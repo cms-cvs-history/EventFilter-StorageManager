@@ -57,9 +57,9 @@ SMI2ORecFrames::SMI2ORecFrames(unsigned int numFramesToAllocate,
   totFrames_(numFramesToAllocate), currFrames_(0), eventIdent_(eventID),
   frameRefs_(totFrames_, 0)
 {
-  FDEBUG(11) << "testI2OReceiver: Making a SMI2ORecFrames struct with " << numFramesToAllocate
+  FDEBUG(10) << "testI2OReceiver: Making a SMI2ORecFrames struct with " << numFramesToAllocate
              << " frames to store" << std::endl;
-  FDEBUG(11) << "testI2OReceiver: checking = " << frameRefs_.size() << std::endl;
+  FDEBUG(10) << "testI2OReceiver: checking = " << frameRefs_.size() << std::endl;
 }
 
 testI2OReceiver::testI2OReceiver(xdaq::ApplicationStub * s)
@@ -119,16 +119,16 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_DATA_MESSAGE_FRAME *msg    =
     (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(11) << "testI2OReceiver: Received data message from HLT " << msg->hltID 
+  FDEBUG(10) << "testI2OReceiver: Received data message from HLT " << msg->hltID 
              << " event " << msg->eventID
              << " total frames = " << msg->numFrames << std::endl;
-  FDEBUG(11) << "testI2OReceiver: Frame " << msg->frameCount << " of " 
+  FDEBUG(10) << "testI2OReceiver: Frame " << msg->frameCount << " of " 
              << msg->numFrames-1 << std::endl;
   // can get rid of this if not dumping the data for checking
   //int minlen = 50;
   //if(minlen > (int)msg->dataSize) minlen = (int)msg->dataSize;
   //std::string temp4print(msg->data,minlen);
-  //FDEBUG(11) << "testI2OReceiver: data = " << temp4print << std::endl;
+  //FDEBUG(10) << "testI2OReceiver: data = " << temp4print << std::endl;
 
   // save this frame fragment
   if(SMframeFragments_.size() > 0)
@@ -160,7 +160,7 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
     } 
     else
     {
-      FDEBUG(11) << "testI2OReceiver: found another frame " << msg->frameCount << " for event "
+      FDEBUG(10) << "testI2OReceiver: found another frame " << msg->frameCount << " for event "
                  << foundPos->eventIdent_ << std::endl;
       // should really check this is not a duplicate frame
       // should test total frames is the same, and other tests are possible
@@ -184,7 +184,7 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
     testCompleteChain(testPos);
   }
 
-  FDEBUG(11) << "testI2OReceiver: SMframeFragments_ size is " << SMframeFragments_.size() << std::endl;
+  FDEBUG(10) << "testI2OReceiver: SMframeFragments_ size is " << SMframeFragments_.size() << std::endl;
   // don't release buffers until the all frames from a chain are received
   // this is done in testCompleteChain
 
@@ -212,31 +212,77 @@ void testI2OReceiver::testCompleteChain(vector<SMI2ORecFrames>::iterator pos)
   // See if the SMI2ORecFrames pointed to by pos contains a complete chain
   // of I2O frames, if so reconstruct the chain, deal with the chain
   // then free the chain buffer and then destroy this SMI2ORecFrames
-  if(pos->currFrames_ == pos->totFrames_)
+  if(pos->totFrames_ == 1)
   {
-    FDEBUG(11) << "testI2OReceiver: Received fragment completes a chain that has " << pos->totFrames_
-               << " frames " << std::endl;
+    // chain is complete as there is only one frame
     toolbox::mem::Reference *head = 0;
-    toolbox::mem::Reference *tail = 0;
-    if(pos->totFrames_ > 1)
-    {
-      FDEBUG(11) << "testI2OReceiver: Remaking the chain" << std::endl;
-      for(int i=0; i < (int)(pos->totFrames_)-1 ; i++)
-      {
-        FDEBUG(11) << "testI2OReceiver: setting next reference for frame " << i << std::endl;
-        head = pos->frameRefs_[i];
-        tail = pos->frameRefs_[i+1];
-        head->setNextReference(tail);
-      }
-    }
     head = pos->frameRefs_[0];
-    FDEBUG(11) << "testI2OReceiver: Original chain remade" << std::endl;
-    // Deal with the chain
+    FDEBUG(10) << "testI2OReceiver: No chain as only one frame" << std::endl;
+    // Write the data out
     writeCompleteChain(head);
     // Destroy the SMI2ORecFrames that was storing these frame pointers
     SMframeFragments_.erase(pos);
     // free the complete chain buffer by freeing the head
     head->release();
+  }
+  else
+  {
+    if(pos->currFrames_ == pos->totFrames_) // doesn't work with only one data frame!
+    {
+      FDEBUG(10) << "testI2OReceiver: Received fragment completes a chain that has " << pos->totFrames_
+                 << " frames " << std::endl;
+      toolbox::mem::Reference *head = 0;
+      toolbox::mem::Reference *tail = 0;
+      if(pos->totFrames_ > 1)
+      {
+        FDEBUG(10) << "testI2OReceiver: Remaking the chain" << std::endl;
+        for(int i=0; i < (int)(pos->totFrames_)-1 ; i++)
+        {
+          FDEBUG(10) << "testI2OReceiver: setting next reference for frame " << i << std::endl;
+          head = pos->frameRefs_[i];
+          tail = pos->frameRefs_[i+1];
+          head->setNextReference(tail);
+        }
+      }
+      head = pos->frameRefs_[0];
+      FDEBUG(10) << "testI2OReceiver: Original chain remade" << std::endl;
+      // Deal with the chain
+      writeCompleteChain(head);
+      // Destroy the SMI2ORecFrames that was storing these frame pointers
+      SMframeFragments_.erase(pos);
+      // free the complete chain buffer by freeing the head
+      head->release();
+    }
+    else
+    {
+    // If running with local transfers, a chain of I2O frames when posted only has the
+    // head frame sent. So a single frame can complete a chain for local transfers.
+    // We need to test for this. Must be head frame and next pointer must exist.
+      if(pos->currFrames_ == 1)
+      {
+        toolbox::mem::Reference *head = 0;
+        toolbox::mem::Reference *next = 0;
+        head = pos->frameRefs_[0];
+        // best to check the complete chain just in case!
+        unsigned int tested_frames = 1;
+        next = head;
+        while((next=next->getNextReference())!=0) tested_frames++;
+        FDEBUG(10) << "testI2OReceiver: Head frame has " << tested_frames-1
+                   << " linked frames out of " << pos->totFrames_-1 << std::endl;
+        if(pos->totFrames_ == tested_frames)
+        {
+          // found a complete linked chain from the leading frame
+          FDEBUG(10) << "testI2OReceiver: Leading frame contains a complete linked chain"
+                     << " - must be local transfer" << std::endl;
+          // Deal with the chain
+          writeCompleteChain(head);
+          // Destroy the SMI2ORecFrames that was storing these frame pointers
+          SMframeFragments_.erase(pos);
+          // free the complete chain buffer by freeing the head
+          head->release();
+        }
+      }
+    }
   }
 }
 
@@ -246,7 +292,7 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
   // we only use the head buffer reference so we can reuse this
   // function when integrating the Storage Manager with XDAQ
   //
-  FDEBUG(11) << "testI2OReceiver: Write out data from chain" << std::endl;
+  FDEBUG(10) << "testI2OReceiver: Write out data from chain" << std::endl;
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)head->getDataLocation();
   I2O_SM_DATA_MESSAGE_FRAME *msg    =
@@ -254,10 +300,10 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
 
   // Remake the data buffer from the chain
   // Use chain info to test exact method used in local transport version
-  FDEBUG(11) << "testI2OReceiver: Number of frames in data chain = " << msg->numFrames << std::endl;
+  FDEBUG(10) << "testI2OReceiver: Number of frames in data chain = " << msg->numFrames << std::endl;
   if(msg->numFrames > 1)
   {
-    FDEBUG(11) << "testI2OReceiver: populating event data buffer from chain for event "
+    FDEBUG(10) << "testI2OReceiver: populating event data buffer from chain for event "
                << msg->eventID << std::endl;
     // get total size and check with original size
     int origsize = msg->originalSize;
@@ -269,8 +315,8 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
     if(origsize > maxsize)
       std::cerr << "testI2OReceiver: error event data size = " << origsize << " larger than "
                 << " max size = " << maxsize << std::endl;
-    FDEBUG(11) << "testI2OReceiver: getting data for frame 0" << std::endl;
-    FDEBUG(11) << "testI2OReceiver: datasize = " << msg->dataSize << std::endl;
+    FDEBUG(10) << "testI2OReceiver: getting data for frame 0" << std::endl;
+    FDEBUG(10) << "testI2OReceiver: datasize = " << msg->dataSize << std::endl;
     int sz = msg->dataSize;
     for(int j=0; j < sz; j++)
       tempbuffer[j] = msg->data[j];
@@ -279,15 +325,15 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
     toolbox::mem::Reference *prev = head;
     for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
     {
-      FDEBUG(11) << "testI2OReceiver: getting data for frame " << i+1 << std::endl;
-      curr = prev->getNextReference();
+      FDEBUG(10) << "testI2OReceiver: getting data for frame " << i+1 << std::endl;
+      curr = prev->getNextReference(); // should test if this exists!
 
       I2O_MESSAGE_FRAME         *stdMsgcurr =
         (I2O_MESSAGE_FRAME*)curr->getDataLocation();
       I2O_SM_DATA_MESSAGE_FRAME *msgcurr    =
         (I2O_SM_DATA_MESSAGE_FRAME*)stdMsgcurr;
 
-      FDEBUG(11) << "testI2OReceiver: datasize = " << msgcurr->dataSize << std::endl;
+      FDEBUG(10) << "testI2OReceiver: datasize = " << msgcurr->dataSize << std::endl;
       int sz = msgcurr->dataSize;
       for(int j=0; j < sz; j++)
         tempbuffer[next_index+j] = msgcurr->data[j];
@@ -295,7 +341,7 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
       prev = curr;
     }
     // tempbuffer is filled with whole chain data
-    FDEBUG(11) << "testI2OReceiver: Belated checking data size = " << next_index << " original size = " 
+    FDEBUG(10) << "testI2OReceiver: Belated checking data size = " << next_index << " original size = " 
                << msg->originalSize << std::endl;
     if(next_index == (int)origsize)
     {
