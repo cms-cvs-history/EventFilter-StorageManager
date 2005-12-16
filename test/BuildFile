@@ -45,6 +45,7 @@
    <use name=IOPool/Streamer>
    <use name=IOPool/StreamerData>
    <use name=EventFilter/Processor>
+   <use name=EventFilter/StorageManager>
   </library>
 
 </environment>
