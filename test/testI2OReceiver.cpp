@@ -16,6 +16,13 @@
        "other message" frame is hardwired to terminate the run
        and close the output file. Cannot handle if this terminate
        message comes before the last data frame!
+     version 1.2 2005/12/15
+       Added a default page to give statistics. The statistics for
+         the memory pool maximum size is not filled.
+       Added code to decode the run and event number and use these
+         to decide if a fragment from a run/event combination has
+         already been received.
+
 */
 
 #include "EventFilter/StorageManager/test/testI2OReceiver.h"
@@ -32,6 +39,10 @@
 #include "i2o/Method.h"
 #include "i2o/utils/include/i2o/utils/AddressMap.h"
 
+#include "toolbox/mem/Pool.h"
+#include "xcept/tools.h"
+#include "xgi/Method.h"
+
 #include <exception>
 #include <iostream>
 #include <string>
@@ -44,18 +55,20 @@ using namespace std;
 
 struct SMI2ORecFrames   // used to store one event
 {
-  SMI2ORecFrames(unsigned int numFramesToAllocate, unsigned int eventID);
+  SMI2ORecFrames(unsigned int numFramesToAllocate, 
+                 unsigned long runID, unsigned long eventID);
 
   unsigned int totFrames_;    // number of frames in this fragment
   unsigned int currFrames_;   // current frames received
-  unsigned int eventIdent_;   // Event Identifier (need also HLT identifier)
+  unsigned long runIdent_;    // Run Identifier (need also HLT identifier)
+  unsigned long eventIdent_;  // Event Identifier
   vector<toolbox::mem::Reference*> frameRefs_; // vector of frame reference pointers
 };
 
 SMI2ORecFrames::SMI2ORecFrames(unsigned int numFramesToAllocate,
-                               unsigned int eventID):
-  totFrames_(numFramesToAllocate), currFrames_(0), eventIdent_(eventID),
-  frameRefs_(totFrames_, 0)
+                               unsigned long runID, unsigned long eventID):
+  totFrames_(numFramesToAllocate), currFrames_(0), runIdent_(runID),
+  eventIdent_(eventID), frameRefs_(totFrames_, 0)
 {
   FDEBUG(10) << "testI2OReceiver: Making a SMI2ORecFrames struct with " << numFramesToAllocate
              << " frames to store" << std::endl;
@@ -69,6 +82,8 @@ testI2OReceiver::testI2OReceiver(xdaq::ApplicationStub * s)
 
   // use the default vector constructor for SMframeFragments_ with no elements
   filename_ = "smi2ostreamout.dat";
+  // useful for tests
+  //filename_ = "/dev/null";
   ost_.open(filename_.c_str(),ios_base::binary | ios_base::out);
   if(!ost_)
   {
@@ -77,6 +92,25 @@ testI2OReceiver::testI2OReceiver(xdaq::ApplicationStub * s)
     //  << "cannot open file " << filename_;
     std::cerr << "testI2OReceiver: Cannot open file " << filename_ << std::endl;
   }
+  eventcounter_ = 0;
+  framecounter_ = 0;
+  pool_is_set_ = 0;
+  pool_ = 0;
+
+  // for performance measurements
+  samples_ = 100; // measurements every 25MB (about)
+  databw_ = 0.;
+  datarate_ = 0.;
+  datalatency_ = 0.;
+  totalsamples_ = 0;
+  duration_ = 0.;
+  meandatabw_ = 0.;
+  meandatarate_ = 0.;
+  meandatalatency_ = 0.;
+  pmeter_ = new sto::SMPerformanceMeter();
+  pmeter_->init(samples_);
+  maxdatabw_ = 0.;
+  mindatabw_ = 999999.;
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -91,15 +125,27 @@ testI2OReceiver::testI2OReceiver(xdaq::ApplicationStub * s)
             &testI2OReceiver::receiveOtherMessage,
             I2O_SM_OTHER,
             XDAQ_ORGANIZATION_ID);
+
+  xgi::bind(this,&testI2OReceiver::defaultWebPage, "Default");
+  xgi::bind(this,&testI2OReceiver::css, "styles.css");
 }
 
 void testI2OReceiver::receiveRegistryMessage(toolbox::mem::Reference *ref)
 {
+  // get the pool pointer for statistics if not already set
+  if(pool_is_set_ == 0)
+  {
+    pool_ = ref->getBuffer()->getPool();
+   pool_is_set_ = 1;
+  }
+
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg    =
     (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10) << "testI2OReceiver: Received registry message from HLT " << msg->hltID  << std::endl;
+  FDEBUG(10) << "testI2OReceiver: Received registry message from HLT " << msg->hltURL
+             << " application " << msg->hltClassName << " id " << msg->hltLocalId
+             << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testI2OReceiver: registry size " << msg->dataSize << "\n";
   // can get rid of this if not dumping the data for checking
   std::string temp4print(msg->data,msg->dataSize);
@@ -110,17 +156,32 @@ void testI2OReceiver::receiveRegistryMessage(toolbox::mem::Reference *ref)
   ost_.write((const char*)msg->data,sz);
   // release the frame buffer now that we are finished
   ref->release();
+  
+  framecounter_++;
+
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
+  addMeasurement(actualFrameSize);
 
 }
 
 void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
 {
+  // get the pool pointer for statistics
+  if(pool_is_set_ == 0)
+  {
+    pool_ = ref->getBuffer()->getPool();
+   pool_is_set_ = 1;
+  }
+
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_DATA_MESSAGE_FRAME *msg    =
     (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10) << "testI2OReceiver: Received data message from HLT " << msg->hltID 
-             << " event " << msg->eventID
+  FDEBUG(10) << "testI2OReceiver: Received data message from HLT at " << msg->hltURL 
+             << " application " << msg->hltClassName << " id " << msg->hltLocalId
+             << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
+  FDEBUG(10) << "                 for run " << msg->runID << " event " << msg->eventID
              << " total frames = " << msg->numFrames << std::endl;
   FDEBUG(10) << "testI2OReceiver: Frame " << msg->frameCount << " of " 
              << msg->numFrames-1 << std::endl;
@@ -129,6 +190,14 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
   //if(minlen > (int)msg->dataSize) minlen = (int)msg->dataSize;
   //std::string temp4print(msg->data,minlen);
   //FDEBUG(10) << "testI2OReceiver: data = " << temp4print << std::endl;
+  // if we want to check InitiatorContext and TransactionContext later
+  // currently not used in xdaq 3.3
+  //I2O_INITIATOR_CONTEXT sourceContext = stdMsg->InitiatorContext;
+  //std::cout << " InitiatorContext = " << sourceContext.LowPart << " " 
+  //          << sourceContext.HighPart << std::endl;
+  //I2O_TRANSACTION_CONTEXT transContext = msg->PvtMessageFrame.TransactionContext;
+  //std::cout << " TransactionContext = " << transContext.LowPart << " " 
+  //          << transContext.HighPart << std::endl;
 
   // save this frame fragment
   if(SMframeFragments_.size() > 0)
@@ -139,7 +208,7 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
     for(vector<SMI2ORecFrames>::iterator pos = SMframeFragments_.begin(); 
         pos != SMframeFragments_.end(); ++pos)
     {
-      if(pos->eventIdent_ == (unsigned int)msg->eventID)
+      if(pos->eventIdent_ == msg->eventID && pos->runIdent_ == msg->runID)
       { // should check there are no entries with duplicate event ids
         eventFound = 1;
         foundPos = pos;
@@ -148,10 +217,11 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
     if(eventFound == 0)
     {
       SMI2ORecFrames *recframe = new SMI2ORecFrames((unsigned int)msg->numFrames,
-                                                   (unsigned int)msg->eventID);
+                                                   msg->runID, msg->eventID);
       SMframeFragments_.push_back(*recframe);
-      SMframeFragments_.back().totFrames_ = msg->numFrames;
+      SMframeFragments_.back().totFrames_  = msg->numFrames;
       SMframeFragments_.back().currFrames_ = 1;
+      SMframeFragments_.back().runIdent_   = msg->runID;
       SMframeFragments_.back().eventIdent_ = msg->eventID;
       SMframeFragments_.back().frameRefs_[msg->frameCount] = ref;
       // now should check if frame is complete and deal with it
@@ -160,8 +230,8 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
     } 
     else
     {
-      FDEBUG(10) << "testI2OReceiver: found another frame " << msg->frameCount << " for event "
-                 << foundPos->eventIdent_ << std::endl;
+      FDEBUG(10) << "testI2OReceiver: found another frame " << msg->frameCount << " for run "
+                 << foundPos->runIdent_ << " and event " << foundPos->eventIdent_ << std::endl;
       // should really check this is not a duplicate frame
       // should test total frames is the same, and other tests are possible
       foundPos->currFrames_++;
@@ -173,10 +243,11 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
   else
   {
     SMI2ORecFrames *recframe = new SMI2ORecFrames((unsigned int)msg->numFrames,
-                                                 (unsigned int)msg->eventID);
+                                                 msg->runID, msg->eventID);
     SMframeFragments_.push_back(*recframe);
-    SMframeFragments_.back().totFrames_ = msg->numFrames;
+    SMframeFragments_.back().totFrames_  = msg->numFrames;
     SMframeFragments_.back().currFrames_ = 1;
+    SMframeFragments_.back().runIdent_   = msg->runID;
     SMframeFragments_.back().eventIdent_ = msg->eventID;
     SMframeFragments_.back().frameRefs_[msg->frameCount] = ref;
     // now should check if frame is complete and deal with it
@@ -188,15 +259,30 @@ void testI2OReceiver::receiveDataMessage(toolbox::mem::Reference *ref)
   // don't release buffers until the all frames from a chain are received
   // this is done in testCompleteChain
 
+  framecounter_++;
+
+  // for bandwidth performance measurements
+  // does not work for chains transferred locally!
+  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+  addMeasurement(actualFrameSize);
 }
 
 void testI2OReceiver::receiveOtherMessage(toolbox::mem::Reference *ref)
 {
+  // get the pool pointer for statistics
+  if(pool_is_set_ == 0)
+  {
+    pool_ = ref->getBuffer()->getPool();
+   pool_is_set_ = 1;
+  }
+
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_OTHER_MESSAGE_FRAME *msg    =
     (I2O_SM_OTHER_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10) << "testI2OReceiver: Received other message from HLT " << msg->hltID << std::endl;
+  FDEBUG(10) << "testI2OReceiver: Received other message from HLT " << msg->hltURL
+             << " application " << msg->hltClassName << " id " << msg->hltLocalId
+             << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testI2OReceiver: message content " << msg->otherData << "\n";
   // hardwire to mean received halt message so close the file
   // should really be checking if more event data from incomplete events are
@@ -205,6 +291,36 @@ void testI2OReceiver::receiveOtherMessage(toolbox::mem::Reference *ref)
   ost_.close();
   // release the frame buffer now that we are finished
   ref->release();
+
+  framecounter_++;
+
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_OTHER_MESSAGE_FRAME);
+  addMeasurement(actualFrameSize);
+}
+
+void testI2OReceiver::addMeasurement(unsigned long size)
+{
+  // for bandwidth performance measurements
+  if ( pmeter_->addSample(size) )
+  {
+    LOG4CPLUS_INFO(getApplicationLogger(),
+      toolbox::toString("measured latency: %f for size %d",pmeter_->latency(), size));
+    LOG4CPLUS_INFO(getApplicationLogger(),
+      toolbox::toString("latency:  %f, rate: %f,bandwidth %f, size: %d\n",
+      pmeter_->latency(),pmeter_->rate(),pmeter_->bandwidth(),size));
+    // new measurement; so update
+    databw_ = pmeter_->bandwidth();
+    datarate_ = pmeter_->rate();
+    datalatency_ = pmeter_->latency();
+    totalsamples_ = pmeter_->totalsamples();
+    duration_ = pmeter_->duration();
+    meandatabw_ = pmeter_->meanbandwidth();
+    meandatarate_ = pmeter_->meanrate();
+    meandatalatency_ = pmeter_->meanlatency();
+    if(databw_ > maxdatabw_) maxdatabw_ = databw_;
+    if(databw_ < mindatabw_) mindatabw_ = databw_;
+  }
 }
 
 void testI2OReceiver::testCompleteChain(vector<SMI2ORecFrames>::iterator pos)
@@ -224,10 +340,11 @@ void testI2OReceiver::testCompleteChain(vector<SMI2ORecFrames>::iterator pos)
     SMframeFragments_.erase(pos);
     // free the complete chain buffer by freeing the head
     head->release();
+    eventcounter_++;
   }
   else
   {
-    if(pos->currFrames_ == pos->totFrames_) // doesn't work with only one data frame!
+    if(pos->currFrames_ == pos->totFrames_)
     {
       FDEBUG(10) << "testI2OReceiver: Received fragment completes a chain that has " << pos->totFrames_
                  << " frames " << std::endl;
@@ -252,6 +369,7 @@ void testI2OReceiver::testCompleteChain(vector<SMI2ORecFrames>::iterator pos)
       SMframeFragments_.erase(pos);
       // free the complete chain buffer by freeing the head
       head->release();
+      eventcounter_++;
     }
     else
     {
@@ -280,6 +398,7 @@ void testI2OReceiver::testCompleteChain(vector<SMI2ORecFrames>::iterator pos)
           SMframeFragments_.erase(pos);
           // free the complete chain buffer by freeing the head
           head->release();
+          eventcounter_++;
         }
       }
     }
@@ -303,8 +422,8 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
   FDEBUG(10) << "testI2OReceiver: Number of frames in data chain = " << msg->numFrames << std::endl;
   if(msg->numFrames > 1)
   {
-    FDEBUG(10) << "testI2OReceiver: populating event data buffer from chain for event "
-               << msg->eventID << std::endl;
+    FDEBUG(10) << "testI2OReceiver: populating event data buffer from chain for run "
+               << msg->runID << " and event " << msg->eventID << std::endl;
     // get total size and check with original size
     int origsize = msg->originalSize;
     // should check the size is correct before defining and filling array!!
@@ -351,8 +470,8 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
     else
     {
       std::cerr << "testI2OReceiver: data size " << next_index << " not equal to original size = " 
-                << msg->originalSize << " for event "
-                << msg->eventID << std::endl;
+                << msg->originalSize << " for run "
+                << msg->runID << " and event " << msg->eventID << std::endl;
       std::cerr << "testI2OReceiver: Change this test to before filling array!!" << std::endl;
     }
   }
@@ -369,11 +488,223 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
     {
       std::cerr << "testI2OReceiver: one frame data size " << sz 
                 << " not equal to original size = " 
-                << msg->originalSize << " for event "
-                << msg->eventID << std::endl;
+                << msg->originalSize << " for run "
+                << msg->runID << " and event " << msg->eventID << std::endl;
     }
   }
 }
+
+#include <iomanip>
+
+void testI2OReceiver::defaultWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  //std::cout << "default web page called" << std::endl;
+  *out << "<html>"                                                   << endl;
+  *out << "<head>"                                                   << endl;
+  *out << "<link type=\"text/css\" rel=\"stylesheet\"";
+  *out << " href=\"/" <<  getApplicationDescriptor()->getURN()
+       << "/styles.css\"/>"                   << endl;
+  *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
+       << getApplicationDescriptor()->getInstance()
+       << "</title>"     << endl;
+    *out << "<table border=\"0\" width=\"100%\">"                      << endl;
+    *out << "<tr>"                                                     << endl;
+    *out << "  <td align=\"left\">"                                    << endl;
+    *out << "    <img"                                                 << endl;
+    *out << "     align=\"middle\""                                    << endl;
+    *out << "     src=\"/daq/evb/examples/fu/images/fu64x64.gif\""     << endl;
+    *out << "     alt=\"main\""                                        << endl;
+    *out << "     width=\"64\""                                        << endl;
+    *out << "     height=\"64\""                                       << endl;
+    *out << "     border=\"\"/>"                                       << endl;
+    *out << "    <b>"                                                  << endl;
+    *out << getApplicationDescriptor()->getClassName() << " instance "
+         << getApplicationDescriptor()->getInstance()                  << endl;
+    *out << "    </b>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "    <a href=\"/urn:xdaq-application:lid=3\">"             << endl;
+    *out << "      <img"                                               << endl;
+    *out << "       align=\"middle\""                                  << endl;
+    *out << "       src=\"/daq/xdaq/hyperdaq/images/HyperDAQ.jpg\""    << endl;
+    *out << "       alt=\"HyperDAQ\""                                  << endl;
+    *out << "       width=\"32\""                                      << endl;
+    *out << "       height=\"32\""                                      << endl;
+    *out << "       border=\"\"/>"                                     << endl;
+    *out << "    </a>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "    <a href=\"/" << getApplicationDescriptor()->getURN()
+         << "/debug\">"                   << endl;
+    *out << "      <img"                                               << endl;
+    *out << "       align=\"middle\""                                  << endl;
+    *out << "       src=\"/daq/evb/bu/images/debug32x32.gif\""         << endl;
+    *out << "       alt=\"debug\""                                     << endl;
+    *out << "       width=\"32\""                                      << endl;
+    *out << "       height=\"32\""                                     << endl;
+    *out << "       border=\"\"/>"                                     << endl;
+    *out << "    </a>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "</tr>"                                                    << endl;
+    *out << "</table>"                                                 << endl;
+
+  *out << "<hr/>"                                                    << endl;
+  *out << "<table>"                                                  << endl;
+  *out << "<tr valign=\"top\">"                                      << endl;
+  *out << "  <td>"                                                   << endl;
+
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << std::endl;
+  *out << "<colgroup> <colgroup align=\"rigth\">"                    << std::endl;
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "Memory Pool Usage"                            << endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+
+        *out << "<tr>" << std::endl;
+        *out << "<th >" << std::endl;
+        *out << "Parameter" << std::endl;
+        *out << "</th>" << std::endl;
+        *out << "<th>" << std::endl;
+        *out << "Value" << std::endl;
+        *out << "</th>" << std::endl;
+        *out << "</tr>" << std::endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Frames Received" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << framecounter_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Events Received" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << eventcounter_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Max Pool Memory (Bytes)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << pool_->getMemoryUsage().getCommitted() << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Memory Used (Bytes)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << pool_->getMemoryUsage().getUsed() << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Percent Memory Used (%)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          double memused = (double)pool_->getMemoryUsage().getUsed();
+          double memmax = (double)pool_->getMemoryUsage().getCommitted();
+          double percentused = 0.0;
+          if(pool_->getMemoryUsage().getCommitted() != 0)
+            percentused = 100.0*(memused/memmax);
+          *out << std::fixed << std::showpoint
+               << std::setw(6) << std::setprecision(2) << percentused << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+// performance statistics
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "Performance for last " << samples_ << " frames"<< endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Bandwidth (MB/s)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << databw_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Rate (Frames/s)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << datarate_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Latency (us/frame)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << datalatency_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Maximum Bandwidth (MB/s)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << maxdatabw_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Minimum Bandwidth (MB/s)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << mindatabw_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+// mean performance statistics for whole run
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "Mean Performance for " << totalsamples_ << " frames, duration "
+         << duration_ << " seconds" << endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Bandwidth (MB/s)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << meandatabw_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Rate (Frames/s)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << meandatarate_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Latency (us/frame)" << std::endl;
+          *out << "</td>" << std::endl;
+          *out << "<td align=right>" << std::endl;
+          *out << meandatalatency_ << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+
+  *out << "</table>" << std::endl;
+
+  *out << "  </td>"                                                  << endl;
+  *out << "</table>"                                                 << endl;
+
+  *out << "</body>"                                                  << endl;
+  *out << "</html>"                                                  << endl;
+}
+
 
 /**
  * Provides factory method for the instantiation of SM applications
