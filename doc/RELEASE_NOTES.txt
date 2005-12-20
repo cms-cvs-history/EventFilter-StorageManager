@@ -1,0 +1,22 @@
+
+13.12.05 jbk:
+
+ Got the first test running - this test uses testfilereader instances from
+ IOPool/Streamer to feed a FragmentCollector, which then feeds a simple
+ object that just drains the data and cleans up.
+
+ Note: ROOT cannot handle more than one collector running because it 
+ cannot do more than one deserialization at a time.  I think this is
+ because the global StreamerInfo Objects actually cache data in static
+ members between operations.  It quickly becomes corrupted when more
+ than one thread uses TBuffers concurrently.
+
+ I am not sure if this also affects reading and writing at the same time.
+ If it does, then the current design may need to be changed (yet again)
+ because it does the deserialization in the fragmentcollector and the 
+ ROOT file writing in the eventprocessor.
+
+ It turns out that, of course, the deserialization takes all the time,
+ so the single FragmentCollector thread is the bottleneck.  See the note
+ above concerning the attempt to start more than one collector.
+
