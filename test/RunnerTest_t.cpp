@@ -5,6 +5,9 @@
 
  $Id:
 
+The EPRunner and Collector stop action need to be defined before 
+this can run.
+
 ----------------------------------------------------------------------*/  
 
 #include <exception>
@@ -14,11 +17,14 @@
 
 #include "FWCore/Framework/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/MessageLogger/interface/MessageLoggerSpigot.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/EPRunner.h"
+#include "EventFilter/StorageManager/interface/FragmentCollector.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
@@ -55,6 +61,12 @@ namespace {
   }
 }
 
+static void deleteBuffer(void* v)
+{
+	stor::FragEntry* fe = (stor::FragEntry*)v;
+	delete [] (char*)fe->buffer_address_;
+}
+
 // -----------------------------------------------
 
 class Main
@@ -74,6 +86,7 @@ class Main
   vector<string> names_;
   edm::ProductRegistry prods_;
   stor::EPRunner drain_;
+  stor::FragmentCollector coll_;
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
@@ -88,7 +101,8 @@ Main::~Main() { }
 Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
-  drain_(getFileContents(conffile),auto_ptr<HLTInfo>(new HLTInfo(prods_)))
+  drain_(getFileContents(conffile),auto_ptr<HLTInfo>(new HLTInfo(prods_))),
+  coll_(*drain_.getInfo(),deleteBuffer,prods_)
 {
   cout << "ctor of Main" << endl;
   // jbk - the next line should not be needed
@@ -97,7 +111,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   for(;it!=en;++it)
     {
       ReaderPtr p(new edmtestp::TestFileReader(*it,
-					       drain_.getInfo()->getQueue(),
+					       drain_.getInfo()->getFragmentQueue(),
 					       prods_));
       readers_.push_back(p);
     }
@@ -107,6 +121,7 @@ int Main::run()
 {
   cout << "starting the EP" << endl;
   drain_.start();
+  coll_.start();
 
   cout << "started the EP" << endl;
   // sleep(10);
@@ -124,9 +139,10 @@ int Main::run()
     }
 
   // send done to the drain
-  edm::EventBuffer::ProducerBuffer b(drain_.getInfo()->getQueue());
+  edm::EventBuffer::ProducerBuffer b(coll_.getFragmentQueue());
   b.commit();
 
+  coll_.join();
   drain_.join();
   return 0;
 }
@@ -143,12 +159,13 @@ int main(int argc, char* argv[])
       //throw cms::Exception("config") << "Bad command line arguments\n";
     }
 
+  edm::MessageLoggerSpigot theMessageLoggerSpigot;
   seal::PluginManager::get()->initialise();
   string conffile(argv[1]);
   
   vector<string> file_names;
   
-  for(int i=1;i<argc;++i)
+  for(int i=2;i<argc;++i)
     {
       cout << argv[i] << endl;
       file_names.push_back(argv[i]);
@@ -161,6 +178,16 @@ int main(int argc, char* argv[])
     m.run();
   }
   catch(cms::Exception& e)
+    {
+      cerr << "Caught an exception:\n" << e.what() << endl;
+      throw;
+    }
+  catch(seal::Error& e)
+    {
+      cerr << "Caught an exception:\n" << e.explainSelf() << endl;
+      throw;
+    }
+  catch(std::exception& e)
     {
       cerr << "Caught an exception:\n" << e.what() << endl;
       throw;
