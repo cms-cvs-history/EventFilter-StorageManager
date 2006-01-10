@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id$
+ $Id: StorageManagerRun.cpp,v 1.1 2005/11/08 20:17:09 jbk Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -8,15 +8,21 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/unistd.h>
 
 #include "FWCore/Framework/interface/EventProcessor.h"
 #include "FWCore/Framework/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/MessageLogger/interface/MessageLoggerSpigot.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
+#include "PluginManager/PluginManager.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -42,10 +48,33 @@ using namespace std;
 // this dleter is particular to this test.  It should really be
 // defined in TestFileReader.h
 
-void deleteBuffer(void* v)
+namespace {
+  string getFileContents(const string& conffile)
+  {
+    struct stat b;
+    if(stat(conffile.c_str(),&b)<0)
+      {
+	cerr << "Cannot stat() file " << conffile << endl;
+	abort();
+      }
+    
+    fstream ist(conffile.c_str());
+    if(!ist)
+      {
+	cerr << "Could not open file " << conffile << endl;
+	abort();
+      }
+    
+    string rc(b.st_size,' ');
+    ist.getline(&rc[0],b.st_size,fstream::traits_type::eof());
+    return rc;
+  }
+}
+
+static void deleteBuffer(void* v)
 {
-  char* b = (char*)v;
-  delete [] b;
+	stor::FragEntry* fe = (stor::FragEntry*)v;
+	delete [] (char*)fe->buffer_address_;
 }
 
 // -----------------------------------------------
@@ -68,7 +97,6 @@ class Main // : public xdaq::Application
   Main(const Main&):jc_("","",deleteBuffer) { }
   Main& operator=(const Main&) { return *this; }
 
-  edm::AssertHandler ah_;
   stor::JobController jc_;
   vector<string> names_;
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
@@ -90,7 +118,10 @@ Main::Main(xdaq::ApplicationStub* s)
 Main::Main(const string& fu_config_file,
 	   const string& my_config_file,
 	   const vector<string>& file_names):
-  jc_(edm::getRegFromFile(file_names[0]),my_config_file,&deleteBuffer),
+  /* use the other jc_ constructor in the real system (JBK) */
+  jc_(edm::getRegFromFile(file_names[0]),
+      getFileContents(my_config_file),
+      &deleteBuffer),
   names_(file_names)
 {
   vector<string>::iterator it(names_.begin()),en(names_.end());
@@ -145,15 +176,39 @@ int main(int argc, char* argv[])
       throw cms::Exception("config") << "Bad command line arguments\n";
     }
   
+  edm::MessageLoggerSpigot theMessageLoggerSpigot;
+  seal::PluginManager::get()->initialise();
+
   string fu_config_file(argv[1]);
   string my_config_file(argv[2]);
   vector<string> file_names;
   
   for(int i=3;i<argc;++i)
     file_names.push_back(argv[i]);
-  
-  Main m(fu_config_file,my_config_file,file_names);
-  m.run();
+
+  try {
+    Main m(fu_config_file,my_config_file,file_names);
+    m.run();
+  }
+  catch(cms::Exception& e)
+    {
+      cerr << "Caught an exception:\n" << e.what() << endl;
+      throw;
+    }
+  catch(seal::Error& e)
+    {
+      cerr << "Caught an exception:\n" << e.explainSelf() << endl;
+      throw;
+    }
+  catch(std::exception& e)
+    {
+      cerr << "Caught an exception:\n" << e.what() << endl;
+      throw;
+    }
+  catch(...)
+  {
+      cerr << "Caught unknown exception\n" << endl;
+  }
 
   return 0;
 }
