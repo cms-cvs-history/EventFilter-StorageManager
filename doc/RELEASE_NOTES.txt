@@ -20,3 +20,39 @@
  so the single FragmentCollector thread is the bottleneck.  See the note
  above concerning the attempt to start more than one collector.
 
+10.01.06 jbk:
+
+ Got the first full storage manager test running.  It still needs to
+ be run by hand and needs input data generated (at least one file).
+ The tests in Streamer/test are driven by a script that can also
+ be used here; it generates data sets first and then runs the jobs.
+
+ The RunStorageManager.cpp program does not yet excerise the two
+ configuration file arguments.  Right now is only uses the second 
+ configuration file and ignores the first.  Remember that the 
+ first is the filter-unit configuration and the second is the 
+ storagemanager config.  The real behavior will be to use the
+ filter-unit config to create a "product registry" that matches that
+ of the filter-unit for use in the storage manager.  Currently the
+ "RunStorageManager" program reads a set of files that contain
+ serialized events.  The "product registry" is retrieved from these
+ files, so the filter-unit config is not necessary.
+
+ The thread shutdown signals are still a bit fuzzy and not very well
+ defined.  Most are triggered by sending an empty message to a queue.
+ It might be better to use the "DONE" message to do this shutdown
+ (in fact, the logic is written this may but it is flawed - see the
+ "stop" member functions).  The size used in the commit and the data
+ types of the buffer messages needed to be looked at more closely.
+
+ The global ROOT lock (implemented as a service) is still necessary
+ because of ROOT thread safety issues in the streamerinfo objects 
+ (persistency layer).
+
+ Each object that runs in its own thread (JobController, FragmentCollector,
+ Main, EPRunner, FileReaders) should have a "stop" member function
+ available and anyone wanting to shut it down should use it.  I think
+ that some of the tests are not making use of this "stop" and are
+ just sending a message to the queue that causes the proper behavior.
+ This needs to be fixed.
+
