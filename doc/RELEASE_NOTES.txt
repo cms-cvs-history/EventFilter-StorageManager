@@ -56,3 +56,12 @@
  just sending a message to the queue that causes the proper behavior.
  This needs to be fixed.
 
+12.01.06 jbk:
+
+ In FragmentCollector, the global ROOT lock when being held during queue
+ insert as well as the streaming operation.  The lock is only supposed to
+ protect the ROOT operation and caused a deadlock when no slots were 
+ available in the queue (readers that need the ROOT lock could not proceed
+ meaning that slots were never freed up for the FragmentCollector to 
+ continue.
+ 
