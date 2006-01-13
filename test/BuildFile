@@ -27,6 +27,24 @@
    <use name=IOPool/Streamer>
   </library>
 
+<bin file=RunnerTest_t.cpp>
+ <use name=boost>
+ <use name=FWCore/MessageLogger>
+ <use name=FWCore/Framework>
+ <use name=EventFilter/StorageManager>
+ <use name=IOPool/Streamer>
+ <use name=IOPool/StreamerData>
+</bin>
+
+  <bin file=RunCollector_t.cpp>
+   <use name=boost>
+   <use name=FWCore/MessageLogger>
+   <use name=FWCore/Framework>
+   <use name=EventFilter/StorageManager>
+   <use name=IOPool/Streamer>
+   <use name=IOPool/StreamerData>
+  </bin>
+
   <library file="testI2OReceiver.cpp" name=EventFilterStorageManagertestI2OReceiver>
 #   <flags SEAL_PLUGIN_NAME="EventFilterStorageManagertestI2OReceiver">
    <use name=xdaq>
