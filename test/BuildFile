@@ -45,6 +45,35 @@
    <use name=IOPool/StreamerData>
   </bin>
 
+  <library file="testStorageManager.cpp" name=EventFilterStorageManagertestStorageManager>
+   <use name=xdaq>
+    <lib name=log4cplus>
+    <lib name=toolbox>
+    <lib name=xdaq>
+    <lib name=xoap>
+    <lib name=xcept>
+    <lib name=cgicc>
+    <lib name=xdata>
+    <lib name=peer>
+    <lib name=ptfifo>
+    <lib name=pthttp>
+    <lib name=pttcp>
+    <lib name=xgi>
+    <lib name=mimetic>
+    <lib name=i2outils>
+    <lib name=xmlappender>
+    <lib name=udpappender>
+   <use name=xerces-c>
+   <use name=boost>
+   <use name=FWCore/Framework>
+   <use name=FWCore/MessageLogger>
+   <use name=FWCore/EDProduct>
+   <use name=IOPool/Streamer>
+   <use name=IOPool/StreamerData>
+   <use name=EventFilter/Processor>
+   <use name=EventFilter/StorageManager>
+  </library>
+
   <library file="testI2OReceiver.cpp" name=EventFilterStorageManagertestI2OReceiver>
 #   <flags SEAL_PLUGIN_NAME="EventFilterStorageManagertestI2OReceiver">
    <use name=xdaq>
