@@ -22,6 +22,10 @@
        Added code to decode the run and event number and use these
          to decide if a fragment from a run/event combination has
          already been received.
+     version 1.3 2006/01/24
+       Remake the header obtained from first frame, and take off
+       the header from all subsequent frames. (Needed by the
+       Storage Manager but not for writing out streamer file.)
 
 */
 
@@ -31,6 +35,7 @@
 #include "FWCore/Utilities/interface/ProblemTracker.h" 
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "IOPool/StreamerData/interface/Messages.h"
 
 #include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
 
@@ -439,6 +444,16 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
     int sz = msg->dataSize;
     for(int j=0; j < sz; j++)
       tempbuffer[j] = msg->data[j];
+    // remake the Header for the leading frame/fragment
+    EventMsg msgBuffer(tempbuffer,sz);
+    edm::RunNumber_t runid     = msgBuffer.getRunNumber();
+    edm::EventNumber_t eventid = msgBuffer.getEventNumber();
+    char dummyBuffer[MAX_I2O_SM_DATAFRAMES * MAX_I2O_SM_DATASIZE];
+    EventMsg msgFrag(dummyBuffer, origsize, eventid, runid, 1, 1);
+    unsigned int headerNeededSize = sizeof(MsgCode::Codes)+sizeof(EventMsg::Header);
+    for(int j=0; j < (int)headerNeededSize; j++) 
+      tempbuffer[j] = dummyBuffer[j];
+
     int next_index = sz;
     toolbox::mem::Reference *curr = 0;
     toolbox::mem::Reference *prev = head;
@@ -454,9 +469,13 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
 
       FDEBUG(10) << "testI2OReceiver: datasize = " << msgcurr->dataSize << std::endl;
       int sz = msgcurr->dataSize;
-      for(int j=0; j < sz; j++)
-        tempbuffer[next_index+j] = msgcurr->data[j];
-      next_index = next_index + sz;
+      //for(int j=0; j < sz; j++)
+      //  tempbuffer[next_index+j] = msgcurr->data[j];
+      // for now - just take out header for all other frames/fragments
+      for(int j=0; j < sz-(int)headerNeededSize; j++)
+        tempbuffer[next_index+j] = msgcurr->data[headerNeededSize+j];
+      //next_index = next_index + sz;
+      next_index = next_index + sz - headerNeededSize;
       prev = curr;
     }
     // tempbuffer is filled with whole chain data
