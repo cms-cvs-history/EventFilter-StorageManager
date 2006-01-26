@@ -114,7 +114,8 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   // default configuration
   // not yet using configuration in XML file, using instead a
   // file in the local area named SMConfig.cfg
-  ispace->fireItemAvailable("parameterSet",&offConfig_);
+  ispace->fireItemAvailable("STparameterSet",&offConfig_);
+  ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
   ispace->fireItemAvailable("stateName",&fsm_->stateName_);
 
   // Bind specific messages to functions
@@ -170,17 +171,25 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   // Get into the ready state
   // get the configuration here or in enable?
 
-  // do this here?
-  edm::MessageLoggerSpigot theMessageLoggerSpigot;
+  // do this here? JBK - moved to data member
+  // edm::MessageLoggerSpigot theMessageLoggerSpigot;
   seal::PluginManager::get()->initialise();
 
-  string sample_file("SMSampleFile.dat"); //streamer format file to get registry
-  string my_config_file("SMConfig.cfg");  // SM config file - should be from XML
-  // for the real thing, give the JobController a configuration string
-  // and save the registry data for checking with the one coming over the network
+  //streamer format file to get registry
+  // string sample_file("SMSampleFile.dat");
+  // SM config file - should be from XML
+  // string my_config_file("SMConfig.cfg");
+  // for the real thing, give the JobController a configuration string and
+  // save the registry data for checking with the one coming over the network
+
+  string sample_config(fuConfig_.value_);
+  string my_config(offConfig_.value_);
+
+  // the rethrows below need to be XDAQ exception types (JBK)
+
   try {
-    jc_.reset(new stor::JobController(edm::getRegFromFile(sample_file),
-                  getFileContents(my_config_file), &deleteSMBuffer));
+    jc_.reset(new stor::JobController(sample_config,
+                  my_config, &deleteSMBuffer));
   }
   catch(cms::Exception& e)
     {

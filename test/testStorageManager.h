@@ -83,7 +83,9 @@ class testStorageManager: public xdaq::Application
 
   evf::EPStateMachine *fsm_;
   //edm::AssertHandler *ah_;
+  edm::MessageLoggerSpigot theMessageLoggerSpigot;
   xdata::String offConfig_;
+  xdata::String fuConfig_;
   friend class evf::EPStateMachine;
 
   boost::shared_ptr<stor::JobController> jc_;

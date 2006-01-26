@@ -63,6 +63,43 @@
 
        <!-- Declare a SMSender application -->
        <xc:Application class="testStorageManager" id="29" instance="0" network="tcp1">
+<properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">
+                    <FUparameterSet xsi:type="xsd:string">
+		       process TEST1 = {
+		         path p = { m1, a1, out2 }
+                         source = EmptySource {untracked int32 maxEvents = 20}
+                         module m1 = StreamThingProducer {
+                           int32 array_size = 20000
+                           int32 instance_count=2 }
+                         module a1 = StreamThingAnalyzer { string product_to_get="m1" }
+                         module dummyunpacker = PoolOutputModule {
+                         string fileName = "/afs/cern.ch/user/h/hcheung/scratch0/CMSSW_0_4_0_pre3_pre4/ciccio.root"}
+                         module out = StreamTestConsumer {
+                           int32 max_event_size = 2000000 int32 max_queue_depth = 5
+                           PSet consumer_config = { string fileName = "test_xdaqstream_myout.dat" } }
+                         module out2 = I2OTestConsumer {
+                           int32 max_event_size = 2000000 int32 max_queue_depth = 5 
+                           PSet consumer_config = { string DestinationName = "testStorageManager" } }
+                       }
+                    </FUparameterSet>
+                    <STparameterSet xsi:type="xsd:string">
+                      process PROD  = {
+                       service = SillyLockService { vstring labels = { "outA", "outB" } }
+                       source = FragmentInput { }
+                       module outA = PoolOutputModule {
+                        untracked string fileName = "mysmoutA.root" }
+                       module outB = PoolOutputModule {
+                        untracked string fileName = "mysmoutB.root" }
+                       module out = StreamTestConsumer {
+                        int32 max_event_size = 2000000
+                        int32 max_queue_depth = 5
+                        PSet consumer_config = {
+                         string fileName = "mysmout.dat" } }
+                       module a1 = StreamThingAnalyzer { string product_to_get="m1" }
+                       path p1 = { a1, outA }
+                     }
+                    </STparameterSet>
+</properties>
        </xc:Application>
        <xc:Application class="PeerTransportTCP" id="31" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
