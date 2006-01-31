@@ -112,7 +112,7 @@ testI2OReceiver::testI2OReceiver(xdaq::ApplicationStub * s)
   meandatabw_ = 0.;
   meandatarate_ = 0.;
   meandatalatency_ = 0.;
-  pmeter_ = new sto::SMPerformanceMeter();
+  pmeter_ = new stor::SMPerformanceMeter();
   pmeter_->init(samples_);
   maxdatabw_ = 0.;
   mindatabw_ = 999999.;

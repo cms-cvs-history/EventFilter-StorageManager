@@ -44,7 +44,7 @@ class testI2OReceiver: public xdaq::Application
 	
   testI2OReceiver(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
 
-  virtual ~testI2OReceiver(){}
+  virtual ~testI2OReceiver(){ delete pmeter_;}
 
  void defaultWebPage
     (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
@@ -72,7 +72,7 @@ class testI2OReceiver: public xdaq::Application
   // for performance measurements
   void addMeasurement(unsigned long size);
   xdata::UnsignedLong samples_; //number of samples (frames) per measurement
-  sto::SMPerformanceMeter *pmeter_;
+  stor::SMPerformanceMeter *pmeter_;
   // measurements for last set of samples
   xdata::Double databw_;      // bandwidth in MB/s
   xdata::Double datarate_;    // number of frames/s

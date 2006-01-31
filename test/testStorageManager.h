@@ -99,7 +99,7 @@ class testStorageManager: public xdaq::Application
   // for performance measurements
   void addMeasurement(unsigned long size);
   xdata::UnsignedLong samples_; //number of samples (frames) per measurement
-  sto::SMPerformanceMeter *pmeter_;
+  stor::SMPerformanceMeter *pmeter_;
   // measurements for last set of samples
   xdata::Double databw_;      // bandwidth in MB/s
   xdata::Double datarate_;    // number of frames/s
