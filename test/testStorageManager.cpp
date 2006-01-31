@@ -112,8 +112,6 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   fsm_->init<testStorageManager>(this);
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
   // default configuration
-  // not yet using configuration in XML file, using instead a
-  // file in the local area named SMConfig.cfg
   ispace->fireItemAvailable("STparameterSet",&offConfig_);
   ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
   ispace->fireItemAvailable("stateName",&fsm_->stateName_);
@@ -152,7 +150,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   meandatabw_ = 0.;
   meandatarate_ = 0.;
   meandatalatency_ = 0.;
-  pmeter_ = new sto::SMPerformanceMeter();
+  pmeter_ = new stor::SMPerformanceMeter();
   pmeter_->init(samples_);
   maxdatabw_ = 0.;
   mindatabw_ = 999999.;
@@ -163,6 +161,7 @@ testStorageManager::~testStorageManager()
 {
   delete fsm_;
   //delete ah_;
+  delete pmeter_;
 }
 
 void testStorageManager::configureAction(toolbox::Event::Reference e) 
@@ -332,21 +331,66 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
   FDEBUG(10) << "testStorageManager: received data frame size = " << len << std::endl;
 
-  // put pointers into fragment collector queue
-  EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-  /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, msg->data, len);
-  b.commit(sizeof(stor::FragEntry));
+  // If running with local transfers, a chain of I2O frames when posted only has the
+  // head frame sent. So a single frame can complete a chain for local transfers.
+  // We need to test for this. Must be head frame, more than one frame
+  // and next pointer must exist.
+  int is_local_chain = 0;
+  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
+  {
+    // this looks like a chain of frames (local transfer)
+    toolbox::mem::Reference *head = ref;
+    toolbox::mem::Reference *next = 0;
+    // best to check the complete chain just in case!
+    unsigned int tested_frames = 1;
+    next = head;
+    while((next=next->getNextReference())!=0) tested_frames++;
+    FDEBUG(10) << "testStorageManager: Head frame has " << tested_frames-1
+               << " linked frames out of " << msg->numFrames-1 << std::endl;
+    if(msg->numFrames == tested_frames)
+    {
+      // found a complete linked chain from the leading frame
+      is_local_chain = 1;
+      FDEBUG(10) << "testStorageManager: Leading frame contains a complete linked chain"
+                 << " - must be local transfer" << std::endl;
+      FDEBUG(10) << "testStorageManager: Breaking the chain" << std::endl;
+      // break the chain and feed them to the fragment collector
+      next = head;
+      for(int iframe=0; iframe <(int)msg->numFrames; iframe++)
+      {
+         toolbox::mem::Reference *thisref=next;
+         next = thisref->getNextReference();
+         thisref->setNextReference(0);
+         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
+         I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
+         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+         int thislen = thismsg->dataSize;
+         new (b.buffer()) stor::FragEntry(thisref, thismsg->data, thislen);
+         b.commit(sizeof(stor::FragEntry));
+         framecounter_++;
+         // for bandwidth performance measurements
+         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+         addMeasurement(actualFrameSize);
+      }
+    } else {
+      // should never get here!
+      FDEBUG(10) << "testStorageManager: Head frame has fewer linked frames "
+                 << "than expected: abnormal error! " << std::endl;
+    }
+  }
 
-  // don't release buffers until the all frames from a chain are received
-  // and JobController/FragmentCollector are finished with them.
-  // This is done in the deleter.
-
-  framecounter_++;
-
-  // for bandwidth performance measurements
-  // does not work for chains transferred locally!
-  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-  addMeasurement(actualFrameSize);
+  if (is_local_chain == 0) 
+  {
+    // put pointers into fragment collector queue
+    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, msg->data, len);
+    b.commit(sizeof(stor::FragEntry));
+    // Frame release is done in the deleter.
+    framecounter_++;
+    // for bandwidth performance measurements
+    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+    addMeasurement(actualFrameSize);
+  }
 }
 
 void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
@@ -500,7 +544,8 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << std::endl;
         *out << "  </tr>" << endl;
 */
-/*   can cause a crash as pool_ is not set until a frame is received!
+        if(pool_is_set_ == 1) 
+        {
         *out << "<tr>" << std::endl;
           *out << "<td >" << std::endl;
           *out << "Max Pool Memory (Bytes)" << std::endl;
@@ -531,7 +576,13 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
                << std::setw(6) << std::setprecision(2) << percentused << std::endl;
           *out << "</td>" << std::endl;
         *out << "  </tr>" << endl;
-*/
+        } else {
+        *out << "<tr>" << std::endl;
+          *out << "<td >" << std::endl;
+          *out << "Memory Pool pointer not yet available" << std::endl;
+          *out << "</td>" << std::endl;
+        *out << "  </tr>" << endl;
+        }
 // performance statistics
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=2>"                                       << endl;
