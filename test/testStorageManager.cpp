@@ -237,6 +237,15 @@ void testStorageManager::resumeAction(toolbox::Event::Reference e)
     "Resume not implemented in testStorageManager");
 }
 
+void testStorageManager::nullAction(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception)
+{
+  //this action has no effect. A warning is issued to this end
+  LOG4CPLUS_WARN(this->getApplicationLogger(),
+		    "Null action invoked");
+
+}
+
+
 #include "xoap/include/xoap/SOAPEnvelope.h"
 #include "xoap/include/xoap/SOAPBody.h"
 #include "xoap/include/xoap/domutils.h"
