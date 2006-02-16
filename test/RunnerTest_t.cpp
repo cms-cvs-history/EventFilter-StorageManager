@@ -15,9 +15,9 @@ this can run.
 #include <string>
 #include <vector>
 
-#include "FWCore/Framework/interface/ProductRegistry.h"
+#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "FWCore/MessageLogger/interface/MessageLoggerSpigot.h"
+#include "FWCore/MessageService/interface/MessageServicePresence.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
       //throw cms::Exception("config") << "Bad command line arguments\n";
     }
 
-  edm::MessageLoggerSpigot theMessageLoggerSpigot;
+  edm::service::MessageServicePresence theMessageServicePresence;
   seal::PluginManager::get()->initialise();
   string conffile(argv[1]);
   

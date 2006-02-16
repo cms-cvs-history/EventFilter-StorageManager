@@ -16,6 +16,7 @@
    <use name=boost>
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
+   <use name=FWCore/MessageService>
    <use name=EventFilter/StorageManager>
    <use name=IOPool/Streamer>
    <use name=IOPool/StreamerData>
@@ -30,6 +31,7 @@
 <bin file=RunnerTest_t.cpp>
  <use name=boost>
  <use name=FWCore/MessageLogger>
+ <use name=FWCore/MessageService>
  <use name=FWCore/Framework>
  <use name=EventFilter/StorageManager>
  <use name=IOPool/Streamer>
@@ -67,11 +69,12 @@
    <use name=boost>
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
-   <use name=FWCore/EDProduct>
+   <use name=FWCore/MessageService>
+   <use name=DataFormats/Common>
    <use name=IOPool/Streamer>
    <use name=IOPool/StreamerData>
-   <use name=EventFilter/Processor>
    <use name=EventFilter/StorageManager>
+   <use name=EventFilter/Utilities>
   </library>
 
   <library file="testI2OReceiver.cpp" name=EventFilterStorageManagertestI2OReceiver>
@@ -96,10 +99,9 @@
    <use name=xerces-c>
    <use name=boost>
    <use name=FWCore/Framework>
-   <use name=FWCore/EDProduct>
+   <use name=DataFormats/Common>
    <use name=IOPool/Streamer>
    <use name=IOPool/StreamerData>
-   <use name=EventFilter/Processor>
    <use name=EventFilter/StorageManager>
   </library>
 

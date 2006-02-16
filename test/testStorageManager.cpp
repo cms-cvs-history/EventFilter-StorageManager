@@ -31,11 +31,11 @@
 #include "EventFilter/StorageManager/test/testStorageManager.h"
 
 #include "FWCore/Framework/interface/EventProcessor.h"
-#include "FWCore/Framework/interface/ProductRegistry.h"
+#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "FWCore/MessageLogger/interface/MessageLoggerSpigot.h"
+#include "FWCore/MessageService/interface/MessageServicePresence.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
@@ -171,7 +171,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   // get the configuration here or in enable?
 
   // do this here? JBK - moved to data member
-  // edm::MessageLoggerSpigot theMessageLoggerSpigot;
+  // edm::MessageServicePresence theMessageServicePresence;
   seal::PluginManager::get()->initialise();
 
   //streamer format file to get registry

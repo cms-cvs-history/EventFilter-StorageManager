@@ -22,10 +22,10 @@
 #include <sys/unistd.h>
 
 #include "FWCore/Framework/interface/EventProcessor.h"
-#include "FWCore/Framework/interface/ProductRegistry.h"
+#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "FWCore/MessageLogger/interface/MessageLoggerSpigot.h"
+#include "FWCore/MessageService/interface/MessageServicePresence.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
@@ -83,7 +83,7 @@ class testStorageManager: public xdaq::Application
 
   evf::EPStateMachine *fsm_;
   //edm::AssertHandler *ah_;
-  edm::MessageLoggerSpigot theMessageLoggerSpigot;
+  edm::service::MessageServicePresence theMessageServicePresence;
   xdata::String offConfig_;
   xdata::String fuConfig_;
   friend class evf::EPStateMachine;

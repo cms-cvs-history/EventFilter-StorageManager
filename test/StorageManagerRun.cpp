@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.1 2005/11/08 20:17:09 jbk Exp $
+ $Id: StorageManagerRun.cpp,v 1.2 2006/01/10 20:14:35 jbk Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -13,10 +13,10 @@
 #include <sys/unistd.h>
 
 #include "FWCore/Framework/interface/EventProcessor.h"
-#include "FWCore/Framework/interface/ProductRegistry.h"
+#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "FWCore/MessageLogger/interface/MessageLoggerSpigot.h"
+#include "FWCore/MessageService/interface/MessageServicePresence.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
       throw cms::Exception("config") << "Bad command line arguments\n";
     }
   
-  edm::MessageLoggerSpigot theMessageLoggerSpigot;
+  edm::service::MessageServicePresence theMessageServicePresence;
   seal::PluginManager::get()->initialise();
 
   string fu_config_file(argv[1]);
