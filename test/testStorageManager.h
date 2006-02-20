@@ -69,6 +69,8 @@ class testStorageManager: public xdaq::Application
     throw (toolbox::fsm::exception::Exception);
   virtual void resumeAction(toolbox::Event::Reference e) 
     throw (toolbox::fsm::exception::Exception);
+  virtual void nullAction(toolbox::Event::Reference e) 
+    throw (toolbox::fsm::exception::Exception);
   xoap::MessageReference fireEvent(xoap::MessageReference msg)
     throw (xoap::exception::Exception);
 
