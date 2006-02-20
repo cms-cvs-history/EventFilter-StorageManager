@@ -245,6 +245,14 @@ void testStorageManager::resumeAction(toolbox::Event::Reference e)
     "Resume not implemented in testStorageManager");
 }
 
+void testStorageManager::nullAction(toolbox::Event::Reference e) 
+  throw (toolbox::fsm::exception::Exception)
+{
+  //this action has no effect. A warning is issued to this end
+  LOG4CPLUS_WARN(this->getApplicationLogger(),
+                    "Null action invoked");
+}
+
 #include "xoap/include/xoap/SOAPEnvelope.h"
 #include "xoap/include/xoap/SOAPBody.h"
 #include "xoap/include/xoap/domutils.h"
@@ -429,11 +437,12 @@ void testStorageManager::addMeasurement(unsigned long size)
   // for bandwidth performance measurements
   if ( pmeter_->addSample(size) )
   {
-    LOG4CPLUS_INFO(getApplicationLogger(),
-      toolbox::toString("measured latency: %f for size %d",pmeter_->latency(), size));
-    LOG4CPLUS_INFO(getApplicationLogger(),
-      toolbox::toString("latency:  %f, rate: %f,bandwidth %f, size: %d\n",
-      pmeter_->latency(),pmeter_->rate(),pmeter_->bandwidth(),size));
+    // don't print out info by default (already in web page)
+    //LOG4CPLUS_INFO(getApplicationLogger(),
+    //  toolbox::toString("measured latency: %f for size %d",pmeter_->latency(), size));
+    //LOG4CPLUS_INFO(getApplicationLogger(),
+    //  toolbox::toString("latency:  %f, rate: %f,bandwidth %f, size: %d\n",
+    //  pmeter_->latency(),pmeter_->rate(),pmeter_->bandwidth(),size));
     // new measurement; so update
     databw_ = pmeter_->bandwidth();
     datarate_ = pmeter_->rate();
