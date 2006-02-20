@@ -84,7 +84,7 @@
                     </FUparameterSet>
                     <STparameterSet xsi:type="xsd:string">
                       process PROD  = {
-                       service = SillyLockService { vstring labels = { "outA", "outB" } }
+                       service = SillyLockService {untracked vstring labels = { "outA", "outB" } }
                        source = FragmentInput { }
                        module outA = PoolOutputModule {
                         untracked string fileName = "mysmoutA.root" }
