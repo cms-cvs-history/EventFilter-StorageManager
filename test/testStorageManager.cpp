@@ -17,6 +17,19 @@
        data file that must be located at the running directory
        to get the registry. Also the SM config file name is also
        hardwired rather than read from the XML file.
+     version 1.2 2006/01/26
+       Changed to use cmsRun configuration contained in the XDAQ
+       XML file instead of hardwired files.
+     version 1.3 2006/01/31
+       Changes to handle local transfers.
+     version 1.4 2006/02/16
+       Fix Build problems due to changes in the Message Logger.
+     version 1.5 2006/02/20
+       Added nullAction needed by EPS state machine.
+     version 1.6 2006/02/28
+       Put testStorageManager into stor:: namespace.
+       Added registration and collection of data for FU senders,
+       and code to display this info on the default web page.
 
 */
 
@@ -54,8 +67,14 @@
 #include "xcept/tools.h"
 #include "xgi/Method.h"
 
+#include "xoap/include/xoap/SOAPEnvelope.h"
+#include "xoap/include/xoap/SOAPBody.h"
+#include "xoap/include/xoap/domutils.h"
+
+
 #include <exception>
 #include <iostream>
+#include <iomanip>
 
 #include "boost/shared_ptr.hpp"
 
@@ -63,33 +82,6 @@ using namespace edm;
 using namespace std;
 
 // -----------------------------------------------
-
-namespace {
-  // should be moved into a common utility library
-  // but we only need it for testing in this program
-
-  string getFileContents(const string& conffile)
-  {
-    struct stat b;
-    if(stat(conffile.c_str(),&b)<0)
-      {
-        cerr << "Cannot stat() file " << conffile << endl;
-        abort();
-      }
-    
-    fstream ist(conffile.c_str());
-    if(!ist)
-      {
-        cerr << "Could not open file " << conffile << endl;
-        abort();
-      }
-    
-    string rc(b.st_size,' ');
-    ist.getline(&rc[0],b.st_size,fstream::traits_type::eof());
-    return rc;
-  }
-}
-
 
 static void deleteSMBuffer(void* Ref)
 {
@@ -100,6 +92,85 @@ static void deleteSMBuffer(void* Ref)
   ref->release();
 }
 // -----------------------------------------------
+
+namespace stor {
+
+using namespace edm;
+using namespace std;
+
+struct SMFUSenderList  // used to store list of FU senders
+{
+  SMFUSenderList(const char* hltURL,
+                 const char* hltClassName,
+                 const unsigned long hltLocalId,
+                 const unsigned long hltInstance,
+                 const unsigned long hltTid,
+                 const unsigned long registrySize,
+                 const char* registryData);
+
+  char          hltURL_[MAX_I2O_SM_URLCHARS];       // FU+HLT identifiers
+  char          hltClassName_[MAX_I2O_SM_URLCHARS];
+  unsigned long hltLocalId_;
+  unsigned long hltInstance_;
+  unsigned long hltTid_;
+  unsigned long registrySize_;
+  char          registryData_[MAX_I2O_REGISTRY_DATASIZE];
+  bool          regCheckedOK_;    // Registry checked to be same as configuration
+  unsigned int  connectStatus_;   // FU+HLT connection status
+  double        timeSinceLast_;   // Absolute time since last data frame
+  unsigned long runNumber_;
+  bool          isLocal_;         // If detected a locally sent frame chain
+  unsigned long framesReceived_;
+  unsigned long eventsReceived_;
+  unsigned long lastEventID_;
+  unsigned long lastRunID_;
+  unsigned long lastFrameNum_;
+  unsigned long lastTotalFrameNum_;
+  unsigned long totalOutOfOrder_;
+  unsigned long totalSizeReceived_;// For data only
+  unsigned long totalBadEvents_;   // Update meaning: include original size check?
+  toolbox::Chrono chrono_;         // Keep latency for connection check
+};
+
+SMFUSenderList::SMFUSenderList(const char* hltURL,
+                 const char* hltClassName,
+                 const unsigned long hltLocalId,
+                 const unsigned long hltInstance,
+                 const unsigned long hltTid,
+                 const unsigned long registrySize,
+                 const char* registryData):
+  hltLocalId_(hltLocalId), hltInstance_(hltInstance), hltTid_(hltTid),
+  registrySize_(registrySize)
+{
+  copy(hltURL, hltURL+MAX_I2O_SM_URLCHARS, hltURL_);
+  copy(hltClassName, hltClassName+MAX_I2O_SM_URLCHARS, hltClassName_);
+  copy(registryData, registryData+MAX_I2O_REGISTRY_DATASIZE, registryData_);
+  regCheckedOK_ = false;
+  /*
+     Connect status
+     Bit 1 = 0 disconnected (was connected before) or delete it?
+           = 1 connected and received registry
+     Bit 2 = 0 not yet received a data frame
+           = 1 received at least one data frame
+  */
+  connectStatus_ = 1;
+  timeSinceLast_ = 0.0;
+  runNumber_ = 0;
+  isLocal_ = false;
+  framesReceived_ = 1;
+  eventsReceived_ = 0;
+  lastEventID_ = 0;
+  lastRunID_ = 0;
+  lastFrameNum_ = 0;
+  lastTotalFrameNum_ = 0;
+  totalOutOfOrder_ = 0;
+  totalSizeReceived_ = 0;
+  totalBadEvents_ = 0;
+
+  FDEBUG(10) << "testStorageManager: Making a SMFUSenderList struct for "
+            << hltURL_ << " class " << hltClassName_  << " instance "
+            << hltInstance_ << " Tid " << hltTid_ << std::endl;
+}
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
@@ -253,10 +324,6 @@ void testStorageManager::nullAction(toolbox::Event::Reference e)
                     "Null action invoked");
 }
 
-#include "xoap/include/xoap/SOAPEnvelope.h"
-#include "xoap/include/xoap/SOAPBody.h"
-#include "xoap/include/xoap/domutils.h"
-
 xoap::MessageReference testStorageManager::fireEvent(xoap::MessageReference msg)
   throw (xoap::exception::Exception)
 {
@@ -314,6 +381,10 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
   addMeasurement(actualFrameSize);
 
+  // register this FU sender into the list to keep its status
+  registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
+                 msg->hltLocalId, msg->hltInstance, msg->hltTid,
+                 msg->dataSize, &msg->data[0]);
 }
 
 void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
@@ -379,6 +450,13 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          // for bandwidth performance measurements
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
          addMeasurement(actualFrameSize);
+         // for FU sender list update
+         // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+         bool isLocal = true;
+         updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+           msg->hltLocalId, msg->hltInstance, msg->hltTid,
+           msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+           msg->originalSize, isLocal);
       }
     } else {
       // should never get here!
@@ -398,6 +476,13 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
     addMeasurement(actualFrameSize);
+    // for FU sender list update
+    // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+    bool isLocal = false;
+    updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+      msg->hltLocalId, msg->hltInstance, msg->hltTid,
+      msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+      msg->originalSize, isLocal);
   }
 }
 
@@ -430,6 +515,143 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_OTHER_MESSAGE_FRAME);
   addMeasurement(actualFrameSize);
 }
+////////////////////////////// Tracking FU Sender Status  //////////////////
+void stor::testStorageManager::registerFUSender(const char* hltURL,
+  const char* hltClassName, const unsigned long hltLocalId,
+  const unsigned long hltInstance, const unsigned long hltTid,
+  const unsigned long registrySize, const char* registryData)
+{
+  // register FU sender into the list to keep its status
+  // first check if FU is already in the list
+
+  // register this FU sender
+  SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
+                 hltLocalId, hltInstance, hltTid,
+                 registrySize, registryData);
+  smfusenders_.push_back(*fusender);
+  smfusenders_.back().chrono_.start(0);
+  // check the registry from this FU against the configuration one
+  bool setcode = false;
+  // need to make a copy in a non-const array
+  char tempregdata[MAX_I2O_REGISTRY_DATASIZE];
+  copy(registryData, registryData+MAX_I2O_REGISTRY_DATASIZE, tempregdata);
+  //edm::InitMsg msg(&registryData[0],registrySize,setcode);
+  edm::InitMsg msg(&tempregdata[0],registrySize,setcode);
+  // use available methods to check registry is a subset
+  edm::JobHeaderDecoder decoder;
+  std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(msg);
+  //if(edm::registryIsSubset(*header, jc_->products()))
+  if(edm::registryIsSubset(*header, jc_->smproducts()))
+  {
+    FDEBUG(10) << "registerFUSender: Received registry is okay" << std::endl;
+    smfusenders_.back().regCheckedOK_ = true;
+  } else {
+    std::cout << "registerFUSender: Error! Received registry is not a subset!"
+              << std::endl;
+  };
+}
+
+void stor::testStorageManager::updateFUSender4data(const char* hltURL,
+  const char* hltClassName, const unsigned long hltLocalId,
+  const unsigned long hltInstance, const unsigned long hltTid,
+  const unsigned long runNumber, const unsigned long eventNumber,
+  const unsigned long frameNum, const unsigned long totalFrames,
+  const unsigned long origdatasize, const bool isLocal)
+{
+  // Find this FU sender in the list
+  bool problemFound = false;
+  if(smfusenders_.size() > 0)
+  {
+    bool fusender_found = false;
+    vector<SMFUSenderList>::iterator foundPos;
+    for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin();
+        pos != smfusenders_.end(); ++pos)
+    {
+      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+         pos->hltTid_ == hltTid)
+      {
+        fusender_found = true;
+        foundPos = pos;
+      }
+    }
+    if(fusender_found)
+    {
+      // should really check this is not a duplicate frame
+      // should test total frames is the same, and other tests are possible
+      // check if this is the first data frame received
+      if(foundPos->connectStatus_ < 2) {  //should actually check bit 2!
+        foundPos->connectStatus_ = foundPos->connectStatus_ + 2; //should set bit 2!
+        FDEBUG(10) << "updateFUSender4data: received first data frame" << std::endl;
+        foundPos->runNumber_ = runNumber;
+        foundPos->isLocal_ = isLocal;
+      } else {
+         if(foundPos->runNumber_ != runNumber) {
+            problemFound = true;
+            FDEBUG(10) << "updateFUSender4data: data frame with new run number!"
+                       << " Current run " << foundPos->runNumber_
+                       << " new run " << runNumber << std::endl;
+         }
+         // could test isLocal here
+      }
+      foundPos->framesReceived_++;
+      foundPos->lastRunID_ = runNumber;
+      foundPos->chrono_.stop(0);
+      foundPos->timeSinceLast_ = (double) foundPos->chrono_.dusecs(); //microseconds
+      foundPos->chrono_.start(0);
+      // check if this frame is the last (assuming in order)
+      // must also handle if there is only one frame in event
+      if(totalFrames == 1) {
+        // there is only one frame in this event assume frameNum = 1!
+        foundPos->eventsReceived_++;
+        foundPos->lastEventID_ = eventNumber;
+        foundPos->lastFrameNum_ = frameNum;
+        foundPos->lastTotalFrameNum_ = totalFrames;
+        foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
+      } else {
+        // flag and count if frame (event fragment) out of order
+        if(foundPos->lastEventID_ == eventNumber) {
+          // check if in order and if last frame in a chain
+          if(frameNum != foundPos->lastFrameNum_ + 1) {
+            foundPos->totalOutOfOrder_++;
+          }
+          if(totalFrames != foundPos->lastTotalFrameNum_) {
+            problemFound = true;
+            // this is a real problem! Corrupt data frame
+          }
+          // if last frame in n-of-m assume it completes an event
+          // frame count starts from 1
+          if(frameNum == totalFrames) { //should check totalFrames
+            foundPos->eventsReceived_++;
+            foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
+          }
+          foundPos->lastFrameNum_ = frameNum;
+        } else {
+          // new event (assume run number does not change)
+          foundPos->lastEventID_ = eventNumber;
+          if(foundPos->lastFrameNum_ != foundPos->lastTotalFrameNum_ &&
+             foundPos->framesReceived_ != 1) {
+            // missing or frame out of order (may count multiplely!)
+            foundPos->totalOutOfOrder_++;
+          }
+          foundPos->lastFrameNum_ = frameNum;
+          foundPos->lastTotalFrameNum_ = totalFrames;
+        }
+      } // totalFrames=1 or not
+      if(problemFound) foundPos->totalBadEvents_++;
+    } // fu sender found
+    else
+    {
+      FDEBUG(10) << "updateFUSender4data: Cannot find FU in FU Sender list!"
+                 << " With URL "
+                 << hltURL << " class " << hltClassName  << " instance "
+                 << hltInstance << " Tid " << hltTid << std::endl;
+    }
+  } else {
+    // problem: did not find an entry!!
+    FDEBUG(10) << "updateFUSender4data: No entries at all in FU sender list!"
+               << std::endl;
+  }
+}
 
 ////////////////////////////// Performance      ////////////////////////////
 void testStorageManager::addMeasurement(unsigned long size)
@@ -458,8 +680,6 @@ void testStorageManager::addMeasurement(unsigned long size)
 }
 
 ////////////////////////////// Default web page ////////////////////////////
-#include <iomanip>
-
 void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -519,78 +739,46 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<tr valign=\"top\">"                                      << endl;
   *out << "  <td>"                                                   << endl;
 
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << std::endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << std::endl;
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
+  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=2>"                                       << endl;
     *out << "      " << "Memory Pool Usage"                            << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
 
-        *out << "<tr>" << std::endl;
-        *out << "<th >" << std::endl;
-        *out << "Parameter" << std::endl;
-        *out << "</th>" << std::endl;
-        *out << "<th>" << std::endl;
-        *out << "Value" << std::endl;
-        *out << "</th>" << std::endl;
-        *out << "</tr>" << std::endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Frames Received" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << framecounter_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+        *out << "<th >" << endl;
+        *out << "Parameter" << endl;
+        *out << "</th>" << endl;
+        *out << "<th>" << endl;
+        *out << "Value" << endl;
+        *out << "</th>" << endl;
+        *out << "</tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Frames Received" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << framecounter_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-/*  Cannot get events yet from fragment collector
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Events Received" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << eventcounter_ << std::endl;
-          *out << "</td>" << std::endl;
-        *out << "  </tr>" << endl;
-*/
         if(pool_is_set_ == 1) 
         {
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Max Pool Memory (Bytes)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << pool_->getMemoryUsage().getCommitted() << std::endl;
-          *out << "</td>" << std::endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Memory Used (Bytes)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << pool_->getMemoryUsage().getUsed() << std::endl;
-          *out << "</td>" << std::endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Percent Memory Used (%)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          double memused = (double)pool_->getMemoryUsage().getUsed();
-          double memmax = (double)pool_->getMemoryUsage().getCommitted();
-          double percentused = 0.0;
-          if(pool_->getMemoryUsage().getCommitted() != 0)
-            percentused = 100.0*(memused/memmax);
-          *out << std::fixed << std::showpoint
-               << std::setw(6) << std::setprecision(2) << percentused << std::endl;
-          *out << "</td>" << std::endl;
-        *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Memory Used (Bytes)" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pool_->getMemoryUsage().getUsed() << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
         } else {
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Memory Pool pointer not yet available" << std::endl;
-          *out << "</td>" << std::endl;
-        *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Memory Pool pointer not yet available" << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
         }
 // performance statistics
     *out << "  <tr>"                                                   << endl;
@@ -598,45 +786,45 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "      " << "Performance for last " << samples_ << " frames"<< endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Bandwidth (MB/s)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << databw_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Bandwidth (MB/s)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << databw_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Rate (Frames/s)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << datarate_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Rate (Frames/s)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << datarate_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Latency (us/frame)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << datalatency_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Latency (us/frame)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << datalatency_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Maximum Bandwidth (MB/s)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << maxdatabw_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Maximum Bandwidth (MB/s)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << maxdatabw_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Minimum Bandwidth (MB/s)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << mindatabw_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Minimum Bandwidth (MB/s)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << mindatabw_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 // mean performance statistics for whole run
     *out << "  <tr>"                                                   << endl;
@@ -645,32 +833,221 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
          << duration_ << " seconds" << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Bandwidth (MB/s)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << meandatabw_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Bandwidth (MB/s)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << meandatabw_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Rate (Frames/s)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << meandatarate_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Rate (Frames/s)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << meandatarate_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-        *out << "<tr>" << std::endl;
-          *out << "<td >" << std::endl;
-          *out << "Latency (us/frame)" << std::endl;
-          *out << "</td>" << std::endl;
-          *out << "<td align=right>" << std::endl;
-          *out << meandatalatency_ << std::endl;
-          *out << "</td>" << std::endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Latency (us/frame)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << meandatalatency_ << endl;
+          *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 
-  *out << "</table>" << std::endl;
+  *out << "</table>" << endl;
+
+  *out << "  </td>"                                                  << endl;
+  *out << "</table>"                                                 << endl;
+// now for FU sender list statistics
+  *out << "<hr/>"                                                    << endl;
+  *out << "<table>"                                                  << endl;
+  *out << "<tr valign=\"top\">"                                      << endl;
+  *out << "  <td>"                                                   << endl;
+
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
+  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "FU Sender List"                            << endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+
+    *out << "<tr>" << endl;
+    *out << "<th >" << endl;
+    *out << "Parameter" << endl;
+    *out << "</th>" << endl;
+    *out << "<th>" << endl;
+    *out << "Value" << endl;
+    *out << "</th>" << endl;
+    *out << "</tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Number of FU Senders" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << smfusenders_.size() << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+    if(smfusenders_.size() > 0) {
+      for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin();
+          pos != smfusenders_.end(); ++pos)
+      {
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender URL" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << pos->hltURL_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Class Name" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << pos->hltClassName_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Instance" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << pos->hltInstance_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Local ID" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << pos->hltLocalId_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Tid" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << pos->hltTid_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Product registry" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          if(pos->regCheckedOK_) {
+            *out << "OK" << endl;
+          } else {
+            *out << "Bad" << endl;
+          }
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Connection Status" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << pos->connectStatus_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        if(pos->connectStatus_ > 1) {
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Time since last data frame (us)" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pos->timeSinceLast_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Run number" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pos->runNumber_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Running locally" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            if(pos->isLocal_) {
+              *out << "Yes" << endl;
+            } else {
+              *out << "No" << endl;
+            }
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Frames received" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pos->framesReceived_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Events received" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pos->eventsReceived_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          if(pos->eventsReceived_ > 0) {
+            *out << "<tr>" << endl;
+              *out << "<td >" << endl;
+              *out << "Average event size (Bytes)" << endl;
+              *out << "</td>" << endl;
+              *out << "<td align=right>" << endl;
+              *out << pos->totalSizeReceived_/pos->eventsReceived_ << endl;
+              *out << "</td>" << endl;
+              *out << "<tr>" << endl;
+                *out << "<td >" << endl;
+                *out << "Last Run Number" << endl;
+                *out << "</td>" << endl;
+                *out << "<td align=right>" << endl;
+                *out << pos->lastRunID_ << endl;
+                *out << "</td>" << endl;
+              *out << "  </tr>" << endl;
+              *out << "<tr>" << endl;
+                *out << "<td >" << endl;
+                *out << "Last Event Number" << endl;
+                *out << "</td>" << endl;
+                *out << "<td align=right>" << endl;
+                *out << pos->lastEventID_ << endl;
+                *out << "</td>" << endl;
+              *out << "  </tr>" << endl;
+            } // events received endif
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Total out of order frames" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pos->totalOutOfOrder_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Total Bad Events" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << pos->totalBadEvents_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+        } // connect status endif
+      } // Sender list loop
+    } //sender size test endif
+
+  *out << "</table>" << endl;
 
   *out << "  </td>"                                                  << endl;
   *out << "</table>"                                                 << endl;
@@ -679,6 +1056,8 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</html>"                                                  << endl;
 }
 
+} //stor namespace
+
 
 /**
  * Provides factory method for the instantiation of SM applications
@@ -686,7 +1065,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 
 extern "C" xdaq::Application * instantiate_testStorageManager(xdaq::ApplicationStub * stub )
 {
-        std::cout << "Going to construct a testStorageManager instance " << endl;
-        return new testStorageManager(stub);
+        std::cout << "Going to construct a testStorageManager instance " << std::endl;
+        return new stor::testStorageManager(stub);
 }
 
