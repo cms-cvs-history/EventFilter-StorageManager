@@ -117,7 +117,7 @@ struct SMFUSenderList  // used to store list of FU senders
   char          registryData_[MAX_I2O_REGISTRY_DATASIZE];
   bool          regCheckedOK_;    // Registry checked to be same as configuration
   unsigned int  connectStatus_;   // FU+HLT connection status
-  double        timeSinceLast_;   // Absolute time since last data frame
+  double        lastLatency_;     // Latency of last frame in microseconds
   unsigned long runNumber_;
   bool          isLocal_;         // If detected a locally sent frame chain
   unsigned long framesReceived_;
@@ -154,7 +154,7 @@ SMFUSenderList::SMFUSenderList(const char* hltURL,
            = 1 received at least one data frame
   */
   connectStatus_ = 1;
-  timeSinceLast_ = 0.0;
+  lastLatency_ = 0.0;
   runNumber_ = 0;
   isLocal_ = false;
   framesReceived_ = 1;
@@ -204,6 +204,9 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   // Bind web interface
   xgi::bind(this,&testStorageManager::defaultWebPage, "Default");
   xgi::bind(this,&testStorageManager::css, "styles.css");
+  xgi::bind(this,&testStorageManager::fusenderWebPage, "fusenderlist");
+  xgi::bind(this,&testStorageManager::eventdataWebPage, "geteventdata");
+  xgi::bind(this,&testStorageManager::headerdataWebPage, "getregdata");
 
 
   eventcounter_ = 0;
@@ -596,7 +599,7 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
       foundPos->framesReceived_++;
       foundPos->lastRunID_ = runNumber;
       foundPos->chrono_.stop(0);
-      foundPos->timeSinceLast_ = (double) foundPos->chrono_.dusecs(); //microseconds
+      foundPos->lastLatency_ = (double) foundPos->chrono_.dusecs(); //microseconds
       foundPos->chrono_.start(0);
       // check if this frame is the last (assuming in order)
       // must also handle if there is only one frame in event
@@ -962,7 +965,12 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
             *out << "Time since last data frame (us)" << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << pos->timeSinceLast_ << endl;
+            // looking at the code for Chrono this does not actually
+            // stop the "stopwatch" it just calculates the time since
+            // the last start was called so can use this
+            pos->chrono_.stop(0);
+            double timewaited = (double) pos->chrono_.dusecs(); //microseconds
+            *out << timewaited << endl;
             *out << "</td>" << endl;
           *out << "  </tr>" << endl;
           *out << "<tr>" << endl;
@@ -1002,6 +1010,14 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
             *out << "</td>" << endl;
           *out << "  </tr>" << endl;
           if(pos->eventsReceived_ > 0) {
+            *out << "<tr>" << endl;
+              *out << "<td >" << endl;
+              *out << "Last frame latency (us)" << endl;
+              *out << "</td>" << endl;
+              *out << "<td align=right>" << endl;
+              *out << pos->lastLatency_ << endl;
+              *out << "</td>" << endl;
+            *out << "  </tr>" << endl;
             *out << "<tr>" << endl;
               *out << "<td >" << endl;
               *out << "Average event size (Bytes)" << endl;
@@ -1051,9 +1067,151 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "  </td>"                                                  << endl;
   *out << "</table>"                                                 << endl;
+  //---- separate page test
+  *out << "<hr/>"                                                 << endl;
+  std::string url = getApplicationDescriptor()->getContextDescriptor()->getURL();
+  std::string urn = getApplicationDescriptor()->getURN();
+  *out << "<a href=\"" << url << "/" << urn << "/fusenderlist" << "\">" 
+       << "FU Sender list web page" << "</a>" << endl;
+  *out << "<hr/>"                                                 << endl;
+  *out << "<a href=\"" << url << "/" << urn << "/geteventdata" << "\">" 
+       << "Get an event via a web page" << "</a>" << endl;
+  *out << "<hr/>"                                                 << endl;
+  *out << "<a href=\"" << url << "/" << urn << "/getregdata" << "\">" 
+       << "Get a header via a web page" << "</a>" << endl;
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
+}
+////////////////////////////// fusender web page ////////////////////////////
+void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  *out << "<html>"                                                   << endl;
+  *out << "<head>"                                                   << endl;
+  *out << "<link type=\"text/css\" rel=\"stylesheet\"";
+  *out << " href=\"/" <<  getApplicationDescriptor()->getURN()
+       << "/styles.css\"/>"                   << endl;
+  *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
+       << getApplicationDescriptor()->getInstance()
+       << "</title>"     << endl;
+    *out << "<table border=\"0\" width=\"100%\">"                      << endl;
+    *out << "<tr>"                                                     << endl;
+    *out << "  <td align=\"left\">"                                    << endl;
+    *out << "    <img"                                                 << endl;
+    *out << "     align=\"middle\""                                    << endl;
+    *out << "     src=\"/daq/evb/examples/fu/images/fu64x64.gif\""     << endl;
+    *out << "     alt=\"main\""                                        << endl;
+    *out << "     width=\"64\""                                        << endl;
+    *out << "     height=\"64\""                                       << endl;
+    *out << "     border=\"\"/>"                                       << endl;
+    *out << "    <b>"                                                  << endl;
+    *out << getApplicationDescriptor()->getClassName() << " instance "
+         << getApplicationDescriptor()->getInstance()                  << endl;
+    *out << "    </b>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "    <a href=\"/urn:xdaq-application:lid=3\">"             << endl;
+    *out << "      <img"                                               << endl;
+    *out << "       align=\"middle\""                                  << endl;
+    *out << "       src=\"/daq/xdaq/hyperdaq/images/HyperDAQ.jpg\""    << endl;
+    *out << "       alt=\"HyperDAQ\""                                  << endl;
+    *out << "       width=\"32\""                                      << endl;
+    *out << "       height=\"32\""                                      << endl;
+    *out << "       border=\"\"/>"                                     << endl;
+    *out << "    </a>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "    <a href=\"/" << getApplicationDescriptor()->getURN()
+         << "/debug\">"                   << endl;
+    *out << "      <img"                                               << endl;
+    *out << "       align=\"middle\""                                  << endl;
+    *out << "       src=\"/daq/evb/bu/images/debug32x32.gif\""         << endl;
+    *out << "       alt=\"debug\""                                     << endl;
+    *out << "       width=\"32\""                                      << endl;
+    *out << "       height=\"32\""                                     << endl;
+    *out << "       border=\"\"/>"                                     << endl;
+    *out << "    </a>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "</tr>"                                                    << endl;
+    *out << "</table>"                                                 << endl;
+
+  *out << "<hr/>"                                                    << endl;
+
+// now for FU sender list statistics
+  *out << "fu sender table"                                                  << endl;
+
+  *out << "</body>"                                                  << endl;
+  *out << "</html>"                                                  << endl;
+}
+////////////////////////////// get event data web page ////////////////////////////
+void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::ifstream infile("samplestreamer.dat");
+/* this sends an entire event
+  char buffer[1000000];
+  int i = 0;
+  while(!infile.eof())
+  {
+    buffer[i]=(char)infile.get();
+    i++;
+  }
+  cout << "file size = " << i-1 <<endl;
+*/
+
+  // this is horrible but lacking time....
+  char buffer[7000000];
+  int reglen = 0;
+  // just get rid of registry
+  infile.read((char*)&reglen,sizeof(int));
+  cout << "reg length = " << reglen << endl;
+  infile.read(&buffer[0],reglen);
+  reglen = reglen + 4;
+  // now the event data
+  int len = 0;
+  infile.read((char*)&len,sizeof(int));
+  cout << "event length = " << len << endl;
+  len = len + 4;
+  std::ifstream infile2("samplestreamer.dat");
+  infile2.read(&buffer[0],reglen);
+  for (int i=0; i<len ; i++) buffer[i]=(char)infile2.get();
+  cout << "file size = " << len <<endl;
+
+  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+  //out->write(buffer,i-1);
+  out->write(buffer,len);
+
+// How to block if there is no data
+// How to signal if end, and there will be no more data?
+
+}
+////////////////////////////// get header (registry) web page ////////////////////////////
+void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  // this is horrible but lacking time....
+  std::ifstream infile("sampleheader.dat");
+  char buffer[1000000];
+  int len = 0;
+  // just get registry
+  infile.read((char*)&len,sizeof(int));
+  cout << "reg length = " << len << endl;
+  //infile.read(&buffer[4],len);
+  len = len + 4;
+  std::ifstream infile2("sampleheader.dat");
+  for (int i=0; i<len ; i++) buffer[i]=(char)infile2.get();
+  cout << "file size = " << len <<endl;
+
+  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+  out->write(buffer,len);
+
+// How to block if there is no header data
+// How to signal if not yet started, so there is no registry yet?
 }
 
 } //stor namespace

@@ -97,6 +97,12 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
       {css_.css(in,out);}
+    void fusenderWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void eventdataWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void headerdataWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
   
     evf::EPStateMachine *fsm_;
     //edm::AssertHandler *ah_;
