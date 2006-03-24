@@ -1150,7 +1150,7 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  std::ifstream infile("samplestreamer.dat");
+  std::ifstream infile("samplestreamer.dat",ios_base::binary | ios_base::in);
 /* this sends an entire event
   char buffer[1000000];
   int i = 0;
@@ -1160,6 +1160,7 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
     i++;
   }
   cout << "file size = " << i-1 <<endl;
+  out->write(buffer,i-1);
 */
 
   // this is horrible but lacking time....
@@ -1167,22 +1168,14 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   int reglen = 0;
   // just get rid of registry
   infile.read((char*)&reglen,sizeof(int));
-  cout << "reg length = " << reglen << endl;
   infile.read(&buffer[0],reglen);
-  reglen = reglen + 4;
   // now the event data
   int len = 0;
   infile.read((char*)&len,sizeof(int));
-  cout << "event length = " << len << endl;
-  len = len + 4;
-  std::ifstream infile2("samplestreamer.dat");
-  infile2.read(&buffer[0],reglen);
-  for (int i=0; i<len ; i++) buffer[i]=(char)infile2.get();
-  cout << "file size = " << len <<endl;
+  for (int i=0; i<len ; i++) buffer[i]=(char)infile.get();
 
   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-  //out->write(buffer,i-1);
   out->write(buffer,len);
 
 // How to block if there is no data
@@ -1194,17 +1187,23 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   // this is horrible but lacking time....
-  std::ifstream infile("sampleheader.dat");
+  vector<char> regdata(1000*1000);
+
+  std::string filename="samplestreamer.dat";
+  std::ifstream ist(filename.c_str(),ios_base::binary | ios_base::in);
+
+  int len;
+  ist.read((char*)&len,sizeof(int));
+  regdata.resize(len);
+  ist.read(&regdata[0],len);
+
+  if(!ist)
+  throw cms::Exception("myReadHeader","headerdataWebPage")
+        << "Could not read the registry information from the test\n"
+        << "event stream file \n";
+
   char buffer[1000000];
-  int len = 0;
-  // just get registry
-  infile.read((char*)&len,sizeof(int));
-  cout << "reg length = " << len << endl;
-  //infile.read(&buffer[4],len);
-  len = len + 4;
-  std::ifstream infile2("sampleheader.dat");
-  for (int i=0; i<len ; i++) buffer[i]=(char)infile2.get();
-  cout << "file size = " << len <<endl;
+  for (int i=0; i<len; i++) buffer[i]=regdata[i];
 
   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
