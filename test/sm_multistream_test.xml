@@ -102,6 +102,7 @@
                        endpath e3 = { pre2, outC }
                      }
                     </STparameterSet>
+                    <oneinN xsi:type="xsd:integer">5</oneinN>
 </properties>
 
        </xc:Application>
