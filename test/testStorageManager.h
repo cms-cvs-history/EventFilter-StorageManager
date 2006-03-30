@@ -10,6 +10,7 @@
    Modification:
      version 1.1 2006/01/24
        Initial implementation. Needs changes for production version.
+       See cc file for updates.
 
 */
 
@@ -38,6 +39,7 @@
 
 #include "toolbox/mem/Reference.h"
 #include "xdata/UnsignedLong.h"
+#include "xdata/Integer.h"
 #include "xdata/Double.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 
@@ -46,7 +48,7 @@
 #include "xgi/include/xgi/exception/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
 
-#include "EventFilter/Utilities/interface/EPStateMachine.h"
+#include "EventFilter/StorageManager/interface/SMStateMachine.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -68,10 +70,6 @@ namespace stor {
     void configureAction(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
     void enableAction(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
     virtual void haltAction(toolbox::Event::Reference e) 
-      throw (toolbox::fsm::exception::Exception);
-    virtual void suspendAction(toolbox::Event::Reference e) 
-      throw (toolbox::fsm::exception::Exception);
-    virtual void resumeAction(toolbox::Event::Reference e) 
       throw (toolbox::fsm::exception::Exception);
     virtual void nullAction(toolbox::Event::Reference e) 
       throw (toolbox::fsm::exception::Exception);
@@ -104,12 +102,12 @@ namespace stor {
     void headerdataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
   
-    evf::EPStateMachine *fsm_;
-    //edm::AssertHandler *ah_;
+    stor::SMStateMachine *fsm_;
+    edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
     xdata::String offConfig_;
     xdata::String fuConfig_;
-    friend class evf::EPStateMachine;
+    friend class stor::SMStateMachine;
   
     boost::shared_ptr<stor::JobController> jc_;
   
@@ -118,6 +116,11 @@ namespace stor {
     unsigned long framecounter_;
     int pool_is_set_;
     toolbox::mem::Pool *pool_;
+
+    // added temporarily for Event Server
+    char serialized_prods_[1000*1000*2];
+    int  ser_prods_size_;
+    xdata::Integer oneinN_; //place one in eveny oneinN_ into buffer
 
     vector<SMFUSenderList> smfusenders_;
   
