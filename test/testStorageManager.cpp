@@ -30,6 +30,19 @@
        Put testStorageManager into stor:: namespace.
        Added registration and collection of data for FU senders,
        and code to display this info on the default web page.
+     version 1.9 2006/03/30
+       Using own SMStateMachine instead of the EPStateMachine from
+       the event filter processor. Added proof of principle
+       implementation of an Event Server. HTTP gets from a cmsRun
+       using the EventStreamHttpReader is reponded to by a binary
+       octet-stream containing the serialized event in a edm::EventMsg. 
+       The first valid product registry edm::InitMsg is saved so it can 
+       be sent when requested.
+          Events to consumers are sent from a ring buffer of size 10.
+       Only 1 in every N events are saved into the ring buffer. For 
+       this test implementation one cannot select on trigger bits. 
+       N is 10 by default but can be overridden by setting oneinN in
+       the testStorageManager section of the xdaq config xml file.
 
 */
 
@@ -174,12 +187,12 @@ SMFUSenderList::SMFUSenderList(const char* hltURL,
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
-  fsm_(0)//, ah_(0)
+  fsm_(0), ah_(0)
 {
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
-  //ah_ = new edm::AssertHandler();
-  fsm_ = new evf::EPStateMachine(getApplicationLogger());
+  ah_ = new edm::AssertHandler();
+  fsm_ = new stor::SMStateMachine(getApplicationLogger());
   fsm_->init<testStorageManager>(this);
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
   // default configuration
@@ -214,6 +227,12 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   pool_is_set_ = 0;
   pool_ = 0;
 
+  // added for Event Server
+  ser_prods_size_ = 0;
+  serialized_prods_[0] = '\0';
+  oneinN_ = 10;
+  ispace->fireItemAvailable("oneinN",&oneinN_);
+
  // for performance measurements
   samples_ = 100; // measurements every 25MB (about)
   databw_ = 0.;
@@ -234,7 +253,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
 testStorageManager::~testStorageManager()
 {
   delete fsm_;
-  //delete ah_;
+  delete ah_;
   delete pmeter_;
 }
 
@@ -263,6 +282,10 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   try {
     jc_.reset(new stor::JobController(sample_config,
                   my_config, &deleteSMBuffer));
+    // added for Event Server
+    int value_4oneinN(oneinN_);
+    if(value_4oneinN <= 0) value_4oneinN = -1;
+    jc_->set_oneinN(value_4oneinN);
   }
   catch(cms::Exception& e)
     {
@@ -303,21 +326,6 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
   jc_.reset();
 }
 
-void testStorageManager::suspendAction(toolbox::Event::Reference e) 
-  throw (toolbox::fsm::exception::Exception)
-{
-  // Get into suspend state: but not valid for Storage Manager?!
-  LOG4CPLUS_INFO(this->getApplicationLogger(),
-    "Suspend state not implemented in testStorageManager");
-}
-
-void testStorageManager::resumeAction(toolbox::Event::Reference e) 
-  throw (toolbox::fsm::exception::Exception)
-{
-  // Get into suspend state: but not valid for Storage Manager?!
-  LOG4CPLUS_INFO(this->getApplicationLogger(),
-    "Resume not implemented in testStorageManager");
-}
 
 void testStorageManager::nullAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
@@ -548,6 +556,15 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
   {
     FDEBUG(10) << "registerFUSender: Received registry is okay" << std::endl;
     smfusenders_.back().regCheckedOK_ = true;
+    // save the correct serialized product registry for Event Server
+    if(ser_prods_size_ == 0)
+    {
+      for(int i=0; i<(int)registrySize; i++)
+        serialized_prods_[i]=tempregdata[i];
+      ser_prods_size_ = registrySize;
+      FDEBUG(9) << "Saved serialized registry for Event Server, size " 
+                << ser_prods_size_ << std::endl;
+    }
   } else {
     std::cout << "registerFUSender: Error! Received registry is not a subset!"
               << std::endl;
@@ -860,6 +877,33 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << meandatalatency_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
+// Event Server Statistics
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "Event Server saving one in  " << oneinN_ << " events" << endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+// should first test if jc_ is valid
+      if(jc_.use_count() != 0) {
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Ring Buffer is empty?" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          if(jc_->isEmpty()) *out << "Y" << endl;
+          else *out << "N" << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Ring Buffer is full?" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          if(jc_->isFull()) *out << "Y" << endl;
+          else *out << "N" << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+      }
 
   *out << "</table>" << endl;
 
@@ -1074,11 +1118,13 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<a href=\"" << url << "/" << urn << "/fusenderlist" << "\">" 
        << "FU Sender list web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
+  /*
   *out << "<a href=\"" << url << "/" << urn << "/geteventdata" << "\">" 
        << "Get an event via a web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
   *out << "<a href=\"" << url << "/" << urn << "/getregdata" << "\">" 
        << "Get a header via a web page" << "</a>" << endl;
+  */
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
@@ -1150,33 +1196,31 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  std::ifstream infile("samplestreamer.dat",ios_base::binary | ios_base::in);
-/* this sends an entire event
-  char buffer[1000000];
-  int i = 0;
-  while(!infile.eof())
-  {
-    buffer[i]=(char)infile.get();
-    i++;
-  }
-  cout << "file size = " << i-1 <<endl;
-  out->write(buffer,i-1);
-*/
-
-  // this is horrible but lacking time....
   char buffer[7000000];
-  int reglen = 0;
-  // just get rid of registry
-  infile.read((char*)&reglen,sizeof(int));
-  infile.read(&buffer[0],reglen);
-  // now the event data
-  int len = 0;
-  infile.read((char*)&len,sizeof(int));
-  for (int i=0; i<len ; i++) buffer[i]=(char)infile.get();
+  if(jc_->isEmpty())
+  {// do what? For now return a zero length stream. Should return MsgCode NODATA
+    int len = 0;
+    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+    out->write(buffer,len);
+  }
+  else
+  {
+    edm::EventMsg msg = jc_->pop_front();
+    edm::EventMsg em(&buffer[0],msg.totalSize(),
+                     msg.getEventNumber(),msg.getRunNumber(),
+                     1,1);
+    char* pos = (char*)em.data();
+    int dsize = msg.getDataSize();
+    char* from=(char*)msg.data();
+    copy(from,from+dsize,pos);
+    int len = msg.totalSize();
+    FDEBUG(10) << "sending event " << msg.getEventNumber() << std::endl;
 
-  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-  out->write(buffer,len);
+    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+    out->write(buffer,len);
+  }
 
 // How to block if there is no data
 // How to signal if end, and there will be no more data?
@@ -1186,28 +1230,24 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  // this is horrible but lacking time....
-  vector<char> regdata(1000*1000);
+  // Need to use the saved serialzied registry
+  // should really serialize the one in jc_ JobController instance
+  if(ser_prods_size_ == 0)
+  { // not available yet - return zero length stream, should return MsgCode NOTREADY
+    int len = 0;
+    char buffer[2000000];
+    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+    out->write(buffer,len);
+  } else {
+    int len = ser_prods_size_;
+    char buffer[2000000];
+    for (int i=0; i<len; i++) buffer[i]=serialized_prods_[i];
 
-  std::string filename="samplestreamer.dat";
-  std::ifstream ist(filename.c_str(),ios_base::binary | ios_base::in);
-
-  int len;
-  ist.read((char*)&len,sizeof(int));
-  regdata.resize(len);
-  ist.read(&regdata[0],len);
-
-  if(!ist)
-  throw cms::Exception("myReadHeader","headerdataWebPage")
-        << "Could not read the registry information from the test\n"
-        << "event stream file \n";
-
-  char buffer[1000000];
-  for (int i=0; i<len; i++) buffer[i]=regdata[i];
-
-  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-  out->write(buffer,len);
+    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+    out->write(buffer,len);
+  }
 
 // How to block if there is no header data
 // How to signal if not yet started, so there is no registry yet?
