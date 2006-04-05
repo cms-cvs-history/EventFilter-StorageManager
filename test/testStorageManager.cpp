@@ -323,6 +323,11 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
   jc_->stop();
   jc_->join();
   // we must destroy the eventprocessor to finish processing
+
+  // make sure serialized product registry is cleared also
+  ser_prods_size_ = 0;
+
+  boost::mutex::scoped_lock sl(halt_lock_);
   jc_.reset();
 }
 
@@ -884,25 +889,28 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
 // should first test if jc_ is valid
-      if(jc_.use_count() != 0) {
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Ring Buffer is empty?" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          if(jc_->isEmpty()) *out << "Y" << endl;
-          else *out << "N" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Ring Buffer is full?" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          if(jc_->isFull()) *out << "Y" << endl;
-          else *out << "N" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
+      if(ser_prods_size_ != 0) {
+        boost::mutex::scoped_lock sl(halt_lock_);
+        if(jc_.use_count() != 0) {
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Ring Buffer is empty?" << endl;
+            *out << "</td>" << endl;
+            *out << "<td>" << endl;
+            if(jc_->isEmpty()) *out << "Y" << endl;
+            else *out << "N" << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Ring Buffer is full?" << endl;
+            *out << "</td>" << endl;
+            *out << "<td>" << endl;
+            if(jc_->isFull()) *out << "Y" << endl;
+            else *out << "N" << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+        }
       }
 
   *out << "</table>" << endl;
@@ -1196,30 +1204,54 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  char buffer[7000000];
-  if(jc_->isEmpty())
-  {// do what? For now return a zero length stream. Should return MsgCode NODATA
-    int len = 0;
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(buffer,len);
-  }
+  //char buffer[7000000]; // change me to a data member!!!!!
+  int len=0;
+  bool empty = true;
+
+  // should first test if storageManager is in halted state
+
+  if(ser_prods_size_ != 0) 
+  {
+    {
+      boost::mutex::scoped_lock sl(halt_lock_);
+      empty = jc_->isEmpty();
+    }
+
+    if(empty)
+    {// do what? For now return a zero length stream. Should return MsgCode NODATA
+      //len = 0;
+      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+      out->write(mybuffer_,len);
+    }
+    else
+    {
+      {
+        boost::mutex::scoped_lock sl(halt_lock_);
+        edm::EventMsg msg = jc_->pop_front();
+        edm::EventMsg em(&mybuffer_[0],msg.totalSize(),
+                         msg.getEventNumber(),msg.getRunNumber(),
+                         1,1);
+        char* pos = (char*)em.data();
+        int dsize = msg.getDataSize();
+        char* from=(char*)msg.data();
+        copy(from,from+dsize,pos);
+        len = msg.totalSize();
+        FDEBUG(10) << "sending event " << msg.getEventNumber() << std::endl;
+      }
+
+      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+      out->write(mybuffer_,len);
+    }
+  } // else send end of run as reponse
   else
   {
-    edm::EventMsg msg = jc_->pop_front();
-    edm::EventMsg em(&buffer[0],msg.totalSize(),
-                     msg.getEventNumber(),msg.getRunNumber(),
-                     1,1);
-    char* pos = (char*)em.data();
-    int dsize = msg.getDataSize();
-    char* from=(char*)msg.data();
-    copy(from,from+dsize,pos);
-    int len = msg.totalSize();
-    FDEBUG(10) << "sending event " << msg.getEventNumber() << std::endl;
-
+    edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
+    len = msg.totalSize();
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(buffer,len);
+    out->write(mybuffer_,len);
   }
 
 // How to block if there is no data
@@ -1235,18 +1267,18 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   if(ser_prods_size_ == 0)
   { // not available yet - return zero length stream, should return MsgCode NOTREADY
     int len = 0;
-    char buffer[2000000];
+    //char buffer[2000000];
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(buffer,len);
+    out->write(mybuffer_,len);
   } else {
     int len = ser_prods_size_;
-    char buffer[2000000];
-    for (int i=0; i<len; i++) buffer[i]=serialized_prods_[i];
+    //char buffer[2000000];
+    for (int i=0; i<len; i++) mybuffer_[i]=serialized_prods_[i];
 
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(buffer,len);
+    out->write(mybuffer_,len);
   }
 
 // How to block if there is no header data

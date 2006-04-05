@@ -51,6 +51,7 @@
 #include "EventFilter/StorageManager/interface/SMStateMachine.h"
 
 #include "boost/shared_ptr.hpp"
+#include "boost/thread/thread.hpp"
 
 using namespace std;
 
@@ -121,6 +122,7 @@ namespace stor {
     char serialized_prods_[1000*1000*2];
     int  ser_prods_size_;
     xdata::Integer oneinN_; //place one in eveny oneinN_ into buffer
+    char mybuffer_[7000000]; //temporary buffer instead of using stack
 
     vector<SMFUSenderList> smfusenders_;
   
@@ -139,6 +141,7 @@ namespace stor {
     xdata::Double meandatalatency_; // micro-seconds/frame
     xdata::Double maxdatabw_;       // maximum bandwidth in MB/s
     xdata::Double mindatabw_;       // minimum bandwidth in MB/s
+    boost::mutex halt_lock_;
   }; // end of class
 } // end of namespace stor
 #endif
