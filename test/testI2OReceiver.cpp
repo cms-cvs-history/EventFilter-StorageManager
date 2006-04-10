@@ -35,7 +35,7 @@
 #include "FWCore/Utilities/interface/ProblemTracker.h" 
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "IOPool/StreamerData/interface/Messages.h"
+#include "IOPool/Streamer/interface/Messages.h"
 
 #include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
 

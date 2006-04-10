@@ -20,7 +20,7 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "IOPool/StreamerData/interface/Messages.h"
+#include "IOPool/Streamer/interface/Messages.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
