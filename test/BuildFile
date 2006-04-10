@@ -8,8 +8,8 @@
 #  <library file="HLTInfo.cc" name=FWCoreHLTHLTInfo>
 #   <flags SEAL_PLUGIN_NAME="FWCoreHLTHLTInfo">
 #   <use name=FWCore/Framework>
+#   <use name=DataFormats/Streamer>
 #   <use name=IOPool/Streamer>
-#   <use name=IOPool/StreamerData>
 #  </library>
 
   <bin file=StorageManagerRun.cpp>
@@ -18,8 +18,8 @@
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=EventFilter/StorageManager>
+   <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
-   <use name=IOPool/StreamerData>
   </bin>
 
   <library file="SillyLockService.cc" name=SillyLockService>
@@ -34,8 +34,8 @@
  <use name=FWCore/MessageService>
  <use name=FWCore/Framework>
  <use name=EventFilter/StorageManager>
+ <use name=DataFormats/Streamer>
  <use name=IOPool/Streamer>
- <use name=IOPool/StreamerData>
 </bin>
 
   <bin file=RunCollector_t.cpp>
@@ -43,8 +43,8 @@
    <use name=FWCore/MessageLogger>
    <use name=FWCore/Framework>
    <use name=EventFilter/StorageManager>
+   <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
-   <use name=IOPool/StreamerData>
   </bin>
 
   <library file="testStorageManager.cpp" name=EventFilterStorageManagertestStorageManager>
@@ -71,8 +71,8 @@
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=DataFormats/Common>
+   <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
-   <use name=IOPool/StreamerData>
    <use name=EventFilter/StorageManager>
    <use name=EventFilter/Utilities>
   </library>
@@ -100,8 +100,8 @@
    <use name=boost>
    <use name=FWCore/Framework>
    <use name=DataFormats/Common>
+   <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
-   <use name=IOPool/StreamerData>
    <use name=EventFilter/StorageManager>
   </library>
 
