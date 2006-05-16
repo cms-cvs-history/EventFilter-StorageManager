@@ -397,8 +397,9 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testStorageManager: registry size " << msg->dataSize << "\n";
   // can get rid of this if not dumping the data for checking
-  std::string temp4print(msg->data,msg->dataSize);
-  FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
+  std::string temp4print(msg->dataPtr(),msg->dataSize);
+  //std::string temp4print(msg->data,msg->dataSize);
+  //FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
   // should be checking the registry with the one being used
   // release the frame buffer now that we are finished
   ref->release();
@@ -412,7 +413,7 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   // register this FU sender into the list to keep its status
   registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
                  msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                 msg->dataSize, &msg->data[0]);
+                 msg->dataSize, msg->dataPtr());
 }
 
 void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
@@ -472,11 +473,14 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
-         new (b.buffer()) stor::FragEntry(thisref, thismsg->data, thislen);
+         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen);
          b.commit(sizeof(stor::FragEntry));
          framecounter_++;
          // for bandwidth performance measurements
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+         // Following is wrong for the last frame because frame sent is
+         // is actually larger than the size taken by actual data
+         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
+                                         +thislen;
          addMeasurement(actualFrameSize);
          // for FU sender list update
          // msg->frameCount start from 0, but in EventMsg header it starts from 1!
@@ -497,12 +501,15 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   {
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, msg->data, len);
+    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     framecounter_++;
     // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+    // Following is wrong for the last frame because frame sent is
+    // is actually larger than the size taken by actual data
+    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
+                                    + len;
     addMeasurement(actualFrameSize);
     // for FU sender list update
     // msg->frameCount start from 0, but in EventMsg header it starts from 1!
