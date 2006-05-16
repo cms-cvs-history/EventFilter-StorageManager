@@ -32,7 +32,10 @@
                          module a1 = StreamThingAnalyzer { string product_to_get="m1" }
                          module out2 = I2OTestConsumer {
                            int32 max_event_size = 2000000 int32 max_queue_depth = 5 
-                           PSet consumer_config = { string DestinationName = "testStorageManager" } }
+                           PSet consumer_config = { 
+                             untracked int32 i2o_max_size = 262140
+                             string DestinationName = "testStorageManager" } 
+                         }
                        }
                     </parameterSet>
                   </properties>
@@ -47,9 +50,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscms/prod/sw/cms/external/xdaq/XDAQ_3_4/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
-       <xc:Module>/cmsonline/home/cheung/cms/CMSSW_0_5_0_pre3/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/cmsonline/home/cheung/cms/CMSSW_0_5_0_pre3/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/external/xdaq/XDAQ_3_4/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
+       <xc:Module>/cmsonline/home/cheung/cms/CMSSW_0_6_0/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/cmsonline/home/cheung/cms/CMSSW_0_6_0/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
     <!-- Declare a context that contain applcation -->
@@ -63,14 +66,17 @@
                     <FUparameterSet xsi:type="xsd:string">
                        process TEST1 = {
                          path p = { m1, a1 }
-                         source = EmptySource {untracked int32 maxEvents = 20}
+                         source = EmptySource {untracked int32 maxEvents = 50}
                          module m1 = StreamThingProducer {
                            int32 array_size = 20000
                            int32 instance_count=11}
                          module a1 = StreamThingAnalyzer { string product_to_get="m1" }
                          module out2 = I2OTestConsumer {
                            int32 max_event_size = 2000000 int32 max_queue_depth = 5
-                           PSet consumer_config = { string DestinationName = "testStorageManager" } }
+                           PSet consumer_config = { 
+                             untracked int32 i2o_max_size = 262140
+                             string DestinationName = "testStorageManager" } 
+                         }
                        }
                     </FUparameterSet>
                     <STparameterSet xsi:type="xsd:string">
@@ -103,6 +109,7 @@
                      }
                     </STparameterSet>
                     <oneinN xsi:type="xsd:integer">5</oneinN>
+                    <runNumber xsi:type="xsd:unsignedLong">1</runNumber>
 </properties>
 
        </xc:Application>
@@ -113,8 +120,8 @@
            </properties>
        </xc:Application>
 
-       <xc:Module>/uscms/prod/sw/cms/external/xdaq/XDAQ_3_4/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
-       <xc:Module>/cmsonline/home/cheung/cms/CMSSW_0_5_0_pre3/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/external/xdaq/XDAQ_3_4/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
+       <xc:Module>/cmsonline/home/cheung/cms/CMSSW_0_6_0/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
        </xc:Context>
 
 </xc:Partition>
