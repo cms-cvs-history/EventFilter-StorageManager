@@ -144,6 +144,8 @@ struct SMFUSenderList  // used to store list of FU senders
   unsigned long totalBadEvents_;   // Update meaning: include original size check?
   toolbox::Chrono chrono_;         // Keep latency for connection check
 };
+}
+using namespace stor;
 
 SMFUSenderList::SMFUSenderList(const char* hltURL,
                  const char* hltClassName,
@@ -198,6 +200,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   // default configuration
   ispace->fireItemAvailable("STparameterSet",&offConfig_);
   ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
+  ispace->fireItemAvailable("runNumber",&runNumber_);
   ispace->fireItemAvailable("stateName",&fsm_->stateName_);
 
   // Bind specific messages to functions
@@ -248,6 +251,13 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   maxdatabw_ = 0.;
   mindatabw_ = 999999.;
 
+  string xmlClass_ = getApplicationDescriptor()->getClassName();
+  unsigned long instance_ = getApplicationDescriptor()->getInstance();
+  ostringstream sourcename;
+  sourcename << xmlClass_ << "_" << instance_;
+  sourceId_ = sourcename.str();
+
+
 }
 
 testStorageManager::~testStorageManager()
@@ -257,6 +267,7 @@ testStorageManager::~testStorageManager()
   delete pmeter_;
 }
 
+#include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 void testStorageManager::configureAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
@@ -273,9 +284,10 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   // string my_config_file("SMConfig.cfg");
   // for the real thing, give the JobController a configuration string and
   // save the registry data for checking with the one coming over the network
-
-  string sample_config(fuConfig_.value_);
-  string my_config(offConfig_.value_);
+  evf::ParameterSetRetriever fupset(fuConfig_.value_);
+  evf::ParameterSetRetriever smpset(offConfig_.value_);
+  string sample_config = fupset.getAsString();
+  string my_config = smpset.getAsString();
 
   // the rethrows below need to be XDAQ exception types (JBK)
 
@@ -618,6 +630,13 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
          }
          // could test isLocal here
       }
+      // check if run number is same which came with configuration, complain otherwise !!!
+      if(runNumber != runNumber_)
+	{
+	  LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << runNumber
+			  << " From " << hltURL 
+			  << " Different from Run Number from configuration = " << runNumber_);
+	}
       foundPos->framesReceived_++;
       foundPos->lastRunID_ = runNumber;
       foundPos->chrono_.stop(0);
@@ -1285,7 +1304,7 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 // How to signal if not yet started, so there is no registry yet?
 }
 
-} //stor namespace
+
 
 
 /**

@@ -48,6 +48,7 @@
 #include "xgi/include/xgi/exception/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
 
+#include "EventFilter/Utilities/interface/RunBase.h"
 #include "EventFilter/StorageManager/interface/SMStateMachine.h"
 
 #include "boost/shared_ptr.hpp"
@@ -59,7 +60,7 @@ namespace stor {
 
   struct SMFUSenderList;
 
-  class testStorageManager: public xdaq::Application
+  class testStorageManager: public xdaq::Application, public evf::RunBase
   {
    public:
     //XDAQ_INSTANTIATOR();
