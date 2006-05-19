@@ -118,6 +118,7 @@ struct SMFUSenderList  // used to store list of FU senders
                  const unsigned long hltLocalId,
                  const unsigned long hltInstance,
                  const unsigned long hltTid,
+                 const unsigned int numFramesToAllocate,
                  const unsigned long registrySize,
                  const char* registryData);
 
@@ -127,7 +128,11 @@ struct SMFUSenderList  // used to store list of FU senders
   unsigned long hltInstance_;
   unsigned long hltTid_;
   unsigned long registrySize_;
-  char          registryData_[MAX_I2O_REGISTRY_DATASIZE];
+  bool          regAllReceived_;  // All Registry fragments are received or not
+  unsigned int  totFrames_;    // number of frames in this fragment
+  unsigned int  currFrames_;   // current frames received
+  vector<toolbox::mem::Reference*> frameRefs_; // vector of frame reference pointers
+  char          registryData_[2*1000*1000]; // size should be a parameter and have tests!
   bool          regCheckedOK_;    // Registry checked to be same as configuration
   unsigned int  connectStatus_;   // FU+HLT connection status
   double        lastLatency_;     // Latency of last frame in microseconds
@@ -143,6 +148,11 @@ struct SMFUSenderList  // used to store list of FU senders
   unsigned long totalSizeReceived_;// For data only
   unsigned long totalBadEvents_;   // Update meaning: include original size check?
   toolbox::Chrono chrono_;         // Keep latency for connection check
+
+  //public:
+  bool sameURL(const char* hltURL);
+  bool sameClassName(const char* hltClassName);
+
 };
 }
 using namespace stor;
@@ -152,14 +162,17 @@ SMFUSenderList::SMFUSenderList(const char* hltURL,
                  const unsigned long hltLocalId,
                  const unsigned long hltInstance,
                  const unsigned long hltTid,
+                 const unsigned int numFramesToAllocate,
                  const unsigned long registrySize,
                  const char* registryData):
   hltLocalId_(hltLocalId), hltInstance_(hltInstance), hltTid_(hltTid),
-  registrySize_(registrySize)
+  registrySize_(registrySize), regAllReceived_(false),
+  totFrames_(numFramesToAllocate), currFrames_(0), frameRefs_(totFrames_, 0)
 {
   copy(hltURL, hltURL+MAX_I2O_SM_URLCHARS, hltURL_);
   copy(hltClassName, hltClassName+MAX_I2O_SM_URLCHARS, hltClassName_);
-  copy(registryData, registryData+MAX_I2O_REGISTRY_DATASIZE, registryData_);
+  // don't copy in constructor now we can have fragments
+  //copy(registryData, registryData+registrySize, registryData_);
   regCheckedOK_ = false;
   /*
      Connect status
@@ -185,6 +198,50 @@ SMFUSenderList::SMFUSenderList(const char* hltURL,
   FDEBUG(10) << "testStorageManager: Making a SMFUSenderList struct for "
             << hltURL_ << " class " << hltClassName_  << " instance "
             << hltInstance_ << " Tid " << hltTid_ << std::endl;
+}
+
+bool SMFUSenderList::sameURL(const char* hltURL)
+{
+  // should really only compare the actual length!
+  FDEBUG(9) << "sameURL: testing url " << std::endl;
+  //for (int i=0; i< MAX_I2O_SM_URLCHARS; i++) {
+  //  if(hltURL_[i] != hltURL[i]) {
+  //    FDEBUG(9) << "sameURL: failed char test at " << i << std::endl;
+  //    return false;
+  //  }
+  //}
+  int i = 0;
+  while (hltURL[i] != '\0') {
+    if(hltURL_[i] != hltURL[i]) {
+      FDEBUG(9) << "sameURL: failed char test at " << i << std::endl;
+      return false;
+    }
+    i = i + 1;
+  }
+  FDEBUG(9) << "sameURL: same url " << std::endl;
+  return true;
+}
+
+bool SMFUSenderList::sameClassName(const char* hltClassName)
+{
+  // should really only compare the actual length!
+  FDEBUG(9) << "sameClassName: testing classname " << std::endl;
+  //for (int i=0; i< MAX_I2O_SM_URLCHARS; i++) {
+  //  if(hltClassName_[i] != hltClassName[i]) {
+  //    FDEBUG(9) << "sameClassName: failed char test at " << i << std::endl;
+  //    return false;
+  //  }
+  //}
+  int i = 0;
+  while (hltClassName[i] != '\0') {
+    if(hltClassName_[i] != hltClassName[i]) {
+      FDEBUG(9) << "sameClassName: failed char test at " << i << std::endl;
+      return false;
+    }
+    i = i + 1;
+  }
+  FDEBUG(9) << "sameClassName: same classname " << std::endl;
+  return true;
 }
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
@@ -397,23 +454,23 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testStorageManager: registry size " << msg->dataSize << "\n";
   // can get rid of this if not dumping the data for checking
-  std::string temp4print(msg->dataPtr(),msg->dataSize);
-  //std::string temp4print(msg->data,msg->dataSize);
+  //std::string temp4print(msg->dataPtr(),msg->dataSize);
   //FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
-  // should be checking the registry with the one being used
-  // release the frame buffer now that we are finished
-  ref->release();
   
   framecounter_++;
 
   // for bandwidth performance measurements
-  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
+  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
+                                  + msg->dataSize;
   addMeasurement(actualFrameSize);
 
   // register this FU sender into the list to keep its status
   registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
                  msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                 msg->dataSize, msg->dataPtr());
+                 msg->frameCount, msg->numFrames,
+                 msg->originalSize, msg->dataPtr(), ref);
+  // should not release until after registerFUSender finds all fragments
+  //ref->release();
 }
 
 void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
@@ -554,45 +611,298 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
 void stor::testStorageManager::registerFUSender(const char* hltURL,
   const char* hltClassName, const unsigned long hltLocalId,
   const unsigned long hltInstance, const unsigned long hltTid,
-  const unsigned long registrySize, const char* registryData)
-{
+  const unsigned long frameCount, const unsigned long numFrames,
+  const unsigned long registrySize, const char* registryData,
+  toolbox::mem::Reference *ref)
+{  
+  // no longer need to pass the registry pointer - can take it out
   // register FU sender into the list to keep its status
-  // first check if FU is already in the list
-
-  // register this FU sender
-  SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
-                 hltLocalId, hltInstance, hltTid,
-                 registrySize, registryData);
-  smfusenders_.push_back(*fusender);
-  smfusenders_.back().chrono_.start(0);
-  // check the registry from this FU against the configuration one
-  bool setcode = false;
-  // need to make a copy in a non-const array
-  char tempregdata[MAX_I2O_REGISTRY_DATASIZE];
-  copy(registryData, registryData+MAX_I2O_REGISTRY_DATASIZE, tempregdata);
-  //edm::InitMsg msg(&registryData[0],registrySize,setcode);
-  edm::InitMsg msg(&tempregdata[0],registrySize,setcode);
-  // use available methods to check registry is a subset
-  edm::JobHeaderDecoder decoder;
-  std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(msg);
-  //if(edm::registryIsSubset(*header, jc_->products()))
-  if(edm::registryIsSubset(*header, jc_->smproducts()))
+  // first check if this FU is already in the list
+  if(smfusenders_.size() > 0)
   {
-    FDEBUG(10) << "registerFUSender: Received registry is okay" << std::endl;
-    smfusenders_.back().regCheckedOK_ = true;
-    // save the correct serialized product registry for Event Server
-    if(ser_prods_size_ == 0)
+    // see if this FUsender already has some registry fragments
+    // should also test if its complete!! (Would mean a reconnect)
+    FDEBUG(9) << "registerFUSender: checking if this FU Sender already registered"
+               << std::endl;
+    int FUFound = 0;
+    vector<SMFUSenderList>::iterator foundPos;
+    for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin(); 
+        pos != smfusenders_.end(); ++pos)
     {
-      for(int i=0; i<(int)registrySize; i++)
-        serialized_prods_[i]=tempregdata[i];
-      ser_prods_size_ = registrySize;
-      FDEBUG(9) << "Saved serialized registry for Event Server, size " 
-                << ser_prods_size_ << std::endl;
+       FDEBUG(9) << "registerFUSender: testing if same FU sender" << std::endl;
+      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+         pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
+         pos->sameClassName(hltClassName))
+      { // should check there are no entries with duplicate HLT ids
+        FUFound = 1;
+        foundPos = pos;
+      }
     }
+    if(FUFound == 0)
+    {
+      FDEBUG(9) << "registerFUSender: found a different FU Sender with frame " 
+                << frameCount << " for URL "
+                << hltURL << " and Tid " << hltTid << std::endl;
+      // register this FU sender
+      SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
+                     hltLocalId, hltInstance, hltTid, numFrames,
+                     registrySize, registryData);
+      smfusenders_.push_back(*fusender);
+      smfusenders_.back().chrono_.start(0);
+      smfusenders_.back().totFrames_ = numFrames;
+      smfusenders_.back().currFrames_ = 1; // should use actual frame if out of order
+                                           // but currFrames_ is also the count!
+      //smfusenders_.back().currFrames_ = frameCount;
+      smfusenders_.back().frameRefs_[frameCount] = ref;
+      // now should check if frame is complete and deal with it
+      vector<SMFUSenderList>::iterator testPos = --smfusenders_.end();
+      testCompleteFUReg(testPos);
+    } else {
+      FDEBUG(10) << "registerFUSender: found another frame " << frameCount << " for URL "
+                 << hltURL << " and Tid " << hltTid << std::endl;
+      // should really check this is not a duplicate frame
+      // should check if already all frames were received (indicates reconnect maybe)
+      // should test total frames is the same, and other tests are possible
+      foundPos->currFrames_++;
+      foundPos->frameRefs_[frameCount] = ref;
+      // now should check if frame is complete and deal with it
+      testCompleteFUReg(foundPos);
+    }
+  } else { // no FU sender has ever been registered yet
+    // register this FU sender
+    SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
+                   hltLocalId, hltInstance, hltTid, numFrames,
+                   registrySize, registryData);
+    smfusenders_.push_back(*fusender);
+    smfusenders_.back().chrono_.start(0);
+    smfusenders_.back().totFrames_ = numFrames;
+    smfusenders_.back().currFrames_ = 1;
+    smfusenders_.back().frameRefs_[frameCount] = ref;
+    // now should check if frame is complete and deal with it
+    vector<SMFUSenderList>::iterator testPos = --smfusenders_.end();
+    testCompleteFUReg(testPos);
+  }
+}
+
+void stor::testStorageManager::testCompleteFUReg(vector<SMFUSenderList>::iterator pos)
+{
+  //  Check that a given FU Sender has sent all frames for a registry
+  //  If so store the serialized registry and check it
+  //  Does not handle yet when a second registry is sent 
+  //  from the same FUSender (e.g. reconnects)
+  //
+  if(pos->totFrames_ == 1)
+  {
+    // chain is complete as there is only one frame
+    toolbox::mem::Reference *head = 0;
+    head = pos->frameRefs_[0];
+    FDEBUG(10) << "testCompleteFUReg: No chain as only one frame" << std::endl;
+    // copy the whole registry for each FU sender and
+    // test the registry against the one being used in Storage Manager
+    pos->regAllReceived_ = true;
+    copyAndTestRegistry(pos, head);
+    // free the complete chain buffer by freeing the head
+    head->release();
+  }
+  else
+  {
+    if(pos->currFrames_ == pos->totFrames_)
+    {
+      FDEBUG(10) << "testCompleteFUReg: Received fragment completes a chain that has " 
+                 << pos->totFrames_
+                 << " frames " << std::endl;
+      pos->regAllReceived_ = true;
+      toolbox::mem::Reference *head = 0;
+      toolbox::mem::Reference *tail = 0;
+      if(pos->totFrames_ > 1)
+      {
+        FDEBUG(10) << "testCompleteFUReg: Remaking the chain" << std::endl;
+        for(int i=0; i < (int)(pos->totFrames_)-1 ; i++)
+        {
+          FDEBUG(10) << "testCompleteFUReg: setting next reference for frame " << i << std::endl;
+          head = pos->frameRefs_[i];
+          tail = pos->frameRefs_[i+1];
+          head->setNextReference(tail);
+        }
+      }
+      head = pos->frameRefs_[0];
+      FDEBUG(10) << "testCompleteFUReg: Original chain remade" << std::endl;
+      // Deal with the chain
+      copyAndTestRegistry(pos, head);
+      // free the complete chain buffer by freeing the head
+      head->release();
+    } else {
+    // If running with local transfers, a chain of I2O frames when posted only has the
+    // head frame sent. So a single frame can complete a chain for local transfers.
+    // We need to test for this. Must be head frame and next pointer must exist.
+      if(pos->currFrames_ == 1) // first is always the head??
+      {
+        toolbox::mem::Reference *head = 0;
+        toolbox::mem::Reference *next = 0;
+        // can crash here is first received frame is not first frame!
+        head = pos->frameRefs_[0];
+        // best to check the complete chain just in case!
+        unsigned int tested_frames = 1;
+        next = head;
+        while((next=next->getNextReference())!=0) tested_frames++;
+        FDEBUG(10) << "testCompleteFUReg: Head frame has " << tested_frames-1
+                   << " linked frames out of " << pos->totFrames_-1 << std::endl;
+        if(pos->totFrames_ == tested_frames)
+        {
+          // found a complete linked chain from the leading frame
+          FDEBUG(10) << "testI2OReceiver: Leading frame contains a complete linked chain"
+                     << " - must be local transfer" << std::endl;
+          pos->regAllReceived_ = true;
+          // Deal with the chain
+          copyAndTestRegistry(pos, head);
+          // free the complete chain buffer by freeing the head
+          head->release();
+        }
+      }
+    }
+  }
+}
+
+void stor::testStorageManager::copyAndTestRegistry(vector<SMFUSenderList>::iterator pos,
+  toolbox::mem::Reference *head)
+{
+  // Copy the registry fragments into the one place for saving
+  //
+  FDEBUG(9) << "copyAndTestRegistry: Saving and checking the registry" << std::endl;
+  I2O_MESSAGE_FRAME         *stdMsg =
+    (I2O_MESSAGE_FRAME*)head->getDataLocation();
+  I2O_SM_PREAMBLE_MESSAGE_FRAME *msg    =
+    (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsg;
+  // get total size and check with original size
+  int origsize = msg->originalSize;
+  int totalsize2check = 0;
+  // should check the size is correct before defining and filling array!!
+  char* tempbuffer = new char[origsize];
+
+  if(msg->numFrames > 1)
+  {
+    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
+               << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
+    int sz = msg->dataSize;
+    totalsize2check = totalsize2check + sz;
+    if(totalsize2check > origsize) {
+      std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
+             << " is larger than original size " << origsize 
+             << " abort copy and test" << std::endl;
+      pos->regCheckedOK_ = false;
+      pos->registrySize_ = 0;
+      delete [] tempbuffer;
+      return;
+    }
+    for(int j=0; j < sz; j++)
+      tempbuffer[j] = msg->dataPtr()[j];
+    // do not need to remake the Header for the leading frame/fragment
+    // as InitMsg does not contain fragment count and total size
+    int next_index = sz;
+    toolbox::mem::Reference *curr = 0;
+    toolbox::mem::Reference *prev = head;
+    for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
+    {
+      FDEBUG(9) << "copyAndTestRegistry: getting data for frame " << i+1 << std::endl;
+      curr = prev->getNextReference(); // should test if this exists!
+
+      I2O_MESSAGE_FRAME         *stdMsgcurr =
+        (I2O_MESSAGE_FRAME*)curr->getDataLocation();
+      I2O_SM_PREAMBLE_MESSAGE_FRAME *msgcurr    =
+        (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsgcurr;
+
+      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msgcurr->dataSize << std::endl;
+      int sz = msgcurr->dataSize;
+      totalsize2check = totalsize2check + sz;
+      if(totalsize2check > origsize) {
+        std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
+               << " is larger than original size " << origsize 
+               << " abort copy and test" << std::endl;
+        pos->regCheckedOK_ = false;
+        pos->registrySize_ = 0;
+        delete [] tempbuffer;
+        return;
+      }
+      for(int j=0; j < sz; j++)
+        tempbuffer[next_index+j] = msgcurr->dataPtr()[j];
+      next_index = next_index + sz;
+      prev = curr;
+    }
+    if(totalsize2check != origsize) {
+       std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
+                 << " not equal to original size " << origsize << std::endl;
+    }
+    // tempbuffer is filled with whole chain data
+    pos->registrySize_ = origsize; // should already be done
+    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
   } else {
-    std::cout << "registerFUSender: Error! Received registry is not a subset!"
+    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
+               << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
+    int sz = msg->dataSize;
+    for(int j=0; j < sz; j++)
+      tempbuffer[j] = msg->dataPtr()[j];
+    // tempbuffer is filled with all data
+    pos->registrySize_ = origsize; // should already be done
+    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
+  }
+  // now test this registry against the SM config one
+  try
+  { // to test registry can seg fault if registry is bad!
+    // check the registry from this FU against the configuration one
+    // need to make a copy in a non-const array
+    bool setcode = false;
+    //char* tempregdata = new char[registrySize];
+    //copy(registryData, registryData+registrySize, tempregdata);
+    //edm::InitMsg msg(&tempregdata[0],registrySize,setcode);
+    edm::InitMsg testmsg(&tempbuffer[0],origsize,setcode);
+    // use available methods to check registry is a subset
+    edm::JobHeaderDecoder decoder;
+    std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(testmsg);
+    //if(edm::registryIsSubset(*header, jc_->products()))
+    if(edm::registryIsSubset(*header, jc_->smproducts()))
+    {
+      FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
+      pos->regCheckedOK_ = true;
+      // save the correct serialized product registry for Event Server
+      if(ser_prods_size_ == 0)
+      {
+        for(int i=0; i<(int)origsize; i++)
+          serialized_prods_[i]=tempbuffer[i];
+        ser_prods_size_ = origsize;
+        FDEBUG(9) << "Saved serialized registry for Event Server, size " 
+                  << ser_prods_size_ << std::endl;
+      }
+    } else {
+      FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
+                << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
+                << std::endl;
+      LOG4CPLUS_INFO(this->getApplicationLogger(),
+        "copyAndTestRegistry: Error! Received registry is not a subset!"
+         << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+      pos->regCheckedOK_ = false;
+      pos->registrySize_ = 0;
+    }
+  }
+  catch(...)
+  {
+    std::cerr << "copyAndTestRegistry: Error! Received registry is not a subset!"
+              << " Or caught problem checking registry! "
+              << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
               << std::endl;
-  };
+    LOG4CPLUS_INFO(this->getApplicationLogger(),
+        "copyAndTestRegistry: Error! Received registry is not a subset!"
+         << " Or caught problem checking registry! "
+         << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+    pos->regCheckedOK_ = false;
+    pos->registrySize_ = 0;
+    delete [] tempbuffer;  // does a throw basically immediately return?
+    throw; // do we want to do this?
+  }
+  delete [] tempbuffer;
 }
 
 void stor::testStorageManager::updateFUSender4data(const char* hltURL,
@@ -611,8 +921,11 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
     for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin();
         pos != smfusenders_.end(); ++pos)
     {
+//      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+//         pos->hltTid_ == hltTid)
       if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-         pos->hltTid_ == hltTid)
+         pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
+         pos->sameClassName(hltClassName))
       {
         fusender_found = true;
         foundPos = pos;
@@ -638,6 +951,7 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
          // could test isLocal here
       }
       // check if run number is same which came with configuration, complain otherwise !!!
+      // this->runNumber_ comes from the RunBase class that testStorageManager inherits from
       if(runNumber != runNumber_)
 	{
 	  LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << runNumber
@@ -696,6 +1010,11 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
                  << " With URL "
                  << hltURL << " class " << hltClassName  << " instance "
                  << hltInstance << " Tid " << hltTid << std::endl;
+      LOG4CPLUS_INFO(this->getApplicationLogger(),
+                 "updateFUSender4data: Cannot find FU in FU Sender list!"
+                 << " With URL "
+                 << hltURL << " class " << hltClassName  << " instance "
+                 << hltInstance << " Tid " << hltTid);
     }
   } else {
     // problem: did not find an entry!!
@@ -1022,8 +1341,20 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Product registry" << endl;
           *out << "</td>" << endl;
           *out << "<td>" << endl;
+          if(pos->regAllReceived_) {
+            *out << "All Received" << endl;
+          } else {
+            *out << "Partially received" << endl;
+          }
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Product registry" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
           if(pos->regCheckedOK_) {
-            *out << "OK" << endl;
+            *out << "Checked OK" << endl;
           } else {
             *out << "Bad" << endl;
           }
@@ -1220,8 +1551,8 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "<hr/>"                                                    << endl;
 
-// now for FU sender list statistics
-  *out << "fu sender table"                                                  << endl;
+// now for FU sender list statistics: put this in!
+  *out << "fu sender table not done yet"                             << endl;
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;

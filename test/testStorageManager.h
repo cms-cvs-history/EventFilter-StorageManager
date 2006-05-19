@@ -85,7 +85,12 @@ namespace stor {
     void registerFUSender(const char* hltURL, const char* hltClassName,
                  const unsigned long hltLocalId, const unsigned long hltInstance,
                  const unsigned long hltTid,
-                 const unsigned long registrySize, const char* registryData);
+                 const unsigned long frameCount, const unsigned long numFrames,
+                 const unsigned long registrySize, const char* registryData,
+                 toolbox::mem::Reference *ref);
+    void testCompleteFUReg(vector<SMFUSenderList>::iterator pos);
+    void copyAndTestRegistry(vector<SMFUSenderList>::iterator pos,
+                 toolbox::mem::Reference *head);
     void updateFUSender4data(const char* hltURL,
       const char* hltClassName, const unsigned long hltLocalId,
       const unsigned long hltInstance, const unsigned long hltTid,
