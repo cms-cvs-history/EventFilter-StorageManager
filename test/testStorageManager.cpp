@@ -358,22 +358,23 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   }
   catch(cms::Exception& e)
     {
-      cerr << "Caught an exception:\n" << e.what() << endl;
-      throw;
+      XCEPT_RAISE (toolbox::fsm::exception::Exception, 
+		   e.explainSelf());
     }
   catch(seal::Error& e)
     {
-      cerr << "Caught an exception:\n" << e.explainSelf() << endl;
-      throw;
+      XCEPT_RAISE (toolbox::fsm::exception::Exception, 
+		   e.explainSelf());
     }
   catch(std::exception& e)
     {
-      cerr << "Caught an exception:\n" << e.what() << endl;
-      throw;
+      XCEPT_RAISE (toolbox::fsm::exception::Exception, 
+		   e.what());
     }
   catch(...)
   {
-      cerr << "Caught unknown exception\n" << endl;
+      XCEPT_RAISE (toolbox::fsm::exception::Exception, 
+		   "Unknown Exception");
   }
 
 }
@@ -388,7 +389,22 @@ void testStorageManager::enableAction(toolbox::Event::Reference e)
 void testStorageManager::haltAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
-  // Get into halted state
+  // Check that all senders have closed connections
+  int timeout = 60;
+  std::cout << "waiting for " <<  smfusenders_.size() 
+	    << " senders to end the run " << std::endl;
+  while(smfusenders_.size() > 0)
+    {
+      ::sleep(1);
+      if(timeout-- == 0) {
+	LOG4CPLUS_WARN(this->getApplicationLogger(),
+		       "Timeout in SM waiting for end of run from "
+		       << smfusenders_.size() << "senders ");
+	break;
+      }
+    }
+
+  // Get into halted state  
   jc_->stop();
   jc_->join();
   // we must destroy the eventprocessor to finish processing
@@ -463,7 +479,7 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                   + msg->dataSize;
   addMeasurement(actualFrameSize);
-
+  //  std::cout << "received registry message from " << msg->hltURL << std::endl;
   // register this FU sender into the list to keep its status
   registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
                  msg->hltLocalId, msg->hltInstance, msg->hltTid,
@@ -493,6 +509,7 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
              << " total frames = " << msg->numFrames << std::endl;
   FDEBUG(10) << "testStorageManager: Frame " << msg->frameCount << " of " 
              << msg->numFrames-1 << std::endl;
+  // std::cout << "received data message from " << msg->hltURL << std::endl;
   int len = msg->dataSize;
   FDEBUG(10) << "testStorageManager: received data frame size = " << len << std::endl;
 
@@ -587,6 +604,8 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
    pool_is_set_ = 1;
   }
 
+
+
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_OTHER_MESSAGE_FRAME *msg    =
@@ -595,9 +614,12 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
              << " application " << msg->hltClassName << " id " << msg->hltLocalId
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testStorageManager: message content " << msg->otherData << "\n";
-
   // Not yet processing any Other messages type
-
+  // the only "other" message is an end-of-run. It is awaited to process a request to halt the storage manager
+  
+  removeFUSender(&msg->hltURL[0], &msg->hltClassName[0],
+		 msg->hltLocalId, msg->hltInstance, msg->hltTid);
+  
   // release the frame buffer now that we are finished
   ref->release();
 
@@ -618,15 +640,15 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
   // no longer need to pass the registry pointer - can take it out
   // register FU sender into the list to keep its status
   // first check if this FU is already in the list
-  if(smfusenders_.size() > 0)
+  if(!smfusenders_.empty())
   {
     // see if this FUsender already has some registry fragments
     // should also test if its complete!! (Would mean a reconnect)
     FDEBUG(9) << "registerFUSender: checking if this FU Sender already registered"
                << std::endl;
     int FUFound = 0;
-    vector<SMFUSenderList>::iterator foundPos;
-    for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin(); 
+    list<SMFUSenderList>::iterator foundPos;
+    for(list<SMFUSenderList>::iterator pos = smfusenders_.begin(); 
         pos != smfusenders_.end(); ++pos)
     {
        FDEBUG(9) << "registerFUSender: testing if same FU sender" << std::endl;
@@ -648,6 +670,7 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
                      hltLocalId, hltInstance, hltTid, numFrames,
                      registrySize, registryData);
       smfusenders_.push_back(*fusender);
+      LOG4CPLUS_INFO(this->getApplicationLogger(),"register FU sender at " << hltURL << " list size is " << smfusenders_.size());
       smfusenders_.back().chrono_.start(0);
       smfusenders_.back().totFrames_ = numFrames;
       smfusenders_.back().currFrames_ = 1; // should use actual frame if out of order
@@ -655,7 +678,7 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
       //smfusenders_.back().currFrames_ = frameCount;
       smfusenders_.back().frameRefs_[frameCount] = ref;
       // now should check if frame is complete and deal with it
-      vector<SMFUSenderList>::iterator testPos = --smfusenders_.end();
+      list<SMFUSenderList>::iterator testPos = --smfusenders_.end();
       testCompleteFUReg(testPos);
     } else {
       FDEBUG(10) << "registerFUSender: found another frame " << frameCount << " for URL "
@@ -674,17 +697,19 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
                    hltLocalId, hltInstance, hltTid, numFrames,
                    registrySize, registryData);
     smfusenders_.push_back(*fusender);
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"register FU sender at " << hltURL << " list size is " << smfusenders_.size());
+
     smfusenders_.back().chrono_.start(0);
     smfusenders_.back().totFrames_ = numFrames;
     smfusenders_.back().currFrames_ = 1;
     smfusenders_.back().frameRefs_[frameCount] = ref;
     // now should check if frame is complete and deal with it
-    vector<SMFUSenderList>::iterator testPos = --smfusenders_.end();
+    list<SMFUSenderList>::iterator testPos = --smfusenders_.end();
     testCompleteFUReg(testPos);
   }
 }
 
-void stor::testStorageManager::testCompleteFUReg(vector<SMFUSenderList>::iterator pos)
+void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator pos)
 {
   //  Check that a given FU Sender has sent all frames for a registry
   //  If so store the serialized registry and check it
@@ -763,7 +788,7 @@ void stor::testStorageManager::testCompleteFUReg(vector<SMFUSenderList>::iterato
   }
 }
 
-void stor::testStorageManager::copyAndTestRegistry(vector<SMFUSenderList>::iterator pos,
+void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
   toolbox::mem::Reference *head)
 {
   // Copy the registry fragments into the one place for saving
@@ -917,8 +942,8 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
   if(smfusenders_.size() > 0)
   {
     bool fusender_found = false;
-    vector<SMFUSenderList>::iterator foundPos;
-    for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin();
+    list<SMFUSenderList>::iterator foundPos;
+    for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
         pos != smfusenders_.end(); ++pos)
     {
 //      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
@@ -1022,6 +1047,56 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
                << std::endl;
   }
 }
+
+
+void stor::testStorageManager::removeFUSender(const char* hltURL,
+  const char* hltClassName, const unsigned long hltLocalId,
+  const unsigned long hltInstance, const unsigned long hltTid)
+{
+  // Find this FU sender in the list
+  if(!smfusenders_.empty())
+  {
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"removing FU sender at " << hltURL);
+    bool fusender_found = false;
+    list<SMFUSenderList>::iterator foundPos;
+    for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
+        pos != smfusenders_.end(); ++pos)
+    {
+//      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+//         pos->hltTid_ == hltTid)
+      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+         pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
+         pos->sameClassName(hltClassName))
+      {
+        fusender_found = true;
+        foundPos = pos;
+      }
+    }
+    if(fusender_found)
+    {
+      smfusenders_.erase(foundPos);
+    }
+    else
+      {
+	LOG4CPLUS_ERROR(this->getApplicationLogger(),
+			"Spurious end-of-run received for FU not in Sender list!"
+			<< " With URL "
+			<< hltURL << " class " << hltClassName  << " instance "
+			<< hltInstance << " Tid " << hltTid);
+	
+      }
+  }
+  else
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+		    "end-of-run received for FU but no sender in Sender list!"
+		    << " With URL "
+		    << hltURL << " class " << hltClassName  << " instance "
+		    << hltInstance << " Tid " << hltTid);
+  
+
+}
+
+
 
 ////////////////////////////// Performance      ////////////////////////////
 void testStorageManager::addMeasurement(unsigned long size)
@@ -1293,7 +1368,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
     if(smfusenders_.size() > 0) {
-      for(vector<SMFUSenderList>::iterator pos = smfusenders_.begin();
+      for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
           pos != smfusenders_.end(); ++pos)
       {
         *out << "<tr>" << endl;
