@@ -18,6 +18,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -88,8 +89,8 @@ namespace stor {
                  const unsigned long frameCount, const unsigned long numFrames,
                  const unsigned long registrySize, const char* registryData,
                  toolbox::mem::Reference *ref);
-    void testCompleteFUReg(vector<SMFUSenderList>::iterator pos);
-    void copyAndTestRegistry(vector<SMFUSenderList>::iterator pos,
+    void testCompleteFUReg(list<SMFUSenderList>::iterator pos);
+    void copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
                  toolbox::mem::Reference *head);
     void updateFUSender4data(const char* hltURL,
       const char* hltClassName, const unsigned long hltLocalId,
@@ -97,7 +98,10 @@ namespace stor {
       const unsigned long runNumber, const unsigned long eventNumber,
       const unsigned long frameNum, const unsigned long totalFrames,
       const unsigned long origdatasize, const bool isLocal);
-  
+    void removeFUSender(const char* hltURL,
+      const char* hltClassName, const unsigned long hltLocalId,
+      const unsigned long hltInstance, const unsigned long hltTid);
+    
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
@@ -130,7 +134,7 @@ namespace stor {
     xdata::Integer oneinN_; //place one in eveny oneinN_ into buffer
     char mybuffer_[7000000]; //temporary buffer instead of using stack
 
-    vector<SMFUSenderList> smfusenders_;
+    list<SMFUSenderList> smfusenders_;
   
     // for performance measurements
     void addMeasurement(unsigned long size);
