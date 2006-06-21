@@ -246,7 +246,7 @@ bool SMFUSenderList::sameClassName(const char* hltClassName)
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
-  fsm_(0), ah_(0)
+  fsm_(0), ah_(0), connectedFUs_(0), storedEvents_(0)
 {
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
@@ -259,6 +259,9 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
   ispace->fireItemAvailable("runNumber",&runNumber_);
   ispace->fireItemAvailable("stateName",&fsm_->stateName_);
+
+  ispace->fireItemAvailable("connectedFUs",&connectedFUs_);
+  ispace->fireItemAvailable("storedEvents",&storedEvents_);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -322,6 +325,12 @@ testStorageManager::~testStorageManager()
   delete fsm_;
   delete ah_;
   delete pmeter_;
+}
+
+xoap::MessageReference testStorageManager::ParameterGet(xoap::MessageReference message)	throw (xoap::exception::Exception)
+{
+  connectedFUs_.value_ = smfusenders_.size();
+  return Application::ParameterGet(message);
 }
 
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -993,6 +1002,7 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
       if(totalFrames == 1) {
         // there is only one frame in this event assume frameNum = 1!
         foundPos->eventsReceived_++;
+	storedEvents_.value_++;
         foundPos->lastEventID_ = eventNumber;
         foundPos->lastFrameNum_ = frameNum;
         foundPos->lastTotalFrameNum_ = totalFrames;
@@ -1012,6 +1022,7 @@ void stor::testStorageManager::updateFUSender4data(const char* hltURL,
           // frame count starts from 1
           if(frameNum == totalFrames) { //should check totalFrames
             foundPos->eventsReceived_++;
+	    storedEvents_.value_++;	
             foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
           }
           foundPos->lastFrameNum_ = frameNum;

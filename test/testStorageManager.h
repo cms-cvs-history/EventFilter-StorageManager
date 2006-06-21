@@ -68,6 +68,13 @@ namespace stor {
     testStorageManager(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
   
     ~testStorageManager();
+
+   /**
+     * Updates the exported parameters
+     */
+    xoap::MessageReference ParameterGet(xoap::MessageReference message)
+    throw (xoap::exception::Exception);
+
   
    private:
     void configureAction(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
@@ -135,7 +142,9 @@ namespace stor {
     char mybuffer_[7000000]; //temporary buffer instead of using stack
 
     list<SMFUSenderList> smfusenders_;
-  
+    xdata::UnsignedLong connectedFUs_;
+    xdata::UnsignedLong storedEvents_;
+
     // for performance measurements
     void addMeasurement(unsigned long size);
     xdata::UnsignedLong samples_; //number of samples (frames) per measurement
