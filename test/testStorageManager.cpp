@@ -332,8 +332,13 @@ xoap::MessageReference testStorageManager::ParameterGet(xoap::MessageReference m
   connectedFUs_.value_ = smfusenders_.size();
   return Application::ParameterGet(message);
 }
+#include "FWCore/ServiceRegistry/interface/ServiceToken.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
 
+#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
+
 void testStorageManager::configureAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
@@ -385,7 +390,16 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       XCEPT_RAISE (toolbox::fsm::exception::Exception, 
 		   "Unknown Exception");
   }
-
+  evf::ModuleWebRegistry *mwr = 0;
+  edm::ServiceRegistry::Operate operate(jc_->getToken());
+  try{
+    if(edm::Service<evf::ModuleWebRegistry>().isAvailable())
+      mwr = edm::Service<evf::ModuleWebRegistry>().operator->();
+  }
+  catch(...)
+    { cout <<"exception when trying to get the service registry " << endl;}
+  if(mwr)
+    mwr->publish(getApplicationInfoSpace());
 }
 
 void testStorageManager::enableAction(toolbox::Event::Reference e) 
