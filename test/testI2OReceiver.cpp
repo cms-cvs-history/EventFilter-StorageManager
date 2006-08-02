@@ -1751,7 +1751,7 @@ void testI2OReceiver::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   } // else send end of run as reponse
   else
   {
-    OtherMessageBuilder othermsg(&mybuffer_[0],sizeof(mybuffer_),Header::DONE);
+    OtherMessageBuilder othermsg(&mybuffer_[0],Header::DONE);
     len = othermsg.size();
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");

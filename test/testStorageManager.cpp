@@ -1795,10 +1795,10 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
     //edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
     //len = msg.totalSize();
     // this is not working
-    OtherMessageBuilder othermsg(&mybuffer_[0],sizeof(mybuffer_),Header::DONE);
+    OtherMessageBuilder othermsg(&mybuffer_[0],Header::DONE);
     len = othermsg.size();
-    std::cout << "making other message code = " << othermsg.code()
-              << " and size = " << othermsg.size() << std::endl;
+    //std::cout << "making other message code = " << othermsg.code()
+    //          << " and size = " << othermsg.size() << std::endl;
 
 // HEREHERE
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
