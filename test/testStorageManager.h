@@ -128,7 +128,12 @@ namespace stor {
     friend class stor::SMStateMachine;
   
     boost::shared_ptr<stor::JobController> jc_;
-  
+    // HEREHERE
+    xdata::String streamer_only_;
+    bool writeStreamerOnly_;
+    xdata::String stfileName_;
+    string filename_;
+
     evf::Css css_;
     unsigned long eventcounter_;
     unsigned long framecounter_;

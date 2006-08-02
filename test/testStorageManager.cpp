@@ -66,6 +66,10 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
+#include "IOPool/Streamer/interface/MsgHeader.h"
+#include "IOPool/Streamer/interface/InitMessage.h"
+#include "IOPool/Streamer/interface/StreamTranslator.h"
+#include "IOPool/Streamer/interface/OtherMessage.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "PluginManager/PluginManager.h"
 
@@ -101,8 +105,15 @@ static void deleteSMBuffer(void* Ref)
   // release the memory pool buffer
   // once the fragment collector is done with it
   stor::FragEntry* entry = (stor::FragEntry*)Ref;
-  toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
-  ref->release();
+// check code for INIT message 
+// and all messages work like this (going into a queue)
+  // do not delete the memory for the single (first) INIT message
+  // it is stored in the local data member for event server
+  if(entry->code_ != Header::INIT) 
+  {
+    toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
+    ref->release();
+  }
 }
 // -----------------------------------------------
 
@@ -203,7 +214,7 @@ SMFUSenderList::SMFUSenderList(const char* hltURL,
 bool SMFUSenderList::sameURL(const char* hltURL)
 {
   // should really only compare the actual length!
-  FDEBUG(9) << "sameURL: testing url " << std::endl;
+  //FDEBUG(9) << "sameURL: testing url " << std::endl;
   //for (int i=0; i< MAX_I2O_SM_URLCHARS; i++) {
   //  if(hltURL_[i] != hltURL[i]) {
   //    FDEBUG(9) << "sameURL: failed char test at " << i << std::endl;
@@ -218,14 +229,14 @@ bool SMFUSenderList::sameURL(const char* hltURL)
     }
     i = i + 1;
   }
-  FDEBUG(9) << "sameURL: same url " << std::endl;
+  //FDEBUG(9) << "sameURL: same url " << std::endl;
   return true;
 }
 
 bool SMFUSenderList::sameClassName(const char* hltClassName)
 {
   // should really only compare the actual length!
-  FDEBUG(9) << "sameClassName: testing classname " << std::endl;
+  //FDEBUG(9) << "sameClassName: testing classname " << std::endl;
   //for (int i=0; i< MAX_I2O_SM_URLCHARS; i++) {
   //  if(hltClassName_[i] != hltClassName[i]) {
   //    FDEBUG(9) << "sameClassName: failed char test at " << i << std::endl;
@@ -240,13 +251,14 @@ bool SMFUSenderList::sameClassName(const char* hltClassName)
     }
     i = i + 1;
   }
-  FDEBUG(9) << "sameClassName: same classname " << std::endl;
+  //FDEBUG(9) << "sameClassName: same classname " << std::endl;
   return true;
 }
 
+// HEREHERE
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
-  fsm_(0), ah_(0), connectedFUs_(0), storedEvents_(0)
+  fsm_(0), ah_(0), writeStreamerOnly_(false), connectedFUs_(0), storedEvents_(0)
 {
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
@@ -289,6 +301,13 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   framecounter_ = 0;
   pool_is_set_ = 0;
   pool_ = 0;
+
+// HEREHERE
+  ispace->fireItemAvailable("streamerOnly",&streamer_only_);
+  // how to set a default for stfileName?
+  ispace->fireItemAvailable("streamerFilename",&stfileName_);
+  filename_ = "smi2ostreamout";  // default only here - set it configureAction
+// HEREHERE
 
   // added for Event Server
   ser_prods_size_ = 0;
@@ -343,6 +362,32 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   throw (toolbox::fsm::exception::Exception)
 {
   // Get into the ready state
+// HEREHERE
+  if(streamer_only_.toString() == "true" || streamer_only_.toString() == "TRUE" ||
+     streamer_only_.toString() == "True" ) {
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
+    writeStreamerOnly_ = true;
+  } else if(streamer_only_.toString() == "false" || streamer_only_.toString() == "FALSE" ||
+     streamer_only_.toString() == "False" ) {
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing PoolOutputModule ROOT files");
+    writeStreamerOnly_ = false;
+  } else {
+    LOG4CPLUS_WARN(this->getApplicationLogger(),
+	           "Unrecognized streamerOnly option "
+		       << streamer_only_.toString() << " will use default false");
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
+    writeStreamerOnly_ = false;
+  }
+  filename_ = stfileName_.toString();
+  FDEBUG(9) << "Streamer filename starts with = " << filename_ << endl;
+  FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
+  std::ostringstream stm;
+  stm << setfill('0') << std::setw(8) << runNumber_;
+  filename_ = filename_ + "." + stm.str();
+  //std::cout << "Streamer filename starts with " << filename_ << endl;
+
+// HEREHERE
+
   // get the configuration here or in enable?
 
   // do this here? JBK - moved to data member
@@ -369,6 +414,8 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     int value_4oneinN(oneinN_);
     if(value_4oneinN <= 0) value_4oneinN = -1;
     jc_->set_oneinN(value_4oneinN);
+    jc_->set_outoption(writeStreamerOnly_);
+    jc_->set_outfile(filename_);
   }
   catch(cms::Exception& e)
     {
@@ -570,8 +617,11 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen);
+//HEREHERE must give it the 1 of N for this fragment (starts from 0 in i2o header)
+         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
+                  thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, thismsg->eventID);
          b.commit(sizeof(stor::FragEntry));
+//HEREHERE
          framecounter_++;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
@@ -598,8 +648,11 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   {
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len);
+//HEREHERE must give it the 1 of N for this fragment (starts from 0 in i2o header)
+    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                msg->frameCount+1, msg->numFrames, Header::EVENT, msg->eventID);
     b.commit(sizeof(stor::FragEntry));
+//HEREHERE
     // Frame release is done in the deleter.
     framecounter_++;
     // for bandwidth performance measurements
@@ -633,10 +686,10 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_OTHER_MESSAGE_FRAME *msg    =
     (I2O_SM_OTHER_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10) << "testStorageManager: Received other message from HLT " << msg->hltURL
+  FDEBUG(9) << "testStorageManager: Received other message from HLT " << msg->hltURL
              << " application " << msg->hltClassName << " id " << msg->hltLocalId
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
-  FDEBUG(10) << "testStorageManager: message content " << msg->otherData << "\n";
+  FDEBUG(9) << "testStorageManager: message content " << msg->otherData << "\n";
   // Not yet processing any Other messages type
   // the only "other" message is an end-of-run. It is awaited to process a request to halt the storage manager
   
@@ -902,14 +955,24 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
   { // to test registry can seg fault if registry is bad!
     // check the registry from this FU against the configuration one
     // need to make a copy in a non-const array
-    bool setcode = false;
+    //bool setcode = false;
     //char* tempregdata = new char[registrySize];
     //copy(registryData, registryData+registrySize, tempregdata);
     //edm::InitMsg msg(&tempregdata[0],registrySize,setcode);
-    edm::InitMsg testmsg(&tempbuffer[0],origsize,setcode);
+//HEREHERE
+    //edm::InitMsg testmsg(&tempbuffer[0],origsize,setcode);
+    InitMsgView testmsg(&tempbuffer[0]);
     // use available methods to check registry is a subset
-    edm::JobHeaderDecoder decoder;
-    std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(testmsg);
+    //edm::JobHeaderDecoder decoder;
+    //std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(testmsg);
+    
+    std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
+// HEREHEREHERE
+// put init message into queue if it is the first (see below)
+//    stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+//                                          msg->frameCount+1, msg->numFrames);
+// make copy of bytes and deleter for it to put into queue
+// to HEREHERE?
     //if(edm::registryIsSubset(*header, jc_->products()))
     if(edm::registryIsSubset(*header, jc_->smproducts()))
     {
@@ -923,6 +986,19 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
         ser_prods_size_ = origsize;
         FDEBUG(9) << "Saved serialized registry for Event Server, size " 
                   << ser_prods_size_ << std::endl;
+//HEREHEREHERE
+        // this is the first serialized registry coming over, queue for output
+        if(writeStreamerOnly_)
+        {
+          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+          new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
+                                1, 1, Header::INIT, 0); // use fixed 0 as ID
+          b.commit(sizeof(stor::FragEntry));
+        }
+        // with it to get the hlt and l1 cnt for fragColl and get
+        // init message to fragcoll to write it out
+        jc_->set_hlt_bit_count(testmsg.get_hlt_bit_cnt());
+        jc_->set_l1_bit_count(testmsg.get_l1_bit_cnt());
       }
     } else {
       FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
@@ -1665,7 +1741,7 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   int len=0;
   bool empty = true;
 
-  // should first test if storageManager is in halted state
+  // should first test if testStorageManager is in halted state
 
   if(ser_prods_size_ != 0) 
   {
@@ -1685,6 +1761,8 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
     {
       {
         boost::mutex::scoped_lock sl(halt_lock_);
+// HEREHERE
+/*
         edm::EventMsg msg = jc_->pop_front();
         edm::EventMsg em(&mybuffer_[0],msg.totalSize(),
                          msg.getEventNumber(),msg.getRunNumber(),
@@ -1692,9 +1770,18 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
         char* pos = (char*)em.data();
         int dsize = msg.getDataSize();
         char* from=(char*)msg.data();
+*/
+        //EventMsgView msgView = evtsrv_area_.pop_front();
+        EventMsgView msgView = jc_->pop_front();
+        unsigned char* pos = (unsigned char*) &mybuffer_[0];
+        unsigned char* from = msgView.startAddress();
+        int dsize = msgView.size();
+
         copy(from,from+dsize,pos);
-        len = msg.totalSize();
-        FDEBUG(10) << "sending event " << msg.getEventNumber() << std::endl;
+        //len = msg.totalSize();
+        len = dsize;
+// HEREHERE
+        FDEBUG(10) << "sending event " << msgView.event() << std::endl;
       }
 
       out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
@@ -1704,8 +1791,16 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   } // else send end of run as reponse
   else
   {
-    edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
-    len = msg.totalSize();
+// HEREHERE
+    //edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
+    //len = msg.totalSize();
+    // this is not working
+    OtherMessageBuilder othermsg(&mybuffer_[0],sizeof(mybuffer_),Header::DONE);
+    len = othermsg.size();
+    std::cout << "making other message code = " << othermsg.code()
+              << " and size = " << othermsg.size() << std::endl;
+
+// HEREHERE
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
     out->write(mybuffer_,len);
