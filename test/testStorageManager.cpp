@@ -74,6 +74,7 @@
 #include "PluginManager/PluginManager.h"
 
 #include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
+#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
 #include "xcept/tools.h"
 
@@ -117,145 +118,8 @@ static void deleteSMBuffer(void* Ref)
 }
 // -----------------------------------------------
 
-namespace stor {
-
-using namespace edm;
-using namespace std;
-
-struct SMFUSenderList  // used to store list of FU senders
-{
-  SMFUSenderList(const char* hltURL,
-                 const char* hltClassName,
-                 const unsigned long hltLocalId,
-                 const unsigned long hltInstance,
-                 const unsigned long hltTid,
-                 const unsigned int numFramesToAllocate,
-                 const unsigned long registrySize,
-                 const char* registryData);
-
-  char          hltURL_[MAX_I2O_SM_URLCHARS];       // FU+HLT identifiers
-  char          hltClassName_[MAX_I2O_SM_URLCHARS];
-  unsigned long hltLocalId_;
-  unsigned long hltInstance_;
-  unsigned long hltTid_;
-  unsigned long registrySize_;
-  bool          regAllReceived_;  // All Registry fragments are received or not
-  unsigned int  totFrames_;    // number of frames in this fragment
-  unsigned int  currFrames_;   // current frames received
-  vector<toolbox::mem::Reference*> frameRefs_; // vector of frame reference pointers
-  char          registryData_[2*1000*1000]; // size should be a parameter and have tests!
-  bool          regCheckedOK_;    // Registry checked to be same as configuration
-  unsigned int  connectStatus_;   // FU+HLT connection status
-  double        lastLatency_;     // Latency of last frame in microseconds
-  unsigned long runNumber_;
-  bool          isLocal_;         // If detected a locally sent frame chain
-  unsigned long framesReceived_;
-  unsigned long eventsReceived_;
-  unsigned long lastEventID_;
-  unsigned long lastRunID_;
-  unsigned long lastFrameNum_;
-  unsigned long lastTotalFrameNum_;
-  unsigned long totalOutOfOrder_;
-  unsigned long totalSizeReceived_;// For data only
-  unsigned long totalBadEvents_;   // Update meaning: include original size check?
-  toolbox::Chrono chrono_;         // Keep latency for connection check
-
-  //public:
-  bool sameURL(const char* hltURL);
-  bool sameClassName(const char* hltClassName);
-
-};
-}
 using namespace stor;
 
-SMFUSenderList::SMFUSenderList(const char* hltURL,
-                 const char* hltClassName,
-                 const unsigned long hltLocalId,
-                 const unsigned long hltInstance,
-                 const unsigned long hltTid,
-                 const unsigned int numFramesToAllocate,
-                 const unsigned long registrySize,
-                 const char* registryData):
-  hltLocalId_(hltLocalId), hltInstance_(hltInstance), hltTid_(hltTid),
-  registrySize_(registrySize), regAllReceived_(false),
-  totFrames_(numFramesToAllocate), currFrames_(0), frameRefs_(totFrames_, 0)
-{
-  copy(hltURL, hltURL+MAX_I2O_SM_URLCHARS, hltURL_);
-  copy(hltClassName, hltClassName+MAX_I2O_SM_URLCHARS, hltClassName_);
-  // don't copy in constructor now we can have fragments
-  //copy(registryData, registryData+registrySize, registryData_);
-  regCheckedOK_ = false;
-  /*
-     Connect status
-     Bit 1 = 0 disconnected (was connected before) or delete it?
-           = 1 connected and received registry
-     Bit 2 = 0 not yet received a data frame
-           = 1 received at least one data frame
-  */
-  connectStatus_ = 1;
-  lastLatency_ = 0.0;
-  runNumber_ = 0;
-  isLocal_ = false;
-  framesReceived_ = 1;
-  eventsReceived_ = 0;
-  lastEventID_ = 0;
-  lastRunID_ = 0;
-  lastFrameNum_ = 0;
-  lastTotalFrameNum_ = 0;
-  totalOutOfOrder_ = 0;
-  totalSizeReceived_ = 0;
-  totalBadEvents_ = 0;
-
-  FDEBUG(10) << "testStorageManager: Making a SMFUSenderList struct for "
-            << hltURL_ << " class " << hltClassName_  << " instance "
-            << hltInstance_ << " Tid " << hltTid_ << std::endl;
-}
-
-bool SMFUSenderList::sameURL(const char* hltURL)
-{
-  // should really only compare the actual length!
-  //FDEBUG(9) << "sameURL: testing url " << std::endl;
-  //for (int i=0; i< MAX_I2O_SM_URLCHARS; i++) {
-  //  if(hltURL_[i] != hltURL[i]) {
-  //    FDEBUG(9) << "sameURL: failed char test at " << i << std::endl;
-  //    return false;
-  //  }
-  //}
-  int i = 0;
-  while (hltURL[i] != '\0') {
-    if(hltURL_[i] != hltURL[i]) {
-      FDEBUG(9) << "sameURL: failed char test at " << i << std::endl;
-      return false;
-    }
-    i = i + 1;
-  }
-  //FDEBUG(9) << "sameURL: same url " << std::endl;
-  return true;
-}
-
-bool SMFUSenderList::sameClassName(const char* hltClassName)
-{
-  // should really only compare the actual length!
-  //FDEBUG(9) << "sameClassName: testing classname " << std::endl;
-  //for (int i=0; i< MAX_I2O_SM_URLCHARS; i++) {
-  //  if(hltClassName_[i] != hltClassName[i]) {
-  //    FDEBUG(9) << "sameClassName: failed char test at " << i << std::endl;
-  //    return false;
-  //  }
-  //}
-  int i = 0;
-  while (hltClassName[i] != '\0') {
-    if(hltClassName_[i] != hltClassName[i]) {
-      FDEBUG(9) << "sameClassName: failed char test at " << i << std::endl;
-      return false;
-    }
-    i = i + 1;
-  }
-  //FDEBUG(9) << "sameClassName: same classname " << std::endl;
-  return true;
-}
-
-// HEREHERE
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
   fsm_(0), ah_(0), writeStreamerOnly_(false), connectedFUs_(0), storedEvents_(0)
@@ -302,12 +166,23 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   pool_is_set_ = 0;
   pool_ = 0;
 
-// HEREHERE
+// Variables needed for streamer file writing
+// should be getting these from SM config file - put them in xml for now
+// until we do it in StreamerOutputService ctor
   ispace->fireItemAvailable("streamerOnly",&streamer_only_);
-  // how to set a default for stfileName?
-  ispace->fireItemAvailable("streamerFilename",&stfileName_);
-  filename_ = "smi2ostreamout";  // default only here - set it configureAction
-// HEREHERE
+  ispace->fireItemAvailable("filePath",&filePath_);
+  ispace->fireItemAvailable("mailboxPath",&mailboxPath_);
+  ispace->fireItemAvailable("setupLabel",&setupLabel_);
+  ispace->fireItemAvailable("streamLabel",&streamLabel_);
+  ispace->fireItemAvailable("maxFileSize",&maxFileSize_);
+  ispace->fireItemAvailable("highWaterMark",&highWaterMark_);
+  // default only here - actually set configureAction if defined in XML file
+  path_ = "./";
+  mpath_ = "./"; //mailbox path
+  setup_ = "cms";
+  stream_ = "main";
+  maxFileSize_ = 1073741824;
+  highWaterMark_ = 0.9;
 
   // added for Event Server
   ser_prods_size_ = 0;
@@ -362,31 +237,6 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   throw (toolbox::fsm::exception::Exception)
 {
   // Get into the ready state
-// HEREHERE
-  if(streamer_only_.toString() == "true" || streamer_only_.toString() == "TRUE" ||
-     streamer_only_.toString() == "True" ) {
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
-    writeStreamerOnly_ = true;
-  } else if(streamer_only_.toString() == "false" || streamer_only_.toString() == "FALSE" ||
-     streamer_only_.toString() == "False" ) {
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing PoolOutputModule ROOT files");
-    writeStreamerOnly_ = false;
-  } else {
-    LOG4CPLUS_WARN(this->getApplicationLogger(),
-	           "Unrecognized streamerOnly option "
-		       << streamer_only_.toString() << " will use default false");
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
-    writeStreamerOnly_ = false;
-  }
-  filename_ = stfileName_.toString();
-  FDEBUG(9) << "Streamer filename starts with = " << filename_ << endl;
-  FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
-  std::ostringstream stm;
-  stm << setfill('0') << std::setw(8) << runNumber_;
-  filename_ = filename_ + "." + stm.str();
-  //std::cout << "Streamer filename starts with " << filename_ << endl;
-
-// HEREHERE
 
   // get the configuration here or in enable?
 
@@ -405,6 +255,38 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   string sample_config = fupset.getAsString();
   string my_config = smpset.getAsString();
 
+  // For streamer file writing to make it more like OutServ for POOL root files
+  // we should pass the my_config string to the streamer writer
+  // which is created by the fragment collector.
+  // Need to find out how to parse the config string there p for now do:
+  if(streamer_only_.toString() == "true" || streamer_only_.toString() == "TRUE" ||
+     streamer_only_.toString() == "True" ) {
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
+    writeStreamerOnly_ = true;
+  } else if(streamer_only_.toString() == "false" || streamer_only_.toString() == "FALSE" ||
+     streamer_only_.toString() == "False" ) {
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing PoolOutputModule ROOT files");
+    writeStreamerOnly_ = false;
+  } else {
+    LOG4CPLUS_WARN(this->getApplicationLogger(),
+	           "Unrecognized streamerOnly option "
+		       << streamer_only_.toString() << " will use default false");
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
+    writeStreamerOnly_ = false;
+  }
+  smConfigString_ = my_config;
+  path_ = filePath_.toString();
+  mpath_ = mailboxPath_.toString();
+  setup_ = setupLabel_.toString();
+  stream_ = streamLabel_.toString();
+  FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
+  std::ostringstream stm;
+  stm << path_ << "/" << setup_ << "." << setfill('0') << std::setw(8) << runNumber_
+      << "." << stream_ << "." << sourceId_;
+  filen_ = stm.str();
+  FDEBUG(9) << "Streamer filename starts with = " << filen_ << endl;
+
+// HEREHERE
   // the rethrows below need to be XDAQ exception types (JBK)
 
   try {
@@ -415,7 +297,17 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     if(value_4oneinN <= 0) value_4oneinN = -1;
     jc_->set_oneinN(value_4oneinN);
     jc_->set_outoption(writeStreamerOnly_);
-    jc_->set_outfile(filename_);
+    unsigned long max(maxFileSize_);
+    double high(highWaterMark_);
+    // check that the directories exist
+    struct stat buf;
+    int retVal = stat(path_.c_str(), &buf);
+    if(retVal !=0)
+    {
+      edm::LogWarning("testStorageManager") << "Output directory " << path_ 
+            << " does not exist. Error=" << errno ;
+    }
+    jc_->set_outfile(filen_, max, high, path_);
   }
   catch(cms::Exception& e)
     {

@@ -55,7 +55,7 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
 
-using namespace std;
+//using namespace std;
 
 namespace stor {
 
@@ -128,11 +128,21 @@ namespace stor {
     friend class stor::SMStateMachine;
   
     boost::shared_ptr<stor::JobController> jc_;
-    // HEREHERE
+    // added for streamer file writing instead of OutServ
     xdata::String streamer_only_;
     bool writeStreamerOnly_;
-    xdata::String stfileName_;
-    string filename_;
+    xdata::String filePath_;
+    xdata::String mailboxPath_;
+    xdata::String setupLabel_;
+    xdata::String streamLabel_;
+    xdata::Integer maxFileSize_;
+    xdata::Double highWaterMark_;
+    std::string smConfigString_;
+    std::string path_;
+    std::string mpath_; //mailbox path
+    std::string setup_;
+    std::string stream_;
+    std::string filen_;
 
     evf::Css css_;
     unsigned long eventcounter_;
@@ -146,7 +156,7 @@ namespace stor {
     xdata::Integer oneinN_; //place one in eveny oneinN_ into buffer
     char mybuffer_[7000000]; //temporary buffer instead of using stack
 
-    list<SMFUSenderList> smfusenders_;
+    std::list<SMFUSenderList> smfusenders_;
     xdata::UnsignedLong connectedFUs_;
     xdata::UnsignedLong storedEvents_;
 
