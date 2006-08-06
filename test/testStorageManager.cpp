@@ -74,7 +74,6 @@
 #include "PluginManager/PluginManager.h"
 
 #include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
-#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
 #include "xcept/tools.h"
 
