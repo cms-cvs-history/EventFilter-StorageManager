@@ -43,6 +43,7 @@
 #include "xdata/Integer.h"
 #include "xdata/Double.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
+#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
 #include "xgi/include/xgi/Input.h"
 #include "xgi/include/xgi/Output.h"
@@ -58,8 +59,6 @@
 //using namespace std;
 
 namespace stor {
-
-  struct SMFUSenderList;
 
   class testStorageManager: public xdaq::Application, public evf::RunBase
   {
