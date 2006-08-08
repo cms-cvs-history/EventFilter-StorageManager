@@ -114,6 +114,8 @@ namespace stor {
       {css_.css(in,out);}
     void fusenderWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void streamerOutputWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void eventdataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void headerdataWebPage

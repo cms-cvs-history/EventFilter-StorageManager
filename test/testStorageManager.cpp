@@ -52,6 +52,7 @@
 #include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
 #include <sys/unistd.h>
 
 #include "EventFilter/StorageManager/test/testStorageManager.h"
@@ -156,6 +157,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&testStorageManager::defaultWebPage, "Default");
   xgi::bind(this,&testStorageManager::css, "styles.css");
   xgi::bind(this,&testStorageManager::fusenderWebPage, "fusenderlist");
+  xgi::bind(this,&testStorageManager::streamerOutputWebPage, "streameroutput");
   xgi::bind(this,&testStorageManager::eventdataWebPage, "geteventdata");
   xgi::bind(this,&testStorageManager::headerdataWebPage, "getregdata");
 
@@ -280,7 +282,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   stream_ = streamLabel_.toString();
   FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
   std::ostringstream stm;
-  stm << path_ << "/" << setup_ << "." << setfill('0') << std::setw(8) << runNumber_
+  stm << setup_ << "." << setfill('0') << std::setw(8) << runNumber_
       << "." << stream_ << "." << sourceId_;
   filen_ = stm.str();
   FDEBUG(9) << "Streamer filename starts with = " << filen_ << endl;
@@ -306,7 +308,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       edm::LogWarning("testStorageManager") << "Output directory " << path_ 
             << " does not exist. Error=" << errno ;
     }
-    jc_->set_outfile(filen_, max, high, path_);
+    jc_->set_outfile(filen_, max, high, path_, mpath_);
   }
   catch(cms::Exception& e)
     {
@@ -1200,6 +1202,14 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << framecounter_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Events Received" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          *out << storedEvents_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
         if(pool_is_set_ == 1) 
         {
           *out << "<tr>" << endl;
@@ -1550,6 +1560,8 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<a href=\"" << url << "/" << urn << "/fusenderlist" << "\">" 
        << "FU Sender list web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
+  *out << "<a href=\"" << url << "/" << urn << "/streameroutput" << "\">" 
+       << "Streamer Output Status web page" << "</a>" << endl;
   /*
   *out << "<a href=\"" << url << "/" << urn << "/geteventdata" << "\">" 
        << "Get an event via a web page" << "</a>" << endl;
@@ -1620,6 +1632,102 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 
 // now for FU sender list statistics: put this in!
   *out << "fu sender table not done yet"                             << endl;
+
+  *out << "</body>"                                                  << endl;
+  *out << "</html>"                                                  << endl;
+}
+////////////////////////////// streamer file output web page ////////////////////////////
+void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  *out << "<html>"                                                   << endl;
+  *out << "<head>"                                                   << endl;
+  *out << "<link type=\"text/css\" rel=\"stylesheet\"";
+  *out << " href=\"/" <<  getApplicationDescriptor()->getURN()
+       << "/styles.css\"/>"                   << endl;
+  *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
+       << getApplicationDescriptor()->getInstance()
+       << "</title>"     << endl;
+    *out << "<table border=\"0\" width=\"100%\">"                      << endl;
+    *out << "<tr>"                                                     << endl;
+    *out << "  <td align=\"left\">"                                    << endl;
+    *out << "    <img"                                                 << endl;
+    *out << "     align=\"middle\""                                    << endl;
+    *out << "     src=\"/daq/evb/examples/fu/images/fu64x64.gif\""     << endl;
+    *out << "     alt=\"main\""                                        << endl;
+    *out << "     width=\"64\""                                        << endl;
+    *out << "     height=\"64\""                                       << endl;
+    *out << "     border=\"\"/>"                                       << endl;
+    *out << "    <b>"                                                  << endl;
+    *out << getApplicationDescriptor()->getClassName() << " instance "
+         << getApplicationDescriptor()->getInstance()                  << endl;
+    *out << "    </b>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "    <a href=\"/urn:xdaq-application:lid=3\">"             << endl;
+    *out << "      <img"                                               << endl;
+    *out << "       align=\"middle\""                                  << endl;
+    *out << "       src=\"/daq/xdaq/hyperdaq/images/HyperDAQ.jpg\""    << endl;
+    *out << "       alt=\"HyperDAQ\""                                  << endl;
+    *out << "       width=\"32\""                                      << endl;
+    *out << "       height=\"32\""                                      << endl;
+    *out << "       border=\"\"/>"                                     << endl;
+    *out << "    </a>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "  <td width=\"32\">"                                      << endl;
+    *out << "    <a href=\"/" << getApplicationDescriptor()->getURN()
+         << "/debug\">"                   << endl;
+    *out << "      <img"                                               << endl;
+    *out << "       align=\"middle\""                                  << endl;
+    *out << "       src=\"/daq/evb/bu/images/debug32x32.gif\""         << endl;
+    *out << "       alt=\"debug\""                                     << endl;
+    *out << "       width=\"32\""                                      << endl;
+    *out << "       height=\"32\""                                     << endl;
+    *out << "       border=\"\"/>"                                     << endl;
+    *out << "    </a>"                                                 << endl;
+    *out << "  </td>"                                                  << endl;
+    *out << "</tr>"                                                    << endl;
+    *out << "</table>"                                                 << endl;
+
+  *out << "<hr/>"                                                    << endl;
+
+    struct statfs64 buf;
+    int retVal = statfs64(path_.c_str(), &buf);
+    if(retVal!=0)
+      edm::LogWarning("OutServ") << "Could not stat output filesystem for path " << path_ << std::endl;
+
+    unsigned long btotal = 0;
+    unsigned long bfree = 0;
+    unsigned long blksize = 0;
+    if(retVal==0)
+    {
+      blksize = buf.f_bsize;
+      btotal = buf.f_blocks;
+      bfree  = buf.f_bfree;
+    }
+  *out << "<P>Current Path= " << path_                                   << endl;
+  *out << "<P>Current mailBoxPath= " << mpath_                           << endl;
+
+  *out << "<P>FileSystem status: " << setw(5) 
+       << (float(bfree)/float(btotal))*100. 
+       << "% free "                                                  << endl;
+  
+  // should first test if jc_ is valid
+      if(ser_prods_size_ != 0) {
+        boost::mutex::scoped_lock sl(halt_lock_);
+        if(jc_.use_count() != 0) {
+          std::list<std::string> files = jc_->get_filelist();
+          std::string currfile = jc_->get_currfile();
+
+          *out << "<P>#    name                             evt        size     " << endl;
+          for(list<string>::const_iterator it = files.begin();
+              it != files.end(); it++)
+              *out << "<P> " <<*it << endl;
+          *out << "<P>CurrentFile = " << currfile                            << endl;
+        }
+      }
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
