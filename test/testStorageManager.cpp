@@ -76,6 +76,9 @@
 
 #include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
 
+#include "IOPool/Streamer/interface/ConsRegMessage.h"
+#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
+
 #include "xcept/tools.h"
 
 #include "i2o/Method.h"
@@ -160,6 +163,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&testStorageManager::streamerOutputWebPage, "streameroutput");
   xgi::bind(this,&testStorageManager::eventdataWebPage, "geteventdata");
   xgi::bind(this,&testStorageManager::headerdataWebPage, "getregdata");
+  xgi::bind(this,&testStorageManager::consumerWebPage, "registerConsumer");
 
 
   eventcounter_ = 0;
@@ -190,6 +194,10 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   serialized_prods_[0] = '\0';
   oneinN_ = 10;
   ispace->fireItemAvailable("oneinN",&oneinN_);
+  maxESEventRate_ = 1.0;
+  ispace->fireItemAvailable("maxESEventRate",&maxESEventRate_);
+  vipConsumerQueueSize_ = 5;
+  ispace->fireItemAvailable("vipConsumerQueueSize",&vipConsumerQueueSize_);
 
  // for performance measurements
   samples_ = 100; // measurements every 25MB (about)
@@ -211,8 +219,6 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   ostringstream sourcename;
   sourcename << xmlClass_ << "_" << instance_;
   sourceId_ = sourcename.str();
-
-
 }
 
 testStorageManager::~testStorageManager()
@@ -289,6 +295,13 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
 
 // HEREHERE
   // the rethrows below need to be XDAQ exception types (JBK)
+
+  // 10-Aug-2006, KAB: ensure reasonable values for event server params
+  if (maxESEventRate_ < 0.0) maxESEventRate_ = 0.0;
+  xdata::Integer cutoff(1);
+  if (vipConsumerQueueSize_ < cutoff) vipConsumerQueueSize_ = cutoff;
+  //cout << "maxESEventRate = " << maxESEventRate_ << endl;
+  //cout << "vipConsumerQueueSize = " << vipConsumerQueueSize_ << endl;
 
   try {
     jc_.reset(new stor::JobController(sample_config,
@@ -1813,6 +1826,28 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+  // 10-Aug-2006, KAB: determine the consumer ID from the header request
+  // message, if it is available.
+  auto_ptr<char> httpPostData;
+  unsigned int consumerId = 0;
+  std::string lengthString = in->getenv("CONTENT_LENGTH");
+  unsigned long contentLength = std::atol(lengthString.c_str());
+  if (contentLength > 0) {
+    auto_ptr<char> msgBuf(new char[contentLength]);
+    in->read(msgBuf.get(), contentLength);
+    OtherMessageView requestMessage(msgBuf.get());
+    uint8 *bodyPtr = requestMessage.msgBody();
+    char_uint32 sentId;
+    for (unsigned int idx = 0; idx < sizeof(char_uint32); idx++) {
+      sentId[idx] = bodyPtr[idx];
+    }
+    consumerId = convert32(sentId);
+
+    // save the post data for use outside the "if" block scope in case it is
+    // useful later (it will still get deleted at the end of the method)
+    httpPostData = msgBuf;
+  }
+
   // Need to use the saved serialzied registry
   // should really serialize the one in jc_ JobController instance
   if(ser_prods_size_ == 0)
@@ -1835,8 +1870,42 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 // How to block if there is no header data
 // How to signal if not yet started, so there is no registry yet?
 }
+////////////////////////////// consumer registration web page ////////////////////////////
+void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string consumerName = "None provided";
+  std::string consumerPriority = "normal";
 
+  // read the consumer registration message from the http input stream
+  std::string lengthString = in->getenv("CONTENT_LENGTH");
+  unsigned long contentLength = std::atol(lengthString.c_str());
+  if (contentLength > 0) {
+    auto_ptr<char> msgBuf(new char[contentLength]);
+    in->read(msgBuf.get(), contentLength);
+    ConsRegRequestView requestMessage(msgBuf.get());
+    consumerName = requestMessage.getConsumerName();
+    consumerPriority = requestMessage.getConsumerPriority();
+  }
 
+  // create the local consumer interface and add it to the event server
+  boost::shared_ptr<ConsumerPipe> consPtr(new ConsumerPipe(consumerName, consumerPriority));
+  // eventServer->addConsumer(consPtr);
+
+  // create the registration reply message
+  const int BUFFER_SIZE = 100;
+  char msgBuff[BUFFER_SIZE];
+  ConsRegResponseBuilder responseMessage(msgBuff, BUFFER_SIZE,
+                                         0, consPtr->getConsumerId());
+
+  // send the response
+  int len = responseMessage.size();
+  for (int i=0; i<len; i++) mybuffer_[i]=msgBuff[i];
+
+  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+  out->write(mybuffer_,len);
+}
 
 
 /**

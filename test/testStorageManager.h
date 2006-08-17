@@ -120,6 +120,8 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void headerdataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void consumerWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
   
     stor::SMStateMachine *fsm_;
     edm::AssertHandler *ah_;
@@ -156,6 +158,8 @@ namespace stor {
     int  ser_prods_size_;
     xdata::Integer oneinN_; //place one in eveny oneinN_ into buffer
     char mybuffer_[7000000]; //temporary buffer instead of using stack
+    xdata::Double maxESEventRate_;
+    xdata::Integer vipConsumerQueueSize_;
 
     std::list<SMFUSenderList> smfusenders_;
     xdata::UnsignedLong connectedFUs_;
