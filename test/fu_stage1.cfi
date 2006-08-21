@@ -18,6 +18,8 @@ process TEST1 = {
                         int32 max_event_size = 7000000 int32 max_queue_depth = 5
                         #untracked int32 i2o_max_size = 262140
                         string DestinationName = "testStorageManager"
+                        bool use_compression = true
+                        int32 compression_level = 1
   }
 
 }
