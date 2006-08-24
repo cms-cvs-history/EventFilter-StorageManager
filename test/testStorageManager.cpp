@@ -278,7 +278,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     LOG4CPLUS_WARN(this->getApplicationLogger(),
 	           "Unrecognized streamerOnly option "
 		       << streamer_only_.toString() << " will use default false");
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
+    LOG4CPLUS_INFO(this->getApplicationLogger(),"Using Output Module");
     writeStreamerOnly_ = false;
   }
   smConfigString_ = my_config;
@@ -770,6 +770,7 @@ void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator 
   }
 }
 
+
 void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
   toolbox::mem::Reference *head)
 {
@@ -785,7 +786,6 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
   int totalsize2check = 0;
   // should check the size is correct before defining and filling array!!
   char* tempbuffer = new char[origsize];
-
   if(msg->numFrames > 1)
   {
     FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
@@ -871,7 +871,6 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
     // use available methods to check registry is a subset
     //edm::JobHeaderDecoder decoder;
     //std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(testmsg);
-    
     std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
 // HEREHEREHERE
 // put init message into queue if it is the first (see below)
