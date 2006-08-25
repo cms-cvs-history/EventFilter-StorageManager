@@ -1888,7 +1888,7 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   }
 
   // create the local consumer interface and add it to the event server
-  boost::shared_ptr<ConsumerPipe> consPtr(new ConsumerPipe(consumerName, consumerPriority));
+  //boost::shared_ptr<ConsumerPipe> consPtr(new ConsumerPipe(consumerName, consumerPriority));
   // eventServer->addConsumer(consPtr);
 
   // create the registration reply message
