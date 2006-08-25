@@ -158,7 +158,9 @@ namespace stor {
     int  ser_prods_size_;
     xdata::Integer oneinN_; //place one in eveny oneinN_ into buffer
     char mybuffer_[7000000]; //temporary buffer instead of using stack
-    xdata::Double maxESEventRate_;
+    xdata::Double maxESEventRate_;  // hertz
+    xdata::Integer activeConsumerTimeout_;  // seconds
+    xdata::Integer idleConsumerTimeout_;  // seconds
     xdata::Integer vipConsumerQueueSize_;
 
     std::list<SMFUSenderList> smfusenders_;

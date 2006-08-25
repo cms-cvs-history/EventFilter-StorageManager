@@ -194,8 +194,12 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   serialized_prods_[0] = '\0';
   oneinN_ = 10;
   ispace->fireItemAvailable("oneinN",&oneinN_);
-  maxESEventRate_ = 1.0;
+  maxESEventRate_ = 10.0;  // hertz
   ispace->fireItemAvailable("maxESEventRate",&maxESEventRate_);
+  activeConsumerTimeout_ = 300;  // seconds
+  ispace->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
+  idleConsumerTimeout_ = 600;  // seconds
+  ispace->fireItemAvailable("idleConsumerTimeout",&idleConsumerTimeout_);
   vipConsumerQueueSize_ = 5;
   ispace->fireItemAvailable("vipConsumerQueueSize",&vipConsumerQueueSize_);
 
@@ -305,7 +309,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
 
   try {
     jc_.reset(new stor::JobController(sample_config,
-                  my_config, &deleteSMBuffer));
+                                      my_config, &deleteSMBuffer));
     // added for Event Server
     int value_4oneinN(oneinN_);
     if(value_4oneinN <= 0) value_4oneinN = -1;
@@ -322,6 +326,10 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
             << " does not exist. Error=" << errno ;
     }
     jc_->set_outfile(filen_, max, high, path_, mpath_);
+
+    boost::shared_ptr<EventServer>
+      eventServer(new EventServer(value_4oneinN, maxESEventRate_));
+    jc_->setEventServer(eventServer);
   }
   catch(cms::Exception& e)
     {
@@ -1748,57 +1756,72 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  //char buffer[7000000]; // change me to a data member!!!!!
+  // default the message length to zero
   int len=0;
-  bool empty = true;
+
+  // 24-Aug-2006, KAB: determine the consumer ID from the event request
+  // message, if it is available.
+  unsigned int consumerId = 0;
+  std::string lengthString = in->getenv("CONTENT_LENGTH");
+  unsigned long contentLength = std::atol(lengthString.c_str());
+  if (contentLength > 0) {
+    auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
+    in->read(&(*bufPtr)[0], contentLength);
+    OtherMessageView requestMessage(&(*bufPtr)[0]);
+    if (requestMessage.code() == Header::EVENT_REQUEST)
+    {
+      uint8 *bodyPtr = requestMessage.msgBody();
+      consumerId = convert32(bodyPtr);
+    }
+  }
 
   // should first test if testStorageManager is in halted state
-
   if(ser_prods_size_ != 0) 
   {
+    if (consumerId == 0)
     {
       boost::mutex::scoped_lock sl(halt_lock_);
-      empty = jc_->isEmpty();
-    }
-
-    if(empty)
-    {// do what? For now return a zero length stream. Should return MsgCode NODATA
-      //len = 0;
-      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-      out->write(mybuffer_,len);
-    }
-    else
-    {
+      if (! (jc_->isEmpty()))
       {
-        boost::mutex::scoped_lock sl(halt_lock_);
-// HEREHERE
-/*
-        edm::EventMsg msg = jc_->pop_front();
-        edm::EventMsg em(&mybuffer_[0],msg.totalSize(),
-                         msg.getEventNumber(),msg.getRunNumber(),
-                         1,1);
-        char* pos = (char*)em.data();
-        int dsize = msg.getDataSize();
-        char* from=(char*)msg.data();
-*/
-        //EventMsgView msgView = evtsrv_area_.pop_front();
         EventMsgView msgView = jc_->pop_front();
         unsigned char* pos = (unsigned char*) &mybuffer_[0];
         unsigned char* from = msgView.startAddress();
         int dsize = msgView.size();
 
         copy(from,from+dsize,pos);
-        //len = msg.totalSize();
         len = dsize;
-// HEREHERE
         FDEBUG(10) << "sending event " << msgView.event() << std::endl;
       }
-
-      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-      out->write(mybuffer_,len);
     }
+    else
+    {
+      boost::shared_ptr<EventServer> eventServer;
+      if (jc_.get() != NULL)
+      {
+        eventServer = jc_->getEventServer();
+      }
+      if (eventServer.get() != NULL)
+      {
+        boost::shared_ptr< std::vector<char> > bufPtr =
+          eventServer->getEvent(consumerId);
+        if (bufPtr.get() != NULL)
+        {
+          EventMsgView msgView(&(*bufPtr)[0]);
+
+          unsigned char* pos = (unsigned char*) &mybuffer_[0];
+          unsigned char* from = msgView.startAddress();
+          int dsize = msgView.size();
+
+          copy(from,from+dsize,pos);
+          len = dsize;
+          FDEBUG(10) << "sending event " << msgView.event() << std::endl;
+        }
+      }
+    }
+
+    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+    out->write(mybuffer_,len);
   } // else send end of run as reponse
   else
   {
@@ -1827,24 +1850,23 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 {
   // 10-Aug-2006, KAB: determine the consumer ID from the header request
   // message, if it is available.
-  auto_ptr<char> httpPostData;
+  auto_ptr< vector<char> > httpPostData;
   unsigned int consumerId = 0;
   std::string lengthString = in->getenv("CONTENT_LENGTH");
   unsigned long contentLength = std::atol(lengthString.c_str());
   if (contentLength > 0) {
-    auto_ptr<char> msgBuf(new char[contentLength]);
-    in->read(msgBuf.get(), contentLength);
-    OtherMessageView requestMessage(msgBuf.get());
-    uint8 *bodyPtr = requestMessage.msgBody();
-    char_uint32 sentId;
-    for (unsigned int idx = 0; idx < sizeof(char_uint32); idx++) {
-      sentId[idx] = bodyPtr[idx];
+    auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
+    in->read(&(*bufPtr)[0], contentLength);
+    OtherMessageView requestMessage(&(*bufPtr)[0]);
+    if (requestMessage.code() == Header::HEADER_REQUEST)
+    {
+      uint8 *bodyPtr = requestMessage.msgBody();
+      consumerId = convert32(bodyPtr);
     }
-    consumerId = convert32(sentId);
 
     // save the post data for use outside the "if" block scope in case it is
     // useful later (it will still get deleted at the end of the method)
-    httpPostData = msgBuf;
+    httpPostData = bufPtr;
   }
 
   // Need to use the saved serialzied registry
@@ -1879,25 +1901,56 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   // read the consumer registration message from the http input stream
   std::string lengthString = in->getenv("CONTENT_LENGTH");
   unsigned long contentLength = std::atol(lengthString.c_str());
-  if (contentLength > 0) {
-    auto_ptr<char> msgBuf(new char[contentLength]);
-    in->read(msgBuf.get(), contentLength);
-    ConsRegRequestView requestMessage(msgBuf.get());
+  if (contentLength > 0)
+  {
+    auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
+    in->read(&(*bufPtr)[0], contentLength);
+    ConsRegRequestView requestMessage(&(*bufPtr)[0]);
     consumerName = requestMessage.getConsumerName();
     consumerPriority = requestMessage.getConsumerPriority();
   }
 
-  // create the local consumer interface and add it to the event server
-  //boost::shared_ptr<ConsumerPipe> consPtr(new ConsumerPipe(consumerName, consumerPriority));
-  // eventServer->addConsumer(consPtr);
-
-  // create the registration reply message
+  // create the buffer to hold the registration reply message
   const int BUFFER_SIZE = 100;
   char msgBuff[BUFFER_SIZE];
-  ConsRegResponseBuilder responseMessage(msgBuff, BUFFER_SIZE,
-                                         0, 0); //consPtr->getConsumerId());
+
+  // fetch the event server
+  // (it and/or the job controller may not have been created yet)
+  boost::shared_ptr<EventServer> eventServer;
+  if (jc_.get() != NULL)
+  {
+    eventServer = jc_->getEventServer();
+  }
+
+  // if no event server, tell the consumer that we're not ready
+  if (eventServer.get() == NULL)
+  {
+    // build the registration response into the message buffer
+    ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
+                                   ConsRegResponseBuilder::ES_NOT_READY, 0);
+    // debug message so that respMsg appears to be used
+    FDEBUG(20) << "Registration response size =  " <<
+      respMsg.size() << std::endl;
+  }
+  else
+  {
+    // create the local consumer interface and add it to the event server
+    boost::shared_ptr<ConsumerPipe>
+      consPtr(new ConsumerPipe(consumerName, consumerPriority,
+                               activeConsumerTimeout_.value_,
+                               idleConsumerTimeout_.value_));
+    eventServer->addConsumer(consPtr);
+
+    // build the registration response into the message buffer
+    ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
+                                   0, consPtr->getConsumerId());
+    // debug message so that respMsg appears to be used
+    FDEBUG(20) << "Registration response size =  " <<
+      respMsg.size() << std::endl;
+  }
 
   // send the response
+  ConsRegResponseView responseMessage(msgBuff);
   int len = responseMessage.size();
   for (int i=0; i<len; i++) mybuffer_[i]=msgBuff[i];
 
