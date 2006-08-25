@@ -1895,7 +1895,7 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   const int BUFFER_SIZE = 100;
   char msgBuff[BUFFER_SIZE];
   ConsRegResponseBuilder responseMessage(msgBuff, BUFFER_SIZE,
-                                         0, consPtr->getConsumerId());
+                                         0, 0); //consPtr->getConsumerId());
 
   // send the response
   int len = responseMessage.size();
