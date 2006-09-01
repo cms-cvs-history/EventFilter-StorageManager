@@ -200,8 +200,8 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
   idleConsumerTimeout_ = 600;  // seconds
   ispace->fireItemAvailable("idleConsumerTimeout",&idleConsumerTimeout_);
-  vipConsumerQueueSize_ = 5;
-  ispace->fireItemAvailable("vipConsumerQueueSize",&vipConsumerQueueSize_);
+  consumerQueueSize_ = 5;
+  ispace->fireItemAvailable("consumerQueueSize",&consumerQueueSize_);
 
  // for performance measurements
   samples_ = 100; // measurements every 25MB (about)
@@ -303,9 +303,9 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   // 10-Aug-2006, KAB: ensure reasonable values for event server params
   if (maxESEventRate_ < 0.0) maxESEventRate_ = 0.0;
   xdata::Integer cutoff(1);
-  if (vipConsumerQueueSize_ < cutoff) vipConsumerQueueSize_ = cutoff;
+  if (consumerQueueSize_ < cutoff) consumerQueueSize_ = cutoff;
   //cout << "maxESEventRate = " << maxESEventRate_ << endl;
-  //cout << "vipConsumerQueueSize = " << vipConsumerQueueSize_ << endl;
+  //cout << "consumerQueueSize = " << consumerQueueSize_ << endl;
 
   try {
     jc_.reset(new stor::JobController(sample_config,
@@ -1874,13 +1874,29 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   if(ser_prods_size_ == 0)
   { // not available yet - return zero length stream, should return MsgCode NOTREADY
     int len = 0;
-    //char buffer[2000000];
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
     out->write(mybuffer_,len);
   } else {
+
+    // 31-Aug-2006, KAB: overlay an INIT message view on the serialized
+    // products array so that we can initialize the consumer event selection
+    InitMsgView initView(serialized_prods_);
+    if (jc_.get() != NULL)
+    {
+      boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+      if (eventServer.get() != NULL)
+      {
+        boost::shared_ptr<ConsumerPipe> consPtr =
+          eventServer->getConsumer(consumerId);
+        if (consPtr.get() != NULL)
+        {
+          consPtr->initializeSelection(initView);
+        }
+      }
+    }
+
     int len = ser_prods_size_;
-    //char buffer[2000000];
     for (int i=0; i<len; i++) mybuffer_[i]=serialized_prods_[i];
 
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
@@ -1897,6 +1913,7 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 {
   std::string consumerName = "None provided";
   std::string consumerPriority = "normal";
+  std::string consumerRequest = "<>";
 
   // read the consumer registration message from the http input stream
   std::string lengthString = in->getenv("CONTENT_LENGTH");
@@ -1908,6 +1925,8 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
     ConsRegRequestView requestMessage(&(*bufPtr)[0]);
     consumerName = requestMessage.getConsumerName();
     consumerPriority = requestMessage.getConsumerPriority();
+    std::string reqString = requestMessage.getRequestParameterSet();
+    if (reqString.size() >= 2) consumerRequest = reqString;
   }
 
   // create the buffer to hold the registration reply message
@@ -1928,23 +1947,28 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
     // build the registration response into the message buffer
     ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
                                    ConsRegResponseBuilder::ES_NOT_READY, 0);
-    // debug message so that respMsg appears to be used
+    // debug message so that compiler thinks respMsg is used
     FDEBUG(20) << "Registration response size =  " <<
       respMsg.size() << std::endl;
   }
   else
   {
+    // construct a parameter set from the consumer request
+    boost::shared_ptr<edm::ParameterSet>
+      requestParamSet(new edm::ParameterSet(consumerRequest));
+
     // create the local consumer interface and add it to the event server
     boost::shared_ptr<ConsumerPipe>
       consPtr(new ConsumerPipe(consumerName, consumerPriority,
                                activeConsumerTimeout_.value_,
-                               idleConsumerTimeout_.value_));
+                               idleConsumerTimeout_.value_,
+                               requestParamSet));
     eventServer->addConsumer(consPtr);
 
     // build the registration response into the message buffer
     ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
                                    0, consPtr->getConsumerId());
-    // debug message so that respMsg appears to be used
+    // debug message so that compiler thinks respMsg is used
     FDEBUG(20) << "Registration response size =  " <<
       respMsg.size() << std::endl;
   }

@@ -161,7 +161,7 @@ namespace stor {
     xdata::Double maxESEventRate_;  // hertz
     xdata::Integer activeConsumerTimeout_;  // seconds
     xdata::Integer idleConsumerTimeout_;  // seconds
-    xdata::Integer vipConsumerQueueSize_;
+    xdata::Integer consumerQueueSize_;
 
     std::list<SMFUSenderList> smfusenders_;
     xdata::UnsignedLong connectedFUs_;
