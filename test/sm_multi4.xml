@@ -18,7 +18,7 @@
         <xc:Application class="evf::FUEventProcessor" id="21" instance="0" network="tcp1">
            <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
 
-                    <parameterSet xsi:type="xsd:string">file://uscms/home/cheung/work/xml/fu_stage1.cfi</parameterSet>
+                    <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1.cfi</parameterSet>
                   </properties>
 
                 </xc:Application>
@@ -31,9 +31,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cmssw/external/xdaq/XDAQ_3_5/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender two -->
@@ -57,9 +57,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cmssw/external/xdaq/XDAQ_3_5/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender three -->
@@ -83,9 +83,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cmssw/external/xdaq/XDAQ_3_5/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
     <!-- Declare a context that contain applcation -->
@@ -96,13 +96,13 @@
        <!-- Declare a SMSender application -->
        <xc:Application class="testStorageManager" id="29" instance="0" network="tcp1">
 <properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">
-                    <FUparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml/fu_stage1noout.cfi</FUparameterSet>
-                    <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml/sm_stage1noout.cfi</STparameterSet>
-                    <oneinN xsi:type="xsd:integer">10</oneinN>
+                    <FUparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1noout.cfi</FUparameterSet>
+                    <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1noout.cfi</STparameterSet>
+                    <oneinN xsi:type="xsd:integer">1</oneinN>
                     <runNumber xsi:type="xsd:unsignedLong">0</runNumber>
                     <streamerOnly xsi:type="xsd:string">true</streamerOnly>
                     <filePath xsi:type="xsd:string">/scratch2/cheung</filePath>
-                    <mailboxPath xsi:type="xsd:string">/scratch2/cheung</mailboxPath>
+                    <mailboxPath xsi:type="xsd:string">/scratch2/cheung/mbox</mailboxPath>
                     <setupLabel xsi:type="xsd:string">mtcc</setupLabel>
                     <streamLabel xsi:type="xsd:string">A</streamLabel>
                     <maxFileSize xsi:type="xsd:integer">1073741824</maxFileSize>
@@ -117,8 +117,8 @@
            </properties>
        </xc:Application>
 
-       <xc:Module>/uscmst1/prod/sw/cmssw/external/xdaq/XDAQ_3_5/slc3_ia32_gcc323/lib/linux/x86/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_0_9_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
        </xc:Context>
 
 </xc:Partition>
