@@ -1738,14 +1738,16 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
       if(ser_prods_size_ != 0) {
         boost::mutex::scoped_lock sl(halt_lock_);
         if(jc_.use_count() != 0) {
-          std::list<std::string> files = jc_->get_filelist();
-          std::string currfile = jc_->get_currfile();
+          std::list<std::string>& files = jc_->get_filelist();
+          std::list<std::string>& currfiles = jc_->get_currfiles();
 
           *out << "<P>#    name                             evt        size     " << endl;
           for(list<string>::const_iterator it = files.begin();
               it != files.end(); it++)
               *out << "<P> " <<*it << endl;
-          *out << "<P>CurrentFile = " << currfile                            << endl;
+          for(list<string>::const_iterator it = currfiles.begin();
+              it != files.end(); it++)
+              *out << "<P>CurrentFile = " <<*it << endl;
         }
       }
 
