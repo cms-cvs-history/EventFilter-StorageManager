@@ -12,7 +12,7 @@
 #   <use name=IOPool/Streamer>
 #  </library>
 
-  <bin file=StorageManagerRun.cpp>
+  <library file=StorageManagerRun.cpp>
    <use name=boost>
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
@@ -20,7 +20,7 @@
    <use name=EventFilter/StorageManager>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
-  </bin>
+  </library>
 
   <library file="SillyLockService.cc" name=SillyLockService>
    <flags SEAL_PLUGIN_NAME="SillyLockService">
