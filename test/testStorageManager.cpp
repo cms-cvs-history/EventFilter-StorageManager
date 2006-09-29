@@ -1746,7 +1746,7 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
               it != files.end(); it++)
               *out << "<P> " <<*it << endl;
           for(list<string>::const_iterator it = currfiles.begin();
-              it != files.end(); it++)
+              it != currfiles.end(); it++)
               *out << "<P>CurrentFile = " <<*it << endl;
         }
       }
