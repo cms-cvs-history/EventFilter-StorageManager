@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.2 2006/01/10 20:14:35 jbk Exp $
+ $Id: StorageManagerRun.cpp,v 1.3 2006/02/16 19:52:00 wmtan Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -23,6 +23,15 @@
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "PluginManager/PluginManager.h"
+
+#include "IOPool/Streamer/interface/StreamTranslator.h"
+#include "IOPool/Streamer/interface/StreamerInputFile.h"
+#include "IOPool/Streamer/interface/InitMessage.h"
+
+#include "DataFormats/Streamer/interface/StreamedProducts.h"
+
+#include "IOPool/Streamer/interface/ClassFiller.h"
+#include "DataFormats/Streamer/interface/StreamedProducts.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -94,10 +103,10 @@ class Main // : public xdaq::Application
 
  private:
   // disallow the following
-  Main(const Main&):jc_("","",deleteBuffer) { }
+  Main(const Main&):jc_(new stor::JobController("","",deleteBuffer)) { }
   Main& operator=(const Main&) { return *this; }
 
-  stor::JobController jc_;
+  stor::JobController* jc_;
   vector<string> names_;
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
   typedef vector<ReaderPtr> Readers;
@@ -106,7 +115,11 @@ class Main // : public xdaq::Application
 
 // ----------- implementation --------------
 
-Main::~Main() { }
+Main::~Main() { 
+ 
+   delete jc_;
+ 
+}
 
 #if 0
 Main::Main(xdaq::ApplicationStub* s)
@@ -118,25 +131,37 @@ Main::Main(xdaq::ApplicationStub* s)
 Main::Main(const string& fu_config_file,
 	   const string& my_config_file,
 	   const vector<string>& file_names):
-  /* use the other jc_ constructor in the real system (JBK) */
-  jc_(edm::getRegFromFile(file_names[0]),
-      getFileContents(my_config_file),
-      &deleteBuffer),
   names_(file_names)
 {
+  StreamerInputFile stream_reader(file_names[0]);
+  const InitMsgView* init =  stream_reader.startMessage();
+  std::auto_ptr<edm::SendJobHeader> header = edm::StreamTranslator::deserializeRegistry(*init);
+
+  edm::ProductRegistry pr;
+  const edm::SendDescs& descs = header->descs_;
+  edm::SendDescs::const_iterator i(descs.begin()), e(descs.end());
+  for(; i != e; ++i) {
+        pr.copyProduct(*i);
+        //FDEBUG(6) << "StreamInput prod = " << i->className() << endl;
+    }
+
+  jc_ = new stor::JobController(pr,
+      getFileContents(my_config_file),
+      &deleteBuffer);
+
   vector<string>::iterator it(names_.begin()),en(names_.end());
   for(;it!=en;++it)
     {
       ReaderPtr p(new edmtestp::TestFileReader(*it,
-					       jc_.getFragmentQueue(),
-					       jc_.products()));
+					       jc_->getFragmentQueue(),
+					       jc_->products()));
       readers_.push_back(p);
     }
 }
 
 int Main::run()
 {
-  jc_.start();
+  jc_->start();
 
   // start file readers
   Readers::iterator it(readers_.begin()),en(readers_.end());
@@ -150,8 +175,8 @@ int Main::run()
       (*it)->join();
     }
 
-  jc_.stop();
-  jc_.join();
+  jc_->stop();
+  jc_->join();
 
   return 0;
 }
@@ -187,6 +212,7 @@ int main(int argc, char* argv[])
     file_names.push_back(argv[i]);
 
   try {
+    edm::loadExtraClasses(); 
     Main m(fu_config_file,my_config_file,file_names);
     m.run();
   }
