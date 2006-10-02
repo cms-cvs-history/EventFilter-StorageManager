@@ -1,0 +1,19 @@
+<?xml version='1.0'?>
+<mon:profile xmlns:mon="http://xdaq.web.cern.ch/xdaq/xsd/2005/Monitor-10">
+  <mon:flashlists>
+    <mon:flash name="urn:xdaq-flashlist:sm-performance-online">
+      <mon:item name="class"          infospace="urn:xdaq-monitorable:smMonData" type="string"/>
+      <mon:item name="instance"       infospace="urn:xdaq-monitorable:smMonData" type="unsigned int 32"/>
+      <mon:item name="runNumber"      infospace="urn:xdaq-monitorable:smMonData" type="unsigned int 32"/>
+      <mon:item name="url"            infospace="urn:xdaq-monitorable:smMonData" type="string"/>
+      <mon:item name="storedEvents"   infospace="urn:xdaq-monitorable:smMonData" type="unsigned int 32"/>
+      <mon:item name="connectedFUs"   infospace="urn:xdaq-monitorable:smMonData" type="unsigned int 32"/>
+      <mon:item name="filePath"       infospace="urn:xdaq-monitorable:smMonData" type="string"/>
+    </mon:flash>
+  </mon:flashlists>
+  <mon:collectorsettings>
+    <mon:collect flashlist="urn:xdaq-flashlist:sm-performance-online"
+     mode="all" every="00:00:00:00:05" history="false" range="00:00:00:01:00"
+     persistent="false" file="/tmp/processInfo.txt" collect="true"/>
+  </mon:collectorsettings>
+</mon:profile>

@@ -46,7 +46,7 @@
 
 */
 
-// $Id:$
+// $Id: testStorageManager.cpp,v 1.32 2006/10/02 19:26:16 klute Exp $
 
 #include <exception>
 #include <iostream>
@@ -2017,26 +2017,66 @@ void testStorageManager::setupFlashList()
   url      += "/";
   url      += getApplicationDescriptor()->getURN();
   url_      = url;
-  nEventsWritten_ = 0;
 
   //----------------------------------------------------------------------------
   // Create/Retrieve an infospace which can be monitored
   xdata::InfoSpace *is =
     xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
 
-  // Publish monitor data in monitorable info space
-  is->fireItemAvailable("class",         &class_);
-  //is->fireItemAvailable("instance",      &instance_);
-  //is->fireItemAvailable("runNumber",     &runNumber_);
-  //is->fireItemAvailable("url",           &url_);
-  //is->fireItemAvailable("nEventsWritten",&nEventsWritten_);
+  // Publish monitor data in monitorable info space -- Head
+  is->fireItemAvailable("class",                &class_);
+  is->fireItemAvailable("instance",             &instance_);
+  is->fireItemAvailable("runNumber",            &runNumber_);
+  is->fireItemAvailable("url",                  &url_);
+  // Body
+  is->fireItemAvailable("STparameterSet",       &offConfig_);
+  is->fireItemAvailable("FUparameterSet",       &fuConfig_);
+  //is->fireItemAvailable("runNumber",            &runNumber_);
+  is->fireItemAvailable("stateName",            &fsm_->stateName_);
+  is->fireItemAvailable("connectedFUs",         &connectedFUs_);
+  is->fireItemAvailable("storedEvents",         &storedEvents_);
+  is->fireItemAvailable("streamerOnly",         &streamer_only_);
+  is->fireItemAvailable("filePath",             &filePath_);
+  is->fireItemAvailable("mailboxPath",          &mailboxPath_);
+  is->fireItemAvailable("setupLabel",           &setupLabel_);
+  is->fireItemAvailable("streamLabel",          &streamLabel_);
+  is->fireItemAvailable("maxFileSize",          &maxFileSize_);
+  is->fireItemAvailable("highWaterMark",        &highWaterMark_);
+  is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
+  is->fireItemAvailable("fileCatalog",          &fileCatalog_);
+  is->fireItemAvailable("oneinN",               &oneinN_);
+  is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
+  is->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
+  is->fireItemAvailable("idleConsumerTimeout",  &idleConsumerTimeout_);
+  is->fireItemAvailable("consumerQueueSize",    &consumerQueueSize_);
 
   // Attach listener to myCounter_ to detect retrieval event
-  is->addItemRetrieveListener("class",         this);
-  //is->addItemRetrieveListener("instance",      this);
-  //is->addItemRetrieveListener("runNumber",     this);
-  //is->addItemRetrieveListener("url",           this);
-  //is->addItemRetrieveListener("nEventsWritten",this);
+  is->addItemRetrieveListener("class",                this);
+  is->addItemRetrieveListener("instance",             this);
+  is->addItemRetrieveListener("runNumber",            this);
+  is->addItemRetrieveListener("url",                  this);
+  // Body
+  is->addItemRetrieveListener("STparameterSet",       this);
+  is->addItemRetrieveListener("FUparameterSet",       this);
+  //is->addItemRetrieveListener("runNumber",            this);
+  is->addItemRetrieveListener("stateName",            this);
+  is->addItemRetrieveListener("connectedFUs",         this);
+  is->addItemRetrieveListener("storedEvents",         this);
+  is->addItemRetrieveListener("streamerOnly",         this);
+  is->addItemRetrieveListener("filePath",             this);
+  is->addItemRetrieveListener("mailboxPath",          this);
+  is->addItemRetrieveListener("setupLabel",           this);
+  is->addItemRetrieveListener("streamLabel",          this);
+  is->addItemRetrieveListener("maxFileSize",          this);
+  is->addItemRetrieveListener("highWaterMark",        this);
+  is->addItemRetrieveListener("nLogicalDisk",         this);
+  is->addItemRetrieveListener("fileCatalog",          this);
+  is->addItemRetrieveListener("oneinN",               this);
+  is->addItemRetrieveListener("maxESEventRate",       this);
+  is->addItemRetrieveListener("activeConsumerTimeout",this);
+  is->addItemRetrieveListener("idleConsumerTimeout",  this);
+  is->addItemRetrieveListener("consumerQueueSize",    this);
+  
   //----------------------------------------------------------------------------
 }
 
@@ -2047,10 +2087,9 @@ void testStorageManager::actionPerformed(xdata::Event& e)
       xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
     is->lock();
     std::string item = dynamic_cast<xdata::ItemRetrieveEvent&>(e).itemName();
-
     // Only update those locations which are not always up to date
-    if (item == "nEventsWritten")
-      nEventsWritten_ = storedEvents_;
+    //if (item == "nEventsWritten")
+    //  nEventsWritten_ = storedEvents_;
     is->unlock();
   } 
 }

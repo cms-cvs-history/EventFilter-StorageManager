@@ -93,6 +93,17 @@
        <xc:Endpoint protocol="tcp" service="i2o"
           hostname="cmsroc2.fnal.gov" port="60000" network="tcp1"/>
 
+      <!--- Setting up the XDAQ monitor -->
+      <xc:Application class="Monitor" id="66"  network="local">
+        <properties xmlns="urn:xdaq-application:Monitor" xsi:type="soapenc:Struct">
+          <inprofile xsi:type="soapenc:Array" soapenc:arrayType="xsd:ur-type[1]">
+            <item xsi:type="xsd:string" soapenc:position="[0]">$CMSSW_BASE/src/EventFilter/StorageManager/test/sm.flash</item>
+          </inprofile>
+          <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
+        </properties>
+      </xc:Application>
+      <xc:Module>$XDAQ_ROOT/lib/libmonitor.so</xc:Module>
+
        <!-- Declare a SMSender application -->
        <xc:Application class="testStorageManager" id="29" instance="0" network="tcp1">
 <properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">

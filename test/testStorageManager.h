@@ -174,18 +174,18 @@ namespace stor {
     xdata::Integer consumerQueueSize_;
 
     std::list<SMFUSenderList> smfusenders_;
-    xdata::UnsignedLong connectedFUs_;
-    xdata::UnsignedLong storedEvents_;
+    xdata::UnsignedInteger32 connectedFUs_;
+    xdata::UnsignedInteger32 storedEvents_;
 
     // for performance measurements
     void addMeasurement(unsigned long size);
-    xdata::UnsignedLong samples_; //number of samples (frames) per measurement
+    xdata::UnsignedInteger32 samples_; //number of samples (frames) per measurement
     stor::SMPerformanceMeter *pmeter_;
     // measurements for last set of samples
     xdata::Double databw_;      // bandwidth in MB/s
     xdata::Double datarate_;    // number of frames/s
     xdata::Double datalatency_; // micro-seconds/frame
-    xdata::UnsignedLong totalsamples_; //number of samples (frames) per measurement
+    xdata::UnsignedInteger32 totalsamples_; //number of samples (frames) per measurement
     xdata::Double duration_;        // time for run in seconds
     xdata::Double meandatabw_;      // bandwidth in MB/s
     xdata::Double meandatarate_;    // number of frames/s
@@ -195,14 +195,12 @@ namespace stor {
     boost::mutex halt_lock_;
 
     //--------------------------------------------------------------------------
-    // Flashlist contents
+    // Additional flashlist contents
     //--------------------------------------------------------------------------
     // conventional header (runNumber_ already defined in RunBase.h)
     xdata::String            class_;
-    xdata::UnsignedLong      instance_;
+    xdata::UnsignedInteger32 instance_;
     xdata::String            url_;       
-    // monitor data interesting for SM specifically
-    xdata::UnsignedLong      nEventsWritten_;
 
   }; // end of class
 } // end of namespace stor
