@@ -295,7 +295,8 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   mpath_          = mailboxPath_.toString();
   setup_          = setupLabel_.toString();
   stream_         = streamLabel_.toString();
-  smFileCatalog_  = fileCatalog_.toString();
+  (fileCatalog_.toString()=="") ? 
+    smFileCatalog_ = "summaryCatalog.txt" : smFileCatalog_ = fileCatalog_.toString();
 
   FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
   std::ostringstream stm;
