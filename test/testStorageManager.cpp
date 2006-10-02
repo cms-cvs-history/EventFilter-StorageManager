@@ -46,6 +46,8 @@
 
 */
 
+// $Id:$
+
 #include <exception>
 #include <iostream>
 #include <string>
@@ -125,7 +127,8 @@ using namespace stor;
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
-  fsm_(0), ah_(0), writeStreamerOnly_(false), connectedFUs_(0), storedEvents_(0)
+				      fsm_(0), ah_(0), writeStreamerOnly_(false), 
+				      connectedFUs_(0), storedEvents_(0)
 {
   setupFlashList();
   
@@ -167,12 +170,12 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&testStorageManager::headerdataWebPage, "getregdata");
   xgi::bind(this,&testStorageManager::consumerWebPage, "registerConsumer");
 
-
   eventcounter_ = 0;
   framecounter_ = 0;
-  pool_is_set_ = 0;
-  pool_ = 0;
+  pool_is_set_  = 0;
+  pool_         = 0;
   nLogicalDisk_ = 0;
+  fileCatalog_  = "summaryCatalog.txt";
 
 // Variables needed for streamer file writing
 // should be getting these from SM config file - put them in xml for now
@@ -295,8 +298,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   mpath_          = mailboxPath_.toString();
   setup_          = setupLabel_.toString();
   stream_         = streamLabel_.toString();
-  (fileCatalog_.toString()=="") ? 
-    smFileCatalog_ = "summaryCatalog.txt" : smFileCatalog_ = fileCatalog_.toString();
+  smFileCatalog_  = fileCatalog_.toString();
 
   FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
   std::ostringstream stm;
