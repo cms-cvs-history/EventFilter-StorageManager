@@ -127,6 +127,8 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception): xdaq::Application(s),
   fsm_(0), ah_(0), writeStreamerOnly_(false), connectedFUs_(0), storedEvents_(0)
 {
+  setupFlashList();
+  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
   ah_ = new edm::AssertHandler();
@@ -170,6 +172,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   framecounter_ = 0;
   pool_is_set_ = 0;
   pool_ = 0;
+  nLogicalDisk_ = 0;
 
 // Variables needed for streamer file writing
 // should be getting these from SM config file - put them in xml for now
@@ -181,7 +184,9 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("streamLabel",&streamLabel_);
   ispace->fireItemAvailable("maxFileSize",&maxFileSize_);
   ispace->fireItemAvailable("highWaterMark",&highWaterMark_);
-  // default only here - actually set configureAction if defined in XML file
+  ispace->fireItemAvailable("nLogicalDisk",  &nLogicalDisk_);
+  ispace->fireItemAvailable("fileCatalog",   &fileCatalog_);
+// default only here - actually set configureAction if defined in XML file
   path_ = "./";
   mpath_ = "./"; //mailbox path
   setup_ = "cms";
@@ -218,10 +223,10 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   maxdatabw_ = 0.;
   mindatabw_ = 999999.;
 
-  string xmlClass_ = getApplicationDescriptor()->getClassName();
-  unsigned long instance_ = getApplicationDescriptor()->getInstance();
+  string        xmlClass = getApplicationDescriptor()->getClassName();
+  unsigned long instance = getApplicationDescriptor()->getInstance();
   ostringstream sourcename;
-  sourcename << xmlClass_ << "_" << instance_;
+  sourcename << xmlClass << "_" << instance;
   sourceId_ = sourcename.str();
 }
 
@@ -286,10 +291,12 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     writeStreamerOnly_ = false;
   }
   smConfigString_ = my_config;
-  path_ = filePath_.toString();
-  mpath_ = mailboxPath_.toString();
-  setup_ = setupLabel_.toString();
-  stream_ = streamLabel_.toString();
+  path_           = filePath_.toString();
+  mpath_          = mailboxPath_.toString();
+  setup_          = setupLabel_.toString();
+  stream_         = streamLabel_.toString();
+  smFileCatalog_  = fileCatalog_.toString();
+
   FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
   std::ostringstream stm;
   stm << setup_ << "." << setfill('0') << std::setw(8) << runNumber_
@@ -301,9 +308,12 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   // the rethrows below need to be XDAQ exception types (JBK)
 
   // 10-Aug-2006, KAB: ensure reasonable values for event server params
-  if (maxESEventRate_ < 0.0) maxESEventRate_ = 0.0;
+  if (maxESEventRate_ < 0.0)
+    maxESEventRate_ = 0.0;
+
   xdata::Integer cutoff(1);
-  if (consumerQueueSize_ < cutoff) consumerQueueSize_ = cutoff;
+  if (consumerQueueSize_ < cutoff)
+    consumerQueueSize_ = cutoff;
   //cout << "maxESEventRate = " << maxESEventRate_ << endl;
   //cout << "consumerQueueSize = " << consumerQueueSize_ << endl;
 
@@ -312,6 +322,8 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
                                       my_config, &deleteSMBuffer));
     // added for Event Server
     int value_4oneinN(oneinN_);
+    int disks(nLogicalDisk_);
+
     if(value_4oneinN <= 0) value_4oneinN = -1;
     jc_->set_oneinN(value_4oneinN);
     jc_->set_outoption(writeStreamerOnly_);
@@ -325,7 +337,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       edm::LogWarning("testStorageManager") << "Output directory " << path_ 
             << " does not exist. Error=" << errno ;
     }
-    jc_->set_outfile(filen_, max, high, path_, mpath_);
+    jc_->set_outfile(filen_, max, high, path_, mpath_, smFileCatalog_, disks);
 
     boost::shared_ptr<EventServer>
       eventServer(new EventServer(value_4oneinN, maxESEventRate_));
@@ -442,7 +454,7 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
-   pool_is_set_ = 1;
+    pool_is_set_ = 1;
   }
 
   I2O_MESSAGE_FRAME         *stdMsg =
@@ -1985,6 +1997,60 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   out->write(mybuffer_,len);
 }
 
+//------------------------------------------------------------------------------
+// Everything that has to do with the flash list goes here
+// 
+// - setupFlashList()  - to setup the variables and inistialize them
+// - actionPerformed(xdata::Event& e)  - to update the values in the flash list
+//------------------------------------------------------------------------------
+void testStorageManager::setupFlashList()
+{
+  //----------------------------------------------------------------------------
+  // Setup the header variables
+  class_    = getApplicationDescriptor()->getClassName();
+  instance_ = getApplicationDescriptor()->getInstance();
+  std::string url;
+  url       = getApplicationDescriptor()->getContextDescriptor()->getURL();
+  url      += "/";
+  url      += getApplicationDescriptor()->getURN();
+  url_      = url;
+  nEventsWritten_ = 0;
+
+  //----------------------------------------------------------------------------
+  // Create/Retrieve an infospace which can be monitored
+  xdata::InfoSpace *is =
+    xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
+
+  // Publish monitor data in monitorable info space
+  is->fireItemAvailable("class",         &class_);
+  //is->fireItemAvailable("instance",      &instance_);
+  //is->fireItemAvailable("runNumber",     &runNumber_);
+  //is->fireItemAvailable("url",           &url_);
+  //is->fireItemAvailable("nEventsWritten",&nEventsWritten_);
+
+  // Attach listener to myCounter_ to detect retrieval event
+  is->addItemRetrieveListener("class",         this);
+  //is->addItemRetrieveListener("instance",      this);
+  //is->addItemRetrieveListener("runNumber",     this);
+  //is->addItemRetrieveListener("url",           this);
+  //is->addItemRetrieveListener("nEventsWritten",this);
+  //----------------------------------------------------------------------------
+}
+
+void testStorageManager::actionPerformed(xdata::Event& e)  
+{
+  if (e.type() == "ItemRetrieveEvent") {
+    xdata::InfoSpace *is =
+      xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
+    is->lock();
+    std::string item = dynamic_cast<xdata::ItemRetrieveEvent&>(e).itemName();
+
+    // Only update those locations which are not always up to date
+    if (item == "nEventsWritten")
+      nEventsWritten_ = storedEvents_;
+    is->unlock();
+  } 
+}
 
 /**
  * Provides factory method for the instantiation of SM applications
@@ -1995,4 +2061,3 @@ extern "C" xdaq::Application * instantiate_testStorageManager(xdaq::ApplicationS
         std::cout << "Going to construct a testStorageManager instance " << std::endl;
         return new stor::testStorageManager(stub);
 }
-

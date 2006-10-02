@@ -39,6 +39,8 @@
 #include "xdaq/ApplicationContext.h"
 
 #include "toolbox/mem/Reference.h"
+#include "xdata/String.h"
+#include "xdata/UnsignedInteger32.h"
 #include "xdata/UnsignedLong.h"
 #include "xdata/Integer.h"
 #include "xdata/Double.h"
@@ -60,7 +62,8 @@
 
 namespace stor {
 
-  class testStorageManager: public xdaq::Application, public evf::RunBase
+  class testStorageManager: public xdaq::Application, xdata::ActionListener,
+                            public evf::RunBase
   {
    public:
     //XDAQ_INSTANTIATOR();
@@ -74,6 +77,9 @@ namespace stor {
     xoap::MessageReference ParameterGet(xoap::MessageReference message)
     throw (xoap::exception::Exception);
 
+    // Anything to do with the flash list
+    void setupFlashList();
+    void actionPerformed(xdata::Event& e);
   
    private:
     void configureAction(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
@@ -140,12 +146,16 @@ namespace stor {
     xdata::String streamLabel_;
     xdata::Integer maxFileSize_;
     xdata::Double highWaterMark_;
+    xdata::Integer   nLogicalDisk_;
+    xdata::String    fileCatalog_;
+
     std::string smConfigString_;
     std::string path_;
     std::string mpath_; //mailbox path
     std::string setup_;
     std::string stream_;
     std::string filen_;
+    std::string      smFileCatalog_;
 
     evf::Css css_;
     unsigned long eventcounter_;
@@ -183,6 +193,17 @@ namespace stor {
     xdata::Double maxdatabw_;       // maximum bandwidth in MB/s
     xdata::Double mindatabw_;       // minimum bandwidth in MB/s
     boost::mutex halt_lock_;
+
+    //--------------------------------------------------------------------------
+    // Flashlist contents
+    //--------------------------------------------------------------------------
+    // conventional header (runNumber_ already defined in RunBase.h)
+    xdata::String            class_;
+    xdata::UnsignedLong      instance_;
+    xdata::String            url_;       
+    // monitor data interesting for SM specifically
+    xdata::UnsignedLong      nEventsWritten_;
+
   }; // end of class
 } // end of namespace stor
 #endif
