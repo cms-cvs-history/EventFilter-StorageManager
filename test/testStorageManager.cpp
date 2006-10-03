@@ -46,7 +46,7 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.33 2006/10/02 19:59:25 paus Exp $
+// $Id: testStorageManager.cpp,v 1.34 2006/10/03 07:00:47 hcheung Exp $
 
 #include <exception>
 #include <iostream>
@@ -1731,7 +1731,7 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     struct statfs64 buf;
     int retVal = statfs64(path_.c_str(), &buf);
     if(retVal!=0)
-      edm::LogWarning("OutServ") << "Could not stat output filesystem for path " << path_ << std::endl;
+      edm::LogWarning("testStorageManager") << "Could not stat output filesystem for path " << path_ << std::endl;
 
     unsigned long btotal = 0;
     unsigned long bfree = 0;
