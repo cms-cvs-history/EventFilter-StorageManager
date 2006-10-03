@@ -27,13 +27,13 @@
        <xc:Application class="PeerTransportTCP" id="30" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
               <autoSize xsi:type="xsd:boolean">true</autoSize>
-              <maxPacketSize xsi:type="xsd:unsignedLong">262144</maxPacketSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender two -->
@@ -44,7 +44,7 @@
         <xc:Application class="evf::FUEventProcessor" id="121" instance="0" network="tcp1">
            <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
 
-                    <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml/fu_stage1_fu2.cfi</parameterSet>
+                    <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1_fu2.cfi</parameterSet>
                   </properties>
 
                 </xc:Application>
@@ -53,13 +53,13 @@
        <xc:Application class="PeerTransportTCP" id="130" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
               <autoSize xsi:type="xsd:boolean">true</autoSize>
-              <maxPacketSize xsi:type="xsd:unsignedLong">262144</maxPacketSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender three -->
@@ -70,7 +70,7 @@
         <xc:Application class="evf::FUEventProcessor" id="221" instance="0" network="tcp1">
            <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
 
-                    <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml/fu_stage1_fu3.cfi</parameterSet>
+                    <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1_fu3.cfi</parameterSet>
                   </properties>
 
                 </xc:Application>
@@ -79,13 +79,13 @@
        <xc:Application class="PeerTransportTCP" id="230" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
               <autoSize xsi:type="xsd:boolean">true</autoSize>
-              <maxPacketSize xsi:type="xsd:unsignedLong">262144</maxPacketSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
     <!-- Declare a context that contain applcation -->
@@ -108,9 +108,9 @@
        <xc:Application class="testStorageManager" id="29" instance="0" network="tcp1">
 <properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">
                     <FUparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1noout.cfi</FUparameterSet>
-                    <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1noout.cfi</STparameterSet>
+                    <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
                     <oneinN xsi:type="xsd:integer">1</oneinN>
-                    <runNumber xsi:type="xsd:unsignedLong">0</runNumber>
+                    <runNumber xsi:type="xsd:unsignedInt">0</runNumber>
                     <streamerOnly xsi:type="xsd:string">true</streamerOnly>
                     <filePath xsi:type="xsd:string">/scratch2/cheung</filePath>
                     <mailboxPath xsi:type="xsd:string">/scratch2/cheung/mbox</mailboxPath>
@@ -124,12 +124,12 @@
        <xc:Application class="PeerTransportTCP" id="31" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
               <autoSize xsi:type="xsd:boolean">true</autoSize>
-              <maxPacketSize xsi:type="xsd:unsignedLong">262144</maxPacketSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
            </properties>
        </xc:Application>
 
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.5/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_1_1_0_pre1/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
+       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
+       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManagertestStorageManager.so</xc:Module>
        </xc:Context>
 
 </xc:Partition>
