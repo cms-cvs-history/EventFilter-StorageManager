@@ -46,7 +46,7 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.32 2006/10/02 19:26:16 klute Exp $
+// $Id: testStorageManager.cpp,v 1.33 2006/10/02 19:59:25 paus Exp $
 
 #include <exception>
 #include <iostream>
@@ -340,7 +340,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       edm::LogWarning("testStorageManager") << "Output directory " << path_ 
             << " does not exist. Error=" << errno ;
     }
-    jc_->set_outfile(filen_, max, high, path_, mpath_, smFileCatalog_, disks);
+    jc_->set_outfile(filen_, runNumber_, max, high, path_, mpath_, smFileCatalog_, disks);
 
     boost::shared_ptr<EventServer>
       eventServer(new EventServer(value_4oneinN, maxESEventRate_));
@@ -1756,10 +1756,13 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
           std::list<std::string>& files = jc_->get_filelist();
           std::list<std::string>& currfiles = jc_->get_currfiles();
 
-          *out << "<P>#    name                             evt        size     " << endl;
-          for(list<string>::const_iterator it = files.begin();
-              it != files.end(); it++)
-              *out << "<P> " <<*it << endl;
+          if(files.size() > 0 )
+          {
+            *out << "<P>#    name                             evt        size     " << endl;
+            for(list<string>::const_iterator it = files.begin();
+                it != files.end(); it++)
+                *out << "<P> " <<*it << endl;
+          }
           for(list<string>::const_iterator it = currfiles.begin();
               it != currfiles.end(); it++)
               *out << "<P>CurrentFile = " <<*it << endl;
