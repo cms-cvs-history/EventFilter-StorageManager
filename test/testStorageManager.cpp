@@ -46,7 +46,6 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.34 2006/10/03 07:00:47 hcheung Exp $
 
 #include <exception>
 #include <iostream>
@@ -340,7 +339,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       edm::LogWarning("testStorageManager") << "Output directory " << path_ 
             << " does not exist. Error=" << errno ;
     }
-    jc_->set_outfile(filen_, runNumber_, max, high, path_, mpath_, smFileCatalog_, disks);
+    jc_->set_outfile(sourceId_, runNumber_, max, high, path_, mpath_, smFileCatalog_, disks);
 
     boost::shared_ptr<EventServer>
       eventServer(new EventServer(value_4oneinN, maxESEventRate_));
