@@ -125,9 +125,10 @@ static void deleteSMBuffer(void* Ref)
 using namespace stor;
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
-  throw (xdaq::exception::Exception): xdaq::Application(s),
-				      fsm_(0), ah_(0), writeStreamerOnly_(false), 
-				      connectedFUs_(0), storedEvents_(0)
+  throw (xdaq::exception::Exception) :
+  xdaq::Application(s),
+  fsm_(0), ah_(0), writeStreamerOnly_(false), 
+  connectedFUs_(0), storedEvents_(0)
 {
   setupFlashList();
   
@@ -137,14 +138,14 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   fsm_ = new stor::SMStateMachine(getApplicationLogger());
   fsm_->init<testStorageManager>(this);
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
+
   // default configuration
   ispace->fireItemAvailable("STparameterSet",&offConfig_);
   ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
-  ispace->fireItemAvailable("runNumber",&runNumber_);
-  ispace->fireItemAvailable("stateName",&fsm_->stateName_);
-
-  ispace->fireItemAvailable("connectedFUs",&connectedFUs_);
-  ispace->fireItemAvailable("storedEvents",&storedEvents_);
+  ispace->fireItemAvailable("runNumber",     &runNumber_);
+  ispace->fireItemAvailable("stateName",     &fsm_->stateName_);
+  ispace->fireItemAvailable("connectedFUs",  &connectedFUs_);
+  ispace->fireItemAvailable("storedEvents",  &storedEvents_);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -161,39 +162,39 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
             XDAQ_ORGANIZATION_ID);
 
   // Bind web interface
-  xgi::bind(this,&testStorageManager::defaultWebPage, "Default");
-  xgi::bind(this,&testStorageManager::css, "styles.css");
-  xgi::bind(this,&testStorageManager::fusenderWebPage, "fusenderlist");
-  xgi::bind(this,&testStorageManager::streamerOutputWebPage, "streameroutput");
-  xgi::bind(this,&testStorageManager::eventdataWebPage, "geteventdata");
-  xgi::bind(this,&testStorageManager::headerdataWebPage, "getregdata");
-  xgi::bind(this,&testStorageManager::consumerWebPage, "registerConsumer");
+  xgi::bind(this,&testStorageManager::defaultWebPage,       "Default");
+  xgi::bind(this,&testStorageManager::css,                  "styles.css");
+  xgi::bind(this,&testStorageManager::fusenderWebPage,      "fusenderlist");
+  xgi::bind(this,&testStorageManager::streamerOutputWebPage,"streameroutput");
+  xgi::bind(this,&testStorageManager::eventdataWebPage,     "geteventdata");
+  xgi::bind(this,&testStorageManager::headerdataWebPage,    "getregdata");
+  xgi::bind(this,&testStorageManager::consumerWebPage,      "registerConsumer");
 
-  eventcounter_ = 0;
-  framecounter_ = 0;
-  pool_is_set_  = 0;
-  pool_         = 0;
-  nLogicalDisk_ = 0;
-  fileCatalog_  = "summaryCatalog.txt";
+  receivedFrames_ = 0;
+  pool_is_set_    = 0;
+  pool_           = 0;
+  nLogicalDisk_   = 0;
+  fileCatalog_    = "summaryCatalog.txt";
 
-// Variables needed for streamer file writing
-// should be getting these from SM config file - put them in xml for now
-// until we do it in StreamerOutputService ctor
-  ispace->fireItemAvailable("streamerOnly",&streamer_only_);
-  ispace->fireItemAvailable("filePath",&filePath_);
-  ispace->fireItemAvailable("mailboxPath",&mailboxPath_);
-  ispace->fireItemAvailable("setupLabel",&setupLabel_);
-  ispace->fireItemAvailable("streamLabel",&streamLabel_);
-  ispace->fireItemAvailable("maxFileSize",&maxFileSize_);
+  // Variables needed for streamer file writing
+  // should be getting these from SM config file - put them in xml for now
+  // until we do it in StreamerOutputService ctor
+  ispace->fireItemAvailable("streamerOnly", &streamer_only_);
+  ispace->fireItemAvailable("filePath",     &filePath_);
+  ispace->fireItemAvailable("mailboxPath",  &mailboxPath_);
+  ispace->fireItemAvailable("setupLabel",   &setupLabel_);
+  ispace->fireItemAvailable("streamLabel",  &streamLabel_);
+  ispace->fireItemAvailable("maxFileSize",  &maxFileSize_);
   ispace->fireItemAvailable("highWaterMark",&highWaterMark_);
-  ispace->fireItemAvailable("nLogicalDisk",  &nLogicalDisk_);
-  ispace->fireItemAvailable("fileCatalog",   &fileCatalog_);
-// default only here - actually set configureAction if defined in XML file
-  path_ = "./";
-  mpath_ = "./"; //mailbox path
-  setup_ = "cms";
-  stream_ = "main";
-  maxFileSize_ = 1073741824;
+  ispace->fireItemAvailable("nLogicalDisk", &nLogicalDisk_);
+  ispace->fireItemAvailable("fileCatalog",  &fileCatalog_);
+
+  // default only here - actually set configureAction if defined in XML file
+  path_          = "./";
+  mpath_         = "./"; //mailbox path
+  setup_         = "cms";
+  stream_        = "main";
+  maxFileSize_   = 1073741824;
   highWaterMark_ = 0.9;
 
   // added for Event Server
@@ -210,20 +211,21 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   consumerQueueSize_ = 5;
   ispace->fireItemAvailable("consumerQueueSize",&consumerQueueSize_);
 
- // for performance measurements
-  samples_ = 100; // measurements every 25MB (about)
-  databw_ = 0.;
-  datarate_ = 0.;
-  datalatency_ = 0.;
-  totalsamples_ = 0;
-  duration_ = 0.;
-  meandatabw_ = 0.;
-  meandatarate_ = 0.;
-  meandatalatency_ = 0.;
+  // for performance measurements
+  samples_          = 100; // measurements every 25MB (about)
+  instantBandwidth_ = 0.;
+  instantRate_      = 0.;
+  instantLatency_   = 0.;
+  totalSamples_     = 0;
+  duration_         = 0.;
+  meanBandwidth_    = 0.;
+  meanRate_         = 0.;
+  meanLatency_      = 0.;
+  maxBandwidth_     = 0.;
+  minBandwidth_     = 999999.;
+
   pmeter_ = new stor::SMPerformanceMeter();
   pmeter_->init(samples_);
-  maxdatabw_ = 0.;
-  mindatabw_ = 999999.;
 
   string        xmlClass = getApplicationDescriptor()->getClassName();
   unsigned long instance = getApplicationDescriptor()->getInstance();
@@ -239,11 +241,14 @@ testStorageManager::~testStorageManager()
   delete pmeter_;
 }
 
-xoap::MessageReference testStorageManager::ParameterGet(xoap::MessageReference message)	throw (xoap::exception::Exception)
+xoap::MessageReference
+testStorageManager::ParameterGet(xoap::MessageReference message)
+  throw (xoap::exception::Exception)
 {
   connectedFUs_.value_ = smfusenders_.size();
   return Application::ParameterGet(message);
 }
+
 #include "FWCore/ServiceRegistry/interface/ServiceToken.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -423,7 +428,8 @@ void testStorageManager::nullAction(toolbox::Event::Reference e)
                     "Null action invoked");
 }
 
-xoap::MessageReference testStorageManager::fireEvent(xoap::MessageReference msg)
+xoap::MessageReference
+testStorageManager::fireEvent(xoap::MessageReference msg)
   throw (xoap::exception::Exception)
 {
   xoap::SOAPPart     part      = msg->getSOAPPart();
@@ -471,7 +477,7 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   //std::string temp4print(msg->dataPtr(),msg->dataSize);
   //FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
   
-  framecounter_++;
+  receivedFrames_++;
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
@@ -550,7 +556,7 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                   thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, thismsg->eventID);
          b.commit(sizeof(stor::FragEntry));
 //HEREHERE
-         framecounter_++;
+         receivedFrames_++;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
@@ -582,7 +588,7 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     b.commit(sizeof(stor::FragEntry));
 //HEREHERE
     // Frame release is done in the deleter.
-    framecounter_++;
+    receivedFrames_++;
     // for bandwidth performance measurements
     // Following is wrong for the last frame because frame sent is
     // is actually larger than the size taken by actual data
@@ -627,12 +633,13 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
   // release the frame buffer now that we are finished
   ref->release();
 
-  framecounter_++;
+  receivedFrames_++;
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_OTHER_MESSAGE_FRAME);
   addMeasurement(actualFrameSize);
 }
+
 ////////////////////////////// Tracking FU Sender Status  //////////////////
 void stor::testStorageManager::registerFUSender(const char* hltURL,
   const char* hltClassName, const unsigned long hltLocalId,
@@ -1139,16 +1146,22 @@ void testStorageManager::addMeasurement(unsigned long size)
     //  toolbox::toString("latency:  %f, rate: %f,bandwidth %f, size: %d\n",
     //  pmeter_->latency(),pmeter_->rate(),pmeter_->bandwidth(),size));
     // new measurement; so update
-    databw_ = pmeter_->bandwidth();
-    datarate_ = pmeter_->rate();
-    datalatency_ = pmeter_->latency();
-    totalsamples_ = pmeter_->totalsamples();
-    duration_ = pmeter_->duration();
-    meandatabw_ = pmeter_->meanbandwidth();
-    meandatarate_ = pmeter_->meanrate();
-    meandatalatency_ = pmeter_->meanlatency();
-    if(databw_ > maxdatabw_) maxdatabw_ = databw_;
-    if(databw_ < mindatabw_) mindatabw_ = databw_;
+
+    // Copy measurements for our record
+    instantBandwidth_ = pmeter_->bandwidth();
+    instantRate_      = pmeter_->rate();
+    instantLatency_   = pmeter_->latency();
+    totalSamples_     = pmeter_->totalsamples();
+    duration_         = pmeter_->duration();
+    meanBandwidth_    = pmeter_->meanbandwidth();
+    meanRate_         = pmeter_->meanrate();
+    meanLatency_      = pmeter_->meanlatency();
+
+    // Determine minimum and maximum instantaneous bandwidth
+    if (instantBandwidth_ > maxBandwidth_)
+      maxBandwidth_ = instantBandwidth_;
+    if (instantBandwidth_ < minBandwidth_)
+      minBandwidth_ = instantBandwidth_;
   }
 }
 
@@ -1233,7 +1246,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Frames Received" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << framecounter_ << endl;
+          *out << receivedFrames_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1272,7 +1285,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << databw_ << endl;
+          *out << instantBandwidth_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1280,7 +1293,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Rate (Frames/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << datarate_ << endl;
+          *out << instantRate_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1288,7 +1301,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Latency (us/frame)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << datalatency_ << endl;
+          *out << instantLatency_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1296,7 +1309,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Maximum Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << maxdatabw_ << endl;
+          *out << maxBandwidth_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1304,13 +1317,13 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Minimum Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << mindatabw_ << endl;
+          *out << minBandwidth_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 // mean performance statistics for whole run
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Mean Performance for " << totalsamples_ << " frames, duration "
+    *out << "      " << "Mean Performance for " << totalSamples_ << " frames, duration "
          << duration_ << " seconds" << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
@@ -1319,7 +1332,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << meandatabw_ << endl;
+          *out << meanBandwidth_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1327,7 +1340,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Rate (Frames/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << meandatarate_ << endl;
+          *out << meanRate_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1335,7 +1348,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Latency (us/frame)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << meandatalatency_ << endl;
+          *out << meanLatency_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 // Event Server Statistics
@@ -1771,7 +1784,7 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
 }
-////////////////////////////// get event data web page ////////////////////////////
+/////////////////////////// get event data web page //////////////////////////
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -2005,13 +2018,14 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 //------------------------------------------------------------------------------
 // Everything that has to do with the flash list goes here
 // 
-// - setupFlashList()  - to setup the variables and inistialize them
-// - actionPerformed(xdata::Event& e)  - to update the values in the flash list
+// - setupFlashList()                  - setup variables and initialize them
+// - actionPerformed(xdata::Event &e)  - update values in flash list
 //------------------------------------------------------------------------------
 void testStorageManager::setupFlashList()
 {
   //----------------------------------------------------------------------------
   // Setup the header variables
+  //----------------------------------------------------------------------------
   class_    = getApplicationDescriptor()->getClassName();
   instance_ = getApplicationDescriptor()->getInstance();
   std::string url;
@@ -2022,21 +2036,35 @@ void testStorageManager::setupFlashList()
 
   //----------------------------------------------------------------------------
   // Create/Retrieve an infospace which can be monitored
+  //----------------------------------------------------------------------------
   xdata::InfoSpace *is =
     xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
 
+  //----------------------------------------------------------------------------
   // Publish monitor data in monitorable info space -- Head
+  //----------------------------------------------------------------------------
   is->fireItemAvailable("class",                &class_);
   is->fireItemAvailable("instance",             &instance_);
   is->fireItemAvailable("runNumber",            &runNumber_);
   is->fireItemAvailable("url",                  &url_);
   // Body
+  is->fireItemAvailable("receivedFrames",       &receivedFrames_);
+  is->fireItemAvailable("storedEvents",         &storedEvents_);
+  is->fireItemAvailable("memoryUsed",           &memoryUsed_);
+  is->fireItemAvailable("instantBandwidth",     &instantBandwidth_);
+  is->fireItemAvailable("instantRate",          &instantRate_);
+  is->fireItemAvailable("instantLatency",       &instantLatency_);
+  is->fireItemAvailable("maxBandwidth",         &maxBandwidth_);
+  is->fireItemAvailable("minBandwidth",         &minBandwidth_);
+  is->fireItemAvailable("duration",             &duration_);
+  is->fireItemAvailable("totalSamples",         &totalSamples_);
+  is->fireItemAvailable("meanBandwidth",        &meanBandwidth_);
+  is->fireItemAvailable("meanRate",             &meanRate_);
+  is->fireItemAvailable("meanLatency",          &meanLatency_);
   is->fireItemAvailable("STparameterSet",       &offConfig_);
   is->fireItemAvailable("FUparameterSet",       &fuConfig_);
-  //is->fireItemAvailable("runNumber",            &runNumber_);
   is->fireItemAvailable("stateName",            &fsm_->stateName_);
   is->fireItemAvailable("connectedFUs",         &connectedFUs_);
-  is->fireItemAvailable("storedEvents",         &storedEvents_);
   is->fireItemAvailable("streamerOnly",         &streamer_only_);
   is->fireItemAvailable("filePath",             &filePath_);
   is->fireItemAvailable("mailboxPath",          &mailboxPath_);
@@ -2052,18 +2080,31 @@ void testStorageManager::setupFlashList()
   is->fireItemAvailable("idleConsumerTimeout",  &idleConsumerTimeout_);
   is->fireItemAvailable("consumerQueueSize",    &consumerQueueSize_);
 
+  //----------------------------------------------------------------------------
   // Attach listener to myCounter_ to detect retrieval event
+  //----------------------------------------------------------------------------
   is->addItemRetrieveListener("class",                this);
   is->addItemRetrieveListener("instance",             this);
   is->addItemRetrieveListener("runNumber",            this);
   is->addItemRetrieveListener("url",                  this);
   // Body
+  is->addItemRetrieveListener("receivedFrames",       this);
+  is->addItemRetrieveListener("storedEvents",         this);
+  is->addItemRetrieveListener("memoryUsed",           this);
+  is->addItemRetrieveListener("instantBandwidth",     this);
+  is->addItemRetrieveListener("instantRate",          this);
+  is->addItemRetrieveListener("instantLatency",       this);
+  is->addItemRetrieveListener("maxBandwidth",         this);
+  is->addItemRetrieveListener("minBandwidth",         this);
+  is->addItemRetrieveListener("duration",             this);
+  is->addItemRetrieveListener("totalSamples",         this);
+  is->addItemRetrieveListener("meanBandwidth",        this);
+  is->addItemRetrieveListener("meanRate",             this);
+  is->addItemRetrieveListener("meanLatency",          this);
   is->addItemRetrieveListener("STparameterSet",       this);
   is->addItemRetrieveListener("FUparameterSet",       this);
-  //is->addItemRetrieveListener("runNumber",            this);
   is->addItemRetrieveListener("stateName",            this);
   is->addItemRetrieveListener("connectedFUs",         this);
-  is->addItemRetrieveListener("storedEvents",         this);
   is->addItemRetrieveListener("streamerOnly",         this);
   is->addItemRetrieveListener("filePath",             this);
   is->addItemRetrieveListener("mailboxPath",          this);
@@ -2090,8 +2131,10 @@ void testStorageManager::actionPerformed(xdata::Event& e)
     is->lock();
     std::string item = dynamic_cast<xdata::ItemRetrieveEvent&>(e).itemName();
     // Only update those locations which are not always up to date
-    //if (item == "nEventsWritten")
-    //  nEventsWritten_ = storedEvents_;
+    if      (item == "connectedFUs")
+      connectedFUs_ = smfusenders_.size();
+    else if (item == "memoryUsed")
+      memoryUsed_   = pool_->getMemoryUsage().getUsed();
     is->unlock();
   } 
 }
@@ -2100,8 +2143,10 @@ void testStorageManager::actionPerformed(xdata::Event& e)
  * Provides factory method for the instantiation of SM applications
  */
 
-extern "C" xdaq::Application * instantiate_testStorageManager(xdaq::ApplicationStub * stub )
+extern "C" xdaq::Application
+*instantiate_testStorageManager(xdaq::ApplicationStub * stub)
 {
-        std::cout << "Going to construct a testStorageManager instance " << std::endl;
-        return new stor::testStorageManager(stub);
+  std::cout << "Going to construct a testStorageManager instance "
+	    << std::endl;
+  return new stor::testStorageManager(stub);
 }

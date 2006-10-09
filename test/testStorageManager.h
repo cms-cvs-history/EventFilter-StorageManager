@@ -136,17 +136,19 @@ namespace stor {
     friend class stor::SMStateMachine;
   
     boost::shared_ptr<stor::JobController> jc_;
+    boost::mutex                           halt_lock_;
+
     // added for streamer file writing instead of OutServ
     xdata::String streamer_only_;
     bool writeStreamerOnly_;
-    xdata::String filePath_;
-    xdata::String mailboxPath_;
-    xdata::String setupLabel_;
-    xdata::String streamLabel_;
+    xdata::String  filePath_;
+    xdata::String  mailboxPath_;
+    xdata::String  setupLabel_;
+    xdata::String  streamLabel_;
     xdata::Integer maxFileSize_;
-    xdata::Double highWaterMark_;
-    xdata::Integer   nLogicalDisk_;
-    xdata::String    fileCatalog_;
+    xdata::Double  highWaterMark_;
+    xdata::Integer nLogicalDisk_;
+    xdata::String  fileCatalog_;
 
     std::string smConfigString_;
     std::string path_;
@@ -154,11 +156,10 @@ namespace stor {
     std::string setup_;
     std::string stream_;
     std::string filen_;
-    std::string      smFileCatalog_;
+    std::string smFileCatalog_;
 
     evf::Css css_;
-    unsigned long eventcounter_;
-    unsigned long framecounter_;
+    xdata::UnsignedInteger32 receivedFrames_;
     int pool_is_set_;
     toolbox::mem::Pool *pool_;
 
@@ -174,33 +175,39 @@ namespace stor {
 
     std::list<SMFUSenderList> smfusenders_;
     xdata::UnsignedInteger32 connectedFUs_;
+
     xdata::UnsignedInteger32 storedEvents_;
 
+    //-----------------------------------------------------------------------------
     // for performance measurements
+    //-----------------------------------------------------------------------------
     void addMeasurement(unsigned long size);
-    xdata::UnsignedInteger32 samples_; //number of samples (frames) per measurement
     stor::SMPerformanceMeter *pmeter_;
+
     // measurements for last set of samples
-    xdata::Double databw_;      // bandwidth in MB/s
-    xdata::Double datarate_;    // number of frames/s
-    xdata::Double datalatency_; // micro-seconds/frame
-    xdata::UnsignedInteger32 totalsamples_; //number of samples (frames) per measurement
-    xdata::Double duration_;        // time for run in seconds
-    xdata::Double meandatabw_;      // bandwidth in MB/s
-    xdata::Double meandatarate_;    // number of frames/s
-    xdata::Double meandatalatency_; // micro-seconds/frame
-    xdata::Double maxdatabw_;       // maximum bandwidth in MB/s
-    xdata::Double mindatabw_;       // minimum bandwidth in MB/s
-    boost::mutex halt_lock_;
+    xdata::UnsignedInteger32 samples_; // number of samples/frames per measurement
+    xdata::Double instantBandwidth_; // bandwidth in MB/s
+    xdata::Double instantRate_;      // number of frames/s
+    xdata::Double instantLatency_;   // micro-seconds/frame
+    xdata::Double maxBandwidth_;     // maximum bandwidth in MB/s
+    xdata::Double minBandwidth_;     // minimum bandwidth in MB/s
+
+    // measurements for all samples
+    xdata::Double duration_;         // time for run in seconds
+    xdata::UnsignedInteger32 totalSamples_; //number of samples/frames per measurement
+    xdata::Double meanBandwidth_;    // bandwidth in MB/s
+    xdata::Double meanRate_;         // number of frames/s
+    xdata::Double meanLatency_;      // micro-seconds/frame
 
     //--------------------------------------------------------------------------
-    // Additional flashlist contents
+    // Additional flashlist contents (rest was already there)
     //--------------------------------------------------------------------------
     // conventional header (runNumber_ already defined in RunBase.h)
     xdata::String            class_;
     xdata::UnsignedInteger32 instance_;
     xdata::String            url_;       
 
+    xdata::UnsignedInteger32 memoryUsed_;
   }; // end of class
 } // end of namespace stor
 #endif
