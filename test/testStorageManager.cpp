@@ -129,14 +129,16 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   xdaq::Application(s),
   fsm_(0), ah_(0), writeStreamerOnly_(false), 
   connectedFUs_(0), storedEvents_(0)
-{
-  setupFlashList();
-  
+{  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
   ah_ = new edm::AssertHandler();
   fsm_ = new stor::SMStateMachine(getApplicationLogger());
   fsm_->init<testStorageManager>(this);
+
+  // Careful: state machine fsm_ has to be setup first
+  setupFlashList();
+
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
   // default configuration
