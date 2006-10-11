@@ -43,6 +43,7 @@
 #include "xdata/UnsignedInteger32.h"
 #include "xdata/Integer.h"
 #include "xdata/Double.h"
+#include "xdata/Boolean.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
@@ -139,8 +140,7 @@ namespace stor {
     boost::mutex                           halt_lock_;
 
     // added for streamer file writing instead of OutServ
-    xdata::String streamer_only_;
-    bool writeStreamerOnly_;
+    xdata::Boolean streamer_only_;
     xdata::String  filePath_;
     xdata::String  mailboxPath_;
     xdata::String  setupLabel_;
@@ -150,6 +150,7 @@ namespace stor {
     xdata::Integer nLogicalDisk_;
     xdata::String  fileCatalog_;
 
+    bool writeStreamerOnly_;
     std::string smConfigString_;
     std::string path_;
     std::string mpath_; //mailbox path

@@ -31,9 +31,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender two -->
@@ -57,9 +57,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender three -->
@@ -83,9 +83,9 @@
               <!-- poolName xsi:type="xsd:string">RoundtripSendPool</poolName -->
            </properties>
        </xc:Application>
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
    </xc:Context>
 
     <!-- Declare a context that contain applcation -->
@@ -109,15 +109,17 @@
 <properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">
                     <FUparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1noout.cfi</FUparameterSet>
                     <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
-                    <oneinN xsi:type="xsd:integer">1</oneinN>
-                    <runNumber xsi:type="xsd:unsignedInt">0</runNumber>
-                    <streamerOnly xsi:type="xsd:string">true</streamerOnly>
-                    <filePath xsi:type="xsd:string">/scratch2/cheung</filePath>
-                    <mailboxPath xsi:type="xsd:string">/scratch2/cheung/mbox</mailboxPath>
-                    <setupLabel xsi:type="xsd:string">mtcc</setupLabel>
-                    <streamLabel xsi:type="xsd:string">A</streamLabel>
-                    <maxFileSize xsi:type="xsd:integer">1073741824</maxFileSize>
-                    <highWaterMark xsi:type="xsd:double">0.9</highWaterMark>
+                    <oneinN         xsi:type="xsd:integer">1</oneinN>
+                    <runNumber      xsi:type="xsd:unsignedInt">0</runNumber>
+                    <nLogicalDisk   xsi:type="xsd:integer">0</nLogicalDisk> 
+                    <fileCatalog    xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
+                    <streamerOnly   xsi:type="xsd:boolean">true</streamerOnly>
+                    <filePath       xsi:type="xsd:string">/scratch2/cheung</filePath>
+                    <mailboxPath    xsi:type="xsd:string">/scratch2/cheung/mbox</mailboxPath>
+                    <setupLabel     xsi:type="xsd:string">mtcc</setupLabel>
+                    <streamLabel    xsi:type="xsd:string">A</streamLabel>
+                    <maxFileSize    xsi:type="xsd:integer">1073741824</maxFileSize>
+                    <highWaterMark  xsi:type="xsd:double">0.9</highWaterMark>
 </properties>
 
        </xc:Application>
@@ -128,8 +130,8 @@
            </properties>
        </xc:Application>
 
-       <xc:Module>/uscmst1/prod/sw/cms/slc3_ia32_gcc323/external/xdaq/3.7.3/lib/libpttcp.so</xc:Module>
-       <xc:Module>/uscms/home/cheung/work/CMSSW_2006-10-01/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManagertestStorageManager.so</xc:Module>
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
        </xc:Context>
 
 </xc:Partition>

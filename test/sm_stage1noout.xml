@@ -46,7 +46,7 @@
                     <STparameterSet xsi:type="xsd:string">file:/cmsonline/home/cheung/cms/xml/sm_stage1noout.cfi</STparameterSet>
                     <oneinN xsi:type="xsd:integer">1</oneinN>
                     <runNumber xsi:type="xsd:unsignedLong">0</runNumber>
-                    <streamerOnly xsi:type="xsd:string">true</streamerOnly>
+                    <streamerOnly xsi:type="xsd:boolean">true</streamerOnly>
                     <streamerFilename xsi:type="xsd:string">smstreamer</streamerFilename>
 </properties>
 

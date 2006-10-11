@@ -46,6 +46,7 @@
 
 */
 
+// $Id:$
 
 #include <exception>
 #include <iostream>
@@ -127,7 +128,7 @@ using namespace stor;
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
-  fsm_(0), ah_(0), writeStreamerOnly_(false), 
+  fsm_(0), ah_(0), writeStreamerOnly_(true), 
   connectedFUs_(0), storedEvents_(0)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
@@ -280,31 +281,13 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   string sample_config = fupset.getAsString();
   string my_config = smpset.getAsString();
 
-  // For streamer file writing to make it more like OutServ for POOL root files
-  // we should pass the my_config string to the streamer writer
-  // which is created by the fragment collector.
-  // Need to find out how to parse the config string there p for now do:
-  if(streamer_only_.toString() == "true" || streamer_only_.toString() == "TRUE" ||
-     streamer_only_.toString() == "True" ) {
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing Streamer files");
-    writeStreamerOnly_ = true;
-  } else if(streamer_only_.toString() == "false" || streamer_only_.toString() == "FALSE" ||
-     streamer_only_.toString() == "False" ) {
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Writing PoolOutputModule ROOT files");
-    writeStreamerOnly_ = false;
-  } else {
-    LOG4CPLUS_WARN(this->getApplicationLogger(),
-	           "Unrecognized streamerOnly option "
-		       << streamer_only_.toString() << " will use default false");
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"Using Output Module");
-    writeStreamerOnly_ = false;
-  }
-  smConfigString_ = my_config;
-  path_           = filePath_.toString();
-  mpath_          = mailboxPath_.toString();
-  setup_          = setupLabel_.toString();
-  stream_         = streamLabel_.toString();
-  smFileCatalog_  = fileCatalog_.toString();
+  writeStreamerOnly_ = (bool) streamer_only_;
+  smConfigString_    = my_config;
+  path_              = filePath_.toString();
+  mpath_             = mailboxPath_.toString();
+  setup_             = setupLabel_.toString();
+  stream_            = streamLabel_.toString();
+  smFileCatalog_     = fileCatalog_.toString();
 
   FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
   std::ostringstream stm;
