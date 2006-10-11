@@ -478,6 +478,18 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   // can get rid of this if not dumping the data for checking
   //std::string temp4print(msg->dataPtr(),msg->dataSize);
   //FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
+
+  // check the storage Manager is in the Ready state first!
+  if(fsm_->stateName_ != "Enabled")
+  {
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                       "Received INIT message but not in Enabled state! Current state = "
+                       << fsm_->stateName_.toString() << " INIT from " << msg->hltURL
+                       << " application " << msg->hltClassName);
+    // just release the memory at least - is that what we want to do?
+    ref->release();
+    return;
+  }
   
   receivedFrames_++;
 
@@ -518,6 +530,18 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   // std::cout << "received data message from " << msg->hltURL << std::endl;
   int len = msg->dataSize;
   FDEBUG(10) << "testStorageManager: received data frame size = " << len << std::endl;
+
+  // check the storage Manager is in the Ready state first!
+  if(fsm_->stateName_ != "Enabled")
+  {
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                       "Received EVENT message but not in Enabled state! Current state = "
+                       << fsm_->stateName_.toString() << " EVENT from" << msg->hltURL
+                       << " application " << msg->hltClassName);
+    // just release the memory at least - is that what we want to do?
+    ref->release();
+    return;
+  }
 
   // If running with local transfers, a chain of I2O frames when posted only has the
   // head frame sent. So a single frame can complete a chain for local transfers.
@@ -628,6 +652,19 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
   FDEBUG(9) << "testStorageManager: message content " << msg->otherData << "\n";
   // Not yet processing any Other messages type
   // the only "other" message is an end-of-run. It is awaited to process a request to halt the storage manager
+
+  // check the storage Manager is in the correct state to process each message
+  // the end-of-run message is only valid when in the "Enabled" state
+  if(fsm_->stateName_ != "Enabled")
+  {
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                       "Received OTHER (End-of-run) message but not in Enabled state! Current state = "
+                       << fsm_->stateName_.toString() << " OTHER from" << msg->hltURL
+                       << " application " << msg->hltClassName);
+    // just release the memory at least - is that what we want to do?
+    ref->release();
+    return;
+  }
   
   removeFUSender(&msg->hltURL[0], &msg->hltClassName[0],
 		 msg->hltLocalId, msg->hltInstance, msg->hltTid);
@@ -1742,26 +1779,29 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "<hr/>"                                                    << endl;
 
-    struct statfs64 buf;
-    int retVal = statfs64(path_.c_str(), &buf);
-    if(retVal!=0)
-      edm::LogWarning("testStorageManager") << "Could not stat output filesystem for path " << path_ << std::endl;
+// only do this if path_ is set
+    if(fsm_->stateName_ == "Enabled" || fsm_->stateName_ == "Ready") {
+      struct statfs64 buf;
+      int retVal = statfs64(path_.c_str(), &buf);
+      if(retVal!=0)
+        edm::LogWarning("testStorageManager") << "Could not stat output filesystem for path " << path_ << std::endl;
 
-    unsigned long btotal = 0;
-    unsigned long bfree = 0;
-    unsigned long blksize = 0;
-    if(retVal==0)
-    {
-      blksize = buf.f_bsize;
-      btotal = buf.f_blocks;
-      bfree  = buf.f_bfree;
+      unsigned long btotal = 0;
+      unsigned long bfree = 0;
+      unsigned long blksize = 0;
+      if(retVal==0)
+      {
+        blksize = buf.f_bsize;
+        btotal = buf.f_blocks;
+        bfree  = buf.f_bfree;
+      }
+    *out << "<P>Current Path= " << path_                                   << endl;
+    *out << "<P>Current mailBoxPath= " << mpath_                           << endl;
+
+    *out << "<P>FileSystem status: " << setw(5) 
+         << (float(bfree)/float(btotal))*100. 
+         << "% free "                                                  << endl;
     }
-  *out << "<P>Current Path= " << path_                                   << endl;
-  *out << "<P>Current mailBoxPath= " << mpath_                           << endl;
-
-  *out << "<P>FileSystem status: " << setw(5) 
-       << (float(bfree)/float(btotal))*100. 
-       << "% free "                                                  << endl;
   
   // should first test if jc_ is valid
       if(ser_prods_size_ != 0) {
@@ -1809,8 +1849,9 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
     }
   }
 
-  // should first test if testStorageManager is in halted state
-  if(ser_prods_size_ != 0) 
+  // first test if testStorageManager is in Enabled state and registry is filled
+  // this must be the case for valid data to be present
+  if(fsm_->stateName_ == "Enabled" && ser_prods_size_ != 0)
   {
     if (consumerId == 0)
     {
@@ -1859,7 +1900,6 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   } // else send end of run as reponse
   else
   {
-// HEREHERE
     //edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
     //len = msg.totalSize();
     // this is not working
@@ -1868,7 +1908,6 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
     //std::cout << "making other message code = " << othermsg.code()
     //          << " and size = " << othermsg.size() << std::endl;
 
-// HEREHERE
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
     out->write(mybuffer_,len);
@@ -1905,38 +1944,51 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // Need to use the saved serialzied registry
   // should really serialize the one in jc_ JobController instance
-  if(ser_prods_size_ == 0)
-  { // not available yet - return zero length stream, should return MsgCode NOTREADY
-    int len = 0;
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(mybuffer_,len);
-  } else {
-
-    // 31-Aug-2006, KAB: overlay an INIT message view on the serialized
-    // products array so that we can initialize the consumer event selection
-    InitMsgView initView(serialized_prods_);
-    if (jc_.get() != NULL)
-    {
-      boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
-      if (eventServer.get() != NULL)
+  // check we are in the right state
+  // first test if testStorageManager is in Enabled state and registry is filled
+  // this must be the case for valid data to be present
+  if(fsm_->stateName_ == "Enabled" && ser_prods_size_ != 0)
+// should check this as it should work in the enabled state?
+//  if(fsm_->stateName_ == "Enabled")
+  {
+    if(ser_prods_size_ == 0)
+    { // not available yet - return zero length stream, should return MsgCode NOTREADY
+      int len = 0;
+      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+      out->write(mybuffer_,len);
+    } else {
+      // 31-Aug-2006, KAB: overlay an INIT message view on the serialized
+      // products array so that we can initialize the consumer event selection
+      InitMsgView initView(serialized_prods_);
+      if (jc_.get() != NULL)
       {
-        boost::shared_ptr<ConsumerPipe> consPtr =
-          eventServer->getConsumer(consumerId);
-        if (consPtr.get() != NULL)
+        boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+        if (eventServer.get() != NULL)
         {
-          consPtr->initializeSelection(initView);
+          boost::shared_ptr<ConsumerPipe> consPtr =
+            eventServer->getConsumer(consumerId);
+          if (consPtr.get() != NULL)
+          {
+            consPtr->initializeSelection(initView);
+          }
         }
       }
+      int len = ser_prods_size_;
+      for (int i=0; i<len; i++) mybuffer_[i]=serialized_prods_[i];
+
+      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+      out->write(mybuffer_,len);
     }
-
-    int len = ser_prods_size_;
-    for (int i=0; i<len; i++) mybuffer_[i]=serialized_prods_[i];
-
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(mybuffer_,len);
+  } else {
+   // In wrong state for this message - return zero length stream, should return Msg NOTREADY
+   int len = 0;
+   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+   out->write(mybuffer_,len);
   }
+
 
 // How to block if there is no header data
 // How to signal if not yet started, so there is no registry yet?
@@ -1945,6 +1997,9 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+  if(fsm_->stateName_ == "Enabled")
+  { // what is the right place for this?
+
   std::string consumerName = "None provided";
   std::string consumerPriority = "normal";
   std::string consumerRequest = "<>";
@@ -2015,6 +2070,15 @@ void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
   out->write(mybuffer_,len);
+
+  } else { // is this the right thing to send?
+   // In wrong state for this message - return zero length stream, should return Msg NOTREADY
+   int len = 0;
+   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+   out->write(mybuffer_,len);
+  }
+
 }
 
 //------------------------------------------------------------------------------
