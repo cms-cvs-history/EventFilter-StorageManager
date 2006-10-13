@@ -46,7 +46,7 @@
 
 */
 
-// $Id:$
+// $Id: testStorageManager.cpp,v 1.40 2006/10/11 15:45:38 klute Exp $
 
 #include <exception>
 #include <iostream>
@@ -463,7 +463,7 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   //FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
 
   // check the storage Manager is in the Ready state first!
-  if(fsm_->stateName_ != "Enabled")
+  if(fsm_->stateName_ != "Enabled" && fsm_->stateName_ != "Ready" )
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
                        "Received INIT message but not in Enabled state! Current state = "
