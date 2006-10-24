@@ -85,5 +85,5 @@ namespace Nuts {
 }
 
 using Nuts::SillyLockService;
-DEFINE_FWK_SERVICE(SillyLockService)
+DEFINE_FWK_SERVICE(SillyLockService);
 
