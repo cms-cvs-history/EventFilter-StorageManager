@@ -46,7 +46,7 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.40 2006/10/11 15:45:38 klute Exp $
+// $Id: testStorageManager.cpp,v 1.41 2006/10/13 22:10:03 hcheung Exp $
 
 #include <exception>
 #include <iostream>
@@ -149,6 +149,11 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("stateName",     &fsm_->stateName_);
   ispace->fireItemAvailable("connectedFUs",  &connectedFUs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
+  ispace->fireItemAvailable("closedFiles",&closedFiles_);
+  ispace->fireItemAvailable("fileList",&fileList_);
+  ispace->fireItemAvailable("eventsInFile",&eventsInFile_);
+  ispace->fireItemAvailable("fileSize",&fileSize_);
+
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -371,8 +376,18 @@ void testStorageManager::enableAction(toolbox::Event::Reference e)
   throw (toolbox::fsm::exception::Exception)
 {
   // Get into running state
+  fileList_.clear();
+  eventsInFile_.clear();
+  fileSize_.clear();
+  storedEvents_ = 0;
   jc_->start();
-}
+}       
+
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 
 void testStorageManager::haltAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
@@ -392,6 +407,36 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
       }
     }
 
+  std::list<std::string> files = jc_->get_filelist();
+  std::list<std::string> currfiles= jc_->get_currfiles();
+  closedFiles_ = files.size();
+  unsigned int totInFile = 0;
+  for(list<string>::const_iterator it = files.begin();
+      it != files.end(); it++)
+    {
+      string name;
+      unsigned int nev;
+      unsigned int size;
+      parseFileEntry((*it),name,nev,size);
+      fileList_.push_back(name);
+      eventsInFile_.push_back(nev);
+      totInFile += nev;
+      fileSize_.push_back(size);
+    }
+  unsigned int nev = storedEvents_ - totInFile;
+
+  for(list<string>::const_iterator it = currfiles.begin();
+      it != currfiles.end(); it++)
+    {
+      struct stat buf;
+      int ret = stat((*it).c_str(), &buf);
+      fileList_.push_back(*it);
+      eventsInFile_.push_back(nev);
+      if(ret == 0)
+	fileSize_.push_back(buf.st_size);
+      else
+	fileSize_.push_back(0);
+    }
   // Get into halted state  
   jc_->stop();
   jc_->join();
@@ -2188,6 +2233,15 @@ void testStorageManager::actionPerformed(xdata::Event& e)
   } 
 }
 
+#include <sstream>
+
+void testStorageManager::parseFileEntry(std::string in, std::string &out, unsigned int &nev, unsigned int &sz)
+{
+  unsigned int no;
+  stringstream pippo;
+  pippo << in;
+  pippo >> no >> out >> nev >> sz;
+}
 /**
  * Provides factory method for the instantiation of SM applications
  */

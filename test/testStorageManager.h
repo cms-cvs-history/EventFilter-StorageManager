@@ -44,6 +44,7 @@
 #include "xdata/Integer.h"
 #include "xdata/Double.h"
 #include "xdata/Boolean.h"
+#include "xdata/Vector.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
@@ -128,7 +129,9 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void consumerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-  
+
+    void parseFileEntry(std::string in, std::string &out, unsigned int &nev, unsigned int &sz);
+	
     stor::SMStateMachine *fsm_;
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
@@ -178,6 +181,10 @@ namespace stor {
     xdata::UnsignedInteger32 connectedFUs_;
 
     xdata::UnsignedInteger32 storedEvents_;
+    xdata::UnsignedInteger32 closedFiles_;
+    xdata::Vector<xdata::String> fileList_;
+    xdata::Vector<xdata::UnsignedInteger32> eventsInFile_;
+    xdata::Vector<xdata::UnsignedInteger32> fileSize_;
 
     //-----------------------------------------------------------------------------
     // for performance measurements
