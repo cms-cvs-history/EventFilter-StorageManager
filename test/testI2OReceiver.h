@@ -160,5 +160,5 @@ namespace stor {
     xdata::Double mindatabw_;       // minimum bandwidth in MB/s
     boost::mutex halt_lock_;
   }; // end of class
-}; // end of namespace stor
+} // end of namespace stor
 #endif
