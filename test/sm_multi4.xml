@@ -19,6 +19,7 @@
            <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
 
                     <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1.cfi</parameterSet>
+                    <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
                   </properties>
 
                 </xc:Application>
