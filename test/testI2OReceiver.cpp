@@ -343,7 +343,7 @@ void testI2OReceiver::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(9) << "testI2OReceiver: registry size " << msg->dataSize << "\n";
   // can get rid of this if not dumping the data for checking
-  std::string temp4print(msg->data,msg->dataSize);
+  std::string temp4print(msg->dataPtr(),msg->dataSize);
   FDEBUG(9) << "testI2OReceiver: registry data = " << temp4print << std::endl;
 
   framecounter_++;
