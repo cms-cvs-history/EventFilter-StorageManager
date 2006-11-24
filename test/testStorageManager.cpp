@@ -46,7 +46,7 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.41 2006/10/13 22:10:03 hcheung Exp $
+// $Id: testStorageManager.cpp,v 1.42 2006/10/31 20:15:56 meschi Exp $
 
 #include <exception>
 #include <iostream>
@@ -1005,7 +1005,7 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
       FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
                 << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
                 << std::endl;
-      LOG4CPLUS_INFO(this->getApplicationLogger(),
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
         "copyAndTestRegistry: Error! Received registry is not a subset!"
          << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
       pos->regCheckedOK_ = false;
