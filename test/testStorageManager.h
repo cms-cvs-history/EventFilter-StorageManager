@@ -215,7 +215,16 @@ namespace stor {
     xdata::UnsignedInteger32 instance_;
     xdata::String            url_;       
 
+    xdata::Double            storedVolume_;
     xdata::UnsignedInteger32 memoryUsed_;
+    xdata::String            progressMarker_;
   }; // end of class
 } // end of namespace stor
+
+namespace progress {
+  const xdata::String Idle    = "Idle";
+  const xdata::String Input   = "Input";
+  const xdata::String Process = "Process";
+  const xdata::String Output  = "Output";
+}
 #endif

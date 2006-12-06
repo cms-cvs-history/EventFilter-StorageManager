@@ -129,7 +129,8 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
   fsm_(0), ah_(0), writeStreamerOnly_(true), 
-  connectedFUs_(0), storedEvents_(0)
+  connectedFUs_(0), storedEvents_(0), storedVolume_(0.),
+  progressMarker_(progress::Idle)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
@@ -495,10 +496,9 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  I2O_MESSAGE_FRAME         *stdMsg =
-    (I2O_MESSAGE_FRAME*)ref->getDataLocation();
-  I2O_SM_PREAMBLE_MESSAGE_FRAME *msg    =
-    (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsg;
+  I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
+  I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
+
   FDEBUG(10) << "testStorageManager: Received registry message from HLT " << msg->hltURL
              << " application " << msg->hltClassName << " id " << msg->hltLocalId
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
@@ -518,7 +518,6 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-  
   receivedFrames_++;
 
   // for bandwidth performance measurements
@@ -541,7 +540,7 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
-   pool_is_set_ = 1;
+    pool_is_set_ = 1;
   }
 
   I2O_MESSAGE_FRAME         *stdMsg =
@@ -596,6 +595,10 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
       FDEBUG(10) << "testStorageManager: Breaking the chain" << std::endl;
       // break the chain and feed them to the fragment collector
       next = head;
+
+      progressMarker_ = progress::Input;
+      printf(" Progress Marker now Input\n");
+
       for(int iframe=0; iframe <(int)msg->numFrames; iframe++)
       {
          toolbox::mem::Reference *thisref=next;
@@ -625,6 +628,10 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
            msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
            msg->originalSize, isLocal);
       }
+
+      progressMarker_ = progress::Output;
+      printf(" Progress Marker now Output\n");
+
     } else {
       // should never get here!
       FDEBUG(10) << "testStorageManager: Head frame has fewer linked frames "
@@ -2131,8 +2138,9 @@ void testStorageManager::setupFlashList()
   //----------------------------------------------------------------------------
   // Create/Retrieve an infospace which can be monitored
   //----------------------------------------------------------------------------
-  xdata::InfoSpace *is =
-    xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
+  std::ostringstream oss;
+  oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
+  xdata::InfoSpace *is = xdata::InfoSpace::get(oss.str());
 
   //----------------------------------------------------------------------------
   // Publish monitor data in monitorable info space -- Head
@@ -2144,6 +2152,7 @@ void testStorageManager::setupFlashList()
   // Body
   is->fireItemAvailable("receivedFrames",       &receivedFrames_);
   is->fireItemAvailable("storedEvents",         &storedEvents_);
+  is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
   is->fireItemAvailable("instantBandwidth",     &instantBandwidth_);
   is->fireItemAvailable("instantRate",          &instantRate_);
@@ -2158,6 +2167,7 @@ void testStorageManager::setupFlashList()
   is->fireItemAvailable("STparameterSet",       &offConfig_);
   is->fireItemAvailable("FUparameterSet",       &fuConfig_);
   is->fireItemAvailable("stateName",            &fsm_->stateName_);
+  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedFUs",         &connectedFUs_);
   is->fireItemAvailable("streamerOnly",         &streamer_only_);
   is->fireItemAvailable("filePath",             &filePath_);
@@ -2184,6 +2194,7 @@ void testStorageManager::setupFlashList()
   // Body
   is->addItemRetrieveListener("receivedFrames",       this);
   is->addItemRetrieveListener("storedEvents",         this);
+  is->addItemRetrieveListener("storedVolume",         this);
   is->addItemRetrieveListener("memoryUsed",           this);
   is->addItemRetrieveListener("instantBandwidth",     this);
   is->addItemRetrieveListener("instantRate",          this);
@@ -2198,6 +2209,7 @@ void testStorageManager::setupFlashList()
   is->addItemRetrieveListener("STparameterSet",       this);
   is->addItemRetrieveListener("FUparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
+  is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedFUs",         this);
   is->addItemRetrieveListener("streamerOnly",         this);
   is->addItemRetrieveListener("filePath",             this);
@@ -2220,8 +2232,10 @@ void testStorageManager::setupFlashList()
 void testStorageManager::actionPerformed(xdata::Event& e)  
 {
   if (e.type() == "ItemRetrieveEvent") {
-    xdata::InfoSpace *is =
-      xdata::InfoSpace::get("urn:xdaq-monitorable:smMonData");
+    std::ostringstream oss;
+    oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
+    xdata::InfoSpace *is = xdata::InfoSpace::get(oss.str());
+
     is->lock();
     std::string item = dynamic_cast<xdata::ItemRetrieveEvent&>(e).itemName();
     // Only update those locations which are not always up to date
@@ -2229,6 +2243,8 @@ void testStorageManager::actionPerformed(xdata::Event& e)
       connectedFUs_ = smfusenders_.size();
     else if (item == "memoryUsed")
       memoryUsed_   = pool_->getMemoryUsage().getUsed();
+    else if (item == "storedVolume")
+      storedVolume_ = pmeter_->totalvolumemb();
     is->unlock();
   } 
 }
