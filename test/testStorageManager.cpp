@@ -46,7 +46,7 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.42 2006/10/31 20:15:56 meschi Exp $
+// $Id: testStorageManager.cpp,v 1.44 2006/12/06 13:33:24 paus Exp $
 
 #include <exception>
 #include <iostream>
@@ -410,7 +410,10 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
 
   std::list<std::string> files = jc_->get_filelist();
   std::list<std::string> currfiles= jc_->get_currfiles();
-  closedFiles_ = files.size();
+  //closedFiles_ = files.size();
+  // return closedFiles_ to original functionality, but is this what is wanted?
+  closedFiles_ = files.size() - currfiles.size();
+  // note that the last (open) files of each output stream do not have the final size
   unsigned int totInFile = 0;
   for(list<string>::const_iterator it = files.begin();
       it != files.end(); it++)
@@ -423,7 +426,9 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
       eventsInFile_.push_back(nev);
       totInFile += nev;
       fileSize_.push_back(size);
+      //std::cout << name << " " << nev << " " << size << std::endl;
     }
+  /* now get_filelist includes all files, including open ones and with statistics)
   unsigned int nev = storedEvents_ - totInFile;
 
   for(list<string>::const_iterator it = currfiles.begin();
@@ -438,6 +443,7 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
       else
 	fileSize_.push_back(0);
     }
+   */
   // Get into halted state  
   jc_->stop();
   jc_->join();
