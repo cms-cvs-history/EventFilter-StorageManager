@@ -46,7 +46,7 @@
 
 */
 
-// $Id: testStorageManager.cpp,v 1.44 2006/12/06 13:33:24 paus Exp $
+// $Id: testStorageManager.cpp,v 1.45 2006/12/10 15:43:59 hcheung Exp $
 
 #include <exception>
 #include <iostream>
@@ -59,8 +59,8 @@
 
 #include "EventFilter/StorageManager/test/testStorageManager.h"
 
-#include "FWCore/Framework/interface/EventProcessor.h"
-#include "DataFormats/Common/interface/ProductRegistry.h"
+//#include "FWCore/Framework/interface/EventProcessor.h"
+//#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -71,7 +71,7 @@
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
-#include "IOPool/Streamer/interface/StreamTranslator.h"
+//#include "IOPool/Streamer/interface/StreamTranslator.h"
 #include "IOPool/Streamer/interface/OtherMessage.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "PluginManager/PluginManager.h"
@@ -115,6 +115,7 @@ static void deleteSMBuffer(void* Ref)
 // and all messages work like this (going into a queue)
   // do not delete the memory for the single (first) INIT message
   // it is stored in the local data member for event server
+  // but should not keep all INIT messages? Clean this up!
   if(entry->code_ != Header::INIT) 
   {
     toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
@@ -145,7 +146,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
 
   // default configuration
   ispace->fireItemAvailable("STparameterSet",&offConfig_);
-  ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
+  //ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
   ispace->fireItemAvailable("runNumber",     &runNumber_);
   ispace->fireItemAvailable("stateName",     &fsm_->stateName_);
   ispace->fireItemAvailable("connectedFUs",  &connectedFUs_);
@@ -270,21 +271,13 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
 {
   // Get into the ready state
 
-  // get the configuration here or in enable?
-
-  // do this here? JBK - moved to data member
-  // edm::MessageServicePresence theMessageServicePresence;
   seal::PluginManager::get()->initialise();
 
-  //streamer format file to get registry
-  // string sample_file("SMSampleFile.dat");
-  // SM config file - should be from XML
-  // string my_config_file("SMConfig.cfg");
-  // for the real thing, give the JobController a configuration string and
-  // save the registry data for checking with the one coming over the network
-  evf::ParameterSetRetriever fupset(fuConfig_.value_);
+  // give the JobController a configuration string and
+  // get the registry data coming over the network (the first one)
+  //evf::ParameterSetRetriever fupset(fuConfig_.value_);
   evf::ParameterSetRetriever smpset(offConfig_.value_);
-  string sample_config = fupset.getAsString();
+  //string sample_config = fupset.getAsString();
   string my_config = smpset.getAsString();
 
   writeStreamerOnly_ = (bool) streamer_only_;
@@ -302,7 +295,6 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   filen_ = stm.str();
   FDEBUG(9) << "Streamer filename starts with = " << filen_ << endl;
 
-// HEREHERE
   // the rethrows below need to be XDAQ exception types (JBK)
 
   // 10-Aug-2006, KAB: ensure reasonable values for event server params
@@ -316,8 +308,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   //cout << "consumerQueueSize = " << consumerQueueSize_ << endl;
 
   try {
-    jc_.reset(new stor::JobController(sample_config,
-                                      my_config, &deleteSMBuffer));
+    jc_.reset(new stor::JobController(my_config, &deleteSMBuffer));
     // added for Event Server
     int value_4oneinN(oneinN_);
     int disks(nLogicalDisk_);
@@ -361,8 +352,10 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       XCEPT_RAISE (toolbox::fsm::exception::Exception, 
 		   "Unknown Exception");
   }
+  /*
   evf::ModuleWebRegistry *mwr = 0;
-  edm::ServiceRegistry::Operate operate(jc_->getToken());
+  // This was for when using OutServ and we have an EP
+  //edm::ServiceRegistry::Operate operate(jc_->getToken());
   try{
     if(edm::Service<evf::ModuleWebRegistry>().isAvailable())
       mwr = edm::Service<evf::ModuleWebRegistry>().operator->();
@@ -371,6 +364,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     { cout <<"exception when trying to get the service registry " << endl;}
   if(mwr)
     mwr->publish(getApplicationInfoSpace());
+  */
 }
 
 void testStorageManager::enableAction(toolbox::Event::Reference e) 
@@ -426,7 +420,7 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
       eventsInFile_.push_back(nev);
       totInFile += nev;
       fileSize_.push_back(size);
-      //std::cout << name << " " << nev << " " << size << std::endl;
+      FDEBUG(5) << name << " " << nev << " " << size << std::endl;
     }
   /* now get_filelist includes all files, including open ones and with statistics)
   unsigned int nev = storedEvents_ - totInFile;
@@ -438,6 +432,7 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
       int ret = stat((*it).c_str(), &buf);
       fileList_.push_back(*it);
       eventsInFile_.push_back(nev);
+      // nev is largest events stored on one of the streams only!
       if(ret == 0)
 	fileSize_.push_back(buf.st_size);
       else
@@ -447,13 +442,14 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
   // Get into halted state  
   jc_->stop();
   jc_->join();
-  // we must destroy the eventprocessor to finish processing
 
   // make sure serialized product registry is cleared also
   ser_prods_size_ = 0;
 
-  boost::mutex::scoped_lock sl(halt_lock_);
-  jc_.reset();
+  {// is this lock needed?
+    boost::mutex::scoped_lock sl(halt_lock_);
+    jc_.reset();
+  }
 }
 
 
@@ -530,7 +526,6 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                   + msg->dataSize;
   addMeasurement(actualFrameSize);
-  //  std::cout << "received registry message from " << msg->hltURL << std::endl;
   // register this FU sender into the list to keep its status
   registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
                  msg->hltLocalId, msg->hltInstance, msg->hltTid,
@@ -560,7 +555,6 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
              << " total frames = " << msg->numFrames << std::endl;
   FDEBUG(10) << "testStorageManager: Frame " << msg->frameCount << " of " 
              << msg->numFrames-1 << std::endl;
-  // std::cout << "received data message from " << msg->hltURL << std::endl;
   int len = msg->dataSize;
   FDEBUG(10) << "testStorageManager: received data frame size = " << len << std::endl;
 
@@ -649,16 +643,13 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   {
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-//HEREHERE must give it the 1 of N for this fragment (starts from 0 in i2o header)
+    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
     /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
                                 msg->frameCount+1, msg->numFrames, Header::EVENT, msg->eventID);
     b.commit(sizeof(stor::FragEntry));
-//HEREHERE
     // Frame release is done in the deleter.
     receivedFrames_++;
     // for bandwidth performance measurements
-    // Following is wrong for the last frame because frame sent is
-    // is actually larger than the size taken by actual data
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
     addMeasurement(actualFrameSize);
@@ -681,12 +672,8 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
    pool_is_set_ = 1;
   }
 
-
-
-  I2O_MESSAGE_FRAME         *stdMsg =
-    (I2O_MESSAGE_FRAME*)ref->getDataLocation();
-  I2O_SM_OTHER_MESSAGE_FRAME *msg    =
-    (I2O_SM_OTHER_MESSAGE_FRAME*)stdMsg;
+  I2O_MESSAGE_FRAME         *stdMsg = (I2O_MESSAGE_FRAME*)ref->getDataLocation();
+  I2O_SM_OTHER_MESSAGE_FRAME *msg    = (I2O_SM_OTHER_MESSAGE_FRAME*)stdMsg;
   FDEBUG(9) << "testStorageManager: Received other message from HLT " << msg->hltURL
              << " application " << msg->hltClassName << " id " << msg->hltLocalId
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
@@ -965,81 +952,97 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
     pos->registrySize_ = origsize; // should already be done
     copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
   }
-  // now test this registry against the SM config one
-  try
-  { // to test registry can seg fault if registry is bad!
-    // check the registry from this FU against the configuration one
-    // need to make a copy in a non-const array
-    //bool setcode = false;
-    //char* tempregdata = new char[registrySize];
-    //copy(registryData, registryData+registrySize, tempregdata);
-    //edm::InitMsg msg(&tempregdata[0],registrySize,setcode);
-//HEREHERE
-    //edm::InitMsg testmsg(&tempbuffer[0],origsize,setcode);
-    InitMsgView testmsg(&tempbuffer[0]);
-    // use available methods to check registry is a subset
-    //edm::JobHeaderDecoder decoder;
-    //std::auto_ptr<edm::SendJobHeader> header = decoder.decodeJobHeader(testmsg);
-    std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
-// HEREHEREHERE
-// put init message into queue if it is the first (see below)
-//    stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-//                                          msg->frameCount+1, msg->numFrames);
-// make copy of bytes and deleter for it to put into queue
-// to HEREHERE?
-    //if(edm::registryIsSubset(*header, jc_->products()))
-    if(edm::registryIsSubset(*header, jc_->smproducts()))
-    {
-      FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
-      pos->regCheckedOK_ = true;
-      // save the correct serialized product registry for Event Server
-      if(ser_prods_size_ == 0)
-      {
-        for(int i=0; i<(int)origsize; i++)
-          serialized_prods_[i]=tempbuffer[i];
-        ser_prods_size_ = origsize;
-        FDEBUG(9) << "Saved serialized registry for Event Server, size " 
-                  << ser_prods_size_ << std::endl;
-//HEREHEREHERE
-        // this is the first serialized registry coming over, queue for output
-        if(writeStreamerOnly_)
-        {
-          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-          new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
-                                1, 1, Header::INIT, 0); // use fixed 0 as ID
-          b.commit(sizeof(stor::FragEntry));
-        }
-        // with it to get the hlt and l1 cnt for fragColl and get
-        // init message to fragcoll to write it out
-        jc_->set_hlt_bit_count(testmsg.get_hlt_bit_cnt());
-        jc_->set_l1_bit_count(testmsg.get_l1_bit_cnt());
-      }
-    } else {
-      FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
-                << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-                << std::endl;
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-        "copyAndTestRegistry: Error! Received registry is not a subset!"
-         << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-      pos->regCheckedOK_ = false;
-      pos->registrySize_ = 0;
-    }
-  }
-  catch(...)
+  // Assume first received registry is correct and save it
+  // (later check list of branch descriptions, run number, 
+  //  if SMConfig is asking for the same path names for the 
+  //  output streams)
+  if(ser_prods_size_ == 0)
   {
-    std::cerr << "copyAndTestRegistry: Error! Received registry is not a subset!"
-              << " Or caught problem checking registry! "
-              << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-              << std::endl;
-    LOG4CPLUS_INFO(this->getApplicationLogger(),
-        "copyAndTestRegistry: Error! Received registry is not a subset!"
-         << " Or caught problem checking registry! "
-         << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-    pos->regCheckedOK_ = false;
-    pos->registrySize_ = 0;
-    delete [] tempbuffer;  // does a throw basically immediately return?
-    throw; // do we want to do this?
+    //for(int i=0; i<(int)origsize; i++)
+    //  serialized_prods_[i]=tempbuffer[i];
+    copy(tempbuffer, tempbuffer+origsize, serialized_prods_);
+    ser_prods_size_ = origsize;
+    FDEBUG(9) << "Saved serialized registry for Event Server, size " 
+              << ser_prods_size_ << std::endl;
+    // queue for output
+    if(writeStreamerOnly_)
+    {
+      EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+      new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
+                            1, 1, Header::INIT, 0); // use fixed 0 as ID
+      b.commit(sizeof(stor::FragEntry));
+    }
+    // with it to get the hlt and l1 cnt for fragColl and get
+    // init message to fragcoll to write it out
+    //jc_->set_hlt_bit_count(testmsg.get_hlt_bit_cnt());
+    //jc_->set_l1_bit_count(testmsg.get_l1_bit_cnt());
   }
+  else
+  { // this is the second or subsequent INIT message test it against first
+    if(writeStreamerOnly_)
+    { // cannot test byte for byte the serialized registry
+      InitMsgView testmsg(&tempbuffer[0]);
+      InitMsgView refmsg(&serialized_prods_[0]);
+      std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
+      std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
+      if(edm::registryIsSubset(*header, *refheader))  // using clunky method
+      {
+        FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
+          pos->regCheckedOK_ = true;
+      } else {
+        // should do something with subsequent data from this FU!
+        FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
+                  << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
+                  << std::endl;
+        LOG4CPLUS_ERROR(this->getApplicationLogger(),
+          "copyAndTestRegistry: Error! Received registry is not a subset!"
+           << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+        pos->regCheckedOK_ = false;
+        pos->registrySize_ = 0;
+      }
+    }
+    else
+    { // test using the EventProcessor product registry
+/*
+      try
+      { // to test registry can seg fault if registry is bad!?
+        InitMsgView testmsg(&tempbuffer[0]);
+        // use available methods to check registry is a subset
+        std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
+        if(edm::registryIsSubset(*header, jc_->smproducts()))
+        {
+          FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
+          pos->regCheckedOK_ = true;
+        } else {
+          // should do something with subsequent data from this FU!
+          FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
+                    << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
+                    << std::endl;
+          LOG4CPLUS_ERROR(this->getApplicationLogger(),
+            "copyAndTestRegistry: Error! Received registry is not a subset!"
+             << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+          pos->regCheckedOK_ = false;
+          pos->registrySize_ = 0;
+        }
+      }
+      catch(...)
+      {
+        std::cerr << "copyAndTestRegistry: Error! Received registry is not a subset!"
+                  << " Or caught problem checking registry! "
+                  << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
+                  << std::endl;
+        LOG4CPLUS_INFO(this->getApplicationLogger(),
+            "copyAndTestRegistry: Error! Received registry is not a subset!"
+             << " Or caught problem checking registry! "
+             << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+        pos->regCheckedOK_ = false;
+        pos->registrySize_ = 0;
+        delete [] tempbuffer;  // does a throw basically immediately return?
+        throw; // do we want to do this?
+      }
+*/
+    } // end of test if writing streamer or root files
+  } // end of test on if first INIT message
   delete [] tempbuffer;
 }
 
@@ -2171,7 +2174,7 @@ void testStorageManager::setupFlashList()
   is->fireItemAvailable("meanRate",             &meanRate_);
   is->fireItemAvailable("meanLatency",          &meanLatency_);
   is->fireItemAvailable("STparameterSet",       &offConfig_);
-  is->fireItemAvailable("FUparameterSet",       &fuConfig_);
+  //is->fireItemAvailable("FUparameterSet",       &fuConfig_);
   is->fireItemAvailable("stateName",            &fsm_->stateName_);
   is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedFUs",         &connectedFUs_);
@@ -2213,7 +2216,7 @@ void testStorageManager::setupFlashList()
   is->addItemRetrieveListener("meanRate",             this);
   is->addItemRetrieveListener("meanLatency",          this);
   is->addItemRetrieveListener("STparameterSet",       this);
-  is->addItemRetrieveListener("FUparameterSet",       this);
+  //is->addItemRetrieveListener("FUparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
   is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedFUs",         this);

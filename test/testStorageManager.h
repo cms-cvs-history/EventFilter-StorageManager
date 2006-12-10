@@ -5,12 +5,16 @@
 
    Description:
      Header file used by test Storage Manager XDAQ application that
-     will receive I2O frames and write out a root file.
+     will receive I2O frames and write out a streamer files.
 
    Modification:
+     See the CVS log for all versions
      version 1.1 2006/01/24
        Initial implementation. Needs changes for production version.
-       See cc file for updates.
+     version ?.? 2006/12/??
+       Initial production version, that writes only streamer files
+       will revert later to having an option of writing root files
+       also.
 
 */
 
@@ -23,8 +27,8 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
-#include "FWCore/Framework/interface/EventProcessor.h"
-#include "DataFormats/Common/interface/ProductRegistry.h"
+//#include "FWCore/Framework/interface/EventProcessor.h"
+//#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
@@ -136,7 +140,7 @@ namespace stor {
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
     xdata::String offConfig_;
-    xdata::String fuConfig_;
+    //xdata::String fuConfig_;
     friend class stor::SMStateMachine;
   
     boost::shared_ptr<stor::JobController> jc_;

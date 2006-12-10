@@ -46,6 +46,7 @@
            <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
 
                     <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1_fu2.cfi</parameterSet>
+                    <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
                   </properties>
 
                 </xc:Application>
@@ -72,6 +73,7 @@
            <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
 
                     <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1_fu3.cfi</parameterSet>
+                    <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
                   </properties>
 
                 </xc:Application>
@@ -108,7 +110,6 @@
        <!-- Declare a SMSender application -->
        <xc:Application class="testStorageManager" id="29" instance="0" network="tcp1">
 <properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">
-                    <FUparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_stage1noout.cfi</FUparameterSet>
                     <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
                     <oneinN         xsi:type="xsd:integer">1</oneinN>
                     <runNumber      xsi:type="xsd:unsignedInt">0</runNumber>

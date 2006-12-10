@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.3 2006/02/16 19:52:00 wmtan Exp $
+ $Id: StorageManagerRun.cpp,v 1.4 2006/09/29 17:03:26 afaq Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -94,8 +94,8 @@ class Main // : public xdaq::Application
   //XDAQ_INSTANTIATOR();
   //Main(xdaq::ApplicationStub* s);
 
-  Main(const string& fu_config_file,
-       const string& my_config_file,
+  //Main(const string& fu_config_file,
+  Main(const string& my_config_file,
        const vector<string>& file_names);
   ~Main();
   
@@ -128,8 +128,8 @@ Main::Main(xdaq::ApplicationStub* s)
 #endif
 
 
-Main::Main(const string& fu_config_file,
-	   const string& my_config_file,
+//Main::Main(const string& fu_config_file,
+Main::Main(const string& my_config_file,
 	   const vector<string>& file_names):
   names_(file_names)
 {
@@ -145,8 +145,8 @@ Main::Main(const string& fu_config_file,
         //FDEBUG(6) << "StreamInput prod = " << i->className() << endl;
     }
 
-  jc_ = new stor::JobController(pr,
-      getFileContents(my_config_file),
+  //jc_ = new stor::JobController(pr,
+  jc_ = new stor::JobController(getFileContents(my_config_file),
       &deleteBuffer);
 
   vector<string>::iterator it(names_.begin()),en(names_.end());
@@ -154,7 +154,8 @@ Main::Main(const string& fu_config_file,
     {
       ReaderPtr p(new edmtestp::TestFileReader(*it,
 					       jc_->getFragmentQueue(),
-					       jc_->products()));
+					       pr));
+					       //jc_->products()));
       readers_.push_back(p);
     }
 }
@@ -192,11 +193,13 @@ void printusage(char* cmdname)
 int main(int argc, char* argv[])
 {
   // pull options out of command line
-  if(argc < 4)
+  //if(argc < 4)
+  if(argc < 3)
     {
-      cerr << "Usage: " << argv[0] << " trigger_config my_config "
+      //cerr << "Usage: " << argv[0] << " trigger_config my_config "
+      cerr << "Usage: " << argv[0] << " my_config "
 	   << "file1 file2 ... fileN\n"
-	   << "trigger_config and my_config must be given along with at "
+	   << "my_config must be given along with at "
 	   << "least one file name";
       throw cms::Exception("config") << "Bad command line arguments\n";
     }
@@ -204,16 +207,18 @@ int main(int argc, char* argv[])
   edm::service::MessageServicePresence theMessageServicePresence;
   seal::PluginManager::get()->initialise();
 
-  string fu_config_file(argv[1]);
-  string my_config_file(argv[2]);
+  //string fu_config_file(argv[1]);
+  string my_config_file(argv[1]);
   vector<string> file_names;
   
-  for(int i=3;i<argc;++i)
+  //for(int i=3;i<argc;++i)
+  for(int i=2;i<argc;++i)
     file_names.push_back(argv[i]);
 
   try {
     edm::loadExtraClasses(); 
-    Main m(fu_config_file,my_config_file,file_names);
+    //Main m(fu_config_file,my_config_file,file_names);
+    Main m(my_config_file,file_names);
     m.run();
   }
   catch(cms::Exception& e)

@@ -102,7 +102,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   drain_(getFileContents(conffile),auto_ptr<HLTInfo>(new HLTInfo(prods_))),
-  coll_(*drain_.getInfo(),deleteBuffer,prods_)
+  coll_(*drain_.getInfo(),deleteBuffer,conffile)
 {
   cout << "ctor of Main" << endl;
   // jbk - the next line should not be needed

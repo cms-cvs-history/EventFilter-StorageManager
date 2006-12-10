@@ -1,17 +1,6 @@
-process PROD  = {
-  //untracked PSet options = { untracked bool wantSummary = true }
+process SM  = {
 
-  //service = SillyLockService {
-  //                       untracked vstring labels = { "outA", "outB" , "outC" } }
   source = FragmentInput { }
-  //module a1 = StreamThingAnalyzer { string product_to_get="m1" }
-
-  //module pre1 = Prescaler { int32 prescaleFactor = 5 }
-  //module pre2 = Prescaler { int32 prescaleFactor = 2 }
-
-  //path p1 = { a1 }
-  //path p2 = { pre1 }
-  //path p3 = { pre2 }
 
   module out = EventStreamFileWriter
    {
@@ -30,8 +19,9 @@ process PROD  = {
      //int32 maxSize = 1073741824
      int32 maxSize =    536870912
      double highWaterMark = 0.9
+     double lumiSectionTimeOut = 10.0
 
-     untracked PSet SelectEvents = { vstring SelectEvents={"p3"}}
+     untracked PSet SelectEvents = { vstring SelectEvents={"p1"}}
    }
 
    module out2 = EventStreamFileWriter
@@ -50,11 +40,35 @@ process PROD  = {
      string streamLabel = "B"
      int32 maxSize = 1073741824
      double highWaterMark = 0.9
+     double lumiSectionTimeOut = 10.0
 
      untracked PSet SelectEvents = { vstring SelectEvents={"p2"}}
    }
+
+   module out3 = EventStreamFileWriter
+   {
+     int32 max_event_size = 7000000
+     int32 max_queue_depth = 5
+     bool use_compression = false
+     int32 compression_level = 1
+
+     string fileName = "storageManager"
+     string indexFileName = "storageManager.ind"
+     // these are only valid for online storage manager
+     string filePath = "/scratch2/cheung"
+     string mailboxPath = "/scratch2/cheung/mbox"
+     string setupLabel = "mtcc"
+     string streamLabel = "C"
+     int32 maxSize = 1073741824
+     double highWaterMark = 0.9
+     double lumiSectionTimeOut = 10.0
+
+     untracked PSet SelectEvents = { vstring SelectEvents={"p3"}}
+   }
+
    endpath e1 = { out }
    endpath e2 = { out2 }
+   endpath e3 = { out3 }
 
 
 }

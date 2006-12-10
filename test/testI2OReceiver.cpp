@@ -697,7 +697,8 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
       count_4_oneinN_++;
       if(count_4_oneinN_ == value_4oneinN)
         {
-	  EventMsgView eventView(mybuffer_,hltBitCount,l1BitCount);
+	  //EventMsgView eventView(mybuffer_,hltBitCount,l1BitCount);
+	  EventMsgView eventView(mybuffer_);
           evtsrv_area_.push_back(eventView);
           count_4_oneinN_ = 0;
         }
@@ -725,7 +726,8 @@ void testI2OReceiver::writeCompleteChain(toolbox::mem::Reference *head)
       count_4_oneinN_++;
       if(count_4_oneinN_ == value_4oneinN)
         {
-	  EventMsgView eventView(mybuffer_,hltBitCount,l1BitCount);
+	  //EventMsgView eventView(mybuffer_,hltBitCount,l1BitCount);
+	  EventMsgView eventView(mybuffer_);
           evtsrv_area_.push_back(eventView);
           count_4_oneinN_ = 0;
         }

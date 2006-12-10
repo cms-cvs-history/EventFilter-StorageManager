@@ -5,7 +5,7 @@ process TEST1 = {
   path p4 = { m1 }
   path p5 = { m1 }
   endpath e = { out2 }
-  source = EmptySource {untracked int32 maxEvents = 20}
+  source = EmptySource {untracked int32 maxEvents = 50}
                         #untracked uint32 firstRun = 1
                         #untracked uint32 firstEvent = 500}
   module m1 = StreamThingProducer {
@@ -14,18 +14,13 @@ process TEST1 = {
   module a1 = StreamThingAnalyzer { string product_to_get="m1" }
   module pre1 = Prescaler { int32 prescaleFactor = 5 }
   module pre2 = Prescaler { int32 prescaleFactor = 2 }
-  module out3 = I2OTestConsumer {
-                        int32 max_event_size = 2000000 int32 max_queue_depth = 5
-                        PSet consumer_config = {
-                        #untracked int32 i2o_max_size = 262140
-                        string DestinationName = "storageManager" }
-  }
   module out2 = I2OStreamConsumer {
-                        int32 max_event_size = 7000000 int32 max_queue_depth = 5
-                        #untracked int32 i2o_max_size = 262140
+                        int32 max_event_size = 7000000 
+                        int32 max_queue_depth = 5
                         string DestinationName = "testStorageManager"
                         bool use_compression = true
                         int32 compression_level = 1
+                        untracked int32 lumiSection_interval = 600
   }
 
 }

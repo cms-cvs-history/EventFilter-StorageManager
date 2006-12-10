@@ -6,6 +6,8 @@
  $Id:
 
 ----------------------------------------------------------------------*/  
+// The FragmentCollector no longer puts events into the EventBuffer
+// so the drain will not get any events
 
 #include <exception>
 #include <iostream>
@@ -164,7 +166,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   info_(prods_),
-  coll_(info_,deleteBuffer,prods_),
+  coll_(info_,deleteBuffer,conffile),
   //coll2_(info_,deleteBuffer,prods_),
   drain_(info_)
 {
@@ -179,6 +181,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
 					       prods_));
       readers_.push_back(p);
     }
+  coll_.set_outoption(true); // to write out streamer files not root files
 }
 
 int Main::run()
@@ -208,12 +211,17 @@ int Main::run()
   // jbk - this is broken now - it only sends a null
   edm::EventBuffer::ProducerBuffer b(info_.getFragmentQueue());
   b.commit();
-  edm::EventBuffer::ProducerBuffer b2(info_.getFragmentQueue());
+  //edm::EventBuffer::ProducerBuffer b2(info_.getFragmentQueue());
+  edm::EventBuffer::ProducerBuffer b2(info_.getEventQueue());
   b2.commit();
 
+  cerr << "waiting for coll to be done" << endl;
   coll_.join();
+  cerr << "coll done" << endl;
+  cerr << "waiting for drain to be done" << endl;
   //coll2_.join();
   drain_.join();
+  cerr << "drain done" << endl;
   return 0;
 }
 
@@ -233,6 +241,7 @@ int main(int argc, char* argv[])
 
   seal::PluginManager::get()->initialise();
   string conffile(argv[1]);
+      cout << "config = " << argv[1] << endl;
   
   vector<string> file_names;
   
@@ -245,7 +254,7 @@ int main(int argc, char* argv[])
   try {
     edm::loadExtraClasses();
     cout << "Done loading extra classes" << endl;
-    Main m(conffile,file_names);
+    Main m(getFileContents(conffile),file_names);
     m.run();
   }
   catch(cms::Exception& e)
