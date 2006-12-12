@@ -1,85 +1,24 @@
-/*
-   Author: Harry Cheung, FNAL
+// $Id: testStorageManager.cpp,v 1.46 2006/12/10 23:12:57 hcheung Exp $
 
-   Description:
-     Storage Manager XDAQ application. It can receive and collect
-     I2O frames to remake event data and then processes them
-     through an event processor. Two cmsRun style configuration 
-     files are normally needed, one for the Storage Manager and
-     one for the FUEventProcessor that produced the incoming
-     events so that the registry can be made at startup.
-     See CMS EventFilter wiki page for further notes.
-
-   Modification:
-     version 1.1 2005/11/23
-       Initial implementation, the FUEventProcessor configuration
-       is not used yet. This prototype uses a sample streamer
-       data file that must be located at the running directory
-       to get the registry. Also the SM config file name is also
-       hardwired rather than read from the XML file.
-     version 1.2 2006/01/26
-       Changed to use cmsRun configuration contained in the XDAQ
-       XML file instead of hardwired files.
-     version 1.3 2006/01/31
-       Changes to handle local transfers.
-     version 1.4 2006/02/16
-       Fix Build problems due to changes in the Message Logger.
-     version 1.5 2006/02/20
-       Added nullAction needed by EPS state machine.
-     version 1.6 2006/02/28
-       Put testStorageManager into stor:: namespace.
-       Added registration and collection of data for FU senders,
-       and code to display this info on the default web page.
-     version 1.9 2006/03/30
-       Using own SMStateMachine instead of the EPStateMachine from
-       the event filter processor. Added proof of principle
-       implementation of an Event Server. HTTP gets from a cmsRun
-       using the EventStreamHttpReader is reponded to by a binary
-       octet-stream containing the serialized event in a edm::EventMsg. 
-       The first valid product registry edm::InitMsg is saved so it can 
-       be sent when requested.
-          Events to consumers are sent from a ring buffer of size 10.
-       Only 1 in every N events are saved into the ring buffer. For 
-       this test implementation one cannot select on trigger bits. 
-       N is 10 by default but can be overridden by setting oneinN in
-       the testStorageManager section of the xdaq config xml file.
-
-*/
-
-// $Id: testStorageManager.cpp,v 1.45 2006/12/10 15:43:59 hcheung Exp $
-
-#include <exception>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <iomanip>
+#include <sstream>
 #include <sys/statfs.h>
-#include <sys/unistd.h>
 
 #include "EventFilter/StorageManager/test/testStorageManager.h"
+#include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
+#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
+#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
+#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
+#include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 
-//#include "FWCore/Framework/interface/EventProcessor.h"
-//#include "DataFormats/Common/interface/ProductRegistry.h"
-#include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
-#include "FWCore/Utilities/interface/Exception.h"
-#include "FWCore/MessageService/interface/MessageServicePresence.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "IOPool/Streamer/interface/HLTInfo.h"
-#include "IOPool/Streamer/interface/Utilities.h"
-#include "IOPool/Streamer/interface/TestFileReader.h"
+#include "FWCore/ServiceRegistry/interface/ServiceToken.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
-//#include "IOPool/Streamer/interface/StreamTranslator.h"
 #include "IOPool/Streamer/interface/OtherMessage.h"
-#include "EventFilter/StorageManager/interface/JobController.h"
-#include "PluginManager/PluginManager.h"
-
-#include "EventFilter/StorageManager/interface/i2oStorageManagerMsg.h"
-
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
-#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 
 #include "xcept/tools.h"
 
@@ -87,32 +26,27 @@
 #include "i2o/utils/include/i2o/utils/AddressMap.h"
 
 #include "toolbox/mem/Pool.h"
+
 #include "xcept/tools.h"
+
 #include "xgi/Method.h"
 
 #include "xoap/include/xoap/SOAPEnvelope.h"
 #include "xoap/include/xoap/SOAPBody.h"
 #include "xoap/include/xoap/domutils.h"
 
-
-#include <exception>
-#include <iostream>
-#include <iomanip>
-
-#include "boost/shared_ptr.hpp"
-
 using namespace edm;
 using namespace std;
+using namespace stor;
 
-// -----------------------------------------------
 
 static void deleteSMBuffer(void* Ref)
 {
   // release the memory pool buffer
   // once the fragment collector is done with it
   stor::FragEntry* entry = (stor::FragEntry*)Ref;
-// check code for INIT message 
-// and all messages work like this (going into a queue)
+  // check code for INIT message 
+  // and all messages work like this (going into a queue)
   // do not delete the memory for the single (first) INIT message
   // it is stored in the local data member for event server
   // but should not keep all INIT messages? Clean this up!
@@ -122,31 +56,30 @@ static void deleteSMBuffer(void* Ref)
     ref->release();
   }
 }
-// -----------------------------------------------
 
-using namespace stor;
 
 testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
-  fsm_(0), ah_(0), writeStreamerOnly_(true), 
-  connectedFUs_(0), storedEvents_(0), storedVolume_(0.),
+  fsm_(0), 
+  ah_(0), 
+  writeStreamerOnly_(true), 
+  connectedFUs_(0), 
+  storedEvents_(0), 
+  storedVolume_(0.),
   progressMarker_(progress::Idle)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
-  ah_ = new edm::AssertHandler();
-  fsm_ = new stor::SMStateMachine(getApplicationLogger());
+  ah_   = new edm::AssertHandler();
+  fsm_  = new stor::SMStateMachine(getApplicationLogger());
   fsm_->init<testStorageManager>(this);
 
-  // Careful: state machine fsm_ has to be setup first
   setupFlashList();
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
-  // default configuration
   ispace->fireItemAvailable("STparameterSet",&offConfig_);
-  //ispace->fireItemAvailable("FUparameterSet",&fuConfig_);
   ispace->fireItemAvailable("runNumber",     &runNumber_);
   ispace->fireItemAvailable("stateName",     &fsm_->stateName_);
   ispace->fireItemAvailable("connectedFUs",  &connectedFUs_);
@@ -155,7 +88,6 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("fileList",&fileList_);
   ispace->fireItemAvailable("eventsInFile",&eventsInFile_);
   ispace->fireItemAvailable("fileSize",&fileSize_);
-
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -179,7 +111,6 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&testStorageManager::eventdataWebPage,     "geteventdata");
   xgi::bind(this,&testStorageManager::headerdataWebPage,    "getregdata");
   xgi::bind(this,&testStorageManager::consumerWebPage,      "registerConsumer");
-
   receivedFrames_ = 0;
   pool_is_set_    = 0;
   pool_           = 0;
@@ -259,25 +190,17 @@ testStorageManager::ParameterGet(xoap::MessageReference message)
   return Application::ParameterGet(message);
 }
 
-#include "FWCore/ServiceRegistry/interface/ServiceToken.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
-
-#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
-#include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 
 void testStorageManager::configureAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
-  // Get into the ready state
-
   seal::PluginManager::get()->initialise();
 
   // give the JobController a configuration string and
   // get the registry data coming over the network (the first one)
   //evf::ParameterSetRetriever fupset(fuConfig_.value_);
   evf::ParameterSetRetriever smpset(offConfig_.value_);
-  //string sample_config = fupset.getAsString();
+
   string my_config = smpset.getAsString();
 
   writeStreamerOnly_ = (bool) streamer_only_;
@@ -295,21 +218,17 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
   filen_ = stm.str();
   FDEBUG(9) << "Streamer filename starts with = " << filen_ << endl;
 
-  // the rethrows below need to be XDAQ exception types (JBK)
-
-  // 10-Aug-2006, KAB: ensure reasonable values for event server params
   if (maxESEventRate_ < 0.0)
     maxESEventRate_ = 0.0;
 
   xdata::Integer cutoff(1);
   if (consumerQueueSize_ < cutoff)
     consumerQueueSize_ = cutoff;
-  //cout << "maxESEventRate = " << maxESEventRate_ << endl;
-  //cout << "consumerQueueSize = " << consumerQueueSize_ << endl;
 
+  // the rethrows below need to be XDAQ exception types (JBK)
   try {
     jc_.reset(new stor::JobController(my_config, &deleteSMBuffer));
-    // added for Event Server
+
     int value_4oneinN(oneinN_);
     int disks(nLogicalDisk_);
 
@@ -318,6 +237,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     jc_->set_outoption(writeStreamerOnly_);
     unsigned long max(maxFileSize_);
     double high(highWaterMark_);
+
     // check that the directories exist
     struct stat buf;
     int retVal = stat(path_.c_str(), &buf);
@@ -352,25 +272,12 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
       XCEPT_RAISE (toolbox::fsm::exception::Exception, 
 		   "Unknown Exception");
   }
-  /*
-  evf::ModuleWebRegistry *mwr = 0;
-  // This was for when using OutServ and we have an EP
-  //edm::ServiceRegistry::Operate operate(jc_->getToken());
-  try{
-    if(edm::Service<evf::ModuleWebRegistry>().isAvailable())
-      mwr = edm::Service<evf::ModuleWebRegistry>().operator->();
-  }
-  catch(...)
-    { cout <<"exception when trying to get the service registry " << endl;}
-  if(mwr)
-    mwr->publish(getApplicationInfoSpace());
-  */
 }
+
 
 void testStorageManager::enableAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
-  // Get into running state
   fileList_.clear();
   eventsInFile_.clear();
   fileSize_.clear();
@@ -379,16 +286,11 @@ void testStorageManager::enableAction(toolbox::Event::Reference e)
 }       
 
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-
 void testStorageManager::haltAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
   // Check that all senders have closed connections
-  int timeout = 60;
+  int timeout = 60; // make this configurable
   std::cout << "waiting for " <<  smfusenders_.size() 
 	    << " senders to end the run " << std::endl;
   while(smfusenders_.size() > 0)
@@ -404,10 +306,8 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
 
   std::list<std::string> files = jc_->get_filelist();
   std::list<std::string> currfiles= jc_->get_currfiles();
-  //closedFiles_ = files.size();
-  // return closedFiles_ to original functionality, but is this what is wanted?
   closedFiles_ = files.size() - currfiles.size();
-  // note that the last (open) files of each output stream do not have the final size
+
   unsigned int totInFile = 0;
   for(list<string>::const_iterator it = files.begin();
       it != files.end(); it++)
@@ -422,44 +322,27 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
       fileSize_.push_back(size);
       FDEBUG(5) << name << " " << nev << " " << size << std::endl;
     }
-  /* now get_filelist includes all files, including open ones and with statistics)
-  unsigned int nev = storedEvents_ - totInFile;
 
-  for(list<string>::const_iterator it = currfiles.begin();
-      it != currfiles.end(); it++)
-    {
-      struct stat buf;
-      int ret = stat((*it).c_str(), &buf);
-      fileList_.push_back(*it);
-      eventsInFile_.push_back(nev);
-      // nev is largest events stored on one of the streams only!
-      if(ret == 0)
-	fileSize_.push_back(buf.st_size);
-      else
-	fileSize_.push_back(0);
-    }
-   */
-  // Get into halted state  
   jc_->stop();
   jc_->join();
 
-  // make sure serialized product registry is cleared also
   ser_prods_size_ = 0;
 
-  {// is this lock needed?
+  {
     boost::mutex::scoped_lock sl(halt_lock_);
     jc_.reset();
   }
 }
 
 
+
 void testStorageManager::nullAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
-  //this action has no effect. A warning is issued to this end
   LOG4CPLUS_WARN(this->getApplicationLogger(),
                     "Null action invoked");
 }
+
 
 xoap::MessageReference
 testStorageManager::fireEvent(xoap::MessageReference msg)
@@ -487,11 +370,10 @@ testStorageManager::fireEvent(xoap::MessageReference msg)
   XCEPT_RAISE(xoap::exception::Exception, "Command not found");
 }
 
-////////////////////////////// I2O frame call back functions ///////////////
 
+// *** I2O frame call back functions
 void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 {
-  // get the pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
@@ -505,11 +387,8 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << " application " << msg->hltClassName << " id " << msg->hltLocalId
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testStorageManager: registry size " << msg->dataSize << "\n";
-  // can get rid of this if not dumping the data for checking
-  //std::string temp4print(msg->dataPtr(),msg->dataSize);
-  //FDEBUG(10) << "testStorageManager: registry data = " << temp4print << std::endl;
 
-  // check the storage Manager is in the Ready state first!
+  // *** check the storage Manager is in the Ready state first!
   if(fsm_->stateName_ != "Enabled" && fsm_->stateName_ != "Ready" )
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -537,7 +416,6 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 
 void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 {
-  // get the pool pointer for statistics
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
@@ -608,11 +486,11 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
-//HEREHERE must give it the 1 of N for this fragment (starts from 0 in i2o header)
+         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
                   thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, thismsg->eventID);
          b.commit(sizeof(stor::FragEntry));
-//HEREHERE
+
          receivedFrames_++;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
@@ -665,7 +543,6 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
 void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
 {
-  // get the pool pointer for statistics
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
@@ -678,6 +555,7 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
              << " application " << msg->hltClassName << " id " << msg->hltLocalId
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(9) << "testStorageManager: message content " << msg->otherData << "\n";
+ 
   // Not yet processing any Other messages type
   // the only "other" message is an end-of-run. It is awaited to process a request to halt the storage manager
 
@@ -707,7 +585,8 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
   addMeasurement(actualFrameSize);
 }
 
-////////////////////////////// Tracking FU Sender Status  //////////////////
+
+// *** Tracking FU Sender Status
 void stor::testStorageManager::registerFUSender(const char* hltURL,
   const char* hltClassName, const unsigned long hltLocalId,
   const unsigned long hltInstance, const unsigned long hltTid,
@@ -715,9 +594,6 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
   const unsigned long registrySize, const char* registryData,
   toolbox::mem::Reference *ref)
 {  
-  // no longer need to pass the registry pointer - can take it out
-  // register FU sender into the list to keep its status
-  // first check if this FU is already in the list
   if(!smfusenders_.empty())
   {
     // see if this FUsender already has some registry fragments
@@ -729,14 +605,14 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
     for(list<SMFUSenderList>::iterator pos = smfusenders_.begin(); 
         pos != smfusenders_.end(); ++pos)
     {
-       FDEBUG(9) << "registerFUSender: testing if same FU sender" << std::endl;
+      FDEBUG(9) << "registerFUSender: testing if same FU sender" << std::endl;
       if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
          pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
          pos->sameClassName(hltClassName))
-      { // should check there are no entries with duplicate HLT ids
-        FUFound = 1;
-        foundPos = pos;
-      }
+	{ // should check there are no entries with duplicate HLT ids
+	  FUFound = 1;
+	  foundPos = pos;
+	}
     }
     if(FUFound == 0)
     {
@@ -745,15 +621,14 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
                 << hltURL << " and Tid " << hltTid << std::endl;
       // register this FU sender
       SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
-                     hltLocalId, hltInstance, hltTid, numFrames,
-                     registrySize, registryData);
+						    hltLocalId, hltInstance, hltTid, numFrames,
+						    registrySize, registryData);
       smfusenders_.push_back(*fusender);
       LOG4CPLUS_INFO(this->getApplicationLogger(),"register FU sender at " << hltURL << " list size is " << smfusenders_.size());
       smfusenders_.back().chrono_.start(0);
       smfusenders_.back().totFrames_ = numFrames;
       smfusenders_.back().currFrames_ = 1; // should use actual frame if out of order
                                            // but currFrames_ is also the count!
-      //smfusenders_.back().currFrames_ = frameCount;
       smfusenders_.back().frameRefs_[frameCount] = ref;
       // now should check if frame is complete and deal with it
       list<SMFUSenderList>::iterator testPos = --smfusenders_.end();
@@ -787,16 +662,17 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
   }
 }
 
+
+// 
+// *** Check that a given FU Sender has sent all frames for a registry
+// *** If so store the serialized registry and check it
+// *** Does not handle yet when a second registry is sent
+// *** from the same FUSender (e.g. reconnects)
+// 
 void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator pos)
 {
-  //  Check that a given FU Sender has sent all frames for a registry
-  //  If so store the serialized registry and check it
-  //  Does not handle yet when a second registry is sent 
-  //  from the same FUSender (e.g. reconnects)
-  //
   if(pos->totFrames_ == 1)
   {
-    // chain is complete as there is only one frame
     toolbox::mem::Reference *head = 0;
     head = pos->frameRefs_[0];
     FDEBUG(10) << "testCompleteFUReg: No chain as only one frame" << std::endl;
@@ -830,39 +706,37 @@ void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator 
       }
       head = pos->frameRefs_[0];
       FDEBUG(10) << "testCompleteFUReg: Original chain remade" << std::endl;
-      // Deal with the chain
       copyAndTestRegistry(pos, head);
-      // free the complete chain buffer by freeing the head
       head->release();
-    } else {
-    // If running with local transfers, a chain of I2O frames when posted only has the
-    // head frame sent. So a single frame can complete a chain for local transfers.
-    // We need to test for this. Must be head frame and next pointer must exist.
-      if(pos->currFrames_ == 1) // first is always the head??
+    } 
+    else 
       {
-        toolbox::mem::Reference *head = 0;
-        toolbox::mem::Reference *next = 0;
-        // can crash here is first received frame is not first frame!
-        head = pos->frameRefs_[0];
-        // best to check the complete chain just in case!
-        unsigned int tested_frames = 1;
-        next = head;
-        while((next=next->getNextReference())!=0) tested_frames++;
-        FDEBUG(10) << "testCompleteFUReg: Head frame has " << tested_frames-1
-                   << " linked frames out of " << pos->totFrames_-1 << std::endl;
-        if(pos->totFrames_ == tested_frames)
-        {
-          // found a complete linked chain from the leading frame
-          FDEBUG(10) << "testI2OReceiver: Leading frame contains a complete linked chain"
-                     << " - must be local transfer" << std::endl;
-          pos->regAllReceived_ = true;
-          // Deal with the chain
-          copyAndTestRegistry(pos, head);
-          // free the complete chain buffer by freeing the head
-          head->release();
-        }
+	// If running with local transfers, a chain of I2O frames when posted only has the
+	// head frame sent. So a single frame can complete a chain for local transfers.
+	// We need to test for this. Must be head frame and next pointer must exist.
+	if(pos->currFrames_ == 1) // first is always the head??
+	  {
+	    toolbox::mem::Reference *head = 0;
+	    toolbox::mem::Reference *next = 0;
+	    // can crash here is first received frame is not first frame!
+	    head = pos->frameRefs_[0];
+	    // best to check the complete chain just in case!
+	    unsigned int tested_frames = 1;
+	    next = head;
+	    while((next=next->getNextReference())!=0) tested_frames++;
+	    FDEBUG(10) << "testCompleteFUReg: Head frame has " << tested_frames-1
+		       << " linked frames out of " << pos->totFrames_-1 << std::endl;
+	    if(pos->totFrames_ == tested_frames)
+	      {
+		// found a complete linked chain from the leading frame
+		FDEBUG(10) << "testI2OReceiver: Leading frame contains a complete linked chain"
+			   << " - must be local transfer" << std::endl;
+		pos->regAllReceived_ = true;
+		copyAndTestRegistry(pos, head);
+		head->release();
+	      }
+	  }
       }
-    }
   }
 }
 
@@ -870,8 +744,6 @@ void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator 
 void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
   toolbox::mem::Reference *head)
 {
-  // Copy the registry fragments into the one place for saving
-  //
   FDEBUG(9) << "copyAndTestRegistry: Saving and checking the registry" << std::endl;
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)head->getDataLocation();
@@ -883,287 +755,269 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
   // should check the size is correct before defining and filling array!!
   char* tempbuffer = new char[origsize];
   if(msg->numFrames > 1)
-  {
-    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
-               << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
-    int sz = msg->dataSize;
-    totalsize2check = totalsize2check + sz;
-    if(totalsize2check > origsize) {
-      std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
-             << " is larger than original size " << origsize 
-             << " abort copy and test" << std::endl;
-      pos->regCheckedOK_ = false;
-      pos->registrySize_ = 0;
-      delete [] tempbuffer;
-      return;
-    }
-    for(int j=0; j < sz; j++)
-      tempbuffer[j] = msg->dataPtr()[j];
-    // do not need to remake the Header for the leading frame/fragment
-    // as InitMsg does not contain fragment count and total size
-    int next_index = sz;
-    toolbox::mem::Reference *curr = 0;
-    toolbox::mem::Reference *prev = head;
-    for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
     {
-      FDEBUG(9) << "copyAndTestRegistry: getting data for frame " << i+1 << std::endl;
-      curr = prev->getNextReference(); // should test if this exists!
-
-      I2O_MESSAGE_FRAME         *stdMsgcurr =
-        (I2O_MESSAGE_FRAME*)curr->getDataLocation();
-      I2O_SM_PREAMBLE_MESSAGE_FRAME *msgcurr    =
-        (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsgcurr;
-
-      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msgcurr->dataSize << std::endl;
-      int sz = msgcurr->dataSize;
+      FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
+		<< msg->hltURL << " and Tid " << msg->hltTid << std::endl;
+      FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
+      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
+      int sz = msg->dataSize;
       totalsize2check = totalsize2check + sz;
-      if(totalsize2check > origsize) {
-        std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
-               << " is larger than original size " << origsize 
-               << " abort copy and test" << std::endl;
-        pos->regCheckedOK_ = false;
-        pos->registrySize_ = 0;
-        delete [] tempbuffer;
-        return;
-      }
+      if(totalsize2check > origsize) 
+	{
+	  std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
+		    << " is larger than original size " << origsize 
+		    << " abort copy and test" << std::endl;
+	  pos->regCheckedOK_ = false;
+	  pos->registrySize_ = 0;
+	  delete [] tempbuffer;
+	  return;
+	}
       for(int j=0; j < sz; j++)
-        tempbuffer[next_index+j] = msgcurr->dataPtr()[j];
-      next_index = next_index + sz;
-      prev = curr;
+	tempbuffer[j] = msg->dataPtr()[j];
+      // do not need to remake the Header for the leading frame/fragment
+      // as InitMsg does not contain fragment count and total size
+      int next_index = sz;
+      toolbox::mem::Reference *curr = 0;
+      toolbox::mem::Reference *prev = head;
+      for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
+	{
+	  FDEBUG(9) << "copyAndTestRegistry: getting data for frame " << i+1 << std::endl;
+	  curr = prev->getNextReference(); // should test if this exists!
+	  
+	  I2O_MESSAGE_FRAME         *stdMsgcurr =
+	    (I2O_MESSAGE_FRAME*)curr->getDataLocation();
+	  I2O_SM_PREAMBLE_MESSAGE_FRAME *msgcurr    =
+	    (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsgcurr;
+	  
+	  FDEBUG(9) << "copyAndTestRegistry: datasize = " << msgcurr->dataSize << std::endl;
+	  int sz = msgcurr->dataSize;
+	  totalsize2check = totalsize2check + sz;
+	  if(totalsize2check > origsize) {
+	    std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
+		      << " is larger than original size " << origsize 
+		      << " abort copy and test" << std::endl;
+	    pos->regCheckedOK_ = false;
+	    pos->registrySize_ = 0;
+	    delete [] tempbuffer;
+	    return;
+	  }
+	  for(int j=0; j < sz; j++)
+	    tempbuffer[next_index+j] = msgcurr->dataPtr()[j];
+	  next_index = next_index + sz;
+	  prev = curr;
+	}
+      if(totalsize2check != origsize) 
+	{
+	  std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
+		    << " not equal to original size " << origsize << std::endl;
+	}
+      // tempbuffer is filled with whole chain data
+      pos->registrySize_ = origsize; // should already be done
+      copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
+    } 
+  else 
+    {
+      FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
+		<< msg->hltURL << " and Tid " << msg->hltTid << std::endl;
+      FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
+      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
+      int sz = msg->dataSize;
+      for(int j=0; j < sz; j++)
+	tempbuffer[j] = msg->dataPtr()[j];
+      // tempbuffer is filled with all data
+      pos->registrySize_ = origsize; // should already be done
+      copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
     }
-    if(totalsize2check != origsize) {
-       std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
-                 << " not equal to original size " << origsize << std::endl;
-    }
-    // tempbuffer is filled with whole chain data
-    pos->registrySize_ = origsize; // should already be done
-    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
-  } else {
-    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
-               << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
-    int sz = msg->dataSize;
-    for(int j=0; j < sz; j++)
-      tempbuffer[j] = msg->dataPtr()[j];
-    // tempbuffer is filled with all data
-    pos->registrySize_ = origsize; // should already be done
-    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
-  }
   // Assume first received registry is correct and save it
   // (later check list of branch descriptions, run number, 
   //  if SMConfig is asking for the same path names for the 
   //  output streams)
   if(ser_prods_size_ == 0)
-  {
-    //for(int i=0; i<(int)origsize; i++)
-    //  serialized_prods_[i]=tempbuffer[i];
-    copy(tempbuffer, tempbuffer+origsize, serialized_prods_);
-    ser_prods_size_ = origsize;
-    FDEBUG(9) << "Saved serialized registry for Event Server, size " 
-              << ser_prods_size_ << std::endl;
-    // queue for output
-    if(writeStreamerOnly_)
     {
-      EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-      new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
-                            1, 1, Header::INIT, 0); // use fixed 0 as ID
-      b.commit(sizeof(stor::FragEntry));
+      //for(int i=0; i<(int)origsize; i++)
+      //  serialized_prods_[i]=tempbuffer[i];
+      copy(tempbuffer, tempbuffer+origsize, serialized_prods_);
+      ser_prods_size_ = origsize;
+      FDEBUG(9) << "Saved serialized registry for Event Server, size " 
+		<< ser_prods_size_ << std::endl;
+      // queue for output
+      if(writeStreamerOnly_)
+	{
+	  EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+	  new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
+					   1, 1, Header::INIT, 0); // use fixed 0 as ID
+	  b.commit(sizeof(stor::FragEntry));
+	}
+      // with it to get the hlt and l1 cnt for fragColl and get
+      // init message to fragcoll to write it out
+      //jc_->set_hlt_bit_count(testmsg.get_hlt_bit_cnt());
+      //jc_->set_l1_bit_count(testmsg.get_l1_bit_cnt());
     }
-    // with it to get the hlt and l1 cnt for fragColl and get
-    // init message to fragcoll to write it out
-    //jc_->set_hlt_bit_count(testmsg.get_hlt_bit_cnt());
-    //jc_->set_l1_bit_count(testmsg.get_l1_bit_cnt());
-  }
   else
-  { // this is the second or subsequent INIT message test it against first
-    if(writeStreamerOnly_)
-    { // cannot test byte for byte the serialized registry
-      InitMsgView testmsg(&tempbuffer[0]);
-      InitMsgView refmsg(&serialized_prods_[0]);
-      std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
-      std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
-      if(edm::registryIsSubset(*header, *refheader))  // using clunky method
-      {
-        FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
-          pos->regCheckedOK_ = true;
-      } else {
-        // should do something with subsequent data from this FU!
-        FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
-                  << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-                  << std::endl;
-        LOG4CPLUS_ERROR(this->getApplicationLogger(),
-          "copyAndTestRegistry: Error! Received registry is not a subset!"
-           << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-        pos->regCheckedOK_ = false;
-        pos->registrySize_ = 0;
-      }
-    }
-    else
-    { // test using the EventProcessor product registry
-/*
-      try
-      { // to test registry can seg fault if registry is bad!?
-        InitMsgView testmsg(&tempbuffer[0]);
-        // use available methods to check registry is a subset
-        std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
-        if(edm::registryIsSubset(*header, jc_->smproducts()))
-        {
-          FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
-          pos->regCheckedOK_ = true;
-        } else {
-          // should do something with subsequent data from this FU!
-          FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
-                    << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-                    << std::endl;
-          LOG4CPLUS_ERROR(this->getApplicationLogger(),
-            "copyAndTestRegistry: Error! Received registry is not a subset!"
-             << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-          pos->regCheckedOK_ = false;
-          pos->registrySize_ = 0;
-        }
-      }
-      catch(...)
-      {
-        std::cerr << "copyAndTestRegistry: Error! Received registry is not a subset!"
-                  << " Or caught problem checking registry! "
-                  << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-                  << std::endl;
-        LOG4CPLUS_INFO(this->getApplicationLogger(),
-            "copyAndTestRegistry: Error! Received registry is not a subset!"
-             << " Or caught problem checking registry! "
-             << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-        pos->regCheckedOK_ = false;
-        pos->registrySize_ = 0;
-        delete [] tempbuffer;  // does a throw basically immediately return?
-        throw; // do we want to do this?
-      }
-*/
-    } // end of test if writing streamer or root files
-  } // end of test on if first INIT message
+    { // this is the second or subsequent INIT message test it against first
+      if(writeStreamerOnly_)
+	{ // cannot test byte for byte the serialized registry
+	  InitMsgView testmsg(&tempbuffer[0]);
+	  InitMsgView refmsg(&serialized_prods_[0]);
+	  std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
+	  std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
+	  if(edm::registryIsSubset(*header, *refheader))  // using clunky method
+	    {
+	      FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
+	      pos->regCheckedOK_ = true;
+	    } 
+	  else 
+	    {
+	      // should do something with subsequent data from this FU!
+	      FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
+			<< " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
+			<< std::endl;
+	      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+			      "copyAndTestRegistry: Error! Received registry is not a subset!"
+			      << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+	      pos->regCheckedOK_ = false;
+	      pos->registrySize_ = 0;
+	    }
+	}
+    } // end of test on if first INIT message
   delete [] tempbuffer;
 }
 
 void stor::testStorageManager::updateFUSender4data(const char* hltURL,
-  const char* hltClassName, const unsigned long hltLocalId,
-  const unsigned long hltInstance, const unsigned long hltTid,
-  const unsigned long runNumber, const unsigned long eventNumber,
-  const unsigned long frameNum, const unsigned long totalFrames,
-  const unsigned long origdatasize, const bool isLocal)
+						   const char* hltClassName, 
+						   const unsigned long hltLocalId,
+						   const unsigned long hltInstance, 
+						   const unsigned long hltTid,
+						   const unsigned long runNumber, 
+						   const unsigned long eventNumber,
+						   const unsigned long frameNum, 
+						   const unsigned long totalFrames,
+						   const unsigned long origdatasize, 
+						   const bool isLocal)
 {
   // Find this FU sender in the list
   bool problemFound = false;
   if(smfusenders_.size() > 0)
-  {
-    bool fusender_found = false;
-    list<SMFUSenderList>::iterator foundPos;
-    for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
-        pos != smfusenders_.end(); ++pos)
     {
-//      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-//         pos->hltTid_ == hltTid)
-      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-         pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
-         pos->sameClassName(hltClassName))
-      {
-        fusender_found = true;
-        foundPos = pos;
-      }
-    }
-    if(fusender_found)
-    {
-      // should really check this is not a duplicate frame
-      // should test total frames is the same, and other tests are possible
-      // check if this is the first data frame received
-      if(foundPos->connectStatus_ < 2) {  //should actually check bit 2!
-        foundPos->connectStatus_ = foundPos->connectStatus_ + 2; //should set bit 2!
-        FDEBUG(10) << "updateFUSender4data: received first data frame" << std::endl;
-        foundPos->runNumber_ = runNumber;
-        foundPos->isLocal_ = isLocal;
-      } else {
-         if(foundPos->runNumber_ != runNumber) {
-            problemFound = true;
-            FDEBUG(10) << "updateFUSender4data: data frame with new run number!"
-                       << " Current run " << foundPos->runNumber_
-                       << " new run " << runNumber << std::endl;
-         }
-         // could test isLocal here
-      }
-      // check if run number is same which came with configuration, complain otherwise !!!
-      // this->runNumber_ comes from the RunBase class that testStorageManager inherits from
-      if(runNumber != runNumber_)
+      bool fusender_found = false;
+      list<SMFUSenderList>::iterator foundPos;
+      for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
+	  pos != smfusenders_.end(); ++pos)
 	{
-	  LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << runNumber
-			  << " From " << hltURL 
-			  << " Different from Run Number from configuration = " << runNumber_);
+	  //      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+	  //         pos->hltTid_ == hltTid)
+	  if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+	     pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
+	     pos->sameClassName(hltClassName))
+	    {
+	      fusender_found = true;
+	      foundPos = pos;
+	    }
 	}
-      foundPos->framesReceived_++;
-      foundPos->lastRunID_ = runNumber;
-      foundPos->chrono_.stop(0);
-      foundPos->lastLatency_ = (double) foundPos->chrono_.dusecs(); //microseconds
-      foundPos->chrono_.start(0);
-      // check if this frame is the last (assuming in order)
-      // must also handle if there is only one frame in event
-      if(totalFrames == 1) {
-        // there is only one frame in this event assume frameNum = 1!
-        foundPos->eventsReceived_++;
-	storedEvents_.value_++;
-        foundPos->lastEventID_ = eventNumber;
-        foundPos->lastFrameNum_ = frameNum;
-        foundPos->lastTotalFrameNum_ = totalFrames;
-        foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
-      } else {
-        // flag and count if frame (event fragment) out of order
-        if(foundPos->lastEventID_ == eventNumber) {
-          // check if in order and if last frame in a chain
-          if(frameNum != foundPos->lastFrameNum_ + 1) {
-            foundPos->totalOutOfOrder_++;
-          }
-          if(totalFrames != foundPos->lastTotalFrameNum_) {
-            problemFound = true;
-            // this is a real problem! Corrupt data frame
-          }
-          // if last frame in n-of-m assume it completes an event
-          // frame count starts from 1
-          if(frameNum == totalFrames) { //should check totalFrames
-            foundPos->eventsReceived_++;
-	    storedEvents_.value_++;	
-            foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
-          }
-          foundPos->lastFrameNum_ = frameNum;
-        } else {
-          // new event (assume run number does not change)
-          foundPos->lastEventID_ = eventNumber;
-          if(foundPos->lastFrameNum_ != foundPos->lastTotalFrameNum_ &&
-             foundPos->framesReceived_ != 1) {
-            // missing or frame out of order (may count multiplely!)
-            foundPos->totalOutOfOrder_++;
-          }
-          foundPos->lastFrameNum_ = frameNum;
-          foundPos->lastTotalFrameNum_ = totalFrames;
-        }
-      } // totalFrames=1 or not
-      if(problemFound) foundPos->totalBadEvents_++;
-    } // fu sender found
-    else
+      if(fusender_found)
+	{
+	  // should really check this is not a duplicate frame
+	  // should test total frames is the same, and other tests are possible
+	  // check if this is the first data frame received
+	  if(foundPos->connectStatus_ < 2) 
+	    {  //should actually check bit 2!
+	      foundPos->connectStatus_ = foundPos->connectStatus_ + 2; //should set bit 2!
+	      FDEBUG(10) << "updateFUSender4data: received first data frame" << std::endl;
+	      foundPos->runNumber_ = runNumber;
+	      foundPos->isLocal_ = isLocal;
+	    } 
+	  else 
+	    {
+	      if(foundPos->runNumber_ != runNumber) {
+		problemFound = true;
+		FDEBUG(10) << "updateFUSender4data: data frame with new run number!"
+			   << " Current run " << foundPos->runNumber_
+			   << " new run " << runNumber << std::endl;
+	      }
+	      // could test isLocal here
+	    }
+	  // check if run number is same which came with configuration, complain otherwise !!!
+	  // this->runNumber_ comes from the RunBase class that testStorageManager inherits from
+	  if(runNumber != runNumber_)
+	    {
+	      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << runNumber
+			      << " From " << hltURL 
+			      << " Different from Run Number from configuration = " << runNumber_);
+	    }
+	  foundPos->framesReceived_++;
+	  foundPos->lastRunID_ = runNumber;
+	  foundPos->chrono_.stop(0);
+	  foundPos->lastLatency_ = (double) foundPos->chrono_.dusecs(); //microseconds
+	  foundPos->chrono_.start(0);
+	  // check if this frame is the last (assuming in order)
+	  // must also handle if there is only one frame in event
+	  if(totalFrames == 1) 
+	    {
+	      // there is only one frame in this event assume frameNum = 1!
+	      foundPos->eventsReceived_++;
+	      storedEvents_.value_++;
+	      foundPos->lastEventID_ = eventNumber;
+	      foundPos->lastFrameNum_ = frameNum;
+	      foundPos->lastTotalFrameNum_ = totalFrames;
+	      foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
+	    } 
+	  else 
+	    {
+	      // flag and count if frame (event fragment) out of order
+	      if(foundPos->lastEventID_ == eventNumber) 
+		{
+		  // check if in order and if last frame in a chain
+		  if(frameNum != foundPos->lastFrameNum_ + 1) {
+		    foundPos->totalOutOfOrder_++;
+		  }
+		  if(totalFrames != foundPos->lastTotalFrameNum_) {
+		    problemFound = true;
+		    // this is a real problem! Corrupt data frame
+		  }
+		  // if last frame in n-of-m assume it completes an event
+		  // frame count starts from 1
+		  if(frameNum == totalFrames) { //should check totalFrames
+		    foundPos->eventsReceived_++;
+		    storedEvents_.value_++;	
+		    foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
+		  }
+		  foundPos->lastFrameNum_ = frameNum;
+		} 
+	      else 
+		{
+		  // new event (assume run number does not change)
+		  foundPos->lastEventID_ = eventNumber;
+		  if(foundPos->lastFrameNum_ != foundPos->lastTotalFrameNum_ &&
+		     foundPos->framesReceived_ != 1) 
+		    {
+		      // missing or frame out of order (may count multiplely!)
+		      foundPos->totalOutOfOrder_++;
+		    }
+		  foundPos->lastFrameNum_ = frameNum;
+		  foundPos->lastTotalFrameNum_ = totalFrames;
+		}
+	    } // totalFrames=1 or not
+	  if(problemFound) foundPos->totalBadEvents_++;
+	} // fu sender found
+      else
+	{
+	  FDEBUG(10) << "updateFUSender4data: Cannot find FU in FU Sender list!"
+		     << " With URL "
+		     << hltURL << " class " << hltClassName  << " instance "
+		     << hltInstance << " Tid " << hltTid << std::endl;
+	  LOG4CPLUS_INFO(this->getApplicationLogger(),
+			 "updateFUSender4data: Cannot find FU in FU Sender list!"
+			 << " With URL "
+			 << hltURL << " class " << hltClassName  << " instance "
+			 << hltInstance << " Tid " << hltTid);
+	}
+    } 
+  else 
     {
-      FDEBUG(10) << "updateFUSender4data: Cannot find FU in FU Sender list!"
-                 << " With URL "
-                 << hltURL << " class " << hltClassName  << " instance "
-                 << hltInstance << " Tid " << hltTid << std::endl;
-      LOG4CPLUS_INFO(this->getApplicationLogger(),
-                 "updateFUSender4data: Cannot find FU in FU Sender list!"
-                 << " With URL "
-                 << hltURL << " class " << hltClassName  << " instance "
-                 << hltInstance << " Tid " << hltTid);
+      // problem: did not find an entry!!
+      FDEBUG(10) << "updateFUSender4data: No entries at all in FU sender list!"
+		 << std::endl;
     }
-  } else {
-    // problem: did not find an entry!!
-    FDEBUG(10) << "updateFUSender4data: No entries at all in FU sender list!"
-               << std::endl;
-  }
 }
 
 
@@ -1173,37 +1027,37 @@ void stor::testStorageManager::removeFUSender(const char* hltURL,
 {
   // Find this FU sender in the list
   if(!smfusenders_.empty())
-  {
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"removing FU sender at " << hltURL);
-    bool fusender_found = false;
-    list<SMFUSenderList>::iterator foundPos;
-    for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
-        pos != smfusenders_.end(); ++pos)
     {
-//      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-//         pos->hltTid_ == hltTid)
-      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-         pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
-         pos->sameClassName(hltClassName))
-      {
-        fusender_found = true;
-        foundPos = pos;
-      }
+      LOG4CPLUS_INFO(this->getApplicationLogger(),"removing FU sender at " << hltURL);
+      bool fusender_found = false;
+      list<SMFUSenderList>::iterator foundPos;
+      for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
+	  pos != smfusenders_.end(); ++pos)
+	{
+	  //      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+	  //         pos->hltTid_ == hltTid)
+	  if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
+	     pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
+	     pos->sameClassName(hltClassName))
+	    {
+	      fusender_found = true;
+	      foundPos = pos;
+	    }
+	}
+      if(fusender_found)
+	{
+	  smfusenders_.erase(foundPos);
+	}
+      else
+	{
+	  LOG4CPLUS_ERROR(this->getApplicationLogger(),
+			  "Spurious end-of-run received for FU not in Sender list!"
+			  << " With URL "
+			  << hltURL << " class " << hltClassName  << " instance "
+			  << hltInstance << " Tid " << hltTid);
+	  
+	}
     }
-    if(fusender_found)
-    {
-      smfusenders_.erase(foundPos);
-    }
-    else
-      {
-	LOG4CPLUS_ERROR(this->getApplicationLogger(),
-			"Spurious end-of-run received for FU not in Sender list!"
-			<< " With URL "
-			<< hltURL << " class " << hltClassName  << " instance "
-			<< hltInstance << " Tid " << hltTid);
-	
-      }
-  }
   else
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
 		    "end-of-run received for FU but no sender in Sender list!"
@@ -1211,12 +1065,12 @@ void stor::testStorageManager::removeFUSender(const char* hltURL,
 		    << hltURL << " class " << hltClassName  << " instance "
 		    << hltInstance << " Tid " << hltTid);
   
-
+  
 }
 
 
 
-////////////////////////////// Performance      ////////////////////////////
+// ***  Performance     
 void testStorageManager::addMeasurement(unsigned long size)
 {
   // for bandwidth performance measurements
@@ -1248,7 +1102,7 @@ void testStorageManager::addMeasurement(unsigned long size)
   }
 }
 
-////////////////////////////// Default web page ////////////////////////////
+// *** Default web page
 void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1703,7 +1557,9 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
 }
-////////////////////////////// fusender web page ////////////////////////////
+
+
+// *** fusender web page 
 void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1766,7 +1622,9 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
 }
-////////////////////////////// streamer file output web page ////////////////////////////
+
+
+// *** streamer file output web page 
 void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1870,102 +1728,105 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
 }
-/////////////////////////// get event data web page //////////////////////////
+
+
+// *** get event data web page
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   // default the message length to zero
   int len=0;
 
-  // 24-Aug-2006, KAB: determine the consumer ID from the event request
-  // message, if it is available.
   unsigned int consumerId = 0;
   std::string lengthString = in->getenv("CONTENT_LENGTH");
   unsigned long contentLength = std::atol(lengthString.c_str());
-  if (contentLength > 0) {
-    auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
-    in->read(&(*bufPtr)[0], contentLength);
-    OtherMessageView requestMessage(&(*bufPtr)[0]);
-    if (requestMessage.code() == Header::EVENT_REQUEST)
+  if (contentLength > 0) 
     {
-      uint8 *bodyPtr = requestMessage.msgBody();
-      consumerId = convert32(bodyPtr);
+      auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
+      in->read(&(*bufPtr)[0], contentLength);
+      OtherMessageView requestMessage(&(*bufPtr)[0]);
+      if (requestMessage.code() == Header::EVENT_REQUEST)
+	{
+	  uint8 *bodyPtr = requestMessage.msgBody();
+	  consumerId = convert32(bodyPtr);
+	}
     }
-  }
-
+  
   // first test if testStorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(fsm_->stateName_ == "Enabled" && ser_prods_size_ != 0)
   {
     if (consumerId == 0)
-    {
-      boost::mutex::scoped_lock sl(halt_lock_);
-      if (! (jc_->isEmpty()))
       {
-        EventMsgView msgView = jc_->pop_front();
-        unsigned char* pos = (unsigned char*) &mybuffer_[0];
-        unsigned char* from = msgView.startAddress();
-        int dsize = msgView.size();
-
-        copy(from,from+dsize,pos);
-        len = dsize;
-        FDEBUG(10) << "sending event " << msgView.event() << std::endl;
+	boost::mutex::scoped_lock sl(halt_lock_);
+	if (! (jc_->isEmpty()))
+	  {
+	    EventMsgView msgView = jc_->pop_front();
+	    unsigned char* pos = (unsigned char*) &mybuffer_[0];
+	    unsigned char* from = msgView.startAddress();
+	    int dsize = msgView.size();
+	    
+	    copy(from,from+dsize,pos);
+	    len = dsize;
+	    FDEBUG(10) << "sending event " << msgView.event() << std::endl;
+	  }
       }
-    }
     else
-    {
-      boost::shared_ptr<EventServer> eventServer;
-      if (jc_.get() != NULL)
       {
-        eventServer = jc_->getEventServer();
+	boost::shared_ptr<EventServer> eventServer;
+	if (jc_.get() != NULL)
+	  {
+	    eventServer = jc_->getEventServer();
+	  }
+	if (eventServer.get() != NULL)
+	  {
+	    boost::shared_ptr< std::vector<char> > bufPtr =
+	      eventServer->getEvent(consumerId);
+	    if (bufPtr.get() != NULL)
+	      {
+		EventMsgView msgView(&(*bufPtr)[0]);
+		
+		unsigned char* pos = (unsigned char*) &mybuffer_[0];
+		unsigned char* from = msgView.startAddress();
+		int dsize = msgView.size();
+		
+		copy(from,from+dsize,pos);
+		len = dsize;
+		FDEBUG(10) << "sending event " << msgView.event() << std::endl;
+	      }
+	  }
       }
-      if (eventServer.get() != NULL)
-      {
-        boost::shared_ptr< std::vector<char> > bufPtr =
-          eventServer->getEvent(consumerId);
-        if (bufPtr.get() != NULL)
-        {
-          EventMsgView msgView(&(*bufPtr)[0]);
-
-          unsigned char* pos = (unsigned char*) &mybuffer_[0];
-          unsigned char* from = msgView.startAddress();
-          int dsize = msgView.size();
-
-          copy(from,from+dsize,pos);
-          len = dsize;
-          FDEBUG(10) << "sending event " << msgView.event() << std::endl;
-        }
-      }
-    }
-
+    
     out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
     out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
     out->write(mybuffer_,len);
   } // else send end of run as reponse
   else
-  {
-    //edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
-    //len = msg.totalSize();
-    // this is not working
-    OtherMessageBuilder othermsg(&mybuffer_[0],Header::DONE);
-    len = othermsg.size();
-    //std::cout << "making other message code = " << othermsg.code()
-    //          << " and size = " << othermsg.size() << std::endl;
-
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write(mybuffer_,len);
-  }
-
-// How to block if there is no data
-// How to signal if end, and there will be no more data?
-
+    {
+      //edm::MsgCode msg(&mybuffer_[0], 4, edm::MsgCode::DONE);
+      //len = msg.totalSize();
+      // this is not working
+      OtherMessageBuilder othermsg(&mybuffer_[0],Header::DONE);
+      len = othermsg.size();
+      //std::cout << "making other message code = " << othermsg.code()
+      //          << " and size = " << othermsg.size() << std::endl;
+      
+      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+      out->write(mybuffer_,len);
+    }
+  
+  // How to block if there is no data
+  // How to signal if end, and there will be no more data?
+  
 }
-////////////////////////////// get header (registry) web page ////////////////////////////
+
+
+// *** get header (registry) web page 
 void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  // 10-Aug-2006, KAB: determine the consumer ID from the header request
+  // determine the consumer ID from the header request
   // message, if it is available.
   auto_ptr< vector<char> > httpPostData;
   unsigned int consumerId = 0;
@@ -1992,51 +1853,57 @@ void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if testStorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(fsm_->stateName_ == "Enabled" && ser_prods_size_ != 0)
-// should check this as it should work in the enabled state?
-//  if(fsm_->stateName_ == "Enabled")
-  {
-    if(ser_prods_size_ == 0)
-    { // not available yet - return zero length stream, should return MsgCode NOTREADY
+    // should check this as it should work in the enabled state?
+    //  if(fsm_->stateName_ == "Enabled")
+    {
+      if(ser_prods_size_ == 0)
+	{ // not available yet - return zero length stream, should return MsgCode NOTREADY
+	  int len = 0;
+	  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+	  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+	  out->write(mybuffer_,len);
+	} 
+      else 
+	{
+	  // overlay an INIT message view on the serialized
+	  // products array so that we can initialize the consumer event selection
+	  InitMsgView initView(serialized_prods_);
+	  if (jc_.get() != NULL)
+	    {
+	      boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+	      if (eventServer.get() != NULL)
+		{
+		  boost::shared_ptr<ConsumerPipe> consPtr =
+		    eventServer->getConsumer(consumerId);
+		  if (consPtr.get() != NULL)
+		    {
+		      consPtr->initializeSelection(initView);
+		    }
+		}
+	    }
+	  int len = ser_prods_size_;
+	  for (int i=0; i<len; i++) mybuffer_[i]=serialized_prods_[i];
+	  
+	  out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
+	  out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
+	  out->write(mybuffer_,len);
+	}
+    } 
+  else 
+    {
+      // In wrong state for this message - return zero length stream, should return Msg NOTREADY
       int len = 0;
       out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
       out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
       out->write(mybuffer_,len);
-    } else {
-      // 31-Aug-2006, KAB: overlay an INIT message view on the serialized
-      // products array so that we can initialize the consumer event selection
-      InitMsgView initView(serialized_prods_);
-      if (jc_.get() != NULL)
-      {
-        boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
-        if (eventServer.get() != NULL)
-        {
-          boost::shared_ptr<ConsumerPipe> consPtr =
-            eventServer->getConsumer(consumerId);
-          if (consPtr.get() != NULL)
-          {
-            consPtr->initializeSelection(initView);
-          }
-        }
-      }
-      int len = ser_prods_size_;
-      for (int i=0; i<len; i++) mybuffer_[i]=serialized_prods_[i];
-
-      out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-      out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-      out->write(mybuffer_,len);
     }
-  } else {
-   // In wrong state for this message - return zero length stream, should return Msg NOTREADY
-   int len = 0;
-   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-   out->write(mybuffer_,len);
-  }
-
-
-// How to block if there is no header data
-// How to signal if not yet started, so there is no registry yet?
+  
+  
+  // How to block if there is no header data
+  // How to signal if not yet started, so there is no registry yet?
 }
+
+
 ////////////////////////////// consumer registration web page ////////////////////////////
 void testStorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
@@ -2174,7 +2041,6 @@ void testStorageManager::setupFlashList()
   is->fireItemAvailable("meanRate",             &meanRate_);
   is->fireItemAvailable("meanLatency",          &meanLatency_);
   is->fireItemAvailable("STparameterSet",       &offConfig_);
-  //is->fireItemAvailable("FUparameterSet",       &fuConfig_);
   is->fireItemAvailable("stateName",            &fsm_->stateName_);
   is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedFUs",         &connectedFUs_);
@@ -2216,7 +2082,6 @@ void testStorageManager::setupFlashList()
   is->addItemRetrieveListener("meanRate",             this);
   is->addItemRetrieveListener("meanLatency",          this);
   is->addItemRetrieveListener("STparameterSet",       this);
-  //is->addItemRetrieveListener("FUparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
   is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedFUs",         this);
@@ -2238,6 +2103,7 @@ void testStorageManager::setupFlashList()
   //----------------------------------------------------------------------------
 }
 
+
 void testStorageManager::actionPerformed(xdata::Event& e)  
 {
   if (e.type() == "ItemRetrieveEvent") {
@@ -2258,7 +2124,6 @@ void testStorageManager::actionPerformed(xdata::Event& e)
   } 
 }
 
-#include <sstream>
 
 void testStorageManager::parseFileEntry(std::string in, std::string &out, unsigned int &nev, unsigned int &sz)
 {
@@ -2267,10 +2132,9 @@ void testStorageManager::parseFileEntry(std::string in, std::string &out, unsign
   pippo << in;
   pippo >> no >> out >> nev >> sz;
 }
-/**
- * Provides factory method for the instantiation of SM applications
- */
 
+
+// *** Provides factory method for the instantiation of SM applications
 extern "C" xdaq::Application
 *instantiate_testStorageManager(xdaq::ApplicationStub * stub)
 {

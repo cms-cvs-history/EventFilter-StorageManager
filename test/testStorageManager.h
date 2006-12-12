@@ -1,22 +1,17 @@
 #ifndef _testStorageManager_h
 #define _testStorageManager_h
+
 /*
    Author: Harry Cheung, FNAL
 
    Description:
-     Header file used by test Storage Manager XDAQ application that
-     will receive I2O frames and write out a streamer files.
+     Storage Manager XDAQ application. It can receive and collect
+     I2O frames to remake event data. 
 
-   Modification:
-     See the CVS log for all versions
-     version 1.1 2006/01/24
-       Initial implementation. Needs changes for production version.
-     version ?.? 2006/12/??
-       Initial production version, that writes only streamer files
-       will revert later to having an option of writing root files
-       also.
-
+     See CMS EventFilter wiki page for further notes.
 */
+
+// $Id:$
 
 #include <exception>
 #include <iostream>
@@ -27,43 +22,43 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
-//#include "FWCore/Framework/interface/EventProcessor.h"
-//#include "DataFormats/Common/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+
+#include "EventFilter/Utilities/interface/Css.h"
+#include "EventFilter/Utilities/interface/RunBase.h"
+#include "EventFilter/StorageManager/interface/JobController.h"
+#include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
+#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
+#include "EventFilter/StorageManager/interface/SMStateMachine.h"
+
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
-#include "EventFilter/StorageManager/interface/JobController.h"
+
 #include "PluginManager/PluginManager.h"
+
+#include "toolbox/mem/Reference.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
 
-#include "toolbox/mem/Reference.h"
 #include "xdata/String.h"
 #include "xdata/UnsignedInteger32.h"
 #include "xdata/Integer.h"
 #include "xdata/Double.h"
 #include "xdata/Boolean.h"
 #include "xdata/Vector.h"
-#include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
-#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
 #include "xgi/include/xgi/Input.h"
 #include "xgi/include/xgi/Output.h"
 #include "xgi/include/xgi/exception/Exception.h"
-#include "EventFilter/Utilities/interface/Css.h"
-
-#include "EventFilter/Utilities/interface/RunBase.h"
-#include "EventFilter/StorageManager/interface/SMStateMachine.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
 
-//using namespace std;
 
 namespace stor {
 
@@ -71,18 +66,15 @@ namespace stor {
                             public evf::RunBase
   {
    public:
-    //XDAQ_INSTANTIATOR();
     testStorageManager(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
   
     ~testStorageManager();
 
-   /**
-     * Updates the exported parameters
-     */
+    // *** Updates the exported parameters
     xoap::MessageReference ParameterGet(xoap::MessageReference message)
     throw (xoap::exception::Exception);
 
-    // Anything to do with the flash list
+    // *** Anything to do with the flash list
     void setupFlashList();
     void actionPerformed(xdata::Event& e);
   
@@ -140,7 +132,7 @@ namespace stor {
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
     xdata::String offConfig_;
-    //xdata::String fuConfig_;
+ 
     friend class stor::SMStateMachine;
   
     boost::shared_ptr<stor::JobController> jc_;
@@ -190,13 +182,11 @@ namespace stor {
     xdata::Vector<xdata::UnsignedInteger32> eventsInFile_;
     xdata::Vector<xdata::UnsignedInteger32> fileSize_;
 
-    //-----------------------------------------------------------------------------
-    // for performance measurements
-    //-----------------------------------------------------------------------------
+    // *** for performance measurements
     void addMeasurement(unsigned long size);
     stor::SMPerformanceMeter *pmeter_;
 
-    // measurements for last set of samples
+    // *** measurements for last set of samples
     xdata::UnsignedInteger32 samples_; // number of samples/frames per measurement
     xdata::Double instantBandwidth_; // bandwidth in MB/s
     xdata::Double instantRate_;      // number of frames/s
@@ -204,17 +194,14 @@ namespace stor {
     xdata::Double maxBandwidth_;     // maximum bandwidth in MB/s
     xdata::Double minBandwidth_;     // minimum bandwidth in MB/s
 
-    // measurements for all samples
+    // *** measurements for all samples
     xdata::Double duration_;         // time for run in seconds
     xdata::UnsignedInteger32 totalSamples_; //number of samples/frames per measurement
     xdata::Double meanBandwidth_;    // bandwidth in MB/s
     xdata::Double meanRate_;         // number of frames/s
     xdata::Double meanLatency_;      // micro-seconds/frame
 
-    //--------------------------------------------------------------------------
-    // Additional flashlist contents (rest was already there)
-    //--------------------------------------------------------------------------
-    // conventional header (runNumber_ already defined in RunBase.h)
+    // *** additional flashlist contents (rest was already there)
     xdata::String            class_;
     xdata::UnsignedInteger32 instance_;
     xdata::String            url_;       
@@ -222,8 +209,9 @@ namespace stor {
     xdata::Double            storedVolume_;
     xdata::UnsignedInteger32 memoryUsed_;
     xdata::String            progressMarker_;
-  }; // end of class
-} // end of namespace stor
+  }; 
+} 
+
 
 namespace progress {
   const xdata::String Idle    = "Idle";
@@ -231,4 +219,5 @@ namespace progress {
   const xdata::String Process = "Process";
   const xdata::String Output  = "Output";
 }
+
 #endif
