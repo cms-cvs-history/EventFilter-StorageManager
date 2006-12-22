@@ -1,7 +1,9 @@
-// $Id: testStorageManager.cpp,v 1.46 2006/12/10 23:12:57 hcheung Exp $
+// $Id: testStorageManager.cpp,v 1.47 2006/12/12 14:57:38 klute Exp $
 
+#include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <vector>
 #include <sys/statfs.h>
 
 #include "EventFilter/StorageManager/test/testStorageManager.h"
@@ -19,6 +21,9 @@
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/OtherMessage.h"
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
+#include "IOPool/Streamer/interface/HLTInfo.h"
+#include "IOPool/Streamer/interface/Utilities.h"
+#include "IOPool/Streamer/interface/TestFileReader.h"
 
 #include "xcept/tools.h"
 
@@ -121,22 +126,8 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   // should be getting these from SM config file - put them in xml for now
   // until we do it in StreamerOutputService ctor
   ispace->fireItemAvailable("streamerOnly", &streamer_only_);
-  ispace->fireItemAvailable("filePath",     &filePath_);
-  ispace->fireItemAvailable("mailboxPath",  &mailboxPath_);
-  ispace->fireItemAvailable("setupLabel",   &setupLabel_);
-  ispace->fireItemAvailable("streamLabel",  &streamLabel_);
-  ispace->fireItemAvailable("maxFileSize",  &maxFileSize_);
-  ispace->fireItemAvailable("highWaterMark",&highWaterMark_);
   ispace->fireItemAvailable("nLogicalDisk", &nLogicalDisk_);
   ispace->fireItemAvailable("fileCatalog",  &fileCatalog_);
-
-  // default only here - actually set configureAction if defined in XML file
-  path_          = "./";
-  mpath_         = "./"; //mailbox path
-  setup_         = "cms";
-  stream_        = "main";
-  maxFileSize_   = 1073741824;
-  highWaterMark_ = 0.9;
 
   // added for Event Server
   ser_prods_size_ = 0;
@@ -205,18 +196,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
 
   writeStreamerOnly_ = (bool) streamer_only_;
   smConfigString_    = my_config;
-  path_              = filePath_.toString();
-  mpath_             = mailboxPath_.toString();
-  setup_             = setupLabel_.toString();
-  stream_            = streamLabel_.toString();
   smFileCatalog_     = fileCatalog_.toString();
-
-  FDEBUG(9) << "Streamer filename run number = " << runNumber_ << endl;
-  std::ostringstream stm;
-  stm << setup_ << "." << setfill('0') << std::setw(8) << runNumber_
-      << "." << stream_ << "." << sourceId_;
-  filen_ = stm.str();
-  FDEBUG(9) << "Streamer filename starts with = " << filen_ << endl;
 
   if (maxESEventRate_ < 0.0)
     maxESEventRate_ = 0.0;
@@ -235,18 +215,10 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
     if(value_4oneinN <= 0) value_4oneinN = -1;
     jc_->set_oneinN(value_4oneinN);
     jc_->set_outoption(writeStreamerOnly_);
-    unsigned long max(maxFileSize_);
-    double high(highWaterMark_);
-
-    // check that the directories exist
-    struct stat buf;
-    int retVal = stat(path_.c_str(), &buf);
-    if(retVal !=0)
-    {
-      edm::LogWarning("testStorageManager") << "Output directory " << path_ 
-            << " does not exist. Error=" << errno ;
-    }
-    jc_->set_outfile(sourceId_, runNumber_, max, high, path_, mpath_, smFileCatalog_, disks);
+ 
+    jc_->setNumberOfFileSystems(disks);
+    jc_->setFileCatalog(smFileCatalog_);
+    jc_->setSourceId(sourceId_);
 
     boost::shared_ptr<EventServer>
       eventServer(new EventServer(value_4oneinN, maxESEventRate_));
@@ -1679,32 +1651,8 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "</tr>"                                                    << endl;
     *out << "</table>"                                                 << endl;
 
-  *out << "<hr/>"                                                    << endl;
+    *out << "<hr/>"                                                    << endl;
 
-// only do this if path_ is set
-    if(fsm_->stateName_ == "Enabled" || fsm_->stateName_ == "Ready") {
-      struct statfs64 buf;
-      int retVal = statfs64(path_.c_str(), &buf);
-      if(retVal!=0)
-        edm::LogWarning("testStorageManager") << "Could not stat output filesystem for path " << path_ << std::endl;
-
-      unsigned long btotal = 0;
-      unsigned long bfree = 0;
-      unsigned long blksize = 0;
-      if(retVal==0)
-      {
-        blksize = buf.f_bsize;
-        btotal = buf.f_blocks;
-        bfree  = buf.f_bfree;
-      }
-    *out << "<P>Current Path= " << path_                                   << endl;
-    *out << "<P>Current mailBoxPath= " << mpath_                           << endl;
-
-    *out << "<P>FileSystem status: " << setw(5) 
-         << (float(bfree)/float(btotal))*100. 
-         << "% free "                                                  << endl;
-    }
-  
   // should first test if jc_ is valid
       if(ser_prods_size_ != 0) {
         boost::mutex::scoped_lock sl(halt_lock_);
@@ -2045,12 +1993,6 @@ void testStorageManager::setupFlashList()
   is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedFUs",         &connectedFUs_);
   is->fireItemAvailable("streamerOnly",         &streamer_only_);
-  is->fireItemAvailable("filePath",             &filePath_);
-  is->fireItemAvailable("mailboxPath",          &mailboxPath_);
-  is->fireItemAvailable("setupLabel",           &setupLabel_);
-  is->fireItemAvailable("streamLabel",          &streamLabel_);
-  is->fireItemAvailable("maxFileSize",          &maxFileSize_);
-  is->fireItemAvailable("highWaterMark",        &highWaterMark_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
   is->fireItemAvailable("fileCatalog",          &fileCatalog_);
   is->fireItemAvailable("oneinN",               &oneinN_);
@@ -2086,12 +2028,6 @@ void testStorageManager::setupFlashList()
   is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedFUs",         this);
   is->addItemRetrieveListener("streamerOnly",         this);
-  is->addItemRetrieveListener("filePath",             this);
-  is->addItemRetrieveListener("mailboxPath",          this);
-  is->addItemRetrieveListener("setupLabel",           this);
-  is->addItemRetrieveListener("streamLabel",          this);
-  is->addItemRetrieveListener("maxFileSize",          this);
-  is->addItemRetrieveListener("highWaterMark",        this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
   is->addItemRetrieveListener("fileCatalog",          this);
   is->addItemRetrieveListener("oneinN",               this);

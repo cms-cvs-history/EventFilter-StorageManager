@@ -116,12 +116,6 @@
                     <nLogicalDisk   xsi:type="xsd:integer">0</nLogicalDisk> 
                     <fileCatalog    xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
                     <streamerOnly   xsi:type="xsd:boolean">true</streamerOnly>
-                    <filePath       xsi:type="xsd:string">/scratch2/cheung</filePath>
-                    <mailboxPath    xsi:type="xsd:string">/scratch2/cheung/mbox</mailboxPath>
-                    <setupLabel     xsi:type="xsd:string">mtcc</setupLabel>
-                    <streamLabel    xsi:type="xsd:string">A</streamLabel>
-                    <maxFileSize    xsi:type="xsd:integer">1073741824</maxFileSize>
-                    <highWaterMark  xsi:type="xsd:double">0.9</highWaterMark>
 </properties>
 
        </xc:Application>

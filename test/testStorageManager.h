@@ -11,16 +11,10 @@
      See CMS EventFilter wiki page for further notes.
 */
 
-// $Id:$
+// $Id: testStorageManager.h,v 1.29 2006/12/12 14:57:39 klute Exp $
 
-#include <exception>
-#include <iostream>
 #include <string>
-#include <vector>
 #include <list>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/unistd.h>
 
 #include "FWCore/Utilities/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -33,10 +27,6 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/SMStateMachine.h"
-
-#include "IOPool/Streamer/interface/HLTInfo.h"
-#include "IOPool/Streamer/interface/Utilities.h"
-#include "IOPool/Streamer/interface/TestFileReader.h"
 
 #include "PluginManager/PluginManager.h"
 
@@ -140,22 +130,11 @@ namespace stor {
 
     // added for streamer file writing instead of OutServ
     xdata::Boolean streamer_only_;
-    xdata::String  filePath_;
-    xdata::String  mailboxPath_;
-    xdata::String  setupLabel_;
-    xdata::String  streamLabel_;
-    xdata::Integer maxFileSize_;
-    xdata::Double  highWaterMark_;
     xdata::Integer nLogicalDisk_;
     xdata::String  fileCatalog_;
 
     bool writeStreamerOnly_;
     std::string smConfigString_;
-    std::string path_;
-    std::string mpath_; //mailbox path
-    std::string setup_;
-    std::string stream_;
-    std::string filen_;
     std::string smFileCatalog_;
 
     evf::Css css_;
