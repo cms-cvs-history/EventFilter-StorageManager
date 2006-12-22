@@ -8,7 +8,6 @@
       <mon:item name="url"            infospace="urn:xdaq-monitorable:smMonData" type="string"/>
       <mon:item name="storedEvents"   infospace="urn:xdaq-monitorable:smMonData" type="unsigned int 32"/>
       <mon:item name="connectedFUs"   infospace="urn:xdaq-monitorable:smMonData" type="unsigned int 32"/>
-      <mon:item name="filePath"       infospace="urn:xdaq-monitorable:smMonData" type="string"/>
     </mon:flash>
   </mon:flashlists>
   <mon:collectorsettings>
