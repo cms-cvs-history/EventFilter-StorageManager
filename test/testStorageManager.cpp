@@ -1,4 +1,4 @@
-// $Id: testStorageManager.cpp,v 1.47 2006/12/12 14:57:38 klute Exp $
+// $Id: testStorageManager.cpp,v 1.48 2006/12/22 09:48:19 klute Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -80,6 +80,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   fsm_  = new stor::SMStateMachine(getApplicationLogger());
   fsm_->init<testStorageManager>(this);
 
+  // Careful with next line: state machine fsm_ has to be setup first
   setupFlashList();
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
@@ -185,11 +186,14 @@ testStorageManager::ParameterGet(xoap::MessageReference message)
 void testStorageManager::configureAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
+  // Get into the Ready state from Halted state
+
   seal::PluginManager::get()->initialise();
 
   // give the JobController a configuration string and
   // get the registry data coming over the network (the first one)
-  //evf::ParameterSetRetriever fupset(fuConfig_.value_);
+  // Note that there is currently no run number check for the INIT
+  // message, just the first one received once in Enabled state is used
   evf::ParameterSetRetriever smpset(offConfig_.value_);
 
   string my_config = smpset.getAsString();
@@ -250,6 +254,7 @@ void testStorageManager::configureAction(toolbox::Event::Reference e)
 void testStorageManager::enableAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
+  // Get into the Enabled (running) state from Ready state
   fileList_.clear();
   eventsInFile_.clear();
   fileSize_.clear();
@@ -261,9 +266,10 @@ void testStorageManager::enableAction(toolbox::Event::Reference e)
 void testStorageManager::haltAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
-  // Check that all senders have closed connections
-  int timeout = 60; // make this configurable
-  std::cout << "waiting for " <<  smfusenders_.size() 
+  // Get into the Halted (stopped and unconfigured) state from Enabled state
+  // First check that all senders have closed connections
+  int timeout = 60; // make this configurable (and advertize the value)
+  std::cout << "waiting " << timeout << " sec for " <<  smfusenders_.size() 
 	    << " senders to end the run " << std::endl;
   while(smfusenders_.size() > 0)
     {
@@ -298,6 +304,8 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
   jc_->stop();
   jc_->join();
 
+  // make sure serialized product registry is cleared also as its used
+  // to check state readiness for web transactions
   ser_prods_size_ = 0;
 
   {
@@ -311,6 +319,8 @@ void testStorageManager::haltAction(toolbox::Event::Reference e)
 void testStorageManager::nullAction(toolbox::Event::Reference e) 
   throw (toolbox::fsm::exception::Exception)
 {
+  // This method is called when we allow for a state transition call but
+  // whose the action has no effect. A warning is issued to this end
   LOG4CPLUS_WARN(this->getApplicationLogger(),
                     "Null action invoked");
 }
@@ -343,9 +353,10 @@ testStorageManager::fireEvent(xoap::MessageReference msg)
 }
 
 
-// *** I2O frame call back functions
+////////// *** I2O frame call back functions /////////////////////////////////////////////
 void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 {
+  // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
@@ -360,11 +371,11 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
   FDEBUG(10) << "testStorageManager: registry size " << msg->dataSize << "\n";
 
-  // *** check the storage Manager is in the Ready state first!
+  // *** check the Storage Manager is in the Ready or Enabled state first!
   if(fsm_->stateName_ != "Enabled" && fsm_->stateName_ != "Ready" )
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                       "Received INIT message but not in Enabled state! Current state = "
+                       "Received INIT message but not in Ready/Enabled state! Current state = "
                        << fsm_->stateName_.toString() << " INIT from " << msg->hltURL
                        << " application " << msg->hltClassName);
     // just release the memory at least - is that what we want to do?
@@ -388,6 +399,7 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 
 void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 {
+  // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
@@ -515,6 +527,7 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
 void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
 {
+  // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
@@ -558,7 +571,7 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
 }
 
 
-// *** Tracking FU Sender Status
+/////////// *** Tracking FU Sender Status //////////////////////////////////////////
 void stor::testStorageManager::registerFUSender(const char* hltURL,
   const char* hltClassName, const unsigned long hltLocalId,
   const unsigned long hltInstance, const unsigned long hltTid,
@@ -566,6 +579,9 @@ void stor::testStorageManager::registerFUSender(const char* hltURL,
   const unsigned long registrySize, const char* registryData,
   toolbox::mem::Reference *ref)
 {  
+  // register FU sender into the list to keep its status
+  // first check if this FU is already in the list
+  // (no longer need to pass the registry pointer - need to be taken out)
   if(!smfusenders_.empty())
   {
     // see if this FUsender already has some registry fragments
@@ -645,6 +661,7 @@ void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator 
 {
   if(pos->totFrames_ == 1)
   {
+    // chain is complete as there is only one frame
     toolbox::mem::Reference *head = 0;
     head = pos->frameRefs_[0];
     FDEBUG(10) << "testCompleteFUReg: No chain as only one frame" << std::endl;
@@ -678,7 +695,9 @@ void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator 
       }
       head = pos->frameRefs_[0];
       FDEBUG(10) << "testCompleteFUReg: Original chain remade" << std::endl;
+      // Deal with the chain
       copyAndTestRegistry(pos, head);
+      // free the complete chain buffer by freeing the head
       head->release();
     } 
     else 
@@ -716,6 +735,8 @@ void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator 
 void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
   toolbox::mem::Reference *head)
 {
+  // Copy the registry fragments into the one place and save for subsequent files
+  // and for event server; also test against the first registry received this run
   FDEBUG(9) << "copyAndTestRegistry: Saving and checking the registry" << std::endl;
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)head->getDataLocation();
@@ -727,131 +748,118 @@ void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterato
   // should check the size is correct before defining and filling array!!
   char* tempbuffer = new char[origsize];
   if(msg->numFrames > 1)
-    {
-      FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
-		<< msg->hltURL << " and Tid " << msg->hltTid << std::endl;
-      FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
-      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
-      int sz = msg->dataSize;
-      totalsize2check = totalsize2check + sz;
-      if(totalsize2check > origsize) 
-	{
-	  std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
-		    << " is larger than original size " << origsize 
-		    << " abort copy and test" << std::endl;
-	  pos->regCheckedOK_ = false;
-	  pos->registrySize_ = 0;
-	  delete [] tempbuffer;
-	  return;
-	}
-      for(int j=0; j < sz; j++)
-	tempbuffer[j] = msg->dataPtr()[j];
-      // do not need to remake the Header for the leading frame/fragment
-      // as InitMsg does not contain fragment count and total size
-      int next_index = sz;
-      toolbox::mem::Reference *curr = 0;
-      toolbox::mem::Reference *prev = head;
-      for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
-	{
-	  FDEBUG(9) << "copyAndTestRegistry: getting data for frame " << i+1 << std::endl;
-	  curr = prev->getNextReference(); // should test if this exists!
-	  
-	  I2O_MESSAGE_FRAME         *stdMsgcurr =
-	    (I2O_MESSAGE_FRAME*)curr->getDataLocation();
-	  I2O_SM_PREAMBLE_MESSAGE_FRAME *msgcurr    =
-	    (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsgcurr;
-	  
-	  FDEBUG(9) << "copyAndTestRegistry: datasize = " << msgcurr->dataSize << std::endl;
-	  int sz = msgcurr->dataSize;
-	  totalsize2check = totalsize2check + sz;
-	  if(totalsize2check > origsize) {
-	    std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
-		      << " is larger than original size " << origsize 
-		      << " abort copy and test" << std::endl;
-	    pos->regCheckedOK_ = false;
-	    pos->registrySize_ = 0;
-	    delete [] tempbuffer;
-	    return;
-	  }
-	  for(int j=0; j < sz; j++)
-	    tempbuffer[next_index+j] = msgcurr->dataPtr()[j];
-	  next_index = next_index + sz;
-	  prev = curr;
-	}
-      if(totalsize2check != origsize) 
-	{
-	  std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
-		    << " not equal to original size " << origsize << std::endl;
-	}
-      // tempbuffer is filled with whole chain data
-      pos->registrySize_ = origsize; // should already be done
-      copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
-    } 
-  else 
-    {
-      FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
-		<< msg->hltURL << " and Tid " << msg->hltTid << std::endl;
-      FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
-      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
-      int sz = msg->dataSize;
-      for(int j=0; j < sz; j++)
-	tempbuffer[j] = msg->dataPtr()[j];
-      // tempbuffer is filled with all data
-      pos->registrySize_ = origsize; // should already be done
-      copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
+  {
+    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
+              << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
+    int sz = msg->dataSize;
+    totalsize2check = totalsize2check + sz;
+    if(totalsize2check > origsize) {
+      std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
+      << " is larger than original size " << origsize 
+      << " abort copy and test" << std::endl;
+      pos->regCheckedOK_ = false;
+      pos->registrySize_ = 0;
+      delete [] tempbuffer;
+      return;
     }
+    for(int j=0; j < sz; j++) tempbuffer[j] = msg->dataPtr()[j];
+    // do not need to remake the Header for the leading frame/fragment
+    // as InitMsg does not contain fragment count and total size
+    int next_index = sz;
+    toolbox::mem::Reference *curr = 0;
+    toolbox::mem::Reference *prev = head;
+    for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
+    {
+      FDEBUG(9) << "copyAndTestRegistry: getting data for frame " << i+1 << std::endl;
+      curr = prev->getNextReference(); // should test if this exists!
+  
+      I2O_MESSAGE_FRAME         *stdMsgcurr =
+        (I2O_MESSAGE_FRAME*)curr->getDataLocation();
+      I2O_SM_PREAMBLE_MESSAGE_FRAME *msgcurr    =
+        (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsgcurr;
+  
+      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msgcurr->dataSize << std::endl;
+      int sz = msgcurr->dataSize;
+      totalsize2check = totalsize2check + sz;
+      if(totalsize2check > origsize) {
+        std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
+                  << " is larger than original size " << origsize 
+                  << " abort copy and test" << std::endl;
+        pos->regCheckedOK_ = false;
+        pos->registrySize_ = 0;
+        delete [] tempbuffer;
+        return;
+      }
+      for(int j=0; j < sz; j++)
+        tempbuffer[next_index+j] = msgcurr->dataPtr()[j];
+      next_index = next_index + sz;
+      prev = curr;
+    }
+    if(totalsize2check != origsize) {
+      std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
+                << " not equal to original size " << origsize << std::endl;
+    }
+    // tempbuffer is filled with whole chain data
+    pos->registrySize_ = origsize; // should already be done
+    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
+
+  } else { // only one frame/fragment
+    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
+              << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
+    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
+    int sz = msg->dataSize;
+    for(int j=0; j < sz; j++)
+      tempbuffer[j] = msg->dataPtr()[j];
+    // tempbuffer is filled with all data
+    pos->registrySize_ = origsize; // should already be done
+    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
+  } // end of number of frames test
+
   // Assume first received registry is correct and save it
   // (later check list of branch descriptions, run number, 
   //  if SMConfig is asking for the same path names for the 
   //  output streams)
   if(ser_prods_size_ == 0)
-    {
-      //for(int i=0; i<(int)origsize; i++)
-      //  serialized_prods_[i]=tempbuffer[i];
-      copy(tempbuffer, tempbuffer+origsize, serialized_prods_);
-      ser_prods_size_ = origsize;
-      FDEBUG(9) << "Saved serialized registry for Event Server, size " 
-		<< ser_prods_size_ << std::endl;
-      // queue for output
-      if(writeStreamerOnly_)
-	{
-	  EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-	  new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
-					   1, 1, Header::INIT, 0); // use fixed 0 as ID
-	  b.commit(sizeof(stor::FragEntry));
-	}
-      // with it to get the hlt and l1 cnt for fragColl and get
-      // init message to fragcoll to write it out
-      //jc_->set_hlt_bit_count(testmsg.get_hlt_bit_cnt());
-      //jc_->set_l1_bit_count(testmsg.get_l1_bit_cnt());
+  {
+    copy(tempbuffer, tempbuffer+origsize, serialized_prods_);
+    ser_prods_size_ = origsize;
+    FDEBUG(9) << "Saved serialized registry for Event Server, size " 
+              << ser_prods_size_ << std::endl;
+    // queue for output
+    if(writeStreamerOnly_) {
+      EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+      new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
+                                       1, 1, Header::INIT, 0); // use fixed 0 as ID
+      b.commit(sizeof(stor::FragEntry));
     }
-  else
-    { // this is the second or subsequent INIT message test it against first
-      if(writeStreamerOnly_)
-	{ // cannot test byte for byte the serialized registry
-	  InitMsgView testmsg(&tempbuffer[0]);
-	  InitMsgView refmsg(&serialized_prods_[0]);
-	  std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
-	  std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
-	  if(edm::registryIsSubset(*header, *refheader))  // using clunky method
-	    {
-	      FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
-	      pos->regCheckedOK_ = true;
-	    } 
-	  else 
-	    {
-	      // should do something with subsequent data from this FU!
-	      FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
-			<< " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-			<< std::endl;
-	      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-			      "copyAndTestRegistry: Error! Received registry is not a subset!"
-			      << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-	      pos->regCheckedOK_ = false;
-	      pos->registrySize_ = 0;
-	    }
-	}
-    } // end of test on if first INIT message
+  } else { // this is the second or subsequent INIT message test it against first
+    if(writeStreamerOnly_)
+    { // cannot test byte for byte the serialized registry
+      InitMsgView testmsg(&tempbuffer[0]);
+      InitMsgView refmsg(&serialized_prods_[0]);
+      std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
+      std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
+      // should test this well to see if a try block is needed for next line
+      if(edm::registryIsSubset(*header, *refheader)) {  // using clunky method
+        FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
+        pos->regCheckedOK_ = true;
+      } else {
+        // should do something with subsequent data from this FU!
+        FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
+                  << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
+                  << std::endl;
+        LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                        "copyAndTestRegistry: Error! Received registry is not a subset!"
+                        << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
+        pos->regCheckedOK_ = false;
+        pos->registrySize_ = 0;
+      }
+    } // end of streamer writing test - should an else with an error/warning message
+      // or decide once and for all we only write streamer files and get rid of test
+  } // end of test on if first INIT message
   delete [] tempbuffer;
 }
 
@@ -1042,7 +1050,7 @@ void stor::testStorageManager::removeFUSender(const char* hltURL,
 
 
 
-// ***  Performance     
+//////////// ***  Performance //////////////////////////////////////////////////////////
 void testStorageManager::addMeasurement(unsigned long size)
 {
   // for bandwidth performance measurements
@@ -1074,7 +1082,7 @@ void testStorageManager::addMeasurement(unsigned long size)
   }
 }
 
-// *** Default web page
+//////////// *** Default web page //////////////////////////////////////////////////////////
 void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1531,7 +1539,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-// *** fusender web page 
+//////////// *** fusender web page //////////////////////////////////////////////////////////
 void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1596,7 +1604,7 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-// *** streamer file output web page 
+//////////// *** streamer file output web page //////////////////////////////////////////////////////////
 void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1678,13 +1686,15 @@ void testStorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-// *** get event data web page
+//////////// *** get event data web page //////////////////////////////////////////////////////////
 void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   // default the message length to zero
   int len=0;
 
+  // determine the consumer ID from the event request
+  // message, if it is available.
   unsigned int consumerId = 0;
   std::string lengthString = in->getenv("CONTENT_LENGTH");
   unsigned long contentLength = std::atol(lengthString.c_str());
@@ -1770,7 +1780,7 @@ void testStorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-// *** get header (registry) web page 
+//////////// *** get header (registry) web page ////////////////////////////////////////
 void testStorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -2071,6 +2081,7 @@ void testStorageManager::parseFileEntry(std::string in, std::string &out, unsign
 
 
 // *** Provides factory method for the instantiation of SM applications
+// should probably use the MACRO? Could a XDAQ version change cause problems?
 extern "C" xdaq::Application
 *instantiate_testStorageManager(xdaq::ApplicationStub * stub)
 {
