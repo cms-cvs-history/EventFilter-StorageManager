@@ -1,4 +1,4 @@
-// $Id: testStorageManager.cpp,v 1.48 2006/12/22 09:48:19 klute Exp $
+// $Id: testStorageManager.cpp,v 1.49 2007/01/03 02:49:58 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -163,7 +163,8 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   string        xmlClass = getApplicationDescriptor()->getClassName();
   unsigned long instance = getApplicationDescriptor()->getInstance();
   ostringstream sourcename;
-  sourcename << xmlClass << "_" << instance;
+  // sourcename << xmlClass << "_" << instance;
+  sourcename << instance;
   sourceId_ = sourcename.str();
 }
 
