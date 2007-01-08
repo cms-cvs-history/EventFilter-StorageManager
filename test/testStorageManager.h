@@ -11,7 +11,7 @@
      See CMS EventFilter wiki page for further notes.
 */
 
-// $Id: testStorageManager.h,v 1.29 2006/12/12 14:57:39 klute Exp $
+// $Id: testStorageManager.h,v 1.30 2006/12/22 09:48:19 klute Exp $
 
 #include <string>
 #include <list>
@@ -82,25 +82,6 @@ namespace stor {
     void receiveDataMessage(toolbox::mem::Reference *ref);
     void receiveOtherMessage(toolbox::mem::Reference *ref);
 
-    void registerFUSender(const char* hltURL, const char* hltClassName,
-                 const unsigned long hltLocalId, const unsigned long hltInstance,
-                 const unsigned long hltTid,
-                 const unsigned long frameCount, const unsigned long numFrames,
-                 const unsigned long registrySize, const char* registryData,
-                 toolbox::mem::Reference *ref);
-    void testCompleteFUReg(list<SMFUSenderList>::iterator pos);
-    void copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
-                 toolbox::mem::Reference *head);
-    void updateFUSender4data(const char* hltURL,
-      const char* hltClassName, const unsigned long hltLocalId,
-      const unsigned long hltInstance, const unsigned long hltTid,
-      const unsigned long runNumber, const unsigned long eventNumber,
-      const unsigned long frameNum, const unsigned long totalFrames,
-      const unsigned long origdatasize, const bool isLocal);
-    void removeFUSender(const char* hltURL,
-      const char* hltClassName, const unsigned long hltLocalId,
-      const unsigned long hltInstance, const unsigned long hltTid);
-    
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
@@ -152,7 +133,7 @@ namespace stor {
     xdata::Integer idleConsumerTimeout_;  // seconds
     xdata::Integer consumerQueueSize_;
 
-    std::list<SMFUSenderList> smfusenders_;
+    SMFUSenderList smfusenders_;
     xdata::UnsignedInteger32 connectedFUs_;
 
     xdata::UnsignedInteger32 storedEvents_;

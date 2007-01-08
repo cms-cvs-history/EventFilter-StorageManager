@@ -1,4 +1,4 @@
-// $Id: testStorageManager.cpp,v 1.49 2007/01/03 02:49:58 hcheung Exp $
+// $Id: testStorageManager.cpp,v 1.50 2007/01/07 18:06:14 klute Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -390,12 +390,60 @@ void testStorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
                                   + msg->dataSize;
   addMeasurement(actualFrameSize);
   // register this FU sender into the list to keep its status
-  registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
+  int status = smfusenders_.registerFUSender(&msg->hltURL[0], &msg->hltClassName[0],
                  msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                 msg->frameCount, msg->numFrames,
-                 msg->originalSize, msg->dataPtr(), ref);
-  // should not release until after registerFUSender finds all fragments
-  //ref->release();
+                 msg->frameCount, msg->numFrames, ref);
+  // see if this completes the registry data for this FU
+  // if so then: if first copy it, if subsequent test it (mark which is first?)
+  // should test on -1 as problems
+  if(status == 1)
+  {
+    char* regPtr = smfusenders_.getRegistryData(&msg->hltURL[0], &msg->hltClassName[0],
+                 msg->hltLocalId, msg->hltInstance, msg->hltTid);
+    unsigned int regSz = smfusenders_.getRegistrySize(&msg->hltURL[0], &msg->hltClassName[0],
+                 msg->hltLocalId, msg->hltInstance, msg->hltTid);
+    // Assume first received registry is correct and save it
+    if(ser_prods_size_ == 0)
+    {
+      copy(regPtr, regPtr+regSz, serialized_prods_);
+      ser_prods_size_ = regSz;
+      FDEBUG(9) << "Saved serialized registry for Event Server, size "
+                << ser_prods_size_ << std::endl;
+      // queue for output
+      if(writeStreamerOnly_) {
+        EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+        new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
+                                         1, 1, Header::INIT, 0); // use fixed 0 as ID
+        b.commit(sizeof(stor::FragEntry));
+      }
+      // this is checked ok by default
+      smfusenders_.setRegCheckedOK(&msg->hltURL[0], &msg->hltClassName[0],
+                                   msg->hltLocalId, msg->hltInstance, msg->hltTid);
+    } else { // this is the second or subsequent INIT message test it against first
+      if(writeStreamerOnly_)
+      { // cannot test byte for byte the serialized registry
+        InitMsgView testmsg(regPtr);
+        InitMsgView refmsg(&serialized_prods_[0]);
+        std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
+        std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
+        // should test this well to see if a try block is needed for next line
+        if(edm::registryIsSubset(*header, *refheader)) {  // using clunky method
+          FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
+          smfusenders_.setRegCheckedOK(&msg->hltURL[0], &msg->hltClassName[0],
+                                       msg->hltLocalId, msg->hltInstance, msg->hltTid);
+        } else {
+          // should do something with subsequent data from this FU!
+          FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
+                    << " for URL " << msg->hltURL << " and Tid " << msg->hltTid
+                    << std::endl;
+          LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                          "copyAndTestRegistry: Error! Received registry is not a subset!"
+                          << " for URL " << msg->hltURL << " and Tid " << msg->hltTid);
+        }
+      } // end of streamer writing test - should an else with an error/warning message
+        // or decide once and for all we only write streamer files and get rid of test
+    } // end of test on if registry data was saved
+  } // end of test on if registryFUSender returned that registry is complete
 }
 
 void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
@@ -483,13 +531,31 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
          addMeasurement(actualFrameSize);
+
+         // should only do this test if the first data frame from each FU?
+         // check if run number is the same as that in Run configuration, complain otherwise !!!
+         // this->runNumber_ comes from the RunBase class that testStorageManager inherits from
+         if(msg->runID != runNumber_)
+         {
+           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << msg->runID
+                           << " From " << msg->hltURL
+                           << " Different from Run Number from configuration = " << runNumber_);
+         }
          // for FU sender list update
          // msg->frameCount start from 0, but in EventMsg header it starts from 1!
          bool isLocal = true;
-         updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+         int status = smfusenders_.updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
            msg->hltLocalId, msg->hltInstance, msg->hltTid,
            msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
            msg->originalSize, isLocal);
+         if(status == 1) ++(storedEvents_.value_);
+         if(status == -1) {
+           LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                    "updateFUSender4data: Cannot find FU in FU Sender list!"
+                    << " With URL "
+                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
+                    << msg->hltInstance << " Tid " << msg->hltTid);
+         }
       }
 
       progressMarker_ = progress::Output;
@@ -516,13 +582,31 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
     addMeasurement(actualFrameSize);
+
+    // should only do this test if the first data frame from each FU?
+    // check if run number is the same as that in Run configuration, complain otherwise !!!
+    // this->runNumber_ comes from the RunBase class that testStorageManager inherits from
+    if(msg->runID != runNumber_)
+    {
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << msg->runID
+                      << " From " << msg->hltURL
+                      << " Different from Run Number from configuration = " << runNumber_);
+    }
     // for FU sender list update
     // msg->frameCount start from 0, but in EventMsg header it starts from 1!
     bool isLocal = false;
-    updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+    int status = smfusenders_.updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
       msg->hltLocalId, msg->hltInstance, msg->hltTid,
       msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
       msg->originalSize, isLocal);
+      if(status == 1) ++(storedEvents_.value_);
+      if(status == -1) {
+        LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                 "updateFUSender4data: Cannot find FU in FU Sender list!"
+                 << " With URL "
+                 << msg->hltURL << " class " << msg->hltClassName  << " instance "
+                 << msg->hltInstance << " Tid " << msg->hltTid);
+      }
   }
 }
 
@@ -558,8 +642,17 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
     return;
   }
   
-  removeFUSender(&msg->hltURL[0], &msg->hltClassName[0],
+  LOG4CPLUS_INFO(this->getApplicationLogger(),"removing FU sender at " << msg->hltURL);
+  bool didErase = smfusenders_.removeFUSender(&msg->hltURL[0], &msg->hltClassName[0],
 		 msg->hltLocalId, msg->hltInstance, msg->hltTid);
+  if(!didErase)
+  {
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                    "Spurious end-of-run received for FU not in Sender list!"
+                    << " With URL "
+                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
+                    << msg->hltInstance << " Tid " << msg->hltTid);
+  }
   
   // release the frame buffer now that we are finished
   ref->release();
@@ -570,486 +663,6 @@ void testStorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_OTHER_MESSAGE_FRAME);
   addMeasurement(actualFrameSize);
 }
-
-
-/////////// *** Tracking FU Sender Status //////////////////////////////////////////
-void stor::testStorageManager::registerFUSender(const char* hltURL,
-  const char* hltClassName, const unsigned long hltLocalId,
-  const unsigned long hltInstance, const unsigned long hltTid,
-  const unsigned long frameCount, const unsigned long numFrames,
-  const unsigned long registrySize, const char* registryData,
-  toolbox::mem::Reference *ref)
-{  
-  // register FU sender into the list to keep its status
-  // first check if this FU is already in the list
-  // (no longer need to pass the registry pointer - need to be taken out)
-  if(!smfusenders_.empty())
-  {
-    // see if this FUsender already has some registry fragments
-    // should also test if its complete!! (Would mean a reconnect)
-    FDEBUG(9) << "registerFUSender: checking if this FU Sender already registered"
-               << std::endl;
-    int FUFound = 0;
-    list<SMFUSenderList>::iterator foundPos;
-    for(list<SMFUSenderList>::iterator pos = smfusenders_.begin(); 
-        pos != smfusenders_.end(); ++pos)
-    {
-      FDEBUG(9) << "registerFUSender: testing if same FU sender" << std::endl;
-      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-         pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
-         pos->sameClassName(hltClassName))
-	{ // should check there are no entries with duplicate HLT ids
-	  FUFound = 1;
-	  foundPos = pos;
-	}
-    }
-    if(FUFound == 0)
-    {
-      FDEBUG(9) << "registerFUSender: found a different FU Sender with frame " 
-                << frameCount << " for URL "
-                << hltURL << " and Tid " << hltTid << std::endl;
-      // register this FU sender
-      SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
-						    hltLocalId, hltInstance, hltTid, numFrames,
-						    registrySize, registryData);
-      smfusenders_.push_back(*fusender);
-      LOG4CPLUS_INFO(this->getApplicationLogger(),"register FU sender at " << hltURL << " list size is " << smfusenders_.size());
-      smfusenders_.back().chrono_.start(0);
-      smfusenders_.back().totFrames_ = numFrames;
-      smfusenders_.back().currFrames_ = 1; // should use actual frame if out of order
-                                           // but currFrames_ is also the count!
-      smfusenders_.back().frameRefs_[frameCount] = ref;
-      // now should check if frame is complete and deal with it
-      list<SMFUSenderList>::iterator testPos = --smfusenders_.end();
-      testCompleteFUReg(testPos);
-    } else {
-      FDEBUG(10) << "registerFUSender: found another frame " << frameCount << " for URL "
-                 << hltURL << " and Tid " << hltTid << std::endl;
-      // should really check this is not a duplicate frame
-      // should check if already all frames were received (indicates reconnect maybe)
-      // should test total frames is the same, and other tests are possible
-      foundPos->currFrames_++;
-      foundPos->frameRefs_[frameCount] = ref;
-      // now should check if frame is complete and deal with it
-      testCompleteFUReg(foundPos);
-    }
-  } else { // no FU sender has ever been registered yet
-    // register this FU sender
-    SMFUSenderList *fusender = new SMFUSenderList(hltURL, hltClassName,
-                   hltLocalId, hltInstance, hltTid, numFrames,
-                   registrySize, registryData);
-    smfusenders_.push_back(*fusender);
-    LOG4CPLUS_INFO(this->getApplicationLogger(),"register FU sender at " << hltURL << " list size is " << smfusenders_.size());
-
-    smfusenders_.back().chrono_.start(0);
-    smfusenders_.back().totFrames_ = numFrames;
-    smfusenders_.back().currFrames_ = 1;
-    smfusenders_.back().frameRefs_[frameCount] = ref;
-    // now should check if frame is complete and deal with it
-    list<SMFUSenderList>::iterator testPos = --smfusenders_.end();
-    testCompleteFUReg(testPos);
-  }
-}
-
-
-// 
-// *** Check that a given FU Sender has sent all frames for a registry
-// *** If so store the serialized registry and check it
-// *** Does not handle yet when a second registry is sent
-// *** from the same FUSender (e.g. reconnects)
-// 
-void stor::testStorageManager::testCompleteFUReg(list<SMFUSenderList>::iterator pos)
-{
-  if(pos->totFrames_ == 1)
-  {
-    // chain is complete as there is only one frame
-    toolbox::mem::Reference *head = 0;
-    head = pos->frameRefs_[0];
-    FDEBUG(10) << "testCompleteFUReg: No chain as only one frame" << std::endl;
-    // copy the whole registry for each FU sender and
-    // test the registry against the one being used in Storage Manager
-    pos->regAllReceived_ = true;
-    copyAndTestRegistry(pos, head);
-    // free the complete chain buffer by freeing the head
-    head->release();
-  }
-  else
-  {
-    if(pos->currFrames_ == pos->totFrames_)
-    {
-      FDEBUG(10) << "testCompleteFUReg: Received fragment completes a chain that has " 
-                 << pos->totFrames_
-                 << " frames " << std::endl;
-      pos->regAllReceived_ = true;
-      toolbox::mem::Reference *head = 0;
-      toolbox::mem::Reference *tail = 0;
-      if(pos->totFrames_ > 1)
-      {
-        FDEBUG(10) << "testCompleteFUReg: Remaking the chain" << std::endl;
-        for(int i=0; i < (int)(pos->totFrames_)-1 ; i++)
-        {
-          FDEBUG(10) << "testCompleteFUReg: setting next reference for frame " << i << std::endl;
-          head = pos->frameRefs_[i];
-          tail = pos->frameRefs_[i+1];
-          head->setNextReference(tail);
-        }
-      }
-      head = pos->frameRefs_[0];
-      FDEBUG(10) << "testCompleteFUReg: Original chain remade" << std::endl;
-      // Deal with the chain
-      copyAndTestRegistry(pos, head);
-      // free the complete chain buffer by freeing the head
-      head->release();
-    } 
-    else 
-      {
-	// If running with local transfers, a chain of I2O frames when posted only has the
-	// head frame sent. So a single frame can complete a chain for local transfers.
-	// We need to test for this. Must be head frame and next pointer must exist.
-	if(pos->currFrames_ == 1) // first is always the head??
-	  {
-	    toolbox::mem::Reference *head = 0;
-	    toolbox::mem::Reference *next = 0;
-	    // can crash here is first received frame is not first frame!
-	    head = pos->frameRefs_[0];
-	    // best to check the complete chain just in case!
-	    unsigned int tested_frames = 1;
-	    next = head;
-	    while((next=next->getNextReference())!=0) tested_frames++;
-	    FDEBUG(10) << "testCompleteFUReg: Head frame has " << tested_frames-1
-		       << " linked frames out of " << pos->totFrames_-1 << std::endl;
-	    if(pos->totFrames_ == tested_frames)
-	      {
-		// found a complete linked chain from the leading frame
-		FDEBUG(10) << "testI2OReceiver: Leading frame contains a complete linked chain"
-			   << " - must be local transfer" << std::endl;
-		pos->regAllReceived_ = true;
-		copyAndTestRegistry(pos, head);
-		head->release();
-	      }
-	  }
-      }
-  }
-}
-
-
-void stor::testStorageManager::copyAndTestRegistry(list<SMFUSenderList>::iterator pos,
-  toolbox::mem::Reference *head)
-{
-  // Copy the registry fragments into the one place and save for subsequent files
-  // and for event server; also test against the first registry received this run
-  FDEBUG(9) << "copyAndTestRegistry: Saving and checking the registry" << std::endl;
-  I2O_MESSAGE_FRAME         *stdMsg =
-    (I2O_MESSAGE_FRAME*)head->getDataLocation();
-  I2O_SM_PREAMBLE_MESSAGE_FRAME *msg    =
-    (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsg;
-  // get total size and check with original size
-  int origsize = msg->originalSize;
-  int totalsize2check = 0;
-  // should check the size is correct before defining and filling array!!
-  char* tempbuffer = new char[origsize];
-  if(msg->numFrames > 1)
-  {
-    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from chain for "
-              << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
-    int sz = msg->dataSize;
-    totalsize2check = totalsize2check + sz;
-    if(totalsize2check > origsize) {
-      std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
-      << " is larger than original size " << origsize 
-      << " abort copy and test" << std::endl;
-      pos->regCheckedOK_ = false;
-      pos->registrySize_ = 0;
-      delete [] tempbuffer;
-      return;
-    }
-    for(int j=0; j < sz; j++) tempbuffer[j] = msg->dataPtr()[j];
-    // do not need to remake the Header for the leading frame/fragment
-    // as InitMsg does not contain fragment count and total size
-    int next_index = sz;
-    toolbox::mem::Reference *curr = 0;
-    toolbox::mem::Reference *prev = head;
-    for(int i=0; i < (int)(msg->numFrames)-1 ; i++)
-    {
-      FDEBUG(9) << "copyAndTestRegistry: getting data for frame " << i+1 << std::endl;
-      curr = prev->getNextReference(); // should test if this exists!
-  
-      I2O_MESSAGE_FRAME         *stdMsgcurr =
-        (I2O_MESSAGE_FRAME*)curr->getDataLocation();
-      I2O_SM_PREAMBLE_MESSAGE_FRAME *msgcurr    =
-        (I2O_SM_PREAMBLE_MESSAGE_FRAME*)stdMsgcurr;
-  
-      FDEBUG(9) << "copyAndTestRegistry: datasize = " << msgcurr->dataSize << std::endl;
-      int sz = msgcurr->dataSize;
-      totalsize2check = totalsize2check + sz;
-      if(totalsize2check > origsize) {
-        std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
-                  << " is larger than original size " << origsize 
-                  << " abort copy and test" << std::endl;
-        pos->regCheckedOK_ = false;
-        pos->registrySize_ = 0;
-        delete [] tempbuffer;
-        return;
-      }
-      for(int j=0; j < sz; j++)
-        tempbuffer[next_index+j] = msgcurr->dataPtr()[j];
-      next_index = next_index + sz;
-      prev = curr;
-    }
-    if(totalsize2check != origsize) {
-      std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
-                << " not equal to original size " << origsize << std::endl;
-    }
-    // tempbuffer is filled with whole chain data
-    pos->registrySize_ = origsize; // should already be done
-    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
-
-  } else { // only one frame/fragment
-    FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
-              << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: getting data for frame 0" << std::endl;
-    FDEBUG(9) << "copyAndTestRegistry: datasize = " << msg->dataSize << std::endl;
-    int sz = msg->dataSize;
-    for(int j=0; j < sz; j++)
-      tempbuffer[j] = msg->dataPtr()[j];
-    // tempbuffer is filled with all data
-    pos->registrySize_ = origsize; // should already be done
-    copy(tempbuffer, tempbuffer+origsize, pos->registryData_);
-  } // end of number of frames test
-
-  // Assume first received registry is correct and save it
-  // (later check list of branch descriptions, run number, 
-  //  if SMConfig is asking for the same path names for the 
-  //  output streams)
-  if(ser_prods_size_ == 0)
-  {
-    copy(tempbuffer, tempbuffer+origsize, serialized_prods_);
-    ser_prods_size_ = origsize;
-    FDEBUG(9) << "Saved serialized registry for Event Server, size " 
-              << ser_prods_size_ << std::endl;
-    // queue for output
-    if(writeStreamerOnly_) {
-      EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-      new (b.buffer()) stor::FragEntry(&serialized_prods_[0], &serialized_prods_[0], ser_prods_size_,
-                                       1, 1, Header::INIT, 0); // use fixed 0 as ID
-      b.commit(sizeof(stor::FragEntry));
-    }
-  } else { // this is the second or subsequent INIT message test it against first
-    if(writeStreamerOnly_)
-    { // cannot test byte for byte the serialized registry
-      InitMsgView testmsg(&tempbuffer[0]);
-      InitMsgView refmsg(&serialized_prods_[0]);
-      std::auto_ptr<edm::SendJobHeader> header = StreamTranslator::deserializeRegistry(testmsg);
-      std::auto_ptr<edm::SendJobHeader> refheader = StreamTranslator::deserializeRegistry(refmsg);
-      // should test this well to see if a try block is needed for next line
-      if(edm::registryIsSubset(*header, *refheader)) {  // using clunky method
-        FDEBUG(9) << "copyAndTestRegistry: Received registry is okay" << std::endl;
-        pos->regCheckedOK_ = true;
-      } else {
-        // should do something with subsequent data from this FU!
-        FDEBUG(9) << "copyAndTestRegistry: Error! Received registry is not a subset!"
-                  << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_
-                  << std::endl;
-        LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                        "copyAndTestRegistry: Error! Received registry is not a subset!"
-                        << " for URL " << pos->hltURL_ << " and Tid " << pos->hltTid_);
-        pos->regCheckedOK_ = false;
-        pos->registrySize_ = 0;
-      }
-    } // end of streamer writing test - should an else with an error/warning message
-      // or decide once and for all we only write streamer files and get rid of test
-  } // end of test on if first INIT message
-  delete [] tempbuffer;
-}
-
-void stor::testStorageManager::updateFUSender4data(const char* hltURL,
-						   const char* hltClassName, 
-						   const unsigned long hltLocalId,
-						   const unsigned long hltInstance, 
-						   const unsigned long hltTid,
-						   const unsigned long runNumber, 
-						   const unsigned long eventNumber,
-						   const unsigned long frameNum, 
-						   const unsigned long totalFrames,
-						   const unsigned long origdatasize, 
-						   const bool isLocal)
-{
-  // Find this FU sender in the list
-  bool problemFound = false;
-  if(smfusenders_.size() > 0)
-    {
-      bool fusender_found = false;
-      list<SMFUSenderList>::iterator foundPos;
-      for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
-	  pos != smfusenders_.end(); ++pos)
-	{
-	  //      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-	  //         pos->hltTid_ == hltTid)
-	  if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-	     pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
-	     pos->sameClassName(hltClassName))
-	    {
-	      fusender_found = true;
-	      foundPos = pos;
-	    }
-	}
-      if(fusender_found)
-	{
-	  // should really check this is not a duplicate frame
-	  // should test total frames is the same, and other tests are possible
-	  // check if this is the first data frame received
-	  if(foundPos->connectStatus_ < 2) 
-	    {  //should actually check bit 2!
-	      foundPos->connectStatus_ = foundPos->connectStatus_ + 2; //should set bit 2!
-	      FDEBUG(10) << "updateFUSender4data: received first data frame" << std::endl;
-	      foundPos->runNumber_ = runNumber;
-	      foundPos->isLocal_ = isLocal;
-	    } 
-	  else 
-	    {
-	      if(foundPos->runNumber_ != runNumber) {
-		problemFound = true;
-		FDEBUG(10) << "updateFUSender4data: data frame with new run number!"
-			   << " Current run " << foundPos->runNumber_
-			   << " new run " << runNumber << std::endl;
-	      }
-	      // could test isLocal here
-	    }
-	  // check if run number is same which came with configuration, complain otherwise !!!
-	  // this->runNumber_ comes from the RunBase class that testStorageManager inherits from
-	  if(runNumber != runNumber_)
-	    {
-	      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << runNumber
-			      << " From " << hltURL 
-			      << " Different from Run Number from configuration = " << runNumber_);
-	    }
-	  foundPos->framesReceived_++;
-	  foundPos->lastRunID_ = runNumber;
-	  foundPos->chrono_.stop(0);
-	  foundPos->lastLatency_ = (double) foundPos->chrono_.dusecs(); //microseconds
-	  foundPos->chrono_.start(0);
-	  // check if this frame is the last (assuming in order)
-	  // must also handle if there is only one frame in event
-	  if(totalFrames == 1) 
-	    {
-	      // there is only one frame in this event assume frameNum = 1!
-	      foundPos->eventsReceived_++;
-	      storedEvents_.value_++;
-	      foundPos->lastEventID_ = eventNumber;
-	      foundPos->lastFrameNum_ = frameNum;
-	      foundPos->lastTotalFrameNum_ = totalFrames;
-	      foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
-	    } 
-	  else 
-	    {
-	      // flag and count if frame (event fragment) out of order
-	      if(foundPos->lastEventID_ == eventNumber) 
-		{
-		  // check if in order and if last frame in a chain
-		  if(frameNum != foundPos->lastFrameNum_ + 1) {
-		    foundPos->totalOutOfOrder_++;
-		  }
-		  if(totalFrames != foundPos->lastTotalFrameNum_) {
-		    problemFound = true;
-		    // this is a real problem! Corrupt data frame
-		  }
-		  // if last frame in n-of-m assume it completes an event
-		  // frame count starts from 1
-		  if(frameNum == totalFrames) { //should check totalFrames
-		    foundPos->eventsReceived_++;
-		    storedEvents_.value_++;	
-		    foundPos->totalSizeReceived_ = foundPos->totalSizeReceived_ + origdatasize;
-		  }
-		  foundPos->lastFrameNum_ = frameNum;
-		} 
-	      else 
-		{
-		  // new event (assume run number does not change)
-		  foundPos->lastEventID_ = eventNumber;
-		  if(foundPos->lastFrameNum_ != foundPos->lastTotalFrameNum_ &&
-		     foundPos->framesReceived_ != 1) 
-		    {
-		      // missing or frame out of order (may count multiplely!)
-		      foundPos->totalOutOfOrder_++;
-		    }
-		  foundPos->lastFrameNum_ = frameNum;
-		  foundPos->lastTotalFrameNum_ = totalFrames;
-		}
-	    } // totalFrames=1 or not
-	  if(problemFound) foundPos->totalBadEvents_++;
-	} // fu sender found
-      else
-	{
-	  FDEBUG(10) << "updateFUSender4data: Cannot find FU in FU Sender list!"
-		     << " With URL "
-		     << hltURL << " class " << hltClassName  << " instance "
-		     << hltInstance << " Tid " << hltTid << std::endl;
-	  LOG4CPLUS_INFO(this->getApplicationLogger(),
-			 "updateFUSender4data: Cannot find FU in FU Sender list!"
-			 << " With URL "
-			 << hltURL << " class " << hltClassName  << " instance "
-			 << hltInstance << " Tid " << hltTid);
-	}
-    } 
-  else 
-    {
-      // problem: did not find an entry!!
-      FDEBUG(10) << "updateFUSender4data: No entries at all in FU sender list!"
-		 << std::endl;
-    }
-}
-
-
-void stor::testStorageManager::removeFUSender(const char* hltURL,
-  const char* hltClassName, const unsigned long hltLocalId,
-  const unsigned long hltInstance, const unsigned long hltTid)
-{
-  // Find this FU sender in the list
-  if(!smfusenders_.empty())
-    {
-      LOG4CPLUS_INFO(this->getApplicationLogger(),"removing FU sender at " << hltURL);
-      bool fusender_found = false;
-      list<SMFUSenderList>::iterator foundPos;
-      for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
-	  pos != smfusenders_.end(); ++pos)
-	{
-	  //      if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-	  //         pos->hltTid_ == hltTid)
-	  if(pos->hltLocalId_ == hltLocalId && pos->hltInstance_ == hltInstance &&
-	     pos->hltTid_ == hltTid && pos->sameURL(hltURL) &&
-	     pos->sameClassName(hltClassName))
-	    {
-	      fusender_found = true;
-	      foundPos = pos;
-	    }
-	}
-      if(fusender_found)
-	{
-	  smfusenders_.erase(foundPos);
-	}
-      else
-	{
-	  LOG4CPLUS_ERROR(this->getApplicationLogger(),
-			  "Spurious end-of-run received for FU not in Sender list!"
-			  << " With URL "
-			  << hltURL << " class " << hltClassName  << " instance "
-			  << hltInstance << " Tid " << hltTid);
-	  
-	}
-    }
-  else
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-		    "end-of-run received for FU but no sender in Sender list!"
-		    << " With URL "
-		    << hltURL << " class " << hltClassName  << " instance "
-		    << hltInstance << " Tid " << hltTid);
-  
-  
-}
-
-
 
 //////////// ***  Performance //////////////////////////////////////////////////////////
 void testStorageManager::addMeasurement(unsigned long size)
@@ -1314,7 +927,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "FU Sender List"                            << endl;
+    *out << "      " << "FU Sender Information"                            << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
 
@@ -1334,191 +947,12 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << smfusenders_.size() << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
-    if(smfusenders_.size() > 0) {
-      for(list<SMFUSenderList>::iterator pos = smfusenders_.begin();
-          pos != smfusenders_.end(); ++pos)
-      {
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "FU Sender URL" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << pos->hltURL_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "FU Sender Class Name" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << pos->hltClassName_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "FU Sender Instance" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << pos->hltInstance_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "FU Sender Local ID" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << pos->hltLocalId_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "FU Sender Tid" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << pos->hltTid_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Product registry" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          if(pos->regAllReceived_) {
-            *out << "All Received" << endl;
-          } else {
-            *out << "Partially received" << endl;
-          }
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Product registry" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          if(pos->regCheckedOK_) {
-            *out << "Checked OK" << endl;
-          } else {
-            *out << "Bad" << endl;
-          }
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Connection Status" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << pos->connectStatus_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        if(pos->connectStatus_ > 1) {
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Time since last data frame (us)" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            // looking at the code for Chrono this does not actually
-            // stop the "stopwatch" it just calculates the time since
-            // the last start was called so can use this
-            pos->chrono_.stop(0);
-            double timewaited = (double) pos->chrono_.dusecs(); //microseconds
-            *out << timewaited << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Run number" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pos->runNumber_ << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Running locally" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            if(pos->isLocal_) {
-              *out << "Yes" << endl;
-            } else {
-              *out << "No" << endl;
-            }
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Frames received" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pos->framesReceived_ << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Events received" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pos->eventsReceived_ << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-          if(pos->eventsReceived_ > 0) {
-            *out << "<tr>" << endl;
-              *out << "<td >" << endl;
-              *out << "Last frame latency (us)" << endl;
-              *out << "</td>" << endl;
-              *out << "<td align=right>" << endl;
-              *out << pos->lastLatency_ << endl;
-              *out << "</td>" << endl;
-            *out << "  </tr>" << endl;
-            *out << "<tr>" << endl;
-              *out << "<td >" << endl;
-              *out << "Average event size (Bytes)" << endl;
-              *out << "</td>" << endl;
-              *out << "<td align=right>" << endl;
-              *out << pos->totalSizeReceived_/pos->eventsReceived_ << endl;
-              *out << "</td>" << endl;
-              *out << "<tr>" << endl;
-                *out << "<td >" << endl;
-                *out << "Last Run Number" << endl;
-                *out << "</td>" << endl;
-                *out << "<td align=right>" << endl;
-                *out << pos->lastRunID_ << endl;
-                *out << "</td>" << endl;
-              *out << "  </tr>" << endl;
-              *out << "<tr>" << endl;
-                *out << "<td >" << endl;
-                *out << "Last Event Number" << endl;
-                *out << "</td>" << endl;
-                *out << "<td align=right>" << endl;
-                *out << pos->lastEventID_ << endl;
-                *out << "</td>" << endl;
-              *out << "  </tr>" << endl;
-            } // events received endif
-          *out << "  </tr>" << endl;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Total out of order frames" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pos->totalOutOfOrder_ << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Total Bad Events" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pos->totalBadEvents_ << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-        } // connect status endif
-      } // Sender list loop
-    } //sender size test endif
 
   *out << "</table>" << endl;
 
   *out << "  </td>"                                                  << endl;
   *out << "</table>"                                                 << endl;
-  //---- separate page test
+  //---- separate pages for FU senders and Streamer Output
   *out << "<hr/>"                                                 << endl;
   std::string url = getApplicationDescriptor()->getContextDescriptor()->getURL();
   std::string urn = getApplicationDescriptor()->getURN();
@@ -1527,7 +961,7 @@ void testStorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<hr/>"                                                 << endl;
   *out << "<a href=\"" << url << "/" << urn << "/streameroutput" << "\">" 
        << "Streamer Output Status web page" << "</a>" << endl;
-  /*
+  /* --- leave these here to debug event server problems
   *out << "<a href=\"" << url << "/" << urn << "/geteventdata" << "\">" 
        << "Get an event via a web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
