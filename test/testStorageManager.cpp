@@ -1,4 +1,4 @@
-// $Id: testStorageManager.cpp,v 1.50 2007/01/07 18:06:14 klute Exp $
+// $Id: testStorageManager.cpp,v 1.51 2007/01/08 18:44:00 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -24,6 +24,7 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
+#include "IOPool/Streamer/interface/ProgressMarker.h"
 
 #include "xcept/tools.h"
 
@@ -72,7 +73,7 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   connectedFUs_(0), 
   storedEvents_(0), 
   storedVolume_(0.),
-  progressMarker_(progress::Idle)
+  progressMarker_(ProgressMarker::instance()->idle())
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making testStorageManager");
 
@@ -507,9 +508,6 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      progressMarker_ = progress::Input;
-      printf(" Progress Marker now Input\n");
-
       for(int iframe=0; iframe <(int)msg->numFrames; iframe++)
       {
          toolbox::mem::Reference *thisref=next;
@@ -557,9 +555,6 @@ void testStorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                     << msg->hltInstance << " Tid " << msg->hltTid);
          }
       }
-
-      progressMarker_ = progress::Output;
-      printf(" Progress Marker now Output\n");
 
     } else {
       // should never get here!
@@ -1480,7 +1475,6 @@ void testStorageManager::setupFlashList()
   is->addItemRetrieveListener("activeConsumerTimeout",this);
   is->addItemRetrieveListener("idleConsumerTimeout",  this);
   is->addItemRetrieveListener("consumerQueueSize",    this);
-  
   //----------------------------------------------------------------------------
 }
 
@@ -1496,11 +1490,13 @@ void testStorageManager::actionPerformed(xdata::Event& e)
     std::string item = dynamic_cast<xdata::ItemRetrieveEvent&>(e).itemName();
     // Only update those locations which are not always up to date
     if      (item == "connectedFUs")
-      connectedFUs_ = smfusenders_.size();
+      connectedFUs_   = smfusenders_.size();
     else if (item == "memoryUsed")
-      memoryUsed_   = pool_->getMemoryUsage().getUsed();
+      memoryUsed_     = pool_->getMemoryUsage().getUsed();
     else if (item == "storedVolume")
-      storedVolume_ = pmeter_->totalvolumemb();
+      storedVolume_   = pmeter_->totalvolumemb();
+    else if (item == "progressMarker")
+      progressMarker_ = ProgressMarker::instance()->status();
     is->unlock();
   } 
 }
