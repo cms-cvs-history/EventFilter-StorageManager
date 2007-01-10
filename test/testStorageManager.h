@@ -11,7 +11,7 @@
      See CMS EventFilter wiki page for further notes.
 */
 
-// $Id: testStorageManager.h,v 1.30 2006/12/22 09:48:19 klute Exp $
+// $Id: testStorageManager.h,v 1.31 2007/01/08 18:39:59 hcheung Exp $
 
 #include <string>
 #include <list>
@@ -172,12 +172,5 @@ namespace stor {
   }; 
 } 
 
-
-namespace progress {
-  const xdata::String Idle    = "Idle";
-  const xdata::String Input   = "Input";
-  const xdata::String Process = "Process";
-  const xdata::String Output  = "Output";
-}
 
 #endif
