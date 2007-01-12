@@ -1,4 +1,4 @@
-// $Id: testStorageManager.cpp,v 1.52 2007/01/10 18:09:39 klute Exp $
+// $Id: testStorageManager.cpp,v 1.53 2007/01/10 22:51:27 wmtan Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -1027,8 +1027,233 @@ void testStorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "<hr/>"                                                    << endl;
 
-// now for FU sender list statistics: put this in!
-  *out << "fu sender table not done yet"                             << endl;
+// now for FU sender list statistics
+  *out << "<table>"                                                  << endl;
+  *out << "<tr valign=\"top\">"                                      << endl;
+  *out << "  <td>"                                                   << endl;
+
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
+  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "FU Sender List"                            << endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+
+    *out << "<tr>" << endl;
+    *out << "<th >" << endl;
+    *out << "Parameter" << endl;
+    *out << "</th>" << endl;
+    *out << "<th>" << endl;
+    *out << "Value" << endl;
+    *out << "</th>" << endl;
+    *out << "</tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Number of FU Senders" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << smfusenders_.size() << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+    std::vector<boost::shared_ptr<SMFUSenderStats> > vfustats = smfusenders_.getFUSenderStats();
+    if(!vfustats.empty()) {
+      for(vector<boost::shared_ptr<SMFUSenderStats> >::iterator pos = vfustats.begin();
+          pos != vfustats.end(); ++pos)
+      {
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender URL" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=right>" << endl;
+          char hlturl[MAX_I2O_SM_URLCHARS];
+          copy(&(((*pos)->hltURL_)->at(0)), 
+               &(((*pos)->hltURL_)->at(0)) + ((*pos)->hltURL_)->size(),
+               hlturl);
+          hlturl[((*pos)->hltURL_)->size()] = '\0';
+          *out << hlturl << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Class Name" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          char hltclass[MAX_I2O_SM_URLCHARS];
+          copy(&(((*pos)->hltClassName_)->at(0)), 
+               &(((*pos)->hltClassName_)->at(0)) + ((*pos)->hltClassName_)->size(),
+               hltclass);
+          hltclass[((*pos)->hltClassName_)->size()] = '\0';
+          *out << hltclass << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Instance" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << (*pos)->hltInstance_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Local ID" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << (*pos)->hltLocalId_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "FU Sender Tid" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << (*pos)->hltTid_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Product registry" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          if((*pos)->regAllReceived_) {
+            *out << "All Received" << endl;
+          } else {
+            *out << "Partially received" << endl;
+          }
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Product registry" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          if((*pos)->regCheckedOK_) {
+            *out << "Checked OK" << endl;
+          } else {
+            *out << "Bad" << endl;
+          }
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        *out << "<tr>" << endl;
+          *out << "<td >" << endl;
+          *out << "Connection Status" << endl;
+          *out << "</td>" << endl;
+          *out << "<td>" << endl;
+          *out << (*pos)->connectStatus_ << endl;
+          *out << "</td>" << endl;
+        *out << "  </tr>" << endl;
+        if((*pos)->connectStatus_ > 1) {
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Time since last data frame (us)" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->timeWaited_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Run number" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->runNumber_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Running locally" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            if((*pos)->isLocal_) {
+              *out << "Yes" << endl;
+            } else {
+              *out << "No" << endl;
+            }
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Frames received" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->framesReceived_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Events received" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->eventsReceived_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Total Bytes received" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->totalSizeReceived_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          if((*pos)->eventsReceived_ > 0) {
+            *out << "<tr>" << endl;
+              *out << "<td >" << endl;
+              *out << "Last frame latency (us)" << endl;
+              *out << "</td>" << endl;
+              *out << "<td align=right>" << endl;
+              *out << (*pos)->lastLatency_ << endl;
+              *out << "</td>" << endl;
+            *out << "  </tr>" << endl;
+            *out << "<tr>" << endl;
+              *out << "<td >" << endl;
+              *out << "Average event size (Bytes)" << endl;
+              *out << "</td>" << endl;
+              *out << "<td align=right>" << endl;
+              *out << (*pos)->totalSizeReceived_/(*pos)->eventsReceived_ << endl;
+              *out << "</td>" << endl;
+              *out << "<tr>" << endl;
+                *out << "<td >" << endl;
+                *out << "Last Run Number" << endl;
+                *out << "</td>" << endl;
+                *out << "<td align=right>" << endl;
+                *out << (*pos)->lastRunID_ << endl;
+                *out << "</td>" << endl;
+              *out << "  </tr>" << endl;
+              *out << "<tr>" << endl;
+                *out << "<td >" << endl;
+                *out << "Last Event Number" << endl;
+                *out << "</td>" << endl;
+                *out << "<td align=right>" << endl;
+                *out << (*pos)->lastEventID_ << endl;
+                *out << "</td>" << endl;
+              *out << "  </tr>" << endl;
+            } // events received endif
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Total out of order frames" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->totalOutOfOrder_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << "Total Bad Events" << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << (*pos)->totalBadEvents_ << endl;
+            *out << "</td>" << endl;
+          *out << "  </tr>" << endl;
+        } // connect status endif
+      } // Sender list loop
+    } //sender size test endif
+
+  *out << "</table>" << endl;
+
+  *out << "  </td>"                                                  << endl;
+  *out << "</table>"                                                 << endl;
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
