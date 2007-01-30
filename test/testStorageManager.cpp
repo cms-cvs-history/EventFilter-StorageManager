@@ -1,4 +1,4 @@
-// $Id: testStorageManager.cpp,v 1.53 2007/01/10 22:51:27 wmtan Exp $
+// $Id: testStorageManager.cpp,v 1.54 2007/01/12 17:34:19 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -16,6 +16,8 @@
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/ServiceRegistry/interface/ServiceToken.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+
+#include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -168,6 +170,12 @@ testStorageManager::testStorageManager(xdaq::ApplicationStub * s)
   // sourcename << xmlClass << "_" << instance;
   sourcename << instance;
   sourceId_ = sourcename.str();
+
+  // need either of the two calls below so that deserializeRegistry can run
+  // in order to compare two registries (cannot compare byte-for-byte)
+  edm::RootAutoLibraryLoader::enable();
+  //loadExtraClasses();
+  // Keep this! Above line needs IOPool/Streamer/interface/ClassFiller.h
 }
 
 testStorageManager::~testStorageManager()
