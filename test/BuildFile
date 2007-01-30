@@ -52,6 +52,7 @@
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
+   <use name=FWCore/RootAutoLibraryLoader>
    <use name=DataFormats/Common>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
