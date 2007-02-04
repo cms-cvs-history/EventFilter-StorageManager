@@ -5,10 +5,10 @@
 
     <i2o:protocol xmlns:i2o="http://xdaq.web.cern.ch/xdaq/xsd/2004/I2OConfiguration-30">
        <i2o:target class="evf::FUEventProcessor" instance="0" tid="23"/>
-       <i2o:target class="SMi2oSender" instance="0" tid="25"/>
-       <i2o:target class="SMi2oSender" instance="1" tid="125"/>
-       <i2o:target class="SMi2oSender" instance="2" tid="225"/>
-       <i2o:target class="testStorageManager" instance="0" tid="24"/>
+       <i2o:target class="FUi2oSender" instance="0" tid="25"/>
+       <i2o:target class="FUi2oSender" instance="1" tid="125"/>
+       <i2o:target class="FUi2oSender" instance="2" tid="225"/>
+       <i2o:target class="StorageManager" instance="0" tid="24"/>
     </i2o:protocol>
 
    <xc:Context url="http://cmsroc3.fnal.gov:1972">
@@ -23,7 +23,7 @@
                   </properties>
 
                 </xc:Application>
-       <xc:Application class="SMi2oSender" id="20" instance="0" network="tcp1">
+       <xc:Application class="FUi2oSender" id="20" instance="0" network="tcp1">
        </xc:Application>
        <xc:Application class="PeerTransportTCP" id="30" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
@@ -34,7 +34,7 @@
        </xc:Application>
        <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
        <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterFUSender.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender two -->
@@ -50,7 +50,7 @@
                   </properties>
 
                 </xc:Application>
-       <xc:Application class="SMi2oSender" id="20" instance="1" network="tcp1">
+       <xc:Application class="FUi2oSender" id="20" instance="1" network="tcp1">
        </xc:Application>
        <xc:Application class="PeerTransportTCP" id="130" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
@@ -61,7 +61,7 @@
        </xc:Application>
        <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
        <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterFUSender.so</xc:Module>
    </xc:Context>
 
    <!-- FU sender three -->
@@ -77,7 +77,7 @@
                   </properties>
 
                 </xc:Application>
-       <xc:Application class="SMi2oSender" id="20" instance="2" network="tcp1">
+       <xc:Application class="FUi2oSender" id="20" instance="2" network="tcp1">
        </xc:Application>
        <xc:Application class="PeerTransportTCP" id="230" network="tcp1">
            <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
@@ -88,7 +88,7 @@
        </xc:Application>
        <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
        <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
-       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterFUSender.so</xc:Module>
    </xc:Context>
 
     <!-- Declare a context that contain applcation -->
@@ -108,8 +108,8 @@
       <xc:Module>$XDAQ_ROOT/lib/libmonitor.so</xc:Module>
 
        <!-- Declare a SMSender application -->
-       <xc:Application class="testStorageManager" id="29" instance="0" network="tcp1">
-<properties xmlns="urn:xdaq-application:testStorageManager" xsi:type="soapenc:Struct">
+       <xc:Application class="StorageManager" id="29" instance="0" network="tcp1">
+<properties xmlns="urn:xdaq-application:StorageManager" xsi:type="soapenc:Struct">
                     <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
                     <oneinN         xsi:type="xsd:integer">1</oneinN>
                     <runNumber      xsi:type="xsd:unsignedInt">0</runNumber>
@@ -127,7 +127,7 @@
        </xc:Application>
 
        <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
-       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManagertestStorageManager.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
        </xc:Context>
 
 </xc:Partition>
