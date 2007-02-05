@@ -110,12 +110,15 @@
        <!-- Declare a SMSender application -->
        <xc:Application class="StorageManager" id="29" instance="0" network="tcp1">
 <properties xmlns="urn:xdaq-application:StorageManager" xsi:type="soapenc:Struct">
-                    <STparameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
-                    <oneinN         xsi:type="xsd:integer">1</oneinN>
-                    <runNumber      xsi:type="xsd:unsignedInt">0</runNumber>
-                    <nLogicalDisk   xsi:type="xsd:integer">0</nLogicalDisk> 
-                    <fileCatalog    xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
-                    <streamerOnly   xsi:type="xsd:boolean">true</streamerOnly>
+                    <STparameterSet     xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
+                    <oneinN             xsi:type="xsd:integer">1</oneinN>
+                    <runNumber          xsi:type="xsd:unsignedInt">0</runNumber>
+                    <nLogicalDisk       xsi:type="xsd:integer">0</nLogicalDisk> 
+                    <fileCatalog        xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
+		    <closeFileScript    xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</closeFileScript>
+		    <notifyTier0Script  xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</notifyTier0Script>
+		    <insertFileScript   xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</insertFileScript>
+                    <streamerOnly       xsi:type="xsd:boolean">true</streamerOnly>
 </properties>
 
        </xc:Application>
