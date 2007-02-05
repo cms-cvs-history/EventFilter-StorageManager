@@ -1,11 +1,4 @@
-
-
-
-/*----------------------------------------------------------------------
-
- $Id:
-
-----------------------------------------------------------------------*/  
+// $Id: $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
