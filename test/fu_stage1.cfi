@@ -6,6 +6,7 @@ process TEST1 = {
   path p5 = { m1 }
   endpath e = { out2 }
   source = EmptySource {untracked int32 maxEvents = 50}
+                        #untracked uint32 eventCreationDelay = 1000000
                         #untracked uint32 firstRun = 1
                         #untracked uint32 firstEvent = 500}
   module m1 = StreamThingProducer {
@@ -23,4 +24,8 @@ process TEST1 = {
                         untracked int32 lumiSection_interval = 600
   }
 
+  ## DQM sender service - under development
+  #service = DQMSenderService {
+  #  string DestinationName = "StorageManager"
+  #}
 }
