@@ -27,5 +27,7 @@ process TEST1 = {
   ## DQM sender service - under development
   #service = DQMSenderService {
   #  string DestinationName = "StorageManager"
+  #  int32 MessageBufferSize = 7000000  // bytes
+  #  int32 UpdateInterval = 10  // seconds
   #}
 }
