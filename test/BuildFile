@@ -1,4 +1,4 @@
-# $Id:$
+# $Id: BuildFile,v 1.17 2007/02/05 11:19:57 klute Exp $
 
 <environment>
   <use name=boost>
@@ -9,7 +9,9 @@
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
+   <use name=FWCore/PluginManager>
    <use name=EventFilter/StorageManager>
+   <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
   </library>
@@ -24,8 +26,9 @@
    <use name=boost>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
-   <use name=FWCore/Framework>
+   <use name=FWCore/PluginManager>
    <use name=EventFilter/StorageManager>
+   <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
   </bin>
@@ -33,8 +36,9 @@
   <bin file=RunCollector_t.cpp>
    <use name=boost>
    <use name=FWCore/MessageLogger>
-   <use name=FWCore/Framework>
+   <use name=FWCore/PluginManager>
    <use name=EventFilter/StorageManager>
+   <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
   </bin>

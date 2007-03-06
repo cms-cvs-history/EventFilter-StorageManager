@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.5 2006/12/10 23:12:57 hcheung Exp $
+ $Id: StorageManagerRun.cpp,v 1.6 2007/01/10 22:51:27 wmtan Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -13,8 +13,8 @@
 #include <sys/unistd.h>
 
 #include "FWCore/Framework/interface/EventProcessor.h"
-#include "DataFormats/Common/interface/ProductRegistry.h"
-#include "FWCore/Utilities/interface/ProblemTracker.h"
+#include "DataFormats/Provenance/interface/ProductRegistry.h"
+#include "FWCore/PluginManager/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"

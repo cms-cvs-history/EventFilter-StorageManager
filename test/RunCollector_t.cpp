@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: RunCollector_t.cpp,v 1.5 2007/02/05 11:19:57 klute Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 
-#include "DataFormats/Common/interface/ProductRegistry.h"
+#include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
