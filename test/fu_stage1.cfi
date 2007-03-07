@@ -26,8 +26,10 @@ process TEST1 = {
 
   ## DQM sender service - under development
   #service = DQMSenderService {
-  #  string DestinationName = "StorageManager"
-  #  int32 MessageBufferSize = 7000000  // bytes
-  #  int32 UpdateInterval = 10  // seconds
+  #  untracked int32 initialMessageBufferSize = 1000000  // bytes
+  #  double lumiSectionsPerUpdate = 1.0
+  #  bool useCompression = true
+  #  int32 compressionLevel = 1
+  #  #int32 lumiSectionInterval = 60  // seconds
   #}
 }
