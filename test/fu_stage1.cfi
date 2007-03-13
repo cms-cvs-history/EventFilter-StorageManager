@@ -30,6 +30,6 @@ process TEST1 = {
   #  double lumiSectionsPerUpdate = 1.0
   #  bool useCompression = true
   #  int32 compressionLevel = 1
-  #  #int32 lumiSectionInterval = 60  // seconds
+  #  #untracked int32 lumiSectionInterval = 60  // seconds
   #}
 }
