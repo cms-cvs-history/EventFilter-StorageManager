@@ -1,0 +1,110 @@
+<?xml version='1.0'?>
+<xc:Partition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+              xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" 
+              xmlns:xc="http://xdaq.web.cern.ch/xdaq/xsd/2004/XMLConfiguration-30">
+
+    <i2o:protocol xmlns:i2o="http://xdaq.web.cern.ch/xdaq/xsd/2004/I2OConfiguration-30">
+       <i2o:target class="evf::FUEventProcessor" instance="0" tid="23"/>
+       <i2o:target class="evf::BU" instance="0" tid="24"/>
+       <i2o:target class="evf::FUResourceBroker" instance="0" tid="25"/>
+       <i2o:target class="StorageManager" instance="0" tid="22"/>
+    </i2o:protocol>
+
+<!-- BU / BROKER CONTEXT -->
+  <xc:Context url="http://cmsroc3.fnal.gov:40000">
+      <xc:Endpoint protocol="tcp" service="i2o"
+          hostname="cmsroc3.fnal.gov" port="30001" network="tcp1"/>
+
+    <!-- Playback Builder Unit -->
+    <xc:Application class="evf::BU" id="24" instance="0" network="tcp1">
+      <properties xmlns="urn:xdaq-application:evf::BU" xsi:type="soapenc:Struct">
+        <dataBufSize xsi:type="xsd:unsignedInt">32768</dataBufSize>
+      </properties>
+    </xc:Application>
+    <xc:Module>${CMSSW_RELEASE_BASE}/lib/slc3_ia32_gcc323_dbg/libEventFilterAutoBU.so</xc:Module>
+
+    <!-- FUResourceBroker -->
+    <xc:Application class="evf::FUResourceBroker" id="25" instance="0" network="tcp1">
+      <properties xmlns="urn:xdaq-application:evf::FUResourceBroker" xsi:type="soapenc:Struct">
+        <buClassName  xsi:type="xsd:string"     >evf::BU</buClassName>
+        <doDropEvents xsi:type="xsd:boolean"    >false</doDropEvents>
+        <doCrcCheck   xsi:type="xsd:unsignedInt">1</doCrcCheck>
+      </properties>
+    </xc:Application>
+    <xc:Module>${CMSSW_BASE}/lib/slc3_ia32_gcc323_dbg/libEventFilterResourceBroker.so</xc:Module>
+
+       <xc:Application class="PeerTransportTCP" id="26" network="tcp1">
+           <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
+              <autoSize xsi:type="xsd:boolean">true</autoSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
+           </properties>
+       </xc:Application>
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+  </xc:Context>
+
+<!-- FUEventProcessor context -->
+   <xc:Context url="http://cmsroc3.fnal.gov:1972">
+       <xc:Endpoint protocol="tcp" service="i2o"
+          hostname="cmsroc3.fnal.gov" port="30000" network="tcp1"/>
+
+        <xc:Application class="evf::FUEventProcessor" id="21" instance="0" network="tcp1">
+           <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
+
+                    <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_testshm.cfi</parameterSet>
+                    <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
+                  </properties>
+
+                </xc:Application>
+       <xc:Application class="PeerTransportTCP" id="30" network="tcp1">
+           <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
+              <autoSize xsi:type="xsd:boolean">true</autoSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
+           </properties>
+       </xc:Application>
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323_dbg/libEventFilterProcessor.so</xc:Module>
+   </xc:Context>
+
+    <!-- Declare a context that contain applcation -->
+    <xc:Context id = "1" url="http://cmsroc2.fnal.gov:1972">
+       <xc:Endpoint protocol="tcp" service="i2o"
+          hostname="cmsroc2.fnal.gov" port="60000" network="tcp1"/>
+
+      <!--- Setting up the XDAQ monitor -->
+      <xc:Application class="Monitor" id="66"  network="local">
+        <properties xmlns="urn:xdaq-application:Monitor" xsi:type="soapenc:Struct">
+          <inprofile xsi:type="soapenc:Array" soapenc:arrayType="xsd:ur-type[1]">
+            <item xsi:type="xsd:string" soapenc:position="[0]">$CMSSW_BASE/src/EventFilter/StorageManager/test/sm.flash</item>
+          </inprofile>
+          <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
+        </properties>
+      </xc:Application>
+      <xc:Module>$XDAQ_ROOT/lib/libmonitor.so</xc:Module>
+
+       <!-- Declare a SMSender application -->
+       <xc:Application class="StorageManager" id="29" instance="0" network="tcp1">
+<properties xmlns="urn:xdaq-application:StorageManager" xsi:type="soapenc:Struct">
+                    <STparameterSet     xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1.cfi</STparameterSet>
+                    <oneinN             xsi:type="xsd:integer">1</oneinN>
+                    <runNumber          xsi:type="xsd:unsignedInt">0</runNumber>
+                    <nLogicalDisk       xsi:type="xsd:integer">0</nLogicalDisk> 
+                    <fileCatalog        xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
+		    <closeFileScript    xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</closeFileScript>
+		    <notifyTier0Script  xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</notifyTier0Script>
+		    <insertFileScript   xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</insertFileScript>
+                    <streamerOnly       xsi:type="xsd:boolean">true</streamerOnly>
+</properties>
+
+       </xc:Application>
+       <xc:Application class="PeerTransportTCP" id="31" network="tcp1">
+           <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
+              <autoSize xsi:type="xsd:boolean">true</autoSize>
+              <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
+           </properties>
+       </xc:Application>
+
+       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323_dbg/libEventFilterStorageManager.so</xc:Module>
+       </xc:Context>
+
+</xc:Partition>
