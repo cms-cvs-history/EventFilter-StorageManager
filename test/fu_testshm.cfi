@@ -44,7 +44,7 @@ process TEST1 = {
   service = DaqMonitorROOTBackEnd{}
 
   # DQM source program
-  module tester = DQMSourceExample{}
+  module tester = SMDQMSourceExample{}
   path pDQM ={tester}
 
   # DQM sender service - under development
