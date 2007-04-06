@@ -29,7 +29,7 @@ this can run.
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
 
-#include "PluginManager/PluginManager.h"
+#include "FWCore/PluginManager/interface/PluginManager.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

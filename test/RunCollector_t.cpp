@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.5 2007/02/05 11:19:57 klute Exp $
+// $Id: RunCollector_t.cpp,v 1.6 2007/03/06 19:41:38 wmtan Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -20,7 +20,7 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
 
-#include "PluginManager/PluginManager.h"
+#include "FWCore/PluginManager/interface/PluginManager.h"
 
 #include <cstdlib>
 #include <sys/types.h>

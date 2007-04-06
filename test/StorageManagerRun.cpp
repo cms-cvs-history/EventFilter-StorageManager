@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.6 2007/01/10 22:51:27 wmtan Exp $
+ $Id: StorageManagerRun.cpp,v 1.7 2007/03/06 19:41:38 wmtan Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -22,7 +22,7 @@
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
-#include "PluginManager/PluginManager.h"
+#include "FWCore/PluginManager/interface/PluginManager.h"
 
 #include "IOPool/Streamer/interface/StreamerInputFile.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
