@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.18 2007/03/06 19:41:38 wmtan Exp $
+# $Id: BuildFile,v 1.19 2007/04/02 19:24:34 hcheung Exp $
 
 <environment>
   <use name=boost>
@@ -17,13 +17,13 @@
   </library>
 
   <library file="SillyLockService.cc" name=SillyLockService>
-   <flags SEAL_PLUGIN_NAME="SillyLockService">
+   <flags EDM_PLUGIN=1>
    <use name=FWCore/Framework>
    <use name=IOPool/Streamer>
   </library>
 
   <library file="SMDQMSourceExample.cc" name=SMDQMServicesDaemonExample>
-   <flags SEAL_PLUGIN_NAME="SMDQMServicesDaemonExample">
+   <flags EDM_PLUGIN=1>
    <use name=boost>
    <use name=DQMServices/CoreROOT>
    <use name=DQMServices/Daemon>
