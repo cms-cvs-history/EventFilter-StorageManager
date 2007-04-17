@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.6 2007/03/06 19:41:38 wmtan Exp $
+// $Id: RunCollector_t.cpp,v 1.7 2007/04/06 22:30:24 hcheung Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -21,6 +21,7 @@
 #include "boost/bind.hpp"
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
+#include "FWCore/PluginManager/interface/standard.h"
 
 #include <cstdlib>
 #include <sys/types.h>
@@ -232,7 +233,7 @@ int main(int argc, char* argv[])
       //throw cms::Exception("config") << "Bad command line arguments\n";
     }
 
-  seal::PluginManager::get()->initialise();
+  edmplugin::PluginManager::configure(edmplugin::standard::config());
   string conffile(argv[1]);
       cout << "config = " << argv[1] << endl;
   

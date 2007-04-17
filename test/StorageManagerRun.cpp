@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.7 2007/03/06 19:41:38 wmtan Exp $
+ $Id: StorageManagerRun.cpp,v 1.8 2007/04/06 22:30:23 hcheung Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -23,6 +23,7 @@
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
+#include "FWCore/PluginManager/interface/standard.h"
 
 #include "IOPool/Streamer/interface/StreamerInputFile.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -205,7 +206,7 @@ int main(int argc, char* argv[])
     }
   
   edm::service::MessageServicePresence theMessageServicePresence;
-  seal::PluginManager::get()->initialise();
+  edmplugin::PluginManager::configure(edmplugin::standard::config());
 
   //string fu_config_file(argv[1]);
   string my_config_file(argv[1]);
@@ -224,11 +225,6 @@ int main(int argc, char* argv[])
   catch(cms::Exception& e)
     {
       cerr << "Caught an exception:\n" << e.what() << endl;
-      throw;
-    }
-  catch(seal::Error& e)
-    {
-      cerr << "Caught an exception:\n" << e.explainSelf() << endl;
       throw;
     }
   catch(std::exception& e)

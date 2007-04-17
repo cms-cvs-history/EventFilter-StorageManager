@@ -30,6 +30,7 @@ this can run.
 #include "boost/bind.hpp"
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
+#include "FWCore/PluginManager/interface/standard.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -160,7 +161,7 @@ int main(int argc, char* argv[])
     }
 
   edm::service::MessageServicePresence theMessageServicePresence;
-  seal::PluginManager::get()->initialise();
+  edmplugin::PluginManager::configure(edmplugin::standard::config());
   string conffile(argv[1]);
   
   vector<string> file_names;
@@ -180,11 +181,6 @@ int main(int argc, char* argv[])
   catch(cms::Exception& e)
     {
       cerr << "Caught an exception:\n" << e.what() << endl;
-      throw;
-    }
-  catch(seal::Error& e)
-    {
-      cerr << "Caught an exception:\n" << e.explainSelf() << endl;
       throw;
     }
   catch(std::exception& e)
