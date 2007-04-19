@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.20 2007/04/12 17:06:07 wmtan Exp $
+# $Id: BuildFile,v 1.21 2007/04/18 01:59:38 hcheung Exp $
 
 <environment>
   <use name=boost>
@@ -31,7 +31,7 @@
   </library>
 
   <library file="SMDQMClientExample.cc" name=SMDQMClientDaemonExample>
-   <flags SEAL_PLUGIN_NAME="SMDQMClientDaemonExample">
+   <flags EDM_PLUGIN=1>
    <use name=boost>
    <use name=DQMServices/CoreROOT>
    <use name=DQMServices/Daemon>
