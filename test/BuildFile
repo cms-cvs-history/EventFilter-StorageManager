@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.21 2007/04/18 01:59:38 hcheung Exp $
+# $Id: BuildFile,v 1.22 2007/04/19 19:35:48 hcheung Exp $
 
 <environment>
   <use name=boost>
@@ -39,6 +39,16 @@
    <use name=DQMServices/UI>
    <use name=FWCore/Framework>
   </library>
+
+  <library file="DQMMessageAnalyzer.cc" name=DQMMessageAnalyzer>
+   <flags SEAL_PLUGIN_NAME="DQMMessageAnalyzer">
+   <use name=boost>
+   <use name=DQMServices/CoreROOT>
+   <use name=DQMServices/Daemon>
+   <use name=FWCore/Framework>
+   <use name=IOPool/Streamer>
+  </library>
+
 
   <bin file=RunnerTest_t.cpp>
    <use name=boost>
