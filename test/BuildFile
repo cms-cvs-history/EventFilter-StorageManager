@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.22 2007/04/19 19:35:48 hcheung Exp $
+# $Id: BuildFile,v 1.23 2007/04/24 16:26:56 afaq Exp $
 
 <environment>
   <use name=boost>
@@ -41,7 +41,7 @@
   </library>
 
   <library file="DQMMessageAnalyzer.cc" name=DQMMessageAnalyzer>
-   <flags SEAL_PLUGIN_NAME="DQMMessageAnalyzer">
+   <flags EDM_PLUGIN=1>
    <use name=boost>
    <use name=DQMServices/CoreROOT>
    <use name=DQMServices/Daemon>
