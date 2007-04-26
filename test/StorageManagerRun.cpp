@@ -23,7 +23,6 @@
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
-#include "FWCore/PluginManager/interface/standard.h"
 
 #include "IOPool/Streamer/interface/StreamerInputFile.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -206,7 +205,7 @@ int main(int argc, char* argv[])
     }
   
   edm::service::MessageServicePresence theMessageServicePresence;
-  edmplugin::PluginManager::configure(edmplugin::standard::config());
+  seal::PluginManager::get()->initialise();
 
   //string fu_config_file(argv[1]);
   string my_config_file(argv[1]);
@@ -225,6 +224,11 @@ int main(int argc, char* argv[])
   catch(cms::Exception& e)
     {
       cerr << "Caught an exception:\n" << e.what() << endl;
+      throw;
+    }
+  catch(seal::Error& e)
+    {
+      cerr << "Caught an exception:\n" << e.explainSelf() << endl;
       throw;
     }
   catch(std::exception& e)
