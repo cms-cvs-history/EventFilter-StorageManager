@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.23 2007/04/24 16:26:56 afaq Exp $
+# $Id: BuildFile,v 1.19 2007/04/02 19:24:34 hcheung Exp $
 
 <environment>
   <use name=boost>
@@ -17,13 +17,13 @@
   </library>
 
   <library file="SillyLockService.cc" name=SillyLockService>
-   <flags EDM_PLUGIN=1>
+   <flags SEAL_PLUGIN_NAME="SillyLockService">
    <use name=FWCore/Framework>
    <use name=IOPool/Streamer>
   </library>
 
   <library file="SMDQMSourceExample.cc" name=SMDQMServicesDaemonExample>
-   <flags EDM_PLUGIN=1>
+   <flags SEAL_PLUGIN_NAME="SMDQMServicesDaemonExample">
    <use name=boost>
    <use name=DQMServices/CoreROOT>
    <use name=DQMServices/Daemon>
@@ -31,7 +31,7 @@
   </library>
 
   <library file="SMDQMClientExample.cc" name=SMDQMClientDaemonExample>
-   <flags EDM_PLUGIN=1>
+   <flags SEAL_PLUGIN_NAME="SMDQMClientDaemonExample">
    <use name=boost>
    <use name=DQMServices/CoreROOT>
    <use name=DQMServices/Daemon>
@@ -39,16 +39,6 @@
    <use name=DQMServices/UI>
    <use name=FWCore/Framework>
   </library>
-
-  <library file="DQMMessageAnalyzer.cc" name=DQMMessageAnalyzer>
-   <flags EDM_PLUGIN=1>
-   <use name=boost>
-   <use name=DQMServices/CoreROOT>
-   <use name=DQMServices/Daemon>
-   <use name=FWCore/Framework>
-   <use name=IOPool/Streamer>
-  </library>
-
 
   <bin file=RunnerTest_t.cpp>
    <use name=boost>

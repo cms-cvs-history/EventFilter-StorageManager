@@ -21,7 +21,6 @@
 #include "boost/bind.hpp"
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
-#include "FWCore/PluginManager/interface/standard.h"
 
 #include <cstdlib>
 #include <sys/types.h>
@@ -175,7 +174,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
 					       prods_));
       readers_.push_back(p);
     }
-  coll_.set_outoption(true); // to write out streamer files not root files
+  //coll_.set_outoption(true); // to write out streamer files not root files
 }
 
 int Main::run()
@@ -233,7 +232,7 @@ int main(int argc, char* argv[])
       //throw cms::Exception("config") << "Bad command line arguments\n";
     }
 
-  edmplugin::PluginManager::configure(edmplugin::standard::config());
+  seal::PluginManager::get()->initialise();
   string conffile(argv[1]);
       cout << "config = " << argv[1] << endl;
   
