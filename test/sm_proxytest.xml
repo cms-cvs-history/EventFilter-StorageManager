@@ -96,28 +96,31 @@
 
 <!-- SMProxyServer context -->
     <!-- Declare a context that contain applcation -->
-    <xc:Context id = "1" url="http://cmsroc7.fnal.gov:1972">
+  <xc:Context id = "1" url="http://cmsroc7.fnal.gov:1972">
 
-      <!--- Setting up the XDAQ monitor -->
-      <xc:Application class="Monitor" id="66"  network="local">
-        <properties xmlns="urn:xdaq-application:Monitor" xsi:type="soapenc:Struct">
-          <inprofile xsi:type="soapenc:Array" soapenc:arrayType="xsd:ur-type[1]">
-            <item xsi:type="xsd:string" soapenc:position="[0]">$CMSSW_BASE/src/EventFilter/SMProxyServer/test/smproxy.flash</item>
-          </inprofile>
-          <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
-        </properties>
-      </xc:Application>
-      <xc:Module>$XDAQ_ROOT/lib/libmonitor.so</xc:Module>
+    <!--- Setting up the XDAQ monitor -->
+    <xc:Application class="Monitor" id="66"  network="local">
+      <properties xmlns="urn:xdaq-application:Monitor" xsi:type="soapenc:Struct">
+        <inprofile xsi:type="soapenc:Array" soapenc:arrayType="xsd:ur-type[1]">
+          <item xsi:type="xsd:string" soapenc:position="[0]">$CMSSW_BASE/src/EventFilter/SMProxyServer/test/smproxy.flash</item>
+        </inprofile>
+        <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
+      </properties>
+    </xc:Application>
+    <xc:Module>$XDAQ_ROOT/lib/libmonitor.so</xc:Module>
 
-       <!-- Declare a SMProxyServer application -->
-       <xc:Application class="SMProxyServer" id="30" instance="0" network="local">
-              <properties xmlns="urn:xdaq-application:SMProxyServer" xsi:type="soapenc:Struct">
-                    <runNumber          xsi:type="xsd:unsignedInt">0</runNumber>
-               </properties>
-       </xc:Application>
+  <!-- Declare a SMProxyServer application -->
+    <xc:Application class="SMProxyServer" id="30" instance="0" network="local">
+      <properties xmlns="urn:xdaq-application:SMProxyServer" xsi:type="soapenc:Struct">
+        <SMRegistrationList xsi:type="soapenc:Array" soapenc:arrayType="xsd:ur-type[2]">
+          <item soapenc:position="[0]" xsi:type="xsd:string">http://cmsroc2.fnal.gov:1972/urn:xdaq-application:lid=29</item>
+          <item soapenc:position="[1]" xsi:type="xsd:string">http://cmsroc3.fnal.gov:1972/urn:xdaq-application:lid=29</item>
+        </SMRegistrationList>
+      </properties>
+    </xc:Application>
 
-       <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
-       <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterSMProxyServer.so</xc:Module>
-       </xc:Context>
+     <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+     <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterSMProxyServer.so</xc:Module>
+     </xc:Context>
 
 </xc:Partition>
