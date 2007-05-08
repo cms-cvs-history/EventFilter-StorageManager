@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.15 2007/04/05 00:12:58 hcheung Exp $
+// $Id: StorageManager.cc,v 1.17 2007/04/26 01:01:54 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -76,6 +76,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_(this), 
   ah_(0), 
   pushMode_(false), 
+  collateDQM_(false),
+  filePrefixDQM_("/tmp/DQM"),
+  purgeTimeDQM_(DEFAULT_PURGE_TIME),
+  readyTimeDQM_(DEFAULT_READY_TIME),
   serialized_prods_(1000000),
   ser_prods_size_(0),
   mybuffer_(7000000),
@@ -142,7 +146,11 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // Variables needed for streamer file writing
   ispace->fireItemAvailable("pushMode2Proxy", &pushmode2proxy_);
-  ispace->fireItemAvailable("nLogicalDisk", &nLogicalDisk_);
+  ispace->fireItemAvailable("collateDQM",     &collateDQM_);
+  ispace->fireItemAvailable("purgeTimeDQM",   &purgeTimeDQM_);
+  ispace->fireItemAvailable("readyTimeDQM",   &readyTimeDQM_);
+  ispace->fireItemAvailable("filePrefixDQM",  &filePrefixDQM_);
+  ispace->fireItemAvailable("nLogicalDisk",   &nLogicalDisk_);
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
   closeFileScript_    = smParameter_ -> closeFileScript();
@@ -1803,6 +1811,10 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedFUs",         &connectedFUs_);
   is->fireItemAvailable("pushMode2Proxy",       &pushmode2proxy_);
+  is->fireItemAvailable("collateDQM",           &collateDQM_);
+  is->fireItemAvailable("purgeTimeDQM",         &purgeTimeDQM_);
+  is->fireItemAvailable("readyTimeDQM",         &readyTimeDQM_);
+  is->fireItemAvailable("filePrefixDQM",        &filePrefixDQM_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
   is->fireItemAvailable("fileCatalog",          &fileCatalog_);
   is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
@@ -1838,6 +1850,10 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedFUs",         this);
   is->addItemRetrieveListener("pushMode2Proxy",       this);
+  is->addItemRetrieveListener("collateDQM",           this);
+  is->addItemRetrieveListener("purgeTimeDQM",         this);
+  is->addItemRetrieveListener("readyTimeDQM",         this);
+  is->addItemRetrieveListener("filePrefixDQM",        this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
   is->addItemRetrieveListener("fileCatalog",          this);
   is->addItemRetrieveListener("maxESEventRate",       this);
@@ -1930,6 +1946,11 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
       jc_->setNumberOfFileSystems(disks);
       jc_->setFileCatalog(smFileCatalog_);
       jc_->setSourceId(sourceId_);
+
+      jc_->setCollateDQM(collateDQM_);
+      jc_->setPurgeTimeDQM(purgeTimeDQM_);
+      jc_->setReadyTimeDQM(readyTimeDQM_);
+      jc_->setFilePrefixDQM(filePrefixDQM_);
       
       boost::shared_ptr<EventServer>
 	eventServer(new EventServer(maxESEventRate_));
