@@ -23,7 +23,7 @@
  *   isIdle() will return false since the consumer has moved from the idle
  *   to the disconnected state.)
  *
- * $Id$
+ * $Id: ConsumerPipe.h,v 1.5 2007/04/26 00:58:17 hcheung Exp $
  */
 
 #include <string>
@@ -55,6 +55,7 @@ namespace stor
     void putEvent(boost::shared_ptr< std::vector<char> > bufPtr);
     boost::shared_ptr< std::vector<char> > getEvent();
     void setPushMode(bool mode) { pushMode_ = mode; }
+    void clearQueue();
 
   private:
     // characteristics of the consumer

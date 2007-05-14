@@ -14,7 +14,7 @@
  * Initial Implementation based on Kurt's EventServer
  * we can think about a common class later...
  *
- * $Id$
+ * $Id: DQMEventServer.h,v 1.1 2007/04/04 22:12:16 hcheung Exp $
  */
 
 #include <sys/time.h>
@@ -39,6 +39,7 @@ namespace stor
     boost::shared_ptr<DQMConsumerPipe> getConsumer(uint32 consumerId);
     void processDQMEvent(const DQMEventMsgView &eventView);
     boost::shared_ptr< std::vector<char> > getDQMEvent(uint32 consumerId);
+    void clearQueue();
 
   private:
 

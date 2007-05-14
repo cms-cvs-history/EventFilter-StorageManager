@@ -36,6 +36,7 @@ namespace stor
     boost::shared_ptr<ConsumerPipe> getConsumer(uint32 consumerId);
     void processEvent(const EventMsgView &eventView);
     boost::shared_ptr< std::vector<char> > getEvent(uint32 consumerId);
+    void clearQueue();
 
   private:
     // data members for handling a maximum rate of accepted events

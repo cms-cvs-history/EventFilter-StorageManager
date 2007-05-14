@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.17 2007/04/26 01:01:54 hcheung Exp $
+// $Id: StorageManager.cc,v 1.17.2.1 2007/05/08 00:14:50 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -2082,6 +2082,18 @@ void StorageManager::stopAction()
   jc_->stop();
 
   jc_->join();
+
+  // should clear the event server(s) last event/queue
+  boost::shared_ptr<EventServer> eventServer;
+  boost::shared_ptr<DQMEventServer> dqmeventServer;
+  if (jc_.get() != NULL)
+  {
+    eventServer = jc_->getEventServer();
+    dqmeventServer = jc_->getDQMEventServer();
+  }
+  if (eventServer.get() != NULL) eventServer->clearQueue();
+  if (dqmeventServer.get() != NULL) dqmeventServer->clearQueue();
+
 }
 
 void StorageManager::haltAction()

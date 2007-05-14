@@ -5,7 +5,7 @@
  *  An input source for DQM consumers using cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.h,v 1.2 2007/04/18 01:47:39 hcheung Exp $
+ *  $Id: DQMHttpSource.h,v 1.2.2.1 2007/05/11 20:35:46 hcheung Exp $
  */
 #include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/StreamDeserializer.h"
@@ -33,6 +33,7 @@ namespace edm
 
    private:
 
+    std::auto_ptr<edm::Event> getOneDQMEvent();
     virtual std::auto_ptr<edm::Event> readOneEvent();
     virtual void registerWithDQMEventServer();
 

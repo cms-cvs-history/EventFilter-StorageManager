@@ -274,3 +274,9 @@ bool ConsumerPipe::pushEvent()
   }
   return false;
 }
+
+void ConsumerPipe::clearQueue()
+{
+  boost::mutex::scoped_lock scopedLockForLatestEvent(latestEventLock_);
+  latestEvent_.reset();
+}

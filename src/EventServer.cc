@@ -2,7 +2,7 @@
  * This class manages the distribution of events to consumers from within
  * the storage manager.
  *
- * $Id$
+ * $Id: EventServer.cc,v 1.4 2007/04/26 01:01:54 hcheung Exp $
  */
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -206,4 +206,16 @@ boost::shared_ptr< std::vector<char> > EventServer::getEvent(uint32 consumerId)
 
   // return the event buffer
   return bufPtr;
+}
+
+void EventServer::clearQueue()
+{
+  std::map< uint32, boost::shared_ptr<ConsumerPipe> >::const_iterator consIter;
+  for (consIter = consumerTable.begin();
+       consIter != consumerTable.end();
+       consIter++)
+  {
+    boost::shared_ptr<ConsumerPipe> consPipe = consIter->second;
+    consPipe->clearQueue();
+  }
 }

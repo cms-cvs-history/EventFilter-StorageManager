@@ -2,7 +2,7 @@
  *  An input source for DQM consumers run in cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.cc,v 1.4.2.1 2007/05/01 01:14:57 hcheung Exp $
+ *  $Id: DQMHttpSource.cc,v 1.4.2.2 2007/05/11 20:35:46 hcheung Exp $
  */
 
 #include "EventFilter/StorageManager/src/DQMHttpSource.h"
@@ -69,6 +69,25 @@ namespace edm
 
 
   std::auto_ptr<Event> DQMHttpSource::readOneEvent()
+  {
+    // repeat a http get every X seconds until we get a DQMevent
+    // only way to stop is specify a maxEvents parameter
+    // or kill the Storage Manager XDAQ application so the http get fails.
+
+    // try to get an event repeat until we get one, this allows
+    // re-registration is the SM is halted or stopped
+
+    bool gotEvent = false;
+    std::auto_ptr<Event> result(0);
+    while (!gotEvent)
+    { 
+       result = getOneDQMEvent();
+       if(result.get() != NULL) gotEvent = true;
+    } 
+    return result;
+  }
+
+  std::auto_ptr<Event> DQMHttpSource::getOneDQMEvent()
   {
     // repeat a http get every X seconds until we get a DQMevent
     // only way to stop is specify a maxEvents parameter
@@ -142,9 +161,9 @@ namespace edm
       {
         cerr << "curl perform failed for DQMevent, messageStatus = "
              << messageStatus << endl;
-        throw cms::Exception("getOneEvent","DQMHttpSource")
-            << "curl perform failed for DQMevent, messageStatus = "
-            << messageStatus << endl;
+        throw cms::Exception("getOneDQMEvent","DQMHttpSource")
+            << "Could not get event: probably XDAQ not running on Storage Manager "
+            << "\n";
         // this will end cmsRun
       }
       if(data.d_.length() == 0)
@@ -172,9 +191,9 @@ namespace edm
 
     if (msgView.code() == Header::DONE) {
       // Continue past run boundaries (SM halt)
-      std::cout << "Storage Manager sent DONE - Probably halted we need to register again" << std::endl;
-      registerWithDQMEventServer();
-      // now need to not make a dummy event but go back and fetch an event!
+      // no need to register again as the SM/EventServer is kept alive on a stopAction
+      std::cout << "Storage Manager has halted - waiting for restart" << std::endl;
+       return std::auto_ptr<edm::Event>();
     } else {
       // counting the updates
       ++updatesCounter_;
