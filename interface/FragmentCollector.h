@@ -90,6 +90,9 @@ namespace stor
     void setCollateDQM(bool collateDQM)      
     { dqmServiceManager_->setCollateDQM(collateDQM); }
 
+    void setArchiveDQM(bool archiveDQM)
+    { dqmServiceManager_->setArchiveDQM(archiveDQM); }
+
     void setPurgeTimeDQM(int purgeTimeDQM)   
     { dqmServiceManager_->setPurgeTime(purgeTimeDQM);}
 
@@ -98,6 +101,12 @@ namespace stor
 
     void setFilePrefixDQM(std::string filePrefixDQM)
     { dqmServiceManager_->setFilePrefix(filePrefixDQM);}
+
+    void setUseCompressionDQM(bool useCompressionDQM)
+    { dqmServiceManager_->setUseCompression(useCompressionDQM);}
+
+    void setCompressionLevelDQM(int compressionLevelDQM)
+    { dqmServiceManager_->setCompressionLevel(compressionLevelDQM);}
 
     void setDQMEventServer(boost::shared_ptr<DQMEventServer>& es)
     {
