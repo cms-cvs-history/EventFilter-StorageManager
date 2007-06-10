@@ -5,7 +5,7 @@
 //
 //  Container class for a single instance of a set of DQM objects
 //
-//  $Id: DQMInstance.cc,v 1.1.2.2 2007/05/08 00:14:50 hcheung Exp $
+//  $Id: DQMInstance.cc,v 1.1.2.3 2007/05/15 01:22:49 hcheung Exp $
 //
 
 #include <iostream>
@@ -56,6 +56,12 @@ DQMGroup::~DQMGroup()
   if ( firstUpdate_ != NULL ) { delete(firstUpdate_);}
   if ( lastUpdate_  != NULL ) { delete(lastUpdate_);}
   if ( lastServed_  != NULL ) { delete(lastServed_);}
+  for (std::map<std::string, TObject * >::iterator i0 = 
+	 dqmObjects_.begin(); i0 != dqmObjects_.end() ; ++i0)
+  {
+    TObject * object = i0->second;
+    if ( object != NULL ) { delete(object); } 
+  }
 }
 
 
@@ -174,7 +180,7 @@ int DQMInstance::writeFile(std::string filePrefix)
 	}
       }
       file->Close();
-      if ( file != NULL ) { delete(file);}
+      delete(file);
       FDEBUG(1) << "Wrote file " << fileName << " " << ctr << " objects"
 		<< std::endl; 
     }
