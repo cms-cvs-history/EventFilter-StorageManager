@@ -5,8 +5,6 @@
 //
 //  Container class for a single instance of a set of DQM objects
 //
-//  $Id: DQMInstance.cc,v 1.1.2.3 2007/05/15 01:22:49 hcheung Exp $
-//
 
 #include <iostream>
 #include <vector>
@@ -15,6 +13,10 @@
 #include "EventFilter/StorageManager/interface/DQMInstance.h"
 #include "TObject.h"
 #include "TH1.h"
+#include "TObjArray.h"
+#include "TObjString.h"
+#include "TString.h"
+#include "TDirectory.h"
 #include "TFile.h"
 
 using edm::debugit;
@@ -28,6 +30,19 @@ DQMGroupDescriptor::DQMGroupDescriptor(DQMInstance *instance,
 {}
 
 DQMGroupDescriptor::~DQMGroupDescriptor() {}
+
+DQMFolder::DQMFolder()
+{}
+
+DQMFolder::~DQMFolder() 
+{
+  for (std::map<std::string, TObject * >::iterator i0 = 
+	 dqmObjects_.begin(); i0 != dqmObjects_.end() ; ++i0)
+  {
+    TObject * object = i0->second;
+    if ( object != NULL ) { delete(object); } 
+  }
+}
 
 DQMGroup::DQMGroup(int readyTime):
   nUpdates_(0),
@@ -56,11 +71,11 @@ DQMGroup::~DQMGroup()
   if ( firstUpdate_ != NULL ) { delete(firstUpdate_);}
   if ( lastUpdate_  != NULL ) { delete(lastUpdate_);}
   if ( lastServed_  != NULL ) { delete(lastServed_);}
-  for (std::map<std::string, TObject * >::iterator i0 = 
-	 dqmObjects_.begin(); i0 != dqmObjects_.end() ; ++i0)
+  for (std::map<std::string, DQMFolder * >::iterator i0 = 
+	 dqmFolders_.begin(); i0 != dqmFolders_.end() ; ++i0)
   {
-    TObject * object = i0->second;
-    if ( object != NULL ) { delete(object); } 
+    DQMFolder * folder = i0->second;
+    if ( folder != NULL ) { delete(folder); } 
   }
 }
 
@@ -90,7 +105,6 @@ DQMInstance::~DQMInstance()
   for (std::map<std::string, DQMGroup * >::iterator i0 = 
 	 dqmGroups_.begin(); i0 != dqmGroups_.end() ; ++i0)
   {
-    std::string groupName = i0->first;
     DQMGroup  * group     = i0->second;
     if ( group != NULL ) { delete(group); } 
   }
@@ -103,7 +117,7 @@ int DQMInstance::updateObject(std::string groupName,
 			      int eventNumber)
 {
   lastEvent_ = eventNumber;
-  std::string fullObjectName = objectDirectory+"/"+object->GetName();
+  std::string objectName = object->GetName();
   DQMGroup * group = dqmGroups_[groupName];
   if ( group == NULL )
   {
@@ -111,11 +125,18 @@ int DQMInstance::updateObject(std::string groupName,
     dqmGroups_[groupName] = group;
   }
 
+  DQMFolder * folder = group->dqmFolders_[objectDirectory];
+  if ( folder == NULL )
+  {
+    folder = new DQMFolder();
+    group->dqmFolders_[objectDirectory] = folder;
+  }
+
   group->setLastEvent(eventNumber);
-  TObject * storedObject = group->dqmObjects_[fullObjectName];
+  TObject * storedObject = folder->dqmObjects_[objectName];
   if ( storedObject == NULL )
   {
-    group->dqmObjects_[fullObjectName] = object->Clone(object->GetName());
+    folder->dqmObjects_[objectName] = object->Clone(object->GetName());
   }
   else
   {
@@ -128,8 +149,9 @@ int DQMInstance::updateObject(std::string groupName,
     }
     else
     {
+      // Unrecognized objects just take the last instance
       delete(storedObject);
-      group->dqmObjects_[fullObjectName] = object->Clone(object->GetName());
+      folder->dqmObjects_[objectName] = object->Clone(object->GetName());
     }
   }
 
@@ -162,21 +184,57 @@ int DQMInstance::writeFile(std::string filePrefix)
 	    runNumber_, 
 	    lumiSection_, 
 	    instance_);
+
     TFile * file = new TFile(fileName,"RECREATE");
     if (( file != NULL ) && file->IsOpen())
     {
       int ctr=0;
-      for ( std::map<std::string, TObject *>::iterator i1 = 
-	      group->dqmObjects_.begin(); i1 != group->dqmObjects_.end(); ++i1)
+
+      // First create directories inside the root file
+      TString token("/");
+      for ( std::map<std::string, DQMFolder *>::iterator i1 = 
+	      group->dqmFolders_.begin(); i1 != group->dqmFolders_.end(); ++i1)
       {
-	std::string objectName = i1->first;
-	TObject *object = i1->second;
-	if ( object != NULL ) 
+	std::string folderName = i1->first;
+	TString path(folderName.c_str());
+
+	TObjArray * tokens = path.Tokenize(token);
+	int nTokens = tokens->GetEntries();
+	TDirectory * newDir = NULL;
+	TDirectory * oldDir = (TDirectory *)file;
+	for ( int j=0; j<nTokens; j++)
 	{
-	  file->cd();
-	  object->Write();
-	  reply++;
-	  ctr++;
+	  TString newDirName = ((TObjString *)tokens->At(j))->String();
+	  oldDir->cd();
+	  newDir = oldDir->GetDirectory(newDirName.Data(),kFALSE,"cd");
+	  if ( newDir == NULL )
+	  {
+	    newDir = oldDir->mkdir(newDirName.Data());
+	  }
+	  oldDir = newDir;
+	}
+	delete(tokens);
+      }
+
+      for ( std::map<std::string, DQMFolder *>::iterator i1 = 
+	      group->dqmFolders_.begin(); i1 != group->dqmFolders_.end(); ++i1)
+      {
+	std::string folderName = i1->first;
+	DQMFolder * folder = i1->second;
+
+	for ( std::map<std::string, TObject *>::iterator i2 = 
+	      folder->dqmObjects_.begin(); i2 != folder->dqmObjects_.end(); 
+	      ++i2)
+	{
+	  std::string objectName = i2->first;
+	  TObject *object = i2->second;
+	  if ( object != NULL ) 
+	  {
+	    file->cd(folderName.c_str());
+	    object->Write();
+	    reply++;
+	    ctr++;
+	  }
 	}
       }
       file->Close();

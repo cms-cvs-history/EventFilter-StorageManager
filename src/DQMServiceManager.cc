@@ -3,7 +3,7 @@
 //
 // (W.Badgett)
 //
-// $Id: DQMServiceManager.cc,v 1.1.2.3 2007/05/15 01:22:49 hcheung Exp $
+// $Id: DQMServiceManager.cc,v 1.3 2007/06/11 10:04:49 badgett Exp $
 //
 
 #include "FWCore/Utilities/interface/DebugMacros.h"
@@ -132,7 +132,7 @@ void DQMServiceManager::manageDQMEventMsg(DQMEventMsgView& msg)
       delete(object);
     }
   }
-
+  
   // Now send the best DQMGroup for this grouping, which may 
   // not be the currently updated one (it may not yet be ready)
   DQMGroupDescriptor * descriptor = 
@@ -141,7 +141,6 @@ void DQMServiceManager::manageDQMEventMsg(DQMEventMsgView& msg)
   {
     // Reserialize the data and give to DQM server
     DQMGroup    * group    = descriptor->group_;
-
     if ( !group->wasServedSinceUpdate() )
     {
       group->setServedSinceUpdate();
@@ -151,25 +150,27 @@ void DQMServiceManager::manageDQMEventMsg(DQMEventMsgView& msg)
       DQMEvent::TObjectTable table;
 
       int subFolderSize = 0;
-      for ( std::map<std::string, TObject *>::iterator i1 = 
-	      group->dqmObjects_.begin(); i1 != group->dqmObjects_.end(); ++i1)
+      for ( std::map<std::string, DQMFolder *>::iterator i1 = 
+	      group->dqmFolders_.begin(); i1 != group->dqmFolders_.end(); ++i1)
       {
-	std::string objectName = i1->first;
-	TObject *object = i1->second;
-	if ( object != NULL ) 
-	{ 
-	  int ptr = objectName.rfind('/');
-	  std::string subFolderName = "/";
-	  if ( ptr > 0 ) { subFolderName = objectName.substr(0,ptr);}
-
-	  if ( table.count(subFolderName) == 0 )
-	  {
-	    std::vector<TObject *> newObjectVector;
-	    table[subFolderName] = newObjectVector;
-	    subFolderSize += 2*sizeof(uint32) + subFolderName.length();
+	std::string folderName = i1->first;
+	DQMFolder * folder = i1->second;
+	for ( std::map<std::string, TObject *>::iterator i2 = 
+	      folder->dqmObjects_.begin(); i2!=folder->dqmObjects_.end(); ++i2)
+	{
+	  std::string objectName = i2->first;
+	  TObject *object = i2->second;
+	  if ( object != NULL ) 
+	  { 
+	    if ( table.count(folderName) == 0 )
+	    {
+	      std::vector<TObject *> newObjectVector;
+	      table[folderName] = newObjectVector;
+	      subFolderSize += 2*sizeof(uint32) + folderName.length();
+	    }
+	    std::vector<TObject *> objectVector = table[folderName];
+	    objectVector.push_back(object);
 	  }
-	  std::vector<TObject *> objectVector = table[subFolderName];
-	  objectVector.push_back(object);
 	}
       }
 
