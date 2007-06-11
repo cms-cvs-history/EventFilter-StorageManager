@@ -8,7 +8,7 @@
      Container class for one snapshot instance of a collection of 
      collated DQM objects
 
-   $Id: DQMInstance.h,v 1.1.2.2 2007/05/08 00:12:16 hcheung Exp $
+   $Id: DQMInstance.h,v 1.4 2007/06/11 10:04:58 badgett Exp $
 */
 
 #include <string>
@@ -28,12 +28,20 @@
 
 namespace stor 
 {
+  class DQMFolder
+  {
+    public:
+      DQMFolder();
+     ~DQMFolder();
+      std::map<std::string, TObject *> dqmObjects_;
+  }; 
+
   class DQMGroup
   {
     public:
       DQMGroup(int readyTime);
      ~DQMGroup();
-      std::map<std::string, TObject *> dqmObjects_;
+      std::map<std::string, DQMFolder *> dqmFolders_;
       int getNUpdates()             { return(nUpdates_);}
       int getReadyTime()            { return(readyTime_);}
       int getLastEvent()            { return(lastEvent_);}
