@@ -2,7 +2,7 @@
  *  An input source for DQM consumers run in cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.cc,v 1.4.2.2 2007/05/11 20:35:46 hcheung Exp $
+ *  $Id: DQMHttpSource.cc,v 1.4.2.3 2007/05/14 04:03:41 hcheung Exp $
  */
 
 #include "EventFilter/StorageManager/src/DQMHttpSource.h"
@@ -65,6 +65,8 @@ namespace edm
     // register this DQM consumer with the DQMevent server of the Storage Manager
     DQMconsumerId_ = (time(0) & 0xffffff);  // temporary - will get from ES later
     registerWithDQMEventServer();
+    // when running Async it seems bei_ is not NULL at the start after default ctor
+    bei_ = NULL;
   }
 
 
