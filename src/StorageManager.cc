@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.17.2.3 2007/05/15 01:22:49 hcheung Exp $
+// $Id: StorageManager.cc,v 1.17.2.4 2007/06/06 21:40:38 meschi Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -35,7 +35,7 @@
 #include "xcept/tools.h"
 
 #include "i2o/Method.h"
-#include "i2o/utils/AddressMap.h"
+#include "i2o/utils/include/i2o/utils/AddressMap.h"
 
 #include "toolbox/mem/Pool.h"
 
@@ -43,9 +43,9 @@
 
 #include "xgi/Method.h"
 
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
+#include "xoap/include/xoap/SOAPEnvelope.h"
+#include "xoap/include/xoap/SOAPBody.h"
+#include "xoap/include/xoap/domutils.h"
 
 using namespace edm;
 using namespace std;
