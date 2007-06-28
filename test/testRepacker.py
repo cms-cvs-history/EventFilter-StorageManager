@@ -24,7 +24,7 @@ process.options = cms.untracked.PSet(
 )
 
 process.source = cms.Source("NewEventStreamFileReader",
-    fileNames = cms.untracked.vstring( 'testRandomFilter.dat' ),
+    fileNames = cms.untracked.vstring( 'file:testRandomFilter.dat' ),
     max_event_size = cms.int32(7000000),
     max_queue_depth = cms.int32(5)
 )
