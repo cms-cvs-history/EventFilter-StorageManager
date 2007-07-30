@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.9 2007/04/17 22:46:30 wmtan Exp $
+ $Id: StorageManagerRun.cpp,v 1.11 2007/04/26 07:13:25 hcheung Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -27,7 +27,7 @@
 
 #include "IOPool/Streamer/interface/StreamerInputFile.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
-#include "IOPool/Streamer/interface/StreamDeserializer.h"
+#include "IOPool/Streamer/interface/StreamerInputSource.h"
 
 #include "DataFormats/Streamer/interface/StreamedProducts.h"
 
@@ -136,7 +136,7 @@ Main::Main(const string& my_config_file,
 {
   StreamerInputFile stream_reader(file_names[0]);
   const InitMsgView* init =  stream_reader.startMessage();
-  std::auto_ptr<edm::SendJobHeader> header = edm::StreamDeserializer::deserializeRegistry(*init);
+  std::auto_ptr<edm::SendJobHeader> header = edm::StreamerInputSource::deserializeRegistry(*init);
 
   edm::ProductRegistry pr;
   const edm::SendDescs& descs = header->descs_;
