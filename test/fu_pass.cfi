@@ -11,6 +11,8 @@ process FU = {
     untracked vstring destinations = { "cout" }
     untracked PSet    cout         = { untracked string threshold = "FATAL" }
     untracked PSet    log4cplus    = { untracked string threshold = "WARNING" }
+    //untracked PSet    cout         = { untracked string threshold = "INFO" }
+    //untracked PSet    log4cplus    = { untracked string threshold = "INFO" }
   }
 
 
@@ -18,7 +20,8 @@ process FU = {
   // source
   source = DaqSource
   {
-    string          reader    = "FUShmReader"
+    untracked string readerPluginName = "FUShmReader"
+    untracked uint32 evtsPerLS = 300
   }
 
   path p1 = { m2, a1 }
@@ -34,11 +37,10 @@ process FU = {
   module pre1 = Prescaler { int32 prescaleFactor = 5 }
   module pre2 = Prescaler { int32 prescaleFactor = 2 }
   module out2 = ShmStreamConsumer {
-                        int32 max_event_size = 7000000 
-                        int32 max_queue_depth = 5
-                        bool use_compression = true
-                        int32 compression_level = 1
-                        untracked int32 lumiSection_interval = 120
+                        untracked int32 max_event_size = 7000000 
+                        untracked bool use_compression = true
+                        untracked int32 compression_level = 1
+     //                   untracked int32 lumiSection_interval = 120
   }
   # DQM back-end interface service
   service = DaqMonitorROOTBackEnd{}
@@ -53,7 +55,7 @@ process FU = {
     double lumiSectionsPerUpdate = 1.0
     bool useCompression = true
     int32 compressionLevel = 1
-    untracked int32 lumiSectionInterval = 120 // seconds
+    //untracked int32 lumiSectionInterval = 60 // seconds
   }
 
 }
