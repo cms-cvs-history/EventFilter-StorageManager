@@ -77,9 +77,9 @@
         <highWaterMark      xsi:type="xsd:double">0.9</highWaterMark>
         <lumiSectionTimeOut xsi:type="xsd:double">10.0</lumiSectionTimeOut>
         <fileCatalog        xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
-	<closeFileScript    xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</closeFileScript>
-        <notifyTier0Script  xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</notifyTier0Script>
-        <insertFileScript   xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</insertFileScript>
+	<closeFileScript    xsi:type="xsd:string">/uscms/home/cheung/work/CMSSW_1_6_0_pre9/src/EventFilter/StorageManager/scripts/perl/dummy.pl</closeFileScript>
+        <notifyTier0Script  xsi:type="xsd:string">/uscms/home/cheung/work/CMSSW_1_6_0_pre9/src/EventFilter/StorageManager/scripts/perl/dummy.pl</notifyTier0Script>
+        <insertFileScript   xsi:type="xsd:string">/uscms/home/cheung/work/CMSSW_1_6_0_pre9/src/EventFilter/StorageManager/scripts/perl/dummy.pl</insertFileScript>
         <pushMode2Proxy     xsi:type="xsd:boolean">true</pushMode2Proxy>
         <collateDQM         xsi:type="xsd:boolean">false</collateDQM>
         <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
