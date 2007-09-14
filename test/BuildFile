@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.24 2007/04/24 17:08:00 afaq Exp $
+# $Id: BuildFile,v 1.26 2007/04/26 07:13:25 hcheung Exp $
 
 <environment>
   <use name=boost>
@@ -37,6 +37,12 @@
    <use name=DQMServices/Daemon>
    <use name=DQMServices/Core>
    <use name=DQMServices/UI>
+   <use name=FWCore/Framework>
+  </library>
+
+  <library file="SMHttpConsumerExample.cc" name=SMHttpConsumerClientExample>
+   <flags EDM_PLUGIN=1>
+   <use name=boost>
    <use name=FWCore/Framework>
   </library>
 
