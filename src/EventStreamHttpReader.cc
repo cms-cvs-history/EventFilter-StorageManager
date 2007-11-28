@@ -17,7 +17,7 @@
                 Manager or specify a maximum number of events for
                 the client to read through a maxEvents parameter.
 
-  $Id: EventStreamHttpReader.cc,v 1.23 2007/09/28 17:04:53 badgett Exp $
+  $Id: EventStreamHttpReader.cc,v 1.25 2007/11/26 19:46:36 biery Exp $
 */
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
@@ -30,6 +30,7 @@
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "FWCore/Framework/interface/EventPrincipal.h"
+#include "FWCore/Utilities/interface/UnixSignalHandlers.h"
 
 #include <algorithm>
 #include <iterator>
@@ -48,7 +49,6 @@ namespace edm
     edm::StreamerInputSource(ps, desc),
     sourceurl_(ps.getParameter<string>("sourceURL")),
     buf_(1000*1000*7), 
-    events_read_(0),
     endRunAlreadyNotified_(true),
     runEnded_(false),
     alreadySaidHalted_(false),
@@ -122,16 +122,12 @@ namespace edm
     // only way to stop is specify a maxEvents parameter
     // or kill the Storage Manager so the http get fails.
 
-    // see if already read maxEvents
-    if(maxEvents() > 0 && events_read_ >= maxEvents()) 
-      return std::auto_ptr<edm::EventPrincipal>();
-
     // try to get an event repeat until we get one, this allows
     // re-registration if the SM is halted or stopped
 
     bool gotEvent = false;
     std::auto_ptr<EventPrincipal> result(0);
-    while ((!gotEvent) && (!runEnded_))
+    while ((!gotEvent) && (!runEnded_) && (!edm::shutdown_flag))
     {
        result = getOneEvent();
        if(result.get() != NULL) gotEvent = true;
@@ -235,7 +231,10 @@ namespace edm
         // sleep for the standard request interval
         usleep(static_cast<int>(1000000 * minEventRequestInterval_));
       }
-    } while (data.d_.length() == 0);
+    } while (data.d_.length() == 0 && !edm::shutdown_flag);
+    if (edm::shutdown_flag) {
+	return std::auto_ptr<edm::EventPrincipal>();
+    }
 
     int len = data.d_.length();
     FDEBUG(9) << "EventStreamHttpReader received len = " << len << std::endl;
@@ -270,7 +269,6 @@ namespace edm
       // reset need-to-set-end-run flag when we get the first event (here any event)
       endRunAlreadyNotified_ = false;
       alreadySaidHalted_ = false;
-      events_read_++;
       EventMsgView eventView(&buf_[0]);
       return deserializeEvent(eventView);
     }
@@ -338,7 +336,11 @@ namespace edm
         // sleep for desired amount of time
         sleep(headerRetryInterval_);
       }
-    } while (data.d_.length() == 0);
+    } while (data.d_.length() == 0 && !edm::shutdown_flag);
+    if (edm::shutdown_flag) {
+      throw cms::Exception("readHeader","EventStreamHttpReader")
+          << "The header read was aborted by a shutdown request.\n";
+    }
 
     std::vector<char> regdata(1000*1000);
 
@@ -377,7 +379,7 @@ namespace edm
   void EventStreamHttpReader::registerWithEventServer()
   {
     stor::ReadData data;
-    uint32 registrationStatus;
+    uint32 registrationStatus = ConsRegResponseBuilder::ES_NOT_READY;
     bool alreadySaidWaiting = false;
     do {
       data.d_.clear();
@@ -413,7 +415,7 @@ namespace edm
       // set messageStatus to a non-zero (but still within CURLcode enum list)
       CURLcode messageStatus = CURLE_COULDNT_CONNECT;
       int tries = 0;
-      while (messageStatus!=0)
+      while (messageStatus!=0 && !edm::shutdown_flag)
       {
 	tries++;
 	messageStatus = curl_easy_perform(han);
@@ -438,6 +440,9 @@ namespace edm
 	    sleep(connectTrySleepTime_);
 	  }
 	}
+      }
+      if (edm::shutdown_flag) {
+	  continue;
       }
 
       curl_slist_free_all(headers);
@@ -483,7 +488,12 @@ namespace edm
         // sleep for desired amount of time
         sleep(headerRetryInterval_);
       }
-    } while (registrationStatus == ConsRegResponseBuilder::ES_NOT_READY);
+    } while (registrationStatus == ConsRegResponseBuilder::ES_NOT_READY &&
+             !edm::shutdown_flag);
+    if (edm::shutdown_flag) {
+      throw cms::Exception("registerWithEventServer","EventStreamHttpReader")
+          << "Registration was aborted by a shutdown request.\n";
+    }
 
     FDEBUG(5) << "Consumer ID = " << consumerId_ << endl;
   }
