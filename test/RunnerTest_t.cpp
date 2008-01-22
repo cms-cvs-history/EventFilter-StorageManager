@@ -18,7 +18,6 @@ this can run.
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
@@ -27,7 +26,6 @@ this can run.
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 
 #include "boost/shared_ptr.hpp"
-#include "boost/bind.hpp"
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"

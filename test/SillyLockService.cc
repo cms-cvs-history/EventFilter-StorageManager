@@ -1,19 +1,13 @@
 
 
 #include "EventFilter/StorageManager/test/SillyLockService.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "FWCore/ServiceRegistry/interface/ServiceMaker.h"
-#include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include <iostream>
-#include <string>
-#include <vector>
 #include <algorithm>
-#include "boost/thread/mutex.hpp"
 
 using namespace edm;
 using namespace std;

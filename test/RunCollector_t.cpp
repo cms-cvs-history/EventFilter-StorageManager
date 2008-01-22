@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.8 2007/04/17 22:46:30 wmtan Exp $
+// $Id: RunCollector_t.cpp,v 1.10 2007/04/26 07:13:25 hcheung Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -15,7 +15,6 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "IOPool/Streamer/interface/Messages.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"

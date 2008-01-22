@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.11 2007/04/26 07:13:25 hcheung Exp $
+ $Id: StorageManagerRun.cpp,v 1.12 2007/07/30 04:50:44 wmtan Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -12,14 +12,10 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
-#include "FWCore/Framework/interface/EventProcessor.h"
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
-#include "FWCore/PluginManager/interface/ProblemTracker.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
-#include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/TestFileReader.h"
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
@@ -32,7 +28,6 @@
 #include "DataFormats/Streamer/interface/StreamedProducts.h"
 
 #include "IOPool/Streamer/interface/ClassFiller.h"
-#include "DataFormats/Streamer/interface/StreamedProducts.h"
 
 #include "boost/shared_ptr.hpp"
 
