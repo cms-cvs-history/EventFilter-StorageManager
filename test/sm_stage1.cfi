@@ -5,7 +5,8 @@ process SM  = {
   module out = EventStreamFileWriter
    {
      string streamLabel = "A"
-     int32 maxSize =    536870912
+     // maxSize parameter now has units of MByte
+     int32 maxSize =  512
 
      untracked PSet SelectEvents = { vstring SelectEvents={"p1"}}
    }
@@ -17,7 +18,8 @@ process SM  = {
      untracked int32 compression_level = 1
 
      string streamLabel = "B"
-     int32 maxSize = 1073741824
+     // maxSize parameter now has units of MByte
+     int32 maxSize = 1024
 
      untracked PSet SelectEvents = { vstring SelectEvents={"p2"}}
    }
@@ -25,7 +27,8 @@ process SM  = {
    module out3 = EventStreamFileWriter
    {
      string streamLabel = "C"
-     int32 maxSize = 1073741824
+     // maxSize parameter now has units of MByte
+     int32 maxSize = 1024
 
      untracked PSet SelectEvents = { vstring SelectEvents={"p3"}}
    }
