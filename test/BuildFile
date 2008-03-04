@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.27 2007/09/14 13:18:32 hcheung Exp $
+# $Id: BuildFile,v 1.28 2007/12/05 22:08:30 elmer Exp $
 
 <environment>
   <use name=boost>
@@ -25,18 +25,14 @@
   <library file="SMDQMSourceExample.cc" name=SMDQMServicesDaemonExample>
    <flags EDM_PLUGIN=1>
    <use name=boost>
-   <use name=DQMServices/CoreROOT>
-   <use name=DQMServices/Daemon>
+   <use name=DQMServices/Core>
    <use name=FWCore/Framework>
   </library>
 
   <library file="SMDQMClientExample.cc" name=SMDQMClientDaemonExample>
    <flags EDM_PLUGIN=1>
    <use name=boost>
-   <use name=DQMServices/CoreROOT>
-   <use name=DQMServices/Daemon>
    <use name=DQMServices/Core>
-   <use name=DQMServices/UI>
    <use name=FWCore/Framework>
   </library>
 
@@ -49,8 +45,7 @@
   <library file="DQMMessageAnalyzer.cc" name=DQMMessageAnalyzer>
    <flags EDM_PLUGIN=1>
    <use name=boost>
-   <use name=DQMServices/CoreROOT>
-   <use name=DQMServices/Daemon>
+   <use name=DQMServices/Core>
    <use name=FWCore/Framework>
    <use name=IOPool/Streamer>
   </library>
