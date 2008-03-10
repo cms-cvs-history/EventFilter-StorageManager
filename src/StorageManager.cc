@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.41 2008/02/21 17:31:17 biery Exp $
+// $Id: StorageManager.cc,v 1.44 2008/03/03 23:31:36 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -176,6 +176,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fileCatalog_        = smParameter_ -> fileCatalog(); 
   fileName_           = smParameter_ -> fileName();
   filePath_           = smParameter_ -> filePath();
+  maxFileSize_        = smParameter_ -> maxFileSize();
   mailboxPath_        = smParameter_ -> mailboxPath();
   setupLabel_         = smParameter_ -> setupLabel();
   highWaterMark_      = smParameter_ -> highWaterMark();
@@ -187,6 +188,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("fileCatalog",        &fileCatalog_);
   ispace->fireItemAvailable("fileName",           &fileName_);
   ispace->fireItemAvailable("filePath",           &filePath_);
+  ispace->fireItemAvailable("maxFileSize",        &maxFileSize_);
   ispace->fireItemAvailable("mailboxPath",        &mailboxPath_);
   ispace->fireItemAvailable("setupLabel",         &setupLabel_);
   ispace->fireItemAvailable("highWaterMark",      &highWaterMark_);
@@ -1960,9 +1962,9 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
     if (reqString.size() >= 2) consumerRequest = reqString;
   }
 
-  // create the buffer to hold the registration reply message
-  const int BUFFER_SIZE = 100;
-  char msgBuff[BUFFER_SIZE];
+  // resize the local buffer, if needed, to handle a minimal response message
+  unsigned int responseSize = 200;
+  if (mybuffer_.capacity() < responseSize) mybuffer_.resize(responseSize);
 
   // fetch the event server
   // (it and/or the job controller may not have been created yet)
@@ -1976,7 +1978,7 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   if (eventServer.get() == NULL)
   {
     // build the registration response into the message buffer
-    ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
+    ConsRegResponseBuilder respMsg(&mybuffer_[0], mybuffer_.capacity(),
                                    ConsRegResponseBuilder::ES_NOT_READY, 0);
     // debug message so that compiler thinks respMsg is used
     FDEBUG(20) << "Registration response size =  " <<
@@ -1984,16 +1986,24 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   }
   else
   {
-    // construct a parameter set from the consumer request
-    boost::shared_ptr<edm::ParameterSet>
-      requestParamSet(new edm::ParameterSet(consumerRequest));
+    // resize the local buffer, if needed, to handle a full response message
+    int mapStringSize = eventServer->getSelectionTableStringSize();
+    responseSize += (int) (2.5 * mapStringSize);
+    if (mybuffer_.capacity() < responseSize) mybuffer_.resize(responseSize);
+
+    // fetch the event selection request from the consumer request
+    edm::ParameterSet requestParamSet(consumerRequest);
+    Strings selectionRequest =
+      EventSelector::getEventSelectionVString(requestParamSet);
+    Strings modifiedRequest =
+      eventServer->updateTriggerSelectionForStreams(selectionRequest);
 
     // create the local consumer interface and add it to the event server
     boost::shared_ptr<ConsumerPipe>
       consPtr(new ConsumerPipe(consumerName, consumerPriority,
                                activeConsumerTimeout_.value_,
                                idleConsumerTimeout_.value_,
-                               requestParamSet, consumerHost,
+                               modifiedRequest, consumerHost,
                                consumerQueueSize_));
     eventServer->addConsumer(consPtr);
     // over-ride pushmode if not set in StorageManager
@@ -2001,18 +2011,22 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
         consPtr->setPushMode(false);
 
     // build the registration response into the message buffer
-    ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
+    ConsRegResponseBuilder respMsg(&mybuffer_[0], mybuffer_.capacity(),
                                    0, consPtr->getConsumerId());
+
+    // add the stream selection table to the proxy server response
+    if (consPtr->isProxyServer()) {
+      respMsg.setStreamSelectionTable(eventServer->getStreamSelectionTable());
+    }
+
     // debug message so that compiler thinks respMsg is used
     FDEBUG(20) << "Registration response size =  " <<
       respMsg.size() << std::endl;
   }
 
   // send the response
-  ConsRegResponseView responseMessage(msgBuff);
+  ConsRegResponseView responseMessage(&mybuffer_[0]);
   unsigned int len = responseMessage.size();
-  if(mybuffer_.capacity() < len) mybuffer_.resize(len);
-  for (unsigned int i=0; i<len; ++i) mybuffer_[i]=msgBuff[i];
 
   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
@@ -2354,19 +2368,19 @@ void StorageManager::parseFileEntry(std::string in, std::string &out, unsigned i
 
 std::string StorageManager::findStreamName(std::string &in)
 {
-  cout << "in findStreamName with string " << in << endl;
+  //cout << "in findStreamName with string " << in << endl;
   string::size_type t = in.find("storageManager");
 
   string::size_type b;
   if(t != string::npos)
     {
-      cout << " storageManager is at " << t << endl;
+      //cout << " storageManager is at " << t << endl;
       b = in.rfind(".",t-2);
       if(b!=string::npos) 
 	{
-	  cout << "looking for substring " << t-b-2 << "long" <<endl;
-	  cout << " stream name should be at " << b+1 << endl;
-	  cout << " will return name " << string(in.substr(b+1,t-b-2)) << endl;
+	  //cout << "looking for substring " << t-b-2 << "long" <<endl;
+	  //cout << " stream name should be at " << b+1 << endl;
+	  //cout << " will return name " << string(in.substr(b+1,t-b-2)) << endl;
 	  return string(in.substr(b+1,t-b-2));
 	}
       else
@@ -2418,6 +2432,7 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
     smParameter_ -> setFileCatalog(fileCatalog_.toString());
     smParameter_ -> setfileName(fileName_.toString());
     smParameter_ -> setfilePath(filePath_.toString());
+    smParameter_ -> setmaxFileSize(maxFileSize_.value_);
     smParameter_ -> setmailboxPath(mailboxPath_.toString());
     smParameter_ -> setsetupLabel(setupLabel_.toString());
     smParameter_ -> sethighWaterMark(highWaterMark_.value_);
@@ -2852,7 +2867,6 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 	    if(streams_.find(sname) == streams_.end())
 	      streams_.insert(pair<string,streammon>(sname,streammon()));
 	  }
-	int streamssize =  streams_.size();
 	
       }
       for(ismap it = streams_.begin(); it != streams_.end(); it++)
