@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.23 2008/02/27 16:00:52 meschi Exp $
+   $Id$
 */
 
 #include <string>
@@ -143,6 +143,7 @@ namespace stor {
     xdata::Integer nLogicalDisk_;
     xdata::String  fileName_;
     xdata::String  filePath_;
+    xdata::Integer maxFileSize_;
     xdata::String  mailboxPath_;
     xdata::String  setupLabel_;
     xdata::Double  highWaterMark_;
