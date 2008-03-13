@@ -1,3 +1,9 @@
+2008-03-13  Emilio Meschi <emilio.meschi@cern.ch>
+
+	* tag V03-09-10 (1_8_X branch)
+	* handle fileSize out of bounds correctly (in case of xdaq override)
+	* added lastEventSeen to front web page
+
 2008-03-10  Harry Cheung <cheung@fnal.gov>
 
 	* tag V03-09-09 (1_8_X branch)
