@@ -2,7 +2,7 @@
  *  An input source for DQM consumers run in cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.cc,v 1.9 2008/01/22 19:28:36 muzaffar Exp $
+ *  $Id: DQMHttpSource.cc,v 1.10 2008/02/11 15:10:19 biery Exp $
  */
 
 #include "EventFilter/StorageManager/src/DQMHttpSource.h"
@@ -10,6 +10,7 @@
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/UnixSignalHandlers.h"
 
 #include "IOPool/Streamer/interface/OtherMessage.h"
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
@@ -79,7 +80,7 @@ namespace edm
 
     bool gotEvent = false;
     std::auto_ptr<Event> result(0);
-    while (!gotEvent)
+    while ((!gotEvent) && (!edm::shutdown_flag))
     { 
        result = getOneDQMEvent();
        if(result.get() != NULL) gotEvent = true;
@@ -173,7 +174,10 @@ namespace edm
         // sleep for the standard request interval
         usleep(static_cast<int>(1000000 * minDQMEventRequestInterval_));
       }
-    } while (data.d_.length() == 0);
+    } while (data.d_.length() == 0 && !edm::shutdown_flag);
+    if (edm::shutdown_flag) {
+      return std::auto_ptr<edm::Event>();
+    }
 
     int len = data.d_.length();
     FDEBUG(9) << "DQMHttpSource received len = " << len << std::endl;
@@ -383,7 +387,8 @@ namespace edm
         // sleep for desired amount of time
         sleep(headerRetryInterval_);
       }
-    } while (registrationStatus == ConsRegResponseBuilder::ES_NOT_READY);
+    } while (registrationStatus == ConsRegResponseBuilder::ES_NOT_READY &&
+             !edm::shutdown_flag);
 
     FDEBUG(9) << "Consumer ID = " << DQMconsumerId_ << endl;
   }
