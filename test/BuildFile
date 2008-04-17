@@ -1,11 +1,10 @@
-# $Id: BuildFile,v 1.28 2007/12/05 22:08:30 elmer Exp $
+# $Id: BuildFile,v 1.29 2008/03/04 17:12:39 hcheung Exp $
 
 <environment>
   <use name=boost>
   <use name=xdaq>
 
   <library file=StorageManagerRun.cpp>
-   <use name=boost>
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
@@ -24,35 +23,29 @@
 
   <library file="SMDQMSourceExample.cc" name=SMDQMServicesDaemonExample>
    <flags EDM_PLUGIN=1>
-   <use name=boost>
    <use name=DQMServices/Core>
    <use name=FWCore/Framework>
   </library>
 
   <library file="SMDQMClientExample.cc" name=SMDQMClientDaemonExample>
    <flags EDM_PLUGIN=1>
-   <use name=boost>
    <use name=DQMServices/Core>
    <use name=FWCore/Framework>
   </library>
 
   <library file="SMHttpConsumerExample.cc" name=SMHttpConsumerClientExample>
    <flags EDM_PLUGIN=1>
-   <use name=boost>
    <use name=FWCore/Framework>
   </library>
 
   <library file="DQMMessageAnalyzer.cc" name=DQMMessageAnalyzer>
    <flags EDM_PLUGIN=1>
-   <use name=boost>
    <use name=DQMServices/Core>
    <use name=FWCore/Framework>
    <use name=IOPool/Streamer>
   </library>
 
-
   <bin file=RunnerTest_t.cpp>
-   <use name=boost>
    <use name=Foundation/SealBase>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
@@ -64,7 +57,6 @@
   </bin>
 
   <bin file=RunCollector_t.cpp>
-   <use name=boost>
    <use name=Foundation/SealBase>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/PluginManager>
