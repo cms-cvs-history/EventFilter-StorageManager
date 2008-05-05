@@ -3,39 +3,36 @@ process SM  = {
   source = FragmentInput { }
 
   module out = EventStreamFileWriter
-   {
-     string streamLabel = "A"
-     // maxSize parameter now has units of MByte
-     int32 maxSize =  512
+  {
+    // these are only valid for online storage manager
+    string streamLabel = "A"
+    int32 maxSize = 512
 
-     untracked PSet SelectEvents = { vstring SelectEvents={"p1"}}
-   }
+    untracked PSet SelectEvents = { vstring SelectEvents={"DiElectron", "CalibPath"}}
+    untracked string SelectHLTOutput = "CalibrationOModule"
+  }
 
-   module out2 = EventStreamFileWriter
-   {
-     untracked int32 max_event_size = 7000000
-     untracked bool use_compression = false
-     untracked int32 compression_level = 1
+  module out2 = EventStreamFileWriter
+  {
+    // these are only valid for online storage manager
+    string streamLabel = "B"
+    int32 maxSize = 1024
 
-     string streamLabel = "B"
-     // maxSize parameter now has units of MByte
-     int32 maxSize = 1024
+    untracked PSet SelectEvents = { vstring SelectEvents={"*"}}
+    untracked string SelectHLTOutput = "PhysicsOModule"
+  }
 
-     untracked PSet SelectEvents = { vstring SelectEvents={"p2"}}
-   }
+  module out3 = EventStreamFileWriter
+  {
+    // these are only valid for online storage manager
+    string streamLabel = "C"
+    int32 maxSize = 200
 
-   module out3 = EventStreamFileWriter
-   {
-     string streamLabel = "C"
-     // maxSize parameter now has units of MByte
-     int32 maxSize = 1024
+    untracked PSet SelectEvents = { vstring SelectEvents={"DiElectron", "CalibPath"}}
+    untracked string SelectHLTOutput = "PhysicsOModule"
+  }
 
-     untracked PSet SelectEvents = { vstring SelectEvents={"p3"}}
-   }
-
-   endpath e1 = { out }
-   endpath e2 = { out2 }
-   endpath e3 = { out3 }
-
-
+  endpath e1 = { out }
+  endpath e2 = { out2 }
+  endpath e3 = { out3 }
 }

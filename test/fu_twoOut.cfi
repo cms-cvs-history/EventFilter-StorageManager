@@ -1,0 +1,119 @@
+process FU = {
+
+  service = PrescaleService {
+    vstring InitialConfig = { "0 * * 1" }          # set all prescales to 1
+  }
+
+  // options
+  untracked PSet options =
+  {
+    untracked vstring Rethrow = {"ProductNotFound","TooManyProducts","TooFewProducts"}
+    untracked bool makeTriggerResults = true
+    untracked bool wantSummary = true
+  }
+
+  service = MessageLogger {
+    untracked vstring destinations = { "cout" }
+    untracked PSet cout = { untracked string threshold = "FATAL" }
+    untracked PSet log4cplus = {
+      untracked string threshold = "WARNING"
+    }
+  }
+
+  untracked PSet maxEvents = {untracked int32 input = -1}
+
+  service = AdaptorConfig {}
+
+  service = SiteLocalConfigService {}
+
+  service = MicroStateService {}
+
+  // source
+  source = DaqSource
+  {
+    untracked string readerPluginName = "FUShmReader"
+    untracked uint32 evtsPerLS = 500
+  }
+
+  module m2b20 = StreamThingProducer {
+    int32 array_size = 20
+    int32 instance_count=2
+  }
+
+  module m3b10 = StreamThingProducer {
+    int32 array_size = 10
+    int32 instance_count=3
+  }
+
+  module m4b15000 = StreamThingProducer {  // generates 5 I2O frames
+    int32 array_size = 15000
+    int32 instance_count=4
+  }
+
+  module m5b20000 = StreamThingProducer {  // generates 7 I2O frames
+    int32 array_size = 20000
+    int32 instance_count=5
+  }
+
+  module m6b25 = StreamThingProducer {
+    int32 array_size = 25
+    int32 instance_count=6
+  }
+
+  module prescaleBy3  = Prescaler { int32 prescaleFactor = 3 }
+  module prescaleBy5  = Prescaler { int32 prescaleFactor = 5 }
+  module prescaleBy7  = Prescaler { int32 prescaleFactor = 7 }
+  module prescaleBy11 = Prescaler { int32 prescaleFactor = 11 }
+
+  path DiMuon     = { prescaleBy5, m2b20, m5b20000 }
+
+  path DiElectron = { prescaleBy7, m6b25 }
+
+  path CalibPath  = { prescaleBy11, m4b15000 }
+
+  path HighPT     = { prescaleBy3, m3b10 }
+
+  endpath e1 = { PhysicsOModule }
+  module PhysicsOModule = ShmStreamConsumer {
+    untracked int32 max_event_size = 7000000 
+    untracked int32 max_queue_depth = 5
+    untracked bool use_compression = true
+    untracked int32 compression_level = 1
+    untracked PSet SelectEvents = { vstring SelectEvents={"DiElectron", "HighPT"} }
+    untracked vstring outputCommands =
+    {
+      "keep *",
+      "drop *_m4b15000_*_*"
+    }
+  }
+
+  endpath e2 = { CalibrationOModule }
+  module CalibrationOModule = ShmStreamConsumer {
+    untracked int32 max_event_size = 7000000 
+    untracked int32 max_queue_depth = 5
+    untracked bool use_compression = true
+    untracked int32 compression_level = 1
+    untracked PSet SelectEvents = { vstring SelectEvents={"*"} }
+    untracked vstring outputCommands =
+    {
+      "keep *",
+      "drop *_m5b20000_*_*"
+    }
+  }
+
+  # DQM back-end interface service
+  service = DQMStore{}
+
+  # DQM source program
+  module tester = SMDQMSourceExample{}
+  path pDQM ={tester}
+
+  # DQM sender service - under development
+  service = FUShmDQMOutputService {
+    untracked int32 initialMessageBufferSize = 1000000  // bytes
+    double lumiSectionsPerUpdate = 1.0
+    bool useCompression = true
+    int32 compressionLevel = 1
+    //untracked int32 lumiSectionInterval = 60 // seconds
+  }
+}
