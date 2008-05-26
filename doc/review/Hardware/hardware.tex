@@ -1,4 +1,4 @@
-% $Id: hardware.tex,v 1.5 2008/05/26 08:50:55 loizides Exp $
+% $Id: hardware.tex,v 1.6 2008/05/26 11:15:59 loizides Exp $
 
 \section{\label{sec:stohard}Storage Manager Hardware}  %Editor: Gerry
 
@@ -393,6 +393,19 @@ and the DQM related impact upon the SM is not known as it is still under develop
 We see meaningful large scale system tests of the SM will increasingly be integrated
 within the context of overall large scale DAQ testing.
  
+
+In fact, the proposal for the second  CRUZET global run in June are to run with a random trigger 
+in addition to the cosmic trigger.
+This will enable the DAQ system to be pushed to higher rates and heavier loads than
+is possible with a high quality cosmic trigger. 
+The unwanted random triggers can be identified in the  HLT filter for rejection.
+We propose to divert these junk events a special stream, record them with the SM,
+and even transfer them to Tier0, where they can finally be thrown away.
+This will create a more challenging data load on the SM then in the past.
+We envisage supporting four DAQ slices with four logger nodes and two SATABeasts.
+
+
+
 Installation of the hardware for the SM expansion (Sec.~\ref{sec:SMexpansion}), 
 assuming a rapid procurement process, should take place by the fall.
 The physical installation of the new hardware is essentially a duplicate
