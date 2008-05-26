@@ -1,4 +1,4 @@
-% $Id: hardware.tex,v 1.7 2008/05/26 11:55:23 gbauer Exp $
+% $Id: hardware.tex,v 1.8 2008/05/26 12:02:50 mrudolph Exp $
 
 \section{\label{sec:stohard}Storage Manager Hardware}  %Editor: Gerry
 
@@ -14,7 +14,7 @@ Data from the HLT is sent to 8 SM nodes (Loggers).
 The Logger nodes are also connected to a GigE switch (Tier0) to provide connectivity 
 to the Tier0 system at CERN.
 The connection to the NexSan SATABeasts is provided through two Fibre Channel QLogic SanBox 5600 
-switches. Each NexSan SATABeast unit has two controllers with two fiber connections. 
+switches. Each NexSan SATABeast unit has two controllers with two fiber connections each. 
 If one controller fails, traffic can automatically be switched to the second controller. 
 The total network connectivity from the Logger nodes to the storage units is 8 times 2~Gb, 
 such that the system is limited by the performance of the SATABeast controller. 
@@ -74,7 +74,7 @@ to dedicate disk arrays to particular logger nodes, and given our use case,
 there is not much incentive to overcome this choice.
 Due to its dual controllers, the SATABeast is best fed by two logger nodes,
 implying a division of the SATABeast into an even number of disk arrays.
-Given the  SATABeast capacity is for 42 disks, and one wants hot spares, 
+Given the  SATABeast capacity is for 42 disks, and the need for hot spares, 
 the obvious choice is a configuration of four 10-disk arrays plus 2 hot spares.
 By giving each logger node write control of two arrays, one can also obtain some benefit
 from reading and writing from separate arrays, even though we do not plan
@@ -84,6 +84,38 @@ suffer reduced throughput; and dramatically larger arrays would be at greater
 risk for multi-disk failures, and longer re-build times.
 The size of the disk arrays can be an issue for some file systems, 
 but partitioning the arrays with multiple volumes easily avoids such limitations.
+
+\subsubsection{Proxy Server Node}
+
+As discused extensively in the software section, the SM supplies monitoring
+data via a Proxy Server system.
+Supplying and maintaining the hardware for the Proxy Server node 
+is {\it not} part of the SM project, but a responsibility assumed by the DAQ group.
+
+
+\subsubsection{Data Lookarea}
+
+It is valuable for commissioning and data monitoring purposes to have rapid
+{\it local} access to some fraction of the data recorded.
+This has been addressed by copying the very first file of each run 
+to a ``Lookarea'' which can be accessed locally at Cessy by users.
+In the old small SM system of  \verb+cmsdisk1+ this was accomplished
+by making a Lookarea directory on one of this machines data disks and
+exporting to other nodes within the \verb+cms+ network.
+
+
+For the SATABEast SM, however, we insist upon the policy that users
+cannot have {\it any} externally driven interaction with the SM system.
+Thus for the new SM a data disk is exported {\it to} the SM logger nodes,
+the logger node initiates the copy of this first data file to this
+external Lookarea machine, i.e. all interaction with the SM is under
+SM control.
+If the external node is unavailable, the file will not be copied, but
+the SM will continue with its normal operation.
+
+The PC serving the Lookarea disk is also a responsibility of the DAQ group.
+
+
 
 
 \subsection{Storage Manager Performance}
