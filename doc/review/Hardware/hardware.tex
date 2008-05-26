@@ -590,7 +590,7 @@ of about 194 MB/sec (writing to a single array with XFS),
 and then triggered a simulated  disk failure {\it during} the run.
 The write speed only decreased to 188 MB/s, but the rebuild rate dramatically increased.
 Writing overlapped with the disk rebuild for about only 7 hours, after which
-the  two arrays were actually filled up (there were no transfers for file removal),
+the array was actually filled up (there were no transfers for file removal),
 but it nevertheless still almost took 22 hours to finish the rebuild.
 We conclude that disk rebuilds have essentially no impact on performance,
 but do take a very long time overwhich the array is still vulnerable.
