@@ -1,4 +1,4 @@
-% $Id: hardware.tex,v 1.6 2008/05/26 11:15:59 loizides Exp $
+% $Id: hardware.tex,v 1.7 2008/05/26 11:55:23 gbauer Exp $
 
 \section{\label{sec:stohard}Storage Manager Hardware}  %Editor: Gerry
 
@@ -16,7 +16,7 @@ to the Tier0 system at CERN.
 The connection to the NexSan SATABeasts is provided through two Fibre Channel QLogic SanBox 5600 
 switches. Each NexSan SATABeast unit has two controllers with two fiber connections. 
 If one controller fails, traffic can automatically be switched to the second controller. 
-The total network connectivity from the Logger nodes to the storage units is 8 time 2~Gb, 
+The total network connectivity from the Logger nodes to the storage units is 8 times 2~Gb, 
 such that the system is limited by the performance of the SATABeast controller. 
 According to specifications each NexSan SATABeast should be able to reach up to $\sim$400MB/s write 
 or $\sim$800MB/s read speeds, if equipped with a sufficient number of disks.
@@ -78,7 +78,7 @@ Given the  SATABeast capacity is for 42 disks, and one wants hot spares,
 the obvious choice is a configuration of four 10-disk arrays plus 2 hot spares.
 By giving each logger node write control of two arrays, one can also obtain some benefit
 from reading and writing from separate arrays, even though we do not plan
-to enforce non-overlapping I/O. We can envisage such a scheme if it is warrented.
+to enforce non-overlapping I/O. We can implement such a scheme if it is warranted.
 The 10-disk arrays are also appropriate in that much smaller arrays would
 suffer reduced throughput; and dramatically larger arrays would be at greater
 risk for multi-disk failures, and longer re-build times.
@@ -317,7 +317,7 @@ fairly large disk arrays.
 Therefore the Phase-II disk purchase was accelerated by a few months,
 giving us in early April the 118.5TB currently installed.
 
-Second, CMS management in consulatation with DAQ and trigger
+Second, CMS management in consultation with DAQ and trigger
 project managers concluded that the doubling the system in 2009 would be
 better done  for the 2008 LHC run.
 Essentially, in this early phase where operation may be unstable 
@@ -336,7 +336,7 @@ however, 8 nodes feeding 3 SATABeasts is not---the 8 nodes were originally
 conceived as 6 loggers $+$ 2 spares.
 The SATABeasts are able to support eight slices,
 but doing so breaks the natural topology of one node per  SATABeast controller.
-This has the important impact that having 8 rather than 6 nodes will umbalance 
+This has the important impact that having 8 rather than 6 nodes will unbalance 
 the throughput that the filter farms 
 can support, and  the large investment in filter computing resources would be underutilized.
 Thus the decision that the  SATABeasts should properly match the 8-fold symmetry
@@ -432,7 +432,7 @@ since March a dual-node$+$SATABeast system has been dedicated
 as the mainstay of CMS data taking.
 We prefer to reserve the other two SATABeasts for technical development
 and testing, but as the need arises we can quickly integrate one, or both,
-of the other SATABeasts into normal CMS operations---it is largely and 
+of the other SATABeasts into normal CMS operations---it is largely an
 administrative decision.
 
 As an example of the use of the SATABeast by CMS,
@@ -457,7 +457,7 @@ no further SM problems were reported.
 The SM in CRUZET consisted of two logger nodes each running two SM instances,
 thus making up a 4-Slice DAQ configuration; and the two logger nodes wrote
 to a single SATABeast with 4 ten-disk arrays.
- The Global Run began with Nodes 15 and 16
+ The Global Run began with Nodes 19 and 20
 writing to a single SATABeast with 4 disk arrays with the XFS file system.
 Later in the run we switched to Nodes 15 and 16 writing to a SATABeast withh the Ext3
 file system.
@@ -504,7 +504,7 @@ their own level of fall-over protection, in particular, traffic can
 be rerouted to the partner switch.
 However, catastrophic failures, like a complete power supply failure
 can still bring down the switch.
-Therefore are plan is to configure the expanded system with 2 fiber links
+Therefore our plan is to configure the expanded system with 2 fiber links
 from each PC, one of which will be connected to each switch.
 The SATABeast already has this dual connection split over the two switches.
 This will then enable a complete and utter failure of a fiber channel
