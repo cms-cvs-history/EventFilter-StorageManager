@@ -10,7 +10,7 @@ The Storage Manager also acts as an event server, and a DQM (Data Quality
 Monitoring)  data server for consumer clients. The DQM data is produced in the
 Filter Farm HLT processes which has access to the full L1
 trigger rate of events before the HLT. The consumers analyze event data
-or DQM data and are mainly used for monitoring the data, or for calibration
+or DQM data and are mainly used for monitoring the data, or possibly for calibration
 and alignment.
 
 The DQM data or monitoring elements are mainly histograms filled with data for a particular
@@ -46,7 +46,7 @@ functions of the code needed are listed below.
 \item Output event data in streams based on trigger bits.
 \item Communicate and interact with Tier-0 for data transmission to Tier-0.
 \item Serve event data and DQM data to consumers.
-\item Receive DQM data, sum histograms and output to DQM Dropbox.
+\item Receive DQM data, sum histograms and output to DQM Disks.
 \end{itemize}
 
 Much of the Storage Manager software is well integrated within the standard
@@ -67,28 +67,46 @@ functions of the Storage Manager.
 
 The event data and DQM data consumers must be able to receive the data using a
 standard CMS EDM offline framework job, or a CMS XDAQ consumer application.
-Remote consumers must be able to receive data from the Storage Manager.
+There is currently no requirement for remote consumers, {\em i.e.} ones that operate
+from outside of the experimental private network.
 
-The intention of the Storage Manager group is to reuse as much of the code in
+The strategy of the Storage Manager group is to reuse as much of the code in
 the CMS offline framework, the CMS DAQ, and the DQM framework. This
 integration means that the SM code is highly dependent on these three 
 subsystems.
 
+\flushleft{\em Handling of Events with Different Data Products}
+
+The HLT process will produce data where events can have different data products. An example
+use case is the production of the following streams:
+
+\begin{itemize}
+\item Physics stream saving all main products (data branches)\item Calibration stream saving only a few data products; high rate\item Debug physics stream saving all main products and in addition many intermediate 
+data products for debugging; low rate\item Exception stream where HLT modules have failed; very low rate\item Auto-accept (small fraction of all events passing L1); low rate
+\end{itemize}Separately there is an Error Stream that does not actually go through the HLT. This 
+Error stream is for events that cause a HLT process to die or time out. These events 
+go directly from the Resource Broker to the Storage Manager.
+
+Due to a limitation of the offline software framework, all events in a particular output
+stream file must have exactly the same set of data products. Events with different
+data products cannot be mixed into the same file.
+
+
 \subsection{Architecture}
 
-The approximately 1000 Filter Farm nodes will be split into 6--8 separate
+The approximately 640 Filter Farm nodes will be split into 8 separate
 slices or subfarms. Each subfarm will have its own Storage Manager application
-as illustrated in Fig.~\ref{fig:SM_architecture_base}. A separate XDAQ 
+instance as illustrated in Fig.~\ref{fig:SM_architecture_base}. A separate XDAQ 
 SM Proxy Server application collects events at a low rate from the
 Storage Managers of each subfarm to serve to event consumers. The SM Proxy
 Server application also collects DQM data and sums the DQM histograms before
-outputing these summed DQM data to the DQM Dropbox disk. The SM Proxy Server
-application sits on the DAQ private network boundary so it can serve remote
-event consumers and remote DQM consumers.
+outputing these summed DQM data to the DQM disks. All Storage Manager
+instances and the  SM Proxy Server
+application sits inside the CMS DAQ private network.
 
 Each Storage Manager application also has event data and DQM data server
 functions, however in normal running the Storage Managers will be isolated from
-almost all consumers (and from every remote consumer) by the SM Proxy Server.
+all consumers by the SM Proxy Server.
 
 \begin{figure}[hbtp]
   \begin{center}
@@ -97,6 +115,28 @@ almost all consumers (and from every remote consumer) by the SM Proxy Server.
     \label{fig:SM_architecture_base}
   \end{center}
 \end{figure}
+
+\subsubsection{Routing of Events in the Storage Manager}
+
+It was decided to implement multiple output streams with different data products by using
+multiple HLT output modules, where each output module gives events with a certain
+data product selection.The HLT output module, Resource Broker, and Storage Manager software need to handle 
+the following issues:
+
+\begin{itemize}
+\item HLT output modules are able to drop products independently, (no assumption 
+that one output module will contain the whole superset of data products).
+\item An event can satisfy the selection for multiple output modules, and thus need 
+to go to multiple streams in the Storage Manager with the correct data products.
+\item The Storage Manager must write streamer files that are readable and can be 
+converted to Root files irrespective of what data products are kept for the stream (file).
+\end{itemize}
+
+The data for each HLT output module is tagged with the output module identifier,
+ the SM uses this output module id as well as the event trigger bits to direct events to the
+ correct output stream file. The HLT and SM configuration are thus coupled and must be 
+ correctly setup to route events to the correct output streams.
+
 
 \subsection{Software Components}
 
@@ -124,8 +164,9 @@ to illustrate where the software components run.
 
 \subsubsection{Output and Input Modules}
 
-The Storage Manager group provides the output module for the HLT process. In
-the output module the event data is serialized into a ``blob'' of bytes for
+The Storage Manager group provides the CMSSW framework (FW) 
+output module for the HLT process. In
+the output module the event data are serialized into a ``blob'' of bytes for
 transfer over the network to the Storage Manager. The actual transfer is
 done by the Resource Broker running the on the HLT Filter Farm node via
 the I2O facility in XDAQ. This is illustrated in Fig.~\ref{fig:ps_fudesign}.
@@ -145,7 +186,7 @@ Since the maximum size of I2O frames is 256~KB, and the actual I2O frame
 size used in the CMS online is smaller (64~KB), the resource broker 
 splits the data for each event into as many fragments as needed, wraps each fragment with
 appropriate I2O headers and sends them to the Storage Manager. The code for
-doing the split of the ``data blob'' was provided by the Storage Manager
+doing the split of the ``data blob'' was initially provided by the Storage Manager
 group though it now resides in the Resource Broker software package and
 maintained by the CMS DAQ group.
 
@@ -165,7 +206,7 @@ output module is used internally for testing purposes.
 
 The Storage Manager group provides a DQM output service plugin module.
 The output service uses the standard offline framework hooks for its
-processing schedule, and the main function is again to serialize the
+processing schedule, and the main function is to serialize the
 DQM data and write to shared memory.
 
 The Storage Manager group also provides two input source plugin modules,
@@ -182,10 +223,14 @@ interact with the HTTP server of the Storage Manager application, and uses a
 HTTP GET command to receive data in a binary stream.
 
 These input sources are not used inside the Storage Manager itself.
-No deserialization is done in the Storage Manager, and it does not
-use the CMS framework event processor. Details the Storage Manager input
-and processing is given below in the section on the Storage Manager
-application.
+No deserialization of the event data is done in the Storage Manager, and it does not
+use the CMS framework event processor. 
+Deserialization of DQM histogram data may take place in the Storage Manager
+so that the same histogram from multiple HLT processes can be summed before
+sending to the SM Proxy Server.
+Details of the Storage Manager and SM Proxy Server input
+and processing is given below in the respective application description sections.
+
 
 
 \subsubsection{Serialization and Deserialization}
@@ -193,7 +238,7 @@ application.
 A serialized data format was created for the serialized data. Originally this
 format was to be a completely temporary format used only for the network
 transfer of event data to the Storage Manager. The Storage Manager would then
-write out the standard CMS ROOT files. During the testing of the first prototype
+write out standard CMS ROOT files. During the testing of the first prototype
 of the Storage Manager we found that the deserialization performance was too
 poor to write out standard CMS ROOT files. Instead in the second prototype
 we wrote out flat binary files, called streamer data files, these are basically
@@ -222,16 +267,18 @@ Manger group to maintain.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/sm_mess_structure.eps}
+    \includegraphics[width=6.0in]{Software/sm_mess_structure.eps}
     \caption{Schematic showing the format of serialized data messages.}
     \label{fig:sm_mess_structure}
   \end{center}
 \end{figure}
 
-At the start of a run, each HLT process sends an INIT message to the Storage Manager.
+At the start of a run, each HLT process output module
+sends an INIT message to the Storage Manager.
 This INIT message is the same as the start of file record. For each run, the data 
-for the first received INIT message are saved for output as the start of file 
-record for each streamer file. The data for each event is transmitted by the
+for the first received INIT message of each output module
+are saved for output as the start of file 
+record for the streamer files. The data for each event is transmitted by the
 HLT processes to the Storage Manager in the form of an event message which is
 the same as the event record. It consists of the event header and the event
 data. The event data is just the serialized ``data blob'' mentioned above
@@ -244,7 +291,8 @@ file, however for each event it contains only the event header and the byte offs
 for that event's data in the corresponding streamer file. The index file is intended
 for use during Tier-0 processing to aid in random access reads of streamer files, and
 is thus only temporary. The index file has the same name as the streamer file but with
-an extension of ``.ind'' instead of ``.dat''.
+an extension of ``.ind'' instead of ``.dat''. At this time, the Tier-0 group have yet to decide
+if these index files will be used.
 
 \begin{figure}[hbtp]
   \begin{center}
@@ -314,7 +362,7 @@ data to registered online consumers.
 After the experience with the first prototype of the Storage Manager it was
 decided that no (real) processing is done in the Storage Manager application
 since even the deserialization was found to be too CPU intensive for the
-Storage Manager to keep up with the incoming data rate.
+Storage Manager to keep up with the design incoming data rate.
 
 \begin{figure}[hbtp]
   \begin{center}
@@ -345,7 +393,9 @@ Storage Manager application.
 trigger I2O callback functions that run in the I2O transport thread. The I2O callback
 functions are defined in the Storage Manager application and essentially just place 
 the appropriate data fragments with identifiers into
-the event/DQM fragment queue.
+the event/DQM fragment queue. If the SM instance is run on a PC with multiple
+network interface cards (NICs), there can be one I2O transport thread per NIC.
+The event/DQM fragment queue is protected by a mutex.
 
 \item {\em HTTP transport thread.} HTTP callback functions are also defined in
 the Storage Manager application and handle various tasks. The tasks include
@@ -375,13 +425,14 @@ reformed into the serialized event data or DQM data.
 Once reformed the serialized data for an event is written out to streamer files based
 on the trigger bits for the event and the initial per run configuration of the Storage Manager.
 The output files can be written out in streams, for example a physics stream, a
-calibration/alignment stream, and a debug stream. The data for each luminosity section
+calibration/alignment stream, and a debug stream. In each SM instance,
+the data for each luminosity section
 for each stream is written to one file. The data for the event is also passed to the
 event server which determines if it needs to be placed in any online consumer queues.
 
 Reformed DQM data is passed to the DQMServiceManager which can be configured to sum up
 histograms for the same update. Once the histograms are summed they are written out to
-the DQM Dropbox disk for pickup by the DQM system. These data are also passed to the
+the DQM disks. These DQM data are also passed to the
 DQMEventServer which determines if it needs to be placed in any DQM consumer queues.
 \end{itemize}
 
@@ -419,7 +470,7 @@ are used in the consumer queues.
 
 \subsubsection{Storage Manager Proxy Server Application}
 
-When there are multiple StorageManager instances, one for each subfarm, online
+With multiple StorageManager instances, one for each subfarm, online
 consumers must be able to get events from multiple Storage Managers. This is
 one of the functions of the SMProxyServer XDAQ application. The design of the
 SMProxyServer is illustrated in Fig.~\ref{fig:SMProxyServer_System}.
@@ -435,11 +486,9 @@ SMProxyServer is illustrated in Fig.~\ref{fig:SMProxyServer_System}.
 The SMProxyServer gets event data and DQM data from each of the StorageManagers
 like an online consumer. The SMProxyServer also
 registers itself with each of the StorageManager applications. However unlike
-a regular online consumer, the SMProxyServer--StorageManager connection
-operates in push mode. For example when the event server of a StorageManager
-instance receives an event that should go to the SMProxyServer, it pushes the
-event data immediately to to the SMProxyServer instead of putting it on a
-consumer queue. The event server limits the rate of the pushed data.
+a regular online consumer, the SMProxyServer can receive data from
+multiple HLT output modules.  The event server in each SM instance can
+limit the rate of the data to the SM Proxy Server.
 
 As much of the StorageManager code as possible is used in the
 SMProxyServer to reduce the amount of code that needs to be maintained.
@@ -451,12 +500,11 @@ instances, and processes commands in the command queue.
 The SMProxyServer functions as an event and DQM server to serve online consumers.
 In normal running the online consumers would actually only connect to the
 SMProxyServer application. This isolates the StorageManager applications from
-the online consumers. The SMProxyServer is located on the border of the
-DAQ private network so that remote online consumers can also connect to it.
+the online consumers.
 
 Finally the SMProxyServer receives DQM data from each of the StorageManager
-applications and sums up the same histograms from each StorageManager
-for the same update and saves them to the DQM Dropbox disk.
+applications and sums up the histograms from each StorageManager instance
+for the same update and saves them to the DQM disk.
 
 The SMProxyServer application uses the same state machine code as the 
 StorageManager application and the state chart is the same as that given
@@ -466,9 +514,8 @@ in Fig.~\ref{fig:sm_fsm_chart}.
 \subsection{File Processing, and Communication and interaction with Tier-0}
 
 For each stream and each StorageManager instance one output file is written
-per luminosity section. To optimize concurrent writing to and reading from the
-disk file system the files for all streams for the same luminosity section are
-written round robin to the set of disks.
+per luminosity section. Each SM instance uses a separate disk array (see the
+hardware section).
 
 Events arrive asynchronously to the Storage Manager depending on the processing
 time for each event in the HLT process. On the arrival of an event from a
@@ -482,16 +529,14 @@ updated includes the number of events in the file and a file CRC checksum.
 The files are moved to a staging subdirectory and the Tier-0 system is notified
 using a shell script provided by the Tier-0 group.
 
-Currently the database creation, update and the Tier-0 notification is done using PERL
-scripts called by the StorageManager instance. In a planned future update the database 
-interaction will be done using standard XDAQ database tools, and the Tier-0 notification
-script could be triggered by the database instead of the StorageManager.
+The database creation, update and the Tier-0 notification is done asynchronously 
+outside of the SM application. The SM application writes a logfile that is read by a
+PERL script running on the same node, and handles the database interaction
+and Tier-0 notification.
+A separate PERL script monitors the status of each of the closed streamer files via
+the database and manages the removal of streamer files.
 
-A set of PERL scripts monitors the status of each of the closed streamer files via
-the database and manages the removal of streamer files. In a future update the removal
-of streamer files could be triggered by the database for some specific update.
-
-All scripts used in the Storage Manager and maintained by the Storage Manager group
+All scripts used in the Storage Manager are maintained by the Storage Manager group
 reside in CVS along with all the C++ code.
 
 
@@ -499,21 +544,38 @@ reside in CVS along with all the C++ code.
 
 \subsubsection{Control}
 
+The behavior o the Storage Manager application
+is controlled by configuration data that are read by the Storage Manager 
+during the transition from Halt state to the Ready state. A new run is always
+started when the Storage Manager is configured or reconfigured. The configuration
+data determines what streams the Storage Manager will write out, and the selection of
+trigger and HLT output module id for each stream. The configuration data also specify which
+disks will be written to, and govern the setup of the event server and DQM
+server, as well as various other parameters that govern the monitoring behavior within the 
+StorageManager and SMProxyServer applications.
+
 Control of the Storage Manager is done by the CMS Run Control using XOAP messages.
 These XOAP messages triggers the state transitions. If problems occurs during the
 state transition the Storage Manager will go into the Failed state instead as
 illustrated in the state chart, see Fig.~\ref{fig:sm_fsm_chart}. 
 
-The Storage Manager
-is also controlled by configuration data that are read by the Storage Manager 
-during the transition from Halt state to the Ready state. A new run is always
-started when the Storage Manager is configured or reconfigured. The configuration
-data determines what streams the Storage Manager will write out and the
-trigger selection for each stream. The configuration data also specify which
-disks will be written to, and govern the setup of the event server and DQM
-server, as well as various other parameters that govern the behavior of the 
-StorageManager and SMProxyServer applications.
+The XOAP messages are sequenced and sent by a set of Java applications called
+Function Managers (FM). These Function Managers react to events (XOAP messages) from
+both the Function Managers that control them, and to events from the XDAQ applications
+that they control. The SM instances are under the DAQ FM while the SM Proxy Server
+application is controlled by the DQM FM. In a later update the SM Proxy Server application
+will move to being controlled by the DQM FM. The DQM FM is created and maintained by
+the CMS central DAQ group while DQM FM is created and maintained by the
+CMS DQM group. 
+The hierarchy of Function Managers are illustrated in Fig.~\ref{fig:fm_example}.
 
+\begin{figure}[hbtp]
+  \begin{center}
+    \includegraphics[width=4.5in]{Software/fm_example.eps}
+    \caption{Illustration of the hierarchy of Function Managers.}
+    \label{fig:fm_example}
+  \end{center}
+\end{figure}
 
 \subsubsection{Monitoring}
 
@@ -550,7 +612,8 @@ features of XDAQ. A list of important properties
 of the Storage Manager is defined at configuration time and the Storage Manager
 updates the information for this list. The list is accessible by other online
 applications like the CMS Run Control. The values of the list of quantities are
-published in the online XDAQ monitoring system and any number of applications
+published in the online XDAQ monitoring system and saved to a database from
+which any number of applications
 can access this information.
 
 Standard web pages are generated using the monitoring lists for each XDAQ
@@ -568,37 +631,146 @@ in Fig.~\ref{fig:sm_page1}.
   \end{center}
 \end{figure}
 
+The error alert system in the CMS online is still under development, and part of
+the work of the SM group will be to integrate into this system when ready. In
+addition the SM group is working on providing more monitoring and check-pointing
+to help analyze problems that may arise, and to provide more useful information
+for non-SM experts.
+
 The monitoring of the Storage Manager hardware will be covered in the
 hardware section.
 
 \subsubsection{Error Handling}
 
-There is currently little error handling in place for the Storage Manager. This
-will form a large part of the ongoing and future work of the Storage Manager group.
-Fatal errors will cause the Storage Manager to go to the Failed state and the
-situation causing the problem is analyzed.
+There is currently some limited error handling in place for the Storage Manager,
+mainly to handle the various error conditions so far experienced in the CMS global
+cosmic ray data taking exercises. Handling of foreseen error conditions forms 
+the major part of active code development for the Storage Manager group.
+Currently most of the errors that are handled are considered fatal ones, and these
+will cause the Storage Manager to go to the Failed state with an associated error condition 
+message. Besides considering foreseen error conditions we have also received
+experience from actual running of the system,
+situations causing problems are analyzed and code changes for more monitoring
+or error handling implemented if appropriate.
 
 There are unit tests in place for the data serialization and deserialization code,
 and for the streamer message creation and access. These unit tests are run during
 each CMSSW pre-release and the production release to ensure that these code
 function properly. The tests of the StorageManager and SMProxyServer applications
 relies on a number of applications and already constitutes an integration test.
-These tests are currently done manually on a test system consisting of two nodes.
-Currently no scale tests are done as part of the software release procedure.
+These tests are currently initially done manually on a test system consisting of two nodes.
+
+The next validation tests are done on a CMS development system at the experiment,
+the cmsdaqpreseries (Green Barrack) cluster. This system has installed the normal
+CMS online with full Run Control and other features that enable tests of the SM system
+software in a realistic online environment. The software development team has access
+to this system and is being trained on operating it from Fermilab.
+It is possible that many problems seen during 
+data-taking can be reproduced in the cmdaqpreseries system and analyzed.
+Currently scale tests and tests involving the actual SM hardware (disk arrays) are not
+possible in the cmdaqpreseries cluster.
+Scale and performance tests are done by the SM operations team on the actual SM hardware,
+and a part of the CMS online system.
 
 CMS has had a number of DAQ global run exercises and the Storage Manager is
 an integral part of every global run exercise. The Storage Manager system is
-scale tested during these global exercises. Any problems or issues in each run
+scale tested up to the maximum foreseen rates
+during these global exercises. Any problems or issues in each run
 are diagnosed and corrected before the next global run exercise. Additional
 functionalities or features of the Storage Manager may also be tested in the
 global run exercises and in test running between these exercises.
 
 Currently we are still collecting data on the types of error conditions we
-face from the global run exercises. We will be evaluating these data to 
-form our fault tolerant and recovery
-policy. This policy will be an integrated policy that fits in with the CMS
+face from the global run exercises, however we have created a  fault tolerant and 
+error recovery policy. This policy is still awaiting feedback from the central DAQ group.
+We will ensure that this error handling policy is an integrated policy that fits in with the CMS
 online plan for fault tolerance and recovery.
 
+Table \ref{tab:fc_errorhandling} gives the error handling policy proposed 
+to the central DQM group.
+
+\begin{table}
+\begin{center}
+\caption{\label{tab:fc_errorhandling}Error Handling Policy for Storage Manager 
+Software Components.}
+\vspace*{3mm}
+    \renewcommand{\arraystretch}{1.5}
+    \setlength{\tabcolsep}{2mm}
+\begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
+\hline
+\multicolumn{3}{c}{\bf FragmentCollector} \\ \hline
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hline
+Corrupt data received from HLT such as invalid message types &   Logic problems in upstream applications or memory corruption &   Log error, keep statistics, discard fragment, (and all other fragments    for this event and output module). Keep running. \\ \hlineUnrecognized data (unexpected fragment type) &    Logic problems in upstream applications or memory corruption &   Log error, keep statistics, discard fragment. \\ \hlineMissing fragments &   Drop packets? &   Provide timeout, log error, keep statistics, discard the partial event. \\ \hlineOut of order fragments & &   Update the code to handle out of order fragments so that this is not a problem.   Keep statistics – believe should not happen with tcp.\\ \hlineSystem exception &   Exception thrown in a system call, or fatal error related to a system call, e.g. problem    writing to disk, no room on disk &   Transition to a Failed state and log an error message. \\ \hlineApplication exception &   Exception thrown within the Storage Manager code. &   For exceptions that are understood and can be handled, log them, keep statistics, and    discard fragment.  For exceptions which can not be handled, transitions to a Failed state    and log the error.\\ \hlineIncoming fragment causes application exception &   Error decoding header, decoding DQM fragment with Root &   Same as Unrecognized data (unexpected fragment type)\\ \hlineEvent message view - bad protocol version & &   Log error, keep statistics, discard fragment.\\ \hlineNo event server &   Logic error &   Transition to a Failed state and log an error message? Or Just log error,    set monitoring alert and keep running?\\ \hlineWriter error & & See below\\ \hlineWrong run number & Data from a mix of runs sent to the SM &   [Update the code to determine the run number in a better way than from the cfg file.]     For events with the wrong run number, Log error, keep statistics, discard fragment.\\ \hlineInvalid fragment key &  & Log error, keep statistics, discard fragment.\\ \hlineFragments in the queue after done message received & &   Discard fragments, generate error message.\\ \hlineCould not stop writer properly & &   Transition to a Failed state and log an error message.\\ \hlineCould not stop DQM event server properly & &    Transition to a Failed state and log an error message.\\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+\begin{table}
+\begin{center}
+\vspace*{3mm}
+    \renewcommand{\arraystretch}{1.5}
+    \setlength{\tabcolsep}{2mm}
+\begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
+\hline
+\multicolumn{3}{c}{\bf ServiceManager (writer)} \\ \hline
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineCannot write to a file & & Transition to a Failed state and log an error message.\\ \hlineCan’t create a file & & Transition to a Failed state and log an error message.\\ \hlineNo space on disk & & Transition to a Failed state and log an error message. 
+   Implement watermark alerts as disk partitions fill up.\\ \hlineUpdate DB fails & & Fault tolerance should be done inside ServiceManager 
+   [Create functionality to provide non-blocking, robust DB updates] 
+   Book-keeping of DB transitions.\\ \hlineMisconfiguration & & Transition to a Failed state and log an error message.\\ \hlineEvent from closed lumi section (no test now) & & Log error, keep statistics, discard event.\\ \hlineDB write too long (CPU time) & & Log warning.\\ \hlineDisk write too slow & & Log warning.\\ \hline
+File move too slow & & Log warning.\\ \hline\end{tabular}
+\end{center}
+\end{table}				\begin{table}
+\begin{center}
+\vspace*{3mm}
+    \renewcommand{\arraystretch}{1.5}
+    \setlength{\tabcolsep}{2mm}
+\begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
+\hline
+\multicolumn{3}{c}{\bf Event Server} \\ \hline
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineWrite to queue fails & Log warning.\\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\begin{center}
+\vspace*{3mm}
+    \renewcommand{\arraystretch}{1.5}
+    \setlength{\tabcolsep}{2mm}
+\begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
+\hline
+\multicolumn{3}{c}{\bf DQM Event Server and Service Manager} \\ \hline
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineDeserialization of histo data fails & & Log error, keep statistics, discard the 
+   offending DQM update.\\ \hlineTaking too long (too much CPU) & & Throttle somehow? \\ \hlineDisk write/file create/disk space (same troubles as other writer) & &
+   Similar responses? Or log error and abandon DQM activities and keep running\\ \hline
+\end{tabular}
+\end{center}
+\end{table}		
+\begin{table}
+\begin{center}
+\vspace*{3mm}
+    \renewcommand{\arraystretch}{1.5}
+    \setlength{\tabcolsep}{2mm}
+\begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
+\hline
+\multicolumn{3}{c}{\bf TCP Transport (registry, data, DQM data, other)} \\ \hline
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineReceive INIT message in wrong state (currently releases buffer, junks the message, 
+   and keeps going) & 
+   Additiional HLT processes started after the run has already started. &
+   Transition to the Failed state? Or log error and keep running?\\ \hlineInvalid event selection in INIT (currently aborts, logs message)	 &
+   Misconfiguration of HLT output streams &
+   Transition to a Failed state and log an error message.\\ \hlineInitMsgView constructor fails - throw exception? & &
+   Log error, keep statistics, discard fragment. Or transition to fail state because the 
+   SM needs to parse the INIT message for checking configuration, etc.?\\ \hlineReceive event or DQM event data but not in run state 
+   (currently release mem, discard data, log msg) & &
+   Transition to the Failed state? Or log error and keep running.\\ \hlineRun number wrong (currently just releases memory) & &
+   Log error, keep statistics, release memory.\\ \hlineReceive data from an unregistered FU & No INIT message sent &
+   Log error, keep statistics, discard fragment.\\ \hlineI2O frame count is wrong (memory corruption) & &
+   Log error, keep statistics, discard fragment.\\ \hlineReceive Other message but not in enabled state &
+   Receive end of run when SM is not enabled &
+   Transition to the Failed state?\\ \hlineDone from FU after Done from RunControl & &
+   Transition to the Failed state?\\ \hline\end{tabular}
+\end{center}
+\end{table}
 
 \subsection{Status, Software Schedule, and Software Organization.}
 
@@ -624,33 +796,30 @@ The performance goals for the Storage Manager were met in MTCC-II.
 
 The Storage Manager group was further strengthened with additional manpower
 to finish the production version for the first CMS global run exercise in May, 2007.
-The SMProxyServer was written but is still not commissioned in the experiment.
 An additional feature request of handling DQM data in the Storage manager was
 taken and completed.
 A series of performance tests in joint exercises with the Tier-0 team was done early in 2007
-in preparation for the May global run exercise.
+in preparation for the May global run exercise. The actual hardware for the SM system
+was delivered in January 2008 and performance tested. It was commissioned in the
+March 2008 global run and in the Cruzet run in May 2008.
+The SMProxyServer was commissioned in the experiment during the Cruzet global
+run exercise in May 2008.
 
-During the 5 global run exercises conducted so far the Storage Manager goals
-were met and performed well. There were of course a number of smaller 
-issues and problems during the exercises or additional fault tolerant
-features needed. The Storage Manager team were able to respond to problems
+During the 8 global run exercises conducted so far the Storage Manager goals
+were met and performed well. There were of course a number of small
+issues and problems during the exercises, these have been fed-back to the
+software development team.
+The Storage Manager team were able to respond to problems
 usually in a timely manner.
-
-\begin{figure}[hbtp]
-  \begin{center}
-    \includegraphics[width=5.5in]{Software/sw_schedule3.eps}
-    \caption{Schedule for CMS global data taking exercises and Storage Manager
-software work.}
-    \label{fig:sw_schedule}
-  \end{center}
-\end{figure}
 
 The schedule of software releases for the Storage Manager is govern by the
 schedule of global run exercises and CMS Cosmic Runs (CCR) as well as
-the actual start of collision data. These are given
-in Fig.~\ref{fig:sw_schedule} for the near future. Most of the future work for the
-Storage Manager involves commissioning the SMProxyServer, including further testing of the
-DQM data collection and summing, scale tests of the Storage Manager, improving
+the actual start of collision data. The current schedule is to have Cruzet 2 in mid-June
+and most likely another global run at zero field with the tracking system in the DAQ
+before the CMS collision hall is closed for first LHC operations in mid-July.
+Most of the future work for the
+Storage Manager involves further commissioning of the
+DQM data collection and summing, optimizing operation at the highest rates, improving
 monitoring, robustness of the code and error handling. In additional documentation
 of the Storage Manager will also be completed.
 
