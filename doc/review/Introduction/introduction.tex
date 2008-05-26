@@ -1,4 +1,4 @@
-% $Id: introduction.tex,v 1.2 2008/05/26 08:35:11 loizides Exp $
+% $Id: introduction.tex,v 1.3 2008/05/26 12:17:26 gbauer Exp $
 
 \section{\label{sec:intro}Introduction}
 
@@ -13,17 +13,19 @@ The High Level Trigger (HLT) is purely software-based and  must achieve the rema
 Events accepted by the HLT are send to the Storage Manager system, where they are organized in streams according to the specific physics content as identified by the HLT filter decision. 
 The HLT output rate is nominally expected to be 100-300~Hz and the event size 1-2.5~MB. 
 We therefore designed a system which is able to handle 1~GB/s throughput with a buffer of 3 days, 
-equivalent to 250~TB---however, CMS management has recently decided upon some more aggressive goals,
-and we will also discuss the correspondingly upgraded SM. 
+equivalent to 250~TB.
 Beside collecting event data, the Storage Manager is responsible for collection of Data Quality Monitoring (DQM) information produced in the HLT. 
 Events and DQM information are written to disk and a fraction of the information can be served to consumer clients. 
-The raw data files on disk are then moved to the Tier0 computing farm for further processing. 
+The raw data files on disk are then moved to the Tier-0 computing center for further processing. 
 
 The primary functions of the Storage Manager are the following:
 \begin{itemize}
 \item Receive events from HLT.
 \item Write events to disks at up to 1~GB/s (baseline).
-\item Transport files to the Tier0 at up to 1~GB/s.
+\item Transport files to the Tier-0 at up to 1~GB/s.
 \item Buffer data to up to 3 days.
 \item Serve events and monitoring elements to online monitoring clients.
 \end{itemize}
+
+Recently, however, CMS management has recently decided upon some more aggressive throughput goals,
+and we will also discuss this upgraded SM. 

@@ -1,4 +1,4 @@
-% $Id: software.tex,v 1.5 2008/05/26 14:55:44 gbauer Exp $
+% $Id: software.tex,v 1.6 2008/05/26 17:16:51 hcheung Exp $
 
 \section{\label{sec:stosoft}Storage Manager Software}  %Editor: Harry
 
@@ -79,7 +79,8 @@ the CMS offline framework, the CMS DAQ, and the DQM framework. This
 integration means that the SM code is highly dependent on these three 
 subsystems.
 
-\flushleft{\em Handling of Events with Different Data Products}
+%\flushleft
+{\em Handling of Events with Different Data Products}
 
 The HLT process will produce data where events can have different data products. An example
 use case is the production of the following streams:
@@ -858,59 +859,3 @@ Done from FU after Done from RunControl & &
 \end{table}
 
 
-\subsection{Status, Software Schedule, and Software Organization.}
-
-The Storage Manager project started slowly in June 2005 with just two people
-from Fermilab. The number of people in the Storage Manager group doubled with time
-and the first prototype was produced for the Magnet Test and Cosmic Challenge (MTCC I)
-in May 2006.
-During this testing it was found that the deserialization step in the Storage manager was
-too slow to write out ROOT output  files thus the decision was made to write out
-the binary streamer files as a temporary format for use within the Tier-0 processing.
-
-Another lesson learned was that the Storage Manager group needed a real presence
-at CERN at the experiment during data taking. The MIT group joined the Storage manager
-group and strengthened the group enormously in this area. 
-The MIT group took over the operations
-responsibility, including the interaction with Tier-0 and the hardware.
-
-A second prototype Storage Manager writing streamer files was produced for MTCC-II
-with more optimized concurrent writing to and reading from the disk system. The event
-server functionality was commissioned during MTCC-II. Remote consumers were
-served by an adhoc proxy server written to run on an Apache HTTP server.
-The performance goals for the Storage Manager were met in MTCC-II.
-
-The Storage Manager group was further strengthened with additional manpower
-to finish the production version for the first CMS global run exercise in May, 2007.
-An additional feature request of handling DQM data in the Storage manager was
-taken and completed.
-A series of performance tests in joint exercises with the Tier-0 team was done early in 2007
-in preparation for the May global run exercise. The actual hardware for the SM system
-was delivered in late in 2007, and performance tested in 2008. It was commissioned in the
-March 2008 global run and in the Cruzet run in May 2008.
-The SMProxyServer was commissioned in the experiment during the Cruzet global
-run exercise in May 2008.
-
-During the 8 global run exercises conducted so far the Storage Manager goals
-were met and performed well. There were of course a number of small
-issues and problems during the exercises, these have been fed-back to the
-software development team.
-The Storage Manager team were able to respond to problems
-usually in a timely manner.
-
-The schedule of software releases for the Storage Manager is govern by the
-schedule of global run exercises and CMS Cosmic Runs (CCR) as well as
-the actual start of collision data. The current schedule is to have Cruzet 2 in mid-June
-and most likely another global run at zero field with the tracking system in the DAQ
-before the CMS collision hall is closed for first LHC operations in mid-July.
-Most of the future work for the
-Storage Manager involves further commissioning of the
-DQM data collection and summing, optimizing operation at the highest rates, improving
-monitoring, robustness of the code and error handling. In additional documentation
-of the Storage Manager will also be completed.
-
-The Storage Manager team resident at Fermilab will continue to do the bulk of the
-software development and code maintenance work, while the MIT team will continue to
-be responsible for the interaction with Tier-0 including development and maintenance of
-the code related to this task, with operations, and with the
-Storage Manager hardware.

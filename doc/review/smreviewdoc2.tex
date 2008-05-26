@@ -1,6 +1,6 @@
-% $Id: smreviewdoc2.tex,v 1.5 2008/05/26 11:59:36 gbauer Exp $
+% $Id: smreviewdoc2.tex,v 1.6 2008/05/26 16:50:13 gbauer Exp $
 
-\documentclass{cmspaper}[12pt]
+\documentclass[12pt]{cmspaper}
 \input epsf
 \usepackage{graphicx}
 %==========================================================
@@ -51,7 +51,7 @@
 
   \title{The CMS Storage Manager\\
 \Large 
- --- Review Documentation for May 2008 ---}
+ --- {\it Review Documentation for May 2008} ---}
 
   \begin{Authlist}
     W.~Badgett, K.~Biery, H.~Cheung, J.~Kowalkowski, 
@@ -88,8 +88,15 @@ needs are discussed.
 
 \input{Introduction/introduction.tex}
 
+\input{Hardware/hardware.tex}
+
 \input{Software/software.tex}
 
-\input{Hardware/hardware.tex}
+\input{Performance/performance.tex}
+
+
+\input{Operations/operations.tex}
+
+
 
 \end{document}
