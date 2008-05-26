@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.6 2008/03/10 10:05:57 meschi Exp $
+// $Id: StreamService.h,v 1.9 2008/05/13 18:06:46 loizides Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -46,19 +46,20 @@ namespace edm {
       void   stop();
       void   report(std::ostream &os, int indentation) const;
 
-      void   setNumberOfFileSystems(int i)   { numberOfFileSystems_ = i; } 
-      void   setCatalog(std::string s)       { catalog_  = s; }
-      void   setSourceId(std::string s)      { sourceId_ = s; }
-      void   setFileName(std::string s)      { fileName_ = s; }
-      void   setFilePath(std::string s)      { filePath_ = s; }
+      void   setNumberOfFileSystems(int i)          { numberOfFileSystems_ = i; } 
+      void   setCatalog(const std::string &s)       { catalog_  = s; }
+      void   setSourceId(const std::string &s)      { sourceId_ = s; }
+      void   setFileName(const std::string &s)      { fileName_ = s; }
+      void   setFilePath(const std::string &s)      { filePath_ = s; }
       void   setMaxFileSize(int x); 
-      void   setMathBoxPath(std::string s)   { mailboxPath_ = s; }
-      void   setSetupLabel(std::string s)    { setupLabel_ = s; }
-      void   setHighWaterMark(double d)      { highWaterMark_ = d; }
-      void   setLumiSectionTimeOut(double d) { lumiSectionTimeOut_ = d; }
+      void   setMathBoxPath(std::string s)          { mailboxPath_ = s; }
+      void   setSetupLabel(std::string s)           { setupLabel_ = s; }
+      void   setHighWaterMark(double d)             { highWaterMark_ = d; }
+      void   setLumiSectionTimeOut(double d)        { lumiSectionTimeOut_ = d; }
 
       std::list<std::string> getFileList();
       std::list<std::string> getCurrentFileList();
+      const std::string& getStreamLabel()    const {return streamLabel_;}
 
     private:
       boost::shared_ptr<OutputService>  newOutputService();
@@ -73,11 +74,7 @@ namespace edm {
       double      getCurrentTime() const;
       bool        checkEvent(boost::shared_ptr<FileRecord>, EventMsgView const&) const;
       bool        checkFileSystem() const;
-      void        handleLock(boost::shared_ptr<FileRecord>);
       void        fillOutputSummaryClosed(const boost::shared_ptr<FileRecord> &file);
-      void        renameNotifyFile();
-      void        setNotifyFile();
-      std::string createNotifyFile() const;
 
       // variables
       ParameterSet                           parameterSet_;
@@ -86,7 +83,6 @@ namespace edm {
       std::map<std::string, int>             outputSummary_;
       std::list<std::string>                 outputSummaryClosed_;
       std::string                            currentLockPath_;
-      std::string                            notifyFileName_;
 
       // set from event message
       int    runNumber_;
@@ -101,10 +97,10 @@ namespace edm {
       std::string sourceId_;
 
       // output module parameter
+      std::string mailboxPath_;
       std::string fileName_;
       std::string filePath_;
       int    maxFileSizeInMB_;
-      std::string mailboxPath_;
       std::string setupLabel_;
       std::string streamLabel_;
       long long maxSize_;

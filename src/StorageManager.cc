@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.51 2008/04/24 10:48:50 loizides Exp $
+// $Id: StorageManager.cc,v 1.52 2008/04/26 21:15:40 loizides Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -985,7 +985,8 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "# CopyWorker" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << system("exit `ps ax | grep CopyWorker | grep -v grep | wc -l`") << endl;
+          int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
+          *out << ps1 << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
         *out << "<tr>" << endl;
@@ -993,7 +994,8 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "# InjectWorker" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << system("exit `ps ax | grep InjectWorker | grep -v grep | wc -l`") << endl;
+          int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
+          *out << ps2 << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
         }
