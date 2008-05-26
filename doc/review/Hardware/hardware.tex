@@ -1,4 +1,4 @@
-% $Id: hardware.tex,v 1.4 2008/05/26 08:35:11 loizides Exp $
+% $Id: hardware.tex,v 1.5 2008/05/26 08:50:55 loizides Exp $
 
 \section{\label{sec:stohard}Storage Manager Hardware}  %Editor: Gerry
 
@@ -39,6 +39,7 @@ two arrays of which are ``owned'' by logger node 1 (``L1'') and two by logger no
 
 
 \subsection{Hardware Components}
+
 \subsubsection{Logger Nodes}
 Logger nodes are standard Dell PC's PowerEdge 2950 with two dual-core Xeon processors and 4 GB RAM. 
 Each node is equipped with a 4-port GbE card (Silicom PEG4i) and 
@@ -49,6 +50,7 @@ The SM nodes are fully incorporated in the DAQ group's Quattor system for managi
 the software installation of PCs.
 
 \subsubsection{Fiber Channel switch}
+
 The fiber channel switches are used to connect the logger nodes and the storage. 
 Two QLogic SanBox 5600 switches are used. 
 Each chassis includes sixteen 4Gb ports, plus a four-pack of high-speed 10Gb ISL ports 
@@ -57,6 +59,7 @@ The latter interconnect can be used to re-route traffic through the other switch
 to reconfigure around the hardware failure of certain components.
 
 \subsubsection{Storage Array}
+
 The storage arrays are the SATABeast from NEXSAN. 
 Each SATABeast has two controllers with two 2~Gb ports.
 The total number of disk slots available is 42 and the system can support Sata disks 
@@ -84,6 +87,7 @@ but partitioning the arrays with multiple volumes easily avoids such limitations
 
 
 \subsection{Storage Manager Performance}
+
 The prototype system, currently installed in Cessy, has
 3 SATABeasts installed  with 10 Sata disks of 750~GB  and 116 of 1~TB.
 These are currently configured in our baseline in groups of 10-disk RAID5 arrays 
@@ -174,7 +178,6 @@ to Tier0.
 Dedicated read-only from the SATABeast, and using the standard \verb+CopyWorker+
 transfer scripts, saturates the Ethernet at about 100 MB/s per logger node.
 \end{itemize}
-
 
 We can put all the pieces together in full system tests, 
 which run the standard SM executables
@@ -288,7 +291,6 @@ achieved the usual write rate of 180 MB/sec.
 An even larger system of 300 FUs showed only a modest drop to 150 MB/s.
 \end{itemize}
 
-
 Our essential conclusion is that while there may be worthwhile optimizations 
 of the system, these results with one SM ``leg'' demonstrate that we are on track
 to meet our performance goals even with the {\it existing}
@@ -341,7 +343,6 @@ Thus the decision that the  SATABeasts should properly match the 8-fold symmetry
 of the greater DAQ system, and that the prototype  configuration should consist
 of four  SATABeasts rather than three.
 
-
 A second modification of the design concerns the robustness of the system.
 The Fiber Channel switches that move data from the logger nodes to the 
 SATABeasts are fault tolerant, and allow traffic to be routed from one
@@ -366,6 +367,7 @@ fashion we would hope to have the full system in operation by the fall.
 
 
 \subsection{SM Commissioning\label{sec:SMcommiss}}
+
 The Phase-I system was installed in the latter part of 2007.
 Performance studies were begun in Dec 2007 and carried out through the spring of 2008.
 In Feburary 2008 the Tier0 connection was commissioned.
@@ -390,7 +392,6 @@ a realistic data profile and final HLT algorithms are not in place;
 and the DQM related impact upon the SM is not known as it is still under development.
 We see meaningful large scale system tests of the SM will increasingly be integrated
 within the context of overall large scale DAQ testing.
-
  
 Installation of the hardware for the SM expansion (Sec.~\ref{sec:SMexpansion}), 
 assuming a rapid procurement process, should take place by the fall.
@@ -406,131 +407,10 @@ disruption of the old SM rack, but in any event, we would seek to maintain
 at least one data-ready SATABeast at all times.
 Our goal would be to have the entire expanded SM system operational
 in early September.
-
-
-\subsection{Personnel Support for Hardware Commissioning and Operations}
-
-At the time of the last review, in Nov 2007, the MIT hardware team 
-was undergoing major personnel changes.
-This centered around the then immenent departure of Markus Klute
-to a faculty position, and the review committee expressed
-some concerns as to the adequacy of human resources.
-
-
-In late November, Research Scientist Gerry Bauer joined the SM project
-full time, and thesis student Matt Rudolph joined part-time while still maintaining
-activities in the tracker group.
-A search was begun for a relacement of Klute, and this gap was
-filled in March 2008 with the addition of Constantin Loizides,
-a physicist with IT training, to the  MIT SM team. 
-In early June the MIT team will be further enhanced by the addition
-of Josep Serrano, an IT professional, as System Administrator.
-Christoph Paus continues his leadership, now as a formal USCMS 
-L-3 project co-manger along with Harry Cheung.
-
-In summary, MIT maintained continuous personnel support of the SM hardware project 
-through the departure of M. Klute, and further expanded the level of support
-commensurate with the enlarged system.
-We are confident that we have the necessary personnel to meet SM commitments,
-and that the initial cautions expressed by the reviewers 
-has been well addressed.
-
-
-\subsection{Hardware Cost and Future Projections}
-Table~\ref{tab:proto} shows the costs for the proto-type system purchased in 2007 
-with the exception of the Logger nodes, Silicom cards and fibers, 
-which where ordered together with the nodes used for the HLT farm or a database project,
-and supplied by CERN. 
-In total \$80k were spend on the proto-type system. 
-
-A cost summary for hardware through 2010 is summarized in  Table~\ref{tab:costs}.
-It includes the expenditures for 2008, which are either completed
-or based on quotes supplied by vendors, except for an year old estimate 
-for optical fibers.
-The 2009 and 2010 projections costs are based on current costs,
-with no attempt to account for falling technology prices or inflationary increases.
-
-No new major purchases are forseen for 2009 or 2010, 
-however, warrenty periods will be expiring, and in particular our original
-three SataBeasts will go off warrenty in 2010.
-Hardware failures are of course unpredictable, but we have separated
-our estimates in terms of `disks' and 'Misc. Hardware' as  statistical
-projections of disk failures are more meaningful with our large sample.
-The funds listed under ``Misc. Hardware replacement'' would be sufficient
-for one major sub-component failure (e.g. $\sim$\$5k for SataBeast controller) and
-still leave a small reserve for other small component failures.
-This division is of course only conceptual, and
-actual experience will dictate the ultimate allocation of funds for replacement 
-hardware.
-
-\begin{table}[!ht]
-\begin{center}
-\begin{tabular}{l|r|r}
-year & cost    & product \\\hline\hline
-2007 & \$66k   & 3 SataBeasts with 10 disks  \\\hline
-2007 & \$6k    & 2 QLogic switches$+$hardware  \\\hline
-2007 & \$8k    & 8 QLogic HBAs \\\hline
-2007 & \$4k    & 2 QLogic switches hardware \\\hline
-2007 & CERN    & 8 Dell PowerEdge 2950 PCs\\\hline
-2007 & CERN    & 8 Silicom PEG4i \\\hline
-2007 & CERN    & 20 2m fiber \\\hline\hline
-\end{tabular}
-\caption{Prototype system costs.}
-\label{tab:proto}
-\end{center}
-\end{table}
-
-% Second Fibre Controller (2 fibre and 2 iscsi ports) Pricing $4,922
-% FC switch: ~3k
-
-\begin{table}[!ht]
-\begin{center}
-\begin{tabular}{l|r|r}
-year  & cost      & product \\\hline\hline
-2007  &     \$80k & prototype system \\ \hline\hline
-2008~~Feb&  \$46k & 100 1TB  SATA disks  \\\hline
-2008~~May& \$182k & 5 SataBeasts with 42 disks  \\
-         &  \$11k & 25 Spare 1TB SataBeasts \\
-         &  \$16k & 2QLogic switches$+$hardware  \\ 
-         &  \$25k & 20 QLogic dual HBAs \\\hline
-2008     &   \$1k & 50 2m-optical fiber \\\hline
-2008     & CERN   & 10 Dell PowerEdge 2950 PCs \\\hline
-\hline
-2009     &  \$11k & 25 Replacement 1TB disks \\ \hline
-\hline
-2010     &  \$11k & 25 Replacement 1TB disks \\ \hline
-2010     &   \$7k & Misc. Hardware replacement  \\  \hline
-\end{tabular}
-\caption{Storage Manager system costs to 2010.}
-\label{tab:costs}
-\end{center}
-\end{table}
-
-%% 
-%% \begin{table}[!ht]
-%% \begin{center}
-%% \begin{tabular}{l|r|r}
-%% year & cost    & product \\\hline\hline
-%% 2007 & \$80k   & proto-type system \\\hline
-%% 2008 & \$51k   & 96 SATA disks  \\\hline
-%% 2009 & \$66k   & 3 SataBeasts with 10 disks  \\\hline
-%% 2009 & \$51k   & 96 SATA disks  \\\hline
-%% 2010 & \$17k   & Hardware replacement  \\
-%% 
-%% \end{tabular}
-%% \caption{OLD:: Storage Manager system costs.}
-%% \label{tab:costsOLD}
-%% \end{center}
-%% \end{table}
-%% 
-%% 
-
-%% memory expansion??
-
 % Operations Plans
-\section{Storage Manager Operations\label{sec:SMoperations}}
 
-\subsection{Operational Experience \label{sec:SMexperience}}
+
+\subsection{\label{sec:SMexperience} Storage Manager Operational Experience}
 
 Throughout 2007 we supported CMS development, commissioning, and data taking
 with the small provisional SM systems (\verb+cmsdisk0+ and \verb+cmsdisk1+).
@@ -686,18 +566,138 @@ This problem scenario is not very much different from the loss of a RU
 at the beginning of the chain.
 Thus reconfiguring the DAQ is a broader issue for the DAQ group.
 
+
 In practice, most problems encountered are not these catastrophic hardware failures,
-but smaller annoying problems arise for the shift crew like
-disks filling up, crashing executives, corrupted files, 
-bugs introduced in updated code or scripts.
+but smaller annoying problems arise for the shift crew like stopping executives on 
+encountering of a configuration failure or general run-time failures,
 We currently have been handling these problems by being experts-on-call.
-In the future data-taking periods, the DAQ group will take more integrated 
-approach to having a generic on-call person with semi-expert knowledge
-to take care of a broad spectrum of remedial fixes.
+In the future data-taking periods, the DAQ group will take more integrated
+approach to having a generic on-call person with semi-expert knowledge to take 
+care of a broad spectrum of remedial fixes.
 Only after that line of defense has been exhausted would experts be called.
 We have begun some documentation along these lines, but important
-aspects of the system have been in flux and we most of this task 
+aspects of the system have been in flux and we most of this task
 remains to be done.
+
+
+\subsection{Personnel Support for Hardware Commissioning and Operations}
+
+At the time of the last review, in Nov 2007, the MIT hardware team 
+was undergoing major personnel changes.
+This centered around the then immenent departure of Markus Klute
+to a faculty position, and the review committee expressed
+some concerns as to the adequacy of human resources.
+
+
+In late November, Research Scientist Gerry Bauer joined the SM project
+full time, and thesis student Matt Rudolph joined part-time while still maintaining
+activities in the tracker group.
+A search was begun for a relacement of Klute, and this gap was
+filled in March 2008 with the addition of Constantin Loizides,
+a physicist with IT training, to the  MIT SM team. 
+In early June the MIT team will be further enhanced by the addition
+of Josep Serrano, an IT professional, as System Administrator.
+Christoph Paus continues his leadership, now as a formal USCMS 
+L-3 project co-manger along with Harry Cheung.
+
+In summary, MIT maintained continuous personnel support of the SM hardware project 
+through the departure of M. Klute, and further expanded the level of support
+commensurate with the enlarged system.
+We are confident that we have the necessary personnel to meet SM commitments,
+and that the initial cautions expressed by the reviewers 
+has been well addressed.
+
+
+\subsection{Hardware Cost and Future Projections}
+Table~\ref{tab:proto} shows the costs for the proto-type system purchased in 2007 
+with the exception of the Logger nodes, Silicom cards and fibers, 
+which where ordered together with the nodes used for the HLT farm or a database project,
+and supplied by CERN. 
+In total \$80k were spend on the proto-type system. 
+
+A cost summary for hardware through 2010 is summarized in  Table~\ref{tab:costs}.
+It includes the expenditures for 2008, which are either completed
+or based on quotes supplied by vendors, except for an year old estimate 
+for optical fibers.
+The 2009 and 2010 projections costs are based on current costs,
+with no attempt to account for falling technology prices or inflationary increases.
+
+No new major purchases are forseen for 2009 or 2010, 
+however, warrenty periods will be expiring, and in particular our original
+three SataBeasts will go off warrenty in 2010.
+Hardware failures are of course unpredictable, but we have separated
+our estimates in terms of `disks' and 'Misc. Hardware' as  statistical
+projections of disk failures are more meaningful with our large sample.
+The funds listed under ``Misc. Hardware replacement'' would be sufficient
+for one major sub-component failure (e.g. $\sim$\$5k for SataBeast controller) and
+still leave a small reserve for other small component failures.
+This division is of course only conceptual, and
+actual experience will dictate the ultimate allocation of funds for replacement 
+hardware.
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{l|r|r}
+year & cost    & product \\\hline\hline
+2007 & \$66k   & 3 SataBeasts with 10 disks  \\\hline
+2007 & \$6k    & 2 QLogic switches$+$hardware  \\\hline
+2007 & \$8k    & 8 QLogic HBAs \\\hline
+2007 & \$4k    & 2 QLogic switches hardware \\\hline
+2007 & CERN    & 8 Dell PowerEdge 2950 PCs\\\hline
+2007 & CERN    & 8 Silicom PEG4i \\\hline
+2007 & CERN    & 20 2m fiber \\\hline\hline
+\end{tabular}
+\caption{Prototype system costs.}
+\label{tab:proto}
+\end{center}
+\end{table}
+
+% Second Fibre Controller (2 fibre and 2 iscsi ports) Pricing $4,922
+% FC switch: ~3k
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{l|r|r}
+year  & cost      & product \\\hline\hline
+2007  &     \$80k & prototype system \\ \hline\hline
+2008~~Feb&  \$46k & 100 1TB  SATA disks  \\\hline
+2008~~May& \$182k & 5 SataBeasts with 42 disks  \\
+         &  \$11k & 25 Spare 1TB SataBeasts \\
+         &  \$16k & 2QLogic switches$+$hardware  \\ 
+         &  \$25k & 20 QLogic dual HBAs \\\hline
+2008     &   \$1k & 50 2m-optical fiber \\\hline
+2008     & CERN   & 10 Dell PowerEdge 2950 PCs \\\hline
+\hline
+2009     &  \$11k & 25 Replacement 1TB disks \\ \hline
+\hline
+2010     &  \$11k & 25 Replacement 1TB disks \\ \hline
+2010     &   \$7k & Misc. Hardware replacement  \\  \hline
+\end{tabular}
+\caption{Storage Manager system costs to 2010.}
+\label{tab:costs}
+\end{center}
+\end{table}
+
+%% 
+%% \begin{table}[!ht]
+%% \begin{center}
+%% \begin{tabular}{l|r|r}
+%% year & cost    & product \\\hline\hline
+%% 2007 & \$80k   & proto-type system \\\hline
+%% 2008 & \$51k   & 96 SATA disks  \\\hline
+%% 2009 & \$66k   & 3 SataBeasts with 10 disks  \\\hline
+%% 2009 & \$51k   & 96 SATA disks  \\\hline
+%% 2010 & \$17k   & Hardware replacement  \\
+%% 
+%% \end{tabular}
+%% \caption{OLD:: Storage Manager system costs.}
+%% \label{tab:costsOLD}
+%% \end{center}
+%% \end{table}
+%% 
+%% 
+
+% memory expansion??
 
 %% operations: 24/7 coverage plans
 
