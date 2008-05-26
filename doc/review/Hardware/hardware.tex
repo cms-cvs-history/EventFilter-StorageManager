@@ -47,7 +47,8 @@ a fiber channel host bus adapter (QLogic QLE2460-CK).
 % An additional PCI-e slot is available for an extra 4-port GbE card if needed. 
 The same PC's are used for the CMS HLT farm.
 The SM nodes are fully incorporated in the DAQ group's Quattor system for managing 
-the software installation of PCs.
+the software installation of PCs, as well as the Nagios system
+for monitoring all the DAQ PCs in the \verb+cms+ network.
 
 \subsubsection{Fiber Channel switch}
 
@@ -84,7 +85,7 @@ suffer reduced throughput; and dramatically larger arrays would be at greater
 risk for multi-disk failures, and longer re-build times.
 The size of the disk arrays can be an issue for some file systems, 
 but partitioning the arrays with multiple volumes easily avoids such limitations.
-
+ 
 \subsubsection{Proxy Server Node}
 
 As discused extensively in the software section, the SM supplies monitoring
@@ -93,7 +94,7 @@ Supplying and maintaining the hardware for the Proxy Server node
 is {\it not} part of the SM project, but a responsibility assumed by the DAQ group.
 
 
-\subsubsection{Data Lookarea}
+\subsubsection{Data ``Lookarea''}
 
 It is valuable for commissioning and data monitoring purposes to have rapid
 {\it local} access to some fraction of the data recorded.
@@ -106,7 +107,8 @@ exporting to other nodes within the \verb+cms+ network.
 
 For the SATABEast SM, however, we insist upon the policy that users
 cannot have {\it any} externally driven interaction with the SM system.
-Thus for the new SM a data disk is exported {\it to} the SM logger nodes,
+Thus for the new SM a data disk is exported {\it to} the SM logger nodes
+from a non-SM PC, and
 the logger node initiates the copy of this first data file to this
 external Lookarea machine, i.e. all interaction with the SM is under
 SM control.
@@ -169,7 +171,7 @@ Subcomponent tests include:
 \begin{itemize}
   \item {\bf Ethernet Input on Logger Nodes:} The Ethernet throughputs have been tested for two cases.
 First, we have set up the full DAQ readout chain but flagged all the data from FUs to the SM
-to be a stream that is {\it not} written out. In this case a 1-rail SM sinks about 110 MB/s,
+to be transferred but {\it not} actually written out. In this case a 1-rail SM sinks about 110 MB/s,
 and a 2-rail SM takes in 220 MB/s.
 Similarly, the single logger-node link to Tier0 for simple file transfers (with no other activity)
 also saturates  at about  110 MB/s.
@@ -219,7 +221,7 @@ and have these event fragments built by the normal chain of RU's and BU's,
 then feed to FU's, and finally
 pass the events to the SM for recording over two Ethernet rails.
 The filter algorithm of the FU has data  compression turned off and 
-the event size was padded with dummy arrays to make it about 1 MB.
+the event size was padded in the FU with dummy arrays to make it about 1 MB.
 
 The operation of the SM consists of a series of stages which can be
 functionally subdivided as:
@@ -255,8 +257,8 @@ by the SM executable. We have been in the process of restructuring this whereby
 the DB access is entirely decoupled from the SM executable (see Section \ref{sec:fpt0}).
 This may reduce the overhead delays in the SM from DB access.
 We do not, however, count any performance improvement from this change.
-This example highlights the fact that other fine-tuning of the system may be possible
-and profitable for improving SM performance, but we note that this does not appear 
+This example highlights the fact that other fine-tuning of the system may be possible,
+and profitable, for improving SM performance, but we note that this does not appear 
 to be actually necessary for the SM to meet our original goals.
 
 A further teasing apart of the effects on throughput is seen in an early
@@ -404,7 +406,7 @@ The Phase-I system was installed in the latter part of 2007.
 Performance studies were begun in Dec 2007 and carried out through the spring of 2008.
 In Feburary 2008 the Tier0 connection was commissioned.
 With the arrival of the supplementary disks (Phase-II) a SATABeast was configured
-and ``delivered'' to the DAQ group in April for their routine use,
+and ``delivered'' to the DAQ group in March for their routine use,
 i.e. both for generic DAQ system tests and CMS data taking, especially for Global Runs.
 This 1-SATABeast system includes two logger nodes, each assigned two 10-disk RAID5
 arrays.
