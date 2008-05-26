@@ -1,5 +1,7 @@
-%\newpage
-\section{Storage Manager Hardware} 
+% $Id:$
+
+\section{\label{sec:stohard}Storage Manager Hardware}  %Editor: Gerry
+
 \subsection{Overview of Baseline System} 
 An overview of the existing  Storage Manager (SM) hardware configuration 
 is given in Figure~\ref{fig:system}. 
@@ -24,11 +26,10 @@ However, the 8-fold symmetry of subfarms imposed by the connectivity
 of the 8 Force10 switches implies that efficient utilization of the subfarm resources
 requires a multiple of 4 SATABeasts for balancing the load across the 8 subfarms.
 
-
 % system overview
 \begin{figure}[tbh]
 \begin{center}  
-\includegraphics[width=1.0\textwidth]{Hardware/SMsystem.eps}
+\includegraphics[width=1.0\textwidth]{Hardware/SMsystem}
 \caption{\emph{ Storage Manager system overview of the currently installed hardware. 
 The leftmost SATABeast is drawn indicating having the arrangement of four disk arrays, 
 two arrays of which are ``owned'' by logger node 1 (``L1'') and two by logger node 2 (``L2'').}}
@@ -36,8 +37,7 @@ two arrays of which are ``owned'' by logger node 1 (``L1'') and two by logger no
 \end{center}
 \end{figure}  
 
-%\newpage
-% hardware components
+
 \subsection{Hardware Components}
 \subsubsection{Logger Nodes}
 Logger nodes are standard Dell PC's PowerEdge 2950 with two dual-core Xeon processors and 4 GB RAM. 
@@ -69,7 +69,7 @@ of practical considerations.
 Without substantial investment in a file management system it is simplest
 to dedicate disk arrays to particular logger nodes, and given our use case, 
 there is not much incentive to overcome this choice.
-Due to its dual controllers, the SATABeast is best fed by two loggernodes,
+Due to its dual controllers, the SATABeast is best fed by two logger nodes,
 implying a division of the SATABeast into an even number of disk arrays.
 Given the  SATABeast capacity is for 42 disks, and one wants hot spares, 
 the obvious choice is a configuration of four 10-disk arrays plus 2 hot spares.
@@ -83,7 +83,6 @@ The size of the disk arrays can be an issue for some file systems,
 but partitioning the arrays with multiple volumes easily avoids such limitations.
 
 
-% expected performance
 \subsection{Storage Manager Performance}
 The prototype system, currently installed in Cessy, has
 3 SATABeasts installed  with 10 Sata disks of 750~GB  and 116 of 1~TB.
@@ -92,8 +91,6 @@ These are currently configured in our baseline in groups of 10-disk RAID5 arrays
 for the full system.
 With the dual controllers, a single SATABeast is expected to be fundamentally 
 limited to about 400 MB/s writing.
-
-
 
 The HLT subfarms are connected via a FORCE10 switch through
 two 2~GbE Silicom links (``rails'') per logger node.
@@ -105,9 +102,7 @@ that would remove this restriction.
 The Ethernet connection limits the theoretical wire-speed of data input
 to a logger node to 250~MB/s.
 
-
 Each logger node is connected to the Tier0 switch with a single 2~GbE link.  
-
 
 The 3-SATABeast prototype system was designed to be able to provide a throughput of about 1~GB/s,
 but it falls short of the design of 250~TB capacity. 
@@ -171,7 +166,7 @@ However, in terms of \verb+dd+ write rates, 10 disks is also a good choice:
 \# Disks:      &   6    &   7    & 8    & 10   &   13\\ \hline
 Rate (MB/s):   & 160    & 174    & 180  & 198  &  200\\ \hline
 \end{tabular}
-\label{tab:ddrates}
+\label{tab:ddrates2}
 \end{center}
   \item {\bf Data Transfers to Tier0:} We have tested reading data files from
 a  SATABeast via logger nodes and sending them out through a single  2~GbE link
@@ -196,10 +191,11 @@ functionally subdivided as:
 \begin{enumerate}
   \item SM Receiving and handling events from the FU  
   \item SM Writing events to disk (each logger node alternates between writing to two of its own  arrays)
-  \item For each file written: database operations for file bookkeeping for the transfer system 
-        and done by the SM executable
-  \item Actual transfer process of files to Tier0 
-        (and bookkeeping operations NOT done by the SM executable) 
+  \item For each file written: database operations for file bookkeeping and for the transfer system 
+        are done by the SM executable
+  \item Actual DB operations and transfer process of files to Tier0 are done by independent scripts
+        (not by the SM executable) 
+
 \end{enumerate}
 The throughput rates measured for various permutations of these processes being
 active or not in full DAQ running  are (in MB/s):
@@ -212,30 +208,27 @@ active or not in full DAQ running  are (in MB/s):
  {\bf YES}  &   NO       &   {\bf YES}    &       150      &    50 &   150$+$50  \\
  {\bf YES}  &  {\bf YES} &   {\bf YES}    &       150      &    50 &   150$+$50  \\
 \end{tabular}
-\label{tab:ddrates}
+\label{tab:rates}
 \end{center}
 These rates are quoted on  a {\bf per logger node} basis, although the measurements
 were actually performed with two logger nodes feeding a single SATABeast.
-
 
 It is interesting that there is a noticeable, and equal,  penalty for DB actions
 and for transfers to Tier0, but one seems to ``shadow'' the other.
 Also note that these test were done with the DB access managed by perl scripts invoked
 by the SM executable. We have been in the process of restructuring this whereby
-the DB access is entirely decoupled from the SM executable (see Section {\bf ???}).
+the DB access is entirely decoupled from the SM executable (see Section \ref{sec:fpt0}).
 This may reduce the overhead delays in the SM from DB access.
 We do not, however, count any performance improvement from this change.
 This example highlights the fact that other fine-tuning of the system may be possible
 and profitable for improving SM performance, but we note that this does not appear 
 to be actually necessary for the SM to meet our original goals.
 
-
 A further teasing apart of the effects on throughput is seen in an early
 test with two SM nodes writing two arrays on a SATABeast, of 6 and 7 disks respectively,
 that gave a rate of about 140 MB/s writing 1 GB files (no reads).
 When each node was reconfigured to write the output in a {\it single} file of unlimited
 size the rate increased to about  150 MB/s.
-
 
 Questions about CPU load can only be fully addressed with all functionality
 in place, including the eventual DQM load.
@@ -245,7 +238,6 @@ $\sim$20-50\% in I/O wait, and $\sim$20-80\% idle.
 No problem is apparent at this point.
 Heavier demands from additional tasks could change this picture, 
 especially motivating an expansion of PC memory.
-
 
 A variety of miscellanous issues were investigated with respect to throughput rates:
 \begin{itemize}
@@ -264,7 +256,6 @@ without any SM incidents.
 We need to still be sensitive to possible negative impacts of choosing  Ext3 over XFS,
 but so far we have not uncovered any major downside with running  Ext3,
 and we have now adopted it as our default system.
-
 
   \item {\bf Multiple Output Streams:}
 We have done a prelimiary test running the full DAQ chain to the SM with 
@@ -304,10 +295,6 @@ to meet our performance goals even with the {\it existing}
 state of the hardware and software.
 
 
-
-
-
-% Expansion Plans
 \subsection{Hardware Expansion\label{sec:SMexpansion}}
 
 The initial prototype system assembled in late 2007 was envisaged as Phase-I 
@@ -374,12 +361,10 @@ and the final system for 2008 data taking should consist of:
 \end{itemize}
 This system should readily exceed the original throughput/storage goals.
 
-
 Assumming the purchase process and equipment delivery proceeds in a timely
 fashion we would hope to have the full system in operation by the fall.
 
 
-% Commissioning Plans
 \subsection{SM Commissioning\label{sec:SMcommiss}}
 The Phase-I system was installed in the latter part of 2007.
 Performance studies were begun in Dec 2007 and carried out through the spring of 2008.
@@ -423,7 +408,6 @@ Our goal would be to have the entire expanded SM system operational
 in early September.
 
 
-% personel
 \subsection{Personnel Support for Hardware Commissioning and Operations}
 
 At the time of the last review, in Nov 2007, the MIT hardware team 
@@ -452,7 +436,6 @@ and that the initial cautions expressed by the reviewers
 has been well addressed.
 
 
-% cost and upgrade plans
 \subsection{Hardware Cost and Future Projections}
 Table~\ref{tab:proto} shows the costs for the proto-type system purchased in 2007 
 with the exception of the Logger nodes, Silicom cards and fibers, 
@@ -460,14 +443,12 @@ which where ordered together with the nodes used for the HLT farm or a database 
 and supplied by CERN. 
 In total \$80k were spend on the proto-type system. 
 
-
 A cost summary for hardware through 2010 is summarized in  Table~\ref{tab:costs}.
 It includes the expenditures for 2008, which are either completed
 or based on quotes supplied by vendors, except for an year old estimate 
 for optical fibers.
 The 2009 and 2010 projections costs are based on current costs,
 with no attempt to account for falling technology prices or inflationary increases.
-
 
 No new major purchases are forseen for 2009 or 2010, 
 however, warrenty periods will be expiring, and in particular our original
@@ -481,8 +462,6 @@ still leave a small reserve for other small component failures.
 This division is of course only conceptual, and
 actual experience will dictate the ultimate allocation of funds for replacement 
 hardware.
-
-
 
 \begin{table}[!ht]
 \begin{center}
@@ -503,7 +482,6 @@ year & cost    & product \\\hline\hline
 
 % Second Fibre Controller (2 fibre and 2 iscsi ports) Pricing $4,922
 % FC switch: ~3k
-
 
 \begin{table}[!ht]
 \begin{center}
@@ -547,15 +525,12 @@ year  & cost      & product \\\hline\hline
 %% 
 %% 
 
-
-
 %% memory expansion??
 
 % Operations Plans
 \section{Storage Manager Operations\label{sec:SMoperations}}
 
 \subsection{Operational Experience \label{sec:SMexperience}}
-
 
 Throughout 2007 we supported CMS development, commissioning, and data taking
 with the small provisional SM systems (\verb+cmsdisk0+ and \verb+cmsdisk1+).
@@ -584,7 +559,7 @@ no further SM problems were reported.
 % cruzet
 \begin{figure}[t]
 \begin{center}  
-\includegraphics[width=0.9\textwidth]{Hardware/cruzetByNode.eps}
+\includegraphics[width=0.9\textwidth]{Hardware/cruzetByNode}
 \caption{\emph{Storage Manager throughput during the May 2008 ``CRUZET'' Global Run. 
 The SM in CRUZET consisted of two logger nodes each running two SM instances,
 thus making up a 4-Slice DAQ configuration; and the two logger nodes wrote
@@ -610,8 +585,6 @@ hardware (Sec.~\ref{sec:SMexpansion}) would allow the full system
 to be in operation in September. 
 
 
-
-%
 \subsection{Response Plans for Hardware Failures \label{sec:SMhardfail}}
 
 In order to minimize or avoid system down-time we envisage the following
@@ -632,9 +605,6 @@ the identity of a defunct node.
 Then in addition to moving a few cables the spare node would fully assume
 the old identity and be completely
 functional in the existing DAQ system configuration. 
-
-
-
 
 \item {\bf Fiber Channel Switch Failure:} The Fiber Channel switches have 
 their own level of fall-over protection, in particular, traffic can
@@ -661,8 +631,6 @@ However, as each controller will only be supporting 1/16 of the data flow,
 this should not have a dramatic impact.
 We are investigating the particular procedures and response times
 for Nexsan to provide replacement parts.
-
-
 
 \item {\bf SATABeast Disk Failure:} The purpose, of course,
 of the RAID array is that a disk may fail without loss of data.
@@ -709,7 +677,6 @@ through a weekend plus a day with the complete loss of Tier0 transfers.
 We presume Tier0 services can be restored within this time frame.
 \end{itemize}
 
-
 With the exception of the loss of a logger node, none of these failures
 require immediate response on the part of the shift crew.
 The most expediant response to the loss of a logger node is
@@ -720,9 +687,9 @@ at the beginning of the chain.
 Thus reconfiguring the DAQ is a broader issue for the DAQ group.
 
 In practice, most problems encountered not these catastrophic hardware failures,
-but smaller annoying problems arise for the shift crew: 
+but smaller annoying problems arise for the shift crew like
 disks filling up, crashing executives, corrupted files, 
-bugs introduced in updated code or scripts,\ldots
+bugs introduced in updated code or scripts.
 We currently have been handling these problems by being experts-on-call.
 In the future data-taking periods, the DAQ group will take more integrated 
 approach to having a generic on-call person with semi-expert knowledge
@@ -731,8 +698,6 @@ Only after that line of defense has been exhausted would experts be called.
 We have begun some documentation along these lines, but important
 aspects of the system have been in flux and we most of this task 
 remains to be done.
-
-
 
 %% operations: 24/7 coverage plans
 
@@ -757,6 +722,5 @@ remains to be done.
 %% costs: add service contract --- sata replacement after 5 yr  <-- too far out 
 
 %% Qlogic warrenty on HBA 3 yr, switches 2 yr
-
 
 %% disk frag impact on writing --- very file sys dependent --- killed sys in past

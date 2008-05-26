@@ -1,3 +1,7 @@
+% $Id:$
+
+\section{\label{sec:stosoft}Storage Manager Software}  %Editor: Harry
+
 \subsection{Storage Manager Functions}
 
 The primary function of the Storage Manager (SM) is to collect (event) data from
@@ -27,7 +31,7 @@ in Fig.~\ref{fig:schematic_simple}.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/schematic_simple.eps}
+    \includegraphics[width=5.5in]{Software/schematic_simple}
     \caption{Functional schematic.}
     \label{fig:schematic_simple}
   \end{center}
@@ -94,7 +98,7 @@ data products cannot be mixed into the same file.
 
 \subsection{Architecture}
 
-The approximately 640 Filter Farm nodes will be split into 8 separate
+The approximately 640 Filter Farm nodes will be split into 8~(or multiple of 8) separate
 slices or subfarms. Each subfarm will have its own Storage Manager application
 instance as illustrated in Fig.~\ref{fig:SM_architecture_base}. A separate XDAQ 
 SM Proxy Server application collects events at a low rate from the
@@ -110,7 +114,7 @@ all consumers by the SM Proxy Server.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=4.5in]{Software/SM_architecture_base.eps}
+    \includegraphics[width=4.5in]{Software/SM_architecture_base}
     \caption{Architecture with subfarms.}
     \label{fig:SM_architecture_base}
   \end{center}
@@ -124,7 +128,7 @@ data product selection.The HLT output module, Resource Broker, and Storage Mana
 the following issues:
 
 \begin{itemize}
-\item HLT output modules are able to drop products independently, (no assumption 
+\item HLT output modules are able to drop products independently (no assumption 
 that one output module will contain the whole superset of data products).
 \item An event can satisfy the selection for multiple output modules, and thus need 
 to go to multiple streams in the Storage Manager with the correct data products.
@@ -148,7 +152,7 @@ to illustrate where the software components run.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/schematic_wproxy.eps}
+    \includegraphics[width=5.5in]{Software/schematic_wproxy}
     \caption{Functional schematic with subfarms.}
     \label{fig:schematic_wproxy}
   \end{center}
@@ -156,7 +160,7 @@ to illustrate where the software components run.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=4.5in]{Software/sm_hardware.eps}
+    \includegraphics[width=4.5in]{Software/sm_hardware}
     \caption{Hardware view showing where the software components run.}
     \label{fig:sm_hardware_wsoftware}
   \end{center}
@@ -175,7 +179,7 @@ resource broker.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/ps_fudesign.eps}
+    \includegraphics[width=5.5in]{Software/ps_fudesign}
     \caption{Schematic showing the mechanism for data transfer between the
 HLT process (FUEventProcessor) and the Storage Manager.}
     \label{fig:ps_fudesign}
@@ -231,8 +235,6 @@ sending to the SM Proxy Server.
 Details of the Storage Manager and SM Proxy Server input
 and processing is given below in the respective application description sections.
 
-
-
 \subsubsection{Serialization and Deserialization}
 
 A serialized data format was created for the serialized data. Originally this
@@ -247,7 +249,7 @@ sent over the network.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/sm_messages1.eps}
+    \includegraphics[width=5.5in]{Software/sm_messages1}
     \caption{Schematic showing the format of Streamer files and index files.}
     \label{fig:sm_messages1}
   \end{center}
@@ -267,7 +269,7 @@ Manger group to maintain.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=6.0in]{Software/sm_mess_structure.eps}
+    \includegraphics[width=6.0in]{Software/sm_mess_structure}
     \caption{Schematic showing the format of serialized data messages.}
     \label{fig:sm_mess_structure}
   \end{center}
@@ -296,21 +298,21 @@ if these index files will be used.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=6.0in]{Software/sm_dqmmess_structure.eps}
+    \includegraphics[width=6.0in]{Software/sm_dqmmess_structure}
     \caption{Schematic showing the format of serialized DQM messages.}
-    \label{fig:sm_dqmmess_structure.eps}
+    \label{fig:sm_dqmmess_structure}
   \end{center}
 \end{figure}
 
 The transmission of DQM data from the HLT processes to the Storage Manager is done
 using serialized DQM data messages. The format of these messages are given in
-Fig.~\ref{fig:sm_dqmmess_structure.eps}. The DQM data are essentially ROOT
+Fig.~\ref{fig:sm_dqmmess_structure}. The DQM data are essentially ROOT
 histograms, and integers, floats, and std::strings stored as TObjects. These
 data are organized into a number of (top-level) folders and subfolders. 
 
 The DQM data for each top-level folder is serialized into a ``blob'' of bytes and
 placed in its own DQM data message, and preceded by some header information as
-shown in Fig.~\ref{fig:sm_dqmmess_structure.eps}. The DQM data is sent at each
+shown in Fig.~\ref{fig:sm_dqmmess_structure}. The DQM data is sent at each
 ``update interval''. Usually this update interval is at the end of a luminosity
 section (nominally 93~seconds).
 
@@ -366,7 +368,7 @@ Storage Manager to keep up with the design incoming data rate.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=6.0in]{Software/SM_System.eps}
+    \includegraphics[width=6.0in]{Software/SM_System}
     \caption{Design of the Storage Manager application.}
     \label{fig:SM_System}
   \end{center}
@@ -444,7 +446,7 @@ state chart for the StorageManager application is illustrated in Fig.~\ref{fig:s
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=4.5in]{Software/sm_fsm_chart.eps}
+    \includegraphics[width=4.5in]{Software/sm_fsm_chart}
     \caption{Storage Manager State Chart}
     \label{fig:sm_fsm_chart}
   \end{center}
@@ -477,7 +479,7 @@ SMProxyServer is illustrated in Fig.~\ref{fig:SMProxyServer_System}.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/SMProxyServer_System.eps}
+    \includegraphics[width=5.5in]{Software/SMProxyServer_System}
     \caption{Design of the Storage Manager Proxy Server application.}
     \label{fig:SMProxyServer_System}
   \end{center}
@@ -511,11 +513,11 @@ StorageManager application and the state chart is the same as that given
 in Fig.~\ref{fig:sm_fsm_chart}.
 
 
-\subsection{File Processing, and Communication and interaction with Tier-0}
+\subsection{\label{sec:fpt0}File Processing, and Communication and interaction with Tier-0}
 
 For each stream and each StorageManager instance one output file is written
-per luminosity section. Each SM instance uses a separate disk array (see the
-hardware section).
+per luminosity section. Each SM instance uses volumes on separate disk arrays 
+(see the hardware section, Section~\ref{sec:stohard}).
 
 Events arrive asynchronously to the Storage Manager depending on the processing
 time for each event in the HLT process. On the arrival of an event from a
@@ -530,14 +532,23 @@ The files are moved to a staging subdirectory and the Tier-0 system is notified
 using a shell script provided by the Tier-0 group.
 
 The database creation, update and the Tier-0 notification is done asynchronously 
-outside of the SM application. The SM application writes a logfile that is read by a
-PERL script running on the same node, and handles the database interaction
-and Tier-0 notification.
-A separate PERL script monitors the status of each of the closed streamer files via
-the database and manages the removal of streamer files.
+outside of the SM application. The SM application writes a logfile that is monitored 
+by a daemon (called ``InjectWorker'' written in PERL) running on the same node. 
+On arrival of new information
+in the log file the daemon handles the necessary database interactions. It verifies
+if the information entered on opening of the file is consistent with the information on 
+closing of the file, and updates the necessary fields known only when the file is closed
+(e.g.~the CRC checksum and the file size). On successful verification the information is
+passed to the Tier-0 notification script. The files get independently transferred by 
+a daemon of the transfer system (called ``CopyWorker'' written in PERL).
+The file size and checksum recorded in the database of each so copied file with be verified 
+on the T0 side. For every successfully copied file the T0 system will update a field in the 
+database indicating that the file was successfully transferred.
+A separate PERL script~(launched by a cron job) monitors the status of each of the 
+closed streamer files via the database and manages the removal of streamer files.
 
-All scripts used in the Storage Manager are maintained by the Storage Manager group
-reside in CVS along with all the C++ code.
+In addition to the code, all scripts used in the Storage Manager are maintained by 
+the Storage Manager group reside in CVS along with all the C++ code.
 
 
 \subsection{Control, Monitoring, and Error Handling}
@@ -571,7 +582,7 @@ The hierarchy of Function Managers are illustrated in Fig.~\ref{fig:fm_example}.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=4.5in]{Software/fm_example.eps}
+    \includegraphics[width=4.5in]{Software/fm_example}
     \caption{Illustration of the hierarchy of Function Managers.}
     \label{fig:fm_example}
   \end{center}
@@ -625,7 +636,7 @@ in Fig.~\ref{fig:sm_page1}.
 
 \begin{figure}[hbtp]
   \begin{center}
-    \includegraphics[width=5.5in]{Software/smpage1_example.eps}
+    \includegraphics[width=5.5in]{Software/smpage1_example}
     \caption{Image of the Storage Manager Page 1 monitoring web page.}
     \label{fig:sm_page1}
   \end{center}
@@ -712,11 +723,16 @@ Corrupt data received from HLT such as invalid message types &   Logic problems
 \begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
 \hline
 \multicolumn{3}{c}{\bf ServiceManager (writer)} \\ \hline
-{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineCannot write to a file & & Transition to a Failed state and log an error message.\\ \hlineCan’t create a file & & Transition to a Failed state and log an error message.\\ \hlineNo space on disk & & Transition to a Failed state and log an error message. 
-   Implement watermark alerts as disk partitions fill up.\\ \hlineUpdate DB fails & & Fault tolerance should be done inside ServiceManager 
-   [Create functionality to provide non-blocking, robust DB updates] 
-   Book-keeping of DB transitions.\\ \hlineMisconfiguration & & Transition to a Failed state and log an error message.\\ \hlineEvent from closed lumi section (no test now) & & Log error, keep statistics, discard event.\\ \hlineDB write too long (CPU time) & & Log warning.\\ \hlineDisk write too slow & & Log warning.\\ \hline
-File move too slow & & Log warning.\\ \hline\end{tabular}
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hline
+Cannot write to a file & & Transition to a Failed state and log an error message.\\ \hline
+Cannot create a file & & Transition to a Failed state and log an error message.\\ \hline
+No space on disk & & Transition to a Failed state and log an error message. 
+   Implement watermark alerts as disk partitions fill up.\\ \hline
+Misconfiguration & & Transition to a Failed state and log an error message.\\ \hline
+Event from closed lumi section (no test now) & & Log error, keep statistics, discard event.\\ \hline
+Disk write too slow & & Log warning.\\ \hline
+File move too slow & & Log warning.\\ \hline
+\end{tabular}
 \end{center}
 \end{table}				\begin{table}
 \begin{center}
@@ -726,7 +742,8 @@ File move too slow & & Log warning.\\ \hline\end{tabular}
 \begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
 \hline
 \multicolumn{3}{c}{\bf Event Server} \\ \hline
-{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineWrite to queue fails & Log warning.\\ \hline
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hline
+Write to queue fails & & Log warning.\\ \hline
 \end{tabular}
 \end{center}
 \end{table}
@@ -771,6 +788,7 @@ File move too slow & & Log warning.\\ \hline\end{tabular}
    Transition to the Failed state?\\ \hline\end{tabular}
 \end{center}
 \end{table}
+
 
 \subsection{Status, Software Schedule, and Software Organization.}
 
@@ -828,4 +846,3 @@ software development and code maintenance work, while the MIT team will continue
 be responsible for the interaction with Tier-0 including development and maintenance of
 the code related to this task, with operations, and with the
 Storage Manager hardware.
-
