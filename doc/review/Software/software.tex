@@ -1,4 +1,4 @@
-% $Id: software.tex,v 1.4 2008/05/26 13:36:37 gbauer Exp $
+% $Id: software.tex,v 1.5 2008/05/26 14:55:44 gbauer Exp $
 
 \section{\label{sec:stosoft}Storage Manager Software}  %Editor: Harry
 
@@ -85,9 +85,15 @@ The HLT process will produce data where events can have different data products.
 use case is the production of the following streams:
 
 \begin{itemize}
-\item Physics stream saving all main products (data branches)\item Calibration stream saving only a few data products; high rate\item Debug physics stream saving all main products and in addition many intermediate 
-data products for debugging; low rate\item Exception stream where HLT modules have failed; very low rate\item Auto-accept (small fraction of all events passing L1); low rate
-\end{itemize}Separately there is an Error Stream that does not actually go through the HLT. This 
+\item Physics stream saving all main products (data branches)
+\item Calibration stream saving only a few data products; high rate
+\item Debug physics stream saving all main products and in addition many intermediate 
+data products for debugging; low rate
+\item Exception stream where HLT modules have failed; very low rate
+\item Auto-accept (small fraction of all events passing L1); low rate
+\end{itemize}
+
+Separately there is an Error Stream that does not actually go through the HLT. This 
 Error stream is for events that cause a HLT process to die or time out. These events 
 go directly from the Resource Broker to the Storage Manager.
 
@@ -124,7 +130,8 @@ all consumers by the SM Proxy Server.
 
 It was decided to implement multiple output streams with different data products by using
 multiple HLT output modules, where each output module gives events with a certain
-data product selection.The HLT output module, Resource Broker, and Storage Manager software need to handle 
+data product selection.
+The HLT output module, Resource Broker, and Storage Manager software need to handle 
 the following issues:
 
 \begin{itemize}
@@ -452,12 +459,15 @@ state chart for the StorageManager application is illustrated in Fig.~\ref{fig:s
   \end{center}
 \end{figure}
 
-The online event and DQM consumers interact with the Storage Manager event and
-DQM servers through HTTP GET and POST commands, and data are transferred using
-a binary stream. Online consumers register with the Storage Manager and get
+The online event and DQM consumers can interact with the Storage Manager event and
+DQM servers directly through HTTP GET and POST commands, and data are transferred using
+a binary stream. Online consumers registered with the Storage Manager can get
 data via a pull mechanism, polling at a maximum rate of a several Hz. The
 event and DQM servers limit the data rate and bandwidth to online consumers to
 ensure that the primary function of the Storage Manager is not compromised.
+In normal running, since the SM Proxy Server has been in use, consumers do not
+connect directly with the Storage Manager but go through the SM Proxy Server. This
+SM Proxy Server (described below) act much like a (special) online event and DQM consumer.
 
 Copies of the data are minimized in the Storage Manager during its execution
 loop. The received data fragments remain in the XDAQ memory pool
@@ -555,7 +565,7 @@ the Storage Manager group reside in CVS along with all the C++ code.
 
 \subsubsection{Control}
 
-The behavior o the Storage Manager application
+The behavior of the Storage Manager application
 is controlled by configuration data that are read by the Storage Manager 
 during the transition from Halt state to the Ready state. A new run is always
 started when the Storage Manager is configured or reconfigured. The configuration
@@ -711,11 +721,53 @@ Software Components.}
 \hline
 \multicolumn{3}{c}{\bf FragmentCollector} \\ \hline
 {\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hline
-Corrupt data received from HLT such as invalid message types &   Logic problems in upstream applications or memory corruption &   Log error, keep statistics, discard fragment, (and all other fragments    for this event and output module). Keep running. \\ \hlineUnrecognized data (unexpected fragment type) &    Logic problems in upstream applications or memory corruption &   Log error, keep statistics, discard fragment. \\ \hlineMissing fragments &   Drop packets? &   Provide timeout, log error, keep statistics, discard the partial event. \\ \hlineOut of order fragments & &   Update the code to handle out of order fragments so that this is not a problem.   Keep statistics Ð believe should not happen with tcp.\\ \hlineSystem exception &   Exception thrown in a system call, or fatal error related to a system call, e.g. problem    writing to disk, no room on disk &   Transition to a Failed state and log an error message. \\ \hlineApplication exception &   Exception thrown within the Storage Manager code. &   For exceptions that are understood and can be handled, log them, keep statistics, and    discard fragment.  For exceptions which can not be handled, transitions to a Failed state    and log the error.\\ \hlineIncoming fragment causes application exception &   Error decoding header, decoding DQM fragment with Root &   Same as Unrecognized data (unexpected fragment type)\\ \hlineEvent message view - bad protocol version & &   Log error, keep statistics, discard fragment.\\ \hlineNo event server &   Logic error &   Transition to a Failed state and log an error message? Or Just log error,    set monitoring alert and keep running?\\ \hlineWriter error & & See below\\ \hlineWrong run number & Data from a mix of runs sent to the SM &   [Update the code to determine the run number in a better way than from the cfg file.]     For events with the wrong run number, Log error, keep statistics, discard fragment.\\ \hlineInvalid fragment key &  & Log error, keep statistics, discard fragment.\\ \hlineFragments in the queue after done message received & &   Discard fragments, generate error message.\\ \hlineCould not stop writer properly & &   Transition to a Failed state and log an error message.\\ \hlineCould not stop DQM event server properly & &    Transition to a Failed state and log an error message.\\ \hline
+Corrupt data received from HLT such as invalid message types &
+   Logic problems in upstream applications or memory corruption &
+   Log error, keep statistics, discard fragment, (and all other fragments 
+   for this event and output module). Keep running. \\ \hline
+Unrecognized data (unexpected fragment type) & 
+   Logic problems in upstream applications or memory corruption &
+   Log error, keep statistics, discard fragment. \\ \hline
+Missing fragments &
+   Drop packets? &
+   Provide timeout, log error, keep statistics, discard the partial event. \\ \hline
+Out of order fragments & &
+   Update the code to handle out of order fragments so that this is not a problem.
+   Keep statistics Ð believe should not happen with tcp.\\ \hline
+System exception &
+   Exception thrown in a system call, or fatal error related to a system call, e.g. problem 
+   writing to disk, no room on disk &
+   Transition to a Failed state and log an error message. \\ \hline
+Application exception &
+   Exception thrown within the Storage Manager code. &
+   For exceptions that are understood and can be handled, log them, keep statistics, and 
+   discard fragment.  For exceptions which can not be handled, transitions to a Failed state 
+   and log the error.\\ \hline
+Incoming fragment causes application exception &
+   Error decoding header, decoding DQM fragment with Root &
+   Same as Unrecognized data (unexpected fragment type)\\ \hline
+Event message view - bad protocol version & &
+   Log error, keep statistics, discard fragment.\\ \hline
+No event server &
+   Logic error &
+   Transition to a Failed state and log an error message? Or Just log error, 
+   set monitoring alert and keep running?\\ \hline
+Writer error & & See below\\ \hline
+Wrong run number & Data from a mix of runs sent to the SM &
+   [Update the code to determine the run number in a better way than from the cfg file.]  
+   For events with the wrong run number, Log error, keep statistics, discard fragment.\\ \hline
+Invalid fragment key &  & Log error, keep statistics, discard fragment.\\ \hline
+Fragments in the queue after done message received & &
+   Discard fragments, generate error message.\\ \hline
+Could not stop writer properly & &
+   Transition to a Failed state and log an error message.\\ \hline
+Could not stop DQM event server properly & & 
+   Transition to a Failed state and log an error message.\\ \hline
 \end{tabular}
 \end{center}
 \end{table}
-\begin{table}
+
+\begin{table}
 \begin{center}
 \vspace*{3mm}
     \renewcommand{\arraystretch}{1.5}
@@ -734,7 +786,9 @@ Disk write too slow & & Log warning.\\ \hline
 File move too slow & & Log warning.\\ \hline
 \end{tabular}
 \end{center}
-\end{table}				\begin{table}
+\end{table}		
+		
+\begin{table}
 \begin{center}
 \vspace*{3mm}
     \renewcommand{\arraystretch}{1.5}
@@ -756,12 +810,16 @@ Write to queue fails & & Log warning.\\ \hline
 \begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
 \hline
 \multicolumn{3}{c}{\bf DQM Event Server and Service Manager} \\ \hline
-{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineDeserialization of histo data fails & & Log error, keep statistics, discard the 
-   offending DQM update.\\ \hlineTaking too long (too much CPU) & & Throttle somehow? \\ \hlineDisk write/file create/disk space (same troubles as other writer) & &
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hline
+Deserialization of histo data fails & & Log error, keep statistics, discard the 
+   offending DQM update.\\ \hline
+Taking too long (too much CPU) & & Throttle somehow? \\ \hline
+Disk write/file create/disk space (same troubles as other writer) & &
    Similar responses? Or log error and abandon DQM activities and keep running\\ \hline
 \end{tabular}
 \end{center}
-\end{table}		
+\end{table}
+		
 \begin{table}
 \begin{center}
 \vspace*{3mm}
@@ -770,22 +828,32 @@ Write to queue fails & & Log warning.\\ \hline
 \begin{tabular}{| p{0.27\textwidth} | p{0.25\textwidth} | p{0.45\textwidth} |}
 \hline
 \multicolumn{3}{c}{\bf TCP Transport (registry, data, DQM data, other)} \\ \hline
-{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hlineReceive INIT message in wrong state (currently releases buffer, junks the message, 
+{\bf Problem} & {\bf Cause} & {\bf Desired Reaction} \\ \hline
+Receive INIT message in wrong state (currently releases buffer, junks the message, 
    and keeps going) & 
    Additiional HLT processes started after the run has already started. &
-   Transition to the Failed state? Or log error and keep running?\\ \hlineInvalid event selection in INIT (currently aborts, logs message)	 &
+   Transition to the Failed state? Or log error and keep running?\\ \hline
+Invalid event selection in INIT (currently aborts, logs message)	 &
    Misconfiguration of HLT output streams &
-   Transition to a Failed state and log an error message.\\ \hlineInitMsgView constructor fails - throw exception? & &
+   Transition to a Failed state and log an error message.\\ \hline
+InitMsgView constructor fails - throw exception? & &
    Log error, keep statistics, discard fragment. Or transition to fail state because the 
-   SM needs to parse the INIT message for checking configuration, etc.?\\ \hlineReceive event or DQM event data but not in run state 
+   SM needs to parse the INIT message for checking configuration, etc.?\\ \hline
+Receive event or DQM event data but not in run state 
    (currently release mem, discard data, log msg) & &
-   Transition to the Failed state? Or log error and keep running.\\ \hlineRun number wrong (currently just releases memory) & &
-   Log error, keep statistics, release memory.\\ \hlineReceive data from an unregistered FU & No INIT message sent &
-   Log error, keep statistics, discard fragment.\\ \hlineI2O frame count is wrong (memory corruption) & &
-   Log error, keep statistics, discard fragment.\\ \hlineReceive Other message but not in enabled state &
+   Transition to the Failed state? Or log error and keep running.\\ \hline
+Run number wrong (currently just releases memory) & &
+   Log error, keep statistics, release memory.\\ \hline
+Receive data from an unregistered FU & No INIT message sent &
+   Log error, keep statistics, discard fragment.\\ \hline
+I2O frame count is wrong (memory corruption) & &
+   Log error, keep statistics, discard fragment.\\ \hline
+Receive Other message but not in enabled state &
    Receive end of run when SM is not enabled &
-   Transition to the Failed state?\\ \hlineDone from FU after Done from RunControl & &
-   Transition to the Failed state?\\ \hline\end{tabular}
+   Transition to the Failed state?\\ \hline
+Done from FU after Done from RunControl & &
+   Transition to the Failed state?\\ \hline
+\end{tabular}
 \end{center}
 \end{table}
 
