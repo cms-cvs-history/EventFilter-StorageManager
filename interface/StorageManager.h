@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.27 2008/04/21 12:12:26 loizides Exp $
+   $Id: StorageManager.h,v 1.28 2008/04/24 10:48:50 loizides Exp $
 */
 
 #include <string>
@@ -186,6 +186,7 @@ namespace stor {
     xdata::Integer DQMidleConsumerTimeout_;  // seconds
     xdata::Integer DQMconsumerQueueSize_;
     boost::mutex consumerInitMsgLock_;
+    xdata::String esSelectedHLTOutputModule_;
 
     SMFUSenderList smfusenders_;
     xdata::UnsignedInteger32 connectedFUs_;
