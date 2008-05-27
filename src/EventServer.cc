@@ -2,7 +2,7 @@
  * This class manages the distribution of events to consumers from within
  * the storage manager.
  *
- * $Id: EventServer.cc,v 1.8 2008/03/03 20:15:55 biery Exp $
+ * $Id: EventServer.cc,v 1.9 2008/04/16 16:14:08 biery Exp $
  */
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <boost/algorithm/string/case_conv.hpp>
+#include "zlib.h"
 
 using namespace std;
 using namespace stor;
@@ -19,7 +20,8 @@ using namespace edm;
  * EventServer constructor.  Throttling events are supported:
  * specifying a maximimum allowed rate of accepted events
  */
-EventServer::EventServer(double maxEventRate, double maxDataRate)
+EventServer::EventServer(double maxEventRate, double maxDataRate,
+                         std::string hltOutputSelection)
 {
   // initialize counters
   disconnectedConsumerTestCounter_ = 0;
@@ -31,9 +33,15 @@ EventServer::EventServer(double maxEventRate, double maxDataRate)
   longTermOutputCounter_.reset(new ForeverCounter());
   shortTermOutputCounter_.reset(new RollingIntervalCounter(180,5,20));
 
-  rateLimiter_.reset(new RateLimiter(maxEventRate, maxDataRate));
+  //rateLimiter_.reset(new RateLimiter(maxEventRate, maxDataRate));
   this->maxEventRate_ = maxEventRate;
   this->maxDataRate_ = maxDataRate;
+  this->hltOutputSelection_ = hltOutputSelection;
+
+  uLong crc = crc32(0L, Z_NULL, 0);
+  Bytef* crcbuf = (Bytef*) hltOutputSelection.data();
+  crc = crc32(crc, crcbuf, hltOutputSelection.length());
+  this->hltOutputModuleId_ = static_cast<uint32>(crc);
 
   outsideTimer_.reset();
   insideTimer_.reset();
@@ -47,6 +55,8 @@ EventServer::EventServer(double maxEventRate, double maxDataRate)
   shortTermOutsideCPUTimeCounter_.reset(new RollingIntervalCounter(180,5,20));
   longTermOutsideRealTimeCounter_.reset(new ForeverCounter());
   shortTermOutsideRealTimeCounter_.reset(new RollingIntervalCounter(180,5,20));
+
+  generator_.reset(new boost::uniform_01<boost::mt19937>(baseGenerator_));
 }
 
 /**
@@ -67,7 +77,7 @@ void EventServer::addConsumer(boost::shared_ptr<ConsumerPipe> consumer)
 
   // add the consumer (by ID) to the rateLimiter instance that we use
   // to provide a fair share of the limited bandwidth to each consumer.
-  rateLimiter_->addConsumer(consumerId);
+  //rateLimiter_->addConsumer(consumerId);
 }
 
 std::map< uint32, boost::shared_ptr<ConsumerPipe> > EventServer::getConsumerTable()
@@ -106,6 +116,12 @@ boost::shared_ptr<ConsumerPipe> EventServer::getConsumer(uint32 consumerId)
  */
 void EventServer::processEvent(const EventMsgView &eventView)
 {
+  // do nothing if the event is empty
+  if (eventView.size() == 0) {return;}
+
+  // the event must be from the correct HLT output module
+  if (eventView.outModId() != hltOutputModuleId_) {return;}
+
   // stop the timer that we use to measure CPU and real time outside the ES
   outsideTimer_.stop();
 
@@ -118,22 +134,31 @@ void EventServer::processEvent(const EventMsgView &eventView)
   longTermInputCounter_->addSample(sizeInMB);
   shortTermInputCounter_->addSample(sizeInMB, now);
 
-  // do nothing if the event is empty
-  if (eventView.size() == 0) {
-    // track timer statistics and start/stop timers as appropriate
-    insideTimer_.stop();
-    longTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime());
-    shortTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime(), now);
-    longTermInsideRealTimeCounter_->addSample(insideTimer_.realTime());
-    shortTermInsideRealTimeCounter_->addSample(insideTimer_.realTime(), now);
-    longTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime());
-    shortTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime(), now);
-    longTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime());
-    shortTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime(), now);
-    outsideTimer_.reset();
-    insideTimer_.reset();
-    outsideTimer_.start();
-    return;
+  // prescale events based on the input event and data rates
+  double eventRate = shortTermInputCounter_->getSampleRate(now);
+  double dataRate = shortTermInputCounter_->getValueRate(now);
+  double eventRatePrescale = eventRate / maxEventRate_;
+  double dataRatePrescale = dataRate / maxDataRate_;
+  double effectivePrescale = std::max(eventRatePrescale, dataRatePrescale);
+  if (effectivePrescale > 1.0) {
+    double instantRatio = 1.0 / effectivePrescale;
+    double randValue = (*generator_)();
+    if (randValue > instantRatio) {
+      // track timer statistics and start/stop timers as appropriate
+      insideTimer_.stop();
+      longTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime());
+      shortTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime(), now);
+      longTermInsideRealTimeCounter_->addSample(insideTimer_.realTime());
+      shortTermInsideRealTimeCounter_->addSample(insideTimer_.realTime(), now);
+      longTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime());
+      shortTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime(), now);
+      longTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime());
+      shortTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime(), now);
+      outsideTimer_.reset();
+      insideTimer_.reset();
+      outsideTimer_.start();
+      return;
+    }
   }
 
   // loop over the consumers in our list, and for each one check whether
@@ -157,14 +182,14 @@ void EventServer::processEvent(const EventMsgView &eventView)
         consPipe->isReadyForEvent(now))
     {
       candidateList.push_back(consPipe->getConsumerId());
-      consPipe->wasConsidered(now);
     }
   }
 
   // determine which of the candidate consumers are allowed
   // to receive another event at this time
-  std::vector<uint32> allowedList =
-    rateLimiter_->getAllowedConsumersFromList(sizeInMB, candidateList);
+  //std::vector<uint32> allowedList =
+  //  rateLimiter_->getAllowedConsumersFromList(sizeInMB, candidateList);
+  std::vector<uint32> allowedList = candidateList;
 
   // send the event to the allowed consumers
   for (uint32 idx = 0; idx < allowedList.size(); ++idx)
@@ -193,6 +218,7 @@ void EventServer::processEvent(const EventMsgView &eventView)
 
     // add the event to the consumer pipe
     boost::shared_ptr<ConsumerPipe> consPipe = getConsumer(consumerId);
+    consPipe->wasConsidered(now);
     consPipe->putEvent(bufPtr);
 
     // add the event to our statistics for "output" events
@@ -238,7 +264,7 @@ void EventServer::processEvent(const EventMsgView &eventView)
 
       // remove the consumer from the rateLimiter instance so that it is
       // no longer considered for a fair share of the allowed bandwidth
-      rateLimiter_->removeConsumer(consumerId);
+      //rateLimiter_->removeConsumer(consumerId);
     }
   }
 

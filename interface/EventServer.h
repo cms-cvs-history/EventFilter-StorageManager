@@ -12,7 +12,7 @@
  * prescale is in effect.
  *
  * 16-Aug-2006 - KAB  - Initial Implementation
- * $Id: EventServer.h,v 1.7 2008/03/03 20:15:54 biery Exp $
+ * $Id: EventServer.h,v 1.8 2008/04/16 16:12:58 biery Exp $
  */
 
 #include <sys/time.h>
@@ -26,6 +26,7 @@
 #include "EventFilter/StorageManager/interface/RollingIntervalCounter.h"
 #include "EventFilter/StorageManager/interface/RateLimiter.h"
 #include "FWCore/Utilities/interface/CPUTimer.h"
+#include "boost/random.hpp"
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/thread.hpp"
@@ -39,7 +40,8 @@ namespace stor
     enum STATS_SAMPLE_TYPE { INPUT_STATS = 10, OUTPUT_STATS = 11 };
     enum STATS_TIMING_TYPE { CPUTIME = 20, REALTIME = 21 };
 
-    EventServer(double maxEventRate, double maxDataRate);
+    EventServer(double maxEventRate, double maxDataRate,
+                std::string hltOutputSelection);
     ~EventServer();
 
     void addConsumer(boost::shared_ptr<ConsumerPipe> consumer);
@@ -63,6 +65,7 @@ namespace stor
 
     double getMaxEventRate() const { return maxEventRate_; }
     double getMaxDataRate() const { return maxDataRate_; }
+    std::string getHLTOutputSelection() const { return hltOutputSelection_; }
 
     long long getEventCount(STATS_TIME_FRAME timeFrame = SHORT_TERM_STATS,
                             STATS_SAMPLE_TYPE sampleType = INPUT_STATS,
@@ -91,6 +94,8 @@ namespace stor
     // data members for handling a maximum rate of accepted events
     double maxEventRate_;
     double maxDataRate_;
+    std::string hltOutputSelection_;
+    uint32 hltOutputModuleId_;
 
     // new fair-share scheme
     boost::shared_ptr<RateLimiter> rateLimiter_;
@@ -120,6 +125,9 @@ namespace stor
     boost::shared_ptr<RollingIntervalCounter> shortTermOutsideCPUTimeCounter_;
     boost::shared_ptr<ForeverCounter> longTermOutsideRealTimeCounter_;
     boost::shared_ptr<RollingIntervalCounter> shortTermOutsideRealTimeCounter_;
+
+    boost::mt19937 baseGenerator_;
+    boost::shared_ptr< boost::uniform_01<boost::mt19937> > generator_;
   };
 }
 
