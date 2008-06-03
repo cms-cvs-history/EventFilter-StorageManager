@@ -1,3 +1,9 @@
+2008-06-03  Harry Cheung <cheung@fnal.gov>
+
+	* tag V03-11-05
+	* Quick fix for registration problem with 2 rails (threads)
+	* earlier tags fixes backporting of event server changes and fix for DQM ME receiving
+
 2008-04-21  Constantin Loizides <loizides@mit.edu>
 
 	* tag V03-11-01
