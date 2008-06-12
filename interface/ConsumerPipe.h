@@ -23,7 +23,7 @@
  *   isIdle() will return false since the consumer has moved from the idle
  *   to the disconnected state.)
  *
- * $Id: ConsumerPipe.h,v 1.12 2008/03/03 20:09:36 biery Exp $
+ * $Id: ConsumerPipe.h,v 1.13 2008/04/16 16:10:20 biery Exp $
  */
 
 #include <string>
@@ -43,12 +43,13 @@
 
 namespace stor
 {
-
-  static const std::string PROXY_SERVER_NAME("SMProxyServer");
-
   class ConsumerPipe
   {
   public:
+    static const std::string PROXY_SERVER_NAME;
+    static const uint32 NULL_CONSUMER_ID;
+    static const double MAX_ACCEPT_INTERVAL;
+
     enum STATS_TIME_FRAME { SHORT_TERM = 0, LONG_TERM = 1 };
     enum STATS_SAMPLE_TYPE { QUEUED_EVENTS = 10, SERVED_EVENTS = 11,
                              DESIRED_EVENTS = 12 };
@@ -60,6 +61,7 @@ namespace stor
 
     ~ConsumerPipe();
 
+    void setConsumerId(uint32 forcedId) { consumerId_ = forcedId; }
     uint32 getConsumerId() const;
     void initializeSelection(Strings const& fullTriggerList);
     bool isActive() const;
@@ -74,11 +76,12 @@ namespace stor
     boost::shared_ptr< std::vector<char> > getEvent();
     void setPushMode(bool mode) { pushMode_ = mode; }
     void clearQueue();
-    std::string getConsumerName() { return(consumerName_);}
-    unsigned int getPushEventFailures() { return(pushEventFailures_);}
-    unsigned int getEvents() { return(events_);}
-    time_t getLastEventRequestTime() { return(lastEventRequestTime_);}
-    std::string getHostName() { return(hostName_);}
+    std::string getConsumerName() const { return consumerName_; }
+    std::string getPriority() const { return consumerPriority_; }
+    unsigned int getPushEventFailures() const { return(pushEventFailures_);}
+    unsigned int getEvents() const { return(events_);}
+    time_t getLastEventRequestTime() const { return(lastEventRequestTime_);}
+    std::string getHostName() const { return(hostName_);}
     std::vector<std::string> getTriggerRequest() const;
     void setRegistryWarning(std::string const& message);
     void setRegistryWarning(std::vector<char> const& message);
@@ -103,6 +106,13 @@ namespace stor
     Strings getTriggerSelection() const { return triggerSelection_; }
     double getRateRequest() const { return rateRequest_; }
 
+    void setGatewayProxyId(uint32 id) { gatewayProxyServerId_ = id; }
+    bool isProxied() const {
+      return (gatewayProxyServerId_ != NULL_CONSUMER_ID);
+    }
+
+    static void setIdOffset(uint32 offset);
+
   private:
 
     static const double MAX_ACCEPT_INTERVAL;
@@ -121,6 +131,7 @@ namespace stor
     double lastConsideredEventTime_;
     std::string hostName_;
     bool consumerIsProxyServer_;
+    uint32 gatewayProxyServerId_;
 
     // event selector that does the work of accepting/rejecting events
     boost::shared_ptr<edm::EventSelector> eventSelector_;
@@ -150,8 +161,9 @@ namespace stor
     boost::mutex eventQueueLock_;
 
     // class data members used for creating unique consumer IDs
-    static uint32 rootId_;
-    static boost::mutex rootIdLock_;
+    static uint32 idOffset_;
+    static uint32 idCounter_;
+    static boost::mutex idAssignmentLock_;
 
     // statistics
     boost::shared_ptr<ForeverCounter> longTermDesiredCounter_;

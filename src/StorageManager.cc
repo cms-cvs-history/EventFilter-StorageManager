@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.49 2008/04/18 14:40:28 loizides Exp $
+// $Id: StorageManager.cc,v 1.50 2008/04/21 12:12:26 loizides Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -99,6 +99,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   useCompressionDQM_(true),
   compressionLevelDQM_(1),
   mybuffer_(7000000),
+  fairShareES_(true),
   connectedFUs_(0), 
   storedEvents_(0), 
   dqmRecords_(0), 
@@ -203,14 +204,15 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // added for Event Server
   maxESEventRate_ = 10.0;  // hertz
   ispace->fireItemAvailable("maxESEventRate",&maxESEventRate_);
-  maxESDataRate_ = 100.0;  // MB/sec
+  maxESDataRate_ = 2048.0;  // MB/sec
   ispace->fireItemAvailable("maxESDataRate",&maxESDataRate_);
   activeConsumerTimeout_ = 60;  // seconds
   ispace->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
-  idleConsumerTimeout_ = 60;  // seconds
+  idleConsumerTimeout_ = 120;  // seconds
   ispace->fireItemAvailable("idleConsumerTimeout",&idleConsumerTimeout_);
   consumerQueueSize_ = 5;
   ispace->fireItemAvailable("consumerQueueSize",&consumerQueueSize_);
+  ispace->fireItemAvailable("fairShareES",&fairShareES_);
   DQMmaxESEventRate_ = 1.0;  // hertz
   ispace->fireItemAvailable("DQMmaxESEventRate",&DQMmaxESEventRate_);
   DQMactiveConsumerTimeout_ = 300;  // seconds
@@ -251,6 +253,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
+
+  ConsumerPipe::setIdOffset(10000 + (250 * instance));
 }
 
 StorageManager::~StorageManager()
@@ -1561,6 +1565,13 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</html>"                                                  << endl;
 }
 
+void StorageManager::debugOutput(std::string text)
+{
+  char nowString[32];
+  sprintf(nowString, "%16.4f", BaseCounter::getCurrentTime());
+  std::cout << "*** " << nowString << " " << text << std::endl;
+}
+
 
 //////////// *** get event data web page //////////////////////////////////////////////////////////
 void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
@@ -1568,6 +1579,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 {
   // default the message length to zero
   int len=0;
+  //debugOutput("Entering eventdataWebPage");
 
   // determine the consumer ID from the event request
   // message, if it is available.
@@ -1668,7 +1680,8 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   
   // How to block if there is no data
   // How to signal if end, and there will be no more data?
-  
+
+  //debugOutput("Leaving eventdataWebPage");
 }
 
 
@@ -2050,6 +2063,9 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
       *out << "    <br/>" << std::endl;
       *out << "    Maximum consumer queue size is " << consumerQueueSize_
            << "." << std::endl;
+      *out << "    <br/>" << std::endl;
+      *out << "    Fair share event serving is " << fairShareES_
+           << "." << std::endl;
       *out << "  </td>" << std::endl;
       *out << "  <td width=\"25%\" align=\"center\">" << std::endl;
       if (autoUpdate) {
@@ -2275,7 +2291,8 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         *out << "  <th>ID</th>" << std::endl;
         *out << "  <th>Name</th>" << std::endl;
         *out << "  <th>State</th>" << std::endl;
-        *out << "  <th>Requested Rate</th>" << std::endl;
+        *out << "  <th>Connection<br/>Type</th>" << std::endl;
+        *out << "  <th>Requested<br/>Rate</th>" << std::endl;
         *out << "  <th>Trigger Request</th>" << std::endl;
         *out << "</tr>" << std::endl;
 
@@ -2309,12 +2326,32 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
           }
           *out << "</td>" << std::endl;
 
-          *out << "  <td align=\"center\">"
-               << consPtr->getRateRequest()
-               << " Hz</td>" << std::endl;
-          *out << "  <td align=\"center\">"
-               << InitMsgCollection::stringsToText(consPtr->getTriggerSelection(), 5)
-               << "</td>" << std::endl;
+          *out << "  <td align=\"center\">";
+          if (consPtr->isProxied()) {
+            *out << "Proxy";
+          }
+          else {
+            *out << "Direct";
+          }
+          *out << "</td>" << std::endl;
+
+          if (consPtr->isProxyServer()) {
+            *out << "  <td align=\"center\">N/A</td>" << std::endl;
+          }
+          else {
+            *out << "  <td align=\"center\">"
+                 << consPtr->getRateRequest()
+                 << " Hz</td>" << std::endl;
+          }
+
+          if (consPtr->isProxyServer()) {
+            *out << "  <td align=\"center\">N/A</td>" << std::endl;
+          }
+          else {
+            *out << "  <td align=\"center\">"
+                 << InitMsgCollection::stringsToText(consPtr->getTriggerSelection(), 5)
+                 << "</td>" << std::endl;
+          }
 
           *out << "</tr>" << std::endl;
         }
@@ -2344,6 +2381,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         {
           boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
           if (consPtr->isDisconnected()) {continue;}
+          if (consPtr->isProxyServer()) {continue;}
 
           eventSum += consPtr->getEventCount(ConsumerPipe::SHORT_TERM,
                                              ConsumerPipe::DESIRED_EVENTS,
@@ -2432,6 +2470,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         {
           boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
           if (consPtr->isDisconnected()) {continue;}
+          if (consPtr->isProxyServer()) {continue;}
 
           eventSum += consPtr->getEventCount(ConsumerPipe::SHORT_TERM,
                                              ConsumerPipe::QUEUED_EVENTS,
@@ -2519,6 +2558,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         {
           boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
           if (consPtr->isDisconnected()) {continue;}
+          if (consPtr->isProxyServer()) {continue;}
 
           eventSum += consPtr->getEventCount(ConsumerPipe::SHORT_TERM,
                                              ConsumerPipe::SERVED_EVENTS,
@@ -2601,6 +2641,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         {
           boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
           if (consPtr->isDisconnected()) {continue;}
+          if (consPtr->isProxyServer()) {continue;}
 
           eventSum += consPtr->getEventCount(ConsumerPipe::LONG_TERM,
                                              ConsumerPipe::DESIRED_EVENTS,
@@ -2689,6 +2730,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         {
           boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
           if (consPtr->isDisconnected()) {continue;}
+          if (consPtr->isProxyServer()) {continue;}
 
           eventSum += consPtr->getEventCount(ConsumerPipe::LONG_TERM,
                                              ConsumerPipe::QUEUED_EVENTS,
@@ -2776,6 +2818,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         {
           boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
           if (consPtr->isDisconnected ()) {continue;}
+          if (consPtr->isProxyServer()) {continue;}
 
           eventSum += consPtr->getEventCount(ConsumerPipe::LONG_TERM,
                                              ConsumerPipe::SERVED_EVENTS,
@@ -2911,6 +2954,8 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   std::string consumerPriority = "normal";
   std::string consumerRequest = "<>";
   std::string consumerHost = in->getenv("REMOTE_HOST");
+  uint32 requestedConsumerId = ConsumerPipe::NULL_CONSUMER_ID;
+  uint32 gatewayProxyId = ConsumerPipe::NULL_CONSUMER_ID;
 
   // read the consumer registration message from the http input stream
   std::string lengthString = in->getenv("CONTENT_LENGTH");
@@ -2924,6 +2969,8 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
     consumerPriority = requestMessage.getConsumerPriority();
     std::string reqString = requestMessage.getRequestParameterSet();
     if (reqString.size() >= 2) consumerRequest = reqString;
+    requestedConsumerId = requestMessage.getExistingConsumerId();
+    gatewayProxyId = requestMessage.getGatewayProxyId();
   }
 
   // resize the local buffer, if needed, to handle a minimal response message
@@ -2973,6 +3020,12 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
                                idleConsumerTimeout_.value_,
                                modifiedRequest, maxEventRequestRate,
                                consumerHost, consumerQueueSize_));
+    if (requestedConsumerId != ConsumerPipe::NULL_CONSUMER_ID) {
+      consPtr->setConsumerId(requestedConsumerId);
+    }
+    if (gatewayProxyId != ConsumerPipe::NULL_CONSUMER_ID) {
+      consPtr->setGatewayProxyId(gatewayProxyId);
+    }
     eventServer->addConsumer(consPtr);
     // over-ride pushmode if not set in StorageManager
     if((consumerPriority.compare("PushMode") == 0) && !pushMode_)
@@ -3007,7 +3060,6 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
    out->write((char*) &mybuffer_[0],len);
   }
-
 }
 
 //////////// *** get DQMevent data web page //////////////////////////////////////////////////////////
@@ -3254,6 +3306,7 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
   is->fireItemAvailable("idleConsumerTimeout",  &idleConsumerTimeout_);
   is->fireItemAvailable("consumerQueueSize",    &consumerQueueSize_);
+  is->fireItemAvailable("fairShareES",          &fairShareES_);
 
   //----------------------------------------------------------------------------
   // Attach listener to myCounter_ to detect retrieval event
@@ -3304,6 +3357,7 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("activeConsumerTimeout",this);
   is->addItemRetrieveListener("idleConsumerTimeout",  this);
   is->addItemRetrieveListener("consumerQueueSize",    this);
+  is->addItemRetrieveListener("fairShareES",          this);
   //----------------------------------------------------------------------------
 }
 

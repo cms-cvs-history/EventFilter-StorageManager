@@ -1,5 +1,5 @@
 /**
- * $Id: RateLimiter.cc,v 1.19 2008/03/03 20:09:37 biery Exp $
+ * $Id: RateLimiter.cc,v 1.1 2008/04/16 02:46:34 biery Exp $
  */
 
 #include "EventFilter/StorageManager/interface/RateLimiter.h"
@@ -49,7 +49,9 @@ void RateLimiter::removeConsumer(uint32 consumerId)
   // remove the consumer from our internal list
   std::vector<uint32>::iterator vecIter =
     std::find(consumerList_.begin(), consumerList_.end(), consumerId);
-  consumerList_.erase(vecIter);
+  if (vecIter != consumerList_.end()) {
+    consumerList_.erase(vecIter);
+  }
 }
 
 /**

@@ -2,7 +2,7 @@
  * This class manages the distribution of events to consumers from within
  * the storage manager.
  *
- * $Id: EventServer.cc,v 1.8 2008/03/03 20:15:55 biery Exp $
+ * $Id: EventServer.cc,v 1.9 2008/04/16 16:14:08 biery Exp $
  */
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -67,7 +67,11 @@ void EventServer::addConsumer(boost::shared_ptr<ConsumerPipe> consumer)
 
   // add the consumer (by ID) to the rateLimiter instance that we use
   // to provide a fair share of the limited bandwidth to each consumer.
-  rateLimiter_->addConsumer(consumerId);
+  // (skip proxy servers - they fetch events masquereding as individual
+  // consumers)
+  if (! consumer->isProxyServer()) {
+    rateLimiter_->addConsumer(consumerId);
+  }
 }
 
 std::map< uint32, boost::shared_ptr<ConsumerPipe> > EventServer::getConsumerTable()
@@ -149,15 +153,20 @@ void EventServer::processEvent(const EventMsgView &eventView)
        consIter != consumerTable_.end();
        consIter++)
   {
-    // test if the consumer is ready and wants the event
     boost::shared_ptr<ConsumerPipe> consPipe = consIter->second;
-    FDEBUG(5) << "Checking if consumer " << consPipe->getConsumerId() <<
-      " wants event " << eventView.event() << std::endl;
-    if (consPipe->wantsEvent(eventView) &&
-        consPipe->isReadyForEvent(now))
+
+    // skip any proxy servers - they never want events for themselves
+    if (! consPipe->isProxyServer())
     {
-      candidateList.push_back(consPipe->getConsumerId());
-      consPipe->wasConsidered(now);
+      // test if the consumer is ready and wants the event
+      FDEBUG(5) << "Checking if consumer " << consPipe->getConsumerId() <<
+        " wants event " << eventView.event() << std::endl;
+      if (consPipe->wantsEvent(eventView) &&
+          consPipe->isReadyForEvent(now))
+      {
+        candidateList.push_back(consPipe->getConsumerId());
+        consPipe->wasConsidered(now);
+      }
     }
   }
 

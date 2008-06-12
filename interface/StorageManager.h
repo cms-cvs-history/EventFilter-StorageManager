@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.26 2008/04/16 16:14:52 biery Exp $
+   $Id: StorageManager.h,v 1.27 2008/04/21 12:12:26 loizides Exp $
 */
 
 #include <string>
@@ -245,6 +245,7 @@ namespace stor {
       DEFAULT_READY_TIME = 10
     };
 
+    void debugOutput(std::string text);
   }; 
 } 
 

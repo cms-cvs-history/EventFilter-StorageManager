@@ -4,10 +4,11 @@
  * event server part of the storage manager.
  *
  * 16-Aug-2006 - KAB  - Initial Implementation
- * $Id: ConsumerPipe.cc,v 1.19 2008/03/03 20:09:37 biery Exp $
+ * $Id: ConsumerPipe.cc,v 1.20 2008/04/16 16:11:44 biery Exp $
  */
 
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
@@ -19,18 +20,21 @@ using namespace stor;
 using namespace edm;
 
 /**
- * Initialize the static value for the root consumer id.
+ * Initialize the static values used in ID assignment.
  */
-uint32 ConsumerPipe::rootId_ = 1;
+uint32 ConsumerPipe::idOffset_ = 0;
+uint32 ConsumerPipe::idCounter_ = 0;
 
 /**
- * Initialize the static lock used to control access to the root ID.
+ * Initialize the lock used to control access to ID assignment.
  */
-boost::mutex ConsumerPipe::rootIdLock_;
+boost::mutex ConsumerPipe::idAssignmentLock_;
 
 /**
- * Initialize the maximum accept interval.
+ * Initialize class constants.
  */
+const std::string ConsumerPipe::PROXY_SERVER_NAME = "SMProxyServer";
+const uint32 ConsumerPipe::NULL_CONSUMER_ID = 0;
 const double ConsumerPipe::MAX_ACCEPT_INTERVAL = 86400.0;  // seconds in 1 day
 
 /**
@@ -47,6 +51,7 @@ ConsumerPipe::ConsumerPipe(std::string name, std::string priority,
   triggerSelection_(triggerSelection),
   rateRequest_(rateRequest),
   hostName_(hostName),
+  gatewayProxyServerId_(NULL_CONSUMER_ID),
   pushEventFailures_(0),
   maxQueueSize_(queueSize)
 {
@@ -70,9 +75,8 @@ ConsumerPipe::ConsumerPipe(std::string name, std::string priority,
   }
 
   // assign the consumer ID
-  boost::mutex::scoped_lock scopedLockForRootId(rootIdLock_);
-  consumerId_ = rootId_;
-  rootId_++;
+  boost::mutex::scoped_lock scopedLockForId(idAssignmentLock_);
+  consumerId_ = idOffset_ + ++idCounter_;
 
   if(han_==0)
   {
@@ -121,6 +125,12 @@ ConsumerPipe::ConsumerPipe(std::string name, std::string priority,
   stQueueSizeWhenDesiredCounter_.reset(new RollingIntervalCounter(180,5,20));
   ltQueueSizeWhenQueuedCounter_.reset(new ForeverCounter());
   stQueueSizeWhenQueuedCounter_.reset(new RollingIntervalCounter(180,5,20));
+}
+
+void ConsumerPipe::setIdOffset(uint32 offset)
+{
+  boost::mutex::scoped_lock scopedLockForId(idAssignmentLock_);
+  idOffset_ = offset;
 }
 
 /**
@@ -205,6 +215,9 @@ bool ConsumerPipe::isReadyForEvent(double currentTime) const
   if (! initializationDone) {return false;}
   if (! this->isActive()) {return false;}
 
+  // a proxy server never gets events for itself
+  if (this->isProxyServer()) {return false;}
+
   // check if enough time has elapsed since the last event was considered.
   // 16-Apr-2008, KAB:  The simple method here would be to always use
   // "currentTime - lastTime" is greater-than-or-equal-to the minimum time
@@ -235,6 +248,9 @@ bool ConsumerPipe::wantsEvent(EventMsgView const& eventView) const
   // or are no longer active
   if (! initializationDone) {return false;}
   if (! this->isActive()) {return false;}
+
+  // a proxy server never gets events for itself
+  if (this->isProxyServer()) {return false;}
 
   // get trigger bits for this event and check using eventSelector_
   std::vector<unsigned char> hlt_out;
