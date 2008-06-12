@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.8 2008/04/29 19:09:07 loizides Exp $
+// $Id: FileRecord.cc,v 1.9 2008/05/13 18:06:46 loizides Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>

@@ -1,48 +1,8 @@
 2008-06-03  Harry Cheung <cheung@fnal.gov>
 
-	* tag V03-12-07
+	* tag V03-11-05
 	* Quick fix for registration problem with 2 rails (threads)
-
-2008-06-03  Harry Cheung <cheung@fnal.gov>
-
-	* tag V03-12-06
-	* Fixes from Kurt for DQM ME receiving (still has wrong run and LS numbers though)
-
-2008-05-15  Harry Cheung <cheung@fnal.gov>
-
-	* tag V03-12-05
-	* Fix to FUSender* classes to handle multiple HLT output modules
-
-2008-05-14  Harry Cheung <cheung@fnal.gov>
-
-	* tag V03-12-04
-	* Kurt's changes to include event server statistics by HLT output module
-
-2008-05-14 Constantin Loizides <loizides@mit.edu>
-
-	* tag V03-12-03
-	* Moved calls to scripts outside of the Storage manager and fixed web display of
-	  running Workers (script jobs)
-
-2008-05-12  Harry Cheung <cheung@fnal.gov>
-
-	* tag V03-12-02
-	* Include a callback function to handle error events from resource broker with separate
-	  I2O function code. Gave it a new ERROR_EVENT message code that requires
-	  IOPool/Streamer tag hwkc20080512 (V04-34-01), this stops problems on receiving error
-	  events, but the error events are not yet written out!
-
-2008-05-11  Harry Cheung <cheung@fnal.gov>
-
-	* tag V03-12-01
-	* Report storedEvents as actually stored events and not received events. Added reporting
-	  of received events for each HLT output module, and stored events for each SM stream.
-
-2008-05-05  Harry Cheung <cheung@fnal.gov>
-
-	* tag V03-12-00
-	* Changes from Kurt for SM selecting on HLT ouptut module ID and INIT message change
-	  from Streamer protocol 5 to 6
+	* earlier tags fixes backporting of event server changes and fix for DQM ME receiving
 
 2008-04-21  Constantin Loizides <loizides@mit.edu>
 

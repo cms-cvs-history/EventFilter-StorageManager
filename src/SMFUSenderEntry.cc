@@ -1,7 +1,7 @@
 /*
         For saving the FU sender list
 
- $Id: SMFUSenderEntry.cc,v 1.4 2007/04/26 01:01:54 hcheung Exp $
+ $Id$
 */
 
 #include "EventFilter/StorageManager/interface/SMFUSenderEntry.h"
@@ -18,28 +18,20 @@ SMFUSenderEntry::SMFUSenderEntry(const char* hltURL,
                  const unsigned int hltTid,
                  const unsigned int frameCount,
                  const unsigned int numFramesToAllocate,
-                 const std::string outModName,
-                 const uint32 outModId,
                  toolbox::mem::Reference *ref):
   hltLocalId_(hltLocalId), 
   hltInstance_(hltInstance), 
-  hltTid_(hltTid)
+  hltTid_(hltTid),
+  registrySize_(0), // set to zero until completed and registry filled
+  regAllReceived_(false),
+  totFrames_(numFramesToAllocate), 
+  currFrames_(1), 
+  frameRefs_(totFrames_, 0),
+  registryData_(1000000)
 {
   copy(hltURL, hltURL+MAX_I2O_SM_URLCHARS, hltURL_);
   copy(hltClassName, hltClassName+MAX_I2O_SM_URLCHARS, hltClassName_);
-  registryCollection_.outModName_.push_back(outModName);
-  registryCollection_.outModName2ModId_.insert(std::make_pair(outModName, outModId));
-  registryCollection_.outModId2ModName_.insert(std::make_pair(outModId, outModName));
-  registryCollection_.registrySizeMap_.insert(std::make_pair(outModName, 0));
-  registryCollection_.regAllReceivedMap_.insert(std::make_pair(outModName, false));
-  registryCollection_.regCheckedOKMap_.insert(std::make_pair(outModName, false));
-  FrameRefCollection frameRefs(numFramesToAllocate, 0);
-  frameRefs[frameCount] = ref;
-  registryCollection_.frameRefsMap_.insert(std::make_pair(outModName, frameRefs));
-  RegData registryData(1000000);
-  registryCollection_.registryDataMap_.insert(std::make_pair(outModName, registryData));
-  registryCollection_.totFramesMap_.insert(std::make_pair(outModName, numFramesToAllocate));
-  registryCollection_.currFramesMap_.insert(std::make_pair(outModName, 1));
+  regCheckedOK_ = false;
   /*
      Connect status
      Bit 1 = 0 disconnected (was connected before)
@@ -55,24 +47,19 @@ SMFUSenderEntry::SMFUSenderEntry(const char* hltURL,
   eventsReceived_ = 0;
   lastEventID_ = 0;
   lastRunID_ = 0;
+  lastFrameNum_ = 0;
+  lastTotalFrameNum_ = 0;
   totalOutOfOrder_ = 0;
   totalSizeReceived_ = 0;
   totalBadEvents_ = 0;
-  // initialize the datCollection TODO
-  datCollection_.framesReceivedMap_.insert(std::make_pair(outModName, 1));
-  datCollection_.eventsReceivedMap_.insert(std::make_pair(outModName, 0));
-  datCollection_.lastEventIDMap_.insert(std::make_pair(outModName, 0));
-  datCollection_.lastFrameNumMap_.insert(std::make_pair(outModName, 0));
-  datCollection_.lastTotalFrameNumMap_.insert(std::make_pair(outModName, 0));
-  // why is framesReceived = 0 but size zero! Because for data only?
-  datCollection_.totalSizeReceivedMap_.insert(std::make_pair(outModName, 0));
+  frameRefs_[frameCount] = ref;
   chrono_.start(0);
 
   FDEBUG(9) << "SMFUSenderEntry: Making a SMFUSenderEntry struct for "
             << hltURL_ << " class " << hltClassName_  << " instance "
             << hltInstance_ << " Tid " << hltTid_ << std::endl;
   // test if this single registry frame is the only one
-  testCompleteFUReg(outModName);
+  testCompleteFUReg();
 }
 
 bool SMFUSenderEntry::sameURL(const char* hltURL)
@@ -104,26 +91,24 @@ bool SMFUSenderEntry::sameClassName(const char* hltClassName)
 }
 
 bool SMFUSenderEntry::addFrame(const unsigned int frameCount, const unsigned int numFrames,
-                toolbox::mem::Reference *ref, const std::string outModName)
+                toolbox::mem::Reference *ref)
 {
    // should test total frames is the same, and other tests are possible
    // add a received registry fragment frame for this FU Sender
    boost::mutex::scoped_lock sl(entry_lock_);
-   ++(registryCollection_.currFramesMap_[outModName]);
-   registryCollection_.frameRefsMap_[outModName][frameCount] = ref;
-   bool copyOK = testCompleteFUReg(outModName);
+   ++currFrames_;
+   frameRefs_[frameCount] = ref;
+   bool copyOK = testCompleteFUReg();
    return(copyOK);
 }
 
 bool SMFUSenderEntry::update4Data(const unsigned int runNumber, const unsigned int eventNumber,
                    const unsigned int frameNum, const unsigned int totalFrames,
-                   const unsigned int origdatasize, const uint32 outModId)
+                   const unsigned int origdatasize)
 {
    // update statistics for a received data fragment frame for this FU sender
    boost::mutex::scoped_lock sl(entry_lock_);
-   std::string outModName = registryCollection_.outModId2ModName_[outModId];
    ++framesReceived_;
-   ++(datCollection_.framesReceivedMap_[outModName]);
    lastRunID_ = runNumber;
    chrono_.stop(0);
    lastLatency_ = (double) chrono_.dusecs(); //microseconds
@@ -134,23 +119,20 @@ bool SMFUSenderEntry::update4Data(const unsigned int runNumber, const unsigned i
    {
       // there is only one frame in this event assume frameNum = 1!
       ++eventsReceived_;
-      ++(datCollection_.eventsReceivedMap_[outModName]);
       fullEvent = true;
       lastEventID_ = eventNumber;
-      datCollection_.lastEventIDMap_[outModName] = eventNumber;
-      datCollection_.lastFrameNumMap_[outModName] = frameNum;
-      datCollection_.lastTotalFrameNumMap_[outModName] = totalFrames;
+      lastFrameNum_ = frameNum;
+      lastTotalFrameNum_ = totalFrames;
       totalSizeReceived_ = totalSizeReceived_ + origdatasize;
-      datCollection_.totalSizeReceivedMap_[outModName] += origdatasize;
    } else {
       // flag and count if frame (event fragment) out of order
-      if(datCollection_.lastEventIDMap_[outModName] == eventNumber) 
+      if(lastEventID_ == eventNumber) 
       {
         // check if in order and if last frame in a chain
-        if(frameNum != datCollection_.lastFrameNumMap_[outModName] + 1) {
+        if(frameNum != lastFrameNum_ + 1) {
           ++totalOutOfOrder_;
         }
-        if(totalFrames != datCollection_.lastTotalFrameNumMap_[outModName]) {
+        if(totalFrames != lastTotalFrameNum_) {
           // this is a real problem! Corrupt data frame
           problemFound = true;
         }
@@ -158,35 +140,32 @@ bool SMFUSenderEntry::update4Data(const unsigned int runNumber, const unsigned i
         // frame count starts from 1
         if(frameNum == totalFrames) { //should check totalFrames
           ++eventsReceived_;
-          ++(datCollection_.eventsReceivedMap_[outModName]);
           fullEvent = true;          
           // Note only to increment total size on whole events to
           // get the correct average event size
           totalSizeReceived_ = totalSizeReceived_ + origdatasize;
-          datCollection_.totalSizeReceivedMap_[outModName] += origdatasize;
         } 
-        datCollection_.lastFrameNumMap_[outModName] = frameNum;
+        lastFrameNum_ = frameNum;
       } else { // first frame from new event
         // new event (assume run number does not change)
         lastEventID_ = eventNumber;
-        datCollection_.lastEventIDMap_[outModName] = eventNumber;
-        if(datCollection_.lastFrameNumMap_[outModName] != datCollection_.lastTotalFrameNumMap_[outModName] &&
-           datCollection_.framesReceivedMap_[outModName] != 1) {
+        if(lastFrameNum_ != lastTotalFrameNum_ &&
+           framesReceived_ != 1) {
            // missing or frame out of order (may count multiply!)
            ++totalOutOfOrder_;
         }
-        datCollection_.lastFrameNumMap_[outModName] = frameNum;
-        datCollection_.lastTotalFrameNumMap_[outModName] = totalFrames;
+        lastFrameNum_ = frameNum;
+        lastTotalFrameNum_ = totalFrames;
       }
    } // totalFrames=1 or not
    if(problemFound) ++totalBadEvents_;
    return fullEvent;
 }
 
-void SMFUSenderEntry::setregCheckedOK(const std::string outModName, const bool status)
+void SMFUSenderEntry::setregCheckedOK(const bool status)
 {
    boost::mutex::scoped_lock sl(entry_lock_);
-   registryCollection_.regCheckedOKMap_[outModName] = status;
+   regCheckedOK_ = status;
 }
 
 void SMFUSenderEntry::setDataStatus()
@@ -242,15 +221,15 @@ bool SMFUSenderEntry::getDataStatus() //const
    else return false;
 }
 
-char* SMFUSenderEntry::getregistryData(const std::string outModName)
+char* SMFUSenderEntry::getregistryData()
 {
    // this could be dangerous
-   return (char*) &(registryCollection_.registryDataMap_[outModName][0]);
+   return (char*) &registryData_[0];
 }
 
-bool SMFUSenderEntry::regIsCopied(const std::string outModName) //const
+bool SMFUSenderEntry::regIsCopied() //const
 {
-   if(registryCollection_.registrySizeMap_[outModName] > 0) return true;
+   if(registrySize_ > 0) return true;
    else return false;
 }
 
@@ -268,51 +247,51 @@ bool SMFUSenderEntry::match(const char* hltURL, const char* hltClassName,
    }
 }
 
-bool SMFUSenderEntry::testCompleteFUReg(const std::string outModName)
+bool SMFUSenderEntry::testCompleteFUReg()
 {
 // 
 // Check that a given FU Sender has sent all frames for a registry
 // If so store the serialized registry and check it and return true
 // 
-  if(registryCollection_.totFramesMap_[outModName] == 1)
+  if(totFrames_ == 1)
   {
     // chain is complete as there is only one frame
     toolbox::mem::Reference *head = 0;
-    head = registryCollection_.frameRefsMap_[outModName][0];
+    head = frameRefs_[0];
     FDEBUG(10) << "testCompleteFUReg: No chain as only one frame" << std::endl;
     // copy the whole registry for each FU sender and
     // test the registry against the one being used in Storage Manager
-    registryCollection_.regAllReceivedMap_[outModName] = true;
-    bool copyOK = copyRegistry(outModName, head);
+    regAllReceived_ = true;
+    bool copyOK = copyRegistry(head);
     // free the complete chain buffer by freeing the head
     head->release();
     return copyOK;
   }
   else
   {
-    if(registryCollection_.currFramesMap_[outModName] == registryCollection_.totFramesMap_[outModName])
+    if(currFrames_ == totFrames_)
     {
       FDEBUG(10) << "testCompleteFUReg: Received fragment completes a chain that has " 
-                 << registryCollection_.totFramesMap_[outModName]
+                 << totFrames_
                  << " frames " << std::endl;
-      registryCollection_.regAllReceivedMap_[outModName] = true;
+      regAllReceived_ = true;
       toolbox::mem::Reference *head = 0;
       toolbox::mem::Reference *tail = 0;
-      if(registryCollection_.totFramesMap_[outModName] > 1)
+      if(totFrames_ > 1)
       {
         FDEBUG(10) << "testCompleteFUReg: Remaking the chain" << std::endl;
-        for(int i=0; i < (int)(registryCollection_.totFramesMap_[outModName])-1 ; ++i)
+        for(int i=0; i < (int)(totFrames_)-1 ; i++)
         {
           FDEBUG(10) << "testCompleteFUReg: setting next reference for frame " << i << std::endl;
-          head = registryCollection_.frameRefsMap_[outModName][i];
-          tail = registryCollection_.frameRefsMap_[outModName][i+1];
+          head = frameRefs_[i];
+          tail = frameRefs_[i+1];
           head->setNextReference(tail);
         }
       }
-      head = registryCollection_.frameRefsMap_[outModName][0];
+      head = frameRefs_[0];
       FDEBUG(10) << "testCompleteFUReg: Original chain remade" << std::endl;
       // Deal with the chain
-      bool copyOK = copyRegistry(outModName, head);
+      bool copyOK = copyRegistry(head);
       // free the complete chain buffer by freeing the head
       head->release();
       return copyOK;
@@ -320,25 +299,25 @@ bool SMFUSenderEntry::testCompleteFUReg(const std::string outModName)
       // If running with local transfers, a chain of I2O frames when posted only has the
       // head frame sent. So a single frame can complete a chain for local transfers.
       // We need to test for this. Must be head frame and next pointer must exist.
-      if(registryCollection_.currFramesMap_[outModName] == 1) // should check if the first is always the head?
+      if(currFrames_ == 1) // should check if the first is always the head?
       {
         toolbox::mem::Reference *head = 0;
         toolbox::mem::Reference *next = 0;
         // can crash here if first received frame is not first frame!?
-        head = registryCollection_.frameRefsMap_[outModName][0];
+        head = frameRefs_[0];
         // best to check the complete chain just in case!
         unsigned int tested_frames = 1;
         next = head;
-        while((next=next->getNextReference())!=0) ++tested_frames;
+        while((next=next->getNextReference())!=0) tested_frames++;
         FDEBUG(10) << "testCompleteFUReg: Head frame has " << tested_frames-1
-          << " linked frames out of " << registryCollection_.totFramesMap_[outModName]-1 << std::endl;
-        if(registryCollection_.totFramesMap_[outModName] == tested_frames)
+          << " linked frames out of " << totFrames_-1 << std::endl;
+        if(totFrames_ == tested_frames)
         {
           // found a complete linked chain from the leading frame
           FDEBUG(10) << "testI2OReceiver: Leading frame contains a complete linked chain"
                      << " - must be local transfer" << std::endl;
-          registryCollection_.regAllReceivedMap_[outModName] = true;
-          bool copyOK = copyRegistry(outModName, head);
+          regAllReceived_ = true;
+          bool copyOK = copyRegistry(head);
           head->release();
           return copyOK;
         }
@@ -349,7 +328,7 @@ bool SMFUSenderEntry::testCompleteFUReg(const std::string outModName)
 }
 
 
-bool SMFUSenderEntry::copyRegistry(const std::string outModName, toolbox::mem::Reference *head)
+bool SMFUSenderEntry::copyRegistry(toolbox::mem::Reference *head)
 {
   // Copy the registry fragments and save into this FU sender entry
   FDEBUG(9) << "copyAndTestRegistry: Saving and checking the registry" << std::endl;
@@ -360,7 +339,7 @@ bool SMFUSenderEntry::copyRegistry(const std::string outModName, toolbox::mem::R
   // get total size and check with original size
   unsigned int origsize = msg->originalSize;
   unsigned int totalsize2check = 0;
-  // TODO should change registryData_ to vector<char> and put directly there!
+  // should change registryData_ to vector<char> and put directly there!
   //typedef vector<char> vchar;
   vector<char> tempbuffer(origsize);
   if(msg->numFrames > 1)
@@ -375,8 +354,8 @@ bool SMFUSenderEntry::copyRegistry(const std::string outModName, toolbox::mem::R
       std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
       << " is larger than original size " << origsize 
       << " abort copy and test" << std::endl;
-      registryCollection_.regCheckedOKMap_[outModName] = false;
-      registryCollection_.registrySizeMap_[outModName] = 0;
+      regCheckedOK_ = false;
+      registrySize_ = 0;
       return false;
     }
     copy(msg->dataPtr(), &msg->dataPtr()[sz], &tempbuffer[0]);
@@ -402,8 +381,8 @@ bool SMFUSenderEntry::copyRegistry(const std::string outModName, toolbox::mem::R
         std::cerr << "copyAndTestRegistry: total registry fragment size " << sz
                   << " is larger than original size " << origsize 
                   << " abort copy and test" << std::endl;
-        registryCollection_.regCheckedOKMap_[outModName] = false;
-        registryCollection_.registrySizeMap_[outModName] = 0;
+        regCheckedOK_ = false;
+        registrySize_ = 0;
         return false;
       }
       copy(msgcurr->dataPtr(), &msgcurr->dataPtr()[sz], &tempbuffer[next_index]);
@@ -413,16 +392,14 @@ bool SMFUSenderEntry::copyRegistry(const std::string outModName, toolbox::mem::R
     if(totalsize2check != origsize) {
       std::cerr << "copyAndTestRegistry: Error! Remade registry size " << totalsize2check
                 << " not equal to original size " << origsize << std::endl;
-      registryCollection_.regCheckedOKMap_[outModName] = false;
-      registryCollection_.registrySizeMap_[outModName] = 0;
+      regCheckedOK_ = false;
+      registrySize_ = 0;
       return false;
     }
     // tempbuffer is filled with whole chain data
-    registryCollection_.registrySizeMap_[outModName] = origsize; // is zero on create
-    if(registryCollection_.registryDataMap_[outModName].capacity() < origsize) 
-        registryCollection_.registryDataMap_[outModName].resize(origsize);
-    copy(&tempbuffer[0], &tempbuffer[0]+origsize, 
-        &(registryCollection_.registryDataMap_[outModName][0]));
+    registrySize_ = origsize; // is zero on create
+    if(registryData_.capacity() < origsize) registryData_.resize(origsize);
+    copy(&tempbuffer[0], &tempbuffer[0]+origsize, &registryData_[0]);
   } else { // only one frame/fragment
     FDEBUG(9) << "copyAndTestRegistry: populating registry buffer from single frame for "
               << msg->hltURL << " and Tid " << msg->hltTid << std::endl;
@@ -431,116 +408,11 @@ bool SMFUSenderEntry::copyRegistry(const std::string outModName, toolbox::mem::R
     int sz = msg->dataSize;
     copy(msg->dataPtr(), &msg->dataPtr()[sz], &tempbuffer[0]);
     // tempbuffer is filled with all data
-    registryCollection_.registrySizeMap_[outModName] = origsize; // is zero on create
-    if(registryCollection_.registryDataMap_[outModName].capacity() < origsize) 
-        registryCollection_.registryDataMap_[outModName].resize(origsize);
-    copy(&tempbuffer[0], &tempbuffer[0]+origsize, 
-        &(registryCollection_.registryDataMap_[outModName][0]));
+    registrySize_ = origsize; // is zero on create
+    if(registryData_.capacity() < origsize) registryData_.resize(origsize);
+    copy(&tempbuffer[0], &tempbuffer[0]+origsize, &registryData_[0]);
   } // end of number of frames test
 
   // the test of subsequent registries must be done in StorageManager
   return true;
-}
-
-void SMFUSenderEntry::addReg2Entry( const unsigned int frameCount, const unsigned int numFramesToAllocate,
-                 const std::string outModName, const uint32 outModId,
-                 toolbox::mem::Reference *ref)
-{
-  registryCollection_.outModName_.push_back(outModName);
-  registryCollection_.outModName2ModId_.insert(std::make_pair(outModName, outModId));
-  registryCollection_.outModId2ModName_.insert(std::make_pair(outModId, outModName));
-  registryCollection_.registrySizeMap_.insert(std::make_pair(outModName, 0));
-  registryCollection_.regAllReceivedMap_.insert(std::make_pair(outModName, false));
-  registryCollection_.regCheckedOKMap_.insert(std::make_pair(outModName, false));
-  FrameRefCollection frameRefs(numFramesToAllocate, 0);
-  frameRefs[frameCount] = ref;
-  registryCollection_.frameRefsMap_.insert(std::make_pair(outModName, frameRefs));
-  RegData registryData(1000000);
-  registryCollection_.registryDataMap_.insert(std::make_pair(outModName, registryData));
-  registryCollection_.totFramesMap_.insert(std::make_pair(outModName, numFramesToAllocate));
-  registryCollection_.currFramesMap_.insert(std::make_pair(outModName, 1));
-  ++framesReceived_;
-  // initialize the datCollection
-  datCollection_.framesReceivedMap_.insert(std::make_pair(outModName, 1));
-  datCollection_.eventsReceivedMap_.insert(std::make_pair(outModName, 0));
-  datCollection_.lastEventIDMap_.insert(std::make_pair(outModName, 0));
-  datCollection_.lastFrameNumMap_.insert(std::make_pair(outModName, 0));
-  datCollection_.lastTotalFrameNumMap_.insert(std::make_pair(outModName, 0));
-  // why is framesReceived = 0 but size zero! (because not data, just registry)
-  datCollection_.totalSizeReceivedMap_.insert(std::make_pair(outModName, 0));
-  chrono_.stop(0);
-  lastLatency_ = (double) chrono_.dusecs(); //microseconds
-  chrono_.start(0);
-
-  FDEBUG(9) << "SMFUSenderEntry: Making a SMFUSenderEntry struct for "
-            << hltURL_ << " class " << hltClassName_  << " instance "
-            << hltInstance_ << " Tid " << hltTid_ << std::endl;
-  // test if this single registry frame is the only one
-  testCompleteFUReg(outModName);
-}
-
-bool SMFUSenderEntry::sameOutMod(const std::string outModName)
-{
-  if(registryCollection_.outModName2ModId_.find(outModName) != registryCollection_.outModName2ModId_.end())
-    return true;
-  else
-    return false;
-}
-
-bool SMFUSenderEntry::sameOutMod(const uint32 outModId)
-{
-  if(registryCollection_.outModId2ModName_.find(outModId) != registryCollection_.outModId2ModName_.end())
-    return true;
-  else
-    return false;
-}
-
-unsigned int SMFUSenderEntry::getregistrySize(const std::string outModName)
-{
-  return registryCollection_.registrySizeMap_[outModName];
-}
-
-bool SMFUSenderEntry::getregAllReceived(const std::string outModName)
-{
-  return registryCollection_.regAllReceivedMap_[outModName];
-}
-
-unsigned int SMFUSenderEntry::gettotFrames(const std::string outModName)
-{
-  return registryCollection_.totFramesMap_[outModName];
-}
-
-unsigned int SMFUSenderEntry::getcurrFrames(const std::string outModName)
-{
-  return registryCollection_.currFramesMap_[outModName];
-}
-
-bool SMFUSenderEntry::getregCheckedOK(const std::string outModName)
-{
-  return registryCollection_.regCheckedOKMap_[outModName];
-}
-
-unsigned int SMFUSenderEntry::getframesReceived(const std::string outModName)
-{
-  return datCollection_.framesReceivedMap_[outModName];
-}
-
-unsigned int SMFUSenderEntry::geteventsReceived(const std::string outModName)
-{
-  return datCollection_.eventsReceivedMap_[outModName];
-}
-
-unsigned int SMFUSenderEntry::getlastFrameNum(const std::string outModName)
-{
-  return datCollection_.lastFrameNumMap_[outModName];
-}
-
-unsigned int SMFUSenderEntry::getlastTotalFrameNum(const std::string outModName)
-{
-  return datCollection_.lastTotalFrameNumMap_[outModName];
-}
-
-unsigned long long SMFUSenderEntry::gettotalSizeReceived(const std::string outModName)
-{
-  return datCollection_.totalSizeReceivedMap_[outModName];
 }

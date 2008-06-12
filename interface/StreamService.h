@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.8 2008/05/11 13:49:18 hcheung Exp $
+// $Id: StreamService.h,v 1.9 2008/05/13 18:06:46 loizides Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -52,6 +52,7 @@ namespace edm {
       void   setFileName(const std::string &s)      { fileName_ = s; }
       void   setFilePath(const std::string &s)      { filePath_ = s; }
       void   setMaxFileSize(int x); 
+      void   setMathBoxPath(std::string s)          { mailboxPath_ = s; }
       void   setSetupLabel(std::string s)           { setupLabel_ = s; }
       void   setHighWaterMark(double d)             { highWaterMark_ = d; }
       void   setLumiSectionTimeOut(double d)        { lumiSectionTimeOut_ = d; }
@@ -96,6 +97,7 @@ namespace edm {
       std::string sourceId_;
 
       // output module parameter
+      std::string mailboxPath_;
       std::string fileName_;
       std::string filePath_;
       int    maxFileSizeInMB_;

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.32 2008/05/13 18:06:46 loizides Exp $
+   $Id: StorageManager.h,v 1.28.2.1 2008/05/27 18:11:03 biery Exp $
 */
 
 #include <string>
@@ -89,7 +89,6 @@ namespace stor {
    private:  
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
     void receiveDataMessage(toolbox::mem::Reference *ref);
-    void receiveErrorDataMessage(toolbox::mem::Reference *ref);
     void receiveOtherMessage(toolbox::mem::Reference *ref);
     void receiveDQMMessage(toolbox::mem::Reference *ref);
 
@@ -147,11 +146,16 @@ namespace stor {
     xdata::String  fileName_;
     xdata::String  filePath_;
     xdata::Integer maxFileSize_;
+    xdata::String  mailboxPath_;
     xdata::String  setupLabel_;
     xdata::Double  highWaterMark_;
     xdata::Double  lumiSectionTimeOut_;
     xdata::String  fileCatalog_;
     xdata::Boolean exactFileSizeTest_;
+
+    xdata::String  closeFileScript_;
+    xdata::String  notifyTier0Script_;
+    xdata::String  insertFileScript_;
 
     bool pushMode_;
     std::string smConfigString_;
@@ -177,35 +181,22 @@ namespace stor {
     xdata::Integer activeConsumerTimeout_;  // seconds
     xdata::Integer idleConsumerTimeout_;  // seconds
     xdata::Integer consumerQueueSize_;
-    xdata::Boolean fairShareES_;
     xdata::Double DQMmaxESEventRate_;  // hertz
     xdata::Integer DQMactiveConsumerTimeout_;  // seconds
     xdata::Integer DQMidleConsumerTimeout_;  // seconds
     xdata::Integer DQMconsumerQueueSize_;
     boost::mutex consumerInitMsgLock_;
+    xdata::String esSelectedHLTOutputModule_;
 
     SMFUSenderList smfusenders_;
     xdata::UnsignedInteger32 connectedFUs_;
 
     xdata::UnsignedInteger32 storedEvents_;
-    xdata::UnsignedInteger32 receivedEvents_;
-    xdata::UnsignedInteger32 receivedErrorEvents_;
     xdata::UnsignedInteger32 dqmRecords_;
     xdata::UnsignedInteger32 closedFiles_;
-    xdata::UnsignedInteger32 openFiles_;
     xdata::Vector<xdata::String> fileList_;
     xdata::Vector<xdata::UnsignedInteger32> eventsInFile_;
-    xdata::Vector<xdata::UnsignedInteger32> storedEventsInStream_;
-    xdata::Vector<xdata::UnsignedInteger32> receivedEventsFromOutMod_;
-    typedef std::map<std::string,uint32> countMap;
-    typedef std::map<uint32,std::string> idMap;
-    typedef std::map<uint32,std::string>::iterator idMap_iter;
-    countMap receivedEventsMap_;
-    idMap modId2ModOutMap_;
-    countMap storedEventsMap_;
     xdata::Vector<xdata::UnsignedInteger32> fileSize_;
-    xdata::Vector<xdata::String> namesOfStream_;
-    xdata::Vector<xdata::String> namesOfOutMod_;
 
     // *** for performance measurements
     void addMeasurement(unsigned long size);
@@ -251,7 +242,6 @@ namespace stor {
     smap	 streams_;
 
     unsigned int lastEventSeen_; // report last seen event id
-    unsigned int lastErrorEventSeen_; // report last error event id seen
     boost::mutex fulist_lock_;  // quick (temporary) fix for registration problem
 
     enum

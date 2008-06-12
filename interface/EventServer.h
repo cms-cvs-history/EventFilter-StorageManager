@@ -12,7 +12,7 @@
  * prescale is in effect.
  *
  * 16-Aug-2006 - KAB  - Initial Implementation
- * $Id: EventServer.h,v 1.9 2008/05/04 12:34:05 biery Exp $
+ * $Id: EventServer.h,v 1.8 2008/04/16 16:12:58 biery Exp $
  */
 
 #include <sys/time.h>
@@ -26,6 +26,7 @@
 #include "EventFilter/StorageManager/interface/RollingIntervalCounter.h"
 #include "EventFilter/StorageManager/interface/RateLimiter.h"
 #include "FWCore/Utilities/interface/CPUTimer.h"
+#include "boost/random.hpp"
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/thread.hpp"
@@ -36,11 +37,11 @@ namespace stor
   {
   public:
     enum STATS_TIME_FRAME { SHORT_TERM_STATS = 0, LONG_TERM_STATS = 1 };
-    enum STATS_SAMPLE_TYPE { INPUT_STATS = 10, OUTPUT_STATS = 11,
-                             UNIQUE_ACCEPT_STATS = 12 };
+    enum STATS_SAMPLE_TYPE { INPUT_STATS = 10, OUTPUT_STATS = 11 };
     enum STATS_TIMING_TYPE { CPUTIME = 20, REALTIME = 21 };
 
-    EventServer(double maxEventRate, double maxDataRate, bool runFairShareAlgo);
+    EventServer(double maxEventRate, double maxDataRate,
+                std::string hltOutputSelection);
     ~EventServer();
 
     void addConsumer(boost::shared_ptr<ConsumerPipe> consumer);
@@ -64,22 +65,19 @@ namespace stor
 
     double getMaxEventRate() const { return maxEventRate_; }
     double getMaxDataRate() const { return maxDataRate_; }
+    std::string getHLTOutputSelection() const { return hltOutputSelection_; }
 
     long long getEventCount(STATS_TIME_FRAME timeFrame = SHORT_TERM_STATS,
                             STATS_SAMPLE_TYPE sampleType = INPUT_STATS,
-                            uint32 outputModuleId = 0,
                             double currentTime = ForeverCounter::getCurrentTime());
     double getEventRate(STATS_TIME_FRAME timeFrame = SHORT_TERM_STATS,
                         STATS_SAMPLE_TYPE sampleType = INPUT_STATS,
-                        uint32 outputModuleId = 0,
                         double currentTime = ForeverCounter::getCurrentTime());
     double getDataRate(STATS_TIME_FRAME timeFrame = SHORT_TERM_STATS,
                        STATS_SAMPLE_TYPE sampleType = INPUT_STATS,
-                       uint32 outputModuleId = 0,
                        double currentTime = ForeverCounter::getCurrentTime());
     double getDuration(STATS_TIME_FRAME timeFrame = SHORT_TERM_STATS,
                        STATS_SAMPLE_TYPE sampleType = INPUT_STATS,
-                       uint32 outputModuleId = 0,
                        double currentTime = ForeverCounter::getCurrentTime());
 
     double getInternalTime(STATS_TIME_FRAME timeFrame = SHORT_TERM_STATS,
@@ -94,12 +92,10 @@ namespace stor
 
   private:
     // data members for handling a maximum rate of accepted events
-    double minTimeBetweenEvents_;  // seconds
-    double lastAcceptedEventTime_; // seconds
-    uint32 lastAcceptedEventNumber_;
     double maxEventRate_;
     double maxDataRate_;
-    bool runFairShareAlgo_;
+    std::string hltOutputSelection_;
+    uint32 hltOutputModuleId_;
 
     // new fair-share scheme
     boost::shared_ptr<RateLimiter> rateLimiter_;
@@ -115,12 +111,10 @@ namespace stor
     int selTableStringSize_;
 
     // statistics
-    std::map<uint32, boost::shared_ptr<ForeverCounter> > ltInputCounters_;
-    std::map<uint32, boost::shared_ptr<RollingIntervalCounter> > stInputCounters_;
-    std::map<uint32, boost::shared_ptr<ForeverCounter> > ltAcceptCounters_;
-    std::map<uint32, boost::shared_ptr<RollingIntervalCounter> > stAcceptCounters_;
-    std::map<uint32, boost::shared_ptr<ForeverCounter> > ltOutputCounters_;
-    std::map<uint32, boost::shared_ptr<RollingIntervalCounter> > stOutputCounters_;
+    boost::shared_ptr<ForeverCounter> longTermInputCounter_;
+    boost::shared_ptr<RollingIntervalCounter> shortTermInputCounter_;
+    boost::shared_ptr<ForeverCounter> longTermOutputCounter_;
+    boost::shared_ptr<RollingIntervalCounter> shortTermOutputCounter_;
     edm::CPUTimer outsideTimer_;
     edm::CPUTimer insideTimer_;
     boost::shared_ptr<ForeverCounter> longTermInsideCPUTimeCounter_;
@@ -131,6 +125,9 @@ namespace stor
     boost::shared_ptr<RollingIntervalCounter> shortTermOutsideCPUTimeCounter_;
     boost::shared_ptr<ForeverCounter> longTermOutsideRealTimeCounter_;
     boost::shared_ptr<RollingIntervalCounter> shortTermOutsideRealTimeCounter_;
+
+    boost::mt19937 baseGenerator_;
+    boost::shared_ptr< boost::uniform_01<boost::mt19937> > generator_;
   };
 }
 

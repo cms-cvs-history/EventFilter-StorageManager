@@ -2,7 +2,7 @@
  * This class manages the distribution of events to consumers from within
  * the storage manager.
  *
- * $Id: EventServer.cc,v 1.10 2008/05/04 12:37:34 biery Exp $
+ * $Id: EventServer.cc,v 1.9 2008/04/16 16:14:08 biery Exp $
  */
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <boost/algorithm/string/case_conv.hpp>
+#include "zlib.h"
 
 using namespace std;
 using namespace stor;
@@ -20,42 +21,27 @@ using namespace edm;
  * specifying a maximimum allowed rate of accepted events
  */
 EventServer::EventServer(double maxEventRate, double maxDataRate,
-                         bool runFairShareAlgo)
+                         std::string hltOutputSelection)
 {
-  // determine the amount of time that we need to wait between accepted
-  // events (to ensure that the event server doesn't send "too many" events
-  // to consumers).  The maximum rate specified to this constructor is
-  // converted to an interval that is used internally, and the interval
-  // is required to be somewhat reasonable.
-  if (maxEventRate < (1.0 / ConsumerPipe::MAX_ACCEPT_INTERVAL))
-  {
-    minTimeBetweenEvents_ = ConsumerPipe::MAX_ACCEPT_INTERVAL;
-  }
-  else
-  {
-    minTimeBetweenEvents_ = 1.0 / maxEventRate;  // seconds
-  }
-
-  // initialize the last accepted event time to construction time
-  lastAcceptedEventTime_ = BaseCounter::getCurrentTime();
-  lastAcceptedEventNumber_ = 0;
-
   // initialize counters
   disconnectedConsumerTestCounter_ = 0;
 
   selTableStringSize_ = 0;
 
-  ltInputCounters_.clear();
-  stInputCounters_.clear();
-  ltAcceptCounters_.clear();
-  stAcceptCounters_.clear();
-  ltOutputCounters_.clear();
-  stOutputCounters_.clear();
+  longTermInputCounter_.reset(new ForeverCounter());
+  shortTermInputCounter_.reset(new RollingIntervalCounter(180,5,20));
+  longTermOutputCounter_.reset(new ForeverCounter());
+  shortTermOutputCounter_.reset(new RollingIntervalCounter(180,5,20));
 
-  rateLimiter_.reset(new RateLimiter(maxEventRate, maxDataRate));
+  //rateLimiter_.reset(new RateLimiter(maxEventRate, maxDataRate));
   this->maxEventRate_ = maxEventRate;
   this->maxDataRate_ = maxDataRate;
-  this->runFairShareAlgo_ = runFairShareAlgo;
+  this->hltOutputSelection_ = hltOutputSelection;
+
+  uLong crc = crc32(0L, Z_NULL, 0);
+  Bytef* crcbuf = (Bytef*) hltOutputSelection.data();
+  crc = crc32(crc, crcbuf, hltOutputSelection.length());
+  this->hltOutputModuleId_ = static_cast<uint32>(crc);
 
   outsideTimer_.reset();
   insideTimer_.reset();
@@ -69,6 +55,8 @@ EventServer::EventServer(double maxEventRate, double maxDataRate,
   shortTermOutsideCPUTimeCounter_.reset(new RollingIntervalCounter(180,5,20));
   longTermOutsideRealTimeCounter_.reset(new ForeverCounter());
   shortTermOutsideRealTimeCounter_.reset(new RollingIntervalCounter(180,5,20));
+
+  generator_.reset(new boost::uniform_01<boost::mt19937>(baseGenerator_));
 }
 
 /**
@@ -89,7 +77,7 @@ void EventServer::addConsumer(boost::shared_ptr<ConsumerPipe> consumer)
 
   // add the consumer (by ID) to the rateLimiter instance that we use
   // to provide a fair share of the limited bandwidth to each consumer.
-  rateLimiter_->addConsumer(consumerId);
+  //rateLimiter_->addConsumer(consumerId);
 }
 
 std::map< uint32, boost::shared_ptr<ConsumerPipe> > EventServer::getConsumerTable()
@@ -128,10 +116,11 @@ boost::shared_ptr<ConsumerPipe> EventServer::getConsumer(uint32 consumerId)
  */
 void EventServer::processEvent(const EventMsgView &eventView)
 {
-  boost::shared_ptr<ForeverCounter> ltCounter;
-  boost::shared_ptr<RollingIntervalCounter> stCounter;
-  std::map<uint32, boost::shared_ptr<ForeverCounter> >::iterator ltIter;
-  std::map<uint32, boost::shared_ptr<RollingIntervalCounter> >::iterator stIter;
+  // do nothing if the event is empty
+  if (eventView.size() == 0) {return;}
+
+  // the event must be from the correct HLT output module
+  if (eventView.outModId() != hltOutputModuleId_) {return;}
 
   // stop the timer that we use to measure CPU and real time outside the ES
   outsideTimer_.stop();
@@ -142,44 +131,34 @@ void EventServer::processEvent(const EventMsgView &eventView)
   // add the event to our statistics for events that are input to the ES
   double sizeInMB = static_cast<double>(eventView.size()) / 1048576.0;
   double now = BaseCounter::getCurrentTime();
-  uint32 outputModuleId = eventView.outModId();
-  // fetch (or create) the correct long term counter for the output module
-  ltIter = ltInputCounters_.find(outputModuleId);
-  if (ltIter == ltInputCounters_.end()) {
-    ltCounter.reset(new ForeverCounter());
-    ltInputCounters_[outputModuleId] = ltCounter;
-  }
-  else {
-    ltCounter = ltIter->second;
-  }
-  // fetch (or create) the correct short term counter for the output module
-  stIter = stInputCounters_.find(outputModuleId);
-  if (stIter == stInputCounters_.end()) {
-    stCounter.reset(new RollingIntervalCounter(180,5,20));
-    stInputCounters_[outputModuleId] = stCounter;
-  }
-  else {
-    stCounter = stIter->second;
-  }
-  ltCounter->addSample(sizeInMB);
-  stCounter->addSample(sizeInMB, now);
+  longTermInputCounter_->addSample(sizeInMB);
+  shortTermInputCounter_->addSample(sizeInMB, now);
 
-  // do nothing if the event is empty
-  if (eventView.size() == 0) {
-    // track timer statistics and start/stop timers as appropriate
-    insideTimer_.stop();
-    longTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime());
-    shortTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime(), now);
-    longTermInsideRealTimeCounter_->addSample(insideTimer_.realTime());
-    shortTermInsideRealTimeCounter_->addSample(insideTimer_.realTime(), now);
-    longTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime());
-    shortTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime(), now);
-    longTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime());
-    shortTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime(), now);
-    outsideTimer_.reset();
-    insideTimer_.reset();
-    outsideTimer_.start();
-    return;
+  // prescale events based on the input event and data rates
+  double eventRate = shortTermInputCounter_->getSampleRate(now);
+  double dataRate = shortTermInputCounter_->getValueRate(now);
+  double eventRatePrescale = eventRate / maxEventRate_;
+  double dataRatePrescale = dataRate / maxDataRate_;
+  double effectivePrescale = std::max(eventRatePrescale, dataRatePrescale);
+  if (effectivePrescale > 1.0) {
+    double instantRatio = 1.0 / effectivePrescale;
+    double randValue = (*generator_)();
+    if (randValue > instantRatio) {
+      // track timer statistics and start/stop timers as appropriate
+      insideTimer_.stop();
+      longTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime());
+      shortTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime(), now);
+      longTermInsideRealTimeCounter_->addSample(insideTimer_.realTime());
+      shortTermInsideRealTimeCounter_->addSample(insideTimer_.realTime(), now);
+      longTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime());
+      shortTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime(), now);
+      longTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime());
+      shortTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime(), now);
+      outsideTimer_.reset();
+      insideTimer_.reset();
+      outsideTimer_.start();
+      return;
+    }
   }
 
   // loop over the consumers in our list, and for each one check whether
@@ -203,66 +182,14 @@ void EventServer::processEvent(const EventMsgView &eventView)
         consPipe->isReadyForEvent(now))
     {
       candidateList.push_back(consPipe->getConsumerId());
-      consPipe->wasConsidered(now);
-    }
-  }
-
-  // do nothing if there are no candidates
-  if (candidateList.size() == 0) {
-    // track timer statistics and start/stop timers as appropriate
-    insideTimer_.stop();
-    longTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime());
-    shortTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime(), now);
-    longTermInsideRealTimeCounter_->addSample(insideTimer_.realTime());
-    shortTermInsideRealTimeCounter_->addSample(insideTimer_.realTime(), now);
-    longTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime());
-    shortTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime(), now);
-    longTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime());
-    shortTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime(), now);
-    outsideTimer_.reset();
-    insideTimer_.reset();
-    outsideTimer_.start();
-    return;
-  }
-
-  // if we're not running the fair-share algorithm, use the older
-  // interval-based model for deciding if we're ready for an event
-  if (! runFairShareAlgo_) {
-    double timeDiff = now - lastAcceptedEventTime_;
-    // check if not enough time has passed since we accepted the last event
-    // However, if the last event that we accepted has the same event number
-    // as this one, allow this one to go through.  This sort of thing happens
-    // when two HLT output modules accept the same event and this method
-    // is called in rapid succession for the same event.  In that case, we
-    // don't want to lock out the subscribers to the second HLT output module.
-    if (timeDiff < minTimeBetweenEvents_ &&
-        eventView.event() != lastAcceptedEventNumber_) {
-      insideTimer_.stop();
-      longTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime());
-      shortTermInsideCPUTimeCounter_->addSample(insideTimer_.cpuTime(), now);
-      longTermInsideRealTimeCounter_->addSample(insideTimer_.realTime());
-      shortTermInsideRealTimeCounter_->addSample(insideTimer_.realTime(), now);
-      longTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime());
-      shortTermOutsideCPUTimeCounter_->addSample(outsideTimer_.cpuTime(), now);
-      longTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime());
-      shortTermOutsideRealTimeCounter_->addSample(outsideTimer_.realTime(), now);
-      outsideTimer_.reset();
-      insideTimer_.reset();
-      outsideTimer_.start();
-      return;
     }
   }
 
   // determine which of the candidate consumers are allowed
   // to receive another event at this time
-  std::vector<uint32> allowedList;
-  if (runFairShareAlgo_) {
-    allowedList = rateLimiter_->getAllowedConsumersFromList(sizeInMB,
-                                                            candidateList);
-  }
-  else {
-    allowedList = candidateList;
-  }
+  //std::vector<uint32> allowedList =
+  //  rateLimiter_->getAllowedConsumersFromList(sizeInMB, candidateList);
+  std::vector<uint32> allowedList = candidateList;
 
   // send the event to the allowed consumers
   for (uint32 idx = 0; idx < allowedList.size(); ++idx)
@@ -287,34 +214,11 @@ void EventServer::processEvent(const EventMsgView &eventView)
 
       // switch buffers
       bufPtr.swap(tmpBufPtr);
-
-      // update the local time stamp for the latest accepted event
-      lastAcceptedEventTime_ = now;
-      lastAcceptedEventNumber_ = eventView.event();
-
-      // add the event to our statistics for "unique accept" events
-      ltIter = ltAcceptCounters_.find(outputModuleId);
-      if (ltIter == ltAcceptCounters_.end()) {
-        ltCounter.reset(new ForeverCounter());
-        ltAcceptCounters_[outputModuleId] = ltCounter;
-      }
-      else {
-        ltCounter = ltIter->second;
-      }
-      stIter = stAcceptCounters_.find(outputModuleId);
-      if (stIter == stAcceptCounters_.end()) {
-        stCounter.reset(new RollingIntervalCounter(180,5,20));
-        stAcceptCounters_[outputModuleId] = stCounter;
-      }
-      else {
-        stCounter = stIter->second;
-      }
-      ltCounter->addSample(sizeInMB);
-      stCounter->addSample(sizeInMB, now);
     }
 
     // add the event to the consumer pipe
     boost::shared_ptr<ConsumerPipe> consPipe = getConsumer(consumerId);
+    consPipe->wasConsidered(now);
     consPipe->putEvent(bufPtr);
 
     // add the event to our statistics for "output" events
@@ -322,24 +226,8 @@ void EventServer::processEvent(const EventMsgView &eventView)
     // to give a more accurate picture of what is being sent out.
     // (Even though we only have one copy of the event internally,
     // it uses up bandwidth N times for N consumers.)
-    ltIter = ltOutputCounters_.find(outputModuleId);
-    if (ltIter == ltOutputCounters_.end()) {
-      ltCounter.reset(new ForeverCounter());
-      ltOutputCounters_[outputModuleId] = ltCounter;
-    }
-    else {
-      ltCounter = ltIter->second;
-    }
-    stIter = stOutputCounters_.find(outputModuleId);
-    if (stIter == stOutputCounters_.end()) {
-      stCounter.reset(new RollingIntervalCounter(180,5,20));
-      stOutputCounters_[outputModuleId] = stCounter;
-    }
-    else {
-      stCounter = stIter->second;
-    }
-    ltCounter->addSample(sizeInMB);
-    stCounter->addSample(sizeInMB, now);
+    longTermOutputCounter_->addSample(sizeInMB);
+    shortTermOutputCounter_->addSample(sizeInMB, now);
   }
 
   // periodically check for disconnected consumers
@@ -376,7 +264,7 @@ void EventServer::processEvent(const EventMsgView &eventView)
 
       // remove the consumer from the rateLimiter instance so that it is
       // no longer considered for a fair share of the allowed bandwidth
-      rateLimiter_->removeConsumer(consumerId);
+      //rateLimiter_->removeConsumer(consumerId);
     }
   }
 
@@ -480,76 +368,22 @@ Strings EventServer::updateTriggerSelectionForStreams(Strings const& selectionLi
  */
 long long EventServer::getEventCount(STATS_TIME_FRAME timeFrame,
                                      STATS_SAMPLE_TYPE sampleType,
-                                     uint32 outputModuleId,
                                      double currentTime)
 {
-  boost::shared_ptr<ForeverCounter> ltCounter;
-  boost::shared_ptr<RollingIntervalCounter> stCounter;
-  std::map<uint32, boost::shared_ptr<ForeverCounter> >::iterator ltIter;
-  std::map<uint32, boost::shared_ptr<RollingIntervalCounter> >::iterator stIter;
-
   if (timeFrame == SHORT_TERM_STATS) {
     if (sampleType == INPUT_STATS) {
-      stIter = stInputCounters_.find(outputModuleId);
-      if (stIter != stInputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getSampleCount(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      stIter = stAcceptCounters_.find(outputModuleId);
-      if (stIter != stAcceptCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getSampleCount(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermInputCounter_->getSampleCount(currentTime);
     }
     else {
-      stIter = stOutputCounters_.find(outputModuleId);
-      if (stIter != stOutputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getSampleCount(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermOutputCounter_->getSampleCount(currentTime);
     }
   }
   else {
     if (sampleType == INPUT_STATS) {
-      ltIter = ltInputCounters_.find(outputModuleId);
-      if (ltIter != ltInputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getSampleCount();
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      ltIter = ltAcceptCounters_.find(outputModuleId);
-      if (ltIter != ltAcceptCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getSampleCount();
-      }
-      else {
-        return 0;
-      }
+      return longTermInputCounter_->getSampleCount();
     }
     else {
-      ltIter = ltOutputCounters_.find(outputModuleId);
-      if (ltIter != ltOutputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getSampleCount();
-      }
-      else {
-        return 0;
-      }
+      return longTermOutputCounter_->getSampleCount();
     }
   }
 }
@@ -560,76 +394,22 @@ long long EventServer::getEventCount(STATS_TIME_FRAME timeFrame,
  */
 double EventServer::getEventRate(STATS_TIME_FRAME timeFrame,
                                  STATS_SAMPLE_TYPE sampleType,
-                                 uint32 outputModuleId,
                                  double currentTime)
 {
-  boost::shared_ptr<ForeverCounter> ltCounter;
-  boost::shared_ptr<RollingIntervalCounter> stCounter;
-  std::map<uint32, boost::shared_ptr<ForeverCounter> >::iterator ltIter;
-  std::map<uint32, boost::shared_ptr<RollingIntervalCounter> >::iterator stIter;
-
   if (timeFrame == SHORT_TERM_STATS) {
     if (sampleType == INPUT_STATS) {
-      stIter = stInputCounters_.find(outputModuleId);
-      if (stIter != stInputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getSampleRate(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      stIter = stAcceptCounters_.find(outputModuleId);
-      if (stIter != stAcceptCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getSampleRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermInputCounter_->getSampleRate(currentTime);
     }
     else {
-      stIter = stOutputCounters_.find(outputModuleId);
-      if (stIter != stOutputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getSampleRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermOutputCounter_->getSampleRate(currentTime);
     }
   }
   else {
     if (sampleType == INPUT_STATS) {
-      ltIter = ltInputCounters_.find(outputModuleId);
-      if (ltIter != ltInputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getSampleRate(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      ltIter = ltAcceptCounters_.find(outputModuleId);
-      if (ltIter != ltAcceptCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getSampleRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return longTermInputCounter_->getSampleRate(currentTime);
     }
     else {
-      ltIter = ltOutputCounters_.find(outputModuleId);
-      if (ltIter != ltOutputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getSampleRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return longTermOutputCounter_->getSampleRate(currentTime);
     }
   }
 }
@@ -640,76 +420,22 @@ double EventServer::getEventRate(STATS_TIME_FRAME timeFrame,
  */
 double EventServer::getDataRate(STATS_TIME_FRAME timeFrame,
                                 STATS_SAMPLE_TYPE sampleType,
-                                uint32 outputModuleId,
                                 double currentTime)
 {
-  boost::shared_ptr<ForeverCounter> ltCounter;
-  boost::shared_ptr<RollingIntervalCounter> stCounter;
-  std::map<uint32, boost::shared_ptr<ForeverCounter> >::iterator ltIter;
-  std::map<uint32, boost::shared_ptr<RollingIntervalCounter> >::iterator stIter;
-
   if (timeFrame == SHORT_TERM_STATS) {
     if (sampleType == INPUT_STATS) {
-      stIter = stInputCounters_.find(outputModuleId);
-      if (stIter != stInputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getValueRate(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      stIter = stAcceptCounters_.find(outputModuleId);
-      if (stIter != stAcceptCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getValueRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermInputCounter_->getValueRate(currentTime);
     }
     else {
-      stIter = stOutputCounters_.find(outputModuleId);
-      if (stIter != stOutputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getValueRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermOutputCounter_->getValueRate(currentTime);
     }
   }
   else {
     if (sampleType == INPUT_STATS) {
-      ltIter = ltInputCounters_.find(outputModuleId);
-      if (ltIter != ltInputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getValueRate(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      ltIter = ltAcceptCounters_.find(outputModuleId);
-      if (ltIter != ltAcceptCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getValueRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return longTermInputCounter_->getValueRate(currentTime);
     }
     else {
-      ltIter = ltOutputCounters_.find(outputModuleId);
-      if (ltIter != ltOutputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getValueRate(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return longTermOutputCounter_->getValueRate(currentTime);
     }
   }
 }
@@ -722,76 +448,22 @@ double EventServer::getDataRate(STATS_TIME_FRAME timeFrame,
  */
 double EventServer::getDuration(STATS_TIME_FRAME timeFrame,
                                 STATS_SAMPLE_TYPE sampleType,
-                                uint32 outputModuleId,
                                 double currentTime)
 {
-  boost::shared_ptr<ForeverCounter> ltCounter;
-  boost::shared_ptr<RollingIntervalCounter> stCounter;
-  std::map<uint32, boost::shared_ptr<ForeverCounter> >::iterator ltIter;
-  std::map<uint32, boost::shared_ptr<RollingIntervalCounter> >::iterator stIter;
-
   if (timeFrame == SHORT_TERM_STATS) {
     if (sampleType == INPUT_STATS) {
-      stIter = stInputCounters_.find(outputModuleId);
-      if (stIter != stInputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getDuration(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      stIter = stAcceptCounters_.find(outputModuleId);
-      if (stIter != stAcceptCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getDuration(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermInputCounter_->getDuration(currentTime);
     }
     else {
-      stIter = stOutputCounters_.find(outputModuleId);
-      if (stIter != stOutputCounters_.end()) {
-        stCounter = stIter->second;
-        return stCounter->getDuration(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return shortTermOutputCounter_->getDuration(currentTime);
     }
   }
   else {
     if (sampleType == INPUT_STATS) {
-      ltIter = ltInputCounters_.find(outputModuleId);
-      if (ltIter != ltInputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getDuration(currentTime);
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (sampleType == UNIQUE_ACCEPT_STATS) {
-      ltIter = ltAcceptCounters_.find(outputModuleId);
-      if (ltIter != ltAcceptCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getDuration(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return longTermInputCounter_->getDuration(currentTime);
     }
     else {
-      ltIter = ltOutputCounters_.find(outputModuleId);
-      if (ltIter != ltOutputCounters_.end()) {
-        ltCounter = ltIter->second;
-        return ltCounter->getDuration(currentTime);
-      }
-      else {
-        return 0;
-      }
+      return longTermOutputCounter_->getDuration(currentTime);
     }
   }
 }

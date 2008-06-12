@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.4 2008/05/04 12:34:05 biery Exp $
+// $Id: ServiceManager.h,v 1.2 2008/01/29 21:15:40 biery Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 #include "FWCore/Framework/interface/EventSelector.h"
@@ -34,14 +34,12 @@ namespace edm
     
     void stop(); 
     
-    void manageInitMsg(std::string catalog, uint32 disks, std::string sourceId, InitMsgView& init_message, stor::InitMsgCollection& initMsgCollection);
+    void manageInitMsg(std::string catalog, uint32 disks, std::string souceId, InitMsgView& init_message, stor::InitMsgCollection& initMsgCollection);
     
     void manageEventMsg(EventMsgView& msg);
     
     std::list<std::string>& get_filelist();
     std::list<std::string>& get_currfiles();
-    std::vector<uint32>& get_storedEvents();
-    std::vector<std::string>& get_storedNames();
 
     std::map<std::string, Strings> getStreamSelectionTable();
     
@@ -53,10 +51,6 @@ namespace edm
     boost::shared_ptr<edm::EventSelector>  eventSelector_;
     std::list<std::string>                 filelist_;
     std::list<std::string>                 currfiles_;
-    Strings                                psetHLTOutputLabels_;
-    std::vector<uint32>                    outputModuleIds_;
-    std::vector<uint32>                    storedEvents_;
-    std::vector<std::string>              storedNames_;
   };
   
 }//edm-namespace
