@@ -1,3 +1,12 @@
+2008-06-18  Kurt Biery <biery@fnal.gov>
+
+	* tag V03-11-07
+	* Fixed bugs in DQM histogram serving and archiving.
+	* Added archiveIntervalDQM configuration parameter to control how often
+	  we archive DQM histograms (once every N lumi sections, where
+	  archiveIntervalDQM = N).
+	* Slightly modified format of DQM archive filenames.
+
 2008-06-03  Harry Cheung <cheung@fnal.gov>
 
 	* tag V03-11-05
