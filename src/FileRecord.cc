@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.8.2.1 2008/05/26 12:17:55 loizides Exp $
+// $Id: FileRecord.cc,v 1.8.2.2 2008/06/23 08:45:21 loizides Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -353,9 +353,9 @@ void FileRecord::checkDirectories() const
 
 void FileRecord::checkDirectory(const string &path) const
 {
-  struct stat buf;
+  struct stat64 buf;
 
-  int retVal = stat(path.c_str(), &buf);
+  int retVal = stat64(path.c_str(), &buf);
   if(retVal !=0 )
     {
       edm::LogError("StorageManager") << "Directory " << path
