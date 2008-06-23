@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.52.2.3 2008/06/03 23:00:46 hcheung Exp $
+// $Id: StorageManager.cc,v 1.52.2.4 2008/06/18 19:28:04 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -3654,9 +3654,9 @@ void StorageManager::haltAction()
 
 void StorageManager::checkDirectoryOK(const std::string path) const
 {
-  struct stat buf;
+  struct stat64 buf;
 
-  int retVal = stat(path.c_str(), &buf);
+  int retVal = stat64(path.c_str(), &buf);
   if(retVal !=0 )
   {
     edm::LogError("StorageManager") << "Directory or file " << path
