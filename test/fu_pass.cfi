@@ -24,38 +24,15 @@ process FU = {
     untracked uint32 evtsPerLS = 300
   }
 
-  path p1 = { m2, a1 }
-  path p2 = { m2, pre1 }
-  path p3 = { m2, pre2 }
-  path p4 = { m2 }
-  path p5 = { m2 }
-  endpath e = { out2 }
-  module m2 = StreamThingProducer {
-                        int32 array_size = 200
-                        int32 instance_count=5}
-  module a1 = StreamThingAnalyzer { string product_to_get="m2" }
-  module pre1 = Prescaler { int32 prescaleFactor = 5 }
-  module pre2 = Prescaler { int32 prescaleFactor = 2 }
-  module out2 = ShmStreamConsumer {
-                        untracked int32 max_event_size = 7000000 
-                        untracked bool use_compression = true
-                        untracked int32 compression_level = 1
-     //                   untracked int32 lumiSection_interval = 120
+  path playbackPath4DQM = { pre1 }
+  module pre1 = Prescaler { int32 prescaleFactor = 1 }
+
+  endpath e = { out4DQM }
+  module out4DQM = ShmStreamConsumer {
+    untracked int32 max_event_size = 7000000 
+    untracked int32 max_queue_depth = 5
+    untracked bool use_compression = true
+    untracked int32 compression_level = 1
+    untracked PSet SelectEvents = { vstring SelectEvents={"*"} }
   }
-  # DQM back-end interface service
-  service = DaqMonitorROOTBackEnd{}
-
-  # DQM source program
-  module tester = SMDQMSourceExample{}
-  path pDQM ={tester}
-
-  # DQM sender service - under development
-  service = FUShmDQMOutputService {
-    untracked int32 initialMessageBufferSize = 1000000  // bytes
-    double lumiSectionsPerUpdate = 1.0
-    bool useCompression = true
-    int32 compressionLevel = 1
-    //untracked int32 lumiSectionInterval = 60 // seconds
-  }
-
 }

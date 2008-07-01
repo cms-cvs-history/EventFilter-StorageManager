@@ -16,14 +16,20 @@
 
     <!-- Playback Builder Unit -->
     <xc:Application class="evf::BU" id="24" instance="0" network="tcp1">
+      <properties xmlns="urn:xdaq-application:evf::BU" xsi:type="soapenc:Struct">
+        <replay xsi:type="xsd:boolean">true</replay>
+        <queueSize xsi:type="xsd:unsignedInt">2000</queueSize>
+        <eventBufferSize xsi:type="xsd:unsignedInt">524288</eventBufferSize>
+      </properties>
     </xc:Application>
-    <xc:Module>${CMSSW_BASE}/lib/slc3_ia32_gcc323/libEventFilterAutoBU.so</xc:Module>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterAutoBU.so</xc:Module>
 
     <!-- FUResourceBroker -->
     <xc:Application class="evf::FUResourceBroker" id="25" instance="0" network="tcp1">
       <properties xmlns="urn:xdaq-application:evf::FUResourceBroker" xsi:type="soapenc:Struct">
         <buClassName  xsi:type="xsd:string"     >evf::BU</buClassName>
-        <nbRawCells xsi:type="xsd:unsignedInt">16</nbRawCells>
+        <!--<nbRawCells xsi:type="xsd:unsignedInt">16</nbRawCells>-->
+        <nbRawCells xsi:type="xsd:unsignedInt">3</nbRawCells>
         <nbRecoCells xsi:type="xsd:unsignedInt">3</nbRecoCells>
         <nbDqmCells xsi:type="xsd:unsignedInt">3</nbDqmCells>
         <rawCellSize xsi:type="xsd:unsignedInt">0x300000</rawCellSize>
@@ -31,19 +37,20 @@
         <dqmCellSize xsi:type="xsd:unsignedInt">0x300000</dqmCellSize>
       </properties>
     </xc:Application>
-    <xc:Module>${CMSSW_BASE}/lib/slc3_ia32_gcc323/libEventFilterResourceBroker.so</xc:Module>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterResourceBroker.so</xc:Module>
 
     <!-- FUEventProcessor playback provider -->
     <xc:Application class="evf::FUEventProcessor" id="27" instance="0" network="local">
       <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
         <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_playback.cfi</parameterSet>
         <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
+        <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
       </properties>
     </xc:Application>
-    <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterProcessor.so</xc:Module>
 
-    <xc:Application class="PeerTransportTCP" id="26" network="tcp1">
-      <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
+    <xc:Application class="pt::tcp::PeerTransportTCP" id="26" network="tcp1">
+      <properties xmlns="urn:xdaq-application:pt::tcp::PeerTransportTCP" xsi:type="soapenc:Struct">
         <autoSize xsi:type="xsd:boolean">true</autoSize>
         <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
       </properties>
@@ -59,9 +66,11 @@
       <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
         <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_pass.cfi</parameterSet>
         <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
+        <runNumber xsi:type="xsd:unsignedInt">100</runNumber>
+        <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
       </properties>
     </xc:Application>
-    <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterProcessor.so</xc:Module>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterProcessor.so</xc:Module>
 
   </xc:Context>
 
@@ -71,29 +80,16 @@
     <xc:Endpoint protocol="tcp" service="i2o"
       hostname="cmsroc6.fnal.gov" port="60000" network="tcp1"/>
 
-    <!--- Setting up the XDAQ monitor -->
-    <xc:Application class="Monitor" id="66"  network="local">
-      <properties xmlns="urn:xdaq-application:Monitor" xsi:type="soapenc:Struct">
-        <inprofile xsi:type="soapenc:Array" soapenc:arrayType="xsd:ur-type[1]">
-          <item xsi:type="xsd:string" soapenc:position="[0]">$CMSSW_BASE/src/EventFilter/StorageManager/test/sm.flash</item>
-        </inprofile>
-        <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
-      </properties>
-    </xc:Application>
-    <xc:Module>$XDAQ_ROOT/lib/libmonitor.so</xc:Module>
-
     <!-- Declare a StorageManager application -->
     <xc:Application class="StorageManager" id="29" instance="0" network="tcp1">
       <properties xmlns="urn:xdaq-application:StorageManager" xsi:type="soapenc:Struct">
         <STparameterSet     xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1noout.cfi</STparameterSet>
-        <runNumber          xsi:type="xsd:unsignedInt">0</runNumber>
-        <maxESEventRate     xsi:type="xsd:double">1.0</maxESEventRate>
+        <maxESEventRate     xsi:type="xsd:double">15.0</maxESEventRate>
         <DQMmaxESEventRate  xsi:type="xsd:double">1.0</DQMmaxESEventRate>
+        <runNumber          xsi:type="xsd:unsignedInt">100</runNumber>
         <nLogicalDisk       xsi:type="xsd:integer">0</nLogicalDisk> 
+        <filePath           xsi:type="xsd:string">/scratch2/cheung</filePath> 
         <fileCatalog        xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
-	<closeFileScript    xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</closeFileScript>
-        <notifyTier0Script  xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</notifyTier0Script>
-        <insertFileScript   xsi:type="xsd:string">$CMSSW_BASE/src/EventFilter/StorageManager/scripts/perl/dummy.pl</insertFileScript>
         <pushMode2Proxy     xsi:type="xsd:boolean">true</pushMode2Proxy>
         <collateDQM         xsi:type="xsd:boolean">false</collateDQM>
         <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
@@ -104,10 +100,10 @@
         <compressionLevelDQM xsi:type="xsd:integer">1</compressionLevelDQM>
       </properties>
     </xc:Application>
-    <xc:Module>$CMSSW_BASE/lib/slc3_ia32_gcc323/libEventFilterStorageManager.so</xc:Module>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterStorageManager.so</xc:Module>
 
-    <xc:Application class="PeerTransportTCP" id="31" network="tcp1">
-      <properties xmlns="urn:xdaq-application:PeerTransportTCP" xsi:type="soapenc:Struct">
+    <xc:Application class="pt::tcp::PeerTransportTCP" id="31" network="tcp1">
+      <properties xmlns="urn:xdaq-application:pt::tcp::PeerTransportTCP" xsi:type="soapenc:Struct">
         <autoSize xsi:type="xsd:boolean">true</autoSize>
         <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
       </properties>

@@ -9,7 +9,12 @@ process PLAYB = {
     //untracked PSet    log4cplus    = { untracked string threshold = "INFO" }
   }
 
+  service = AdaptorConfig {}
+
+  service = SiteLocalConfigService {}
+
   untracked PSet maxEvents = {untracked int32 input = -1}
+
   // source
   source = PoolSource
   {
@@ -23,8 +28,7 @@ process PLAYB = {
     untracked uint32 queueSize = 32
   }
   
-  looper = IterateNTimesLooper {
-    uint32 nTimes = 2
-  }
-
+  //looper = IterateNTimesLooper {
+  //  uint32 nTimes = 2
+  //}
 }
