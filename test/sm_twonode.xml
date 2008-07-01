@@ -16,14 +16,6 @@
 
     <!-- Playback Builder Unit -->
     <xc:Application class="evf::BU" id="24" instance="0" network="tcp1">
-      <properties xmlns="urn:xdaq-application:evf::BU" xsi:type="soapenc:Struct">
-<!--
-        <replay xsi:type="xsd:boolean">false</replay>
-        <queueSize xsi:type="xsd:unsignedInt">32</queueSize>
-        <crc xsi:type="xsd:boolean">true</crc> 
-        <eventBufferSize xsi:type="xsd:unsignedInt">0x400000</eventBufferSize> 
--->
-      </properties>
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterAutoBU.so</xc:Module>
 
@@ -35,7 +27,7 @@
         <nbRecoCells xsi:type="xsd:unsignedInt">4</nbRecoCells>
         <nbDqmCells xsi:type="xsd:unsignedInt">4</nbDqmCells>
         <rawCellSize xsi:type="xsd:unsignedInt">0x200000</rawCellSize>
-        <recoCellSize xsi:type="xsd:unsignedInt">0x700000</recoCellSize>
+        <recoCellSize xsi:type="xsd:unsignedInt">0x200000</recoCellSize>
         <dqmCellSize xsi:type="xsd:unsignedInt">0x200000</dqmCellSize>
       </properties>
     </xc:Application>
@@ -55,6 +47,21 @@
   <xc:Context url="http://cmsroc6.fnal.gov:50001">
 
     <xc:Application class="evf::FUEventProcessor" id="21" instance="0" network="local">
+      <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
+        <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_twoOut.cfi</parameterSet>
+        <runNumber xsi:type="xsd:unsignedInt">1</runNumber>
+        <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
+        <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
+      </properties>
+    </xc:Application>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterProcessor.so</xc:Module>
+
+  </xc:Context>
+
+<!-- FUEventProcessor context -->
+  <xc:Context url="http://cmsroc6.fnal.gov:50101">
+
+    <xc:Application class="evf::FUEventProcessor" id="121" instance="0" network="local">
       <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
         <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_twoOut.cfi</parameterSet>
         <runNumber xsi:type="xsd:unsignedInt">1</runNumber>

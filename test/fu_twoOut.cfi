@@ -1,9 +1,5 @@
 process FU = {
 
-  service = PrescaleService {
-    vstring InitialConfig = { "0 * * 1" }          # set all prescales to 1
-  }
-
   // options
   untracked PSet options =
   {
@@ -26,14 +22,17 @@ process FU = {
 
   service = SiteLocalConfigService {}
 
-  service = MicroStateService {}
-
   // source
   source = DaqSource
   {
     untracked string readerPluginName = "FUShmReader"
     untracked uint32 evtsPerLS = 500
   }
+
+
+  service = ModuleWebRegistry {}
+  module errorInjector = ExceptionGenerator{}
+  path p0 = { errorInjector }
 
   module m2b20 = StreamThingProducer {
     int32 array_size = 20
@@ -73,6 +72,8 @@ process FU = {
 
   path HighPT     = { prescaleBy3, m3b10 }
 
+  path playbackPath4DQM = { prescaleBy3, m3b10 }
+
   endpath e1 = { PhysicsOModule }
   module PhysicsOModule = ShmStreamConsumer {
     untracked int32 max_event_size = 7000000 
@@ -87,13 +88,13 @@ process FU = {
     }
   }
 
-  endpath e2 = { CalibrationOModule }
-  module CalibrationOModule = ShmStreamConsumer {
+  endpath e2 = { out4DQM }
+  module out4DQM = ShmStreamConsumer {
     untracked int32 max_event_size = 7000000 
     untracked int32 max_queue_depth = 5
     untracked bool use_compression = true
     untracked int32 compression_level = 1
-    untracked PSet SelectEvents = { vstring SelectEvents={"*"} }
+    untracked PSet SelectEvents = { vstring SelectEvents={"playbackPath4DQM"} }
     untracked vstring outputCommands =
     {
       "keep *",
@@ -106,7 +107,7 @@ process FU = {
 
   # DQM source program
   module tester = SMDQMSourceExample{}
-  path pDQM ={tester}
+  path DQMpath = {tester}
 
   # DQM sender service - under development
   service = FUShmDQMOutputService {

@@ -8,8 +8,7 @@ process SM  = {
     string streamLabel = "A"
     int32 maxSize = 512
 
-    untracked PSet SelectEvents = { vstring SelectEvents={"DiElectron", "CalibPath"}}
-    untracked string SelectHLTOutput = "CalibrationOModule"
+    untracked string SelectHLTOutput = "out4DQM"
   }
 
   module out2 = EventStreamFileWriter
@@ -28,7 +27,7 @@ process SM  = {
     string streamLabel = "C"
     int32 maxSize = 200
 
-    untracked PSet SelectEvents = { vstring SelectEvents={"DiElectron", "CalibPath"}}
+    untracked PSet SelectEvents = { vstring SelectEvents={"DiMuon", "HighPT"}}
     untracked string SelectHLTOutput = "PhysicsOModule"
   }
 
