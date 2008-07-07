@@ -22,9 +22,6 @@ process FUEVENTCONSUMER =
   {
     string sourceURL = "http://cmsroc6.fnal.gov:50003/urn:xdaq-application:lid=30"
 
-    int32 max_event_size = 7000000
-    int32 max_queue_depth = 5
-
     untracked string consumerName = "Consumer FUEP"
     untracked string consumerPriority = "normal"
     untracked int32 headerRetryInterval = 3  // seconds
