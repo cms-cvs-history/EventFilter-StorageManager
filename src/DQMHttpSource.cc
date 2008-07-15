@@ -2,11 +2,12 @@
  *  An input source for DQM consumers run in cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.cc,v 1.11 2008/03/04 17:12:38 hcheung Exp $
+ *  $Id: DQMHttpSource.cc,v 1.11.2.1 2008/05/30 20:28:29 biery Exp $
  */
 
 #include "EventFilter/StorageManager/src/DQMHttpSource.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
+#include "EventFilter/StorageManager/interface/DQMInstance.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -270,13 +271,13 @@ namespace edm
         for (int tdx = 0; tdx < (int) toList.size(); tdx++) {
           TObject *toPtr = toList[tdx];
           std::string cls = toPtr->IsA()->GetName();
-          std::string nm = toPtr->GetName();
+          std::string nm = stor::DQMInstance::getSafeMEName(toPtr);
           FDEBUG(8) << "    TObject class = " << cls << ", name = " << nm << std::endl;
-	  if (bei_->extract(toPtr, bei_->pwd(), true))
+          if (bei_->extract(toPtr, bei_->pwd(), true))
           {
-	    std::string path;
-	    if (MonitorElement *me = bei_->findObject(subFolderName, nm, path))
-	      me->update();
+            std::string path;
+            if (MonitorElement *me = bei_->findObject(subFolderName, nm, path))
+              me->update();
             ++count;
           }
         }
@@ -290,7 +291,7 @@ namespace edm
         std::string subFolderName = ti->first;
         std::vector<TObject *>::iterator vi(ti->second.begin()), ve(ti->second.end());
         for ( ; vi != ve; ++vi) {
-          std::string histoName = (*vi)->GetName();
+          std::string histoName = stor::DQMInstance::getSafeMEName(*vi);
           std::string fullName = subFolderName + "/" + histoName;
           std::vector<std::string>::iterator entryFound;
           entryFound = std::find(firstHistoExtractDone_.begin(),
