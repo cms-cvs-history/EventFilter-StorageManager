@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.12 2007/07/30 04:50:44 wmtan Exp $
+ $Id: StorageManagerRun.cpp,v 1.13 2008/01/22 19:28:37 muzaffar Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -134,7 +134,7 @@ Main::Main(const string& my_config_file,
   std::auto_ptr<edm::SendJobHeader> header = edm::StreamerInputSource::deserializeRegistry(*init);
 
   edm::ProductRegistry pr;
-  const edm::SendDescs& descs = header->descs_;
+  const edm::SendDescs& descs = header->descs();
   edm::SendDescs::const_iterator i(descs.begin()), e(descs.end());
   for(; i != e; ++i) {
         pr.copyProduct(*i);
