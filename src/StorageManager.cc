@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.52.2.6 2008/07/29 18:34:13 biery Exp $
+// $Id: StorageManager.cc,v 1.52.2.7 2008/07/29 19:10:30 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -138,6 +138,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   i2o::bind(this,
             &StorageManager::receiveDataMessage,
             I2O_SM_DATA,
+            XDAQ_ORGANIZATION_ID);
+  i2o::bind(this,
+            &StorageManager::receiveErrorDataMessage,
+            I2O_SM_ERROR,
             XDAQ_ORGANIZATION_ID);
   i2o::bind(this,
             &StorageManager::receiveOtherMessage,
