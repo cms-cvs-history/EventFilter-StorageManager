@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.52.2.5 2008/06/23 08:45:21 loizides Exp $
+// $Id: StorageManager.cc,v 1.52.2.6 2008/07/29 18:34:13 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -661,7 +661,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   if(fsm_.stateName()->toString() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                       "Received EVENT message but not in Enabled state! Current state = "
+                       "Received ERROR message but not in Enabled state! Current state = "
                        << fsm_.stateName()->toString() << " EVENT from" << msg->hltURL
                        << " application " << msg->hltClassName);
     // just release the memory at least - is that what we want to do?
