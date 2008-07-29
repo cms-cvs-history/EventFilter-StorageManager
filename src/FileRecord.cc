@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.8.2.2 2008/06/23 08:45:21 loizides Exp $
+// $Id: FileRecord.cc,v 1.8.2.3 2008/06/23 09:44:17 loizides Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -297,6 +297,89 @@ void FileRecord::moveFileToClosed()
     throw cms::Exception("FileRecord", "moveFileToClosed")
       << "Error moving " << openStreamerFileName << " to "
       << closedStreamerFileName << ".  The closed file size ("
+      << finalStatBuff.st_size << ") is different than the open file size ("
+      << initialStatBuff.st_size << ").  Possibly the storage manager "
+      << "disk areas are full." << std::endl;
+  }
+}
+
+
+//
+// *** move error event file to "closed" directory
+//
+void FileRecord::moveErrorFileToClosed()
+{
+  struct stat64 initialStatBuff, finalStatBuff;
+  int statStatus;
+  double pctDiff;
+  bool sizeMismatch;
+
+  string openErrorFileName   = completeFileName() + ".err";
+  statStatus = stat64(openErrorFileName.c_str(), &initialStatBuff);
+  if (statStatus != 0) {
+    throw cms::Exception("FileRecord", "moveErrorFileToClosed")
+      << "Error checking the status of open error file "
+      << openErrorFileName << ".  Has the file moved unexpectedly?"
+      << std::endl;
+  }
+  sizeMismatch = false;
+  if (smParameter_->exactFileSizeTest()) {
+    if (fileSize_ != initialStatBuff.st_size) {
+      sizeMismatch = true;
+    }
+  }
+  else {
+    pctDiff = calcPctDiff(fileSize_, initialStatBuff.st_size);
+    if (pctDiff > 0.1) {sizeMismatch = true;}
+  }
+  if (sizeMismatch) {
+    throw cms::Exception("FileRecord", "moveErrorFileToClosed")
+      << "Found an unexpected open file size when trying to move "
+      << "the file to the closed state.  File " << openErrorFileName
+      << " has an actual size of " << initialStatBuff.st_size
+      << " instead of the expected size of " << fileSize_ << std::endl;
+  }
+
+  int ronly  = chmod(openErrorFileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
+  if (ronly != 0) {
+    throw cms::Exception("FileRecord", "moveErrorFileToClosed")
+      << "Unable to change permissions of " << openErrorFileName
+      << "to read only." << std::endl;
+  }
+
+  workingDir_ = "/closed/";
+  string closedErrorFileName = completeFileName() + ".err";
+
+  int result = rename( openErrorFileName.c_str() , closedErrorFileName.c_str() );
+  if (result != 0) {
+    throw cms::Exception("FileRecord", "moveErrorFileToClosed")
+      << "Unable to move " << openErrorFileName << " to "
+      << closedErrorFileName << ".  Possibly the storage manager "
+      << "disk areas are full." << std::endl;
+  }
+
+  statStatus = stat64(closedErrorFileName.c_str(), &finalStatBuff);
+  if (statStatus != 0) {
+    throw cms::Exception("FileRecord", "moveErrorFileToClosed")
+      << "Error checking the status of closed file "
+      << closedErrorFileName << ".  This file was copied from "
+      << openErrorFileName << ", and the copy seems to have failed."
+      << std::endl;
+  }
+  sizeMismatch = false;
+  if (smParameter_->exactFileSizeTest()) {
+    if (initialStatBuff.st_size != finalStatBuff.st_size) {
+      sizeMismatch = true;
+    }
+  }
+  else {
+    pctDiff = calcPctDiff(initialStatBuff.st_size, finalStatBuff.st_size);
+    if (pctDiff > 0.1) {sizeMismatch = true;}
+  }
+  if (sizeMismatch) {
+    throw cms::Exception("FileRecord", "moveErrorFileToClosed")
+      << "Error moving " << openErrorFileName << " to "
+      << closedErrorFileName << ".  The closed file size ("
       << finalStatBuff.st_size << ") is different than the open file size ("
       << initialStatBuff.st_size << ").  Possibly the storage manager "
       << "disk areas are full." << std::endl;

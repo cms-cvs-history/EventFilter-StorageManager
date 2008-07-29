@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.52.2.4 2008/06/18 19:28:04 biery Exp $
+// $Id: StorageManager.cc,v 1.52.2.5 2008/06/23 08:45:21 loizides Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -212,15 +212,15 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("maxESDataRate",&maxESDataRate_);
   activeConsumerTimeout_ = 60;  // seconds
   ispace->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
-  idleConsumerTimeout_ = 60;  // seconds
+  idleConsumerTimeout_ = 120;  // seconds
   ispace->fireItemAvailable("idleConsumerTimeout",&idleConsumerTimeout_);
   consumerQueueSize_ = 5;
   ispace->fireItemAvailable("consumerQueueSize",&consumerQueueSize_);
   DQMmaxESEventRate_ = 1.0;  // hertz
   ispace->fireItemAvailable("DQMmaxESEventRate",&DQMmaxESEventRate_);
-  DQMactiveConsumerTimeout_ = 300;  // seconds
+  DQMactiveConsumerTimeout_ = 60;  // seconds
   ispace->fireItemAvailable("DQMactiveConsumerTimeout",&DQMactiveConsumerTimeout_);
-  DQMidleConsumerTimeout_ = 600;  // seconds
+  DQMidleConsumerTimeout_ = 120;  // seconds
   ispace->fireItemAvailable("DQMidleConsumerTimeout",&DQMidleConsumerTimeout_);
   DQMconsumerQueueSize_ = 15;
   ispace->fireItemAvailable("DQMconsumerQueueSize",&DQMconsumerQueueSize_);
@@ -634,6 +634,194 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     }
 }
 
+void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
+{
+  // get the memory pool pointer for statistics if not already set
+  if(pool_is_set_ == 0)
+  {
+    pool_ = ref->getBuffer()->getPool();
+    pool_is_set_ = 1;
+  }
+
+  I2O_MESSAGE_FRAME         *stdMsg =
+    (I2O_MESSAGE_FRAME*)ref->getDataLocation();
+  I2O_SM_DATA_MESSAGE_FRAME *msg    =
+    (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
+  FDEBUG(10)   << "StorageManager: Received error data message from HLT at " << msg->hltURL 
+	       << " application " << msg->hltClassName << " id " << msg->hltLocalId
+	       << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
+  FDEBUG(10)   << "                 for run " << msg->runID << " event " << msg->eventID
+	       << " total frames = " << msg->numFrames << std::endl;
+  FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
+	       << msg->numFrames-1 << std::endl;
+  
+  int len = msg->dataSize;
+
+  // check the storage Manager is in the Ready state first!
+  if(fsm_.stateName()->toString() != "Enabled")
+  {
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                       "Received EVENT message but not in Enabled state! Current state = "
+                       << fsm_.stateName()->toString() << " EVENT from" << msg->hltURL
+                       << " application " << msg->hltClassName);
+    // just release the memory at least - is that what we want to do?
+    ref->release();
+    return;
+  }
+
+  // If running with local transfers, a chain of I2O frames when posted only has the
+  // head frame sent. So a single frame can complete a chain for local transfers.
+  // We need to test for this. Must be head frame, more than one frame
+  // and next pointer must exist.
+  int is_local_chain = 0;
+  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
+  {
+    // this looks like a chain of frames (local transfer)
+    toolbox::mem::Reference *head = ref;
+    toolbox::mem::Reference *next = 0;
+    // best to check the complete chain just in case!
+    unsigned int tested_frames = 1;
+    next = head;
+    while((next=next->getNextReference())!=0) tested_frames++;
+    FDEBUG(10) << "StorageManager: Head frame has " << tested_frames-1
+               << " linked frames out of " << msg->numFrames-1 << std::endl;
+    if(msg->numFrames == tested_frames)
+    {
+      // found a complete linked chain from the leading frame
+      is_local_chain = 1;
+      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
+                 << " - must be local transfer" << std::endl;
+      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
+      // break the chain and feed them to the fragment collector
+      next = head;
+
+      for(int iframe=0; iframe <(int)msg->numFrames; iframe++)
+      {
+         toolbox::mem::Reference *thisref=next;
+         next = thisref->getNextReference();
+         thisref->setNextReference(0);
+         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
+         I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
+         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+         int thislen = thismsg->dataSize;
+         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
+         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
+                                          thismsg->frameCount+1, thismsg->numFrames, (Header::ERROR_EVENT), 
+                  thismsg->runID, thismsg->eventID, thismsg->outModID);
+         b.commit(sizeof(stor::FragEntry));
+
+         receivedFrames_++;
+         // for bandwidth performance measurements
+         // Following is wrong for the last frame because frame sent is
+         // is actually larger than the size taken by actual data
+         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
+                                         +thislen;
+         addMeasurement(actualFrameSize);
+
+         // should only do this test if the first data frame from each FU?
+         // check if run number is the same as that in Run configuration, complain otherwise !!!
+         // this->runNumber_ comes from the RunBase class that StorageManager inherits from
+         if(msg->runID != runNumber_)
+         {
+           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = " << msg->runID
+                           << " From " << msg->hltURL
+                           << " Different from Run Number from configuration = " << runNumber_);
+         }
+         // for FU sender list update
+         // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+         bool isLocal = true;
+
+         //update last error event seen
+         lastErrorEventSeen_ = msg->eventID;
+
+         // TODO need to fix this as the outModId is not valid for error events
+         int status = 
+	   smfusenders_.updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+					    msg->hltLocalId, msg->hltInstance, msg->hltTid,
+					    msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+					    msg->originalSize, isLocal);
+
+         if(status == 1) {
+           //++(receivedErrorEvents_.value_);
+         }
+
+         if(status == -1) {
+           LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                    "updateFUSender4data: Cannot find FU in FU Sender list!"
+                    << " For Error Event With URL "
+                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
+                    << msg->hltInstance << " Tid " << msg->hltTid);
+         }
+      }
+
+    } else {
+      // should never get here!
+      FDEBUG(10) << "StorageManager: Head frame has fewer linked frames "
+                 << "than expected: abnormal error! " << std::endl;
+    }
+  }
+
+  if (is_local_chain == 0) 
+  {
+    // put pointers into fragment collector queue
+    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
+    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                msg->frameCount+1, msg->numFrames, (Header::ERROR_EVENT), 
+                                msg->runID, msg->eventID, msg->outModID);
+    b.commit(sizeof(stor::FragEntry));
+    // Frame release is done in the deleter.
+    receivedFrames_++;
+    // for bandwidth performance measurements
+    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
+                                    + len;
+    addMeasurement(actualFrameSize);
+
+    // should only do this test if the first data frame from each FU?
+    // check if run number is the same as that in Run configuration, complain otherwise !!!
+    // this->runNumber_ comes from the RunBase class that StorageManager inherits from
+    if(msg->runID != runNumber_)
+    {
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = " << msg->runID
+                      << " From " << msg->hltURL
+                      << " Different from Run Number from configuration = " << runNumber_);
+    }
+
+    //update last error event seen
+    lastErrorEventSeen_ = msg->eventID;
+
+    // for FU sender list update
+    // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+    bool isLocal = false;
+    // TODO need to fix this as the outModId is not valid for error events
+    int status = 
+      smfusenders_.updateFUSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+				       msg->hltLocalId, msg->hltInstance, msg->hltTid,
+				       msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+				       msg->originalSize, isLocal);
+    
+    if(status == 1) {
+      //++(receivedErrorEvents_.value_);
+    }
+    if(status == -1) {
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+		      "updateFUSender4data: Cannot find FU in FU Sender list!"
+		      << " For Error Event With URL "
+		      << msg->hltURL << " class " << msg->hltClassName  << " instance "
+		      << msg->hltInstance << " Tid " << msg->hltTid);
+    }
+  }
+
+  if (  msg->frameCount == msg->numFrames-1 )
+    {
+      string hltClassName(msg->hltClassName);
+      sendDiscardMessage(msg->fuID, 
+			 msg->hltInstance, 
+			 I2O_FU_DATA_DISCARD,
+			 hltClassName);
+    }
+}
+
 void StorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
 {
   // get the memory pool pointer for statistics if not already set
@@ -866,6 +1054,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
        << getApplicationDescriptor()->getInstance()
        << "</title>"     << endl;
+  *out << "</head><body>"                                            << endl;
     *out << "<table border=\"0\" width=\"100%\">"                      << endl;
     *out << "<tr>"                                                     << endl;
     *out << "  <td align=\"left\">"                                    << endl;
@@ -929,7 +1118,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "  <td>"                                                   << endl;
 
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\""	 << endl;
-  *out << " readonly title=\"Note: this info updates every 30s !!!\">"<< endl;
+  *out << " readonly title=\"Note: parts of this info updates every 30s !!!\">"<< endl;
   *out << "<colgroup> <colgroup align=\"right\">"			 << endl;
     *out << "  <tr>"						 	 << endl;
     *out << "    <th colspan=2>"					 << endl;
@@ -1010,7 +1199,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
         }
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=4>"                                       << endl;
-    *out << "      " << "Streams"                                      << endl;
+    *out << "      " << "Streams (updated only every 30 sec)"          << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
         *out << "<tr class=\"special\">"			       << endl;
@@ -1223,7 +1412,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<a href=\"" << url << "/" << urn << "/streameroutput" << "\">" 
        << "Streamer Output Status web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
-  *out << "<a href=\"" << url << "/" << urn << "/EventServerStats?update=on"
+  *out << "<a href=\"" << url << "/" << urn << "/EventServerStats?update=off"
        << "\">Event Server Statistics" << "</a>" << endl;
   /* --- leave these here to debug event server problems
   *out << "<a href=\"" << url << "/" << urn << "/geteventdata" << "\">" 
@@ -1250,6 +1439,7 @@ void StorageManager::fusenderWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
        << getApplicationDescriptor()->getInstance()
        << "</title>"     << endl;
+  *out << "</head><body>"                                            << endl;
     *out << "<table border=\"0\" width=\"100%\">"                      << endl;
     *out << "<tr>"                                                     << endl;
     *out << "  <td align=\"left\">"                                    << endl;
@@ -1552,6 +1742,7 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
        << getApplicationDescriptor()->getInstance()
        << "</title>"     << endl;
+  *out << "</head><body>"                                            << endl;
     *out << "<table border=\"0\" width=\"100%\">"                      << endl;
     *out << "<tr>"                                                     << endl;
     *out << "  <td align=\"left\">"                                    << endl;
@@ -2031,7 +2222,9 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   // --> if the SM is not enabled, assume that users want updating turned
   // --> ON so that they don't A) think that is is ON (when it's not) and
   // --> B) wait forever thinking that something is wrong.
-  bool autoUpdate = true;
+  //bool autoUpdate = true;
+  // 11-Jun-2008, KAB - changed auto update default to OFF
+  bool autoUpdate = false;
   if(fsm_.stateName()->toString() == "Enabled") {
     cgicc::Cgicc cgiWrapper(in);
     cgicc::const_form_iterator updateRef = cgiWrapper.getElement("update");
@@ -2040,6 +2233,9 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         boost::algorithm::to_lower_copy(updateRef->getValue());
       if (updateString == "off") {
         autoUpdate = false;
+      }
+      else {
+        autoUpdate = true;
       }
     }
   }

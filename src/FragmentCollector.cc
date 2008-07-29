@@ -1,8 +1,8 @@
-// $Id: FragmentCollector.cc,v 1.37 2008/01/30 16:51:47 biery Exp $
+// $Id: FragmentCollector.cc,v 1.38 2008/01/30 17:31:38 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
-
+#include "EventFilter/StorageManager/interface/Configurator.h"
 
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -14,6 +14,7 @@
 #include <utility>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 
 using namespace edm;
 using namespace std;
@@ -51,6 +52,7 @@ namespace stor
     buffer_deleter_(d),
     prods_(0),
     info_(&h), 
+    errFileRunNumber_(-99),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -66,6 +68,7 @@ namespace stor
     buffer_deleter_(d),
     prods_(0),
     info_(info.get()), 
+    errFileRunNumber_(-99),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -76,6 +79,9 @@ namespace stor
 
   FragmentCollector::~FragmentCollector()
   {
+    // 28-Jul-2008, KAB - as part of providing a temporary way to
+    // write out error events, close any open error event file
+    closeErrorFileIfNeeded();
   }
 
   void FragmentCollector::run(FragmentCollector* t)
@@ -148,6 +154,12 @@ namespace stor
 	      processDQMEvent(entry);
 	      break;
 	    }
+	  case (Header::ERROR_EVENT):
+	    {
+	      FR_DEBUG << "FragColl: Got an Error_Event" << endl;
+	      processErrorEvent(entry);
+	      break;
+	    }
 	  default:
 	    {
 	      FR_DEBUG << "FragColl: Got junk" << endl;
@@ -159,6 +171,10 @@ namespace stor
     FR_DEBUG << "FragColl: DONE!" << endl;
     writer_->stop();
     dqmServiceManager_->stop();
+
+    // 28-Jul-2008, KAB - as part of providing a temporary way to
+    // write out error events, close any open error event file
+    closeErrorFileIfNeeded();
   }
 
   void FragmentCollector::stop()
@@ -420,4 +436,137 @@ namespace stor
     }
     ProgressMarker::instance()->processing(false);
   }
+
+  void FragmentCollector::processErrorEvent(FragEntry* entry)
+  {
+    ProgressMarker::instance()->processing(true);
+    if(entry->totalSegs_==1)
+    {
+        FR_DEBUG << "FragColl: Got an Error Event with one segment" << endl;
+        FR_DEBUG << "FragColl: Event size " << entry->buffer_size_ << endl;
+        FR_DEBUG << "FragColl: Event ID " << entry->id_ << endl;
+
+        // 28-Jul-2008, provide a temporary way to write out error events
+        // for global runs taken with CMSSW_2_0_X
+
+        // open a new error file, if needed
+        openErrorFileIfNeeded(entry->run_);
+
+        // write the error event to the file
+        if (! errFileOut_->write((char*)entry->buffer_address_,entry->buffer_size_)) {
+          throw cms::Exception("FragmentCollector","processErrorEvent")
+            << "Failed to write error event to " << errFileFullPath_ << std::endl;
+        }
+        if (errFileRecord_.get() != 0) {
+          errFileRecord_->increaseFileSize(entry->buffer_size_);
+          errFileRecord_->increaseEventCount();
+        }
+
+        // make sure the buffer properly released
+        (*buffer_deleter_)(entry);
+        return;
+    } // end of single segment test
+
+    pair<Collection::iterator,bool> rc =
+      fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_, entry->secondaryId_), Fragments()));
+    
+    rc.first->second.push_back(*entry);
+    FR_DEBUG << "FragColl: added fragment" << endl;
+    
+    if((int)rc.first->second.size()==entry->totalSegs_)
+    {
+        FR_DEBUG << "FragColl: completed an error event with "
+                 << entry->totalSegs_ << " segments" << endl;
+        // we are done with this error event so assemble parts
+        // but first make sure we have enough room; use an overestimate
+        unsigned int max_sizePerFrame = rc.first->second.begin()->buffer_size_;
+        if((entry->totalSegs_ * max_sizePerFrame) > event_area_.capacity()) {
+          event_area_.resize(entry->totalSegs_ * max_sizePerFrame);
+        }
+        unsigned char* pos = (unsigned char*)&event_area_[0];
+
+        int sum=0;
+        unsigned int lastpos=0;
+        Fragments::iterator
+          i(rc.first->second.begin()),e(rc.first->second.end());
+
+        for(;i!=e;++i)
+        {
+          int dsize = i->buffer_size_;
+          sum+=dsize;
+          unsigned char* from=(unsigned char*)i->buffer_address_;
+          copy(from,from+dsize,pos+lastpos);
+          lastpos = lastpos + dsize;
+          // ask deleter to kill off the buffer
+          (*buffer_deleter_)(&(*i));
+        }
+
+        // 28-Jul-2008, provide a temporary way to write out error events
+        // for global runs taken with CMSSW_2_0_X
+
+        // open a new error file, if needed
+        openErrorFileIfNeeded(entry->run_);
+
+        // write the error event to the file
+        if (! errFileOut_->write((char*)entry->buffer_address_,entry->buffer_size_)) {
+          throw cms::Exception("FragmentCollector","processErrorEvent")
+            << "Failed to write error event to " << errFileFullPath_ << std::endl;
+        }
+        if (errFileRecord_.get() != 0) {
+          errFileRecord_->increaseFileSize(entry->buffer_size_);
+          errFileRecord_->increaseEventCount();
+        }
+
+        // remove the entry from the map
+        fragment_area_.erase(rc.first);
+    }
+    ProgressMarker::instance()->processing(false);
+  }
+
+  void FragmentCollector::openErrorFileIfNeeded(uint32 errorEventRunNumber)
+  {
+    // check if the error event file has never been opened or needs
+    // to be changed because the run number has changed
+    if ((errFileOut_.get() == 0) || (((int) errorEventRunNumber) != errFileRunNumber_))
+    {
+      // if a file is already open, close it
+      closeErrorFileIfNeeded();
+
+      // determine the full path to the new file
+      boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
+      std::ostringstream oss;
+      oss    << smParameter_->setupLabel()
+             << "." << std::setfill('0') << std::setw(8) << errorEventRunNumber
+             << "." << "0001"
+             << "." << "ERROR"
+             << "." << smParameter_->fileName()
+             << "." << smParameter_->smInstance();
+      std::string fileName = oss.str();
+      errFileRecord_.reset(new edm::FileRecord(1, fileName, smParameter_->filePath()));
+      errFileFullPath_ = errFileRecord_->filePath() + errFileRecord_->fileName() + errFileRecord_->fileCounterStr() + ".err";
+
+      // open the new file
+      errFileOut_.reset(new ofstream());
+      errFileOut_->open(errFileFullPath_.c_str(),ios::out|ios::binary);
+
+      // save the run number associated with the new file
+      errFileRunNumber_ = errorEventRunNumber;
+    }
+  }
+
+  void FragmentCollector::closeErrorFileIfNeeded()
+  {
+    if (errFileOut_.get() != 0)
+    {
+      errFileOut_->close();
+      errFileOut_.reset();
+      errFileRunNumber_ = -99;
+      if (errFileRecord_.get() != 0)
+      {
+        errFileRecord_->moveErrorFileToClosed();
+        errFileRecord_.reset();
+      }
+    }
+  }
+
 }

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.28.2.2 2008/06/03 23:00:45 hcheung Exp $
+   $Id: StorageManager.h,v 1.28.2.3 2008/06/18 19:24:20 biery Exp $
 */
 
 #include <string>
@@ -89,6 +89,7 @@ namespace stor {
    private:  
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
     void receiveDataMessage(toolbox::mem::Reference *ref);
+    void receiveErrorDataMessage(toolbox::mem::Reference *ref);
     void receiveOtherMessage(toolbox::mem::Reference *ref);
     void receiveDQMMessage(toolbox::mem::Reference *ref);
 
@@ -243,6 +244,7 @@ namespace stor {
     smap	 streams_;
 
     unsigned int lastEventSeen_; // report last seen event id
+    unsigned int lastErrorEventSeen_; // report last error event id seen
     boost::mutex fulist_lock_;  // quick (temporary) fix for registration problem
 
     enum

@@ -26,6 +26,7 @@
 #include "EventFilter/StorageManager/interface/ServiceManager.h"
 #include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/FileRecord.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
@@ -33,6 +34,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <sstream>
 
 namespace stor
 {
@@ -76,6 +78,7 @@ namespace stor
     void processEvent(FragEntry* msg);
     void processHeader(FragEntry* msg);
     void processDQMEvent(FragEntry* msg);
+    void processErrorEvent(FragEntry* msg);
 
     edm::EventBuffer* cmd_q_;
     edm::EventBuffer* evtbuf_q_;
@@ -87,6 +90,13 @@ namespace stor
     boost::shared_ptr<boost::thread> me_;
     const edm::ProductRegistry* prods_; // change to shared_ptr ? 
     stor::HLTInfo* info_;  // cannot be const when using EP_Runner?
+
+    void openErrorFileIfNeeded(uint32 runNumber);
+    void closeErrorFileIfNeeded();
+    int errFileRunNumber_;
+    boost::shared_ptr<edm::FileRecord> errFileRecord_;
+    std::string errFileFullPath_;
+    boost::shared_ptr<ofstream> errFileOut_;
 
   public:
 
