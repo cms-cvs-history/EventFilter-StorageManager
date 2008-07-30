@@ -1,7 +1,7 @@
 /*
         For saving the FU sender list
 
- $Id$
+ $Id: SMFUSenderEntry.cc,v 1.4 2007/04/26 01:01:54 hcheung Exp $
 */
 
 #include "EventFilter/StorageManager/interface/SMFUSenderEntry.h"
@@ -191,7 +191,10 @@ double SMFUSenderEntry::getStopWTime() //const
 {
    boost::mutex::scoped_lock sl(entry_lock_); // should check if this is needed
    chrono_.stop(0); // note that this does not actually stop the stopwatch
-   return ((double) chrono_.dusecs());
+
+   // 30-Jul-2008, KAB: changed the units of the return value from
+   // microseconds to milliseconds
+   return ((double) chrono_.dsecs() * 1000.0);
 }
 
 boost::shared_ptr<std::vector<char> > SMFUSenderEntry::getvhltURL() 
