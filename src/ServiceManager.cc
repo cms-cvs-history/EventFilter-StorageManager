@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.6 2008/03/03 20:23:30 biery Exp $
+// $Id: ServiceManager.cc,v 1.7 2008/03/10 10:07:07 meschi Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
@@ -12,8 +12,10 @@ using boost::shared_ptr;
 
 ServiceManager::ServiceManager(const std::string& config):
   outModPSets_(0),
-  managedOutputs_(0)
+  managedOutputs_(0),
+  storedEvents_(0)
 {
+  storedNames_.clear();
   collectStreamerPSets(config);
 } 
 
@@ -21,6 +23,8 @@ ServiceManager::ServiceManager(const std::string& config):
 ServiceManager::~ServiceManager()
 { 
   managedOutputs_.clear();
+  storedEvents_.clear();
+  storedNames_.clear();
 }
 
 
@@ -75,6 +79,8 @@ void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::strin
             stream->setHighWaterMark(smParameter_ -> highWaterMark());
             stream->setLumiSectionTimeOut(smParameter_ -> lumiSectionTimeOut());
             managedOutputs_.push_back(stream);
+            storedEvents_.push_back(0);
+            storedNames_.push_back(stream->getStreamLabel());
             stream->report(cout,3);
           }
         }
@@ -101,9 +107,14 @@ void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::strin
 void ServiceManager::manageEventMsg(EventMsgView& msg)
 {
   bool eventAccepted = false;
-  for(StreamsIterator  it = managedOutputs_.begin(), itEnd = managedOutputs_.end(); it != itEnd; ++it)
-    eventAccepted = (*it)->nextEvent(msg) || eventAccepted;
-
+  bool thisEventAccepted = false;
+  int outputIdx = -1;
+  for(StreamsIterator  it = managedOutputs_.begin(), itEnd = managedOutputs_.end(); it != itEnd; ++it) {
+    ++outputIdx;
+    thisEventAccepted = (*it)->nextEvent(msg);
+    eventAccepted = thisEventAccepted || eventAccepted;
+    if (thisEventAccepted) ++storedEvents_[outputIdx];
+  }
 }
 
 
@@ -136,6 +147,16 @@ std::list<std::string>& ServiceManager::get_currfiles()
 	filelist_.insert(filelist_.end(), sub_list.begin(), sub_list.end());
   }
   return currfiles_;  
+}
+
+//
+std::vector<uint32>& ServiceManager::get_storedEvents()
+{ 
+  return storedEvents_;  
+}
+std::vector<std::string>& ServiceManager::get_storedNames()
+{ 
+  return storedNames_;  
 }
 
 /**

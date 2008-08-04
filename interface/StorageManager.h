@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.28.2.3 2008/06/18 19:24:20 biery Exp $
+   $Id: StorageManager.h,v 1.28.2.4 2008/07/29 18:34:12 biery Exp $
 */
 
 #include <string>
@@ -194,11 +194,24 @@ namespace stor {
     xdata::UnsignedInteger32 connectedFUs_;
 
     xdata::UnsignedInteger32 storedEvents_;
+    xdata::UnsignedInteger32 receivedEvents_;
+    xdata::UnsignedInteger32 receivedErrorEvents_;
     xdata::UnsignedInteger32 dqmRecords_;
     xdata::UnsignedInteger32 closedFiles_;
+    xdata::UnsignedInteger32 openFiles_;
     xdata::Vector<xdata::String> fileList_;
     xdata::Vector<xdata::UnsignedInteger32> eventsInFile_;
+    xdata::Vector<xdata::UnsignedInteger32> storedEventsInStream_;
+    xdata::Vector<xdata::UnsignedInteger32> receivedEventsFromOutMod_;
+    typedef std::map<std::string,uint32> countMap;
+    typedef std::map<uint32,std::string> idMap;
+    typedef std::map<uint32,std::string>::iterator idMap_iter;
+    countMap receivedEventsMap_;
+    idMap modId2ModOutMap_;
+    countMap storedEventsMap_;
     xdata::Vector<xdata::UnsignedInteger32> fileSize_;
+    xdata::Vector<xdata::String> namesOfStream_;
+    xdata::Vector<xdata::String> namesOfOutMod_;
 
     // *** for performance measurements
     void addMeasurement(unsigned long size);
