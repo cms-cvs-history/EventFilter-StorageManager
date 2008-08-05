@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.8.2.3 2008/06/23 09:44:17 loizides Exp $
+// $Id: FileRecord.cc,v 1.8.2.4 2008/07/29 18:34:13 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -314,7 +314,7 @@ void FileRecord::moveErrorFileToClosed()
   double pctDiff;
   bool sizeMismatch;
 
-  string openErrorFileName   = completeFileName() + ".err";
+  string openErrorFileName   = completeFileName() + ".dat";
   statStatus = stat64(openErrorFileName.c_str(), &initialStatBuff);
   if (statStatus != 0) {
     throw cms::Exception("FileRecord", "moveErrorFileToClosed")
@@ -348,7 +348,7 @@ void FileRecord::moveErrorFileToClosed()
   }
 
   workingDir_ = "/closed/";
-  string closedErrorFileName = completeFileName() + ".err";
+  string closedErrorFileName = completeFileName() + ".dat";
 
   int result = rename( openErrorFileName.c_str() , closedErrorFileName.c_str() );
   if (result != 0) {

@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.38 2008/01/30 17:31:38 biery Exp $
+// $Id: FragmentCollector.cc,v 1.38.4.1 2008/07/29 18:34:13 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -515,6 +515,14 @@ namespace stor
         if (errFileRecord_.get() != 0) {
           errFileRecord_->increaseFileSize(entry->buffer_size_);
           errFileRecord_->increaseEventCount();
+          double ts = 0;
+          if (!ts) { // set/overwrite stop time
+            struct timeval now;
+            struct timezone dummyTZ;
+            gettimeofday(&now, &dummyTZ);
+            ts = (double) now.tv_sec + (double) now.tv_usec / 1000000.0;
+            errFileRecord_->lastEntry(ts);
+          }
         }
 
         // remove the entry from the map
@@ -543,14 +551,35 @@ namespace stor
              << "." << smParameter_->smInstance();
       std::string fileName = oss.str();
       errFileRecord_.reset(new edm::FileRecord(1, fileName, smParameter_->filePath()));
-      errFileFullPath_ = errFileRecord_->filePath() + errFileRecord_->fileName() + errFileRecord_->fileCounterStr() + ".err";
 
+      if (disks_>0)
+        errFileRecord_->fileSystem((errorEventRunNumber + atoi(smParameter_->smInstance().c_str())) % disks_); 
+
+      errFileRecord_->setFileCounter(1);
+      errFileRecord_->checkDirectories();
+      errFileRecord_->setRunNumber(errorEventRunNumber);
+      errFileRecord_->setStreamLabel("ERROR");
+      errFileRecord_->setSetupLabel(smParameter_->setupLabel());
+      
+      errFileFullPath_ = errFileRecord_->filePath() + errFileRecord_->fileName() + errFileRecord_->fileCounterStr() + ".dat";
       // open the new file
       errFileOut_.reset(new ofstream());
       errFileOut_->open(errFileFullPath_.c_str(),ios::out|ios::binary);
 
       // save the run number associated with the new file
       errFileRunNumber_ = errorEventRunNumber;
+
+      double ts = 0;
+      if (!ts) { // set start time
+        struct timeval now;
+        struct timezone dummyTZ;
+        gettimeofday(&now, &dummyTZ);
+        ts = (double) now.tv_sec + (double) now.tv_usec / 1000000.0;
+        errFileRecord_->firstEntry(ts);
+      }
+
+      // enter file into log file
+      errFileRecord_->insertFileInDatabase();
     }
   }
 
@@ -564,6 +593,7 @@ namespace stor
       if (errFileRecord_.get() != 0)
       {
         errFileRecord_->moveErrorFileToClosed();
+        errFileRecord_->updateDatabase();
         errFileRecord_.reset();
       }
     }
