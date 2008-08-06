@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.7 2008/03/10 10:07:07 meschi Exp $
+// $Id: ServiceManager.cc,v 1.7.2.1 2008/08/04 16:06:54 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
@@ -13,7 +13,9 @@ using boost::shared_ptr;
 ServiceManager::ServiceManager(const std::string& config):
   outModPSets_(0),
   managedOutputs_(0),
-  storedEvents_(0)
+  storedEvents_(0),
+  currentlumi_(0),
+  timeouttime_(0)
 {
   storedNames_.clear();
   collectStreamerPSets(config);
@@ -106,14 +108,24 @@ void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::strin
 
 void ServiceManager::manageEventMsg(EventMsgView& msg)
 {
-  bool eventAccepted = false;
-  bool thisEventAccepted = false;
   int outputIdx = -1;
-  for(StreamsIterator  it = managedOutputs_.begin(), itEnd = managedOutputs_.end(); it != itEnd; ++it) {
+  for(StreamsIterator it = managedOutputs_.begin(), itEnd = managedOutputs_.end(); it != itEnd; ++it) {
     ++outputIdx;
-    thisEventAccepted = (*it)->nextEvent(msg);
-    eventAccepted = thisEventAccepted || eventAccepted;
-    if (thisEventAccepted) ++storedEvents_[outputIdx];
+    bool thisEventAccepted = (*it)->nextEvent(msg);
+    if (thisEventAccepted) {
+      ++storedEvents_[outputIdx];
+      if ((*it)->lumiSection() > currentlumi_) {
+        currentlumi_ = (*it)->lumiSection();
+        timeouttime_ = (*it)->getCurrentTime();
+      }
+    }
+  }
+
+  // close time-out open files from previous lumi-section 
+  if(currentlumi_>0) {
+    for(StreamsIterator it = managedOutputs_.begin(), itEnd = managedOutputs_.end(); it != itEnd; ++it) {
+      (*it)->closeTimedOutFiles(currentlumi_, timeouttime_);
+    }
   }
 }
 

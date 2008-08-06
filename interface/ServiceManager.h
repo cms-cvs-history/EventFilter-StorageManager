@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.3 2008/03/03 20:23:29 biery Exp $
+// $Id: ServiceManager.h,v 1.3.4.1 2008/08/04 16:06:54 biery Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 #include "FWCore/Framework/interface/EventSelector.h"
@@ -55,6 +55,8 @@ namespace edm
     std::list<std::string>                 currfiles_;
     std::vector<uint32>                    storedEvents_;
     std::vector<std::string>               storedNames_;
+    int                                    currentlumi_;
+    double                                 timeouttime_;
   };
   
 }//edm-namespace

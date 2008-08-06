@@ -1,7 +1,7 @@
 #ifndef OUTPUTSERVICE_H
 #define OUTPUTSERVICE_H
 
-// $Id: OutputService.h,v 1.1 2007/02/05 11:19:56 klute Exp $
+// $Id: OutputService.h,v 1.2 2008/04/21 12:14:13 loizides Exp $
 
 #include "IOPool/Streamer/interface/EventMessage.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -24,6 +24,7 @@ namespace edm {
       ~OutputService();
 
       void   writeEvent(EventMsgView const&);
+      double lumiSection() { return file_->lumiSection(); }
       double lastEntry() { return file_->lastEntry(); }
       void   report(std::ostream &os, int indentation) const;
 

@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.9 2008/05/13 18:06:46 loizides Exp $
+// $Id: StreamService.h,v 1.7.2.1 2008/05/26 12:17:55 loizides Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -46,6 +46,9 @@ namespace edm {
       void   stop();
       void   report(std::ostream &os, int indentation) const;
 
+      int    runNum() const { return runNumber_; }
+      int    lumiSection() const { return lumiSection_; }
+
       void   setNumberOfFileSystems(int i)          { numberOfFileSystems_ = i; } 
       void   setCatalog(const std::string &s)       { catalog_  = s; }
       void   setSourceId(const std::string &s)      { sourceId_ = s; }
@@ -56,25 +59,25 @@ namespace edm {
       void   setSetupLabel(std::string s)           { setupLabel_ = s; }
       void   setHighWaterMark(double d)             { highWaterMark_ = d; }
       void   setLumiSectionTimeOut(double d)        { lumiSectionTimeOut_ = d; }
+      void   closeTimedOutFiles(int lumi, double timeoutstart);
 
+      double getCurrentTime() const;
       std::list<std::string> getFileList();
       std::list<std::string> getCurrentFileList();
-      const std::string& getStreamLabel()    const {return streamLabel_;}
+      const std::string& getStreamLabel() const {return streamLabel_;}
 
     private:
       boost::shared_ptr<OutputService>  newOutputService();
       boost::shared_ptr<OutputService>  getOutputService(EventMsgView const&);
       boost::shared_ptr<FileRecord>     generateFileRecord();  
 
-      void        saveInitMessage(InitMsgView const&);
-      void        initializeSelection(InitMsgView const&);
-      bool        acceptEvent(EventMsgView const&);
-      void        setStreamParameter();
-      void        closeTimedOutFiles();
-      double      getCurrentTime() const;
-      bool        checkEvent(boost::shared_ptr<FileRecord>, EventMsgView const&) const;
-      bool        checkFileSystem() const;
-      void        fillOutputSummaryClosed(const boost::shared_ptr<FileRecord> &file);
+      void   saveInitMessage(InitMsgView const&);
+      void   initializeSelection(InitMsgView const&);
+      bool   acceptEvent(EventMsgView const&);
+      void   setStreamParameter();
+      bool   checkEvent(boost::shared_ptr<FileRecord>, EventMsgView const&) const;
+      bool   checkFileSystem() const;
+      void   fillOutputSummaryClosed(const boost::shared_ptr<FileRecord> &file);
 
       // variables
       ParameterSet                           parameterSet_;
