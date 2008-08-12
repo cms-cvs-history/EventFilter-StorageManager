@@ -1,9 +1,38 @@
+2008-08-06  Constantin Loizides <loizides@mit.edu>
+
+	* tag V03-11-12
+	* Fixes a flaw/bug in the way the lumi-section timeout is handled. 
+	  Following the suggestion by Kurt the following is enforced:
+	   1. The first flaw is that the LumiSectionTimeout is enforced against
+	      the time that the last event arrived for LumiSection N instead of
+	      the time of the arrival of the first event in LumiSection N+1.
+	   2. The second flaw is that each stream keeps track of its own
+	      starting point for the timeout rather than using a common value.
+	  This is implemented by a modified version of
+	  StreamService::closeTimedOutFiles() which is called by
+	  ServiceManager::ManageEventMessage() for each stream.
+
+2008-08-05  Constantin Loizides <loizides@mit.edu>
+
+	* tag V03-11-11
+	* Additions to the handling of error streams such that they can be
+	  injected for transfers to Tier0.
+
+2008-08-04  Harry Cheung <cheung@fnal.gov>
+
+	* tag V03-11-10
+	* Backport of fixes from 2_1_X into 2_0_X for global runs. Includes
+	  handling of Error stream for error events from the RB and writes out
+	  an error stream. Also includes changes to SM web app pages to aid
+	  debugging Storage Manager problems.Fixed bugs in DQM histogram
+	  serving and archiving.
+
 2008-07-17  Harry Cheung <cheung@fnal.gov>
 
 	* tag V03-11-09
-	* Fixes from KB for scalar MEs (ints, floats, strings):  correctly determine ME name; 
-	switched to using first instance when collating rather than last instance.
-	Fixed bugs in DQM histogram serving and archiving.
+	* Fixes from KB for scalar MEs (ints, floats, strings):  correctly
+	  determine ME name; switched to using first instance when collating
+	  rather than last instance.
 
 2008-06-18  Kurt Biery <biery@fnal.gov>
 
