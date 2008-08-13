@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: cleanupEmu.sh,v 1.8 2008/08/11 19:19:16 loizides Exp $
+# $Id: cleanupEmu.sh,v 1.6 2008/07/23 21:36:40 loizides Exp $
 
 if test -e "/etc/profile.d/sm_env.sh"; then 
     source /etc/profile.d/sm_env.sh
@@ -28,7 +28,7 @@ if ! test -d "$EMUDIR"; then
 fi
  
 # lifetime in mins / 1 day = 1440
-LIFETIME50=90
+LIFETIME90=90
 LIFETIME30=360
 LIFETIME20=1440
 LIFETIME00=10080
@@ -40,21 +40,16 @@ EPOCH=`date +%s`
 for CUD in $( ls $EMUDIR | grep ^[0-9][0-9]$ ); do
   
     # find mount point of dir to cleanup
-    tmpvar=`ls -l $EMUDIR/$CUD | cut -f2 -d">"`
-    if test "`hostname`" = "srv-C2D05-02" -o "`hostname`" = "srv-S2C17-01"; then
-        mntpoint=`echo $tmpvar | cut -f2 -d"/"`
-    else
-        mntpoint=`echo $tmpvar | cut -f3 -d"/"`
-    fi
+    mntpoint=`ls -l $EMUDIR/$CUD | cut -f2 -d">" | cut -f3 -d"/"`
 
     # find how full disk is to determine how much to delete
     LIFETIME=$(df | 
-        awk -v LIFETIME50="$LIFETIME50" \
+        awk -v LIFETIME90="$LIFETIME90" \
             -v LIFETIME30="$LIFETIME30" \
             -v LIFETIME20="$LIFETIME20" \
             -v LIFETIME00="$LIFETIME00" \
             -v pat="$mntpoint" \
-           '$0 ~ pat {if ($5 > 50) print LIFETIME50; \
+           '$0 ~ pat {if ($5 > 90) print LIFETIME90; \
                  else if ($5 > 30) print LIFETIME30; \
                  else if ($5 > 20) print LIFETIME20; \
                  else print LIFETIME00; }' )

@@ -1,16 +1,9 @@
 #!/bin/sh
-# $Id: setup_sm.sh,v 1.15 2008/08/07 15:54:10 jserrano Exp $
+# $Id: setup_sm.sh,v 1.12 2008/08/05 14:26:14 loizides Exp $
 
 if test -e "/etc/profile.d/sm_env.sh"; then 
     source /etc/profile.d/sm_env.sh;
 fi
-
-###
-echo     5 > /proc/sys/vm/dirty_background_ratio
-echo    15 > /proc/sys/vm/dirty_ratio
-echo   128 > /proc/sys/vm/lower_zone_protection
-echo 16384 > /proc/sys/vm/min_free_kbytes
-###
 
 store=/store
 if test -n "$SM_STORE"; then
@@ -23,11 +16,6 @@ fi
 
 hname=`hostname | cut -d. -f1`;
 nname="node"`echo $hname | cut -d- -f3` 
-
-if test -x "/sbin/multipath"; then
-    echo "Refresh multipath devices"
-    /sbin/multipath
-fi
 
 case $hname in
     cmsdisk0)
@@ -82,11 +70,6 @@ if test -n "$SM_CALIB_NFS" -a -n "$SM_CALIBAREA"; then
         echo "Attempting to mount $SM_CALIBAREA"
         mount -t nfs -o rsize=32768,wsize=32768,timeo=14,intr $SM_CALIB_NFS $SM_CALIBAREA
     fi
-fi
-
-if test -x "/sbin/multipath"; then
-    echo "Flushing unused multipath devices"
-    /sbin/multipath -F
 fi
 
 su - cmsprod -c "~cmsprod/$nname/t0_control.sh stop" >/dev/null 2>&1
