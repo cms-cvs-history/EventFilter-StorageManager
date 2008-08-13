@@ -31,7 +31,15 @@ process SM  = {
     untracked string SelectHLTOutput = "PhysicsOModule"
   }
 
+  //module out4 = ErrorStreamFileWriter
+  //{
+  //  // these are only valid for online storage manager
+  //  string streamLabel = "Error"
+  //  int32 maxSize = 32
+  //}
+
   endpath e1 = { out }
   endpath e2 = { out2 }
   endpath e3 = { out3 }
+  //endpath e4 = { out4 }
 }
