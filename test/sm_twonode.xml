@@ -50,7 +50,7 @@
       <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
         <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_twoOut.cfi</parameterSet>
         <runNumber xsi:type="xsd:unsignedInt">1</runNumber>
-        <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
+    <!--    <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>   -->
         <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
       </properties>
     </xc:Application>
@@ -65,7 +65,7 @@
       <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
         <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_twoOut.cfi</parameterSet>
         <runNumber xsi:type="xsd:unsignedInt">1</runNumber>
-        <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
+    <!--    <collReconnSec xsi:type="xsd:integer">-1</collReconnSec> -->
         <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
       </properties>
     </xc:Application>
