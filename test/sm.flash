@@ -8,9 +8,9 @@
       <mon:item name="url"              infospace="urn:xdaq-monitorable:StorageManager:" type="string"/>
       <mon:item name="receivedFrames"   infospace="urn:xdaq-monitorable:StorageManager:" type="unsigned int 32"/>
       <mon:item name="storedEvents"     infospace="urn:xdaq-monitorable:StorageManager:" type="unsigned int 32"/>
+      <mon:item name="closedFiles"      infospace="urn:xdaq-monitorable:StorageManager:" type="unsigned int 32"/>
       <mon:item name="connectedRBs"     infospace="urn:xdaq-monitorable:StorageManager:" type="unsigned int 32"/>
       <mon:item name="stateName"        infospace="urn:xdaq-monitorable:StorageManager:" type="string"/>
-      <mon:item name="storedEvents"     infospace="urn:xdaq-monitorable:StorageManager:" type="unsigned int 32"/>
       <mon:item name="storedVolume"     infospace="urn:xdaq-monitorable:StorageManager:" type="double"/>
       <mon:item name="instantBandwidth" infospace="urn:xdaq-monitorable:StorageManager:" type="double"/>
       <mon:item name="instantRate"      infospace="urn:xdaq-monitorable:StorageManager:" type="double"/>
