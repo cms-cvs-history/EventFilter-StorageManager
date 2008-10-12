@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.42 2008/10/08 19:49:51 biery Exp $
+   $Id: StorageManager.h,v 1.43 2008/10/09 16:14:36 biery Exp $
 */
 
 #include <string>
@@ -98,6 +98,7 @@ namespace stor {
 			    unsigned int, 
 			    std::string);
 
+    void configureAction();
     void stopAction();
     void haltAction();
 
@@ -157,6 +158,7 @@ namespace stor {
     bool pushMode_;
     std::string smConfigString_;
     std::string smFileCatalog_;
+    bool reconfigurationRequested_;
 
     xdata::Boolean collateDQM_;
     xdata::Boolean archiveDQM_;
