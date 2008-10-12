@@ -28,7 +28,9 @@ namespace stor
   }
 
   JobController::JobController(const std::string& my_config,
-			       FragmentCollector::Deleter deleter)
+			       const log4cplus::Logger& applicationLogger,
+			       FragmentCollector::Deleter deleter) :
+  applicationLogger_(applicationLogger)      
   {
     // change to phony input source
     //string new_config = changeToPhony(fu_config);
@@ -36,26 +38,9 @@ namespace stor
     init(my_config,deleter);
   } 
 
-/*  obslete constructor?
-  JobController::JobController(const edm::ProductRegistry& reg,
-			       const std::string& my_config,
-			       FragmentCollector::Deleter d):
-    prods_(reg)
-  {
-    init(my_config,d);
-  }
-*/
-
-
   void JobController::init(const std::string& my_config,
 			   FragmentCollector::Deleter deleter)
   {
-    // JBK - 2/26/06 reordered the EPRunner and FragmentCollector
-    // so that the fragment collector gets the registry from the 
-    // EventProcessor instead of from the filter unit config
-
-    // here prods_ is empty
-    //std::auto_ptr<HLTInfo> inf(new HLTInfo(prods_));
     std::auto_ptr<HLTInfo> inf(new HLTInfo());
 
     // ep takes ownership of inf!
@@ -65,21 +50,14 @@ namespace stor
     //  coll(new FragmentCollector(*(ep->getInfo()),deleter,
     //				 my_config));
     std::auto_ptr<FragmentCollector> 
-      coll(new FragmentCollector(inf,deleter,
-				 my_config));
+	coll(new FragmentCollector(inf,deleter,applicationLogger_,
+				   my_config));
 
     collector_.reset(coll.release());
     //ep_runner_.reset(ep.release());
 
     fileClosingTestInterval_ = 5;  // usually overwritten by SM
   }
-
-/*
-  void JobController::setRegistry(const std::string& fu_config)
-  {
-    prods_ = ep_runner_->getRegistry();
-  }
-*/
 
   void JobController::run(JobController* t)
   {

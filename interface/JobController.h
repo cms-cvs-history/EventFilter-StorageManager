@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.20 2008/06/25 18:03:22 biery Exp $
+// $Id: JobController.h,v 1.21 2008/09/04 17:47:21 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -14,6 +14,8 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
 
+#include "log4cplus/logger.h"
+
 #include <string>
 
 namespace stor
@@ -22,14 +24,8 @@ namespace stor
   class JobController
   {
   public:
-    // remove next ctor later
-    JobController(const std::string& fu_config,
-		  const std::string& my_config,
-		  FragmentCollector::Deleter);
     JobController(const std::string& my_config,
-		  FragmentCollector::Deleter);
-    JobController(const edm::ProductRegistry& reg,
-		  const std::string& my_config,
+		  const log4cplus::Logger& applicationLogger,
 		  FragmentCollector::Deleter);
 
     ~JobController();
@@ -97,6 +93,7 @@ namespace stor
     boost::shared_ptr<InitMsgCollection> initMsgCollection_;
 
     int fileClosingTestInterval_;
+    const log4cplus::Logger& applicationLogger_;
 
     boost::shared_ptr<boost::thread> me_;
   };
