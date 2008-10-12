@@ -30,6 +30,8 @@ this can run.
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
 
+#include "log4cplus/logger.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -101,7 +103,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   drain_(getFileContents(conffile),auto_ptr<HLTInfo>(new HLTInfo(prods_))),
-  coll_(*drain_.getInfo(),deleteBuffer,conffile)
+  coll_(*drain_.getInfo(),deleteBuffer,log4cplus::Logger::getRoot(),conffile)
 {
   cout << "ctor of Main" << endl;
   // jbk - the next line should not be needed

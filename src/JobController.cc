@@ -28,7 +28,7 @@ namespace stor
   }
 
   JobController::JobController(const std::string& my_config,
-			       const log4cplus::Logger& applicationLogger,
+			       log4cplus::Logger& applicationLogger,
 			       FragmentCollector::Deleter deleter) :
   applicationLogger_(applicationLogger)      
   {

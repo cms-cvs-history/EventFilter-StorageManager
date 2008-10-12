@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.41 2008/09/04 17:49:07 biery Exp $
+// $Id: FragmentCollector.cc,v 1.42 2008/10/08 19:49:51 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -10,6 +10,8 @@
 #include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 #include "boost/bind.hpp"
+
+#include "log4cplus/loggingmacros.h"
 
 #include <algorithm>
 #include <utility>
@@ -45,6 +47,7 @@ namespace stor
 
 
   FragmentCollector::FragmentCollector(HLTInfo& h,Deleter d,
+				       log4cplus::Logger& applicationLogger,
                                        const string& config_str):
     cmd_q_(&(h.getCommandQueue())),
     evtbuf_q_(&(h.getEventQueue())),
@@ -52,6 +55,7 @@ namespace stor
     buffer_deleter_(d),
     prods_(0),
     info_(&h), 
+    applicationLogger_(applicationLogger),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -60,6 +64,7 @@ namespace stor
     event_area_.reserve(7000000);
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,Deleter d,
+				       log4cplus::Logger& applicationLogger,
                                        const string& config_str):
     cmd_q_(&(info.get()->getCommandQueue())),
     evtbuf_q_(&(info.get()->getEventQueue())),
@@ -67,6 +72,7 @@ namespace stor
     buffer_deleter_(d),
     prods_(0),
     info_(info.get()), 
+    applicationLogger_(applicationLogger),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -273,6 +279,8 @@ namespace stor
     InitMsgView msg(entry->buffer_address_);
 
     FR_DEBUG << "FragColl: writing INIT size " << entry->buffer_size_ << endl;
+    LOG4CPLUS_INFO(applicationLogger_,
+                   "Writing INIT message of size "<<entry->buffer_size_);
 
     writer_->manageInitMsg(catalog_, disks_, sourceId_, msg, *initMsgCollection_);
   }

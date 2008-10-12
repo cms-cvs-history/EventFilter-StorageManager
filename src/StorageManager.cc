@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.85 2008/10/08 19:49:51 biery Exp $
+// $Id: StorageManager.cc,v 1.86 2008/10/09 16:14:36 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -102,6 +102,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   exactFileSizeTest_(false),
   fileClosingTestInterval_(5),
   pushMode_(false), 
+  reconfigurationRequested_(false),
   collateDQM_(false),
   archiveDQM_(false),
   archiveIntervalDQM_(0),
@@ -157,6 +158,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("foundRcmsStateListener", fsm_.foundRcmsStateListener());
 
   ispace->addItemRetrieveListener("closedFiles", this);
+  ispace->addItemChangedListener("STparameterSet", this);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -4186,7 +4188,14 @@ void StorageManager::actionPerformed(xdata::Event& e)
     } else if (item == "progressMarker")
       progressMarker_ = ProgressMarker::instance()->status();
     is->unlock();
-  } 
+  }
+
+  if (e.type()=="ItemChangedEvent" && !(fsm_.stateName()->toString()=="Halted")) {
+    string item = dynamic_cast<xdata::ItemChangedEvent&>(e).itemName();
+    if ( item == "STparameterSet") {
+      reconfigurationRequested_ = true;
+    }
+  }
 }
 
 void StorageManager::parseFileEntry(const std::string &in, std::string &out, 
@@ -4228,241 +4237,236 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
-    
-    
-    // Get into the Ready state from Halted state
-    
-    try {
-      if(!edmplugin::PluginManager::isAvailable()) {
-        edmplugin::PluginManager::configure(edmplugin::standard::config());
-      }
-    }
-    catch(cms::Exception& e)
-    {
-      reasonForFailedState_ = e.explainSelf();
-      fsm_.fireFailed(reasonForFailedState_,this);
-      return false;
-      //XCEPT_RAISE (toolbox::fsm::exception::Exception, e.explainSelf());
-    }
-    
-    // give the JobController a configuration string and
-    // get the registry data coming over the network (the first one)
-    // Note that there is currently no run number check for the INIT
-    // message, just the first one received once in Enabled state is used
-    evf::ParameterSetRetriever smpset(offConfig_.value_);
-    
-    string my_config = smpset.getAsString();
-    
-    pushMode_ = (bool) pushmode2proxy_;
-    smConfigString_    = my_config;
-    smFileCatalog_     = fileCatalog_.toString();
-    
-    boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-    smParameter_ -> setFileCatalog(fileCatalog_.toString());
-    smParameter_ -> setfileName(fileName_.toString());
-    smParameter_ -> setfilePath(filePath_.toString());
-    smParameter_ -> setmaxFileSize(maxFileSize_.value_);
-    smParameter_ -> setsetupLabel(setupLabel_.toString());
-    smParameter_ -> sethighWaterMark(highWaterMark_.value_);
-    smParameter_ -> setlumiSectionTimeOut(lumiSectionTimeOut_.value_);
-    smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
 
-    // check output locations and scripts before we continue
-    try {
-      checkDirectoryOK(filePath_.toString());
-      if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
-    }
-    catch(cms::Exception& e)
-    {
-      reasonForFailedState_ = e.explainSelf();
-      fsm_.fireFailed(reasonForFailedState_,this);
-      //XCEPT_RAISE (toolbox::fsm::exception::Exception, e.explainSelf());
-      return false;
-    }
+    configureAction();
 
-    // check whether the maxSize parameter in an SM output stream
-    // is still specified in bytes (rather than MBytes).  (All we really
-    // check is if the maxSize is unreasonably large after converting
-    // it to bytes.)
-    //@@EM this is done on the xdaq parameter if it is set (i.e. if >0),
-    // otherwise on the cfg params
-    if(smParameter_ ->maxFileSize()>0) {
-      long long maxSize = 1048576 *
-         (long long) smParameter_ -> maxFileSize();
-      if (maxSize > 2E+13) {
-        std::string errorString =  "The maxSize parameter (file size) ";
-        errorString.append("from xdaq configuration is too large(");
-        try {
-          errorString.append(boost::lexical_cast<std::string>(maxSize));
-        }
-        catch (boost::bad_lexical_cast& blcExcpt) {
-          errorString.append("???");
-        }
-        errorString.append(" bytes). ");
-        errorString.append("Please check that this parameter is ");
-        errorString.append("specified as the number of MBytes, not bytes. ");
-        errorString.append("(The units for maxSize was changed from ");
-        errorString.append("bytes to MBytes, and it is possible that ");
-        errorString.append("your storage manager configuration ");
-        errorString.append("needs to be updated to reflect this.)");
-	
-        reasonForFailedState_ = errorString;
-        fsm_.fireFailed(reasonForFailedState_,this);
-        return false;
-      }
-    } else {
-      try {
-        // create a parameter set from the configuration string
-         ProcessDesc pdesc(smConfigString_);
-         boost::shared_ptr<edm::ParameterSet> smPSet = pdesc.getProcessPSet();
-
-         // loop over each end path
-         std::vector<std::string> allEndPaths = 
-            smPSet->getParameter<std::vector<std::string> >("@end_paths");
-         for(std::vector<std::string>::iterator endPathIter = allEndPaths.begin();
-             endPathIter != allEndPaths.end(); ++endPathIter) {
-
-           // loop over each element in the end path list (not sure why...)
-            std::vector<std::string> anEndPath =
-               smPSet->getParameter<std::vector<std::string> >((*endPathIter));
-            for(std::vector<std::string>::iterator ep2Iter = anEndPath.begin();
-                ep2Iter != anEndPath.end(); ++ep2Iter) {
-
-              // fetch the end path parameter set
-              edm::ParameterSet endPathPSet =
-                 smPSet->getParameter<edm::ParameterSet>((*ep2Iter));
-              if (! endPathPSet.empty()) {
-                std::string mod_type =
-                   endPathPSet.getParameter<std::string> ("@module_type");
-                if (mod_type == "EventStreamFileWriter") {
-                  // convert the maxSize parameter value from MB to bytes
-                  long long maxSize = 1048576 *
-                     (long long) endPathPSet.getParameter<int> ("maxSize");
-
-                  // test the maxSize value.  2E13 is somewhat arbitrary,
-                  // but ~18 TeraBytes seems larger than we would realistically
-                  // want, and it will catch stale (byte-based) values greater
-                  // than ~18 MBytes.)
-                  if (maxSize > 2E+13) {
-                    std::string streamLabel =  endPathPSet.getParameter<std::string> ("streamLabel");
-                    std::string errorString =  "The maxSize parameter (file size) ";
-                    errorString.append("for stream ");
-                    errorString.append(streamLabel);
-                    errorString.append(" is too large (");
-                    try {
-                      errorString.append(boost::lexical_cast<std::string>(maxSize));
-                    }
-                    catch (boost::bad_lexical_cast& blcExcpt) {
-                      errorString.append("???");
-                    }
-                    errorString.append(" bytes). ");
-                    errorString.append("Please check that this parameter is ");
-                    errorString.append("specified as the number of MBytes, not bytes. ");
-                    errorString.append("(The units for maxSize was changed from ");
-                    errorString.append("bytes to MBytes, and it is possible that ");
-                    errorString.append("your storage manager configuration file ");
-                    errorString.append("needs to be updated to reflect this.)");
-
-                    reasonForFailedState_ = errorString;
-                    fsm_.fireFailed(reasonForFailedState_,this);
-                    return false;
-                  }
-                }
-              }
-            }
-         }
-      }
-      catch (...) {
-        // since the maxSize test is just a convenience, we'll ignore
-        // exceptions and continue normally, for now.
-      }
-    }
-
-    if (maxESEventRate_ < 0.0)
-      maxESEventRate_ = 0.0;
-    if (maxESDataRate_ < 0.0)
-      maxESDataRate_ = 0.0;
-    if (DQMmaxESEventRate_ < 0.0)
-      DQMmaxESEventRate_ = 0.0;
-    
-    xdata::Integer cutoff(1);
-    if (consumerQueueSize_ < cutoff)
-      consumerQueueSize_ = cutoff;
-    if (DQMconsumerQueueSize_ < cutoff)
-      DQMconsumerQueueSize_ = cutoff;
-    
-    // the rethrows below need to be XDAQ exception types (JBK)
-    try {
-
-      jc_.reset(new stor::JobController(my_config, &deleteSMBuffer));
-      
-      int disks(nLogicalDisk_);
-      
-      jc_->setNumberOfFileSystems(disks);
-      jc_->setFileCatalog(smFileCatalog_);
-      jc_->setSourceId(sourceId_);
-
-      jc_->setCollateDQM(collateDQM_);
-      jc_->setArchiveDQM(archiveDQM_);
-      jc_->setArchiveIntervalDQM(archiveIntervalDQM_);
-      jc_->setPurgeTimeDQM(purgeTimeDQM_);
-      jc_->setReadyTimeDQM(readyTimeDQM_);
-      jc_->setFilePrefixDQM(filePrefixDQM_);
-      jc_->setUseCompressionDQM(useCompressionDQM_);
-      jc_->setCompressionLevelDQM(compressionLevelDQM_);
-      jc_->setFileClosingTestInterval(fileClosingTestInterval_);
-      
-      boost::shared_ptr<EventServer>
-	eventServer(new EventServer(maxESEventRate_, maxESDataRate_,
-                                    esSelectedHLTOutputModule_,
-                                    fairShareES_));
-      jc_->setEventServer(eventServer);
-      boost::shared_ptr<DQMEventServer>
-	DQMeventServer(new DQMEventServer(DQMmaxESEventRate_));
-      jc_->setDQMEventServer(DQMeventServer);
-      boost::shared_ptr<InitMsgCollection>
-        initMsgCollection(new InitMsgCollection());
-      jc_->setInitMsgCollection(initMsgCollection);
-    }
-    catch(cms::Exception& e)
-    {
-      reasonForFailedState_ = e.explainSelf();
-      fsm_.fireFailed(reasonForFailedState_,this);
-      //XCEPT_RAISE (toolbox::fsm::exception::Exception, e.explainSelf());
-      return false;
-    }
-    catch(std::exception& e)
-    {
-      reasonForFailedState_  = e.what();
-      fsm_.fireFailed(reasonForFailedState_,this);
-      //XCEPT_RAISE (toolbox::fsm::exception::Exception, e.what());
-      return false;
-    }
-    catch(...)
-    {
-      reasonForFailedState_  = "Unknown Exception while configuring";
-      fsm_.fireFailed(reasonForFailedState_,this);
-      //XCEPT_RAISE (toolbox::fsm::exception::Exception, "Unknown Exception");
-      return false;
-    }
-    
-    
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished configuring!");
-    
+
     fsm_.fireEvent("ConfigureDone",this);
+  }
+  catch (cms::Exception& e) {
+    reasonForFailedState_ = e.explainSelf();
+    fsm_.fireFailed(reasonForFailedState_,this);
+    return false;
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "configuring FAILED: " + (string)e.what();
     fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
+  catch (std::exception& e) {
+    reasonForFailedState_  = e.what();
+    fsm_.fireFailed(reasonForFailedState_,this);
+    return false;
+  }
+  catch (...) {
+    reasonForFailedState_  = "Unknown Exception while configuring";
+    fsm_.fireFailed(reasonForFailedState_,this);
+    return false;
+  }
 
+  reconfigurationRequested_ = false;
   return false;
+}
+
+
+void StorageManager::configureAction()
+{
+  if(!edmplugin::PluginManager::isAvailable()) {
+    edmplugin::PluginManager::configure(edmplugin::standard::config());
+  }
+    
+  // give the JobController a configuration string and
+  // get the registry data coming over the network (the first one)
+  // Note that there is currently no run number check for the INIT
+  // message, just the first one received once in Enabled state is used
+  evf::ParameterSetRetriever smpset(offConfig_.value_);
+
+  string my_config = smpset.getAsString();
+
+  pushMode_ = (bool) pushmode2proxy_;
+  smConfigString_    = my_config;
+  smFileCatalog_     = fileCatalog_.toString();
+
+  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
+  smParameter_ -> setFileCatalog(fileCatalog_.toString());
+  smParameter_ -> setfileName(fileName_.toString());
+  smParameter_ -> setfilePath(filePath_.toString());
+  smParameter_ -> setmaxFileSize(maxFileSize_.value_);
+  smParameter_ -> setsetupLabel(setupLabel_.toString());
+  smParameter_ -> sethighWaterMark(highWaterMark_.value_);
+  smParameter_ -> setlumiSectionTimeOut(lumiSectionTimeOut_.value_);
+  smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
+
+  // check output locations and scripts before we continue
+  checkDirectoryOK(filePath_.toString());
+  if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
+
+  // check whether the maxSize parameter in an SM output stream
+  // is still specified in bytes (rather than MBytes).  (All we really
+  // check is if the maxSize is unreasonably large after converting
+  // it to bytes.)
+  //@@EM this is done on the xdaq parameter if it is set (i.e. if >0),
+  // otherwise on the cfg params
+  if(smParameter_ ->maxFileSize()>0) {
+    long long maxSize = 1048576 * (long long) smParameter_ -> maxFileSize();
+    if (maxSize > 2E+13) {
+      std::string errorString =  "The maxSize parameter (file size) ";
+      errorString.append("from xdaq configuration is too large(");
+      try {
+        errorString.append(boost::lexical_cast<std::string>(maxSize));
+      }
+      catch (boost::bad_lexical_cast& blcExcpt) {
+        errorString.append("???");
+      }
+      errorString.append(" bytes). ");
+      errorString.append("Please check that this parameter is ");
+      errorString.append("specified as the number of MBytes, not bytes. ");
+      errorString.append("(The units for maxSize was changed from ");
+      errorString.append("bytes to MBytes, and it is possible that ");
+      errorString.append("your storage manager configuration ");
+      errorString.append("needs to be updated to reflect this.)");
+
+      throw cms::Exception("StorageManager","configureAction")
+        << errorString;
+    }
+  } else {
+    // create a parameter set from the configuration string
+    ProcessDesc pdesc(smConfigString_);
+    boost::shared_ptr<edm::ParameterSet> smPSet = pdesc.getProcessPSet();
+
+    // loop over each end path
+    std::vector<std::string> allEndPaths = 
+      smPSet->getParameter<std::vector<std::string> >("@end_paths");
+    for(std::vector<std::string>::iterator endPathIter = allEndPaths.begin();
+        endPathIter != allEndPaths.end(); ++endPathIter) {
+
+      // loop over each element in the end path list (not sure why...)
+      std::vector<std::string> anEndPath =
+        smPSet->getParameter<std::vector<std::string> >((*endPathIter));
+      for(std::vector<std::string>::iterator ep2Iter = anEndPath.begin();
+          ep2Iter != anEndPath.end(); ++ep2Iter) {
+
+        // fetch the end path parameter set
+        edm::ParameterSet endPathPSet =
+          smPSet->getParameter<edm::ParameterSet>((*ep2Iter));
+        if (! endPathPSet.empty()) {
+          std::string mod_type =
+            endPathPSet.getParameter<std::string> ("@module_type");
+          if (mod_type == "EventStreamFileWriter") {
+            // convert the maxSize parameter value from MB to bytes
+            long long maxSize = 1048576 *
+              (long long) endPathPSet.getParameter<int> ("maxSize");
+
+            // test the maxSize value.  2E13 is somewhat arbitrary,
+            // but ~18 TeraBytes seems larger than we would realistically
+            // want, and it will catch stale (byte-based) values greater
+            // than ~18 MBytes.)
+            if (maxSize > 2E+13) {
+              std::string streamLabel =  endPathPSet.getParameter<std::string> ("streamLabel");
+              std::string errorString =  "The maxSize parameter (file size) ";
+              errorString.append("for stream ");
+              errorString.append(streamLabel);
+              errorString.append(" is too large (");
+              try {
+                errorString.append(boost::lexical_cast<std::string>(maxSize));
+              }
+              catch (boost::bad_lexical_cast& blcExcpt) {
+                errorString.append("???");
+              }
+              errorString.append(" bytes). ");
+              errorString.append("Please check that this parameter is ");
+              errorString.append("specified as the number of MBytes, not bytes. ");
+              errorString.append("(The units for maxSize was changed from ");
+              errorString.append("bytes to MBytes, and it is possible that ");
+              errorString.append("your storage manager configuration file ");
+              errorString.append("needs to be updated to reflect this.)");
+
+              throw cms::Exception("StorageManager","configureAction")
+                << errorString;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (maxESEventRate_ < 0.0)
+    maxESEventRate_ = 0.0;
+  if (maxESDataRate_ < 0.0)
+    maxESDataRate_ = 0.0;
+  if (DQMmaxESEventRate_ < 0.0)
+    DQMmaxESEventRate_ = 0.0;
+    
+  xdata::Integer cutoff(1);
+  if (consumerQueueSize_ < cutoff)
+    consumerQueueSize_ = cutoff;
+  if (DQMconsumerQueueSize_ < cutoff)
+    DQMconsumerQueueSize_ = cutoff;
+
+  jc_.reset(new stor::JobController(my_config, getApplicationLogger(), &deleteSMBuffer));
+
+  int disks(nLogicalDisk_);
+
+  jc_->setNumberOfFileSystems(disks);
+  jc_->setFileCatalog(smFileCatalog_);
+  jc_->setSourceId(sourceId_);
+
+  jc_->setCollateDQM(collateDQM_);
+  jc_->setArchiveDQM(archiveDQM_);
+  jc_->setArchiveIntervalDQM(archiveIntervalDQM_);
+  jc_->setPurgeTimeDQM(purgeTimeDQM_);
+  jc_->setReadyTimeDQM(readyTimeDQM_);
+  jc_->setFilePrefixDQM(filePrefixDQM_);
+  jc_->setUseCompressionDQM(useCompressionDQM_);
+  jc_->setCompressionLevelDQM(compressionLevelDQM_);
+  jc_->setFileClosingTestInterval(fileClosingTestInterval_);
+
+  boost::shared_ptr<EventServer>
+    eventServer(new EventServer(maxESEventRate_, maxESDataRate_,
+                                esSelectedHLTOutputModule_,
+                                fairShareES_));
+  jc_->setEventServer(eventServer);
+  boost::shared_ptr<DQMEventServer> DQMeventServer(new DQMEventServer(DQMmaxESEventRate_));
+  jc_->setDQMEventServer(DQMeventServer);
+  boost::shared_ptr<InitMsgCollection> initMsgCollection(new InitMsgCollection());
+  jc_->setInitMsgCollection(initMsgCollection);
 }
 
 
 bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
 {
+  if (reconfigurationRequested_) {
+    reconfigurationRequested_ = false;
+
+    try {
+      LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
+      this->haltAction();
+      this->configureAction();
+      LOG4CPLUS_INFO(getApplicationLogger(),"Finished re-configuring!");
+    }
+    catch (cms::Exception& e) {
+      reasonForFailedState_ = e.explainSelf();
+      fsm_.fireFailed(reasonForFailedState_,this);
+      return false;
+    }
+    catch (xcept::Exception &e) {
+      reasonForFailedState_ = "re-configuring FAILED: " + (string)e.what();
+      fsm_.fireFailed(reasonForFailedState_,this);
+      return false;
+    }
+    catch (std::exception& e) {
+      reasonForFailedState_  = e.what();
+      fsm_.fireFailed(reasonForFailedState_,this);
+      return false;
+    }
+    catch (...) {
+      reasonForFailedState_  = "Unknown Exception while re-configuring";
+      fsm_.fireFailed(reasonForFailedState_,this);
+      return false;
+    }
+  }
+
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start enabling ...");
 
@@ -4580,7 +4584,7 @@ void StorageManager::stopAction()
   std::list<std::string>& currfiles= jc_->get_currfiles();
   closedFiles_ = files.size() - currfiles.size();
   openFiles_ = currfiles.size();
-
+  
   unsigned int totInFile = 0;
   for(list<string>::const_iterator it = files.begin();
       it != files.end(); it++)
@@ -4622,7 +4626,6 @@ void StorageManager::stopAction()
   }
   if (eventServer.get() != NULL) eventServer->clearQueue();
   if (dqmeventServer.get() != NULL) dqmeventServer->clearQueue();
-
 }
 
 void StorageManager::haltAction()

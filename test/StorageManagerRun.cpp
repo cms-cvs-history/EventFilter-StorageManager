@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.13 2008/01/22 19:28:37 muzaffar Exp $
+ $Id: StorageManagerRun.cpp,v 1.14 2008/07/19 06:24:13 wmtan Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -30,6 +30,8 @@
 #include "IOPool/Streamer/interface/ClassFiller.h"
 
 #include "boost/shared_ptr.hpp"
+
+#include "log4cplus/logger.h"
 
 // #include "xdaq/include/xdaq/Application.h"
 
@@ -99,7 +101,7 @@ class Main // : public xdaq::Application
 
  private:
   // disallow the following
-  Main(const Main&):jc_(new stor::JobController("","",deleteBuffer)) { }
+    Main(const Main&):jc_(new stor::JobController("",log4cplus::Logger::getRoot(),deleteBuffer)) { }
   Main& operator=(const Main&) { return *this; }
 
   stor::JobController* jc_;
@@ -143,7 +145,7 @@ Main::Main(const string& my_config_file,
 
   //jc_ = new stor::JobController(pr,
   jc_ = new stor::JobController(getFileContents(my_config_file),
-      &deleteBuffer);
+				log4cplus::Logger::getRoot(),&deleteBuffer);
 
   vector<string>::iterator it(names_.begin()),en(names_.end());
   for(;it!=en;++it)

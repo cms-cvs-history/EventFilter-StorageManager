@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.10 2007/04/26 07:13:25 hcheung Exp $
+// $Id: RunCollector_t.cpp,v 1.11 2008/01/22 19:28:37 muzaffar Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -21,6 +21,8 @@
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
+
+#include "log4cplus/logger.h"
 
 #include <cstdlib>
 #include <sys/types.h>
@@ -141,7 +143,7 @@ class Main
   vector<string> names_;
   edm::ProductRegistry prods_;
   stor::HLTInfo info_;
-  stor::FragmentCollector coll_;
+  boost::shared_ptr<stor::FragmentCollector> coll_;
   //stor::FragmentCollector coll2_;
   Drain drain_;
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
@@ -159,11 +161,16 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   info_(prods_),
-  coll_(info_,deleteBuffer,conffile),
+  //  coll_(info_,&deleteBuffer,log4cplus::Logger::getRoot(),conffile),
   //coll2_(info_,deleteBuffer,prods_),
   drain_(info_)
 {
   cout << "ctor of Main" << endl;
+
+  log4cplus::Logger rootLogger = log4cplus::Logger::getRoot();
+  coll_.reset(new stor::FragmentCollector(info_,&deleteBuffer,
+                                          rootLogger,conffile));
+
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);
   vector<string>::iterator it(names_.begin()),en(names_.end());
@@ -174,14 +181,14 @@ Main::Main(const string& conffile, const vector<string>& file_names):
 					       prods_));
       readers_.push_back(p);
     }
-  //coll_.set_outoption(true); // to write out streamer files not root files
+  //coll_->set_outoption(true); // to write out streamer files not root files
 }
 
 int Main::run()
 {
   cerr << "starting the collector and drain" << endl;
   drain_.start();
-  coll_.start();
+  coll_->start();
   //coll2_.start();
   cerr << "started the collector and drain" << endl;
   // sleep(10);
@@ -209,7 +216,7 @@ int Main::run()
   b2.commit();
 
   cerr << "waiting for coll to be done" << endl;
-  coll_.join();
+  coll_->join();
   cerr << "coll done" << endl;
   cerr << "waiting for drain to be done" << endl;
   //coll2_.join();
