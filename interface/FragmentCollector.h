@@ -30,6 +30,8 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
 
+#include "log4cplus/logger.h"
+
 #include <vector>
 #include <map>
 #include <string>
@@ -50,8 +52,10 @@ namespace stor
     typedef std::map<stor::FragKey, Fragments> Collection;
 
     FragmentCollector(HLTInfo& h, Deleter d,
+		      const log4cplus::Logger& applicationLogger,
                       const std::string& config_str="");
     FragmentCollector(std::auto_ptr<HLTInfo>, Deleter d,
+		      const log4cplus::Logger& applicationLogger,
                       const std::string& config_str="");
     ~FragmentCollector();
 
@@ -136,6 +140,7 @@ namespace stor
     uint32 disks_;
     std::string catalog_;
     std::string sourceId_;
+    const log4cplus::Logger& applicationLogger_;
 
     std::auto_ptr<edm::ServiceManager> writer_;
     std::auto_ptr<stor::DQMServiceManager> dqmServiceManager_;
