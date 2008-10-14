@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.10 2007/04/26 07:13:25 hcheung Exp $
+// $Id: RunCollector_t.cpp,v 1.11 2008/01/22 19:28:37 muzaffar Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -15,6 +15,8 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/Configurator.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
@@ -164,6 +166,16 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   drain_(info_)
 {
   cout << "ctor of Main" << endl;
+  boost::shared_ptr<stor::InitMsgCollection>
+    initMsgCollection(new stor::InitMsgCollection());
+  coll_.setInitMsgCollection(initMsgCollection);
+
+  boost::shared_ptr<stor::Parameter> smParameter =
+    stor::Configurator::instance()->getParameter();
+  // the following directory path must have "open", "closed", and
+  // "log" subdirectories!
+  smParameter->setfilePath("/tmp");
+
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);
   vector<string>::iterator it(names_.begin()),en(names_.end());
