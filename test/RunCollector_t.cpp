@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.11 2008/01/22 19:28:37 muzaffar Exp $
+// $Id: RunCollector_t.cpp,v 1.11.10.1 2008/10/12 01:32:42 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -15,6 +15,8 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/Configurator.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
@@ -22,6 +24,7 @@
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
 
+#include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 
 #include <cstdlib>
@@ -149,6 +152,7 @@ class Main
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
+  log4cplus::Logger logger_;
 };
 
 // ----------- implementation --------------
@@ -161,15 +165,28 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   info_(prods_),
-  //  coll_(info_,&deleteBuffer,log4cplus::Logger::getRoot(),conffile),
   //coll2_(info_,deleteBuffer,prods_),
-  drain_(info_)
+  drain_(info_),
+  logger_(log4cplus::Logger::getRoot())  // placeholder, overwritten below
 {
   cout << "ctor of Main" << endl;
 
-  log4cplus::Logger rootLogger = log4cplus::Logger::getRoot();
+  log4cplus::BasicConfigurator config;
+  config.configure();
+  logger_ = log4cplus::Logger::getInstance("main");
+
   coll_.reset(new stor::FragmentCollector(info_,&deleteBuffer,
-                                          rootLogger,conffile));
+                                          logger_,conffile));
+
+  boost::shared_ptr<stor::InitMsgCollection>
+    initMsgCollection(new stor::InitMsgCollection());
+  coll_->setInitMsgCollection(initMsgCollection);
+
+  boost::shared_ptr<stor::Parameter> smParameter =
+    stor::Configurator::instance()->getParameter();
+  // the following directory path must have "open", "closed", and
+  // "log" subdirectories!
+  smParameter->setfilePath("/tmp");
 
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);
