@@ -1,3 +1,10 @@
+2008-10-14  Kurt Biery <biery@fnal.gov>
+
+	* tag V03-14-17-01
+	* Added protection to the actionPerformed() method in the SM
+	  to prevent uninitialized data from being referenced in the
+	  Halted state.
+
 2008-10-09  Kurt Biery <biery@fnal.gov>
 
 	* tag V03-14-17
