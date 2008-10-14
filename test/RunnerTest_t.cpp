@@ -24,12 +24,15 @@ this can run.
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/EPRunner.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/Configurator.h"
 
 #include "boost/shared_ptr.hpp"
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
 
+#include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 
 #include <sys/types.h>
@@ -87,10 +90,11 @@ class Main
   vector<string> names_;
   edm::ProductRegistry prods_;
   stor::EPRunner drain_;
-  stor::FragmentCollector coll_;
+  boost::shared_ptr<stor::FragmentCollector> coll_;
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
+  log4cplus::Logger logger_;
 };
 
 // ----------- implementation --------------
@@ -103,9 +107,27 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   drain_(getFileContents(conffile),auto_ptr<HLTInfo>(new HLTInfo(prods_))),
-  coll_(*drain_.getInfo(),deleteBuffer,log4cplus::Logger::getRoot(),conffile)
+  logger_(log4cplus::Logger::getRoot())  // placeholder, overwritten below
 {
   cout << "ctor of Main" << endl;
+
+  log4cplus::BasicConfigurator config;
+  config.configure();
+  logger_ = log4cplus::Logger::getInstance("main");
+
+  coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),deleteBuffer,
+                                          logger_,conffile));
+
+  boost::shared_ptr<stor::InitMsgCollection>
+    initMsgCollection(new stor::InitMsgCollection());
+  coll_->setInitMsgCollection(initMsgCollection);
+
+  boost::shared_ptr<stor::Parameter> smParameter =
+    stor::Configurator::instance()->getParameter();
+  // the following directory path must have "open", "closed", and
+  // "log" subdirectories!
+  smParameter->setfilePath("/tmp/biery");
+
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);
   vector<string>::iterator it(names_.begin()),en(names_.end());
@@ -122,7 +144,7 @@ int Main::run()
 {
   cout << "starting the EP" << endl;
   drain_.start();
-  coll_.start();
+  coll_->start();
 
   cout << "started the EP" << endl;
   // sleep(10);
@@ -140,10 +162,10 @@ int Main::run()
     }
 
   // send done to the drain
-  edm::EventBuffer::ProducerBuffer b(coll_.getFragmentQueue());
+  edm::EventBuffer::ProducerBuffer b(coll_->getFragmentQueue());
   b.commit();
 
-  coll_.join();
+  coll_->join();
   drain_.join();
   return 0;
 }
