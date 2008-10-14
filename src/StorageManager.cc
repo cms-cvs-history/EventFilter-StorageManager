@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.85 2008/10/08 19:49:51 biery Exp $
+// $Id: StorageManager.cc,v 1.86 2008/10/09 16:14:36 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -4132,6 +4132,15 @@ void StorageManager::setupFlashList()
 
 void StorageManager::actionPerformed(xdata::Event& e)  
 {
+  // 14-Oct-2008, KAB - skip all processing in this method, for now,
+  // when the SM state is halted.  This will protect against the use
+  // of un-initialized variables (like jc_).
+  if (fsm_.stateName()->toString()=="Halted") {return;}
+  if (fsm_.stateName()->toString()=="halting") {return;}
+  // paranoia - also return if jc_.get() is null.  Although, to do this
+  // right, we would need a lock
+  if (jc_.get() == 0) {return;}
+
   if (e.type() == "ItemRetrieveEvent") {
     std::ostringstream oss;
     oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
