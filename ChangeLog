@@ -1,3 +1,10 @@
+2008-10-15  Harry Cheung <cheung@fnal.gov>
+
+	* tag V03-14-20
+	* Added protection to the actionPerformed() method to prevent uninitialized
+	  members being referenced in the Halted state (from Kurt). Also minor bug 
+	  fix for monitoring web page of copy workers listed from Constantin.
+
 2008-10-13  Harry Cheung <cheung@fnal.gov>
 
 	* tag V03-14-19

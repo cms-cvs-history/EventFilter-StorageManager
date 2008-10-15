@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.87 2008/10/12 15:18:15 hcheung Exp $
+// $Id: StorageManager.cc,v 1.88 2008/10/13 13:05:36 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -1438,7 +1438,9 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
         *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
-        for(int i=0;i<=(int)nLogicalDisk_;i++) {
+        int nD = nLogicalDisk_;
+        if (nD == 0) nD=1;
+        for(int i=0;i<nD;i++) {
            string path(filePath_);
            if(nLogicalDisk_>0) {
               std::ostringstream oss;
@@ -1469,6 +1471,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "<td colspan=5>" << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
+        }
         *out << "<tr>" << endl;
           *out << "<td >" << endl;
           *out << "# CopyWorker" << endl;
@@ -1491,7 +1494,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "<td colspan=5>" << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
-        }
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=7>"                                       << endl;
     *out << "      " << "Output Streams (updated only every 10 sec)"          << endl;
@@ -1777,7 +1779,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
           *out << "<td >" << endl;
-          *out << "Total Volume Received (MB)" << endl;
+          *out << "Total (Event) Volume Stored (MB)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
           *out << store_receivedVolume_ << endl;
@@ -4348,6 +4350,15 @@ void StorageManager::setupFlashList()
 
 void StorageManager::actionPerformed(xdata::Event& e)  
 {
+  // 14-Oct-2008, KAB - skip all processing in this method, for now,
+  // when the SM state is halted.  This will protect against the use
+  // of un-initialized variables (like jc_).
+  if (fsm_.stateName()->toString()=="Halted") {return;}
+  if (fsm_.stateName()->toString()=="halting") {return;}
+  // paranoia - also return if jc_.get() is null.  Although, to do this
+  // right, we would need a lock
+  if (jc_.get() == 0) {return;}
+
   if (e.type() == "ItemRetrieveEvent") {
     std::ostringstream oss;
     oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
