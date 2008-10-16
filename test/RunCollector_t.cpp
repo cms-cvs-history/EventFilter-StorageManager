@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.11.10.1 2008/10/12 01:32:42 biery Exp $
+// $Id: RunCollector_t.cpp,v 1.12 2008/10/14 13:43:48 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 

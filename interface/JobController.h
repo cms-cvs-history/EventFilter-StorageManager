@@ -1,11 +1,12 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.21.2.1 2008/10/12 00:20:55 biery Exp $
+// $Id: JobController.h,v 1.22 2008/10/13 13:05:35 hcheung Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/EventServer.h"
 #include "EventFilter/StorageManager/interface/DQMEventServer.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 
 #include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
@@ -81,6 +82,7 @@ namespace stor
     std::list<std::string>& get_currfiles() { return collector_->get_currfiles(); }
     std::vector<uint32>& get_storedEvents() { return collector_->get_storedEvents(); }
     std::vector<std::string>& get_storedNames() { return collector_->get_storedNames(); }
+    boost::shared_ptr<stor::SMOnlyStats> get_stats() { return collector_->get_stats(); }
 
   private:
     void init(const std::string& my_config,FragmentCollector::Deleter);

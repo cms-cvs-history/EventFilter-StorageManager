@@ -1,3 +1,43 @@
+2008-10-14  Kurt Biery <biery@fnal.gov>
+
+	* tag V04-00-01
+	* Added protection to the actionPerformed() method to prevent
+	  uninitialized members being referenced in the Halted state.
+	  These changes depend on the same related tags as V04-00-00.
+
+2008-10-14  Kurt Biery <biery@fnal.gov>
+
+	* tag V04-00-00
+	* Initial changes to support unique filter unit IDs.  Fixed a couple
+	  of minor bugs in the FragmentCollector uncovered by running the
+	  RunCollector_t unit test.  Updated the RunCollector_t unit test to
+	  get it working again.  These changes depend on the following related tags:
+	  EventFilter/Utilities      V00-15-00
+	  EventFilter/ShmBuffer      V00-07-00
+	  EventFilter/ShmReader      V01-03-00
+	  EventFilter/ResourceBroker V00-11-00
+	  IOPool/Streamer            V05-04-00
+	  EventFilter/Modules        V00-06-00
+
+2008-10-13  Harry Cheung <cheung@fnal.gov>
+
+	* tag V03-14-19
+	* Install performance statistics for stored data rates like for
+	  received data rates. Changed the stored volume infospace variable
+	  to actually give the stored volume and not the received data volume.
+
+2008-10-12  Harry Cheung <cheung@fnal.gov>
+
+	* tag V03-14-18
+	* Changed SMPerformanceMeter to use Kurt's counter classes and also
+	  introduce a rate over a time period as well as a rate over a
+	  given number of samples. Both are now given and the samples and
+	  time period can be set in the SM XML xdaq config file (see sm_onenode.xml)
+	  Also getting  and reporting statistics for received event sizes 
+	  using a new counter class, still need to get the compression ratio
+	  and fragment queue size when statistics gathering is moved to 
+	  the FragmentCollector
+
 2008-10-09  Kurt Biery <biery@fnal.gov>
 
 	* tag V03-14-17
