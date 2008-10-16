@@ -131,12 +131,8 @@ namespace stor
             if ((now - fileCheckIntervalStart) >= fileClosingTestInterval_) {
               fileCheckIntervalStart = now;
               EventBuffer::ProducerBuffer fragQBuff(getFragmentQueue());
-              // 03-Sep-2008, KAB: the use of the NEW_INIT_AVAILABLE message code
-              // here is a hack until the new FILE_CLOSE_REQUEST message code is
-              // ready (in IOPool/Streamer/MsgHeader).  As soon as FILE_CLOSE_REQUEST
-              // is ready, it should replace NEW_INIT_AVAILABLE.
               new (fragQBuff.buffer()) stor::FragEntry(0, 0, 0, 1, 1,
-                                                       Header::NEW_INIT_AVAILABLE,
+                                                       Header::FILE_CLOSE_REQUEST,
                                                        0, 0, 0);
               fragQBuff.commit(sizeof(stor::FragEntry));
             }
