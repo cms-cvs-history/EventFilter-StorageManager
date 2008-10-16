@@ -1,3 +1,9 @@
+2008-10-16  Harry Cheung <cheung@fnal.gov>
+
+	* tag V03-14-21
+	* Added DQM received data statistics in monitoring and also gives the SM
+	  config information and CVS version.
+
 2008-10-15  Harry Cheung <cheung@fnal.gov>
 
 	* tag V03-14-20
