@@ -38,6 +38,13 @@
 
 namespace stor
 {
+  struct FragmentContainer
+  {
+    FragmentContainer():creationTime_(time(0)),lastFragmentTime_(0) { }
+    std::map<int, FragEntry> fragmentMap_;
+    time_t creationTime_;
+    time_t lastFragmentTime_;
+  };
 
   class FragmentCollector
   {
@@ -48,8 +55,7 @@ namespace stor
     // This is not the most efficient way to store and manipulate this
     // type of data.  It is like this because there is not much time
     // available to create the prototype.
-    typedef std::vector<FragEntry> Fragments;
-    typedef std::map<stor::FragKey, Fragments> Collection;
+    typedef std::map<stor::FragKey, FragmentContainer> Collection;
 
     FragmentCollector(HLTInfo& h, Deleter d,
 		      log4cplus::Logger& applicationLogger,
@@ -82,6 +88,9 @@ namespace stor
     void processDQMEvent(FragEntry* msg);
     void processErrorEvent(FragEntry* msg);
 
+    int assembleFragments(std::map<int, FragEntry>& fragmentMap);
+    int removeStaleFragments();
+
     edm::EventBuffer* cmd_q_;
     edm::EventBuffer* evtbuf_q_;
     edm::EventBuffer* frag_q_;
@@ -92,6 +101,9 @@ namespace stor
     boost::shared_ptr<boost::thread> me_;
     const edm::ProductRegistry* prods_; // change to shared_ptr ? 
     stor::HLTInfo* info_;  // cannot be const when using EP_Runner?
+
+    time_t lastStaleCheckTime_;
+    int staleFragmentTimeout_;
 
   public:
 
