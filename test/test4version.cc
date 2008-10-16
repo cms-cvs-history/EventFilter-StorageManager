@@ -1,5 +1,4 @@
-// $Id$
-// $Name$
+// $Id: test4version.cc,v 1.1.2.1 2008/10/16 12:12:08 hcheung Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -126,7 +125,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_($Id$)
+  sm_cvs_version_("$Id: test4version.cc,v 1.1.2.1 2008/10/16 12:12:08 hcheung Exp $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -317,7 +316,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
-  sm_cvs_version_ = "$Id$"
+  sm_cvs_version_ = "$Id: test4version.cc,v 1.1.2.1 2008/10/16 12:12:08 hcheung Exp $"
 }
 
 StorageManager::~StorageManager()
