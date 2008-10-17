@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.42.2.2 2008/10/16 18:52:01 biery Exp $
+// $Id: FragmentCollector.cc,v 1.42.2.3 2008/10/16 19:37:08 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -232,7 +232,9 @@ namespace stor
       LOG4CPLUS_ERROR(applicationLogger_,
                       "Invalid fragment ID received for event " << entry->id_
                       << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ".  Fragment id is "
+                      << entry->secondaryId_ << ", FU PID = "
+                      << entry->originatorPid_ << ", FU GUID = "
+                      << entry->originatorGuid_  << ".  Fragment id is "
                       << entry->segNumber_ << ", total number of fragments is "
                       << entry->totalSegs_ << ".");
       (*buffer_deleter_)(entry);
@@ -244,7 +246,8 @@ namespace stor
     // same key has already been processed)
     pair<Collection::iterator,bool> rc =
       fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_,
-                                              entry->secondaryId_),
+                                              entry->secondaryId_, entry->originatorPid_,
+                                              entry->originatorGuid_),
                                       FragmentContainer()));
 
     // add this fragment to the map of fragments for this event
@@ -262,7 +265,9 @@ namespace stor
       LOG4CPLUS_ERROR(applicationLogger_,
                       "Duplicate fragment ID received for event " << entry->id_
                       << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ".  Fragment id is "
+                      << entry->secondaryId_ << ", FU PID = "
+                      << entry->originatorPid_ << ", FU GUID = "
+                      << entry->originatorGuid_  << ".  Fragment id is "
                       << entry->segNumber_ << ", total number of fragments is "
                       << entry->totalSegs_ << ".");
       (*buffer_deleter_)(entry);
@@ -341,7 +346,9 @@ namespace stor
       LOG4CPLUS_ERROR(applicationLogger_,
                       "Invalid fragment ID received for DQM event " << entry->id_
                       << " in run " << entry->run_ << " with folder ID of "
-                      << entry->secondaryId_ << ".  Fragment id is "
+                      << entry->secondaryId_ << ", FU PID = "
+                      << entry->originatorPid_ << ", FU GUID = "
+                      << entry->originatorGuid_  << ".  Fragment id is "
                       << entry->segNumber_ << ", total number of fragments is "
                       << entry->totalSegs_ << ".");
       (*buffer_deleter_)(entry);
@@ -353,7 +360,8 @@ namespace stor
     // same key has already been processed)
     pair<Collection::iterator,bool> rc =
       fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_,
-                                              entry->secondaryId_),
+                                              entry->secondaryId_, entry->originatorPid_,
+                                              entry->originatorGuid_),
                                       FragmentContainer()));
 
     // add this fragment to the map of fragments for this event
@@ -371,7 +379,9 @@ namespace stor
       LOG4CPLUS_ERROR(applicationLogger_,
                       "Duplicate fragment ID received for DQM event " << entry->id_
                       << " in run " << entry->run_ << " with folder ID of "
-                      << entry->secondaryId_ << ".  Fragment id is "
+                      << entry->secondaryId_ << ", FU PID = "
+                      << entry->originatorPid_ << ", FU GUID = "
+                      << entry->originatorGuid_  << ".  Fragment id is "
                       << entry->segNumber_ << ", total number of fragments is "
                       << entry->totalSegs_ << ".");
       (*buffer_deleter_)(entry);
@@ -432,7 +442,9 @@ namespace stor
       LOG4CPLUS_ERROR(applicationLogger_,
                       "Invalid fragment ID received for Error event " << entry->id_
                       << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ".  Fragment id is "
+                      << entry->secondaryId_ << ", FU PID = "
+                      << entry->originatorPid_ << ", FU GUID = "
+                      << entry->originatorGuid_  << ".  Fragment id is "
                       << entry->segNumber_ << ", total number of fragments is "
                       << entry->totalSegs_ << ".");
       (*buffer_deleter_)(entry);
@@ -444,7 +456,8 @@ namespace stor
     // same key has already been processed)
     pair<Collection::iterator,bool> rc =
       fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_,
-                                              entry->secondaryId_),
+                                              entry->secondaryId_, entry->originatorPid_,
+                                              entry->originatorGuid_),
                                       FragmentContainer()));
 
     // add this fragment to the map of fragments for this event
@@ -462,7 +475,9 @@ namespace stor
       LOG4CPLUS_ERROR(applicationLogger_,
                       "Duplicate fragment ID received for Error event " << entry->id_
                       << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ".  Fragment id is "
+                      << entry->secondaryId_ << ", FU PID = "
+                      << entry->originatorPid_ << ", FU GUID = "
+                      << entry->originatorGuid_  << ".  Fragment id is "
                       << entry->segNumber_ << ", total number of fragments is "
                       << entry->totalSegs_ << ".");
       (*buffer_deleter_)(entry);
@@ -592,6 +607,8 @@ namespace stor
                        "Deleting a stale fragment set for event "
                        << workingEntry.id_ << " in run " << workingEntry.run_
                        << " with secondary ID of " << workingEntry.secondaryId_
+                       << ", FU PID = " << workingEntry.originatorPid_
+                       << ", FU GUID = " << workingEntry.originatorGuid_
                        << ".  The number of fragments received was "
                        << fragContainer.fragmentMap_.size()
                        << ", and the total number of fragments expected was "
@@ -601,7 +618,7 @@ namespace stor
     }
 
     // actually do the removal
-    for (int idx = 0; idx < staleList.size(); ++idx)
+    for (unsigned int idx = 0; idx < staleList.size(); ++idx)
     {
       fragment_area_.erase(staleList[idx]);
     }
