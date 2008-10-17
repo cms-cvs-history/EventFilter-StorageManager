@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.90 2008/10/14 22:01:06 biery Exp $
+// $Id: StorageManager.cc,v 1.86.2.2 2008/10/16 19:37:08 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   readyTimeDQM_(DEFAULT_READY_TIME),
   useCompressionDQM_(true),
   compressionLevelDQM_(1),
-  allowDupAutoBUEvtNums_(false),
   mybuffer_(7000000),
   fairShareES_(false),
   connectedRBs_(0), 
@@ -212,7 +211,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("filePrefixDQM",       &filePrefixDQM_);
   ispace->fireItemAvailable("useCompressionDQM",   &useCompressionDQM_);
   ispace->fireItemAvailable("compressionLevelDQM", &compressionLevelDQM_);
-  ispace->fireItemAvailable("allowDupAutoBUEvtNums",&allowDupAutoBUEvtNums_);
   ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
@@ -436,8 +434,14 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
           // queue for output
           EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
           // don't have the correct run number yet
-          new (b.buffer()) stor::FragEntry(&(*serializedProds)[0], &(*serializedProds)[0], serializedProds->size(),
-                                           1, 1, Header::INIT, 0, 0, 0); // use fixed 0 as ID
+          new (b.buffer()) stor::FragEntry(&(*serializedProds)[0],
+                                           &(*serializedProds)[0],
+                                           serializedProds->size(), 1, 1,
+                                           Header::INIT,
+                                           0, // run number is unknown
+                                           msg->rbBufferID, // use RB buffer number as event ID in absence of anything else
+                                           msg->outModID,
+                                           msg->fuProcID, msg->fuGUID);
           b.commit(sizeof(stor::FragEntry));
           // this is checked ok by default
           smrbsenders_.setRegCheckedOK(&msg->hltURL[0], &msg->hltClassName[0],
@@ -586,17 +590,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   
   int len = msg->dataSize;
 
-  // 16-Sep-2008, KAB: when running with multiple AutoBUs, it is possible
-  // to get identical run numbers from different resource brokers.
-  // To avoid getting confused by this, we'll support the possibility
-  // of creating a special secondary ID value from the output module ID
-  // and the sender TID to use in the FragEntry.
-  uint32 modifiedSecondaryId = msg->outModID;
-  if (allowDupAutoBUEvtNums_) {
-    modifiedSecondaryId = ((msg->hltTid & 0x7ff) << 21) |
-      (msg->outModID & 0x1fffff);
-  }
-
   // check the storage Manager is in the Ready state first!
   if(fsm_.stateName()->toString() != "Enabled")
   {
@@ -647,7 +640,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
                   thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, 
-                  thismsg->runID, thismsg->eventID, thismsg->outModID);
+                  thismsg->runID, thismsg->eventID, thismsg->outModID,
+                  thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
          receivedFrames_++;
@@ -714,7 +708,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
     /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
                                 msg->frameCount+1, msg->numFrames, Header::EVENT, 
-                                msg->runID, msg->eventID, modifiedSecondaryId);
+                                msg->runID, msg->eventID, msg->outModID,
+                                msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     receivedFrames_++;
@@ -850,7 +845,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
                   thismsg->frameCount+1, thismsg->numFrames, Header::ERROR_EVENT, 
-                  thismsg->runID, thismsg->eventID, thismsg->outModID);
+                  thismsg->runID, thismsg->eventID, thismsg->outModID,
+                  thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
          receivedFrames_++;
@@ -918,7 +914,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
     /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
                                 msg->frameCount+1, msg->numFrames, Header::ERROR_EVENT, 
-                                msg->runID, msg->eventID, msg->outModID);
+                                msg->runID, msg->eventID, msg->outModID,
+                                msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     receivedFrames_++;
@@ -1122,7 +1119,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
                   thismsg->frameCount+1, thismsg->numFrames, Header::DQM_EVENT, 
-                  thismsg->runID, thismsg->eventAtUpdateID, thismsg->folderID);
+                  thismsg->runID, thismsg->eventAtUpdateID, thismsg->folderID,
+                  thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
          ++receivedFrames_;
@@ -1152,7 +1150,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
     /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
                                 msg->frameCount+1, msg->numFrames, Header::DQM_EVENT, 
-                                msg->runID, msg->eventAtUpdateID, msg->folderID);
+                                msg->runID, msg->eventAtUpdateID, msg->folderID,
+                                msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     ++receivedFrames_;
@@ -4277,7 +4276,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("filePrefixDQM",        &filePrefixDQM_);
   is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
   is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
-  is->fireItemAvailable("allowDupAutoBUEvtNums",&allowDupAutoBUEvtNums_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
   is->fireItemAvailable("fileCatalog",          &fileCatalog_);
   is->fireItemAvailable("fileName",             &fileName_);
@@ -4336,7 +4334,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("filePrefixDQM",        this);
   is->addItemRetrieveListener("useCompressionDQM",    this);
   is->addItemRetrieveListener("compressionLevelDQM",  this);
-  is->addItemRetrieveListener("allowDupAutoBUEvtNums",this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
   is->addItemRetrieveListener("fileCatalog",          this);
   is->addItemRetrieveListener("fileName",             this);
