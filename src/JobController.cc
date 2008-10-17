@@ -133,7 +133,7 @@ namespace stor
               EventBuffer::ProducerBuffer fragQBuff(getFragmentQueue());
               new (fragQBuff.buffer()) stor::FragEntry(0, 0, 0, 1, 1,
                                                        Header::FILE_CLOSE_REQUEST,
-                                                       0, 0, 0);
+                                                       0, 0, 0, 0, 0);
               fragQBuff.commit(sizeof(stor::FragEntry));
             }
           }
