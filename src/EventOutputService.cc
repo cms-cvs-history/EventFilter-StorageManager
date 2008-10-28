@@ -1,4 +1,4 @@
-// $Id: EventOutputService.cc,v 1.1 2008/08/13 22:48:12 biery Exp $
+// $Id: EventOutputService.cc,v 1.3 2008/10/24 17:41:55 loizides Exp $
 
 #include <EventFilter/StorageManager/interface/EventOutputService.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -77,6 +77,7 @@ void EventOutputService::closeFile()
 {
   writer_ -> stop();
   file_   -> increaseFileSize(writer_->getStreamEOFSize());
+  file_   -> setadler(writer_->get_adler32_stream(),writer_->get_adler32_index());
   file_   -> moveFileToClosed();
   file_   -> writeToSummaryCatalog();
   file_   -> updateDatabase();
