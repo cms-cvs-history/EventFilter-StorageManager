@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.41 2008/09/04 17:49:07 biery Exp $
+// $Id: FragmentCollector.cc,v 1.42 2008/10/08 19:49:51 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -10,6 +10,8 @@
 #include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 #include "boost/bind.hpp"
+
+#include "zlib.h"
 
 #include <algorithm>
 #include <utility>
@@ -207,6 +209,14 @@ namespace stor
         {
           eventServer_->processEvent(emsg);
         }
+
+	int comp_err = check_compression( emsg );
+	if( comp_err )
+	  {
+	    cerr << "FragmentCollector::processEvent: uncompression error " << comp_err
+		 << "; run " << emsg.run() << ", event " << emsg.event()
+		 << ", output module id " << emsg.outModId() << endl;
+	  }
 
 	// make sure the buffer properly released
 	(*buffer_deleter_)(entry);
@@ -500,6 +510,27 @@ namespace stor
 	fragment_area_.erase(rc.first);
     }
     ProgressMarker::instance()->processing(false);
+  }
+
+  // Try to catch compression errors:
+
+  int FragmentCollector::check_compression( const EventMsgView& emview )
+  {
+
+    unsigned long origsize = emview.origDataSize();
+    if( origsize == 0 || origsize == 78 ) return 0; // uncompressed
+
+    unsigned int e_length = emview.eventLength();
+    std::vector<unsigned char> dest;
+    dest.resize( e_length );
+
+    unsigned long uncompressed_size = origsize;
+
+    return uncompress( &(dest[0]),
+		       &uncompressed_size,
+		       (unsigned char*)emview.eventData(),
+		       e_length );
+
   }
 
 }

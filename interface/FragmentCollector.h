@@ -90,6 +90,8 @@ namespace stor
     const edm::ProductRegistry* prods_; // change to shared_ptr ? 
     stor::HLTInfo* info_;  // cannot be const when using EP_Runner?
 
+    static int check_compression( const EventMsgView& );
+
   public:
 
     void setNumberOfFileSystems(int disks)   { disks_        = disks; }
