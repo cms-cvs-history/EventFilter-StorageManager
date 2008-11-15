@@ -54,7 +54,7 @@ struct SMFUSenderEntry  // used to store each FU sender
                  const std::string outModName,
                  const uint32 outModId,
                  const uint32 rbBufferID,
-                 toolbox::mem::Reference *ref);
+                 const uint32 regSize);
   private:
   
   char          hltURL_[MAX_I2O_SM_URLCHARS];       // FU+HLT identifiers
@@ -82,17 +82,15 @@ struct SMFUSenderEntry  // used to store each FU sender
 
   bool sameURL(const char* hltURL);
   bool sameClassName(const char* hltClassName);
-  bool testCompleteRegistry(const std::string outModName);
-  bool copyRegistry(const std::string outModName, toolbox::mem::Reference *head);
 
   public:
   
   /// returns true if frame added completes the registry
   void addReg2Entry(const unsigned int frameCount, const unsigned int numFramesToAllocate,
                  const std::string outModName, const uint32 outModId,
-                 toolbox::mem::Reference *ref);
+                 const uint32 regSize);
   bool addFrame(const unsigned int frameCount, const unsigned int numFrames,
-                toolbox::mem::Reference *ref, const std::string outModName);
+                const uint32 regSize, const std::string outModName);
   bool update4Data(const unsigned int runNumber, const unsigned int eventNumber,
                    const unsigned int frameNum, const unsigned int totalFrames,
                    const unsigned int origdatasize, const uint32 outModId);
@@ -140,7 +138,6 @@ struct SMFUSenderEntry  // used to store each FU sender
 
   bool getDataStatus();  
   char* getregistryData(const std::string outModName); // const char* here needs modifying InitMsgView ctor
-  void shrinkRegistryData(const std::string outModName);
   bool matchFirst(const char* hltURL, const char* hltClassName, 
                              const unsigned int hltLocalId,
                              const unsigned int hltInstance, 

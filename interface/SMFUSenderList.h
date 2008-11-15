@@ -37,7 +37,7 @@ class SMFUSenderList  //< list of data senders with thread-safe access
     const char* hltClassName, const unsigned int hltLocalId,
     const unsigned int hltInstance, const unsigned int hltTid,
     const unsigned int frameCount, const unsigned int numFrames,
-    toolbox::mem::Reference *ref, const std::string outModName, 
+    const uint32 regSize, const std::string outModName, 
     const uint32 outModId, const uint32 rbBufferID);
   /// Update data sender information and statistics for each data
   /// frame received, return true if this frame completes an event
@@ -60,10 +60,6 @@ class SMFUSenderList  //< list of data senders with thread-safe access
     const std::string outModName, const uint32 rbBufferID);
   /// methods for access to sender info and statistics
   char* getRegistryData(const char* hltURL,
-    const char* hltClassName, const unsigned int hltLocalId,
-    const unsigned int hltInstance, const unsigned int hltTid, 
-    const std::string outModName, const uint32 rbBufferID);
-  void shrinkRegistryData(const char* hltURL,
     const char* hltClassName, const unsigned int hltLocalId,
     const unsigned int hltInstance, const unsigned int hltTid, 
     const std::string outModName, const uint32 rbBufferID);
@@ -97,7 +93,7 @@ class SMFUSenderList  //< list of data senders with thread-safe access
     const char* hltClassName, const unsigned int hltLocalId,
     const unsigned int hltInstance, const unsigned int hltTid,
     const unsigned int frameCount, const unsigned int numFrames,
-    toolbox::mem::Reference *ref, const std::string outModName, 
+    const uint32 regSize, const std::string outModName, 
     const uint32 outModId, const uint32 rbBufferID);
 /*
   bool eraseFirstFUEntry(const char* hltURL, const char* hltClassName, 
