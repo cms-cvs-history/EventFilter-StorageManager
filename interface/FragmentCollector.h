@@ -27,6 +27,7 @@
 #include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
+#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
@@ -80,6 +81,7 @@ namespace stor
       }
     }
     void setInitMsgCollection(boost::shared_ptr<InitMsgCollection>& imColl) { initMsgCollection_ = imColl; }
+    void setSMRBSenderList(SMFUSenderList* senderList) { smRBSenderList_ = senderList; }
 
   private:
     static void run(FragmentCollector*);
@@ -162,6 +164,7 @@ namespace stor
     boost::shared_ptr<EventServer> eventServer_;
     boost::shared_ptr<DQMEventServer> DQMeventServer_;
     boost::shared_ptr<InitMsgCollection> initMsgCollection_;
+    SMFUSenderList* smRBSenderList_;
   };
 }
 
