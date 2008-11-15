@@ -1,12 +1,13 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22 2008/10/13 13:05:35 hcheung Exp $
+// $Id: JobController.h,v 1.21.2.3 2008/10/16 19:37:07 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/EventServer.h"
 #include "EventFilter/StorageManager/interface/DQMEventServer.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
+#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
 #include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
@@ -61,6 +62,11 @@ namespace stor
     }
     boost::shared_ptr<InitMsgCollection>& getInitMsgCollection() { return initMsgCollection_; }
 
+    void setSMRBSenderList(SMFUSenderList* senderList) {
+      if (collector_.get() != NULL) collector_->setSMRBSenderList(senderList);
+      smRBSenderList_ = senderList;
+    }
+
     void setNumberOfFileSystems(int disks)    { collector_->setNumberOfFileSystems(disks); }
     void setFileCatalog(std::string catalog)  { collector_->setFileCatalog(catalog); }
     void setSourceId(std::string sourceId)    { collector_->setSourceId(sourceId); }
@@ -93,6 +99,7 @@ namespace stor
     boost::shared_ptr<EventServer> eventServer_;
     boost::shared_ptr<DQMEventServer> DQMeventServer_;
     boost::shared_ptr<InitMsgCollection> initMsgCollection_;
+    SMFUSenderList* smRBSenderList_;
 
     int fileClosingTestInterval_;
     log4cplus::Logger& applicationLogger_;
