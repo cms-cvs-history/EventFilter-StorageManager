@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.91 2008/10/22 01:00:54 loizides Exp $
+// $Id: StorageManager.cc,v 1.86.2.4 2008/10/28 21:38:42 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -72,16 +72,8 @@ static void deleteSMBuffer(void* Ref)
   // release the memory pool buffer
   // once the fragment collector is done with it
   stor::FragEntry* entry = (stor::FragEntry*)Ref;
-  // check code for INIT message 
-  // and all messages work like this (going into a queue)
-  // do not delete the memory for the single (first) INIT message
-  // it is stored in the local data member for event server
-  // but should not keep all INIT messages? Clean this up!
-  if(entry->code_ != Header::INIT) 
-  {
-    toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
-    ref->release();
-  }
+  toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
+  ref->release();
 }
 
 std::string smutil_itos(int i)	// convert int to string
@@ -351,6 +343,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << msg->fuGUID << std::dec << std::endl;
   FDEBUG(10) << "StorageManager: registry size " << msg->dataSize << "\n";
 
+  int len = msg->dataSize;
+
   // *** check the Storage Manager is in the Ready or Enabled state first!
   if(fsm_.stateName()->toString() != "Enabled" && fsm_.stateName()->toString() != "Ready" )
   {
@@ -362,206 +356,123 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-  receivedFrames_++;
 
-  // for bandwidth performance measurements
-  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
-                                  + msg->dataSize;
-  addMeasurement(actualFrameSize);
-  // register this data sender into the list to keep its status
-  // need output module name and Id which is not available in the I2O header!!
-  // We must assume the registry is in a single frame! So in this case
-  // we extract the information from the INIT message header
-/*
-  unsigned int origsize = msg->originalSize;
-  vector<char> tempbuffer(origsize);
-  int sz = msg->dataSize;
-  copy(msg->dataPtr(), &msg->dataPtr()[sz], &tempbuffer[0]);
-  InitMsgView dummymsg(&tempbuffer[0]);
-  std::string dmoduleLabel = dummymsg.outputModuleLabel();
-  uint32 dmoduleId = dummymsg.outputModuleId();
-*/
-  std::string dmoduleLabel("dummy" + smutil_itos(msg->outModID));
-  uint32 dmoduleId = msg->outModID;
+  // If running with local transfers, a chain of I2O frames when posted only has the
+  // head frame sent. So a single frame can complete a chain for local transfers.
+  // We need to test for this. Must be head frame, more than one frame
+  // and next pointer must exist.
+  int is_local_chain = 0;
+  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
   {
-  // a quick fix for registration problem TODO find real problem and fix!
-  boost::mutex::scoped_lock sl(rblist_lock_);
-  
-  // TODO for local transfers should break the I2O chain and feed these in each frame
-  //      but beware of the discard for local transfers!
+    // this looks like a chain of frames (local transfer)
+    toolbox::mem::Reference *head = ref;
+    toolbox::mem::Reference *next = 0;
+    // best to check the complete chain just in case!
+    unsigned int tested_frames = 1;
+    next = head;
+    while((next=next->getNextReference())!=0) ++tested_frames;
+    FDEBUG(10) << "StorageManager: INIT Head frame has " << tested_frames-1
+               << " linked frames out of " << msg->numFrames-1 << std::endl;
+    if(msg->numFrames == tested_frames)
+    {
+      // found a complete linked chain from the leading frame
+      is_local_chain = 1;
+      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
+                 << " - must be local transfer" << std::endl;
+      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
+      // break the chain and feed them to the fragment collector
+      next = head;
 
-  int status = smrbsenders_.registerDataSender(&msg->hltURL[0], &msg->hltClassName[0],
-                 msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                 msg->frameCount, msg->numFrames, ref, dmoduleLabel, dmoduleId, msg->rbBufferID);
-  // see if this completes the registry data for this data sender
-  // if so then: if first copy it, if subsequent test it (mark which is first?)
-  // should test on -1 as problems
-  if(status == 1)
-  {
-    char* regPtr = smrbsenders_.getRegistryData(&msg->hltURL[0], &msg->hltClassName[0],
-                                                msg->hltLocalId, msg->hltInstance,
-                                                msg->hltTid, dmoduleLabel, msg->rbBufferID);
-
-    if (regPtr != NULL) {
-
-      unsigned int regSz = smrbsenders_.getRegistrySize(&msg->hltURL[0], &msg->hltClassName[0],
-                                                        msg->hltLocalId, msg->hltInstance,
-                                                        msg->hltTid, dmoduleLabel, msg->rbBufferID);
-
-      // attempt to add the INIT message to our collection
-      // of INIT messages.  (This assumes that we have a full INIT message
-      // at this point.)  (In principle, this could be done in the
-      // FragmentCollector::processHeader method, but then how would we
-      // propogate errors back to this code?  If/when we move the collecting
-      // of INIT message fragments into FragmentCollector::processHeader,
-      // we'll have to solve that problem.
-      boost::shared_ptr<InitMsgCollection> initMsgCollection = jc_->getInitMsgCollection();
-
-      InitMsgView testmsg(regPtr);
-      try
+      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
       {
-        // TODO - couple the addIfUnique and getLastElement calls either with a
-        // change to the API or a mutex
-        if (initMsgCollection->addIfUnique(testmsg))
-        {
-          // if the addition of the INIT message to the collection worked,
-          // then we know that it is unique, etc. and we need to send it
-          // off to the Fragment Collector which passes it to the
-          // appropriate SM output stream(s)
-          InitMsgSharedPtr serializedProds = initMsgCollection->getLastElement();
-          FDEBUG(9) << "Saved serialized registry for Event Server, size "
-                    << regSz << std::endl;
-          // queue for output
-          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-          // don't have the correct run number yet
-          new (b.buffer()) stor::FragEntry(&(*serializedProds)[0],
-                                           &(*serializedProds)[0],
-                                           serializedProds->size(), 1, 1,
-                                           Header::INIT,
-                                           0, // run number is unknown
-                                           msg->rbBufferID, // use RB buffer number as event ID in absence of anything else
-                                           msg->outModID,
-                                           msg->fuProcID, msg->fuGUID);
-          b.commit(sizeof(stor::FragEntry));
-          // this is checked ok by default
-          smrbsenders_.setRegCheckedOK(&msg->hltURL[0], &msg->hltClassName[0],
-                                       msg->hltLocalId, msg->hltInstance,
-                                       msg->hltTid, dmoduleLabel, msg->rbBufferID);
+         toolbox::mem::Reference *thisref=next;
+         next = thisref->getNextReference();
+         thisref->setNextReference(0);
+         I2O_MESSAGE_FRAME          *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
+         I2O_SM_PREAMBLE_MESSAGE_FRAME *thismsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*)thisstdMsg;
+         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+         int thislen = thismsg->dataSize;
+         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
+         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
+                  thismsg->frameCount+1, thismsg->numFrames, Header::INIT, 
+                  0, thismsg->hltTid, thismsg->outModID,
+                  thismsg->fuProcID, thismsg->fuGUID);
+         std::copy(msg->hltURL, msg->hltURL+MAX_I2O_SM_URLCHARS,
+                   static_cast<stor::FragEntry*>(b.buffer())->hltURL_);
+         std::copy(msg->hltClassName, msg->hltClassName+MAX_I2O_SM_URLCHARS,
+                   static_cast<stor::FragEntry*>(b.buffer())->hltClassName_);
+         static_cast<stor::FragEntry*>(b.buffer())->hltLocalId_ = msg->hltLocalId;
+         static_cast<stor::FragEntry*>(b.buffer())->hltInstance_ = msg->hltInstance;
+         static_cast<stor::FragEntry*>(b.buffer())->hltTid_ = msg->hltTid;
+         static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = msg->rbBufferID;
+         b.commit(sizeof(stor::FragEntry));
 
-          // add this output module to the monitoring
-          bool alreadyStoredOutMod = false;
-          std::string moduleLabel = testmsg.outputModuleLabel();
-          uint32 moduleId = testmsg.outputModuleId();
-          if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end())  alreadyStoredOutMod = true;
-          if(!alreadyStoredOutMod) {
-            modId2ModOutMap_.insert(std::make_pair(moduleId,moduleLabel));
-            receivedEventsMap_.insert(std::make_pair(moduleLabel,0));
-            avEventSizeMap_.insert(std::make_pair(moduleLabel,
-              boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-            avCompressRatioMap_.insert(std::make_pair(moduleLabel,
-              boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-          }
-
-          // limit this (and other) interaction with the InitMsgCollection
-          // to a single thread so that we can present a coherent
-          // picture to consumers
-          boost::mutex::scoped_lock sl(consumerInitMsgLock_);
-
-          // check if any currently connected consumers did not specify
-          // an HLT output module label and we now have multiple, different,
-          // INIT messages.  If so, we need to complain because the
-          // SelectHLTOutput parameter needs to be specified when there
-          // is more than one HLT output module (and correspondingly, more
-          // than one INIT message)
-          if (initMsgCollection->size() > 1)
-          {
-            boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
-            std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
-              eventServer->getConsumerTable();
-            std::map< uint32, boost::shared_ptr<ConsumerPipe> >::const_iterator 
-              consumerIter;
-            for (consumerIter = consumerTable.begin();
-                 consumerIter != consumerTable.end();
-                 consumerIter++)
-            {
-              boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
-
-              // for regular consumers, we need to test whether the consumer
-              // configuration specified an HLT output module
-              if (! consPtr->isProxyServer())
-              {
-                if (consPtr->getHLTOutputSelection().empty())
-                {
-                  // store a warning message in the consumer pipe to be
-                  // sent to the consumer at the next opportunity
-                  std::string errorString;
-                  errorString.append("ERROR: The configuration for this ");
-                  errorString.append("consumer does not specify an HLT output ");
-                  errorString.append("module.\nPlease specify one of the HLT ");
-                  errorString.append("output modules listed below as the ");
-                  errorString.append("SelectHLTOutput parameter ");
-                  errorString.append("in the InputSource configuration.\n");
-                  errorString.append(initMsgCollection->getSelectionHelpString());
-                  errorString.append("\n");
-                  consPtr->setRegistryWarning(errorString);
-                }
-              }
-            }
-          }
-        }
-        else
-        {
-          // even though this INIT message wasn't added to the collection,
-          // it was still verified to be "OK" by virtue of the fact that
-          // there was no exception.
-          FDEBUG(9) << "copyAndTestRegistry: Duplicate registry is okay" << std::endl;
-          smrbsenders_.setRegCheckedOK(&msg->hltURL[0], &msg->hltClassName[0],
-                                       msg->hltLocalId, msg->hltInstance,
-                                       msg->hltTid, dmoduleLabel, msg->rbBufferID);
-        }
-      }
-      catch(cms::Exception& excpt)
-      {
-        char tidString[32];
-        sprintf(tidString, "%d", msg->hltTid);
-        std::string logMsg = "receiveRegistryMessage: Error processing a ";
-        logMsg.append("registry message from URL ");
-        logMsg.append(msg->hltURL);
-        logMsg.append(" and Tid ");
-        logMsg.append(tidString);
-        logMsg.append(":\n");
-        logMsg.append(excpt.what());
-        logMsg.append("\n");
-        logMsg.append(initMsgCollection->getSelectionHelpString());
-        FDEBUG(9) << logMsg << std::endl;
-        LOG4CPLUS_ERROR(this->getApplicationLogger(), logMsg);
-
-        throw excpt;
+         ++receivedFrames_;
+         // for bandwidth performance measurements
+         // Following is wrong for the last frame because frame sent is
+         // is actually larger than the size taken by actual data
+         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
+                                         +thislen;
+         addMeasurement(actualFrameSize);
       }
 
-      smrbsenders_.shrinkRegistryData(&msg->hltURL[0], &msg->hltClassName[0],
-                                      msg->hltLocalId, msg->hltInstance,
-                                      msg->hltTid, dmoduleLabel, msg->rbBufferID);
+    } else {
+      // should never get here!
+      FDEBUG(10) << "StorageManager: INIT Head frame has fewer linked frames "
+                 << "than expected: abnormal error! " << std::endl;
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),"INIT Head frame has fewer linked frames" 
+                      << " than expected: abnormal error! ");
     }
-    else {
-      char tidString[32];
-      sprintf(tidString, "%d", msg->hltTid);
-      std::string logMsg = "receiveRegistryMessage: Skipping ";
-      logMsg.append("NULL registry data for URL ");
-      logMsg.append(msg->hltURL);
-      logMsg.append(" and Tid ");
-      logMsg.append(tidString);
-      FDEBUG(9) << logMsg << std::endl;
-      LOG4CPLUS_ERROR(this->getApplicationLogger(), logMsg);
-    }  // end if regPtr != NULL
+  }
 
+  if (is_local_chain == 0) 
+  {
+    // put pointers into fragment collector queue
+    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
+    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
+    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                msg->frameCount+1, msg->numFrames, Header::INIT,
+                                0, msg->hltTid, msg->outModID,
+                                msg->fuProcID, msg->fuGUID);
+    std::copy(msg->hltURL, msg->hltURL+MAX_I2O_SM_URLCHARS,
+              static_cast<stor::FragEntry*>(b.buffer())->hltURL_);
+    std::copy(msg->hltClassName, msg->hltClassName+MAX_I2O_SM_URLCHARS,
+              static_cast<stor::FragEntry*>(b.buffer())->hltClassName_);
+    static_cast<stor::FragEntry*>(b.buffer())->hltLocalId_ = msg->hltLocalId;
+    static_cast<stor::FragEntry*>(b.buffer())->hltInstance_ = msg->hltInstance;
+    static_cast<stor::FragEntry*>(b.buffer())->hltTid_ = msg->hltTid;
+    static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = msg->rbBufferID;
+    b.commit(sizeof(stor::FragEntry));
+    // Frame release is done in the deleter.
+    ++receivedFrames_;
+    // for bandwidth performance measurements
+    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
+                                    + len;
+    addMeasurement(actualFrameSize);
+
+    // add this output module to the monitoring
+    bool alreadyStoredOutMod = false;
+    std::string dmoduleLabel("dummy" + smutil_itos(msg->outModID));
+    uint32 moduleId = msg->outModID;
+    if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
+    if(!alreadyStoredOutMod) {
+      modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
+      receivedEventsMap_.insert(std::make_pair(dmoduleLabel,0));
+      avEventSizeMap_.insert(std::make_pair(dmoduleLabel,
+          boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
+      avCompressRatioMap_.insert(std::make_pair(dmoduleLabel,
+          boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
+    }
+  }
+
+  if (  msg->frameCount == msg->numFrames-1 )
+  {
     string hltClassName(msg->hltClassName);
     sendDiscardMessage(msg->rbBufferID, 
                        msg->hltInstance, 
                        I2O_FU_DATA_DISCARD,
                        hltClassName);
-  } // end of test on if registerDataSender returned that registry is complete
-  } // end of scope for mutex to protect registration
+  }
 }
 
 void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
@@ -615,7 +526,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     // best to check the complete chain just in case!
     unsigned int tested_frames = 1;
     next = head;
-    while((next=next->getNextReference())!=0) tested_frames++;
+    while((next=next->getNextReference())!=0) ++tested_frames;
     FDEBUG(10) << "StorageManager: Head frame has " << tested_frames-1
                << " linked frames out of " << msg->numFrames-1 << std::endl;
     if(msg->numFrames == tested_frames)
@@ -628,7 +539,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      for(int iframe=0; iframe <(int)msg->numFrames; iframe++)
+      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
       {
          toolbox::mem::Reference *thisref=next;
          next = thisref->getNextReference();
@@ -644,7 +555,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                   thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
-         receivedFrames_++;
+         ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
@@ -669,10 +580,10 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          lastEventSeen_ = msg->eventID;
 
          int status = 
-	   smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-					    msg->hltLocalId, msg->hltInstance, msg->hltTid,
-					    msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-					    msg->originalSize, isLocal, msg->outModID);
+           smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+                                          msg->hltLocalId, msg->hltInstance, msg->hltTid,
+                                          msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+                                          msg->originalSize, isLocal, msg->outModID);
 
          //if(status == 1) ++(storedEvents_.value_);
          if(status == 1) {
@@ -698,6 +609,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
       // should never get here!
       FDEBUG(10) << "StorageManager: Head frame has fewer linked frames "
                  << "than expected: abnormal error! " << std::endl;
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Head frame has fewer linked frames" 
+                      << " than expected: abnormal error! ");
     }
   }
 
@@ -712,7 +625,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                                 msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
-    receivedFrames_++;
+    ++receivedFrames_;
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
@@ -736,9 +649,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     bool isLocal = false;
     int status = 
       smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-				       msg->hltLocalId, msg->hltInstance, msg->hltTid,
-				       msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-				       msg->originalSize, isLocal, msg->outModID);
+                                     msg->hltLocalId, msg->hltInstance, msg->hltTid,
+                                     msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+                                     msg->originalSize, isLocal, msg->outModID);
     
     //if(status == 1) ++(storedEvents_.value_);
     if(status == 1) {
@@ -760,13 +673,13 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   }
 
   if (  msg->frameCount == msg->numFrames-1 )
-    {
-      string hltClassName(msg->hltClassName);
-      sendDiscardMessage(msg->rbBufferID, 
-			 msg->hltInstance, 
-			 I2O_FU_DATA_DISCARD,
-			 hltClassName);
-    }
+  {
+    string hltClassName(msg->hltClassName);
+    sendDiscardMessage(msg->rbBufferID, 
+                       msg->hltInstance, 
+                       I2O_FU_DATA_DISCARD,
+                       hltClassName);
+  }
 }
 
 void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
@@ -820,7 +733,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     // best to check the complete chain just in case!
     unsigned int tested_frames = 1;
     next = head;
-    while((next=next->getNextReference())!=0) tested_frames++;
+    while((next=next->getNextReference())!=0) ++tested_frames;
     FDEBUG(10) << "StorageManager: Head frame has " << tested_frames-1
                << " linked frames out of " << msg->numFrames-1 << std::endl;
     if(msg->numFrames == tested_frames)
@@ -833,7 +746,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      for(int iframe=0; iframe <(int)msg->numFrames; iframe++)
+      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
       {
          toolbox::mem::Reference *thisref=next;
          next = thisref->getNextReference();
@@ -849,7 +762,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
                   thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
-         receivedFrames_++;
+         ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
@@ -918,7 +831,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
                                 msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
-    receivedFrames_++;
+    ++receivedFrames_;
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
@@ -967,13 +880,13 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   }
 
   if (  msg->frameCount == msg->numFrames-1 )
-    {
-      string hltClassName(msg->hltClassName);
-      sendDiscardMessage(msg->rbBufferID, 
-			 msg->hltInstance, 
-			 I2O_FU_DATA_DISCARD,
-			 hltClassName);
-    }
+  {
+    string hltClassName(msg->hltClassName);
+    sendDiscardMessage(msg->rbBufferID, 
+                       msg->hltInstance, 
+                       I2O_FU_DATA_DISCARD,
+                       hltClassName);
+  }
 }
 
 /*
@@ -1031,7 +944,7 @@ void StorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
   // release the frame buffer now that we are finished
   ref->release();
 
-  receivedFrames_++;
+  ++receivedFrames_;
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_OTHER_MESSAGE_FRAME);
@@ -1076,7 +989,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-  (dqmRecords_.value_)++;
+  ++(dqmRecords_.value_);
 
   // If running with local transfers, a chain of I2O frames when posted only has the
   // head frame sent. So a single frame can complete a chain for local transfers.
@@ -1164,13 +1077,13 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   }
 
   if (  msg->frameCount == msg->numFrames-1 )
-    {
-      string hltClassName(msg->hltClassName);
-      sendDiscardMessage(msg->rbBufferID, 
-			 msg->hltInstance, 
-			 I2O_FU_DQM_DISCARD,
-			 hltClassName);
-    }
+  {
+    string hltClassName(msg->hltClassName);
+    sendDiscardMessage(msg->rbBufferID, 
+                       msg->hltInstance, 
+                       I2O_FU_DQM_DISCARD,
+                       hltClassName);
+  }
 }
 
 //////////// ***  Performance //////////////////////////////////////////////////////////
@@ -1450,7 +1363,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
         *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
         int nD = nLogicalDisk_;
         if (nD == 0) nD=1;
-        for(int i=0;i<nD;i++) {
+        for(int i=0;i<nD;++i) {
            string path(filePath_);
            if(nLogicalDisk_>0) {
               std::ostringstream oss;
@@ -1526,7 +1439,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
         *out << "</td>" << endl;
         *out << "</tr>" << endl;
 
-    for(ismap it = streams_.begin(); it != streams_.end(); it++)
+    for(ismap it = streams_.begin(); it != streams_.end(); ++it)
       {
         *out << "<tr>" << endl;
 	*out << "<td >" << endl;
@@ -2679,7 +2592,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 	consumerIter;
       for (consumerIter = consumerTable.begin();
 	   consumerIter != consumerTable.end();
-	   consumerIter++)
+	   ++consumerIter)
       {
 	boost::shared_ptr<ConsumerPipe> consumerPipe = consumerIter->second;
 	sprintf(buffer, "<Consumer>\n");
@@ -2739,7 +2652,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 	dqmIter;
       for (dqmIter = dqmTable.begin();
 	   dqmIter != dqmTable.end();
-	   dqmIter++)
+	   ++dqmIter)
       {
 	boost::shared_ptr<DQMConsumerPipe> dqmPipe = dqmIter->second;
 	sprintf(buffer, "<DQMConsumer>\n");
@@ -3449,7 +3362,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
 
           for (consumerIter = consumerTable.begin();
                consumerIter != consumerTable.end();
-               consumerIter++)
+               ++consumerIter)
           {
             boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
             *out << "<tr>" << std::endl;
@@ -3521,7 +3434,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
           dataRateSum = 0.0;
           for (consumerIter = consumerTable.begin();
                consumerIter != consumerTable.end();
-               consumerIter++)
+               ++consumerIter)
           {
             boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
             if (consPtr->isDisconnected()) {continue;}
@@ -3611,7 +3524,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
           dataRateSum = 0.0;
           for (consumerIter = consumerTable.begin();
                consumerIter != consumerTable.end();
-               consumerIter++)
+               ++consumerIter)
           {
             boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
             if (consPtr->isDisconnected()) {continue;}
@@ -3696,7 +3609,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
           dataRateSum = 0.0;
           for (consumerIter = consumerTable.begin();
                consumerIter != consumerTable.end();
-               consumerIter++)
+               ++consumerIter)
           {
             boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
             if (consPtr->isDisconnected()) {continue;}
@@ -3786,7 +3699,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
           dataRateSum = 0.0;
           for (consumerIter = consumerTable.begin();
                consumerIter != consumerTable.end();
-               consumerIter++)
+               ++consumerIter)
           {
             boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
             if (consPtr->isDisconnected ()) {continue;}
@@ -4667,6 +4580,7 @@ void StorageManager::configureAction()
   jc_->setDQMEventServer(DQMeventServer);
   boost::shared_ptr<InitMsgCollection> initMsgCollection(new InitMsgCollection());
   jc_->setInitMsgCollection(initMsgCollection);
+  jc_->setSMRBSenderList(&smrbsenders_);
 }
 
 
@@ -4827,7 +4741,7 @@ void StorageManager::stopAction()
   
   unsigned int totInFile = 0;
   for(list<string>::const_iterator it = files.begin();
-      it != files.end(); it++)
+      it != files.end(); ++it)
   {
       string name;
       unsigned int nev;
@@ -5041,7 +4955,7 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
       if(files.size()==0){is->unlock(); return true;}
       if(streams_.size()==0) {
 	for(list<string>::const_iterator it = files.begin();
-	    it != files.end(); it++)
+	    it != files.end(); ++it)
 	  {
 	    string name;
 	    unsigned int nev;
@@ -5054,7 +4968,7 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 	  }
 	
       }
-      for(ismap it = streams_.begin(); it != streams_.end(); it++)
+      for(ismap it = streams_.begin(); it != streams_.end(); ++it)
 	{
 	  (*it).second.nclosedfiles_=0;
 	  (*it).second.nevents_ =0;
@@ -5062,7 +4976,7 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 	}
       
       for(list<string>::const_iterator it = files.begin();
-	  it != files.end(); it++)
+	  it != files.end(); ++it)
 	{
 	  string name;
 	  unsigned int nev;
