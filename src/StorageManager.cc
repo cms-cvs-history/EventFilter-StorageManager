@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.86.2.8 2008/11/16 09:55:04 biery Exp $
+// $Id: StorageManager.cc,v 1.86.2.9 2008/11/16 12:29:45 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -116,7 +116,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.8 2008/11/16 09:55:04 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.9 2008/11/16 12:29:45 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -1812,6 +1812,46 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << smrbsenders_.size() << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
+
+  *out << "</table>" << endl;
+
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
+  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
+    *out << "  <tr>"                                                   << endl;
+    *out << "    <th colspan=2>"                                       << endl;
+    *out << "      " << "SM Configuration Information "                << endl;
+    *out << "    </th>"                                                << endl;
+    *out << "  </tr>"                                                  << endl;
+
+    *out << "<tr>" << endl;
+    *out << "<th >" << endl;
+    *out << "Parameter" << endl;
+    *out << "</th>" << endl;
+    *out << "<th>" << endl;
+    *out << "Value" << endl;
+    *out << "</th>" << endl;
+    *out << "</tr>" << endl;
+    *out << "<tr>" << endl;
+      *out << "<td >" << endl;
+      *out << "SM CVS Version" << endl;
+      *out << "</td>" << endl;
+      *out << "<td>" << endl;
+      *out << sm_cvs_version_ << endl;
+      *out << "</td>" << endl;
+    *out << "  </tr>" << endl;
+    *out << "<tr class=\"special\">" << endl;
+      *out << "<td colspan=2>" << endl;
+      *out << "SM cfg string" << endl;
+      *out << "</td>" << endl;
+    *out << "  </tr>" << endl;
+    *out << "<tr>"					     << endl;
+      *out << " <td colspan=2>"					     << endl;
+      *out << "<textarea rows=" << 10 << " cols=100 scroll=yes";
+      *out << " readonly title=\"SM config\">"		     << endl;
+      *out << smConfigString_                                  << endl;
+      *out << "</textarea>"                                          << endl;
+      *out << " </td>"					     << endl;
+    *out << "</tr>"					     << endl;
 
   *out << "</table>" << endl;
 
