@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.86.2.6 2008/11/16 09:42:56 biery Exp $
+// $Id: StorageManager.cc,v 1.86.2.7 2008/11/16 09:52:11 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -116,7 +116,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.6 2008/11/16 09:42:56 biery Exp $ $Name: $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.7 2008/11/16 09:52:11 biery Exp $ $Name$")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
