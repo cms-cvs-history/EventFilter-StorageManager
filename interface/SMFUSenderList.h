@@ -59,10 +59,6 @@ class SMFUSenderList  //< list of data senders with thread-safe access
     const unsigned int hltInstance, const unsigned int hltTid, 
     const std::string outModName, const uint32 rbBufferID);
   /// methods for access to sender info and statistics
-  char* getRegistryData(const char* hltURL,
-    const char* hltClassName, const unsigned int hltLocalId,
-    const unsigned int hltInstance, const unsigned int hltTid, 
-    const std::string outModName, const uint32 rbBufferID);
   unsigned int getRegistrySize(const char* hltURL,
     const char* hltClassName, const unsigned int hltLocalId,
     const unsigned int hltInstance, const unsigned int hltTid, 

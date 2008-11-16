@@ -22,12 +22,9 @@ struct SMFUSenderRegCollection // used to stored collection of INIT messages
   std::vector<std::string> outModName_;
   std::map<std::string, uint32> outModName2ModId_;
   std::map<uint32, std::string> outModId2ModName_;
-  std::map<uint32, std::string> outModId2RealModName_;
   std::map<std::string, uint32> registrySizeMap_;    // size of registry in bytes once received AND copied
   std::map<std::string, bool> regAllReceivedMap_;  // All Registry fragments are received or not
   std::map<std::string, bool> regCheckedOKMap_;    // // Registry checked to be same as configuration
-  std::map<std::string, FrameRefCollection> frameRefsMap_; //vector of frame reference pointers
-  std::map<std::string, RegData> registryDataMap_;
   std::map<std::string, uint32> totFramesMap_;  // number of frames in this fragment
   std::map<std::string, uint32> currFramesMap_; // current frames received for registry
 };
@@ -137,7 +134,6 @@ struct SMFUSenderEntry  // used to store each FU sender
   unsigned int gettotalBadEvents() const {return totalBadEvents_;}
 
   bool getDataStatus();  
-  char* getregistryData(const std::string outModName); // const char* here needs modifying InitMsgView ctor
   bool matchFirst(const char* hltURL, const char* hltClassName, 
                              const unsigned int hltLocalId,
                              const unsigned int hltInstance, 

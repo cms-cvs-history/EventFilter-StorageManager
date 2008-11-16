@@ -317,22 +317,6 @@ void SMFUSenderList::setRegCheckedOK(const char* hltURL,
   }
 }
 
-char* SMFUSenderList::getRegistryData(const char* hltURL,
-    const char* hltClassName, const unsigned int hltLocalId,
-    const unsigned int hltInstance, const unsigned int hltTid, 
-    const std::string outModName, const uint32 rbBufferID)
-{  
-  boost::mutex::scoped_lock sl(list_lock_);
-  boost::shared_ptr<stor::SMFUSenderEntry> foundPos = findEntry(hltURL, hltClassName, hltLocalId,
-                                                                hltInstance, hltTid, rbBufferID, outModName);
-  if(foundPos != NULL)
-  {
-    return foundPos->getregistryData(outModName);
-  } else {
-     return NULL;
-  }
-}
-
 unsigned int SMFUSenderList::getRegistrySize(const char* hltURL,
     const char* hltClassName, const unsigned int hltLocalId,
     const unsigned int hltInstance, const unsigned int hltTid, 

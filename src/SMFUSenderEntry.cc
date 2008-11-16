@@ -1,7 +1,7 @@
 /*
         For saving the FU sender list
 
- $Id: SMFUSenderEntry.cc,v 1.13.2.1 2008/10/16 19:37:08 biery Exp $
+ $Id: SMFUSenderEntry.cc,v 1.13.2.2 2008/11/15 20:01:05 biery Exp $
 */
 
 #include "EventFilter/StorageManager/interface/SMFUSenderEntry.h"
@@ -237,13 +237,6 @@ bool SMFUSenderEntry::getDataStatus() //const
    // test if second bit is set
    if((connectStatus_ & 2) > 0) return true;
    else return false;
-}
-
-char* SMFUSenderEntry::getregistryData(const std::string outModName)
-{
-   // this could be dangerous
-   RegData tmpRegData = registryCollection_.registryDataMap_[outModName];
-   return (char*) &(*tmpRegData)[0];
 }
 
 bool SMFUSenderEntry::regIsCopied(const std::string outModName) //const
