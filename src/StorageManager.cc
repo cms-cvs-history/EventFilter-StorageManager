@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.86.2.7 2008/11/16 09:52:11 biery Exp $
+// $Id: StorageManager.cc,v 1.86.2.8 2008/11/16 09:55:04 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -116,7 +116,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.7 2008/11/16 09:52:11 biery Exp $ $Name$")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.8 2008/11/16 09:55:04 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -361,9 +361,9 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
   // that we can use that information even after the Reference is released.
   // Do *NOT* use the dataPtr() method of the localMsgCopy!
-  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
+  I2O_SM_PREAMBLE_MESSAGE_FRAME localMsgCopy;
   const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+  unsigned int msize = sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
   char* dest = (char*) &localMsgCopy;
   std::copy(from, from+msize, dest);
   localMsgCopy.dataSize = msize;
@@ -402,6 +402,15 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          I2O_MESSAGE_FRAME          *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
          I2O_SM_PREAMBLE_MESSAGE_FRAME *thismsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*)thisstdMsg;
 
+         // 04-Nov-2008, need to make a local copy of I2O header information.
+         // Do *NOT* use the dataPtr() method of the thisMsgCopy!
+         I2O_SM_PREAMBLE_MESSAGE_FRAME thisMsgCopy;
+         from = static_cast<const char*>(thisref->getDataLocation());
+         msize = sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
+         dest = (char*) &thisMsgCopy;
+         std::copy(from, from+msize, dest);
+         thisMsgCopy.dataSize = msize;
+
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
@@ -419,10 +428,6 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = thismsg->rbBufferID;
          b.commit(sizeof(stor::FragEntry));
 
-         // BE CAREFUL not to use thismsg after this point because it
-         // may have been released already by the FragmentCollector!
-         // If it needs to be used, make a copy.
-
          ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
@@ -430,6 +435,20 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                          +thislen;
          addMeasurement(actualFrameSize);
+
+         // add this output module to the monitoring
+         bool alreadyStoredOutMod = false;
+         uint32 moduleId = thisMsgCopy.outModID;
+         std::string dmoduleLabel("ID_" + smutil_itos(thisMsgCopy.outModID));
+         if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
+         if(!alreadyStoredOutMod) {
+           modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
+           receivedEventsMap_.insert(std::make_pair(dmoduleLabel,0));
+           avEventSizeMap_.insert(std::make_pair(dmoduleLabel,
+                   boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
+           avCompressRatioMap_.insert(std::make_pair(dmoduleLabel,
+                   boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
+         }
       }
 
     } else {
@@ -468,8 +487,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 
     // add this output module to the monitoring
     bool alreadyStoredOutMod = false;
-    std::string dmoduleLabel("dummy" + smutil_itos(localMsgCopy.outModID));
     uint32 moduleId = localMsgCopy.outModID;
+    std::string dmoduleLabel("ID_" + smutil_itos(localMsgCopy.outModID));
     if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
     if(!alreadyStoredOutMod) {
       modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
@@ -625,11 +644,20 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          if(status == 1) {
            ++(receivedEvents_.value_);
            uint32 moduleId = thisMsgCopy.outModID;
-           std::string moduleLabel = modId2ModOutMap_[moduleId];
-           // TODO: what happens if this is an invalid non-known moduleId??
-           ++(receivedEventsMap_[moduleLabel]);
-           avEventSizeMap_[moduleLabel]->addSample((double)thisMsgCopy.originalSize);
-           // TODO: get the uncompressed size to find compression ratio for stats
+           if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
+             std::string moduleLabel = modId2ModOutMap_[moduleId];
+             ++(receivedEventsMap_[moduleLabel]);
+             avEventSizeMap_[moduleLabel]->addSample((double)thisMsgCopy.originalSize);
+             // TODO: get the uncompressed size to find compression ratio for stats
+           }
+           else {
+             LOG4CPLUS_WARN(this->getApplicationLogger(),
+                            "StorageManager::receiveDataMessage: "
+                            << "Unable to find output module label when "
+                            << "accumulating statistics for event "
+                            << thisMsgCopy.eventID << ", output module "
+                            << thisMsgCopy.outModID << ".");
+           }
          }
 
          if(status == -1) {
@@ -693,11 +721,20 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     if(status == 1) {
       ++(receivedEvents_.value_);
       uint32 moduleId = localMsgCopy.outModID;
-      std::string moduleLabel = modId2ModOutMap_[moduleId];
-      // TODO: what happens if this is an invalid non-known moduleId??
-      ++(receivedEventsMap_[moduleLabel]);
-      avEventSizeMap_[moduleLabel]->addSample((double)localMsgCopy.originalSize);
-      // TODO: get the uncompressed size to find compression ratio for stats
+      if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
+        std::string moduleLabel = modId2ModOutMap_[moduleId];
+        ++(receivedEventsMap_[moduleLabel]);
+        avEventSizeMap_[moduleLabel]->addSample((double)localMsgCopy.originalSize);
+        // TODO: get the uncompressed size to find compression ratio for stats
+      }
+      else {
+        LOG4CPLUS_WARN(this->getApplicationLogger(),
+                       "StorageManager::receiveDataMessage: "
+                       << "Unable to find output module label when "
+                       << "accumulating statistics for event "
+                       << localMsgCopy.eventID << ", output module "
+                       << localMsgCopy.outModID << ".");
+      }
     }
     if(status == -1) {
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -1281,11 +1318,20 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Max (KB)" << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
+        boost::shared_ptr<InitMsgCollection> initMsgCollection;
+        if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
+          initMsgCollection = jc_->getInitMsgCollection();
+        }
         idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
         for( ; oi != oe; ++oi) {
+          std::string outputModuleLabel = oi->second;
+          if (initMsgCollection.get() != NULL &&
+              initMsgCollection->getOutputModuleName(oi->first) != "") {
+            outputModuleLabel = initMsgCollection->getOutputModuleName(oi->first);
+          }
           *out << "<tr>" << endl;
             *out << "<td >" << endl;
-            *out << oi->second << endl;
+            *out << outputModuleLabel << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
             //*out << receivedEventsMap_[oi->second] << endl;
@@ -1993,8 +2039,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
               *out << "Output Module Name" << endl;
               *out << "</td>" << endl;
               *out << "<td align=right>" << endl;
-              uint32 idtemp = (*pos)->registryCollection_.outModName2ModId_[*idx];
-              *out << (*pos)->registryCollection_.outModId2RealModName_[idtemp] << endl;
+              *out << (*idx) << endl;
               *out << "</td>" << endl;
             *out << "  </tr>" << endl;
             *out << "<tr>" << endl;
@@ -2112,8 +2157,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
                 *out << "Output Module Name" << endl;
                 *out << "</td>" << endl;
                 *out << "<td align=right>" << endl;
-                uint32 idtemp = (*pos)->registryCollection_.outModName2ModId_[*idx];
-                *out << (*pos)->registryCollection_.outModId2RealModName_[idtemp] << endl;
+                *out << (*idx) << endl;
                 *out << "</td>" << endl;
               *out << "  </tr>" << endl;
               *out << "<tr>" << endl;
@@ -4314,10 +4358,20 @@ void StorageManager::actionPerformed(xdata::Event& e)
     } else if (item == "receivedEventsFromOutMod" || item == "namesOfOutMod") {
       receivedEventsFromOutMod_.clear();
       namesOfOutMod_.clear();
+
+      boost::shared_ptr<InitMsgCollection> initMsgCollection;
+      if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
+        initMsgCollection = jc_->getInitMsgCollection();
+      }
       idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
       for( ; oi != oe; ++oi) {
+        std::string outputModuleLabel = oi->second;
+        if (initMsgCollection.get() != NULL &&
+            initMsgCollection->getOutputModuleName(oi->first) != "") {
+          outputModuleLabel = initMsgCollection->getOutputModuleName(oi->first);
+        }
         receivedEventsFromOutMod_.push_back(receivedEventsMap_[oi->second]);
-        namesOfOutMod_.push_back(oi->second);
+        namesOfOutMod_.push_back(outputModuleLabel);
       }
 /* removed for temporary solution of using the monitoring loop
 
@@ -4762,10 +4816,20 @@ void StorageManager::stopAction()
   }
   receivedEventsFromOutMod_.clear();
   namesOfOutMod_.clear();
+
+  boost::shared_ptr<InitMsgCollection> initMsgCollection;
+  if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
+    initMsgCollection = jc_->getInitMsgCollection();
+  }
   idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
   for( ; oi != oe; ++oi) {
+      std::string outputModuleLabel = oi->second;
+      if (initMsgCollection.get() != NULL &&
+          initMsgCollection->getOutputModuleName(oi->first) != "") {
+        outputModuleLabel = initMsgCollection->getOutputModuleName(oi->first);
+      }
       receivedEventsFromOutMod_.push_back(receivedEventsMap_[oi->second]);
-      namesOfOutMod_.push_back(oi->second);
+      namesOfOutMod_.push_back(outputModuleLabel);
   }
   storedEvents_ = 0;
   storedEventsInStream_.clear();
