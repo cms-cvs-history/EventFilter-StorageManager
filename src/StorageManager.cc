@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.86.2.4 2008/10/28 21:38:42 biery Exp $
+// $Id: StorageManager.cc,v 1.86.2.5 2008/11/15 20:08:15 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -115,7 +115,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedVolume_(0.),
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
-  lastErrorEventSeen_(0)
+  lastErrorEventSeen_(0),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.88.2.3 2008/11/05 19:02:47 biery Exp $ $Name $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -357,6 +358,16 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     return;
   }
 
+  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
+  // that we can use that information even after the Reference is released.
+  // Do *NOT* use the dataPtr() method of the localMsgCopy!
+  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
+  const char* from = static_cast<const char*>(ref->getDataLocation());
+  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+  char* dest = (char*) &localMsgCopy;
+  std::copy(from, from+msize, dest);
+  localMsgCopy.dataSize = msize;
+
   // If running with local transfers, a chain of I2O frames when posted only has the
   // head frame sent. So a single frame can complete a chain for local transfers.
   // We need to test for this. Must be head frame, more than one frame
@@ -383,29 +394,34 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
+      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
       {
          toolbox::mem::Reference *thisref=next;
          next = thisref->getNextReference();
          thisref->setNextReference(0);
          I2O_MESSAGE_FRAME          *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
          I2O_SM_PREAMBLE_MESSAGE_FRAME *thismsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*)thisstdMsg;
+
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                  thismsg->frameCount+1, thismsg->numFrames, Header::INIT, 
-                  0, thismsg->hltTid, thismsg->outModID,
-                  thismsg->fuProcID, thismsg->fuGUID);
-         std::copy(msg->hltURL, msg->hltURL+MAX_I2O_SM_URLCHARS,
+                                          thismsg->frameCount+1, thismsg->numFrames, Header::INIT, 
+                                          0, thismsg->hltTid, thismsg->outModID,
+                                          thismsg->fuProcID, thismsg->fuGUID);
+         std::copy(thismsg->hltURL, thismsg->hltURL+MAX_I2O_SM_URLCHARS,
                    static_cast<stor::FragEntry*>(b.buffer())->hltURL_);
-         std::copy(msg->hltClassName, msg->hltClassName+MAX_I2O_SM_URLCHARS,
+         std::copy(thismsg->hltClassName, thismsg->hltClassName+MAX_I2O_SM_URLCHARS,
                    static_cast<stor::FragEntry*>(b.buffer())->hltClassName_);
-         static_cast<stor::FragEntry*>(b.buffer())->hltLocalId_ = msg->hltLocalId;
-         static_cast<stor::FragEntry*>(b.buffer())->hltInstance_ = msg->hltInstance;
-         static_cast<stor::FragEntry*>(b.buffer())->hltTid_ = msg->hltTid;
-         static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = msg->rbBufferID;
+         static_cast<stor::FragEntry*>(b.buffer())->hltLocalId_ = thismsg->hltLocalId;
+         static_cast<stor::FragEntry*>(b.buffer())->hltInstance_ = thismsg->hltInstance;
+         static_cast<stor::FragEntry*>(b.buffer())->hltTid_ = thismsg->hltTid;
+         static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = thismsg->rbBufferID;
          b.commit(sizeof(stor::FragEntry));
+
+         // BE CAREFUL not to use thismsg after this point because it
+         // may have been released already by the FragmentCollector!
+         // If it needs to be used, make a copy.
 
          ++receivedFrames_;
          // for bandwidth performance measurements
@@ -430,10 +446,10 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                msg->frameCount+1, msg->numFrames, Header::INIT,
-                                0, msg->hltTid, msg->outModID,
-                                msg->fuProcID, msg->fuGUID);
+    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                     msg->frameCount+1, msg->numFrames, Header::INIT,
+                                     0, msg->hltTid, msg->outModID,
+                                     msg->fuProcID, msg->fuGUID);
     std::copy(msg->hltURL, msg->hltURL+MAX_I2O_SM_URLCHARS,
               static_cast<stor::FragEntry*>(b.buffer())->hltURL_);
     std::copy(msg->hltClassName, msg->hltClassName+MAX_I2O_SM_URLCHARS,
@@ -452,8 +468,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 
     // add this output module to the monitoring
     bool alreadyStoredOutMod = false;
-    std::string dmoduleLabel("dummy" + smutil_itos(msg->outModID));
-    uint32 moduleId = msg->outModID;
+    std::string dmoduleLabel("dummy" + smutil_itos(localMsgCopy.outModID));
+    uint32 moduleId = localMsgCopy.outModID;
     if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
     if(!alreadyStoredOutMod) {
       modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
@@ -465,11 +481,11 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     }
   }
 
-  if (  msg->frameCount == msg->numFrames-1 )
+  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
   {
-    string hltClassName(msg->hltClassName);
-    sendDiscardMessage(msg->rbBufferID, 
-                       msg->hltInstance, 
+    string hltClassName(localMsgCopy.hltClassName);
+    sendDiscardMessage(localMsgCopy.rbBufferID, 
+                       localMsgCopy.hltInstance, 
                        I2O_FU_DATA_DISCARD,
                        hltClassName);
   }
@@ -513,6 +529,16 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     return;
   }
 
+  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
+  // that we can use that information even after the Reference is released.
+  // Do *NOT* use the dataPtr() method of the localMsgCopy!
+  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
+  const char* from = static_cast<const char*>(ref->getDataLocation());
+  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+  char* dest = (char*) &localMsgCopy;
+  std::copy(from, from+msize, dest);
+  localMsgCopy.dataSize = msize;
+
   // If running with local transfers, a chain of I2O frames when posted only has the
   // head frame sent. So a single frame can complete a chain for local transfers.
   // We need to test for this. Must be head frame, more than one frame
@@ -539,20 +565,30 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
+      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
       {
          toolbox::mem::Reference *thisref=next;
          next = thisref->getNextReference();
          thisref->setNextReference(0);
          I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
          I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
+
+         // 04-Nov-2008, need to make a local copy of I2O header information.
+         // Do *NOT* use the dataPtr() method of the thisMsgCopy!
+         I2O_SM_DATA_MESSAGE_FRAME thisMsgCopy;
+         from = static_cast<const char*>(thisref->getDataLocation());
+         msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+         dest = (char*) &thisMsgCopy;
+         std::copy(from, from+msize, dest);
+         thisMsgCopy.dataSize = msize;
+
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                  thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, 
-                  thismsg->runID, thismsg->eventID, thismsg->outModID,
-                  thismsg->fuProcID, thismsg->fuGUID);
+                                          thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, 
+                                          thismsg->runID, thismsg->eventID, thismsg->outModID,
+                                          thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
          ++receivedFrames_;
@@ -566,33 +602,33 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
          // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-         if(msg->runID != runNumber_)
+         if(thisMsgCopy.runID != runNumber_)
          {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << msg->runID
-                           << " From " << msg->hltURL
+           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << thisMsgCopy.runID
+                           << " From " << thisMsgCopy.hltURL
                            << " Different from Run Number from configuration = " << runNumber_);
          }
          // for data sender list update
-         // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+         // thisMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
          bool isLocal = true;
 
          //update last event seen
-         lastEventSeen_ = msg->eventID;
+         lastEventSeen_ = thisMsgCopy.eventID;
 
          int status = 
-           smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-                                          msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                                          msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-                                          msg->originalSize, isLocal, msg->outModID);
+	   smrbsenders_.updateSender4data(&thisMsgCopy.hltURL[0], &thisMsgCopy.hltClassName[0],
+					  thisMsgCopy.hltLocalId, thisMsgCopy.hltInstance, thisMsgCopy.hltTid,
+					  thisMsgCopy.runID, thisMsgCopy.eventID, thisMsgCopy.frameCount+1, thisMsgCopy.numFrames,
+					  thisMsgCopy.originalSize, isLocal, thisMsgCopy.outModID);
 
          //if(status == 1) ++(storedEvents_.value_);
          if(status == 1) {
            ++(receivedEvents_.value_);
-           uint32 moduleId = msg->outModID;
+           uint32 moduleId = thisMsgCopy.outModID;
            std::string moduleLabel = modId2ModOutMap_[moduleId];
            // TODO: what happens if this is an invalid non-known moduleId??
            ++(receivedEventsMap_[moduleLabel]);
-           avEventSizeMap_[moduleLabel]->addSample((double)msg->originalSize);
+           avEventSizeMap_[moduleLabel]->addSample((double)thisMsgCopy.originalSize);
            // TODO: get the uncompressed size to find compression ratio for stats
          }
 
@@ -600,8 +636,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
            LOG4CPLUS_ERROR(this->getApplicationLogger(),
                     "updateSender4data: Cannot find RB in Data Sender list!"
                     << " With URL "
-                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
-                    << msg->hltInstance << " Tid " << msg->hltTid);
+                    << thisMsgCopy.hltURL << " class " << thisMsgCopy.hltClassName  << " instance "
+                    << thisMsgCopy.hltInstance << " Tid " << thisMsgCopy.hltTid);
          }
       }
 
@@ -619,10 +655,10 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                msg->frameCount+1, msg->numFrames, Header::EVENT, 
-                                msg->runID, msg->eventID, msg->outModID,
-                                msg->fuProcID, msg->fuGUID);
+    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                     msg->frameCount+1, msg->numFrames, Header::EVENT, 
+                                     msg->runID, msg->eventID, msg->outModID,
+                                     msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     ++receivedFrames_;
@@ -634,52 +670,52 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
     // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-    if(msg->runID != runNumber_)
+    if(localMsgCopy.runID != runNumber_)
     {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << msg->runID
-                      << " From " << msg->hltURL
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
+		      << localMsgCopy.runID << " From " << localMsgCopy.hltURL
                       << " Different from Run Number from configuration = " << runNumber_);
     }
 
     //update last event seen
-    lastEventSeen_ = msg->eventID;
+    lastEventSeen_ = localMsgCopy.eventID;
 
     // for data sender list update
-    // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+    // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
     bool isLocal = false;
     int status = 
-      smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-                                     msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                                     msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-                                     msg->originalSize, isLocal, msg->outModID);
-    
+      smrbsenders_.updateSender4data(&localMsgCopy.hltURL[0], &localMsgCopy.hltClassName[0],
+                                     localMsgCopy.hltLocalId, localMsgCopy.hltInstance, localMsgCopy.hltTid,
+                                     localMsgCopy.runID, localMsgCopy.eventID, localMsgCopy.frameCount+1, localMsgCopy.numFrames,
+                                     localMsgCopy.originalSize, isLocal, localMsgCopy.outModID);
+
     //if(status == 1) ++(storedEvents_.value_);
     if(status == 1) {
       ++(receivedEvents_.value_);
-      uint32 moduleId = msg->outModID;
+      uint32 moduleId = localMsgCopy.outModID;
       std::string moduleLabel = modId2ModOutMap_[moduleId];
       // TODO: what happens if this is an invalid non-known moduleId??
       ++(receivedEventsMap_[moduleLabel]);
-      avEventSizeMap_[moduleLabel]->addSample((double)msg->originalSize);
+      avEventSizeMap_[moduleLabel]->addSample((double)localMsgCopy.originalSize);
       // TODO: get the uncompressed size to find compression ratio for stats
     }
     if(status == -1) {
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
 		      "updateSender4data: Cannot find RB in Data Sender list!"
 		      << " With URL "
-		      << msg->hltURL << " class " << msg->hltClassName  << " instance "
-		      << msg->hltInstance << " Tid " << msg->hltTid);
+		      << localMsgCopy.hltURL << " class " << localMsgCopy.hltClassName  << " instance "
+		      << localMsgCopy.hltInstance << " Tid " << localMsgCopy.hltTid);
     }
   }
 
-  if (  msg->frameCount == msg->numFrames-1 )
-  {
-    string hltClassName(msg->hltClassName);
-    sendDiscardMessage(msg->rbBufferID, 
-                       msg->hltInstance, 
-                       I2O_FU_DATA_DISCARD,
-                       hltClassName);
-  }
+  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
+    {
+      string hltClassName(localMsgCopy.hltClassName);
+      sendDiscardMessage(localMsgCopy.rbBufferID, 
+			 localMsgCopy.hltInstance, 
+			 I2O_FU_DATA_DISCARD,
+			 hltClassName);
+    }
 }
 
 void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
@@ -720,6 +756,16 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     return;
   }
 
+  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
+  // that we can use that information even after the Reference is released.
+  // Do *NOT* use the dataPtr() method of the localMsgCopy!
+  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
+  const char* from = static_cast<const char*>(ref->getDataLocation());
+  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+  char* dest = (char*) &localMsgCopy;
+  std::copy(from, from+msize, dest);
+  localMsgCopy.dataSize = msize;
+
   // If running with local transfers, a chain of I2O frames when posted only has the
   // head frame sent. So a single frame can complete a chain for local transfers.
   // We need to test for this. Must be head frame, more than one frame
@@ -746,20 +792,30 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
+      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
       {
          toolbox::mem::Reference *thisref=next;
          next = thisref->getNextReference();
          thisref->setNextReference(0);
          I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
          I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
+
+         // 04-Nov-2008, need to make a local copy of I2O header information.
+         // Do *NOT* use the dataPtr() method of the thisMsgCopy!
+         I2O_SM_DATA_MESSAGE_FRAME thisMsgCopy;
+         from = static_cast<const char*>(thisref->getDataLocation());
+         msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
+         dest = (char*) &thisMsgCopy;
+         std::copy(from, from+msize, dest);
+         thisMsgCopy.dataSize = msize;
+
          EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
          int thislen = thismsg->dataSize;
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                  thismsg->frameCount+1, thismsg->numFrames, Header::ERROR_EVENT, 
-                  thismsg->runID, thismsg->eventID, thismsg->outModID,
-                  thismsg->fuProcID, thismsg->fuGUID);
+                                          thismsg->frameCount+1, thismsg->numFrames, Header::ERROR_EVENT, 
+                                          thismsg->runID, thismsg->eventID, thismsg->outModID,
+                                          thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
          ++receivedFrames_;
@@ -773,26 +829,26 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
          // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-         if(msg->runID != runNumber_)
+         if(thisMsgCopy.runID != runNumber_)
          {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = " << msg->runID
-                           << " From " << msg->hltURL
+           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = "
+			   << thisMsgCopy.runID << " From " << thisMsgCopy.hltURL
                            << " Different from Run Number from configuration = " << runNumber_);
          }
          // for data sender list update
-         // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+         // thisMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
          //bool isLocal = true;
 
          //update last error event seen
-         lastErrorEventSeen_ = msg->eventID;
+         lastErrorEventSeen_ = thisMsgCopy.eventID;
 
          // TODO need to fix this as the outModId is not valid for error events
          /*
          int status = 
-	   smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-					    msg->hltLocalId, msg->hltInstance, msg->hltTid,
-					    msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-					    msg->originalSize, isLocal, msg->outModID);
+	   smrbsenders_.updateSender4data(&thisMsgCopy.hltURL[0], &thisMsgCopy.hltClassName[0],
+	   thisMsgCopy.hltLocalId, thisMsgCopy.hltInstance, thisMsgCopy.hltTid,
+	   thisMsgCopy.runID, thisMsgCopy.eventID, thisMsgCopy.frameCount+1, thisMsgCopy.numFrames,
+	   thisMsgCopy.originalSize, isLocal, thisMsgCopy.outModID);
          */
 
          // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
@@ -807,8 +863,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
            LOG4CPLUS_ERROR(this->getApplicationLogger(),
                     "updateSender4data: Cannot find RB in Data Sender list!"
                     << " For Error Event With URL "
-                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
-                    << msg->hltInstance << " Tid " << msg->hltTid);
+                    << thisMsgCopy.hltURL << " class " << thisMsgCopy.hltClassName  << " instance "
+                    << thisMsgCopy.hltInstance << " Tid " << thisMsgCopy.hltTid);
          }
          */
       }
@@ -825,10 +881,10 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                msg->frameCount+1, msg->numFrames, Header::ERROR_EVENT, 
-                                msg->runID, msg->eventID, msg->outModID,
-                                msg->fuProcID, msg->fuGUID);
+    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                     msg->frameCount+1, msg->numFrames, Header::ERROR_EVENT, 
+                                     msg->runID, msg->eventID, msg->outModID,
+                                     msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     ++receivedFrames_;
@@ -840,26 +896,26 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
     // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-    if(msg->runID != runNumber_)
+    if(localMsgCopy.runID != runNumber_)
     {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = " << msg->runID
-                      << " From " << msg->hltURL
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = "
+		      << localMsgCopy.runID << " From " << localMsgCopy.hltURL
                       << " Different from Run Number from configuration = " << runNumber_);
     }
 
     //update last error event seen
-    lastErrorEventSeen_ = msg->eventID;
+    lastErrorEventSeen_ = localMsgCopy.eventID;
 
     // for data sender list update
-    // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+    // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
     //bool isLocal = false;
     // TODO need to fix this as the outModId is not valid for error events
     /*
     int status = 
-      smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-				       msg->hltLocalId, msg->hltInstance, msg->hltTid,
-				       msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-				       msg->originalSize, isLocal, msg->outModID);
+      smrbsenders_.updateSender4data(&localMsgCopy.hltURL[0], &localMsgCopy.hltClassName[0],
+      localMsgCopy.hltLocalId, localMsgCopy.hltInstance, localMsgCopy.hltTid,
+      localMsgCopy.runID, localMsgCopy.eventID, localMsgCopy.frameCount+1, localMsgCopy.numFrames,
+      localMsgCopy.originalSize, isLocal, localMsgCopy.outModID);
     */
     
     // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
@@ -873,84 +929,21 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
 		      "updateSender4data: Cannot find RB in Data Sender list!"
 		      << " For Error Event With URL "
-		      << msg->hltURL << " class " << msg->hltClassName  << " instance "
-		      << msg->hltInstance << " Tid " << msg->hltTid);
+		      << localMsgCopy.hltURL << " class " << localMsgCopy.hltClassName  << " instance "
+		      << localMsgCopy.hltInstance << " Tid " << localMsgCopy.hltTid);
     }
     */
   }
 
-  if (  msg->frameCount == msg->numFrames-1 )
-  {
-    string hltClassName(msg->hltClassName);
-    sendDiscardMessage(msg->rbBufferID, 
-                       msg->hltInstance, 
-                       I2O_FU_DATA_DISCARD,
-                       hltClassName);
-  }
+  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
+    {
+      string hltClassName(localMsgCopy.hltClassName);
+      sendDiscardMessage(localMsgCopy.rbBufferID, 
+			 localMsgCopy.hltInstance, 
+			 I2O_FU_DATA_DISCARD,
+			 hltClassName);
+    }
 }
-
-/*
-void StorageManager::receiveOtherMessage(toolbox::mem::Reference *ref)
-{
-  // get the memory pool pointer for statistics if not already set
-  if(pool_is_set_ == 0)
-  {
-    pool_ = ref->getBuffer()->getPool();
-   pool_is_set_ = 1;
-  }
-
-  I2O_MESSAGE_FRAME         *stdMsg = (I2O_MESSAGE_FRAME*)ref->getDataLocation();
-  I2O_SM_OTHER_MESSAGE_FRAME *msg    = (I2O_SM_OTHER_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(9) << "StorageManager: Received other message from HLT " << msg->hltURL
-             << " application " << msg->hltClassName << " id " << msg->hltLocalId
-             << " instance " << msg->hltInstance << " tid " << msg->hltTid << std::endl;
-  FDEBUG(9) << "StorageManager: message content " << msg->otherData << "\n";
- 
-  // Not yet processing any Other messages type
-  // the only "other" message is an end-of-run. It is awaited to process a request to halt the storage manager
-
-  // check the storage Manager is in the correct state to process each message
-  // the end-of-run message is only valid when in the "Enabled" state
-  if(fsm_.stateName()->toString() != "Enabled")
-  {
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                       "Received OTHER (End-of-run) message but not in Enabled state! Current state = "
-                       << fsm_.stateName()->toString() << " OTHER from" << msg->hltURL
-                       << " application " << msg->hltClassName);
-    // just release the memory at least - is that what we want to do?
-    ref->release();
-    return;
-  }
-  
-  LOG4CPLUS_INFO(this->getApplicationLogger(),"removing data sender at " << msg->hltURL);
-  bool didErase = smrbsenders_.removeDataSender(&msg->hltURL[0], &msg->hltClassName[0],
-		 msg->hltLocalId, msg->hltInstance, msg->hltTid);
-  //  
-  //  can only remove one (first) entry matching URL etc. as there is no real FU id.
-  //  Since this is called multiple times, once for each FU on an RB, we are effectively
-  //  only counting we have removed the right number of FUs per RB
-  //  TODO to be fixed when moving INIT message to FragmentCollector
-  //
-
-  if(!didErase)
-  {
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                    "Too many end-of-run received for RB/FU or RB not in Sender list!"
-                    << " With URL "
-                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
-                    << msg->hltInstance << " Tid " << msg->hltTid);
-  }
-  
-  // release the frame buffer now that we are finished
-  ref->release();
-
-  ++receivedFrames_;
-
-  // for bandwidth performance measurements
-  unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_OTHER_MESSAGE_FRAME);
-  addMeasurement(actualFrameSize);
-}
-*/
 
 void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 {
@@ -991,6 +984,16 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   }
   ++(dqmRecords_.value_);
 
+  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
+  // that we can use that information even after the Reference is released.
+  // Do *NOT* use the dataPtr() method of the localMsgCopy!
+  I2O_SM_DQM_MESSAGE_FRAME localMsgCopy;
+  const char* from = static_cast<const char*>(ref->getDataLocation());
+  unsigned int msize = sizeof(I2O_SM_DQM_MESSAGE_FRAME);
+  char* dest = (char*) &localMsgCopy;
+  std::copy(from, from+msize, dest);
+  localMsgCopy.dataSize = msize;
+
   // If running with local transfers, a chain of I2O frames when posted only has the
   // head frame sent. So a single frame can complete a chain for local transfers.
   // We need to test for this. Must be head frame, more than one frame
@@ -1020,7 +1023,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
       // break the chain and feed them to the fragment collector
       next = head;
 
-      for(int iframe=0; iframe <(int)msg->numFrames; ++iframe)
+      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
       {
          toolbox::mem::Reference *thisref=next;
          next = thisref->getNextReference();
@@ -1031,10 +1034,14 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
          int thislen = thismsg->dataSize;
          // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
          new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                  thismsg->frameCount+1, thismsg->numFrames, Header::DQM_EVENT, 
-                  thismsg->runID, thismsg->eventAtUpdateID, thismsg->folderID,
-                  thismsg->fuProcID, thismsg->fuGUID);
+                                          thismsg->frameCount+1, thismsg->numFrames, Header::DQM_EVENT, 
+                                          thismsg->runID, thismsg->eventAtUpdateID, thismsg->folderID,
+                                          thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
+
+         // BE CAREFUL not to use thismsg after this point because it
+         // may have been released already by the FragmentCollector!
+         // If it needs to be used, make a copy.
 
          ++receivedFrames_;
          // for bandwidth performance measurements
@@ -1061,10 +1068,10 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     // put pointers into fragment collector queue
     EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
     // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    /* stor::FragEntry* fe = */ new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                msg->frameCount+1, msg->numFrames, Header::DQM_EVENT, 
-                                msg->runID, msg->eventAtUpdateID, msg->folderID,
-                                msg->fuProcID, msg->fuGUID);
+    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
+                                     msg->frameCount+1, msg->numFrames, Header::DQM_EVENT, 
+                                     msg->runID, msg->eventAtUpdateID, msg->folderID,
+                                     msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
     ++receivedFrames_;
@@ -1076,14 +1083,14 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     // no data sender list update yet for DQM data, should add it here
   }
 
-  if (  msg->frameCount == msg->numFrames-1 )
-  {
-    string hltClassName(msg->hltClassName);
-    sendDiscardMessage(msg->rbBufferID, 
-                       msg->hltInstance, 
-                       I2O_FU_DQM_DISCARD,
-                       hltClassName);
-  }
+  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
+    {
+      string hltClassName(localMsgCopy.hltClassName);
+      sendDiscardMessage(localMsgCopy.rbBufferID, 
+			 localMsgCopy.hltInstance, 
+			 I2O_FU_DQM_DISCARD,
+			 hltClassName);
+    }
 }
 
 //////////// ***  Performance //////////////////////////////////////////////////////////
@@ -4738,7 +4745,7 @@ void StorageManager::stopAction()
   std::list<std::string>& currfiles= jc_->get_currfiles();
   closedFiles_ = files.size() - currfiles.size();
   openFiles_ = currfiles.size();
-  
+
   unsigned int totInFile = 0;
   for(list<string>::const_iterator it = files.begin();
       it != files.end(); ++it)
