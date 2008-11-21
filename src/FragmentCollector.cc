@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.42 2008/10/08 19:49:51 biery Exp $
+// $Id: FragmentCollector.cc,v 1.42.6.1 2008/11/11 11:29:23 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -522,14 +522,16 @@ namespace stor
 
     unsigned int e_length = emview.eventLength();
     std::vector<unsigned char> dest;
-    dest.resize( e_length );
+    dest.resize( origsize );
 
     unsigned long uncompressed_size = origsize;
 
-    return uncompress( &(dest[0]),
-		       &uncompressed_size,
-		       (unsigned char*)emview.eventData(),
-		       e_length );
+    int retval = uncompress( &(dest[0]),
+			     &uncompressed_size,
+			     emview.eventData(),
+			     e_length );
+
+    return retval;
 
   }
 
