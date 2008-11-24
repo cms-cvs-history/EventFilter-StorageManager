@@ -1,11 +1,13 @@
 #!/bin/sh
-# $Id: setup_sm.sh,v 1.19 2008/09/30 04:04:14 loizides Exp $
+# $Id: setup_sm.sh,v 1.27 2008/11/14 07:02:16 loizides Exp $
 
 if test -e "/etc/profile.d/sm_env.sh"; then 
     source /etc/profile.d/sm_env.sh;
 fi
 
-# set variables
+#
+# variables
+#
 
 store=/store
 if test -n "$SM_STORE"; then
@@ -18,23 +20,58 @@ fi
 
 hname=`hostname | cut -d. -f1`;
 nname="node"`echo $hname | cut -d- -f3` 
+case $hname in
+    cmsdisk0)
+        nname="nottobeused"
+        ;;
+    srv-S2C17-01)
+        nname=node_cms-tier0-stage
+        ;;
+    srv-C2D05-02)
+        nname=node_cmsdisk1
+        ;;
+    srv-c2c06-* | srv-C2C06-*)
+        nname="nottobeused"
+        ;;
+    *)
+        ;;
+esac
 
+t0control="~cmsprod/$nname/t0_control.sh";
+if test -e "/opt/copyworker/t0_control.sh"; then
+    t0control="/opt/copyworker/t0_control.sh"
+fi
+
+t0inject="~smpro/scripts/t0inject.sh";
+if test -e "/opt/injectworker/inject/t0inject.sh"; then
+    t0inject="/opt/injectworker/inject/t0inject.sh"
+fi
+
+#
 # functions
+#
 
 modifykparams () {
-    echo     5 > /proc/sys/vm/dirty_background_ratio
-    echo    15 > /proc/sys/vm/dirty_ratio
-    echo   128 > /proc/sys/vm/lower_zone_protection
+#    echo     5 > /proc/sys/vm/dirty_background_ratio
+#    echo    15 > /proc/sys/vm/dirty_ratio
+    echo   256 > /proc/sys/vm/lower_zone_protection
     echo 16384 > /proc/sys/vm/min_free_kbytes
+#    echo 1 > /proc/sys/fs/xfs/error_level
 }
 
 stopunwantedservices () {
-    /etc/init.d/cups stop
-    /etc/init.d/squid stop
-    /etc/init.d/xfs stop
-    /etc/init.d/sendmail stop
-    /etc/init.d/gpm stop
-#    /etc/init.d/slp stop
+    /etc/init.d/cups     stop >/dev/null 2>&1
+    /etc/init.d/squid    stop >/dev/null 2>&1
+    /etc/init.d/xfs      stop >/dev/null 2>&1
+    /etc/init.d/sendmail stop >/dev/null 2>&1
+    /etc/init.d/gpm      stop >/dev/null 2>&1
+}
+
+startwantedservices () {
+    ms="~smpro/sm_scripts_cvs/operations/monitoringSar.sh";
+    if test -e $ms; then 
+        $ms >> /var/log/monitoringSar.log &
+    fi
 }
 
 start () {
@@ -44,10 +81,8 @@ start () {
             return 0;
             ;;
         srv-S2C17-01)
-            nname=node_cms-tier0-stage
             ;;
         srv-C2D05-02)
-            nname=node_cmsdisk1
             for i in $store/satacmsdisk*; do 
                 sn=`basename $i`
                 if test -z "`mount | grep $sn`"; then
@@ -56,12 +91,8 @@ start () {
                 fi
             done
             ;;
-        srv-c2c07-* | srv-C2C07-*)
-
-            modifykparams
-            stopunwantedservices >/dev/null 2>&1
-
-            ~smpro/sm_scripts_cvs/operations/monitoringSar.sh >> /var/log/monitoringSar.log &
+        srv-c2c07-* | srv-C2C07-* | srv-c2c06-* | srv-C2C06-*)
+            stopunwantedservices
 
             if test -x "/sbin/multipath"; then
                 echo "Refresh multipath devices"
@@ -80,6 +111,10 @@ start () {
                 echo "Flushing unused multipath devices"
                 /sbin/multipath -F
             fi
+
+            startwantedservices
+            modifykparams
+            mount -oro,remount /dev/sda1 /boot/
             ;;
         *)
             echo "Unknown host: $hname"
@@ -105,19 +140,19 @@ start () {
         fi
     fi
 
-    su - cmsprod -c "~cmsprod/$nname/t0_control.sh stop" >/dev/null 2>&1
-    su - cmsprod -c "NCOPYWORKER=2 ~cmsprod/$nname/t0_control.sh start"
-    su - smpro -c "~smpro/scripts/t0inject.sh stop" >/dev/null 2>&1
+    su - cmsprod -c "$t0control stop" >/dev/null 2>&1
+    su - cmsprod -c "NCOPYWORKER=2 $t0control start"
+    su - smpro -c "$t0inject stop" >/dev/null 2>&1
     rm -f /tmp/.20*-${hname}-*.log.lock
-    su - smpro -c "~smpro/scripts/t0inject.sh start"
+    su - smpro -c "$t0inject start"
 
     return 0;
 }
 
 stopworkers () {
-    su - smpro -c "~smpro/scripts/t0inject.sh stop"
+    su - smpro -c "$t0inject stop"
     rm -f /tmp/.20*-${hname}-*.log.lock
-    su - cmsprod -c "~cmsprod/$nname/t0_control.sh stop"
+    su - cmsprod -c "$t0control stop"
 
     counter=1;
     while [ $counter -le 10 ]; do
@@ -139,11 +174,9 @@ stop () {
             return 0;
             ;;
         srv-S2C17-01)
-            nname=node_cms-tier0-stage
             stopworkers
             ;;
         srv-C2D05-02)
-            nname=node_cmsdisk1
             stopworkers
             for i in $store/satacmsdisk*; do 
                 sn=`basename $i`
@@ -153,7 +186,7 @@ stop () {
                 fi
             done
             ;;
-        srv-c2c07-* | srv-C2C07-*)
+        srv-c2c07-* | srv-C2C07-* | srv-c2c06-* | srv-C2C06-*)
             stopworkers
             killall -5 monitoringSar.sh
             for i in $store/sata*a*v*; do 
@@ -203,16 +236,14 @@ status () {
             return 0;
             ;;
         srv-S2C17-01)
-            nname=node_cms-tier0-stage
             ;;
         srv-C2D05-02)
-            nname=node_cmsdisk1
             for i in $store/satacmsdisk*; do 
                 sn=`basename $i`
                 printmstat $i $sn
             done
             ;;
-        srv-c2c07-* | srv-C2C07-*)
+        srv-c2c07-* | srv-C2C07-* | srv-c2c06-* | srv-C2C06-*)
             for i in $store/sata*a*v*; do 
                 sn=`basename $i`
                 printmstat $i $sn
@@ -232,8 +263,8 @@ status () {
         printmstat $SM_CALIBAREA $SM_CALIBAREA
     fi
 
-    su - smpro -c "~smpro/scripts/t0inject.sh status"
-    su - cmsprod -c "~cmsprod/$nname/t0_control.sh status"
+    su - smpro -c "$t0inject status"
+    su - cmsprod -c "$t0control status"
     return 0
 }
 

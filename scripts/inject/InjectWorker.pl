@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# $Id: InjectWorker.pl,v 1.29 2008/10/08 01:28:59 loizides Exp $
+# $Id: InjectWorker.pl,v 1.32 2008/10/29 00:20:13 loizides Exp $
 
 use strict;
 use DBI;
@@ -190,7 +190,7 @@ sub inject($$)
     $indfile =~ s/\.dat$/\.ind/;
     my $indfilesize = -1;
     if (-e "$pathname/$indfile") {
-        $indfilesize = -s "$indfile";
+        $indfilesize = -s "$pathname/$indfile";
     } else {
         $indfile     = '';
     }
@@ -355,7 +355,7 @@ my $phrase = "xxx";
 if(-e $config) {
     eval `cat $config`;
 } else {
-    mydie("Error: Can not read config file \"$config\" does not exist","");
+    mydie("Error: Can not read config file \"$config\"","");
     usageShort();
 }
 

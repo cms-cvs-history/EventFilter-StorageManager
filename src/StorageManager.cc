@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.86.2.9 2008/11/16 12:29:45 biery Exp $
+// $Id: StorageManager.cc,v 1.92 2008/11/21 19:09:39 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -116,7 +116,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.9 2008/11/16 12:29:45 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.86.2.10 2008/11/16 13:54:16 biery Exp $ $Name: kabOct08Dev $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -148,6 +148,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   ispace->fireItemAvailable("rcmsStateListener", fsm_.rcmsStateListener());
   ispace->fireItemAvailable("foundRcmsStateListener", fsm_.foundRcmsStateListener());
+  // 21-Nov-2008, KAB: the findRcmsStateListener call needs to go after the
+  // calls to add the RCMS vars to the application infospace.
+  fsm_.findRcmsStateListener();
 
   ispace->addItemRetrieveListener("closedFiles", this);
   ispace->addItemChangedListener("STparameterSet", this);
