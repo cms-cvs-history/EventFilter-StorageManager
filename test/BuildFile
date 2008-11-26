@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.29 2008/03/04 17:12:39 hcheung Exp $
+# $Id: BuildFile,v 1.30 2008/04/17 10:45:30 loizides Exp $
 
 <environment>
   <use name=boost>
@@ -46,7 +46,6 @@
   </library>
 
   <bin file=RunnerTest_t.cpp>
-   <use name=Foundation/SealBase>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=FWCore/PluginManager>
@@ -57,7 +56,6 @@
   </bin>
 
   <bin file=RunCollector_t.cpp>
-   <use name=Foundation/SealBase>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/PluginManager>
    <use name=EventFilter/StorageManager>
