@@ -1,3 +1,10 @@
+2008-12-04  Kurt Biery <biery@fnal.gov>
+
+	* tag V03-14-17-03
+	* Modified the configuration-parsing code to expect Python rather
+	  than the older cfg format.  Added a sample sm_stage1.py
+	  configuration file to the test subdirectory.
+
 2008-11-05  Kurt Biery <biery@fnal.gov>
 
 	* tag V03-14-17-02

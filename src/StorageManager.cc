@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.86.4.1 2008/10/14 19:32:23 biery Exp $
+// $Id: StorageManager.cc,v 1.86.4.2 2008/11/05 17:34:50 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -24,6 +24,7 @@
 #include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
+#include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
 
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -4374,8 +4375,9 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
     } else {
       try {
         // create a parameter set from the configuration string
-         ProcessDesc pdesc(smConfigString_);
-         boost::shared_ptr<edm::ParameterSet> smPSet = pdesc.getProcessPSet();
+         PythonProcessDesc py_pdesc(smConfigString_);
+         boost::shared_ptr<ProcessDesc> pdesc = py_pdesc.processDesc();
+         boost::shared_ptr<edm::ParameterSet> smPSet = pdesc->getProcessPSet();
 
          // loop over each end path
          std::vector<std::string> allEndPaths = 
