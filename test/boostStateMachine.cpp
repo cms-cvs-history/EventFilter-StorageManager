@@ -7,7 +7,6 @@
 
 namespace sc = boost::statechart;
 
-// just a simple comment - KAB 17-Dec-2008
 
 // Forward definition of the states
 class Normal;
