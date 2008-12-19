@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.13 2008/01/22 19:28:37 muzaffar Exp $
+ $Id: StorageManagerRun.cpp,v 1.14.4.2 2008/10/14 15:22:37 biery Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -30,6 +30,9 @@
 #include "IOPool/Streamer/interface/ClassFiller.h"
 
 #include "boost/shared_ptr.hpp"
+
+#include "log4cplus/configurator.h"
+#include "log4cplus/logger.h"
 
 // #include "xdaq/include/xdaq/Application.h"
 
@@ -99,7 +102,7 @@ class Main // : public xdaq::Application
 
  private:
   // disallow the following
-  Main(const Main&):jc_(new stor::JobController("","",deleteBuffer)) { }
+  //Main(const Main&):jc_(new stor::JobController("",deleteBuffer)) { }
   Main& operator=(const Main&) { return *this; }
 
   stor::JobController* jc_;
@@ -107,6 +110,7 @@ class Main // : public xdaq::Application
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
+  log4cplus::Logger logger_;
 };
 
 // ----------- implementation --------------
@@ -127,7 +131,8 @@ Main::Main(xdaq::ApplicationStub* s)
 //Main::Main(const string& fu_config_file,
 Main::Main(const string& my_config_file,
 	   const vector<string>& file_names):
-  names_(file_names)
+  names_(file_names),
+  logger_(log4cplus::Logger::getRoot())  // placeholder, overwritten below
 {
   StreamerInputFile stream_reader(file_names[0]);
   const InitMsgView* init =  stream_reader.startMessage();
@@ -141,9 +146,13 @@ Main::Main(const string& my_config_file,
         //FDEBUG(6) << "StreamInput prod = " << i->className() << endl;
     }
 
+  log4cplus::BasicConfigurator config;
+  config.configure();
+  logger_ = log4cplus::Logger::getInstance("main");
+
   //jc_ = new stor::JobController(pr,
   jc_ = new stor::JobController(getFileContents(my_config_file),
-      &deleteBuffer);
+                                logger_,&deleteBuffer);
 
   vector<string>::iterator it(names_.begin()),en(names_.end());
   for(;it!=en;++it)
