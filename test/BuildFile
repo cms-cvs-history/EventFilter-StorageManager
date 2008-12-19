@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.29 2008/03/04 17:12:39 hcheung Exp $
+# $Id: BuildFile,v 1.30.14.1 2008/12/18 21:55:02 biery Exp $
 
 <environment>
   <use name=boost>
@@ -66,5 +66,7 @@
    <use name=IOPool/Streamer>
   </bin>
 
-</environment>
+  <bin file=boostStateMachine.cpp>
+  </bin>
 
+</environment>
