@@ -3,7 +3,7 @@
 //
 // (W.Badgett)
 //
-// $Id: DQMServiceManager.cc,v 1.5 2008/06/25 18:03:22 biery Exp $
+// $Id: DQMServiceManager.cc,v 1.7 2008/12/19 22:28:22 biery Exp $
 //
 
 #include "FWCore/Utilities/interface/DebugMacros.h"
@@ -239,7 +239,8 @@ int DQMServiceManager::writeAndPurgeDQMInstances(bool writeAll)
             (instance->getLumiSection() % archiveInterval_) == 0)
            || (writeAll && n == listSizeWithOneReady)))
       {
-        instance->writeFile(filePrefix_);
+        instance->writeFile(filePrefix_,
+                            (writeAll && n == listSizeWithOneReady));
       }
       delete(instance);
       reply++;

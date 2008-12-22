@@ -1,5 +1,5 @@
 #!/bin/bash
-# $Id:$
+# $Id: check_left_files_opensize.sh,v 1.3 2008/11/28 09:24:36 jserrano Exp $
 
 # This script iterates over all files in the list of hosts provided and calls
 # injection script with --check option to show a status report.
@@ -21,5 +21,7 @@ do
 
   echo;echo;echo OPEN FILES
   ssh $host "du -h $CHECK_PATH_OPEN"
+#  echo;echo;echo CLOSED FILES
+#  ssh $host "du -h $CHECK_PATH_CLOSED"
 done
 exit 0
