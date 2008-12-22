@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.11 2008/01/22 19:28:37 muzaffar Exp $
+// $Id: RunCollector_t.cpp,v 1.12.2.1 2008/12/22 19:12:52 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -23,6 +23,9 @@
 
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
+
+#include "log4cplus/configurator.h"
+#include "log4cplus/logger.h"
 
 #include <cstdlib>
 #include <sys/types.h>
@@ -143,12 +146,13 @@ class Main
   vector<string> names_;
   edm::ProductRegistry prods_;
   stor::HLTInfo info_;
-  stor::FragmentCollector coll_;
+  boost::shared_ptr<stor::FragmentCollector> coll_;
   //stor::FragmentCollector coll2_;
   Drain drain_;
   typedef boost::shared_ptr<edmtestp::TestFileReader> ReaderPtr;
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
+  log4cplus::Logger logger_;
 };
 
 // ----------- implementation --------------
@@ -161,14 +165,22 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   info_(prods_),
-  coll_(info_,deleteBuffer,conffile),
   //coll2_(info_,deleteBuffer,prods_),
-  drain_(info_)
+  drain_(info_),
+  logger_(log4cplus::Logger::getRoot())  // placeholder, overwritten below
 {
   cout << "ctor of Main" << endl;
+
+  log4cplus::BasicConfigurator config;
+  config.configure();
+  logger_ = log4cplus::Logger::getInstance("main");
+
+  coll_.reset(new stor::FragmentCollector(info_,&deleteBuffer,
+                                          logger_,conffile));
+
   boost::shared_ptr<stor::InitMsgCollection>
     initMsgCollection(new stor::InitMsgCollection());
-  coll_.setInitMsgCollection(initMsgCollection);
+  coll_->setInitMsgCollection(initMsgCollection);
 
   boost::shared_ptr<stor::Parameter> smParameter =
     stor::Configurator::instance()->getParameter();
@@ -186,14 +198,14 @@ Main::Main(const string& conffile, const vector<string>& file_names):
 					       prods_));
       readers_.push_back(p);
     }
-  //coll_.set_outoption(true); // to write out streamer files not root files
+  //coll_->set_outoption(true); // to write out streamer files not root files
 }
 
 int Main::run()
 {
   cerr << "starting the collector and drain" << endl;
   drain_.start();
-  coll_.start();
+  coll_->start();
   //coll2_.start();
   cerr << "started the collector and drain" << endl;
   // sleep(10);
@@ -221,7 +233,7 @@ int Main::run()
   b2.commit();
 
   cerr << "waiting for coll to be done" << endl;
-  coll_.join();
+  coll_->join();
   cerr << "coll done" << endl;
   cerr << "waiting for drain to be done" << endl;
   //coll2_.join();
