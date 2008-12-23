@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.1 2008/12/22 19:18:01 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.2 2008/12/23 20:15:53 paterno Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -91,14 +91,6 @@ static void deleteSMBuffer(void* Ref)
   ref->release();
 }
 
-std::string smutil_itos(int i)	// convert int to string
-{
-  std::stringstream s;
-  s << i;
-  return s.str();
-}
-
-
 StorageManager::StorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
@@ -131,7 +123,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.1 2008/12/22 19:18:01 biery Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.2 2008/12/23 20:15:53 paterno Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -459,7 +451,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          // add this output module to the monitoring
          bool alreadyStoredOutMod = false;
          uint32 moduleId = thisMsgCopy.outModID;
-         std::string dmoduleLabel("ID_" + smutil_itos(thisMsgCopy.outModID));
+         std::string dmoduleLabel("ID_" + boost::lexical_cast<std::string>(thisMsgCopy.outModID));
          if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
          if(!alreadyStoredOutMod) {
            modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
@@ -508,7 +500,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     // add this output module to the monitoring
     bool alreadyStoredOutMod = false;
     uint32 moduleId = localMsgCopy.outModID;
-    std::string dmoduleLabel("ID_" + smutil_itos(localMsgCopy.outModID));
+    std::string dmoduleLabel("ID_" + boost::lexical_cast<std::string>(localMsgCopy.outModID));
     if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
     if(!alreadyStoredOutMod) {
       modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));

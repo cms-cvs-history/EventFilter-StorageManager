@@ -16,3 +16,6 @@ Dec 23, 2008 MFP
    data of the StorageManager class; it has no reason to be a member
    function.
 
+3. Remove smutil_ios() function in favor of boost::lexical_cast<>,
+   which had already been used elsewhere in StorageManager.cc.
+
