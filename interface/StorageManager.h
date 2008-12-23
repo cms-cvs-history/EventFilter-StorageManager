@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.1 2008/12/22 19:17:59 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.2 2008/12/23 19:58:58 paterno Exp $
 */
 
 #include <string>
@@ -130,9 +130,6 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void DQMconsumerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-
-
-    void parseFileEntry(const std::string &in, std::string &out, unsigned int &nev, unsigned long long &sz) const;
 
     std::string findStreamName(const std::string &in) const;
 	

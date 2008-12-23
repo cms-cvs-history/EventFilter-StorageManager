@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.2.1 2008/12/22 19:12:52 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.1 2008/12/22 19:18:01 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -68,6 +68,20 @@ using namespace std;
 using namespace stor;
 
 
+namespace 
+{
+  void
+  parseFileEntry(const std::string &in, 
+		 std::string &out, unsigned int &nev, unsigned long long &sz)
+  {
+    unsigned int no;
+    stringstream pippo;
+    pippo << in;
+    pippo >> no >> out >> nev >> sz;
+  }
+}
+
+
 static void deleteSMBuffer(void* Ref)
 {
   // release the memory pool buffer
@@ -117,7 +131,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.2.1 2008/12/22 19:12:52 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.1 2008/12/22 19:18:01 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -4435,14 +4449,6 @@ void StorageManager::actionPerformed(xdata::Event& e)
   }
 }
 
-void StorageManager::parseFileEntry(const std::string &in, std::string &out, 
-                                    unsigned int &nev, unsigned long long &sz) const
-{
-  unsigned int no;
-  stringstream pippo;
-  pippo << in;
-  pippo >> no >> out >> nev >> sz;
-}
 
 std::string StorageManager::findStreamName(const std::string &in) const
 {
