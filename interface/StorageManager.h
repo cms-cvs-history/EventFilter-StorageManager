@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.4.1 2008/12/22 19:12:50 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.1 2008/12/22 19:17:59 biery Exp $
 */
 
 #include <string>
@@ -88,6 +88,10 @@ namespace stor {
     
 ////////////////////////////////////////////////////////////////////////////////
    private:  
+    StorageManager(StorageManager const&); // not implemented
+    StorageManager& operator=(StorageManager const&); // not implemented
+
+
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
     void receiveDataMessage(toolbox::mem::Reference *ref);
     void receiveErrorDataMessage(toolbox::mem::Reference *ref);

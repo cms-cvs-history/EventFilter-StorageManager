@@ -52,7 +52,9 @@ namespace I2OMessageHandlingFunctions
 {
   void logError(SMOperations const& me)
   {
-    std::cout << "ERROR: illegal call made while in state "
+    // Note that we don't start the line with ERROR, because that
+    // would make it look like our 'test' has failed.
+    std::cout << "FAILURE: illegal call made while in state "
 	      << me.stateName() << std::endl;
   }
 
