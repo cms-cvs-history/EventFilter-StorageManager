@@ -1,6 +1,8 @@
 #ifndef _StorageManager_h
 #define _StorageManager_h
 
+// -*- C++ -*-
+
 /*
    Author: Harry Cheung, FNAL
 
@@ -10,7 +12,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.2 2008/12/23 19:58:58 paterno Exp $
+   $Id: StorageManager.h,v 1.45.6.3 2008/12/23 20:15:53 paterno Exp $
 */
 
 #include <string>
@@ -105,8 +107,6 @@ namespace stor {
     void configureAction();
     void stopAction();
     void haltAction();
-
-    void checkDirectoryOK(const std::string dir) const;
 
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);

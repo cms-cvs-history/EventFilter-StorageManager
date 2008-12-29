@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.2 2008/12/23 20:15:53 paterno Exp $
+// $Id: StorageManager.cc,v 1.92.4.3 2008/12/23 21:04:30 paterno Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -79,6 +79,24 @@ namespace
     pippo << in;
     pippo >> no >> out >> nev >> sz;
   }
+
+  void
+  checkDirectoryOK(xdata::String const& p)
+  {
+    struct stat64 buf;
+    // The const-cast is needed because xdata::String::toString() is
+    // not declared const.
+    string path(const_cast<xdata::String&>(p).toString());
+    
+    int retVal = stat64(path.c_str(), &buf);
+    if(retVal !=0 )
+      {
+	edm::LogError("StorageManager") << "Directory or file " << path
+					<< " does not exist. Error=" << errno ;
+	throw cms::Exception("StorageManager","checkDirectoryOK")
+	  << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
+      }
+  }
 }
 
 
@@ -123,7 +141,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.2 2008/12/23 20:15:53 paterno Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.3 2008/12/23 21:04:30 paterno Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -4534,7 +4552,7 @@ void StorageManager::configureAction()
   smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
 
   // check output locations and scripts before we continue
-  checkDirectoryOK(filePath_.toString());
+  checkDirectoryOK(filePath_);
   if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
 
   // check whether the maxSize parameter in an SM output stream
@@ -4899,19 +4917,6 @@ void StorageManager::haltAction()
   }
 }
 
-void StorageManager::checkDirectoryOK(const std::string path) const
-{
-  struct stat64 buf;
-
-  int retVal = stat64(path.c_str(), &buf);
-  if(retVal !=0 )
-  {
-    edm::LogError("StorageManager") << "Directory or file " << path
-                                    << " does not exist. Error=" << errno ;
-    throw cms::Exception("StorageManager","checkDirectoryOK")
-            << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
-  }
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
