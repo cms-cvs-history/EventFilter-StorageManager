@@ -1,8 +1,6 @@
 #ifndef _StorageManager_h
 #define _StorageManager_h
 
-// -*- C++ -*-
-
 /*
    Author: Harry Cheung, FNAL
 
@@ -12,17 +10,13 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.3 2008/12/23 20:15:53 paterno Exp $
+   $Id: StorageManager.h,v 1.45.6.4 2008/12/29 19:21:12 paterno Exp $
 */
 
 #include <string>
-#include <list>
 #include <map>
 
-#include "FWCore/PluginManager/interface/ProblemTracker.h"
-#include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "EventFilter/Utilities/interface/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
@@ -34,10 +28,6 @@
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 
-#include "FWCore/PluginManager/interface/PluginManager.h"
-
-#include "toolbox/mem/Reference.h"
-
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
 
@@ -48,13 +38,21 @@
 #include "xdata/Boolean.h"
 #include "xdata/Vector.h"
 
-#include "xgi/Input.h"
-#include "xgi/Output.h"
 #include "xgi/exception/Exception.h"
 
 #include "boost/shared_ptr.hpp"
-#include "boost/thread/thread.hpp"
+#include "boost/thread/mutex.hpp"
 
+namespace toolbox { 
+  namespace mem {
+    class Reference;
+  }
+}
+
+namespace xgi {
+  class Input;
+  class Output;
+}
 
 namespace stor {
 

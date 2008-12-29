@@ -24,3 +24,7 @@ Dec 29, 2008 MFP
 4. Made StorageManager::checkDirectoryOK into a free function in an
    anonymous namespace, and simplified it's call.
 
+5. Removed several unnecessary headers from StorageManager.h; some
+   were totally extraneous, some were moved to StorageManager.cc,
+   and some were replaced by forward declarations of classes.
+

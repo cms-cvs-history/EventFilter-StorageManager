@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.3 2008/12/23 21:04:30 paterno Exp $
+// $Id: StorageManager.cc,v 1.92.4.4 2008/12/29 19:21:13 paterno Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -40,6 +40,7 @@
 #include "i2o/utils/AddressMap.h"
 
 #include "toolbox/mem/Pool.h"
+#include "toolbox/mem/Reference.h"
 
 #include "xcept/tools.h"
 
@@ -141,7 +142,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.3 2008/12/23 21:04:30 paterno Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.4 2008/12/29 19:21:13 paterno Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
