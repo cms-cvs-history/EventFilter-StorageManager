@@ -138,14 +138,18 @@ while ($#argv)
         setenv BUILDER_UNIT_URL $argv[1]
     else
         echo "Usage: $0 [-b <builder unit URL>] [-f <filter unit URL>] [-g <filter unit2 URL>] [-h <filter unit3 URL>] [-i <filter unit4 URL>] [-s <storage manager URL>] [-p <SM proxy URL>] [-c <consumer FU URL>]"
-        echo "  where <builder unit URL> defaults to 'http://${HOSTNAME}:51985'"
-        echo "  and   <filter unit URL> defaults to 'http://${HOSTNAME}:51986'"
-        echo "  and   <filter unit2 URL> defaults to 'http://${HOSTNAME}:51987'"
-        echo "  and   <filter unit3 URL> defaults to 'http://${HOSTNAME}:51988'"
-        echo "  and   <filter unit4 URL> defaults to 'http://${HOSTNAME}:51989'"
-        echo "  and   <storage manager URL> defaults to 'http://${HOSTNAME}:52985'."
-        echo "  and   <SM proxy URL> defaults to 'http://${HOSTNAME}:52986'."
-        echo "  and   <consumer FU URL> defaults to 'http://${HOSTNAME}:52987'."
+        echo "  where <builder unit URL> defaults to 'http://STMGR_DEV_BU_HOST:STMGR_DEV_BU_PORT'"
+        echo "  and   <filter unit URL> defaults to 'http://STMGR_DEV_FU_HOST:STMGR_DEV_FU_PORT'"
+        echo "  and   <filter unit2 URL> defaults to 'http://STMGR_DEV_FU2_HOST:STMGR_DEV_FU2_PORT'"
+        echo "  and   <filter unit3 URL> defaults to 'http://STMGR_DEV_FU3_HOST:STMGR_DEV_FU3_PORT'"
+        echo "  and   <filter unit4 URL> defaults to 'http://STMGR_DEV_FU4_HOST:STMGR_DEV_FU4_PORT'"
+        echo "  and   <filter unit5 URL> defaults to 'http://STMGR_DEV_FU5_HOST:STMGR_DEV_FU5_PORT'"
+        echo "  and   <filter unit6 URL> defaults to 'http://STMGR_DEV_FU6_HOST:STMGR_DEV_FU6_PORT'"
+        echo "  and   <filter unit7 URL> defaults to 'http://STMGR_DEV_FU7_HOST:STMGR_DEV_FU7_PORT'"
+        echo "  and   <filter unit8 URL> defaults to 'http://STMGR_DEV_FU8_HOST:STMGR_DEV_FU8_PORT'"
+        echo "  and   <storage manager URL> defaults to 'http://STMGR_DEV_SM_HOST:STMGR_DEV_SM_PORT'."
+        echo "  and   <SM proxy URL> defaults to 'http://STMGR_DEV_SMPROXY_HOST:STMGR_DEV_SMPROXY_PORT'."
+        echo "  and   <consumer FU URL> defaults to 'http://STMGR_DEV_CONSFU_HOST:STMGR_DEV_CONSFU_PORT'."
         echo "If you specify any URLs by hand, be sure the include the 'http://'."
         exit
     endif
