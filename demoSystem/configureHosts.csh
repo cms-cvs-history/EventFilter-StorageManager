@@ -6,7 +6,7 @@
 if ($1 == "-h") then
     echo "Usage: configureHosts.csh [cfgType [baseXdaqPort [hostNameOverride]]]"
     echo "where cfgType is one of 'python' or 'cfg', default is python"
-    echo "e.g. 'configureHosts.csh python 51985 cmsroc8.fnal.gov'"
+    echo "e.g. 'configureHosts.csh python 50000 cmsroc8.fnal.gov'"
     exit
 endif
 if ($#argv > 0) then
@@ -17,7 +17,7 @@ endif
 if ($#argv > 1) then
     @ basePort = $argv[2]
 else
-    @ basePort = 51985
+    @ basePort = 50000
 endif
 if ($#argv > 2) then
     set localHostName = $argv[3]
