@@ -1,0 +1,47 @@
+process FUEVENTCONSUMER =
+{
+  // options
+  untracked PSet options =
+  {
+    untracked vstring Rethrow = {"ProductNotFound","TooManyProducts","TooFewProducts"}
+    untracked bool makeTriggerResults = true
+    untracked bool wantSummary = true
+  }
+
+  service = MessageLogger {
+    untracked vstring destinations = { "cout" }
+    untracked PSet cout = { untracked string threshold = "FATAL" }
+    untracked PSet log4cplus = {
+      untracked string threshold = "INFO"
+      //untracked PSet ERROR   = { untracked int32 limit = 10 }
+      //untracked PSet WARNING = { untracked int32 limit = 10 }
+      //untracked PSet INFO    = { untracked int32 limit = 10 }
+    }
+  }
+
+  untracked PSet maxEvents = {untracked int32 input = -1}
+
+  source = EventStreamHttpReader
+  {
+    string sourceURL = "http://STMGR_DEV_SMPROXY_HOST:STMGR_DEV_SMPROXY_PORT/urn:xdaq-application:lid=30"
+
+    untracked string consumerName = "Consumer FUEP"
+    untracked string consumerPriority = "normal"
+    untracked int32 headerRetryInterval = 3  // seconds
+    untracked double maxEventRequestRate = 0.1  // hertz
+    untracked PSet SelectEvents = { vstring SelectEvents={"*DQM"} }
+
+    untracked string SelectHLTOutput = "out4DQM"
+
+    untracked int32 maxConnectTries = 1
+  }
+
+  module contentAna = EventContentAnalyzer
+  {
+      //untracked vstring verboseForModuleLabels = { "TEST1" }
+      //untracked bool verbose = true
+      //untracked bool getData = true
+  }
+
+  //path p2 = { contentAna }
+}
