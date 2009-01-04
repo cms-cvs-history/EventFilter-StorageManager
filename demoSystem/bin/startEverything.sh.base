@@ -17,43 +17,43 @@ cd $STMGR_DIR/log/filterUnit
 xdaq.exe -h STMGR_DEV_FU_HOST -p STMGR_DEV_FU_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}.log &
 echo "Started FU1 xdaq.exe..."
 sleep 3
-if [ $SMDEV_FU_PROCESS_COUNT > 1 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 1 ]
 then
   xdaq.exe -h STMGR_DEV_FU2_HOST -p STMGR_DEV_FU2_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_2.log &
   echo "Started FU2 xdaq.exe..."
   sleep 3
 fi
-if [ $SMDEV_FU_PROCESS_COUNT > 2 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 2 ]
 then
   xdaq.exe -h STMGR_DEV_FU3_HOST -p STMGR_DEV_FU3_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_3.log &
   echo "Started FU3 xdaq.exe..."
   sleep 3
 fi
-if [ $SMDEV_FU_PROCESS_COUNT > 3 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 3 ]
 then
   xdaq.exe -h STMGR_DEV_FU4_HOST -p STMGR_DEV_FU4_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_4.log &
   echo "Started FU4 xdaq.exe..."
   sleep 3
 fi
-if [ $SMDEV_FU_PROCESS_COUNT > 4 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 4 ]
 then
   xdaq.exe -h STMGR_DEV_FU5_HOST -p STMGR_DEV_FU5_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_5.log &
   echo "Started FU5 xdaq.exe..."
   sleep 3
 fi
-if [ $SMDEV_FU_PROCESS_COUNT > 5 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 5 ]
 then
   xdaq.exe -h STMGR_DEV_FU6_HOST -p STMGR_DEV_FU6_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_6.log &
   echo "Started FU6 xdaq.exe..."
   sleep 3
 fi
-if [ $SMDEV_FU_PROCESS_COUNT > 6 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 6 ]
 then
   xdaq.exe -h STMGR_DEV_FU7_HOST -p STMGR_DEV_FU7_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_7.log &
   echo "Started FU7 xdaq.exe..."
   sleep 3
 fi
-if [ $SMDEV_FU_PROCESS_COUNT > 7 ]
+if [ $SMDEV_FU_PROCESS_COUNT -gt 7 ]
 then
   xdaq.exe -h STMGR_DEV_FU8_HOST -p STMGR_DEV_FU8_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml >& FU${TIMESTAMP}_8.log &
   echo "Started FU8 xdaq.exe..."
