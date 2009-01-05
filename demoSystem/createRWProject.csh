@@ -46,8 +46,14 @@ cd $tagName/src
 #usage# echo "$projDesc" > usage.comment
 #usage# chmod u-w usage.comment
 
-#project CMSSW  # temporarily out 22-Dec-2008?
-kserver_init
+if (`hostname` =~ *fnal.gov) then
+    kserver_init
+else
+    if (`hostname` =~ *lxplus*.cern.ch) then
+        kinit
+        source $CMS_PATH/sw/slc4_ia32_gcc345/cms/cms-cvs-utils/1.0/bin/projch.csh CMSSW
+    endif
+endif
 
 echo "Checking out CVS modules..."
 
