@@ -10,32 +10,45 @@ export STMGR_DIR="$rootDir"
 source bin/uaf_setup.sh
 source bin/cvs_setup.sh
 
-# check for existing project areas.  Prompt the user to choose one.
-projectCount=`ls -1d CMSSW* | wc -l`
-if [ $projectCount -eq 0 ]
+# check if this script is being run from inside a CMSSW project area
+set selectedProject = ""
+if [[ `pwd` =~ src/EventFilter/StorageManager/demoSystem ]]
 then
-    echo "No project areas currently exist; try createProjectArea.csh"
-    return
-fi
-projectList=`ls -dt CMSSW*`
-selectedProject=""
-if [ $projectCount -eq 1 ]
-then
-    selectedProject=$projectList
+    tmpProject=`pwd`
+    tmpProject=`dirname $tmpProject`
+    tmpProject=`dirname $tmpProject`
+    tmpProject=`dirname $tmpProject`
+    tmpProject=`dirname $tmpProject`
+    tmpProject=`basename $tmpProject`
+    selectedProject="../../../../../$tmpProject"
+
 else
-    echo " "
-    echo "Select a project:"
-    for project in $projectList
-    do
-        echo -n "  Use $project (y/n [y])? "
-        read response
-        response=`echo ${response}y | tr "[A-Z]" "[a-z]" | cut -c1`
-        if [ "$response" == "y" ]
-        then
-            selectedProject=$project
-            break
-        fi
-    done
+    # check for existing project areas.  Prompt the user to choose one.
+    projectCount=`ls -1d CMSSW* | wc -l`
+    if [ $projectCount -eq 0 ]
+    then
+        echo "No project areas currently exist; try createProjectArea.csh"
+        return
+    fi
+    projectList=`ls -dt CMSSW*`
+    if [ $projectCount -eq 1 ]
+    then
+        selectedProject=$projectList
+    else
+        echo " "
+        echo "Select a project:"
+        for project in $projectList
+        do
+            echo -n "  Use $project (y/n [y])? "
+            read response
+            response=`echo ${response}y | tr "[A-Z]" "[a-z]" | cut -c1`
+            if [ "$response" == "y" ]
+            then
+                selectedProject=$project
+                break
+            fi
+        done
+    fi
 fi
 if [ "$selectedProject" == "" ]
 then
@@ -46,7 +59,7 @@ fi
 # set up the selected project
 cd ${selectedProject}/src
 source ../../bin/scram_setup.sh
-cd ../../
+cd - > /dev/null
 
 # define useful aliases
 

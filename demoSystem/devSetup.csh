@@ -12,28 +12,40 @@ setenv STMGR_DIR $rootDir
 source bin/uaf_setup.csh
 source bin/cvs_setup.csh
 
-# check for existing project areas.  Prompt the user to choose one.
-set projectCount = `ls -1d CMSSW* | wc -l`
-if ($projectCount == 0) then
-    echo "No project areas currently exist; try createProjectArea.csh"
-    exit
-endif
-set projectList = `ls -dt CMSSW*`
+# check if this script is being run from inside a CMSSW project area
 set selectedProject = ""
-if ($projectCount == 1) then
-    set selectedProject = $projectList
+if (`pwd` =~ *CMSSW*/src/EventFilter/StorageManager/demoSystem) then
+    set tmpProject = `pwd`
+    set tmpProject = `dirname $tmpProject`
+    set tmpProject = `dirname $tmpProject`
+    set tmpProject = `dirname $tmpProject`
+    set tmpProject = `dirname $tmpProject`
+    set tmpProject = `basename $tmpProject`
+    set selectedProject = "../../../../../$tmpProject"
+
 else
-    echo " "
-    echo "Select a project:"
-    foreach project ($projectList)
-        echo -n "  Use $project (y/n [y])? "
-        set response = $<
-        set response = `echo ${response}y | tr "[A-Z]" "[a-z]" | cut -c1`
-        if ($response == "y") then
-            set selectedProject = $project
-            break
-        endif
-    end
+    # check for existing project areas.  Prompt the user to choose one.
+    set projectCount = `ls -1d CMSSW* | wc -l`
+    if ($projectCount == 0) then
+        echo "No project areas currently exist; try createProjectArea.csh"
+        exit
+    endif
+    set projectList = `ls -dt CMSSW*`
+    if ($projectCount == 1) then
+        set selectedProject = $projectList
+    else
+        echo " "
+        echo "Select a project:"
+        foreach project ($projectList)
+            echo -n "  Use $project (y/n [y])? "
+            set response = $<
+            set response = `echo ${response}y | tr "[A-Z]" "[a-z]" | cut -c1`
+            if ($response == "y") then
+                set selectedProject = $project
+                break
+            endif
+        end
+    endif
 endif
 if ($selectedProject == "") then
     echo "No project selected.  Exiting..."
@@ -43,7 +55,7 @@ endif
 # set up the selected project
 cd ${selectedProject}/src
 source ../../bin/scram_setup.csh
-cd ../../
+cd -
 
 # define useful aliases
 
