@@ -63,7 +63,7 @@ alias startEverything "cd $rootDir/bin; source startEverything.csh"
 
 # this test may need to be more sophisticated if Python configs
 # are enabled in 2_2_X...
-if ($selectedProject =~ CMSSW_3_*) then
+if ($selectedProject =~ *CMSSW_3_*) then
     alias startConsumer "cd $rootDir/log/client; cmsRun ../../cfg/eventConsumer.py"
     alias startConsumer1 "cd $rootDir/log/client1; cmsRun ../../cfg/eventConsumer.py"
     alias startConsumer2 "cd $rootDir/log/client2; cmsRun ../../cfg/eventConsumer.py"
