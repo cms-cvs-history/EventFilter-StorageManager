@@ -72,19 +72,19 @@ cvs co -r $tagName IOPool/Streamer
 
 # 02-Jan-2009 - using the SM refdev01 work branch with 3_0_0_pre3
 if ($tagName == "CMSSW_3_0_0_pre3") then
-  cvs update -R -r refdev01_scratch_branch EventFilter/StorageManager
+  cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -r 1.13 IOPool/Streamer/interface/HLTInfo.h
 endif
 
 # 02-Jan-2009 - using the SM refdev01 work branch with 2_1_11
 if ($tagName == "CMSSW_2_1_11") then
-  cvs update -R -r CMSSW_3_0_0_pre2 EventFilter/AutoBU
+  cvs update -dR -r CMSSW_3_0_0_pre2 EventFilter/AutoBU
   cvs co -r CMSSW_3_0_0_pre2 EventFilter/Modules
-  cvs update -R -r CMSSW_3_0_0_pre2 EventFilter/Processor
-  cvs update -R -r CMSSW_3_0_0_pre2 EventFilter/ResourceBroker
+  cvs update -dR -r CMSSW_3_0_0_pre2 EventFilter/Processor
+  cvs update -dR -r CMSSW_3_0_0_pre2 EventFilter/ResourceBroker
   cvs co -r CMSSW_3_0_0_pre2 EventFilter/ShmBuffer
   cvs co -r CMSSW_3_0_0_pre2 EventFilter/ShmReader
-  cvs update -R -r CMSSW_3_0_0_pre2 EventFilter/SMProxyServer
+  cvs update -dR -r CMSSW_3_0_0_pre2 EventFilter/SMProxyServer
   cvs co -r CMSSW_3_0_0_pre2 EventFilter/Utilities
   cvs co -r CMSSW_3_0_0_pre2 FWCore/Framework
   cvs co -r CMSSW_3_0_0_pre2 FWCore/MessageLogger
@@ -92,8 +92,8 @@ if ($tagName == "CMSSW_2_1_11") then
   cvs co -r CMSSW_3_0_0_pre2 FWCore/Modules
   cvs co -r CMSSW_3_0_0_pre2 FWCore/ServiceRegistry
   cvs co -r CMSSW_3_0_0_pre2 FWCore/Version
-  cvs update -R -r CMSSW_3_0_0_pre2 IOPool/Streamer
-  cvs update -R -r refdev01_scratch_branch EventFilter/StorageManager
+  cvs update -dR -r CMSSW_3_0_0_pre2 IOPool/Streamer
+  cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -r 1.13 IOPool/Streamer/interface/HLTInfo.h
 endif
 
