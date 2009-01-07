@@ -138,5 +138,3 @@ foreach filename ($fileList)
         chmod +x $finalFile
     endif
 end
-
-#chmod +x bin/startSystem_test.csh
