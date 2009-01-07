@@ -63,7 +63,7 @@ cd - > /dev/null
 
 # define useful aliases
 
-alias startEverything="cd $rootDir/bin; source startEverything.sh"
+alias startEverything="cd $rootDir/bin; source ./startEverything.sh"
 
 # this test may need to be more sophisticated if Python configs
 # are enabled in 2_2_X...

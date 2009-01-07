@@ -59,7 +59,7 @@ cd -
 
 # define useful aliases
 
-alias startEverything "cd $rootDir/bin; source startEverything.csh"
+alias startEverything "cd $rootDir/bin; source ./startEverything.csh"
 
 # this test may need to be more sophisticated if Python configs
 # are enabled in 2_2_X...
