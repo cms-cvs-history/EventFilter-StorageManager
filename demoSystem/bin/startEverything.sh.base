@@ -79,4 +79,4 @@ echo "Started consumer xdaq.exe..."
 sleep 5
 
 cd $STMGR_DIR/soap
-./startupSystem.csh
+./startupSystem.sh

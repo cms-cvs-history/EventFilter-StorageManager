@@ -1,7 +1,7 @@
 #!/bin/csh
 
 # determine the EP and SM URLs from either input arguments or defaults
-source setDemoUrlEnvVar.csh $argv[*]
+source ./setDemoUrlEnvVar.csh $argv[*]
 if ("$BUILDER_UNIT_URL" == "" || "$FILTER_UNIT_URL" == "" || \
     "$FILTER_UNIT2_URL" == "" || "$FILTER_UNIT3_URL" == "" || \
     "$FILTER_UNIT5_URL" == "" || "$FILTER_UNIT6_URL" == "" || \

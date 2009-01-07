@@ -93,10 +93,10 @@ fi
 alias cleanupShm="FUShmCleanUp_t"
 alias killEverything="killall -9 xdaq.exe; sleep 2; FUShmCleanUp_t; cd $rootDir/bin; ./removeOldLogFiles.sh; ./removeOldDataFiles.sh; ./removeOldDQMFiles.sh; cd -"
 
-alias globalConfigure="cd $rootDir/soap; ./globalConfigure.csh"
-alias globalEnable="cd $rootDir/soap; ./globalEnable.csh"
-alias globalStop="cd $rootDir/soap; ./globalStop.csh"
-alias globalHalt="cd $rootDir/soap; ./globalHalt.csh"
+alias globalConfigure="cd $rootDir/soap; ./globalConfigure.sh"
+alias globalEnable="cd $rootDir/soap; ./globalEnable.sh"
+alias globalStop="cd $rootDir/soap; ./globalStop.sh"
+alias globalHalt="cd $rootDir/soap; ./globalHalt.sh"
 
 # 02-Jan-2008 - if needed, create a shared memory key file so that we
 # can use shared memory keys independent of other developers

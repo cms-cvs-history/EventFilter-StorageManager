@@ -48,7 +48,7 @@ if ($cfgType != "python") then
     set consCfgFile = "fuConsumer.cfg"
 endif
 
-set fileList = "cfg/sm_autobu_8fu.xml cfg/eventConsumer.cfg cfg/eventConsumer.py cfg/proxyEventConsumer.cfg cfg/proxyEventConsumer.py cfg/dqmConsumer.cfg cfg/dqmConsumer.py cfg/proxyDQMConsumer.cfg cfg/proxyDQMConsumer.py cfg/fuConsumer.cfg cfg/fuConsumer.py bin/startEverything.csh bin/startEverything.sh soap/setDemoUrlEnvVar.csh soap/setRunNumbers.csh"
+set fileList = "cfg/sm_autobu_8fu.xml cfg/eventConsumer.cfg cfg/eventConsumer.py cfg/proxyEventConsumer.cfg cfg/proxyEventConsumer.py cfg/dqmConsumer.cfg cfg/dqmConsumer.py cfg/proxyDQMConsumer.cfg cfg/proxyDQMConsumer.py cfg/fuConsumer.cfg cfg/fuConsumer.py bin/startEverything.csh bin/startEverything.sh soap/setDemoUrlEnvVar.csh soap/setDemoUrlEnvVar.sh soap/setRunNumbers.csh soap/setRunNumbers.sh"
 
 foreach filename ($fileList)
     set finalFile = "$filename"
@@ -135,6 +135,10 @@ foreach filename ($fileList)
     rm -f $workFile
 
     if ($finalFile =~ *csh) then
+        chmod +x $finalFile
+    endif
+
+    if ($finalFile =~ *sh) then
         chmod +x $finalFile
     endif
 end

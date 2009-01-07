@@ -1,15 +1,17 @@
-#!/bin/csh
+#!/bin/sh
 
 # determine the EP and SM URLs from either input arguments or defaults
-source ./setDemoUrlEnvVar.csh $argv[*]
-if ("$BUILDER_UNIT_URL" == "" || "$FILTER_UNIT_URL" == "" || \
-    "$FILTER_UNIT2_URL" == "" || "$FILTER_UNIT3_URL" == "" || \
-    "$FILTER_UNIT5_URL" == "" || "$FILTER_UNIT6_URL" == "" || \
-    "$FILTER_UNIT7_URL" == "" || "$FILTER_UNIT8_URL" == "" || \
-    "$FILTER_UNIT4_URL" == "" || "$STORAGE_MANAGER_URL" == "" || \
-    "$SM_PROXY_URL" == "" || "$CONSUMER_FU_URL" == "") then
+source ./setDemoUrlEnvVar.sh $@
+if [ "$BUILDER_UNIT_URL" == "" ] || [ "$FILTER_UNIT_URL" == "" ] || \
+   [ "$FILTER_UNIT2_URL" == "" ] || [ "$FILTER_UNIT3_URL" == "" ] || \
+   [ "$FILTER_UNIT5_URL" == "" ] || [ "$FILTER_UNIT6_URL" == "" ] || \
+   [ "$FILTER_UNIT7_URL" == "" ] || [ "$FILTER_UNIT8_URL" == "" ] || \
+   [ "$FILTER_UNIT4_URL" == "" ] || [ "$STORAGE_MANAGER_URL" == "" ] || \
+   [ "$SM_PROXY_URL" == "" ] || [ "$CONSUMER_FU_URL" == "" ]
+then
+    echo "Missing env var URL!"
     exit
-endif
+fi
 
 # for each transition, we create a temporary copy of the xml file with
 # the appropriate URL filled in, and send the modified xml to XDAQ
@@ -73,12 +75,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
@@ -92,12 +95,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT2_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
@@ -111,12 +115,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT3_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
@@ -130,12 +135,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT4_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
@@ -149,12 +155,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT5_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
@@ -168,12 +175,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT6_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
@@ -187,12 +195,13 @@ rm -f tmp.xml
 cat tmp2.xml | sed "s,REQUESTED_ACTION,Configure," > tmp.xml
 curl -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $FILTER_UNIT7_URL
-@ savedStatus = $status
+savedStatus=$?
 echo ""
 
-if ($savedStatus == 0) then
+if [ $savedStatus -eq 0 ]
+then
    sleep 5
-endif
+fi
 
 echo ""
 echo "========================================"
