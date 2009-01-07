@@ -58,7 +58,7 @@ fi
 
 # set up the selected project
 cd ${selectedProject}/src
-source ../../bin/scram_setup.sh
+source $rootDir/bin/scram_setup.sh
 cd - > /dev/null
 
 # define useful aliases

@@ -54,7 +54,7 @@ endif
 
 # set up the selected project
 cd ${selectedProject}/src
-source ../../bin/scram_setup.csh
+source $rootDir/bin/scram_setup.csh
 cd -
 
 # define useful aliases
