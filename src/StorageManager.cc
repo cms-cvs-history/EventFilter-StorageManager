@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.5 2008/12/29 20:51:21 paterno Exp $
+// $Id: StorageManager.cc,v 1.92.4.6 2008/12/30 16:08:49 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -43,12 +43,6 @@
 #include "toolbox/mem/Reference.h"
 
 #include "xcept/tools.h"
-
-#include "xgi/Method.h"
-
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
 
 #include "xdata/InfoSpaceFactory.h"
 
@@ -142,7 +136,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.5 2008/12/29 20:51:21 paterno Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.6 2008/12/30 16:08:49 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 

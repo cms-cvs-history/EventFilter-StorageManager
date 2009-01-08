@@ -28,3 +28,6 @@ Dec 29, 2008 MFP
    were totally extraneous, some were moved to StorageManager.cc,
    and some were replaced by forward declarations of classes.
 
+Jan 8, 2009
+
+6. Remove some extraneous headers from StorageManager.cc
