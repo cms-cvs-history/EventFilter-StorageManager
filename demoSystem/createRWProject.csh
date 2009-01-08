@@ -52,6 +52,10 @@ else
     if (`hostname` =~ *lxplus*.cern.ch) then
         kinit
         source $CMS_PATH/sw/slc4_ia32_gcc345/cms/cms-cvs-utils/1.0/bin/projch.csh CMSSW
+    else
+        if (`hostname` =~ *srv-C*) then
+            kinit -4 `whoami`@CERN.CH
+        endif
     endif
 endif
 
