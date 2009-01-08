@@ -60,23 +60,28 @@ process.m6b25 = cms.EDProducer("StreamThingProducer",
                                )
 
 process.prescaleBy3 = cms.EDFilter("Prescaler",
-                                   prescaleFactor = cms.int32(3)
+                                   prescaleFactor = cms.int32(3),
+                                   prescaleOffset = cms.int32(0)
                                    )
 
 process.prescaleBy5 = cms.EDFilter("Prescaler",
-                                   prescaleFactor = cms.int32(5)
+                                   prescaleFactor = cms.int32(5),
+                                   prescaleOffset = cms.int32(0)
                                    )
 
 process.prescaleBy7 = cms.EDFilter("Prescaler",
-                                   prescaleFactor = cms.int32(7)
+                                   prescaleFactor = cms.int32(7),
+                                   prescaleOffset = cms.int32(0)
                                    )
 
 process.prescaleBy11 = cms.EDFilter("Prescaler",
-                                    prescaleFactor = cms.int32(11)
+                                    prescaleFactor = cms.int32(11),
+                                    prescaleOffset = cms.int32(0)
                                     )
 
 process.prescaleBy1000 = cms.EDFilter("Prescaler",
-                                      prescaleFactor = cms.int32(1000)
+                                      prescaleFactor = cms.int32(1000),
+                                      prescaleOffset = cms.int32(0)
                                       )
 
 
