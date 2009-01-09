@@ -30,7 +30,7 @@ public:
   Normal();
   virtual ~Normal();
 
-  virtual const std::string& state_name() const;
+  virtual std::string state_name() const;
   virtual void handle_I2O_event_message() const;
 
 };

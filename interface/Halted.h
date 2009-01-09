@@ -30,7 +30,7 @@ public:
   Halted();
   virtual ~Halted();
 
-  virtual const std::string& state_name() const;
+  virtual std::string state_name() const;
   virtual void handle_I2O_event_message() const;
 
 };
