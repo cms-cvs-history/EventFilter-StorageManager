@@ -11,11 +11,11 @@
 
 #include "EventFilter/StorageManager/interface/TransitionEvents.h"
 #include "EventFilter/StorageManager/interface/Operations.h"
+#include "EventFilter/StorageManager/interface/Normal.h"
 
 class Failed;
 class StateMachine;
 class Halted;
-class Normal;
 
 namespace bsc = boost::statechart;
 

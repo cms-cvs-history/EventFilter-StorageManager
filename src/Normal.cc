@@ -1,6 +1,5 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/Failed.h"
-#include "EventFilter/StorageManager/interface/Normal.h"
 
 #include <iostream>
 
