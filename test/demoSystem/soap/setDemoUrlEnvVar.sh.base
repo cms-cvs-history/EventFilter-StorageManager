@@ -1,0 +1,244 @@
+#!/bin/sh
+
+# initialization
+export BUILDER_UNIT_URL=""
+export FILTER_UNIT_URL=""
+export FILTER_UNIT2_URL=""
+export FILTER_UNIT3_URL=""
+export FILTER_UNIT4_URL=""
+export FILTER_UNIT5_URL=""
+export FILTER_UNIT6_URL=""
+export FILTER_UNIT7_URL=""
+export FILTER_UNIT8_URL=""
+export STORAGE_MANAGER_URL=""
+export SM_PROXY_URL=""
+export CONSUMER_FU_URL=""
+
+# process any input arguments
+while [ $# -gt 0 ]
+do
+    if [ "$1" == "-f" ]
+    then
+        shift
+        if [ "$FILTER_UNIT_URL" != "" ]
+        then
+            echo "WARNING: the '-f' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the filter unit URL with the '-f' argument."
+            return
+        fi
+        export FILTER_UNIT_URL=$1
+    elif [ "$1" == "-g" ]
+    then
+        shift
+        if [ "$FILTER_UNIT2_URL" != "" ]
+        then
+            echo "WARNING: the '-g' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the second filter unit URL with the '-g' argument."
+            return
+        fi
+        export FILTER_UNIT2_URL=$1
+    elif [ "$1" == "-h" ]
+    then
+        shift
+        if [ "$FILTER_UNIT3_URL" != "" ]
+        then
+            echo "WARNING: the '-h' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the third filter unit URL with the '-h' argument."
+            return
+        fi
+        export FILTER_UNIT3_URL=$1
+    elif [ "$1" == "-i" ]
+    then
+        shift
+        if [ "$FILTER_UNIT4_URL" != "" ]
+        then
+            echo "WARNING: the '-i' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the fourth filter unit URL with the '-i' argument."
+            return
+        fi
+        export FILTER_UNIT4_URL=$1
+    elif [ "$1" == "-j" ]
+    then
+        shift
+        if [ "$FILTER_UNIT5_URL" != "" ]
+        then
+            echo "WARNING: the '-j' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the fifth filter unit URL with the '-j' argument."
+            return
+        fi
+        export FILTER_UNIT5_URL=$1
+    elif [ "$1" == "-k" ]
+    then
+        shift
+        if [ "$FILTER_UNIT6_URL" != "" ]
+        then
+            echo "WARNING: the '-k' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the sixth filter unit URL with the '-k' argument."
+            return
+        fi
+        export FILTER_UNIT6_URL=$1
+    elif [ "$1" == "-l" ]
+    then
+        shift
+        if [ "$FILTER_UNIT7_URL" != "" ]
+        then
+            echo "WARNING: the '-l' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the seventh filter unit URL with the '-l' argument."
+            return
+        fi
+        export FILTER_UNIT7_URL=$1
+    elif [ "$1" == "-m" ]
+    then
+        shift
+        if [ "$FILTER_UNIT8_URL" != "" ]
+        then
+            echo "WARNING: the '-m' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the eighth filter unit URL with the '-m' argument."
+            return
+        fi
+        export FILTER_UNIT8_URL=$1
+    elif [ "$1" == "-s" ]
+    then
+        shift
+        if [ "$STORAGE_MANAGER_URL" != "" ]
+        then
+            echo "WARNING: the '-s' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the storage manager URL with the '-s' argument."
+            return
+        fi
+        export STORAGE_MANAGER_URL=$1
+    elif [ "$1" == "-p" ]
+    then
+        shift
+        if [ "$SM_PROXY_URL" != "" ]
+        then
+            echo "WARNING: the '-p' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the SM proxy URL with the '-p' argument."
+            return
+        fi
+        export SM_PROXY_URL=$1
+    elif [ "$1" == "-c" ]
+    then
+        shift
+        if [ "$CONSUMER_FU_URL" != "" ]
+        then
+            echo "WARNING: the '-c' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the consumer FU URL with the '-c' argument."
+            return
+        fi
+        export CONSUMER_FU_URL=$1
+    elif [ "$1" == "-b" ]
+    then
+        shift
+        if [ "$BUILDER_UNIT_URL" != "" ]
+        then
+            echo "WARNING: the '-b' argument was specified multiple times."
+        fi
+        if [ $# -eq 0 ]
+        then
+            echo "Please include the storage manager URL with the '-b' argument."
+            return
+        fi
+        export BUILDER_UNIT_URL=$1
+    else
+        echo "Usage: $0 [-b <builder unit URL>] [-f <filter unit URL>] [-g <filter unit2 URL>] [-h <filter unit3 URL>] [-i <filter unit4 URL>] [-s <storage manager URL>] [-p <SM proxy URL>] [-c <consumer FU URL>]"
+        echo "  where <builder unit URL> defaults to 'http://STMGR_DEV_BU_HOST:STMGR_DEV_BU_PORT'"
+        echo "  and   <filter unit URL> defaults to 'http://STMGR_DEV_FU_HOST:STMGR_DEV_FU_PORT'"
+        echo "  and   <filter unit2 URL> defaults to 'http://STMGR_DEV_FU2_HOST:STMGR_DEV_FU2_PORT'"
+        echo "  and   <filter unit3 URL> defaults to 'http://STMGR_DEV_FU3_HOST:STMGR_DEV_FU3_PORT'"
+        echo "  and   <filter unit4 URL> defaults to 'http://STMGR_DEV_FU4_HOST:STMGR_DEV_FU4_PORT'"
+        echo "  and   <filter unit5 URL> defaults to 'http://STMGR_DEV_FU5_HOST:STMGR_DEV_FU5_PORT'"
+        echo "  and   <filter unit6 URL> defaults to 'http://STMGR_DEV_FU6_HOST:STMGR_DEV_FU6_PORT'"
+        echo "  and   <filter unit7 URL> defaults to 'http://STMGR_DEV_FU7_HOST:STMGR_DEV_FU7_PORT'"
+        echo "  and   <filter unit8 URL> defaults to 'http://STMGR_DEV_FU8_HOST:STMGR_DEV_FU8_PORT'"
+        echo "  and   <storage manager URL> defaults to 'http://STMGR_DEV_SM_HOST:STMGR_DEV_SM_PORT'."
+        echo "  and   <SM proxy URL> defaults to 'http://STMGR_DEV_SMPROXY_HOST:STMGR_DEV_SMPROXY_PORT'."
+        echo "  and   <consumer FU URL> defaults to 'http://STMGR_DEV_CONSFU_HOST:STMGR_DEV_CONSFU_PORT'."
+        echo "If you specify any URLs by hand, be sure the include the 'http://'."
+        return
+    fi
+    shift
+done
+
+# provide defaults, if needed
+if [ "$BUILDER_UNIT_URL" == "" ]
+then
+    export BUILDER_UNIT_URL="http://STMGR_DEV_BU_HOST:STMGR_DEV_BU_PORT"
+fi
+if [ "$FILTER_UNIT_URL" == "" ]
+then
+    export FILTER_UNIT_URL="http://STMGR_DEV_FU_HOST:STMGR_DEV_FU_PORT"
+fi
+if [ "$FILTER_UNIT2_URL" == "" ]
+then
+    export FILTER_UNIT2_URL="http://STMGR_DEV_FU2_HOST:STMGR_DEV_FU2_PORT"
+fi
+if [ "$FILTER_UNIT3_URL" == "" ]
+then
+    export FILTER_UNIT3_URL="http://STMGR_DEV_FU3_HOST:STMGR_DEV_FU3_PORT"
+fi
+if [ "$FILTER_UNIT4_URL" == "" ]
+then
+    export FILTER_UNIT4_URL="http://STMGR_DEV_FU4_HOST:STMGR_DEV_FU4_PORT"
+fi
+if [ "$FILTER_UNIT5_URL" == "" ]
+then
+    export FILTER_UNIT5_URL="http://STMGR_DEV_FU5_HOST:STMGR_DEV_FU5_PORT"
+fi
+if [ "$FILTER_UNIT6_URL" == "" ]
+then
+    export FILTER_UNIT6_URL="http://STMGR_DEV_FU6_HOST:STMGR_DEV_FU6_PORT"
+fi
+if [ "$FILTER_UNIT7_URL" == "" ]
+then
+    export FILTER_UNIT7_URL="http://STMGR_DEV_FU7_HOST:STMGR_DEV_FU7_PORT"
+fi
+if [ "$FILTER_UNIT8_URL" == "" ]
+then
+    export FILTER_UNIT8_URL="http://STMGR_DEV_FU8_HOST:STMGR_DEV_FU8_PORT"
+fi
+if [ "$STORAGE_MANAGER_URL" == "" ]
+then
+    export STORAGE_MANAGER_URL="http://STMGR_DEV_SM_HOST:STMGR_DEV_SM_PORT"
+fi
+if [ "$SM_PROXY_URL" == "" ]
+then
+    export SM_PROXY_URL="http://STMGR_DEV_SMPROXY_HOST:STMGR_DEV_SMPROXY_PORT"
+fi
+if [ "$CONSUMER_FU_URL" == "" ]
+then
+    export CONSUMER_FU_URL="http://STMGR_DEV_CONSFU_HOST:STMGR_DEV_CONSFU_PORT"
+fi
