@@ -30,7 +30,7 @@ if [fork] {
     # the child process
 
     foreach stateCmd $stateCmds {
-	spawn ../demoSystem/soap/sendSimpleCmdToApp srv-C2D05-05 27000 stor::fsmSoap 0 $stateCmd
+	spawn ./demoSystem/soap/sendSimpleCmdToApp srv-C2D05-05 27000 stor::fsmSoap 0 $stateCmd
 	expect {
 	    "$stateCmd: EMPTY SOAP MESSAGE" {}
 	    timeout {send_user "FAILED: soap failure sending $stateCmd\n"; exit 1}

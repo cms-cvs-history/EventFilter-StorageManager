@@ -14,14 +14,14 @@ source bin/cvs_setup.csh
 
 # check if this script is being run from inside a CMSSW project area
 set selectedProject = ""
-if (`pwd` =~ *CMSSW*/src/EventFilter/StorageManager/demoSystem) then
+if (`pwd` =~ *CMSSW*/src/EventFilter/StorageManager/test/demoSystem) then
     set tmpProject = `pwd`
     set tmpProject = `dirname $tmpProject`
     set tmpProject = `dirname $tmpProject`
     set tmpProject = `dirname $tmpProject`
     set tmpProject = `dirname $tmpProject`
     set tmpProject = `basename $tmpProject`
-    set selectedProject = "../../../../../$tmpProject"
+    set selectedProject = "../../../../../../$tmpProject"
 
 else
     # check for existing project areas.  Prompt the user to choose one.

@@ -12,7 +12,7 @@ source bin/cvs_setup.sh
 
 # check if this script is being run from inside a CMSSW project area
 set selectedProject = ""
-if [[ `pwd` =~ src/EventFilter/StorageManager/demoSystem ]]
+if [[ `pwd` =~ src/EventFilter/StorageManager/test/demoSystem ]]
 then
     tmpProject=`pwd`
     tmpProject=`dirname $tmpProject`
@@ -20,7 +20,7 @@ then
     tmpProject=`dirname $tmpProject`
     tmpProject=`dirname $tmpProject`
     tmpProject=`basename $tmpProject`
-    selectedProject="../../../../../$tmpProject"
+    selectedProject="../../../../../../$tmpProject"
 
 else
     # check for existing project areas.  Prompt the user to choose one.
