@@ -19,6 +19,7 @@ then
     tmpProject=`dirname $tmpProject`
     tmpProject=`dirname $tmpProject`
     tmpProject=`dirname $tmpProject`
+    tmpProject=`dirname $tmpProject`
     tmpProject=`basename $tmpProject`
     selectedProject="../../../../../../$tmpProject"
 
@@ -91,7 +92,7 @@ else
 fi
 
 alias cleanupShm="FUShmCleanUp_t"
-alias killEverything="killall -9 xdaq.exe; sleep 2; FUShmCleanUp_t; cd $rootDir/bin; ./removeOldLogFiles.sh; ./removeOldDataFiles.sh; ./removeOldDQMFiles.sh; cd -"
+alias killEverything="killall -9 xdaq.exe; sleep 2; FUShmCleanUp_t; cd $rootDir/bin; ./removeOldLogFiles.sh; ./removeOldDataFiles.sh; ./removeOldDQMFiles.sh; cd - > /dev/null"
 
 alias globalConfigure="cd $rootDir/soap; ./globalConfigure.sh"
 alias globalEnable="cd $rootDir/soap; ./globalEnable.sh"

@@ -20,6 +20,7 @@ if (`pwd` =~ *CMSSW*/src/EventFilter/StorageManager/test/demoSystem) then
     set tmpProject = `dirname $tmpProject`
     set tmpProject = `dirname $tmpProject`
     set tmpProject = `dirname $tmpProject`
+    set tmpProject = `dirname $tmpProject`
     set tmpProject = `basename $tmpProject`
     set selectedProject = "../../../../../../$tmpProject"
 
