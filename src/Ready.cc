@@ -20,7 +20,7 @@ Ready::~Ready()
   cout << "Exiting " << state_name() << " inner state" << endl;
 }
 
-const string& Ready::state_name() const
+string Ready::state_name() const
 {
   return string( "Ready" );
 }

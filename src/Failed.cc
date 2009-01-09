@@ -16,7 +16,7 @@ Failed::~Failed()
   cout << "Exiting " << state_name() << " outer state" << endl;
 }
 
-const string& Failed::state_name() const
+string Failed::state_name() const
 {
   return string( "Failed" );
 }

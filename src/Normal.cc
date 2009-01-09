@@ -15,7 +15,7 @@ Normal::~Normal()
   cout << "Exiting " << state_name() << " outer state" << endl;
 }
 
-const string& Normal::state_name() const
+string Normal::state_name() const
 {
   return string( "Normal" );
 }

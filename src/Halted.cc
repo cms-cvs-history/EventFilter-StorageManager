@@ -20,7 +20,7 @@ Halted::~Halted()
   cout << "Exiting " << state_name() << " inner state" << endl;
 }
 
-const string& Halted::state_name() const
+string Halted::state_name() const
 {
   return string( "Halted" );
 }

@@ -33,7 +33,7 @@ Enabled::~Enabled()
   cout << "Exiting " << state_name() << " inner state" << endl;
 }
 
-const string& Enabled::state_name() const
+string Enabled::state_name() const
 {
   return string( "Enabled" );
 }
