@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.3 2009/01/09 14:50:57 dshpakov Exp $
+# $Id: BuildFile,v 1.30.16.4 2009/01/09 17:17:15 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -43,6 +43,10 @@
    <use name=DQMServices/Core>
    <use name=FWCore/Framework>
    <use name=IOPool/Streamer>
+  </library>
+
+  <library file=fsmSoap_t.cpp>
+   <use name=EventFilter/StorageManager>
   </library>
 
   <bin file=RunnerTest_t.cpp>
