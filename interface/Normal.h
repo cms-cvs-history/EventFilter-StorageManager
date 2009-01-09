@@ -11,9 +11,8 @@
 
 #include "EventFilter/StorageManager/interface/TransitionEvents.h"
 #include "EventFilter/StorageManager/interface/Operations.h"
-#include "EventFilter/StorageManager/interface/Normal.h"
+#include "EventFilter/StorageManager/interface/Failed.h"
 
-class Failed;
 class StateMachine;
 class Halted;
 
