@@ -4,6 +4,8 @@
 
 #include "EventFilter/StorageManager/interface/TransitionEvents.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/Normal.h"
+#include "EventFilter/StorageManager/interface/Halted.h"
 
 using namespace std;
 
