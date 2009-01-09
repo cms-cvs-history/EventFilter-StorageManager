@@ -1,9 +1,10 @@
-#include "EventFilter/StorageManager/interface/Ready.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/Operations.h"
 #include "EventFilter/StorageManager/interface/Normal.h"
+#include "EventFilter/StorageManager/interface/Failed.h"
 #include "EventFilter/StorageManager/interface/Enabled.h"
 #include "EventFilter/StorageManager/interface/Halted.h"
+#include "EventFilter/StorageManager/interface/Ready.h"
 
 #include <iostream>
 
