@@ -12,7 +12,7 @@ Processing::Processing( my_context c ): my_base(c)
   ++_counter;
   if( _counter > 2 )
     {
-      cerr << "ERROR: " << stateName() << " state created too many times" << endl;
+      cerr << "Error: " << stateName() << " state created too many times" << endl;
       post_event( Fail() );
       return;
     }

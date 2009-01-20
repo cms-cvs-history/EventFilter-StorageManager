@@ -21,5 +21,5 @@ string Failed::stateName() const
 
 void Failed::handleI2OEventMessage() const
 {
-  cerr << "ERROR: " << stateName() << " state cannot handle I2O messages" << endl;
+  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
 }

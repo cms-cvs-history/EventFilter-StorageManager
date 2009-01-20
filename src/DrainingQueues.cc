@@ -22,5 +22,5 @@ string DrainingQueues::stateName() const
 
 void DrainingQueues::handleI2OEventMessage() const
 {
-  cerr << "ERROR: " << stateName() << " state cannot handle I2O messages" << endl;
+  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
 }
