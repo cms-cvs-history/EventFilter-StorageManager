@@ -1,7 +1,4 @@
-#include "EventFilter/StorageManager/interface/TransitionEvents.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Normal.h"
-#include "EventFilter/StorageManager/interface/Halted.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
