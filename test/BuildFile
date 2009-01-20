@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.24.1 2008/12/19 15:31:03 biery Exp $
+# $Id: BuildFile,v 1.30.24.2 2008/12/22 19:25:06 biery Exp $
 
 <environment>
   <use name=boost>
@@ -45,6 +45,10 @@
    <use name=IOPool/Streamer>
   </library>
 
+  <library file=fsmSoap_t.cpp>
+   <use name=EventFilter/StorageManager>
+  </library>
+
   <bin file=RunnerTest_t.cpp>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
@@ -65,6 +69,10 @@
   </bin>
 
   <bin file=boostStateMachine.cpp>
+  </bin>
+
+  <bin file=state_machine.cpp>
+   <use name=EventFilter/StorageManager>
   </bin>
 
 </environment>
