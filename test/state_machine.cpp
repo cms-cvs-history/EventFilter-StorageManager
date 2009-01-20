@@ -2,10 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "EventFilter/StorageManager/interface/TransitionEvents.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Normal.h"
-#include "EventFilter/StorageManager/interface/Halted.h"
 
 using namespace std;
 
@@ -50,7 +47,7 @@ int main()
 	      machine.process_event( Halt() );
 	    }
 
-	  machine.handle_I2O_event_message();
+	  machine.handleI2OEventMessage();
 
 	}
 

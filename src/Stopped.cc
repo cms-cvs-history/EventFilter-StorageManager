@@ -4,22 +4,22 @@
 
 using namespace std;
 
-Failed::Failed( my_context c ): my_base(c)
+Stopped::Stopped( my_context c ): my_base(c)
 {
   cout << "Entering " << stateName() << " state" << endl;
 }
 
-Failed::~Failed()
+Stopped::~Stopped()
 {
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Failed::stateName() const
+string Stopped::stateName() const
 {
-  return string( "Failed" );
+  return string( "Stopped" );
 }
 
-void Failed::handleI2OEventMessage() const
+void Stopped::handleI2OEventMessage() const
 {
   cerr << "ERROR: " << stateName() << " state cannot handle I2O messages" << endl;
 }

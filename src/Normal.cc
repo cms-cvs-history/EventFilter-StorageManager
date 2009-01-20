@@ -1,26 +1,25 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Normal.h"
 
 #include <iostream>
 
 using namespace std;
 
-Normal::Normal()
+Normal::Normal( my_context c ): my_base(c)
 {
-  cout << "Entering " << state_name() << " outer state" << endl;
+  cout << "Entering " << stateName() << " state" << endl;
 }
 
 Normal::~Normal()
 {
-  cout << "Exiting " << state_name() << " outer state" << endl;
+  cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Normal::state_name() const
+string Normal::stateName() const
 {
   return string( "Normal" );
 }
 
-void Normal::handle_I2O_event_message() const
+void Normal::handleI2OEventMessage() const
 {
-  cerr << state_name() << " state cannot handle I2O messages" << endl;
+  cerr << "ERROR: " << stateName() << " state cannot handle I2O messages" << endl;
 }

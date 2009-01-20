@@ -1,31 +1,25 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Operations.h"
-#include "EventFilter/StorageManager/interface/Normal.h"
-#include "EventFilter/StorageManager/interface/Failed.h"
-#include "EventFilter/StorageManager/interface/Enabled.h"
-#include "EventFilter/StorageManager/interface/Ready.h"
-#include "EventFilter/StorageManager/interface/Halted.h"
 
 #include <iostream>
 
 using namespace std;
 
-Halted::Halted()
+Halted::Halted( my_context c ): my_base(c)
 {
-  cout << "Entering " << state_name() << " inner state" << endl;
+  cout << "Entering " << stateName() << " state" << endl;
 }
 
 Halted::~Halted()
 {
-  cout << "Exiting " << state_name() << " inner state" << endl;
+  cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Halted::state_name() const
+string Halted::stateName() const
 {
   return string( "Halted" );
 }
 
-void Halted::handle_I2O_event_message() const
+void Halted::handleI2OEventMessage() const
 {
-  cerr << state_name() << " state cannot handle I2O messages" << endl;
+  cerr << "ERROR: " << stateName() << " state cannot handle I2O messages" << endl;
 }
