@@ -1,4 +1,4 @@
-// $Id$
+// $Id: FragmentStore.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 
@@ -15,11 +15,9 @@ stor::FragmentStore::~FragmentStore()
 }
 
 
-stor::Chain stor::FragmentStore::addFragment()
+bool stor::FragmentStore::addFragment(I2OChain &chain)
 {
-  Chain chain;
-
-  return chain;
+  return false;
 }
 
 

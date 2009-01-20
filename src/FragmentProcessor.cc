@@ -1,4 +1,4 @@
-// $Id$
+// $Id: FragmentProcessor.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 
@@ -21,7 +21,7 @@ void stor::FragmentProcessor::processNextI2OFragment()
 }
 
 
-void stor::FragmentProcessor::processNextStateMachineEvent()
+void stor::FragmentProcessor:: haveStateProcessFragment(I2OChain &chain)
 {
 
 }
