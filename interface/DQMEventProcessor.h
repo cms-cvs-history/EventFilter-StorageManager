@@ -1,4 +1,15 @@
-// $Id$
+// $Id: DQMEventProcessor.h,v 1.1.2.1 2009/01/19 18:12:16 mommsen Exp $
+
+/**
+ * @file
+ * Processes the DQM event (histograms)
+ *
+ * It retrieves the next DQM event from the DQMEventQueue,
+ * adds up the histograms belonging to one lumi-section, and
+ * puts it into the appropriate DQMConsumerQueues.
+ * Depending on the configuration, it also writes the histograms
+ * to disk every N lumi-sections.
+ */
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -17,7 +28,12 @@ namespace stor {
     DQMEventProcessor();
     
     ~DQMEventProcessor();
-    
+
+    /**
+     * Pops the next DQM event from the DQMEventQueue, processes it,
+     * and puts it in the appropriate DQMConsumerQueues when the
+     * lumi-section has finished.
+     */    
     void processNextDQMEvent();
 
     

@@ -1,4 +1,10 @@
-// $Id$
+// $Id: Queue.h,v 1.1.2.1 2009/01/19 18:12:17 mommsen Exp $
+
+/**
+ * @file
+ * Generic queue class holding I2OChains
+ *
+ */
 
 #ifndef StorageManager_Queue_h
 #define StorageManager_Queue_h
@@ -6,7 +12,7 @@
 #include <queue>
 #include <boost/thread/mutex.hpp>
 
-#include "EventFilter/StorageManager/interface/Chain.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 
 namespace stor {
@@ -19,14 +25,25 @@ namespace stor {
     
     virtual ~Queue();
     
-    virtual void addEvent(Chain&);
+    /**
+     * Add a I2OChain to the queue
+     */
+    virtual void addEvent(I2OChain&);
 
-    virtual Chain popEvent();
+    /**
+     * Removes the oldest element from the queue and returns it
+     */
+    virtual I2OChain popEvent();
+
+    /**
+     * Returns true if the queue is empty
+     */
+    virtual bool empty();
 
 
   private:
     
-    static std::queue<Chain> _queue;
+    std::queue<I2OChain> _queue;
     boost::mutex _mutex;
 
   };

@@ -1,9 +1,16 @@
-// $Id$
+// $Id: FragmentStore.h,v 1.1.2.1 2009/01/19 18:12:17 mommsen Exp $
+
+/**
+ * @file
+ * Stores incomplete events
+ *
+ * Uses a map of I2OChains to store incomplete events.
+ */
 
 #ifndef StorageManager_FragmentStore_h
 #define StorageManager_FragmentStore_h
 
-#include "EventFilter/StorageManager/interface/Chain.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 
 namespace stor {
@@ -16,10 +23,18 @@ namespace stor {
     
     ~FragmentStore();
     
-    Chain addFragment();
+    /**
+     * Adds fragments of the I2OChain to the fragment store.
+     * If the passed fragments completes an event, it returns true.
+     * In this case, the passed I2OChain contains the completed event.
+     */
+    bool addFragment(I2OChain&);
 
     
   private:
+
+    std::map<int, I2OChain> _chains;
+    
     
   };
   
