@@ -9,10 +9,10 @@ set stateMap(Stop)      Ready
 set stateMap(Enable)    Enabled
 set stateMap(Halt)      Halted
 
-spawn xdaq.exe -p 27000 -c fsmSoap/fsmSoap.xml
+spawn xdaq.exe -p STMGR_DEV_SM_PORT -c fsmSoap/fsmSoap.xml
 expect {
-    "Entering Halted inner state"  {send_user "halted state\n"}
-    timeout                          {send_user "FAILED: not reached halted state\n"; exit 1}
+    "Entering Halted state"  {send_user "halted state\n"}
+    timeout                  {send_user "FAILED: not reached halted state\n"; exit 1}
 }
 
 
@@ -20,8 +20,9 @@ if [fork] {
     # the parent process gets the child process id
 
     foreach stateCmd $stateCmds {
+        sleep 1
 	expect {
-	    "Entering $stateMap($stateCmd) inner state" {}
+	    "Entering $stateMap($stateCmd) state" {}
 	    timeout {send_user "FAILED: did not reach $stateMap($stateCmd) state\n"; exit 1}
 	}
     }
@@ -30,7 +31,8 @@ if [fork] {
     # the child process
 
     foreach stateCmd $stateCmds {
-	spawn ./demoSystem/soap/sendSimpleCmdToApp srv-C2D05-05 27000 stor::fsmSoap 0 $stateCmd
+	spawn ./demoSystem/soap/sendSimpleCmdToApp STMGR_DEV_SM_HOST STMGR_DEV_SM_PORT stor::fsmSoap 0 $stateCmd
+        sleep 1
 	expect {
 	    "$stateCmd: EMPTY SOAP MESSAGE" {}
 	    timeout {send_user "FAILED: soap failure sending $stateCmd\n"; exit 1}
