@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 
+./configureHosts.sh
+
+( cd demoSystem && source devSetup.sh )
+
+
 tests="fsmSoap/fsmSoap.tcl"
 
 error=0
