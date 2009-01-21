@@ -63,6 +63,7 @@ class StateMachine: public bsc::state_machine<StateMachine,Normal>
 public:
 
   void handleI2OEventMessage();
+  std::string getCurrentStateName();
 
 };
 
