@@ -30,6 +30,8 @@ int main()
 
 	  if( j == 1 && i == 2 ) continue;
 
+	  std::cout << "### Requesting " << t << " transition." << std::endl;
+
 	  if( t == "Configure" )
 	    {
 	      machine.process_event( Configure() );
@@ -46,6 +48,14 @@ int main()
 	    {
 	      machine.process_event( Halt() );
 	    }
+
+          // Test if we need to send a StopDone event.  In the real
+          // system this will be done by a thread that waits until
+          // the queues are empty and then posts this event.
+          if( machine.getCurrentStateName() == "DrainingQueues" )
+            {
+              machine.process_event( StopDone() );
+            }
 
 	  machine.handleI2OEventMessage();
 
