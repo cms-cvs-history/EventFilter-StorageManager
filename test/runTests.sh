@@ -2,7 +2,7 @@
 
 ./configureHosts.sh
 
-( cd demoSystem && source devSetup.sh )
+source testSetup.sh
 
 
 tests="fsmSoap/fsmSoap.tcl"
