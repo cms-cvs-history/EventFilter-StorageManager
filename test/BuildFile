@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.5 2009/01/09 17:37:23 mommsen Exp $
+# $Id: BuildFile,v 1.30.16.6 2009/01/22 14:34:43 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -72,6 +72,10 @@
   </bin>
 
   <bin file=state_machine.cpp>
+   <use name=EventFilter/StorageManager>
+  </bin>
+
+  <bin file=xhtmlmaker_t.cpp>
    <use name=EventFilter/StorageManager>
   </bin>
 
