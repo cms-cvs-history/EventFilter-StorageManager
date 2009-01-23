@@ -5,6 +5,7 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 using namespace std;
+using namespace stor;
 
 int main()
 {

@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace stor;
 
 unsigned int Processing::_counter = 0;
 

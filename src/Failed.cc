@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace stor;
 
 Failed::Failed( my_context c ): my_base(c)
 {

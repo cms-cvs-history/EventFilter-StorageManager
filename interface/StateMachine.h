@@ -12,199 +12,204 @@
 
 namespace bsc = boost::statechart;
 
-////////////////////////////////////////////////
-//// Forward declarations of state classes: ////
-////////////////////////////////////////////////
-
-class Failed;
-class Normal;
-class Halted;
-class Ready;
-class Stopped;
-class Enabled;
-class Processing;
-class DrainingQueues;
-
-////////////////////////////
-//// Transition events: ////
-////////////////////////////
-
-class Configure : public bsc::event<Configure> {};
-class Enable : public bsc::event<Enable> {};
-class Stop : public bsc::event<Stop> {};
-class Halt : public bsc::event<Halt> {};
-class Fail : public bsc::event<Fail> {};
-class Reconfigure : public bsc::event<Reconfigure> {};
-class EmergencyStop : public bsc::event<EmergencyStop> {};
-class StopDone : public bsc::event<StopDone> {};
-
-////////////////////////////////////////////////////////
-//// Operations -- abstract base for state classes: ////
-////////////////////////////////////////////////////////
-
-class Operations
+namespace stor
 {
 
-public:
+  ////////////////////////////////////////////////
+  //// Forward declarations of state classes: ////
+  ////////////////////////////////////////////////
 
-  virtual ~Operations() = 0;
-  virtual void handleI2OEventMessage() const = 0;
-  virtual std::string stateName() const = 0;
+  class Failed;
+  class Normal;
+  class Halted;
+  class Ready;
+  class Stopped;
+  class Enabled;
+  class Processing;
+  class DrainingQueues;
 
-};
+  ////////////////////////////
+  //// Transition events: ////
+  ////////////////////////////
 
-///////////////////////
-//// StateMachine: ////
-///////////////////////
+  class Configure : public bsc::event<Configure> {};
+  class Enable : public bsc::event<Enable> {};
+  class Stop : public bsc::event<Stop> {};
+  class Halt : public bsc::event<Halt> {};
+  class Fail : public bsc::event<Fail> {};
+  class Reconfigure : public bsc::event<Reconfigure> {};
+  class EmergencyStop : public bsc::event<EmergencyStop> {};
+  class StopDone : public bsc::event<StopDone> {};
 
-class StateMachine: public bsc::state_machine<StateMachine,Normal>
-{
+  ////////////////////////////////////////////////////////
+  //// Operations -- abstract base for state classes: ////
+  ////////////////////////////////////////////////////////
 
-public:
+  class Operations
+  {
 
-  void handleI2OEventMessage();
-  std::string getCurrentStateName();
+  public:
 
-};
+    virtual ~Operations() = 0;
+    virtual void handleI2OEventMessage() const = 0;
+    virtual std::string stateName() const = 0;
 
-////////////////////////
-//// State classes: ////
-////////////////////////
+  };
 
-// Failed:
-class Failed: public bsc::state<Failed,StateMachine>, public Operations
-{
+  ///////////////////////
+  //// StateMachine: ////
+  ///////////////////////
 
-public:
+  class StateMachine: public bsc::state_machine<StateMachine,Normal>
+  {
 
-  Failed( my_context );
-  virtual ~Failed();
+  public:
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    void handleI2OEventMessage();
+    std::string getCurrentStateName();
 
-};
+  };
 
-// Normal:
-class Normal: public bsc::state<Normal,StateMachine,Halted>, public Operations
-{
+  ////////////////////////
+  //// State classes: ////
+  ////////////////////////
 
-public:
+  // Failed:
+  class Failed: public bsc::state<Failed,StateMachine>, public Operations
+  {
 
-  typedef bsc::transition<Fail,Failed> FT;
-  typedef boost::mpl::list<FT> reactions;
+  public:
 
-  Normal( my_context );
-  virtual ~Normal();
+    Failed( my_context );
+    virtual ~Failed();
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-};
+  };
 
-// Halted:
-class Halted: public bsc::state<Halted,Normal>, public Operations
-{
+  // Normal:
+  class Normal: public bsc::state<Normal,StateMachine,Halted>, public Operations
+  {
 
-public:
+  public:
 
-  typedef bsc::transition<Configure,Ready> RT;
-  typedef boost::mpl::list<RT> reactions;
+    typedef bsc::transition<Fail,Failed> FT;
+    typedef boost::mpl::list<FT> reactions;
 
-  Halted( my_context );
-  virtual ~Halted();
+    Normal( my_context );
+    virtual ~Normal();
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-};
+  };
 
-// Ready:
-class Ready: public bsc::state<Ready,Normal,Stopped>, public Operations
-{
+  // Halted:
+  class Halted: public bsc::state<Halted,Normal>, public Operations
+  {
 
-public:
+  public:
 
-  typedef bsc::transition<Halt,Halted> HT;
-  typedef boost::mpl::list<HT> reactions;
+    typedef bsc::transition<Configure,Ready> RT;
+    typedef boost::mpl::list<RT> reactions;
 
-  Ready( my_context );
-  virtual ~Ready();
+    Halted( my_context );
+    virtual ~Halted();
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-};
+  };
 
-// Stopped:
-class Stopped: public bsc::state<Stopped,Ready>, public Operations
-{
+  // Ready:
+  class Ready: public bsc::state<Ready,Normal,Stopped>, public Operations
+  {
 
-public:
+  public:
 
-  typedef bsc::transition<Reconfigure,Stopped> ST;
-  typedef bsc::transition<Enable,Enabled> ET;
-  typedef boost::mpl::list<ST,ET> reactions;
+    typedef bsc::transition<Halt,Halted> HT;
+    typedef boost::mpl::list<HT> reactions;
 
-  Stopped( my_context );
-  virtual ~Stopped();
+    Ready( my_context );
+    virtual ~Ready();
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-};
+  };
 
-// Enabled:
-class Enabled: public bsc::state<Enabled,Ready,Processing>, public Operations
-{
+  // Stopped:
+  class Stopped: public bsc::state<Stopped,Ready>, public Operations
+  {
 
-public:
+  public:
 
-  typedef bsc::transition<EmergencyStop,Stopped> ET;
-  typedef bsc::transition<StopDone,Stopped> DT;
-  typedef boost::mpl::list<ET,DT> reactions;
+    typedef bsc::transition<Reconfigure,Stopped> ST;
+    typedef bsc::transition<Enable,Enabled> ET;
+    typedef boost::mpl::list<ST,ET> reactions;
 
-  Enabled( my_context );
-  virtual ~Enabled();
+    Stopped( my_context );
+    virtual ~Stopped();
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-};
+  };
 
-// Processing:
-class Processing: public bsc::state<Processing,Enabled>, public Operations
-{
+  // Enabled:
+  class Enabled: public bsc::state<Enabled,Ready,Processing>, public Operations
+  {
 
-public:
+  public:
 
-  typedef bsc::transition<Stop,DrainingQueues> DT;
-  typedef boost::mpl::list<DT> reactions;
+    typedef bsc::transition<EmergencyStop,Stopped> ET;
+    typedef bsc::transition<StopDone,Stopped> DT;
+    typedef boost::mpl::list<ET,DT> reactions;
 
-  Processing( my_context );
-  virtual ~Processing();
+    Enabled( my_context );
+    virtual ~Enabled();
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-private:
+  };
 
-  static unsigned int _counter;
+  // Processing:
+  class Processing: public bsc::state<Processing,Enabled>, public Operations
+  {
 
-};
+  public:
 
-// DrainingQueues:
-class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations
-{
+    typedef bsc::transition<Stop,DrainingQueues> DT;
+    typedef boost::mpl::list<DT> reactions;
 
-public:
+    Processing( my_context );
+    virtual ~Processing();
 
-  DrainingQueues( my_context );
-  virtual ~DrainingQueues();
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
 
-  virtual std::string stateName() const;
-  virtual void handleI2OEventMessage() const;
+  private:
 
-};
+    static unsigned int _counter;
+
+  };
+
+  // DrainingQueues:
+  class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations
+  {
+
+  public:
+
+    DrainingQueues( my_context );
+    virtual ~DrainingQueues();
+
+    virtual std::string stateName() const;
+    virtual void handleI2OEventMessage() const;
+
+  };
+
+} // end namespace stor
 
 #endif
