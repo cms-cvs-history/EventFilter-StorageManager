@@ -88,6 +88,13 @@ cvs co -r $tagName IOPool/Streamer
 #cvs co -r $tagName FWCore/Modules
 #cvs co -r $tagName IORawData/DaqSource
 
+# 23-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre7
+if [ "$tagName" == "CMSSW_3_0_0_pre7" ]
+then
+  cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
+  cvs update -dR V01-08-07 EventFilter/SMProxyServer
+fi
+
 # 22-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre5
 if [ "$tagName" == "CMSSW_3_0_0_pre5" ]
 then
