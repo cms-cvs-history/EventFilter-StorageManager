@@ -1,4 +1,4 @@
-// $Id: Queue.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
+// $Id: Queue.cc,v 1.1.2.2 2009/01/20 10:54:37 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Queue.h"
 
@@ -19,7 +19,7 @@ void stor::Queue::addEvent(I2OChain &event)
 {
   boost::mutex::scoped_lock lock(_mutex);
   _queue.push(event);
-  lock.unlock();
+  //  lock.unlock();
 }
 
 
@@ -33,7 +33,7 @@ stor::I2OChain stor::Queue::popEvent()
     chain = _queue.front();
     _queue.pop();
   }
-  lock.unlock();
+  //lock.unlock();
 
   return chain;
 }

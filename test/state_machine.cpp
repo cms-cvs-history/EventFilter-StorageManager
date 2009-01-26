@@ -58,7 +58,10 @@ int main()
               machine.process_event( StopDone() );
             }
 
-	  machine.handleI2OEventMessage();
+	  // In the current design, the StateMachine object does not
+	  // process I2O messages.
+
+	  //	  machine.handleI2OEventMessage();
 
 	}
 

@@ -15,12 +15,12 @@ Normal::~Normal()
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Normal::stateName() const
+string Normal::do_stateName() const
 {
   return string( "Normal" );
 }
 
-void Normal::handleI2OEventMessage() const
-{
-  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-}
+// void Normal::handleI2OEventMessage() const
+// {
+//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
+// }

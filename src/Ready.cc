@@ -15,12 +15,12 @@ Ready::~Ready()
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Ready::stateName() const
+string Ready::do_stateName() const
 {
   return string( "Ready" );
 }
 
-void Ready::handleI2OEventMessage() const
-{
-  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-}
+// void Ready::handleI2OEventMessage() const
+// {
+//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
+// }

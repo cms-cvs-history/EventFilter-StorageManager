@@ -15,12 +15,12 @@ Stopped::~Stopped()
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Stopped::stateName() const
+string Stopped::do_stateName() const
 {
   return string( "Stopped" );
 }
 
-void Stopped::handleI2OEventMessage() const
-{
-  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-}
+// void Stopped::handleI2OEventMessage() const
+// {
+//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
+// }

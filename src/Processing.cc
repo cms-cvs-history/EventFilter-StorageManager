@@ -27,12 +27,20 @@ Processing::~Processing()
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Processing::stateName() const
+string Processing::do_stateName() const
 {
   return string( "Processing" );
 }
 
-void Processing::handleI2OEventMessage() const
+// void Processing::handleI2OEventMessage() const
+// {
+//   cout << "Handling I2O event message..." << endl;
+// }
+
+void
+Processing::do_processI2OFragment(I2OChain& frag,
+				  EventDistributor& ed,
+				  FragmentStore& fs)
 {
-  cout << "Handling I2O event message..." << endl;
+  cout << "Processing a fragment\n";
 }

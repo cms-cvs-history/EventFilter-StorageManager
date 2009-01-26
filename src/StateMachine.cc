@@ -2,13 +2,19 @@
 
 using namespace stor;
 
-void StateMachine::handleI2OEventMessage()
+// void StateMachine::handleI2OEventMessage()
+// {
+//   const Operations& ref = state_cast<Operations const&>();
+//   ref.handleI2OEventMessage();
+// }
+
+Operations const&
+StateMachine::getCurrentState()
 {
-  const Operations& ref = state_cast<Operations const&>();
-  ref.handleI2OEventMessage();
+  return state_cast<Operations const&>();
 }
 
 std::string StateMachine::getCurrentStateName()
 {
-  return state_cast< const Operations & >().stateName();
+  return getCurrentState().stateName();
 }

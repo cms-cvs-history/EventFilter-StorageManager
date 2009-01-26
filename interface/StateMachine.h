@@ -15,6 +15,10 @@ namespace bsc = boost::statechart;
 namespace stor
 {
 
+  class I2OChain;
+  class EventDistributor;
+  class FragmentStore;
+
   ////////////////////////////////////////////////
   //// Forward declarations of state classes: ////
   ////////////////////////////////////////////////
@@ -51,9 +55,17 @@ namespace stor
   public:
 
     virtual ~Operations() = 0;
-    virtual void handleI2OEventMessage() const = 0;
-    virtual std::string stateName() const = 0;
+    void processI2OFragment(I2OChain& frag,
+			    EventDistributor& ed,
+			    FragmentStore& fs);
 
+    std::string stateName() const;			    
+
+  protected:
+    virtual void do_processI2OFragment(I2OChain& frag,
+				       EventDistributor& ed,
+				       FragmentStore& fs);
+    virtual std::string do_stateName() const = 0;
   };
 
   ///////////////////////
@@ -65,8 +77,9 @@ namespace stor
 
   public:
 
-    void handleI2OEventMessage();
+    //void processI2OFragment();
     std::string getCurrentStateName();
+    Operations const& getCurrentState();
 
   };
 
@@ -83,9 +96,9 @@ namespace stor
     Failed( my_context );
     virtual ~Failed();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
+  private:
 
+    virtual std::string do_stateName() const;
   };
 
   // Normal:
@@ -100,9 +113,9 @@ namespace stor
     Normal( my_context );
     virtual ~Normal();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
+  private:
 
+    virtual std::string do_stateName() const;
   };
 
   // Halted:
@@ -117,9 +130,8 @@ namespace stor
     Halted( my_context );
     virtual ~Halted();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
-
+  private:
+    virtual std::string do_stateName() const;
   };
 
   // Ready:
@@ -134,9 +146,8 @@ namespace stor
     Ready( my_context );
     virtual ~Ready();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
-
+  private:
+    virtual std::string do_stateName() const;
   };
 
   // Stopped:
@@ -151,10 +162,10 @@ namespace stor
 
     Stopped( my_context );
     virtual ~Stopped();
+    
+  private:
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
-
+    virtual std::string do_stateName() const;
   };
 
   // Enabled:
@@ -170,9 +181,9 @@ namespace stor
     Enabled( my_context );
     virtual ~Enabled();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
+  private:
 
+    virtual std::string do_stateName() const;
   };
 
   // Processing:
@@ -187,13 +198,12 @@ namespace stor
     Processing( my_context );
     virtual ~Processing();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
-
   private:
-
+    virtual std::string do_stateName() const;
+    virtual void do_processI2OFragment(I2OChain& frag,
+				       EventDistributor& ed,
+				       FragmentStore& fs);
     static unsigned int _counter;
-
   };
 
   // DrainingQueues:
@@ -205,9 +215,8 @@ namespace stor
     DrainingQueues( my_context );
     virtual ~DrainingQueues();
 
-    virtual std::string stateName() const;
-    virtual void handleI2OEventMessage() const;
-
+  private:
+    virtual std::string do_stateName() const;
   };
 
 } // end namespace stor

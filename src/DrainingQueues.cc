@@ -26,12 +26,12 @@ DrainingQueues::~DrainingQueues()
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string DrainingQueues::stateName() const
+string DrainingQueues::do_stateName() const
 {
   return string( "DrainingQueues" );
 }
 
-void DrainingQueues::handleI2OEventMessage() const
-{
-  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-}
+// void DrainingQueues::handleI2OEventMessage() const
+// {
+//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
+// }

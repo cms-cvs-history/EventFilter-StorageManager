@@ -15,12 +15,12 @@ Failed::~Failed()
   cout << "Exiting " << stateName() << " state" << endl;
 }
 
-string Failed::stateName() const
+string Failed::do_stateName() const
 {
   return string( "Failed" );
 }
 
-void Failed::handleI2OEventMessage() const
-{
-  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-}
+// void Failed::handleI2OEventMessage() const
+// {
+//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
+// }

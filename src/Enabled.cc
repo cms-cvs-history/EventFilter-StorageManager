@@ -15,12 +15,12 @@ Enabled::~Enabled()
   cout << "Closing files and exiting " << stateName() << " state" << endl;
 }
 
-string Enabled::stateName() const
+string Enabled::do_stateName() const
 {
   return string( "Enabled" );
 }
 
-void Enabled::handleI2OEventMessage() const
-{
-  cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-}
+// void Enabled::handleI2OEventMessage() const
+// {
+//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
+// }
