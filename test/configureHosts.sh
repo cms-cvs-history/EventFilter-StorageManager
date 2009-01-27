@@ -56,7 +56,6 @@ fi
 for filename in `find . -name "*.base"`
 do
     finalFile="${filename/.base}"
-    workFile="${finalFile}.tmp"
     inputFile="$filename"
 
     sed -e "{
