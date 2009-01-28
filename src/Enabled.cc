@@ -12,7 +12,7 @@ Enabled::Enabled( my_context c ): my_base(c)
 
 Enabled::~Enabled()
 {
-  cout << "Closing files and exiting " << stateName() << " state" << endl;
+  cout << "Clearing queues, closing files, and exiting " << stateName() << " state" << endl;
 }
 
 string Enabled::do_stateName() const
