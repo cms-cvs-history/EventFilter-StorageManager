@@ -1,4 +1,4 @@
-// $Id$
+// $Id: workloop_t.cpp,v 1.1.2.1 2009/01/22 14:34:43 mommsen Exp $
 
 // Test script to demonstrate the use of xdaq workloops
 // Documentation at https://twiki.cern.ch/twiki/bin/view/XdaqWiki/WebHome?topic=workloop
@@ -28,13 +28,13 @@ public:
 
     // Define actions    
     toolbox::task::ActionSignature* processFragmentQueueAction = 
-      toolbox::task::bind(this, &WorkloopTest::ProcessFragmentQueue, "ProcessFragmentQueue");
+      toolbox::task::bind(this, &WorkloopTest::processFragmentQueue, "ProcessFragmentQueue");
     
     toolbox::task::ActionSignature* processCommandQueueAction = 
-      toolbox::task::bind(this, &WorkloopTest::ProcessCommandQueue, "ProcessCommandQueue");
+      toolbox::task::bind(this, &WorkloopTest::processCommandQueue, "ProcessCommandQueue");
     
     toolbox::task::ActionSignature* processDQMEventQueueAction = 
-      toolbox::task::bind(this, &WorkloopTest::ProcessDQMEventQueue, "ProcessDQMEventQueue");
+      toolbox::task::bind(this, &WorkloopTest::processDQMEventQueue, "ProcessDQMEventQueue");
 
 
     // Add actions to workloops
@@ -74,7 +74,7 @@ public:
 
 private:
   
-  bool ProcessFragmentQueue(toolbox::task::WorkLoop* wl)
+  bool processFragmentQueue(toolbox::task::WorkLoop* wl)
   {
     std::cout << "Processing a I2O fragment" << std::endl;
     ::sleep(1);
@@ -82,7 +82,7 @@ private:
   }
 
   
-  bool ProcessCommandQueue(toolbox::task::WorkLoop* wl)
+  bool processCommandQueue(toolbox::task::WorkLoop* wl)
   {
     std::cout << "Processing a state machine command" << std::endl;
     ::sleep(5);
@@ -90,7 +90,7 @@ private:
   }
 
   
-  bool ProcessDQMEventQueue(toolbox::task::WorkLoop* wl)
+  bool processDQMEventQueue(toolbox::task::WorkLoop* wl)
   {
     std::cout << "Processing a DQM event" << std::endl;
     ::sleep(1);
