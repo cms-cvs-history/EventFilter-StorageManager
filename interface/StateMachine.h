@@ -3,6 +3,9 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
+#include "toolbox/lang/Class.h"
+#include "toolbox/task/WorkLoop.h"
+
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
 #include <boost/statechart/transition.hpp>
@@ -207,18 +210,35 @@ namespace stor
   };
 
   // DrainingQueues:
-  class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations
+  class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations,
+    public toolbox::lang::Class
   {
 
   public:
 
     DrainingQueues( my_context );
     virtual ~DrainingQueues();
+    void emergencyStop(const EmergencyStop&);
 
   private:
     virtual std::string do_stateName() const;
+    bool action(toolbox::task::WorkLoop*);
+
+    toolbox::task::WorkLoop *_workloop;
+    bool _doDraining;
+
   };
 
 } // end namespace stor
 
 #endif
+
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
