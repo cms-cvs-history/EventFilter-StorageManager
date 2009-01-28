@@ -53,16 +53,18 @@ int main()
           // Test if we need to send a StopDone event.  In the real
           // system this will be done by a thread that waits until
           // the queues are empty and then posts this event.
-          if( machine.getCurrentStateName() == "DrainingQueues" )
-            {
-              machine.process_event( StopDone() );
-            }
+//           if( machine.getCurrentStateName() == "DrainingQueues" )
+//           {
+//               machine.process_event( StopDone() );
+//           }
 
 	  // In the current design, the StateMachine object does not
 	  // process I2O messages.
 
 	  //	  machine.handleI2OEventMessage();
 
+
+          sleep(2);
 	}
 
     }
