@@ -60,14 +60,14 @@ namespace stor
     virtual ~Operations() = 0;
     void processI2OFragment(I2OChain& frag,
 			    EventDistributor& ed,
-			    FragmentStore& fs);
+			    FragmentStore& fs) const;
 
     std::string stateName() const;			    
 
   protected:
     virtual void do_processI2OFragment(I2OChain& frag,
 				       EventDistributor& ed,
-				       FragmentStore& fs);
+				       FragmentStore& fs) const;
     virtual std::string do_stateName() const = 0;
   };
 
@@ -205,7 +205,7 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_processI2OFragment(I2OChain& frag,
 				       EventDistributor& ed,
-				       FragmentStore& fs);
+				       FragmentStore& fs) const;
     static unsigned int _counter;
   };
 

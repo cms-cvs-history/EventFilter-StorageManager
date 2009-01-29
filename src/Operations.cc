@@ -10,7 +10,7 @@ namespace stor
   void
   Operations::processI2OFragment(I2OChain& frag,
 				 EventDistributor& ed,
-				 FragmentStore& fs)
+				 FragmentStore& fs) const
   {
     do_processI2OFragment(frag, ed, fs);
   }
@@ -28,7 +28,7 @@ namespace stor
   void 
   Operations::do_processI2OFragment(I2OChain&         /* unused */ ,
 				    EventDistributor& /* unused */ ,
-				    FragmentStore&    /* unused */ )
+				    FragmentStore&    /* unused */ ) const
   {
     // What should we really do here? 
     std::cerr << "Error: "

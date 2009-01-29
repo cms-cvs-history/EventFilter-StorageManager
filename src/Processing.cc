@@ -40,7 +40,7 @@ string Processing::do_stateName() const
 void
 Processing::do_processI2OFragment(I2OChain& frag,
 				  EventDistributor& ed,
-				  FragmentStore& fs)
+				  FragmentStore& fs) const
 {
   cout << "Processing a fragment\n";
 }

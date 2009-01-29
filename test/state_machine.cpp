@@ -3,6 +3,9 @@
 #include <vector>
 
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
 
 using namespace std;
 using namespace stor;
@@ -63,6 +66,13 @@ int main()
 
 	  //	  machine.handleI2OEventMessage();
 
+          
+          Operations const& currentState = machine.getCurrentState();
+          I2OChain dummyChain;
+          EventDistributor dummyDistributor;
+          FragmentStore dummyFragmentStore;
+          currentState.processI2OFragment(dummyChain, dummyDistributor,
+                                          dummyFragmentStore);
 
           sleep(2);
 	}
