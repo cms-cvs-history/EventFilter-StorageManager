@@ -11,7 +11,7 @@ Processing::Processing( my_context c ): my_base(c)
 {
 
   ++_counter;
-  if( _counter > 2 )
+  if( _counter > 4 )
     {
       cerr << "Error: " << stateName() << " state created too many times" << endl;
       post_event( Fail() );

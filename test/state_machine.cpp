@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
-#include <vector>
+#include <map>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/statechart/event_base.hpp>
 
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -8,74 +11,65 @@
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 
 using namespace std;
+using namespace boost::statechart;
 using namespace stor;
 
+using boost::shared_ptr;
+
+typedef map< string, shared_ptr<event_base> > EventMap;
+
+/////////////////////////////////////////////////////////
+//// Call process_event and processI2OFragment once: ////
+/////////////////////////////////////////////////////////
+void onePass( StateMachine& machine, const EventMap::const_iterator& it )
+{
+
+  cout << "### Requesting " << it->first << " in "
+       << machine.getCurrentState().stateName() << ":" << endl;
+
+  machine.process_event( *(it->second) );
+
+  cout << "### Arriving at " << machine.getCurrentState().stateName() << endl;
+
+  I2OChain i2oc;
+  EventDistributor ed;
+  FragmentStore fs;
+  machine.getCurrentState().processI2OFragment( i2oc, ed, fs );
+
+}
+
+///////////////
+//// Main: ////
+///////////////
 int main()
 {
 
+  EventMap emap;
+  emap[ "Configure" ] = shared_ptr<event_base>( new Configure() );
+  emap[ "Enable" ] = shared_ptr<event_base>( new Enable() );
+  emap[ "Stop" ] = shared_ptr<event_base>( new Stop() );
+  emap[ "Halt" ] = shared_ptr<event_base>( new Halt() );
+  emap[ "Reconfigure" ] = shared_ptr<event_base>( new Reconfigure() );
+  emap[ "EmergencyStop" ] = shared_ptr<event_base>( new EmergencyStop() );
+  emap[ "StopDone" ] = shared_ptr<event_base>( new StopDone() );
+  emap[ "Fail" ] = shared_ptr<event_base>( new Fail() );
+
   StateMachine machine;
-  machine.initiate();
 
-  // This should be replaced by a map from string to event
-
-  vector<string> transitions;
-  transitions.push_back( "Configure" );
-  transitions.push_back( "Enable" );
-  transitions.push_back( "Stop" );
-  transitions.push_back( "Halt" );
-
-  for( unsigned int j = 0; j < 3; ++j )
+  for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
     {
 
-      for( unsigned int i = 0; i < 4; ++i )
-	{
+      machine.initiate(); // expect Halted
+      onePass( machine, it );
 
-	  string t = transitions[i];
+      machine.initiate();
+      machine.process_event( *(emap[ "Configure" ]) ); // expect Configured
+      onePass( machine, it );
 
-	  if( j == 1 && i == 2 ) continue;
-
-	  std::cout << "### Requesting " << t << " transition." << std::endl;
-
-	  if( t == "Configure" )
-	    {
-	      machine.process_event( Configure() );
-	    }
-	  else if( t == "Enable" )
-	    {
-	      machine.process_event( Enable() );
-	    }
-	  else if( t == "Stop" )
-	    {
-	      machine.process_event( Stop() );
-	    }
-	  else if( t == "Halt" )
-	    {
-	      machine.process_event( Halt() );
-	    }
-
-          // Test if we need to send a StopDone event.  In the real
-          // system this will be done by a thread that waits until
-          // the queues are empty and then posts this event.
-//           if( machine.getCurrentStateName() == "DrainingQueues" )
-//           {
-//               machine.process_event( StopDone() );
-//           }
-
-	  // In the current design, the StateMachine object does not
-	  // process I2O messages.
-
-	  //	  machine.handleI2OEventMessage();
-
-          
-          Operations const& currentState = machine.getCurrentState();
-          I2OChain dummyChain;
-          EventDistributor dummyDistributor;
-          FragmentStore dummyFragmentStore;
-          currentState.processI2OFragment(dummyChain, dummyDistributor,
-                                          dummyFragmentStore);
-
-          sleep(2);
-	}
+      machine.initiate();
+      machine.process_event( *(emap[ "Configure" ]) );
+      machine.process_event( *(emap[ "Enable" ]) ); // expect Processing
+      onePass( machine, it );
 
     }
 
