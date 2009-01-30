@@ -1,0 +1,4 @@
+<area shape="rect" href="$struct___i2_o___s_m___d_a_t_a___m_e_s_s_a_g_e___f_r_a_m_e.html" title="Storage Manager Data Message." alt="" coords="5,303,243,404">
+<area shape="rect" href="$struct___i2_o___s_m___d_q_m___m_e_s_s_a_g_e___f_r_a_m_e.html" title="Storage Manager DQM Messages." alt="" coords="267,295,501,412">
+<area shape="rect" href="$struct___i2_o___s_m___o_t_h_e_r___m_e_s_s_a_g_e___f_r_a_m_e.html" title="Storage Manager OTHER Messages." alt="" coords="525,312,773,395">
+<area shape="rect" href="$struct___i2_o___s_m___p_r_e_a_m_b_l_e___m_e_s_s_a_g_e___f_r_a_m_e.html" title="Storage Manager Preample Message we want the run number if we knew it in this message..." alt="" coords="797,312,1069,395">
