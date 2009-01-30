@@ -1,21 +1,23 @@
-// $Id: FragmentStore.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
+// $Id: FragmentStore.cc,v 1.1.2.2 2009/01/20 10:54:37 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 
+using namespace stor;
 
-stor::FragmentStore::FragmentStore()
+
+FragmentStore::FragmentStore()
 {
 
 }
 
 
-stor::FragmentStore::~FragmentStore()
+FragmentStore::~FragmentStore()
 {
 
 }
 
 
-bool stor::FragmentStore::addFragment(I2OChain &chain)
+bool FragmentStore::addFragment(I2OChain &chain)
 {
   return false;
 }

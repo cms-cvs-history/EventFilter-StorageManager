@@ -1,16 +1,18 @@
-// $Id$
+// $Id: EventConsumerQueue.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
 
+using namespace stor;
 
-stor::EventConsumerQueue::EventConsumerQueue() :
+
+EventConsumerQueue::EventConsumerQueue() :
 Queue()
 {
 
 }
 
 
-stor::EventConsumerQueue::~EventConsumerQueue()
+EventConsumerQueue::~EventConsumerQueue()
 {
 
 }

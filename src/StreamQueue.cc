@@ -1,16 +1,18 @@
-// $Id$
+// $Id: StreamQueue.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
 
+using namespace stor;
 
-stor::StreamQueue::StreamQueue() :
+
+StreamQueue::StreamQueue() :
 Queue()
 {
 
 }
 
 
-stor::StreamQueue::~StreamQueue()
+StreamQueue::~StreamQueue()
 {
 
 }

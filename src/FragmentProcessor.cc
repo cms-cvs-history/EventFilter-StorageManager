@@ -1,35 +1,46 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.2 2009/01/20 10:54:37 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 
+using namespace stor;
 
-stor::FragmentProcessor::FragmentProcessor()
+
+FragmentProcessor::FragmentProcessor()
 {
 
 }
 
 
-stor::FragmentProcessor::~FragmentProcessor()
+FragmentProcessor::~FragmentProcessor()
 {
 
 }
 
 
-void stor::FragmentProcessor::processNextI2OFragment()
+void FragmentProcessor::processMessages()
 {
 
 }
 
 
-void stor::FragmentProcessor:: haveStateProcessFragment(I2OChain &chain)
+void FragmentProcessor:: haveStateProcessFragment(I2OChain &chain)
 {
 
 }
 
 
-void stor::FragmentProcessor::updateStatistics()
+void FragmentProcessor::updateStatistics()
 {
 
+}
+
+
+const QueueID FragmentProcessor::registerEventConsumer
+(
+  boost::shared_ptr<EventConsumerRegistrationInfo> registrationInfo
+)
+{
+  return _eventDistributor.registerEventConsumer(registrationInfo);
 }
 
 

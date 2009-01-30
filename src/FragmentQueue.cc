@@ -1,16 +1,18 @@
-// $Id: FragmentQueue.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
+// $Id: FragmentQueue.cc,v 1.1.2.1 2009/01/20 10:54:37 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 
+using namespace stor;
 
-stor::FragmentQueue::FragmentQueue() :
+
+FragmentQueue::FragmentQueue() :
 Queue()
 {
 
 }
 
 
-stor::FragmentQueue::~FragmentQueue()
+FragmentQueue::~FragmentQueue()
 {
 
 }
