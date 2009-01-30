@@ -1,19 +1,21 @@
-// $Id$
+// $Id: Types.h,v 1.1.2.1 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_Types_h
 #define StorageManager_Types_h
+
+#include <cstddef>
 
 namespace stor {
 
   /**
    * Definition of types used in the storage manager
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/01/30 10:49:40 $
    */
 
-  typedef unsigned long QueueID;
+  typedef size_t QueueID;
 
   
 } // namespace stor
