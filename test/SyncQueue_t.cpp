@@ -1,9 +1,11 @@
 #include "Utilities/Testing/interface/CppUnit_testdriver.icpp"
 #include "cppunit/extensions/HelperMacros.h"
 
+#include <ostream>
 #include <sstream>
 #include <string>
 
+#include "boost/bind.hpp"
 #include "EventFilter/StorageManager/interface/SyncQueue.h"
 
 /////////////////////////////////////////////////////////////
@@ -48,10 +50,34 @@ class PrintToStream
 {
 public:
   explicit PrintToStream(std::ostream& os = std::cout) : _stream(os) { }
-  std::ostream& operator()(int const& i) const { _stream << i << '\n'; return _stream;}  
+  std::ostream& operator()(int const& i) const 
+  {
+    if (_stream << i) _stream << '\n';
+    return _stream;
+  }
   std::ostream& stream() { return _stream; }
 private:
   std::ostream& _stream;
+};
+
+// Demonstrate how to use an arbitrary class's non-static member
+// function as the function to be called during iteration over the
+// queue. This also shows that we can invoke a member template, not
+// just a member function, of such a class.
+
+class FakeWebPage
+{
+public:
+  template <class T> std::ostringstream& addLine(T const& t) 
+  {
+    if (_stream << t) _stream << '\n';
+    return _stream;
+  }
+  
+  std::string getText() const { return _stream.str(); }
+
+private:
+  std::ostringstream _stream;
 };
 
 class testSyncQueue : public CppUnit::TestFixture
@@ -60,6 +86,7 @@ class testSyncQueue : public CppUnit::TestFixture
   CPPUNIT_TEST(iterate_on_empty);
   CPPUNIT_TEST(iterate_on_nonempty);
   CPPUNIT_TEST(write_to_sstream);
+  CPPUNIT_TEST(bind_member_function);
   CPPUNIT_TEST(clear);
 
   CPPUNIT_TEST_SUITE_END();
@@ -71,6 +98,7 @@ public:
   void iterate_on_empty();
   void iterate_on_nonempty();
   void write_to_sstream();
+  void bind_member_function();
   void clear();
 
 private:
@@ -80,6 +108,7 @@ private:
 void
 testSyncQueue::setUp()
 { 
+  // Each test should start with an empty queue.
   _queue.clear();
 }
 
@@ -87,6 +116,7 @@ testSyncQueue::setUp()
 void
 testSyncQueue::tearDown()
 {
+  // Nothing needs to be done.
 }
 
 void 
@@ -122,9 +152,34 @@ testSyncQueue::write_to_sstream()
 
   std::ostringstream out;
   PrintToStream printer(out);
-  CPPUNIT_ASSERT(_queue.for_each(printer).stream()); // make sure the stream
-					    // state is good.
+
+  // The call to 'stream' is to make sure the stream state is good
+  // after all the insertions are done.
+  CPPUNIT_ASSERT(_queue.for_each(printer).stream()); 
+  
   CPPUNIT_ASSERT(out.str() == std::string("1\n2\n3\n"));
+}
+
+void
+testSyncQueue::bind_member_function()
+{
+  FakeWebPage page;
+
+  _queue.push(1);
+  _queue.push(2);
+  _queue.push(3);
+
+  // This time, we're ignoring the return value of for_each, because
+  // we only care about the 'page' object that has been modified, not
+  // the anonymous functor that was used to modify it.
+  // The call to boost::bind returns a function object that uses
+  // 'page' as the object on which the member function is to be
+  // called; the _1 means that the first (and in this case only)
+  // argument of the constructed function object is the second
+  // argument to the member function (the first being the implicit
+  // 'this' pointer).
+  _queue.for_each(boost::bind(&FakeWebPage::addLine<int>, &page, _1));
+  CPPUNIT_ASSERT(page.getText() == std::string("1\n2\n3\n"));
 }
 
 void
