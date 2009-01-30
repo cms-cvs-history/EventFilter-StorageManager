@@ -1,0 +1,39 @@
+This file contains a list of compatible CMSSW tags for storage manager
+development.
+
+For development in the refdev01_scratch_branch of the
+EventFilter/StorageManager package, please use the following tags
+with the specified releases:
+
+CMSSW_3_0_0_pre7:
+ - EventFilter/SMProxyServer V01-08-08
+ - Remember to patch EventFilter/ResourceBroker/src/FUResourceTable
+   so that the setting of the acceptSMxxDiscard array element is set
+   *before* a call is made to send the message to the SM in the 
+   sendInitMessage, sendDataEvent, sendErrorEvent, and sendDqmEvent
+   methods.
+
+CMSSW_3_0_0_pre6:
+ - no special tags for SM development
+ - Remember to patch EventFilter/ResourceBroker/src/FUResourceTable
+   so that the setting of the acceptSMxxDiscard array element is set
+   *before* a call is made to send the message to the SM in the 
+   sendInitMessage, sendDataEvent, sendErrorEvent, and sendDqmEvent
+   methods.
+
+CMSSW_3_0_0_pre5:
+ - no special tags for SM development
+ - Remember to patch EventFilter/ResourceBroker/src/FUResourceTable
+   so that the setting of the acceptSMxxDiscard array element is set
+   *before* a call is made to send the message to the SM in the 
+   sendInitMessage, sendDataEvent, sendErrorEvent, and sendDqmEvent
+   methods.
+
+
+CMSSW_3_0_0_pre3:
+ - IOPool/Streamer/interface/HLTInfo.h 1.13
+ - Remember to patch EventFilter/ResourceBroker/src/FUResourceTable
+   so that the setting of the acceptSMxxDiscard array element is set
+   *before* a call is made to send the message to the SM in the 
+   sendInitMessage, sendDataEvent, sendErrorEvent, and sendDqmEvent
+   methods.
