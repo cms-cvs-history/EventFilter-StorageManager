@@ -1,15 +1,15 @@
-# $Id: BuildFile,v 1.30.16.6 2009/01/22 14:34:43 mommsen Exp $
+# $Id: BuildFile,v 1.30.16.7 2009/01/23 14:38:39 dshpakov Exp $
 
 <environment>
   <use name=boost>
   <use name=xdaq>
+   <use name=EventFilter/StorageManager>
 
   <library file=StorageManagerRun.cpp>
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=FWCore/PluginManager>
-   <use name=EventFilter/StorageManager>
    <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
@@ -46,14 +46,12 @@
   </library>
 
   <library file=fsmSoap_t.cpp>
-   <use name=EventFilter/StorageManager>
   </library>
 
   <bin file=RunnerTest_t.cpp>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=FWCore/PluginManager>
-   <use name=EventFilter/StorageManager>
    <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
@@ -62,7 +60,6 @@
   <bin file=RunCollector_t.cpp>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/PluginManager>
-   <use name=EventFilter/StorageManager>
    <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
@@ -72,14 +69,22 @@
   </bin>
 
   <bin file=state_machine.cpp>
-   <use name=EventFilter/StorageManager>
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>
-   <use name=EventFilter/StorageManager>
+
   </bin>
 
   <bin file=workloop_t.cpp>
   </bin>
+
+  <bin file=I2OChain_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=SyncQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
 
 </environment>
