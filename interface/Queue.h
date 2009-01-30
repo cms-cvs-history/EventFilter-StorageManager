@@ -1,10 +1,4 @@
-// $Id: Queue.h,v 1.1.2.1 2009/01/19 18:12:17 mommsen Exp $
-
-/**
- * @file
- * Generic queue class holding I2OChains
- *
- */
+// $Id: Queue.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
 
 #ifndef StorageManager_Queue_h
 #define StorageManager_Queue_h
@@ -16,6 +10,14 @@
 
 
 namespace stor {
+
+  /**
+   * Generic queue class holding I2OChains
+   *
+   * $Author:$
+   * $Revision:$
+   * $Date:$
+   */
   
   class Queue
   {

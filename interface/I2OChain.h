@@ -1,13 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.1 2009/01/19 18:12:16 mommsen Exp $
-
-/**
- * @file
- * List of one or multiple I2O messages representing event fragments. 
- *
- * It wraps several toolbox::mem::Reference chained together and 
- * assures that the corresponding release methods are called when 
- * the last instance of I2OChain goes out of scope.
- */
+// $Id: I2OChain.h,v 1.1.2.1 2009/01/20 10:54:04 mommsen Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -16,6 +7,18 @@
 
 
 namespace stor {
+
+  /**
+   * List of one or multiple I2O messages representing event fragments. 
+   *
+   * It wraps several toolbox::mem::Reference chained together and 
+   * assures that the corresponding release methods are called when 
+   * the last instance of I2OChain goes out of scope.
+   *
+   * $Author:$
+   * $Revision:$
+   * $Date:$
+   */
   
   class I2OChain
   {

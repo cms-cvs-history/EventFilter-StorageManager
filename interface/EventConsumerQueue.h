@@ -1,11 +1,4 @@
-// $Id: EventConsumerQueue.h,v 1.1.2.1 2009/01/19 18:12:17 mommsen Exp $
-
-/**
- * @file
- * Queue holding I2OChains of complete events waiting to be served
- * over HTTP to an event consumer
- *
- */
+// $Id: EventConsumerQueue.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
 
 #ifndef StorageManager_EventConsumerQueue_h
 #define StorageManager_EventConsumerQueue_h
@@ -14,6 +7,15 @@
 
 
 namespace stor {
+
+  /**
+   * Queue holding I2OChains of complete events waiting to be served
+   * over HTTP to an event consumer
+   *
+   * $Author:$
+   * $Revision:$
+   * $Date:$
+   */
   
   class EventConsumerQueue : public Queue
   {

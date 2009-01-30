@@ -1,11 +1,4 @@
-// $Id: FragmentStore.h,v 1.1.2.1 2009/01/19 18:12:17 mommsen Exp $
-
-/**
- * @file
- * Stores incomplete events
- *
- * Uses a map of I2OChains to store incomplete events.
- */
+// $Id: FragmentStore.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
 
 #ifndef StorageManager_FragmentStore_h
 #define StorageManager_FragmentStore_h
@@ -14,6 +7,16 @@
 
 
 namespace stor {
+  
+  /**
+   * Stores incomplete events
+   *
+   * Uses a map of I2OChains to store incomplete events.
+   *
+   * $Author:$
+   * $Revision:$
+   * $Date:$
+   */
   
   class FragmentStore
   {
@@ -33,7 +36,7 @@ namespace stor {
     
   private:
 
-    std::map<int, I2OChain> _chains;
+    std::map<unsigned int, I2OChain> _chains;
     
     
   };

@@ -1,13 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.1 2009/01/19 18:12:17 mommsen Exp $
-
-/**
- * @file
- * Processes I2O event fragments
- *
- * It pops the next fragment from the FragmentQueue and adds it to the
- * FragmentStore. If this completes the event, it hands it to the 
- * EventDistributor.
- */
+// $Id: FragmentProcessor.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -18,10 +9,23 @@
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/Types.h"
 
 
 namespace stor {
-  
+
+  /**
+   * Processes I2O event fragments
+   *
+   * It pops the next fragment from the FragmentQueue and adds it to the
+   * FragmentStore. If this completes the event, it hands it to the 
+   * EventDistributor.
+   *
+   * $Author:$
+   * $Revision:$
+   * $Date:$
+   */
+
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
@@ -31,9 +35,15 @@ namespace stor {
     ~FragmentProcessor();
     
     /**
-     * Pops the next I2O fragment from the FragmentQueue
+     * Processes the message queued in the command and
+     * fragment queue.
      */
-    void processNextI2OFragment();
+    void processMessages();
+
+    /**
+     * Updates the statistics of processed fragments
+     */
+    void updateStatistics();
 
     /**
      * Hands the fragment to the current state
@@ -41,9 +51,12 @@ namespace stor {
     void haveStateProcessFragment(I2OChain&);
 
     /**
-     * Updates the statistics of processed fragments
+     * Registers a new event consumer with the EventDistributor
      */
-    void updateStatistics();
+    const QueueID registerEventConsumer
+    (
+      boost::shared_ptr<EventConsumerRegistrationInfo>
+    );
 
 
   private:

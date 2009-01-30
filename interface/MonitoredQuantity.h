@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.1 2009/01/29 17:17:14 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.2 2009/01/29 22:13:51 biery Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -14,10 +14,9 @@ namespace stor
    * This class keeps track of statistics for a set of sample values 
    * and provides timing information on the samples.
    *
-   * \author $Author: mommsen $
-   * \version $Revision: 1.1.2.1 $
-   * \date $Date: 2009/01/29 17:17:14 $
-   *
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/01/29 17:17:14 $
    */
 
   class MonitoredQuantity
