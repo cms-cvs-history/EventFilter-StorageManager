@@ -58,17 +58,19 @@ namespace stor
   public:
 
     virtual ~Operations() = 0;
-    void processI2OFragment(I2OChain& frag,
-			    EventDistributor& ed,
-			    FragmentStore& fs) const;
+    void processI2OFragment( I2OChain& frag,
+			     EventDistributor& ed,
+                             FragmentStore& fs ) const;
 
-    std::string stateName() const;			    
+    std::string stateName() const;
 
   protected:
-    virtual void do_processI2OFragment(I2OChain& frag,
-				       EventDistributor& ed,
-				       FragmentStore& fs) const;
+
+    virtual void do_processI2OFragment( I2OChain& frag,
+				        EventDistributor& ed,
+				        FragmentStore& fs ) const;
     virtual std::string do_stateName() const = 0;
+
   };
 
   ///////////////////////
@@ -83,6 +85,9 @@ namespace stor
     //void processI2OFragment();
     std::string getCurrentStateName();
     Operations const& getCurrentState();
+
+    // test to see what my_context is:
+    std::string ctx_test() const { return "Hi there"; }
 
   };
 
@@ -102,6 +107,7 @@ namespace stor
   private:
 
     virtual std::string do_stateName() const;
+
   };
 
   // Normal:
@@ -134,7 +140,9 @@ namespace stor
     virtual ~Halted();
 
   private:
+
     virtual std::string do_stateName() const;
+
   };
 
   // Ready:
@@ -150,7 +158,9 @@ namespace stor
     virtual ~Ready();
 
   private:
+
     virtual std::string do_stateName() const;
+
   };
 
   // Stopped:
@@ -169,6 +179,7 @@ namespace stor
   private:
 
     virtual std::string do_stateName() const;
+
   };
 
   // Enabled:
@@ -187,6 +198,7 @@ namespace stor
   private:
 
     virtual std::string do_stateName() const;
+
   };
 
   // Processing:
@@ -202,11 +214,13 @@ namespace stor
     virtual ~Processing();
 
   private:
+
     virtual std::string do_stateName() const;
-    virtual void do_processI2OFragment(I2OChain& frag,
-				       EventDistributor& ed,
-				       FragmentStore& fs) const;
+    virtual void do_processI2OFragment( I2OChain& frag,
+				        EventDistributor& ed,
+				        FragmentStore& fs ) const;
     static unsigned int _counter;
+
   };
 
   // DrainingQueues:
@@ -218,11 +232,11 @@ namespace stor
 
     DrainingQueues( my_context );
     virtual ~DrainingQueues();
-    void emergencyStop(const EmergencyStop&);
+    void emergencyStop( const EmergencyStop& );
 
   private:
     virtual std::string do_stateName() const;
-    bool action(toolbox::task::WorkLoop*);
+    bool action( toolbox::task::WorkLoop* );
 
     toolbox::task::WorkLoop *_workloop;
     bool _doDraining;
@@ -232,9 +246,6 @@ namespace stor
 } // end namespace stor
 
 #endif
-
-
-
 
 /// emacs configuration
 /// Local Variables: -

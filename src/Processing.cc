@@ -10,6 +10,8 @@ unsigned int Processing::_counter = 0;
 Processing::Processing( my_context c ): my_base(c)
 {
 
+  cout << "***** See if StateMachine is accessible: " << outermost_context().ctx_test() << endl;
+
   ++_counter;
   if( _counter > 4 )
     {
@@ -38,9 +40,9 @@ string Processing::do_stateName() const
 // }
 
 void
-Processing::do_processI2OFragment(I2OChain& frag,
-				  EventDistributor& ed,
-				  FragmentStore& fs) const
+Processing::do_processI2OFragment( I2OChain& frag,
+				   EventDistributor& ed,
+				   FragmentStore& fs ) const
 {
   cout << "Processing a fragment\n";
 }
