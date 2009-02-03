@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.7 2009/01/23 14:38:39 dshpakov Exp $
+# $Id: BuildFile,v 1.30.16.8 2009/01/30 20:35:15 paterno Exp $
 
 <environment>
   <use name=boost>
@@ -83,6 +83,10 @@
   </bin>
 
   <bin file=SyncQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=CommandQueue_t.cpp>
     <use name=cppunit>
   </bin>
 
