@@ -1,8 +1,18 @@
-// $Id$
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.1 2009/02/04 13:27:08 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 
 using namespace stor;
+
+FragmentMonitorCollection::FragmentMonitorCollection(xdaq::Application *app) :
+MonitorCollection(app, "Fragment")
+{
+  _infoSpaceItems.push_back(std::make_pair("receivedFrames", &_receivedFrames));
+  _infoSpaceItems.push_back(std::make_pair("receivedFramesSize", &_receivedFramesSize));
+  _infoSpaceItems.push_back(std::make_pair("receivedFramesBandwidth", &_receivedFramesBandwidth));
+
+  putItemsIntoInfoSpace();
+}
 
 
 void FragmentMonitorCollection::do_calculateStatistics()
@@ -15,9 +25,14 @@ void FragmentMonitorCollection::do_calculateStatistics()
 
 void FragmentMonitorCollection::do_updateInfoSpace()
 {
-  // get relevant stats from allFragmentSizes and store them in the infospace
-  // get relevant stats from eventFragmentSizes and store them in the infospace
-  // get relevant stats from dqmEventFragmentSizes and store them in the infospace
+  // No need to lock the infospace, as we are notifying the 
+  // infospace for changes (TBC)
+  _receivedFrames = static_cast<uint32_t>(allFragmentSizes.getSampleRate());
+  _receivedFramesSize = static_cast<uint32_t>(allFragmentSizes.getValueSum());
+  _receivedFramesBandwidth = allFragmentSizes.getValueRate(MonitoredQuantity::RECENT);
+
+  // The fireItemGroupChanged locks the infospace
+  _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
 }
 
 
