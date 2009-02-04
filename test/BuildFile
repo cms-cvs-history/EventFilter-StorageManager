@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.8 2009/01/30 20:35:15 paterno Exp $
+# $Id: BuildFile,v 1.30.16.9 2009/02/03 20:19:58 paterno Exp $
 
 <environment>
   <use name=boost>
@@ -72,7 +72,6 @@
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>
-
   </bin>
 
   <bin file=workloop_t.cpp>
@@ -90,5 +89,8 @@
     <use name=cppunit>
   </bin>
 
+  <bin file=MonitoredQuantity_t.cpp>
+    <use name=cppunit>
+  </bin>
 
 </environment>
