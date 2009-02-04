@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.2 2009/01/29 22:13:51 biery Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -15,8 +15,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/01/29 17:17:14 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
    */
 
   class MonitoredQuantity
@@ -32,9 +32,14 @@ namespace stor
     MonitoredQuantity(double timeWindowForRecentResults = 10.0);
 
     /**
-     * Adds the specified sample value to the monitor instance.
+     * Adds the specified doubled valued sample value to the monitor instance.
      */
     void addSample(double value = 1.0);
+
+    /**
+     * Adds the specified integer valued sample value to the monitor instance.
+     */
+    void addSample(int value = 1);
 
     /**
      * Returns the number of samples stored in the monitor.
@@ -99,7 +104,18 @@ namespace stor
      * will be called once per interval specified by
      * EXPECTED_CALCULATION_INTERVAL.
      */
-    void calculateStatistics(double currentTime = getCurrentTime());
+    void calculateStatistics();
+
+    /**
+     * Same as calculateStatistics, but takes the current time as double
+     * in seconds since the epoch (as returned by getCurrentTime())
+     *
+     * Note: using the API 
+     * void calculateStatistics(double currentTime = getCurrentTime())
+     * prevents the use of the std::for_each construct as the boost::mem_fn
+     * cannot handle functions with default arguments.
+     */
+    void calculateStatistics(double currentTime);
 
     /**
      * Resets the monitor (zeroes out all counters and restarts the
@@ -161,12 +177,12 @@ namespace stor
 
     int binCount_;
     int workingBinId_;
-    boost::shared_ptr< std::vector<long long> > binSampleCount_;
-    boost::shared_ptr< std::vector<double> > binValueSum_;
-    boost::shared_ptr< std::vector<double> > binValueSumOfSquares_;
-    boost::shared_ptr< std::vector<double> > binValueMin_;
-    boost::shared_ptr< std::vector<double> > binValueMax_;
-    boost::shared_ptr< std::vector<double> > binDuration_;
+    std::vector<long long> binSampleCount_;
+    std::vector<double> binValueSum_;
+    std::vector<double> binValueSumOfSquares_;
+    std::vector<double> binValueMin_;
+    std::vector<double> binValueMax_;
+    std::vector<double> binDuration_;
 
     long long fullSampleCount_;
     double fullSampleRate_;
