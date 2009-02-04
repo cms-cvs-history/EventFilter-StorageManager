@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.1 2009/02/04 13:27:08 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.2 2009/02/04 17:52:34 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 
@@ -20,6 +20,9 @@ void FragmentMonitorCollection::do_calculateStatistics()
   allFragmentSizes.calculateStatistics();
   eventFragmentSizes.calculateStatistics();
   dqmEventFragmentSizes.calculateStatistics();
+
+  eventFragmentBandwidth.addSample(eventFragmentSizes.getValueRate());
+  eventFragmentBandwidth.calculateStatistics();
 }
 
 
