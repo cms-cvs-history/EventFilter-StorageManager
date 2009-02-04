@@ -53,9 +53,10 @@ testCommandQueue::matched_pops_and_pushes()
   q.push_front(event_ptr(new stor::Enable));
   q.push_front(event_ptr(new stor::EmergencyStop));
   CPPUNIT_ASSERT(q.size() == 3);
-//   CPPUNIT_ASSERT(q.pop_back()->stateName() == "Configure");
-//   CPPUNIT_ASSERT(q.pop_back()->stateName() == "Enable");
-//   CPPUNIT_ASSERT(q.pop_back()->stateName() == "EmergencyStop");
+  event_ptr discard;
+  CPPUNIT_ASSERT(q.pop_back(discard));
+  CPPUNIT_ASSERT(q.pop_back(discard));
+  CPPUNIT_ASSERT(q.pop_back(discard));
   CPPUNIT_ASSERT(q.empty());
 }
 

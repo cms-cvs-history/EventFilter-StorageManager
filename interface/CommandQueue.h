@@ -14,14 +14,12 @@
 
 namespace stor
 {
-  typedef boost::shared_ptr<boost::statechart::event_base> event_ptr;
-  typedef std::list<event_ptr> CommandQueue;
-
   // To put something ONTO the queue, use:
   //      void push_front(T const&)
 
-  // To pop something off the queue, use 
-  //      T const& pop_back();
+  // To pop something off the queue, use:
+  //       T pop_back();
+  // DO NOT CALL pop_back() is the queue is empty!
 
   // To see if the queue is empty, use
   //      bool empty() const;
@@ -46,10 +44,57 @@ namespace stor
   //     q.for_each(some_functor);
   //
 
-  // Please do not use any of the rest of the interface of std::list;
-  // the real CommandQueue will not support the whole interface of
-  // list.
+  class CommandQueue
+  {
+  public:
+    typedef boost::shared_ptr<boost::statechart::event_base> event_ptr;
+    typedef std::list<event_ptr> sequence_t;
+    typedef sequence_t::size_type size_type;
+    
+    // Compiler-generated default c'tor, copy c'tor, and d'tor are
+    // correct (for now).
+
+    void push_front(event_ptr p) 
+    {
+      _elements.push_back(p);
+    }
+
+    bool pop_back(event_ptr& p)
+    {
+      if (_elements.empty()) return false;
+      p = _elements.back();
+      _elements.pop_back();
+      return true;
+    }
+
+    bool empty() const
+    {
+      return _elements.empty();
+    }
+
+    size_type size() const
+    {
+      return _elements.size();
+    }
+
+    void clear()
+    {
+      _elements.clear();
+    }
+
+  private:
+      sequence_t _elements;
+  };
+
+
 
 }
 
 #endif
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
