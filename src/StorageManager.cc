@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.7 2009/01/08 19:42:56 paterno Exp $
+// $Id: StorageManager.cc,v 1.92.4.8 2009/01/27 18:29:10 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
+#include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -136,7 +137,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.7 2009/01/08 19:42:56 paterno Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.8 2009/01/27 18:29:10 biery Exp $ $Name:  $"),
+  fragMonCollection_(this)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -359,6 +361,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
+
+  startNewMonitorWorkloop();
 }
 
 StorageManager::~StorageManager()
@@ -1196,6 +1200,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 //////////// ***  Performance //////////////////////////////////////////////////////////
 void StorageManager::addMeasurement(unsigned long size)
 {
+  MonitoredQuantity& eventSizeMQ = fragMonCollection_.getEventFragmentSizeMQ();
+  eventSizeMQ.addSample(static_cast<double>(size) / 1048576.0);
   // for bandwidth performance measurements, first sample based
   if ( pmeter_->addSample(size) )
   {
@@ -1305,6 +1311,10 @@ void StorageManager::addDQMMeasurement(unsigned long size)
 void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+  const MonitoredQuantity& eventSizeMQ =
+    fragMonCollection_.getEventFragmentSizeMQ();
+  const MonitoredQuantity& eventBandwidthMQ =
+    fragMonCollection_.getEventFragmentBandwidthMQ();
   *out << "<html>"                                                   << endl;
   *out << "<head>"                                                   << endl;
   *out << "<link type=\"text/css\" rel=\"stylesheet\"";
@@ -1643,7 +1653,8 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Frames Received" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << receivedFrames_ << endl;
+          *out << receivedFrames_ << " ["
+               << eventSizeMQ.getSampleCount() << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1674,7 +1685,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 // performance statistics
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Statistics for last " << samples_ << " frames" << " (and last " << period4samples_ << " sec)" << endl;
+    *out << "      " << "Statistics for last " << samples_ << " frames" << " (and last " << period4samples_ << " sec) [" << eventSizeMQ.getDuration(MonitoredQuantity::RECENT) << "]" << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
         *out << "<tr>" << endl;
@@ -1682,7 +1693,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << instantBandwidth_ << " (" << instantBandwidth2_ << ")" << endl;
+          *out << instantBandwidth_ << " (" << instantBandwidth2_ << ") [" << eventSizeMQ.getValueRate(MonitoredQuantity::RECENT) << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1690,7 +1701,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Rate (Frames/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << instantRate_ << " (" << instantRate2_ << ")" << endl;
+          *out << instantRate_ << " (" << instantRate2_ << ") [" << eventSizeMQ.getSampleRate(MonitoredQuantity::RECENT) << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1698,7 +1709,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Latency (us/frame)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << instantLatency_ << " (" << instantLatency2_ << ")" << endl;
+          *out << instantLatency_ << " (" << instantLatency2_ << ") [" << (1000000.0 / eventSizeMQ.getSampleRate(MonitoredQuantity::RECENT)) << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1706,7 +1717,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Maximum Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << maxBandwidth_ << " (" << maxBandwidth2_ << ")" << endl;
+          *out << maxBandwidth_ << " (" << maxBandwidth2_ << ") [" << eventBandwidthMQ.getValueMax(MonitoredQuantity::RECENT) << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1714,14 +1725,14 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Minimum Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << minBandwidth_ << " (" << minBandwidth2_ << ")" << endl;
+          *out << minBandwidth_ << " (" << minBandwidth2_ << ") [" << eventBandwidthMQ.getValueMin(MonitoredQuantity::RECENT) << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 // mean performance statistics for whole run
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Mean Performance for " << totalSamples_ << " (" << totalSamples2_ << ")" << " frames, duration "
-         << duration_ << " (" << duration2_ << ")" << " seconds" << endl;
+    *out << "      " << "Mean Performance for " << totalSamples_ << " (" << totalSamples2_ << ") [" << eventSizeMQ.getSampleCount() << "] frames, duration "
+         << duration_ << " (" << duration2_ << ") [" << eventSizeMQ.getDuration() << "] seconds" << endl;
     *out << "    </th>"                                                << endl;
     *out << "  </tr>"                                                  << endl;
         *out << "<tr>" << endl;
@@ -1729,7 +1740,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Bandwidth (MB/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << meanBandwidth_ << " (" << meanBandwidth2_ << ")" << endl;
+          *out << meanBandwidth_ << " (" << meanBandwidth2_ << ") [" << eventSizeMQ.getValueRate() << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1737,7 +1748,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Rate (Frames/s)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << meanRate_ << " (" << meanRate2_ << ")" << endl;
+          *out << meanRate_ << " (" << meanRate2_ << ") [" << eventSizeMQ.getSampleRate() << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1745,7 +1756,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Latency (us/frame)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << meanLatency_ << " (" << meanLatency2_ << ")" << endl;
+          *out << meanLatency_ << " (" << meanLatency2_ << ") [" << (1000000.0 / eventSizeMQ.getSampleRate()) << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -1753,7 +1764,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Total Volume Received (MB)" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << receivedVolume_ << endl;
+          *out << receivedVolume_ << " [" << eventSizeMQ.getValueSum() << "]" << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 
@@ -5201,6 +5212,31 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 	  delete proxy;
 	}
     }
+}
+
+void StorageManager::startNewMonitorWorkloop() throw (evf::Exception)
+{
+  try {
+    wlNewMonitor_=
+      toolbox::task::getWorkLoopFactory()->getWorkLoop(sourceId_+"NewMonitor",
+						       "waiting");
+    if (!wlNewMonitor_->isActive()) wlNewMonitor_->activate();
+    asNewMonitor_ = toolbox::task::bind(this,&StorageManager::newMonitorAction,
+				      sourceId_+"NewMonitor");
+    wlNewMonitor_->submit(asNewMonitor_);
+  }
+  catch (xcept::Exception& e) {
+    string msg = "Failed to start workloop 'NewMonitor'.";
+    XCEPT_RETHROW(evf::Exception,msg,e);
+  }
+}
+
+
+bool StorageManager::newMonitorAction(toolbox::task::WorkLoop* wl)
+{
+  ::sleep(MonitoredQuantity::EXPECTED_CALCULATION_INTERVAL);
+  fragMonCollection_.calculateStatistics();
+  return true;
 }
 
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.5 2008/12/29 20:51:21 paterno Exp $
+   $Id: StorageManager.h,v 1.45.6.6 2008/12/30 16:08:49 biery Exp $
 */
 
 #include <string>
@@ -27,6 +27,7 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -85,7 +86,11 @@ namespace stor {
     // @@EM added monitoring workloop
     void startMonitoringWorkLoop() throw (evf::Exception);
     bool monitoring(toolbox::task::WorkLoop* wl);
-    
+
+    // tests of new Monitor classes
+    void startNewMonitorWorkloop() throw (evf::Exception);
+    bool newMonitorAction(toolbox::task::WorkLoop* wl);
+
 ////////////////////////////////////////////////////////////////////////////////
    private:  
     StorageManager(StorageManager const&); // not implemented
@@ -344,6 +349,11 @@ namespace stor {
       DEFAULT_PURGE_TIME = 120,
       DEFAULT_READY_TIME = 30
     };
+
+    // tests of new Monitor classes
+    FragmentMonitorCollection fragMonCollection_;
+    toolbox::task::WorkLoop *wlNewMonitor_;      
+    toolbox::task::ActionSignature *asNewMonitor_;
 
   }; 
 } 
