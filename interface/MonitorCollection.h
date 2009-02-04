@@ -1,4 +1,4 @@
-// $Id$
+// $Id: MonitorCollection.h,v 1.1.2.1 2009/02/04 13:27:08 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -13,17 +13,17 @@ namespace stor {
   /**
    * An abstract collection of MonitoredQuantities
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/02/04 13:27:08 $
    */
   
   class MonitorCollection
   {
   public:
 
-    // A virtual destructor here leads to a missing symbol
-    // virtual ~MonitorCollection() = 0;
+    // A pure virtual destructor results in a missing symbol
+    virtual ~MonitorCollection() {};
 
     /**
      * Calculates the statistics for all quantities
