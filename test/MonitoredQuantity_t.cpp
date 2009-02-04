@@ -21,6 +21,7 @@ class testMonitoredQuantity : public CppUnit::TestFixture
   CPPUNIT_TEST(testEmpty);
   CPPUNIT_TEST(testFull);
   CPPUNIT_TEST(testRecent);
+  CPPUNIT_TEST(testDisable);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -44,6 +45,7 @@ public:
   void testEmpty();
   void testFull();
   void testRecent();
+  void testDisable();
 
 private:
   MonitoredQuantity _quantity;
@@ -177,6 +179,31 @@ void testMonitoredQuantity::testRecent()
 
   testResults(MonitoredQuantity::FULL, 3, sampleCount, totalSquareSum);
   testResults(MonitoredQuantity::RECENT, 2, sampleCount, squareSum);
+}
+
+
+void testMonitoredQuantity::testDisable()
+{
+  const int sampleCount = 50;
+  double squareSum, dummySquareSum;
+
+  _quantity.reset();
+
+  accumulateSamples(sampleCount, squareSum);
+  // disable the quantity, no changes expected
+  _quantity.disable();
+  accumulateSamples(sampleCount, dummySquareSum);
+
+  testResults(MonitoredQuantity::FULL, 1, sampleCount, squareSum);
+  testResults(MonitoredQuantity::RECENT, 1, sampleCount, squareSum);
+
+  // Reenable quantity. This resets everything.
+  _quantity.enable();
+  squareSum = 0;
+  accumulateSamples(sampleCount, squareSum);
+
+  testResults(MonitoredQuantity::FULL, 1, sampleCount, squareSum);
+  testResults(MonitoredQuantity::RECENT, 1, sampleCount, squareSum);
 }
 
 
