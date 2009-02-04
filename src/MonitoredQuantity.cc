@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.1 2009/01/29 17:17:15 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.2 2009/01/29 22:13:51 biery Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include <sys/time.h>
@@ -28,6 +28,11 @@ void MonitoredQuantity::addSample(double value)
 
   if (value < workingValueMin_) workingValueMin_ = value;
   if (value > workingValueMax_) workingValueMax_ = value;
+}
+
+void  MonitoredQuantity::addSample(int value)
+{
+  addSample(static_cast<double>(value));
 }
 
 long long MonitoredQuantity::getSampleCount(DataSetType dataSet)
@@ -138,6 +143,11 @@ double MonitoredQuantity::getDuration(DataSetType dataSet)
   }
 }
 
+void MonitoredQuantity::calculateStatistics()
+{
+  calculateStatistics( getCurrentTime() );
+}
+
 void MonitoredQuantity::calculateStatistics(double currentTime)
 {
   if (! enabled_) {return;}
@@ -179,17 +189,17 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     fullValueSum_ += latestValueSum;
     fullValueSumOfSquares_ += latestValueSumOfSquares;
     if (latestValueMin < fullValueMin_) {fullValueMin_ = latestValueMin;}
-    if (latestValueMax < fullValueMax_) {fullValueMax_ = latestValueMax;}
+    if (latestValueMax > fullValueMax_) {fullValueMax_ = latestValueMax;}
     fullDuration_ += latestDuration;
 
     // for the recent results, we need to replace the contents of
     // the working bin and re-calculate the recent values
-    (*binSampleCount_)[workingBinId_] = latestSampleCount;
-    (*binValueSum_)[workingBinId_] = latestValueSum;
-    (*binValueSumOfSquares_)[workingBinId_] = latestValueSumOfSquares;
-    (*binValueMin_)[workingBinId_] = latestValueMin;
-    (*binValueMax_)[workingBinId_] = latestValueMax;
-    (*binDuration_)[workingBinId_] = latestDuration;
+    binSampleCount_[workingBinId_] = latestSampleCount;
+    binValueSum_[workingBinId_] = latestValueSum;
+    binValueSumOfSquares_[workingBinId_] = latestValueSumOfSquares;
+    binValueMin_[workingBinId_] = latestValueMin;
+    binValueMax_[workingBinId_] = latestValueMax;
+    binDuration_[workingBinId_] = latestDuration;
 
     recentSampleCount_ = 0;
     recentValueSum_ = 0.0;
@@ -199,16 +209,16 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     recentDuration_ = 0.0;
 
     for (int idx = 0; idx < binCount_; ++idx) {
-      recentSampleCount_ += (*binSampleCount_)[idx];
-      recentValueSum_ += (*binValueSum_)[idx];
-      recentValueSumOfSquares_ += (*binValueSumOfSquares_)[idx];
-      if ((*binValueMin_)[idx] < recentValueMin_) {
-        recentValueMin_ = (*binValueMin_)[idx];
+      recentSampleCount_ += binSampleCount_[idx];
+      recentValueSum_ += binValueSum_[idx];
+      recentValueSumOfSquares_ += binValueSumOfSquares_[idx];
+      if (binValueMin_[idx] < recentValueMin_) {
+        recentValueMin_ = binValueMin_[idx];
       }
-      if ((*binValueMax_)[idx] < recentValueMax_) {
-        recentValueMax_ = (*binValueMax_)[idx];
+      if (binValueMax_[idx] > recentValueMax_) {
+        recentValueMax_ = binValueMax_[idx];
       }
-      recentDuration_ = (*binDuration_)[idx];
+      recentDuration_ = binDuration_[idx];
     }
 
     // update the working bin ID here so that we are ready for
@@ -218,8 +228,8 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
 
     // calculate the derived full values
     if (fullDuration_ > 0.0) {
-      fullSampleRate_ = ((double) fullSampleCount_) / fullDuration_;
-      fullValueRate_ = ((double) fullValueSum_) / fullDuration_;
+      fullSampleRate_ = static_cast<double>(fullSampleCount_) / fullDuration_;
+      fullValueRate_ = static_cast<double>(fullValueSum_) / fullDuration_;
     }
     else {
       fullSampleRate_ = 0.0;
@@ -227,10 +237,10 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     }
 
     if (fullSampleCount_ > 0) {
-      fullValueAverage_ = fullValueSum_ / ((double) fullSampleCount_);
+      fullValueAverage_ = fullValueSum_ / static_cast<double>(fullSampleCount_);
 
-      double squareAvg = (fullValueSumOfSquares_ / (double) fullSampleCount_);
-      double avg = (fullValueSum_ / (double) fullSampleCount_);
+      double squareAvg = fullValueSumOfSquares_ / static_cast<double>(fullSampleCount_);
+      double avg = fullValueSum_ / static_cast<double>(fullSampleCount_);
       double sigSquared = squareAvg - avg*avg;
       if(sigSquared > 0.0) {
         fullValueRMS_ = sqrt(sigSquared);
@@ -246,8 +256,8 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
 
     // calculate the derived recent values
     if (recentDuration_ > 0.0) {
-      recentSampleRate_ = ((double) recentSampleCount_) / recentDuration_;
-      recentValueRate_ = ((double) recentValueSum_) / recentDuration_;
+      recentSampleRate_ = static_cast<double>(recentSampleCount_) / recentDuration_;
+      recentValueRate_ = static_cast<double>(recentValueSum_) / recentDuration_;
     }
     else {
       recentSampleRate_ = 0.0;
@@ -255,11 +265,11 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     }
 
     if (recentSampleCount_ > 0) {
-      recentValueAverage_ = recentValueSum_ / ((double) recentSampleCount_);
+      recentValueAverage_ = recentValueSum_ / static_cast<double>(recentSampleCount_);
 
-      double squareAvg = (recentValueSumOfSquares_ /
-                          (double) recentSampleCount_);
-      double avg = (recentValueSum_ / (double) recentSampleCount_);
+      double squareAvg = recentValueSumOfSquares_ /
+        static_cast<double>(recentSampleCount_);
+      double avg = recentValueSum_ / static_cast<double>(recentSampleCount_);
       double sigSquared = squareAvg - avg*avg;
       if(sigSquared > 0.0) {
         recentValueRMS_ = sqrt(sigSquared);
@@ -293,12 +303,12 @@ void MonitoredQuantity::reset()
 
     workingBinId_ = 0;
     for (int idx = 0; idx < binCount_; ++idx) {
-      (*binSampleCount_)[idx] = 0;
-      (*binValueSum_)[idx] = 0.0;
-      (*binValueSumOfSquares_)[idx] = 0.0;
-      (*binValueMin_)[idx] =  999999999.0;
-      (*binValueMax_)[idx] = -999999999.0;
-      (*binDuration_)[idx] = 0.0;
+      binSampleCount_[idx] = 0;
+      binValueSum_[idx] = 0.0;
+      binValueSumOfSquares_[idx] = 0.0;
+      binValueMin_[idx] =  999999999.0;
+      binValueMax_[idx] = -999999999.0;
+      binDuration_[idx] = 0.0;
     }
 
     fullSampleCount_ = 0;
@@ -358,24 +368,12 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(double interval)
                        0.5);
 
     // create the vectors for the binned quantities
-    binSampleCount_.reset(new std::vector<long long>());
-    binValueSum_.reset(new std::vector<double>());
-    binValueSumOfSquares_.reset(new std::vector<double>());
-    binValueMin_.reset(new std::vector<double>());
-    binValueMax_.reset(new std::vector<double>());
-    binDuration_.reset(new std::vector<double>());
-
-    // populate the vectors with initial values (since everything
-    // after this point assumes that the vectors have the correct
-    // number of entries)
-    for (int idx = 0; idx < binCount_; ++idx) {
-      this->binSampleCount_->push_back(0);
-      this->binValueSum_->push_back(0.0);
-      this->binValueSumOfSquares_->push_back(0.0);
-      this->binValueMin_->push_back(0.0);
-      this->binValueMax_->push_back(0.0);
-      this->binDuration_->push_back(0.0);
-    }
+    binSampleCount_.reserve(binCount_);
+    binValueSum_.reserve(binCount_);
+    binValueSumOfSquares_.reserve(binCount_);
+    binValueMin_.reserve(binCount_);
+    binValueMax_.reserve(binCount_);
+    binDuration_.reserve(binCount_);
   }
 
   // call the reset method to populate the correct initial values
@@ -389,8 +387,8 @@ double MonitoredQuantity::getCurrentTime()
   struct timeval timeStruct;
   int status = gettimeofday(&timeStruct, 0);
   if (status == 0) {
-    now = ((double) timeStruct.tv_sec) +
-      (((double) timeStruct.tv_usec) / 1000000.0);
+    now = static_cast<double>(timeStruct.tv_sec) +
+      (static_cast<double>(timeStruct.tv_usec) / 1000000.0);
   }
   return now;
 }
