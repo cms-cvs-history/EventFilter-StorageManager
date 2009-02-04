@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.2 2009/01/29 22:13:51 biery Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.3 2009/02/04 10:58:07 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include <sys/time.h>
@@ -35,7 +35,7 @@ void  MonitoredQuantity::addSample(int value)
   addSample(static_cast<double>(value));
 }
 
-long long MonitoredQuantity::getSampleCount(DataSetType dataSet)
+long long MonitoredQuantity::getSampleCount(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -47,7 +47,7 @@ long long MonitoredQuantity::getSampleCount(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getSampleRate(DataSetType dataSet)
+double MonitoredQuantity::getSampleRate(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -59,7 +59,7 @@ double MonitoredQuantity::getSampleRate(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getValueSum(DataSetType dataSet)
+double MonitoredQuantity::getValueSum(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -71,7 +71,7 @@ double MonitoredQuantity::getValueSum(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getValueAverage(DataSetType dataSet)
+double MonitoredQuantity::getValueAverage(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -83,7 +83,7 @@ double MonitoredQuantity::getValueAverage(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getValueRMS(DataSetType dataSet)
+double MonitoredQuantity::getValueRMS(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -95,7 +95,7 @@ double MonitoredQuantity::getValueRMS(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getValueMin(DataSetType dataSet)
+double MonitoredQuantity::getValueMin(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -107,7 +107,7 @@ double MonitoredQuantity::getValueMin(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getValueMax(DataSetType dataSet)
+double MonitoredQuantity::getValueMax(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -119,7 +119,7 @@ double MonitoredQuantity::getValueMax(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getValueRate(DataSetType dataSet)
+double MonitoredQuantity::getValueRate(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -131,7 +131,7 @@ double MonitoredQuantity::getValueRate(DataSetType dataSet)
   }
 }
 
-double MonitoredQuantity::getDuration(DataSetType dataSet)
+double MonitoredQuantity::getDuration(DataSetType dataSet) const
 {
   boost::mutex::scoped_lock sl(resultsMutex_);
 
@@ -218,7 +218,7 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
       if (binValueMax_[idx] > recentValueMax_) {
         recentValueMax_ = binValueMax_[idx];
       }
-      recentDuration_ = binDuration_[idx];
+      recentDuration_ += binDuration_[idx];
     }
 
     // update the working bin ID here so that we are ready for

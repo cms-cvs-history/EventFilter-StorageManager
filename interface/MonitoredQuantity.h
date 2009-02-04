@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.4 2009/02/04 10:53:49 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -15,8 +15,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/04 10:53:49 $
    */
 
   class MonitoredQuantity
@@ -44,43 +44,43 @@ namespace stor
     /**
      * Returns the number of samples stored in the monitor.
      */
-    long long getSampleCount(DataSetType dataSet = FULL);
+    long long getSampleCount(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the rate of samples stored in the monitor
      * (number of samples divided by duration).  The units of the
      * return value are samples per second.
      */
-    double getSampleRate(DataSetType dataSet = FULL);
+    double getSampleRate(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the sum of all sample values stored in the monitor.
      */
-    double getValueSum(DataSetType dataSet = FULL);
+    double getValueSum(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the average value of the samples that have been stored in
      * the monitor or 0.0 if no samples have been added.
      */
-    double getValueAverage(DataSetType dataSet = FULL);
+    double getValueAverage(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the RMS of the sample values that have been stored in
      * the monitor or 0.0 if no samples have been added.
      */
-    double getValueRMS(DataSetType dataSet = FULL);
+    double getValueRMS(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the minimum sample value that has been stored in
      * the monitor.
      */
-    double getValueMin(DataSetType dataSet = FULL);
+    double getValueMin(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the maximum sample value that has been stored in
      * the monitor.
      */
-    double getValueMax(DataSetType dataSet = FULL);
+    double getValueMax(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the sample value rate (the sum of all sample values stored
@@ -88,14 +88,14 @@ namespace stor
      * stored.  The units of the return
      * value are [the units of the sample values] per second (e.g. MByte/sec).
      */
-    double getValueRate(DataSetType dataSet = FULL);
+    double getValueRate(DataSetType dataSet = FULL) const;
 
     /**
      * Returns the amount of time (seconds) that this monitor instance has
      * been processing values starting with the time of the first sample
      * or 0.0 if no samples have been stored in the monitor.
      */
-    double getDuration(DataSetType dataSet = FULL);
+    double getDuration(DataSetType dataSet = FULL) const;
 
     /**
      * Forces a calculation of the statistics for the monitored quantity.
@@ -206,7 +206,7 @@ namespace stor
     double recentValueRate_;
     double recentDuration_;
 
-    boost::mutex resultsMutex_;
+    mutable boost::mutex resultsMutex_;
 
     bool enabled_;
     double intervalForRecentStats_;  // seconds
