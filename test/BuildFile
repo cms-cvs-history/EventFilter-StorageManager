@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.9 2009/02/03 20:19:58 paterno Exp $
+# $Id: BuildFile,v 1.30.16.10 2009/02/04 10:59:01 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -81,6 +81,10 @@
     <use name=cppunit>
   </bin>
 
+  <bin file=MemoryChainDuplicate_t.cpp>
+  </bin>
+
+
   <bin file=SyncQueue_t.cpp>
     <use name=cppunit>
   </bin>
@@ -92,5 +96,9 @@
   <bin file=MonitoredQuantity_t.cpp>
     <use name=cppunit>
   </bin>
+
+  <bin file=test_condition.cpp>
+  </bin>
+
 
 </environment>
