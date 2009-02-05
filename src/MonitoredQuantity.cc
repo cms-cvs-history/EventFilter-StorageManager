@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.3 2009/02/04 10:58:07 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.4 2009/02/04 21:49:21 biery Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include <sys/time.h>
@@ -141,11 +141,6 @@ double MonitoredQuantity::getDuration(DataSetType dataSet) const
   else {
     return fullDuration_;
   }
-}
-
-void MonitoredQuantity::calculateStatistics()
-{
-  calculateStatistics( getCurrentTime() );
 }
 
 void MonitoredQuantity::calculateStatistics(double currentTime)

@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.4 2009/02/04 10:53:49 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.5 2009/02/04 21:49:21 biery Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -14,9 +14,9 @@ namespace stor
    * This class keeps track of statistics for a set of sample values 
    * and provides timing information on the samples.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/02/04 10:53:49 $
+   * $Author: biery $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/02/04 21:49:21 $
    */
 
   class MonitoredQuantity
@@ -104,18 +104,7 @@ namespace stor
      * will be called once per interval specified by
      * EXPECTED_CALCULATION_INTERVAL.
      */
-    void calculateStatistics();
-
-    /**
-     * Same as calculateStatistics, but takes the current time as double
-     * in seconds since the epoch (as returned by getCurrentTime())
-     *
-     * Note: using the API 
-     * void calculateStatistics(double currentTime = getCurrentTime())
-     * prevents the use of the std::for_each construct as the boost::mem_fn
-     * cannot handle functions with default arguments.
-     */
-    void calculateStatistics(double currentTime);
+    void calculateStatistics(double currentTime = getCurrentTime());
 
     /**
      * Resets the monitor (zeroes out all counters and restarts the
