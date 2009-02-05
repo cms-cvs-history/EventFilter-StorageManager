@@ -54,6 +54,13 @@ namespace stor
     double getSampleRate(DataSetType dataSet = FULL) const;
 
     /**
+     * Returns the latency of samples stored in the monitor
+     * (duration divided by number of samples).  The units of the
+     * return value are microsecond per sample.
+     */
+    double getSampleLatency(DataSetType dataSet = FULL) const;
+
+    /**
      * Returns the sum of all sample values stored in the monitor.
      */
     double getValueSum(DataSetType dataSet = FULL) const;

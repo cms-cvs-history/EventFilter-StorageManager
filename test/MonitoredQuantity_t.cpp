@@ -122,6 +122,12 @@ void testMonitoredQuantity::testResults
 
     CPPUNIT_ASSERT(
       fabs(
+        _quantity.getSampleLatency(type) -
+        1e6*_quantity.getDuration(type)/(cycleCount*sampleCount)
+      ) < smallValue);    
+
+    CPPUNIT_ASSERT(
+      fabs(
         _quantity.getValueRate(type) -
         _quantity.getValueSum(type)/_quantity.getDuration(type)
       ) < smallValue);

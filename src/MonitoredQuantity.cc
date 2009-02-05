@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.4 2009/02/04 21:49:21 biery Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.5 2009/02/05 10:14:50 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include <sys/time.h>
@@ -57,6 +57,12 @@ double MonitoredQuantity::getSampleRate(DataSetType dataSet) const
   else {
     return fullSampleRate_;
   }
+}
+
+double MonitoredQuantity::getSampleLatency(DataSetType dataSet) const
+{
+  double value = getSampleRate(dataSet);
+  return (value) ? 1e6/value : 0;
 }
 
 double MonitoredQuantity::getValueSum(DataSetType dataSet) const
