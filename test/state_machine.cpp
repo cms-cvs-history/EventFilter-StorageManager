@@ -73,6 +73,27 @@ int main()
 
     }
 
+  StateMachine::History h = machine.history();
+
+  cout << "**** Begin transition history ****" << endl;
+
+  for( StateMachine::History::const_iterator j = h.begin(); j != h.end(); ++j )
+    {
+      cout << "  " << j->timeStamp().tv_sec << "."
+	   << j->timeStamp().tv_usec << ": ";
+      if( j->isEntry() )
+	{
+	  cout << "entered";
+	}
+      else
+	{
+	  cout << "exited";
+	}
+      cout << " " << j->stateName() << endl;
+    }
+
+  cout << "**** End transition history ****" << endl;
+
   return 0;
 
 }

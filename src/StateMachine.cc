@@ -1,6 +1,7 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 using namespace stor;
+using namespace std;
 
 // void StateMachine::handleI2OEventMessage()
 // {
@@ -14,7 +15,12 @@ StateMachine::getCurrentState()
   return state_cast<Operations const&>();
 }
 
-std::string StateMachine::getCurrentStateName()
+string StateMachine::getCurrentStateName()
 {
   return getCurrentState().stateName();
+}
+
+void StateMachine::updateHistory( const TransitionRecord& tr )
+{
+  _history.push_back( tr );
 }

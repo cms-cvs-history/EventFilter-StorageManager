@@ -10,8 +10,6 @@ unsigned int Processing::_counter = 0;
 Processing::Processing( my_context c ): my_base(c)
 {
 
-  cout << "***** See if StateMachine is accessible: " << outermost_context().ctx_test() << endl;
-
   ++_counter;
   if( _counter > 4 )
     {

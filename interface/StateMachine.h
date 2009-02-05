@@ -12,6 +12,8 @@
 #include <boost/mpl/list.hpp>
 
 #include <string>
+#include <vector>
+#include <ctime>
 
 namespace bsc = boost::statechart;
 
@@ -57,6 +59,7 @@ namespace stor
 
   public:
 
+    Operations();
     virtual ~Operations() = 0;
     void processI2OFragment( I2OChain& frag,
 			     EventDistributor& ed,
@@ -73,6 +76,29 @@ namespace stor
 
   };
 
+  ///////////////////////////
+  //// TransitionRecord: ////
+  ///////////////////////////
+
+  class TransitionRecord
+  {
+
+  public:
+
+    TransitionRecord( const std::string& state_name, bool is_entry );
+
+    const std::string& stateName() const { return _stateName; }
+    bool isEntry() const { return _isEntry; }
+    const struct timeval& timeStamp() const { return _timestamp; }
+
+  private:
+
+    std::string _stateName;
+    bool _isEntry;
+    struct timeval _timestamp;
+
+  };
+
   ///////////////////////
   //// StateMachine: ////
   ///////////////////////
@@ -86,8 +112,14 @@ namespace stor
     std::string getCurrentStateName();
     Operations const& getCurrentState();
 
-    // test to see what my_context is:
-    std::string ctx_test() const { return "Hi there"; }
+    void updateHistory( const TransitionRecord& tr );
+
+    typedef std::vector<TransitionRecord> History;
+    const History& history() const { return _history; }
+
+  private:
+
+    History _history;
 
   };
 
