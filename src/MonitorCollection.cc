@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.1.2.2 2009/02/04 17:52:34 mommsen Exp $
+// $Id: MonitorCollection.cc,v 1.1.2.3 2009/02/05 10:09:49 mommsen Exp $
 
 #include <sstream>
 
@@ -40,11 +40,11 @@ void MonitorCollection::updateInfoSpace()
 }
 
 
-xercesc::DOMElement* MonitorCollection::addDOMElement(xercesc::DOMElement *parent)
+void MonitorCollection::addDOMElement(xercesc::DOMElement *parent)
 {
   // do any operations that are common for all child classes
 
-  return do_addDOMElement(parent);
+  do_addDOMElement(parent);
 }
 
 

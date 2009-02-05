@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.3 2009/02/04 17:52:19 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.1.2.4 2009/02/05 10:09:49 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -22,8 +22,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/02/04 17:52:19 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/05 10:09:49 $
    */
   
   class MonitorCollection
@@ -52,14 +52,14 @@ namespace stor {
     /**
      * Adds a child node to the parent node
      */
-    xercesc::DOMElement* addDOMElement(xercesc::DOMElement*);
+    void addDOMElement(xercesc::DOMElement*);
 
 
   protected:
 
     virtual void do_calculateStatistics() = 0;
     
-    virtual xercesc::DOMElement* do_addDOMElement(xercesc::DOMElement*) = 0;
+    virtual void do_addDOMElement(xercesc::DOMElement*) = 0;
     
     virtual void do_updateInfoSpace() = 0;
 
