@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.2 2009/02/04 13:33:18 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.1.2.3 2009/02/04 17:52:19 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -22,8 +22,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/02/04 13:33:18 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/02/04 17:52:19 $
    */
   
   class MonitorCollection
@@ -67,7 +67,6 @@ namespace stor {
     // Stuff dealing with info space
     void putItemsIntoInfoSpace();
 
-    const std::string _infoSpaceName;
     xdata::InfoSpace *_infoSpace;
 
     typedef std::vector< std::pair<std::string, xdata::Serializable*> > infoSpaceItems_t;

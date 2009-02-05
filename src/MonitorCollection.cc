@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.1.2.1 2009/02/04 13:27:08 mommsen Exp $
+// $Id: MonitorCollection.cc,v 1.1.2.2 2009/02/04 17:52:34 mommsen Exp $
 
 #include <sstream>
 
@@ -15,8 +15,7 @@ MonitorCollection::MonitorCollection
 (
   xdaq::Application *app,
   const std::string infoSpaceName
-) :
-_infoSpaceName(infoSpaceName)
+)
 {
   // Get the infospace
   toolbox::net::URN urn = 

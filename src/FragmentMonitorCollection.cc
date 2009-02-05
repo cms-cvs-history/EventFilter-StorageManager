@@ -1,5 +1,6 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.3 2009/02/04 21:51:56 biery Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.4 2009/02/05 09:51:24 mommsen Exp $
 
+#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 
 using namespace stor;
@@ -37,8 +38,20 @@ void FragmentMonitorCollection::do_updateInfoSpace()
   // Can these updates throw?
   // If so, we'll need to catch it and release the lock on the infospace.
 
-  // The fireItemGroupChanged locks the infospace
-  _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
+  try
+  {
+    // The fireItemGroupChanged locks the infospace
+    _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
+  }
+  catch (xdata::exception::Exception &e)
+  {
+      std::stringstream oss;
+      
+      oss << "Failed to fire item group changed for info space " 
+        << _infoSpace->name();
+      
+      XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
+  }
 }
 
 
