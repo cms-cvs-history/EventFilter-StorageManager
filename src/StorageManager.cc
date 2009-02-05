@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.8 2009/01/27 18:29:10 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.9 2009/02/04 21:54:36 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -13,6 +13,7 @@
 #include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
+#include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -137,7 +138,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.8 2009/01/27 18:29:10 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.9 2009/02/04 21:54:36 biery Exp $ $Name: refdev01_scratch_branch $"),
   fragMonCollection_(this)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -203,6 +204,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
+  xgi::bind(this,&StorageManager::newDefaultWebPage,    "newDefault");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
   xgi::bind(this,&StorageManager::streamerOutputWebPage,"streameroutput");
@@ -1305,6 +1307,74 @@ void StorageManager::addDQMMeasurement(unsigned long size)
     DQMminBandwidth2_    = stats.minBandwidth2_;
   }
   DQMreceivedVolume_ = DQMpmeter_->totalvolumemb();
+}
+
+//////////// *** Refactored default web page ///////////////////////////////////////////////
+void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+    XHTMLMaker* maker = XHTMLMaker::instance();
+
+    std::stringstream title;
+    title << getApplicationDescriptor()->getClassName()
+        << " instance " << getApplicationDescriptor()->getInstance();
+    XHTMLMaker::Node* body = maker->start(title.str());
+    //How to add stylesheet?
+
+    XHTMLMaker::AttrMap tableAttr;
+    tableAttr[ "border" ] = "0";
+    tableAttr[ "cellspacing" ] = "7";
+    tableAttr[ "width" ] = "100%";
+    XHTMLMaker::Node* table = maker->addNode("table", body, tableAttr);
+
+    XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
+
+    XHTMLMaker::AttrMap tableDivAttr;
+    tableDivAttr[ "align" ] = "left";
+    tableDivAttr[ "width" ] = "64";
+    XHTMLMaker::Node* tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+
+    XHTMLMaker::AttrMap smImgAttr;
+    smImgAttr[ "align" ] = "middle";
+    smImgAttr[ "src" ] = "/evf/images/smicon.jpg"; // $XDAQ_DOCUMENT_ROOT is prepended to this path
+    smImgAttr[ "alt" ] = "main";
+    smImgAttr[ "width" ] = "64";
+    smImgAttr[ "height" ] = "64";
+    smImgAttr[ "border" ] = "0";
+    maker->addNode("img", tableDiv, smImgAttr);
+
+    tableDivAttr[ "width" ] = "40%";
+    tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+    XHTMLMaker::Node* header = maker->addNode("h3", tableDiv);
+    maker->addText(header, title.str());
+    
+    tableDivAttr[ "width" ] = "30%";
+    tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+    header = maker->addNode("h3", tableDiv);
+    maker->addText(header, fsm_.stateName()->toString());
+    
+    tableDivAttr[ "align" ] = "right";
+    tableDivAttr[ "width" ] = "64";
+    tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+
+    XHTMLMaker::AttrMap xdaqLinkAttr;
+    xdaqLinkAttr[ "href" ] = "/urn:xdaq-application:lid=3";
+    XHTMLMaker::Node* xdaqLink = maker->addNode("a", tableDiv, xdaqLinkAttr);
+
+    XHTMLMaker::AttrMap xdaqImgAttr;
+    xdaqImgAttr[ "align" ] = "middle";
+    xdaqImgAttr[ "src" ] = "/hyperdaq/images/HyperDAQ.jpg"; // $XDAQ_DOCUMENT_ROOT is prepended to this path
+    xdaqImgAttr[ "alt" ] = "HyperDAQ";
+    xdaqImgAttr[ "width" ] = "64";
+    xdaqImgAttr[ "height" ] = "64";
+    xdaqImgAttr[ "border" ] = "0";
+    maker->addNode("img", xdaqLink, xdaqImgAttr);
+
+    fragMonCollection_.addDOMElement(body);
+
+    // Dump the webpage to test.xhtml
+    maker->out();
+
 }
 
 //////////// *** Default web page //////////////////////////////////////////////////////////
