@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.2 2009/02/04 17:52:34 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.3 2009/02/04 21:51:56 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 
@@ -28,11 +28,14 @@ void FragmentMonitorCollection::do_calculateStatistics()
 
 void FragmentMonitorCollection::do_updateInfoSpace()
 {
-  // No need to lock the infospace, as we are notifying the 
-  // infospace for changes (TBC)
+  // Lock the infospace to assure that all items are consistent
+  _infoSpace->lock();
   _receivedFrames = static_cast<uint32_t>(allFragmentSizes.getSampleRate());
   _receivedFramesSize = static_cast<uint32_t>(allFragmentSizes.getValueSum());
   _receivedFramesBandwidth = allFragmentSizes.getValueRate(MonitoredQuantity::RECENT);
+  _infoSpace->unlock();
+  // Can these updates throw?
+  // If so, we'll need to catch it and release the lock on the infospace.
 
   // The fireItemGroupChanged locks the infospace
   _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
