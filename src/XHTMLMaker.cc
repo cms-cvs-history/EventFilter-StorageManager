@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <xercesc/util/PlatformUtils.hpp>
-//#include <xercesc/framework/StdOutFormatTarget.hpp>
+#include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
 
 using namespace std;
@@ -130,11 +130,11 @@ void XHTMLMaker::addText( Node* parent, const string& data )
   parent->appendChild( txt );
 }
 
-//////////////////////////////
-//// Dump page to stdout: ////
-//////////////////////////////
+/////////////////////////////////
+//// Set DOMWriter features: ////
+/////////////////////////////////
 
-void XHTMLMaker::out()
+void XHTMLMaker::_setWriterFeatures()
 {
 
   //_writer->setNewLine( (const XMLCh*)( L"\n" ) );
@@ -159,14 +159,58 @@ void XHTMLMaker::out()
       _writer->setFeature( XMLUni::fgDOMWRTBOM, true );
     }
 
-  //XMLFormatTarget* ftar = new StdOutFormatTarget();
-  XMLFormatTarget* ftar = new LocalFileFormatTarget( "test.xhtml" );
+}
+
+//////////////////
+//// Cleanup: ////
+//////////////////
+void XHTMLMaker::_cleanup()
+{
+  XMLPlatformUtils::Terminate();
+  _instance = 0;
+}
+
+//////////////////////////////
+//// Dump page to stdout: ////
+//////////////////////////////
+void XHTMLMaker::out()
+{
+  _setWriterFeatures();
+  XMLFormatTarget* ftar = new StdOutFormatTarget();
   fflush( stdout );
   _writer->writeNode( ftar, *_doc );
   delete ftar;
+  _cleanup();
+}
 
-  XMLPlatformUtils::Terminate();
+////////////////////////////////////
+//// Dump page to a local file: ////
+////////////////////////////////////
+void XHTMLMaker::out( const string& filename )
+{
+  _setWriterFeatures();
+  XMLFormatTarget* ftar = new LocalFileFormatTarget( _xs( filename ) );
+  _writer->writeNode( ftar, *_doc );
+  delete ftar;
+  _cleanup();
+}
 
-  _instance = 0;
+////////////////////////////////////
+//// Dump the page to a string: ////
+////////////////////////////////////
+void XHTMLMaker::out( string& dest )
+{
+  _setWriterFeatures();
+  XMLCh* xch = _writer->writeToString( *_doc );
+  char* ch = xercesc::XMLString::transcode( xch );
+  dest = string( ch );
+  _cleanup();
+}
 
+//////////////////////////////////////////////
+//// Dump the page into an output stream: ////
+//////////////////////////////////////////////
+void XHTMLMaker::out( std::ostream& dest )
+{
+  
 }

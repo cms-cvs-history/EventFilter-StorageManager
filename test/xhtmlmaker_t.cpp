@@ -1,5 +1,10 @@
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
+#include <string>
+#include <iostream>
+
+using namespace std;
+
 int main()
 {
 
@@ -19,7 +24,7 @@ int main()
     maker->addNode( "a", p, m );
   maker->addText( link, "Fancy Link" );
 
-  maker->out();
+  maker->out( "test.xhtml" );
 
   return 0;
 

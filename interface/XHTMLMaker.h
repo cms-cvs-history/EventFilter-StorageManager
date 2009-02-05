@@ -10,6 +10,7 @@
 
 #include <map>
 #include <string>
+#include <iostream>
 
 class XHTMLMaker
 {
@@ -56,8 +57,17 @@ public:
   // Add text:
   void addText( Node* parent, const std::string& data );
 
-  // Dump page to stdout:
+  // Dump the page to stdout:
   void out();
+
+  // Dump the page to a local file:
+  void out( const std::string& dest );
+
+  // Dump the page to a string:
+  void out( std::string& dest );
+
+  // Dump the page into an output stream:
+  void out( std::ostream& dest );
 
 private:
 
@@ -74,6 +84,12 @@ private:
   {
     return xercesc::XMLString::transcode( str.data() );
   }
+
+  // Set DOMWriter features:
+  void _setWriterFeatures();
+
+  // Cleanup:
+  void _cleanup();
 
 };
 

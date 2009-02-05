@@ -3,7 +3,6 @@
 test_exe=$CMSSW_BASE/test/$SCRAM_ARCH/xhtmlmaker_t
 testoutput=test.xhtml
 
-
 a=`$test_exe 2>&1`
 sa=$?
 if [ $sa != 0 ]; then
