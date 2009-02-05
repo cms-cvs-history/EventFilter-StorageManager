@@ -11,6 +11,8 @@ using namespace stor;
 DrainingQueues::DrainingQueues( my_context c ): my_base(c)
 {
   cout << "Entering " << stateName() << " state" << endl;
+  TransitionRecord tr( stateName(), true );
+  outermost_context().updateHistory( tr );
 
   // Get the work loop
   // This workloop may or may not exists from a previous invocation of
@@ -44,6 +46,8 @@ DrainingQueues::DrainingQueues( my_context c ): my_base(c)
 DrainingQueues::~DrainingQueues()
 {
   cout << "Exiting " << stateName() << " state" << endl;
+  TransitionRecord tr( stateName(), false );
+  outermost_context().updateHistory( tr );
 
   // Stop the draining action
   _doDraining = false;

@@ -1,4 +1,7 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -33,7 +36,7 @@ namespace stor {
         {
             std::cout << "Constructor" << std::endl;
             
-            stateMachine = new StateMachine();
+            stateMachine = new StateMachine( 0, 0, 0 );  // empty worker objects for now
             stateMachine->initiate();
             
 	    xoap::bind(
@@ -173,6 +176,9 @@ namespace stor {
     private:
         
         StateMachine *stateMachine;
+        DiskWriter diskWriter;
+        EventDistributor eventDistributor;
+        FragmentProcessor fragmentProcessor;
         
     };
     

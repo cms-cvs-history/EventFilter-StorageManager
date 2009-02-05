@@ -7,7 +7,9 @@
 
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 
 using namespace std;
@@ -54,7 +56,7 @@ int main()
   emap[ "StopDone" ] = shared_ptr<event_base>( new StopDone() );
   emap[ "Fail" ] = shared_ptr<event_base>( new Fail() );
 
-  StateMachine machine;
+  StateMachine machine( 0, 0, 0 );  // will need real worker objects soon
 
   for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
     {

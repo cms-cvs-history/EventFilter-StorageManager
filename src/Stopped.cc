@@ -8,11 +8,15 @@ using namespace stor;
 Stopped::Stopped( my_context c ): my_base(c)
 {
   cout << "Entering " << stateName() << " state" << endl;
+  TransitionRecord tr( stateName(), true );
+  outermost_context().updateHistory( tr );
 }
 
 Stopped::~Stopped()
 {
   cout << "Exiting " << stateName() << " state" << endl;
+  TransitionRecord tr( stateName(), false );
+  outermost_context().updateHistory( tr );
 }
 
 string Stopped::do_stateName() const

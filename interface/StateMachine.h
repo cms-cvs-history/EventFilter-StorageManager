@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <sys/time.h>
 
 namespace bsc = boost::statechart;
 
@@ -21,7 +22,9 @@ namespace stor
 {
 
   class I2OChain;
+  class DiskWriter;
   class EventDistributor;
+  class FragmentProcessor;
   class FragmentStore;
 
   ////////////////////////////////////////////////
@@ -85,7 +88,12 @@ namespace stor
 
   public:
 
-    TransitionRecord( const std::string& state_name, bool is_entry );
+    TransitionRecord( const std::string& state_name, bool is_entry )
+    {
+      _stateName = state_name;
+      _isEntry = is_entry;
+      gettimeofday( &_timestamp, 0 );
+    }
 
     const std::string& stateName() const { return _stateName; }
     bool isEntry() const { return _isEntry; }
@@ -108,6 +116,8 @@ namespace stor
 
   public:
 
+    StateMachine( DiskWriter* dw, EventDistributor* ed, FragmentProcessor* fp );
+
     //void processI2OFragment();
     std::string getCurrentStateName();
     Operations const& getCurrentState();
@@ -117,9 +127,17 @@ namespace stor
     typedef std::vector<TransitionRecord> History;
     const History& history() const { return _history; }
 
+    DiskWriter* getDiskWriter() { return _diskWriter; }
+    EventDistributor* getEventDistributor() { return _eventDistributor; }
+    FragmentProcessor* getFragmentProcessor() { return _fragmentProcessor; }
+
   private:
 
     History _history;
+
+    DiskWriter* _diskWriter;
+    EventDistributor* _eventDistributor;
+    FragmentProcessor* _fragmentProcessor;
 
   };
 

@@ -19,12 +19,16 @@ Processing::Processing( my_context c ): my_base(c)
     }
 
   cout << "Entering " << stateName() << " state, counter = " << _counter << endl;
+  TransitionRecord tr( stateName(), true );
+  outermost_context().updateHistory( tr );
 
 }
 
 Processing::~Processing()
 {
   cout << "Exiting " << stateName() << " state" << endl;
+  TransitionRecord tr( stateName(), false );
+  outermost_context().updateHistory( tr );
 }
 
 string Processing::do_stateName() const

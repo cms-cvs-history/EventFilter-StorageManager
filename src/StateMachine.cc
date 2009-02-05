@@ -9,6 +9,13 @@ using namespace std;
 //   ref.handleI2OEventMessage();
 // }
 
+StateMachine::StateMachine( DiskWriter* dw, EventDistributor* ed, FragmentProcessor* fp ):
+  _diskWriter(dw),
+  _eventDistributor(ed),
+  _fragmentProcessor(fp)
+{
+}
+
 Operations const&
 StateMachine::getCurrentState()
 {
