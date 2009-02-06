@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.5 2009/02/05 10:09:49 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.6 2009/02/05 14:51:46 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -93,44 +93,108 @@ void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent)
   XHTMLMaker::Node* tableDiv = maker->addNode("td", tableRow);
   maker->addText(tableDiv, "Frames Received");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  std::stringstream framesString;
-  framesString << eventFragmentSizes.getSampleCount();
-  maker->addText(tableDiv, framesString.str());
+  maker->addText(tableDiv, eventFragmentSizes.getSampleCount(), 0);
 
   // DQM records received entry
   tableRow = maker->addNode("tr", table);
   tableDiv = maker->addNode("td", tableRow);
   maker->addText(tableDiv, "DQM Records Received");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  std::stringstream recordsString;
-  recordsString << "n/a";
-  maker->addText(tableDiv, recordsString.str());
+  maker->addText(tableDiv, "n/a");
 
   // Memory usage does not belong here
 
   // Recent statistics header
-  tableRow = maker->addNode("tr", table);
-  tableHeader = maker->addNode("th", tableRow, tableHeaderAttr);
-  std::stringstream durationString;
-  durationString << "Statistics for last " <<
-    std::fixed << std::setprecision(1) <<
-    eventFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " sec";
-  maker->addText(tableHeader, durationString.str());
+  {
+    tableRow = maker->addNode("tr", table);
+    tableHeader = maker->addNode("th", tableRow, tableHeaderAttr);
+    std::ostringstream tmpString;
+    tmpString << "Statistics for last " <<
+      std::fixed << std::setprecision(1) <<
+      eventFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " sec (and last " <<
+      eventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT) << " frames)";
+    maker->addText(tableHeader, tmpString.str());
+  }
 
-  // DQM records received entry
+  // Bandwidth
   tableRow = maker->addNode("tr", table);
   tableDiv = maker->addNode("td", tableRow);
   maker->addText(tableDiv, "Bandwidth (MB/s)");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  std::stringstream bandwidthString;
-  bandwidthString << 
-    std::fixed << std::setprecision(2) <<
-    eventFragmentSizes.getValueRate(MonitoredQuantity::RECENT);
-  maker->addText(tableDiv, bandwidthString.str());
+  maker->addText(tableDiv, eventFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
 
-  // etc...
+  // Rate
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Rate (Frames/s)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+
+  // Latency
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Latency (us/Frame)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+
+  // Maximum Bandwidth
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Maximum Bandwidth (MB/s)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getValueMax(MonitoredQuantity::RECENT));
+
+  // Minimum Bandwidth
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Minimum Bandwidth (MB/s)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getValueMin(MonitoredQuantity::RECENT));
+
+
+
+  // Mean performance header
+  {
+    tableRow = maker->addNode("tr", table);
+    tableHeader = maker->addNode("th", tableRow, tableHeaderAttr);
+    std::ostringstream tmpString;
+    tmpString << "Mean performance for " <<
+      std::fixed << std::setprecision(1) <<
+      eventFragmentSizes.getDuration(MonitoredQuantity::FULL) << " sec (and " <<
+      eventFragmentSizes.getSampleCount(MonitoredQuantity::FULL) << " frames)";
+    maker->addText(tableHeader, tmpString.str());
+  }
+
+  // Bandwidth
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Bandwidth (MB/s)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+
+  // Rate
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Rate (Frames/s)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+
+  // Latency
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Latency (us/Frame)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+
+  // Total volume received
+  tableRow = maker->addNode("tr", table);
+  tableDiv = maker->addNode("td", tableRow);
+  maker->addText(tableDiv, "Total volume received (MB)");
+  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+  maker->addText(tableDiv, eventFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
 
 }
+
 
 
 
