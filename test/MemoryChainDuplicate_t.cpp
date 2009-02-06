@@ -15,7 +15,6 @@
 #include "toolbox/mem/Reference.h"
 #include "toolbox/mem/MemoryPoolFactory.h"
 #include "toolbox/mem/exception/Exception.h"
-#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 #include <cassert>
 #include <iostream>
@@ -25,7 +24,6 @@ using toolbox::mem::MemoryPoolFactory;
 using toolbox::mem::getMemoryPoolFactory;
 using toolbox::mem::HeapAllocator;
 using toolbox::mem::Reference;
-
 
 void
 test_copying_chains(MemoryPoolFactory* g_factory, Pool* g_pool)
@@ -83,7 +81,6 @@ int main()
 
   delete g_alloc;
 }
-
 
 /// emacs configuration
 /// Local Variables: -

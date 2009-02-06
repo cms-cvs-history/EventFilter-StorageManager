@@ -1,12 +1,14 @@
-// $Id: I2OChain.h,v 1.1.2.2 2009/01/30 10:49:40 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.3 2009/01/30 20:34:08 paterno Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
 
 #include <vector>
 
-//#include "toolbox/mem/Reference.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "boost/shared_ptr.hpp"
+
+#include "toolbox/mem/Reference.h"
+
 
 namespace toolbox
 {
@@ -25,22 +27,50 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 20:34:08 $
    */
-  
+
+
+  // We need only declare ChainData here; it is defined in I2OChain.cc.
+  namespace detail
+  {
+    class ChainData;
+  }
+
   class I2OChain
   {
   public:
 
-    /**
-       Default constructor, copy, assignment, and destructor are all
-       compiler-generated.
-    */
 
     /**
-     * Returns true if there are no I2O messages (fragments)
+       A default-constructed I2OChain manages no Reference.
+    */
+    I2OChain();
+
+    /**
+       Create an I2OChain that will manage the Reference at address
+       pRef, and assure that release is called on it only once,
+       regardless of how many copies of the I2OChain object have been
+       made.
+    */
+    explicit I2OChain(toolbox::mem::Reference* pRef);
+
+    /**
+       A copy of an I2OChain shares management of the underlying
+       Reference. We avoid calling Reference::duplicate.
+     */
+    I2OChain(I2OChain const& other);
+
+    /**
+       Destroying an I2OChain does not release the managed Reference,
+       unless that I2OChain is the last one managing that Reference.
+    */
+    ~I2OChain();
+
+    /**
+     * Returns true if there is no Reference managed by *this.
      */
     bool empty() const;
 
@@ -50,19 +80,28 @@ namespace stor {
     bool complete() const;
 
     /**
-     * Adds fragments from another chain to the current chain
-     * taking care that all fragments are chained in the right order
+       Adds fragments from another chain to the current chain taking
+       care that all fragments are chained in the right order. This
+       destructively modifies newpart so that it no longer is part of
+       managing any Reference: newpart is made empty.
+     
      */
-    void addToChain(I2OChain&);
+    void addToChain(I2OChain& newpart);
 
+    /**
+       Mark this chain as known to be complete.
+     */
+    void markComplete();
+
+    /**
+       Return the address at which the data in buffer managed by the
+       Reference begins. If the chain is empty, a null pointer is
+       returned.
+    */
+    unsigned long* getBufferData();
     
   private:
-    
-    std::vector<QueueID> _streamTags;
-    std::vector<QueueID> _dqmEventConsumerTags;
-    std::vector<QueueID> _eventConsumerTags;
-
-    toolbox::mem::Reference* ref;
+    boost::shared_ptr<detail::ChainData> _data;
   };
   
 } // namespace stor
