@@ -1,8 +1,10 @@
-// $Id: I2OChain.cc,v 1.1.2.4 2009/02/06 14:31:59 paterno Exp $
+// $Id: I2OChain.cc,v 1.1.2.5 2009/02/06 17:59:05 paterno Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
+#include "IOPool/Streamer/interface/MsgHeader.h"
 
 namespace stor
 {
@@ -103,18 +105,24 @@ namespace stor
 
   // A default-constructed I2OChain has a null (shared) pointer.
   I2OChain::I2OChain() :
-    _data()
+    _data(),
+    _i2oMessageCode(0),
+    _fragKey(0,0,0,0,0,0)
   { 
   }
 
   I2OChain::I2OChain(toolbox::mem::Reference* pRef) :
-    _data(new detail::ChainData(pRef))
-  
-  { 
+    _data(new detail::ChainData(pRef)),
+    _i2oMessageCode(0),
+    _fragKey(0,0,0,0,0,0)
+  {
+    parseI2OHeader();
   }
 
   I2OChain::I2OChain(I2OChain const& other) :
-    _data(other._data)
+    _data(other._data),
+    _i2oMessageCode(other._i2oMessageCode),
+    _fragKey(other._fragKey)
   { }
 
   I2OChain::~I2OChain()
@@ -133,6 +141,8 @@ namespace stor
   void I2OChain::swap(I2OChain& other)
   {
     _data.swap(other._data);
+    std::swap(_i2oMessageCode, other._i2oMessageCode);
+    std::swap(_fragKey, other._fragKey);
   }
 
   bool I2OChain::empty() const
@@ -172,6 +182,94 @@ namespace stor
     // relinquish our control over any controlled Reference by
     // becoming like a default-constructed chain.
     I2OChain().swap(*this);
+  }
+
+  void I2OChain::parseI2OHeader()
+  {
+    if (empty())
+      {
+        _i2oMessageCode = 0;
+        _fragKey.code_ = 0;
+        _fragKey.run_ = 0;
+        _fragKey.event_ = 0;
+        _fragKey.secondaryId_ = 0;
+        _fragKey.originatorPid_ = 0;
+        _fragKey.originatorGuid_ = 0;
+      }
+    else
+      {
+        I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+          (I2O_PRIVATE_MESSAGE_FRAME*) getBufferData();
+        _i2oMessageCode = pvtMsg->XFunctionCode;
+
+        switch (_i2oMessageCode)
+          {
+
+          case I2O_SM_PREAMBLE:
+            {
+              I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+                (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+              _fragKey.code_ = Header::INIT;
+              _fragKey.run_ = 0;
+              _fragKey.event_ = i2oMsg->hltTid;
+              _fragKey.secondaryId_ = i2oMsg->outModID;
+              _fragKey.originatorPid_ = i2oMsg->fuProcID;
+              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+              break;
+            }
+
+          case I2O_SM_DATA:
+            {
+              I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+                (I2O_SM_DATA_MESSAGE_FRAME*) pvtMsg;
+              _fragKey.code_ = Header::EVENT;
+              _fragKey.run_ = i2oMsg->runID;
+              _fragKey.event_ = i2oMsg->eventID;
+              _fragKey.secondaryId_ = i2oMsg->outModID;
+              _fragKey.originatorPid_ = i2oMsg->fuProcID;
+              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+              break;
+            }
+
+          case I2O_SM_ERROR:
+            {
+              I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+                (I2O_SM_DATA_MESSAGE_FRAME*) pvtMsg;
+              _fragKey.code_ = Header::ERROR_EVENT;
+              _fragKey.run_ = i2oMsg->runID;
+              _fragKey.event_ = i2oMsg->eventID;
+              _fragKey.secondaryId_ = i2oMsg->outModID;
+              _fragKey.originatorPid_ = i2oMsg->fuProcID;
+              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+              break;
+            }
+
+          case I2O_SM_DQM:
+            {
+              I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+                (I2O_SM_DQM_MESSAGE_FRAME*) pvtMsg;
+              _fragKey.code_ = Header::DQM_EVENT;
+              _fragKey.run_ = i2oMsg->runID;
+              _fragKey.event_ = i2oMsg->eventAtUpdateID;
+              _fragKey.secondaryId_ = i2oMsg->folderID;
+              _fragKey.originatorPid_ = i2oMsg->fuProcID;
+              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+              break;
+            }
+
+          default:
+            {
+              _fragKey.code_ = 0;
+              _fragKey.run_ = 0;
+              _fragKey.event_ = 0;
+              _fragKey.secondaryId_ = 0;
+              _fragKey.originatorPid_ = 0;
+              _fragKey.originatorGuid_ = 0;
+              break;
+            }
+
+          }
+      }
   }
 
 } // namespace stor
