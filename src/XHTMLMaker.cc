@@ -1,5 +1,9 @@
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.6 2009/02/05 14:51:46 mommsen Exp $
+
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
+#include <sstream>
+#include <iomanip>
 #include <iostream>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/framework/StdOutFormatTarget.hpp>
@@ -130,6 +134,17 @@ void XHTMLMaker::addText( Node* parent, const string& data )
   parent->appendChild( txt );
 }
 
+/////////////////////////////
+//// Add a double value: ////
+/////////////////////////////
+
+void XHTMLMaker::addText( Node* parent, const double& value, const int& precision )
+{
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(precision) << value;
+    addText( parent, tmpString.str() );
+}
+
 /////////////////////////////////
 //// Set DOMWriter features: ////
 /////////////////////////////////
@@ -214,3 +229,12 @@ void XHTMLMaker::out( std::ostream& dest )
 {
   
 }
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

@@ -1,4 +1,5 @@
 // -*- c++ -*-
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.6 2009/02/05 14:51:46 mommsen Exp $
 
 #ifndef XHTMLMAKER_H
 #define XHTMLMAKER_H
@@ -57,6 +58,9 @@ public:
   // Add text:
   void addText( Node* parent, const std::string& data );
 
+  // Add a double value:
+  void addText( Node* parent, const double& value, const int& precision = 2 );
+
   // Dump the page to stdout:
   void out();
 
@@ -94,3 +98,12 @@ private:
 };
 
 #endif
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
