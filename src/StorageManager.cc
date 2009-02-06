@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.9 2009/02/04 21:54:36 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.10 2009/02/05 14:50:32 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -138,7 +138,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.9 2009/02/04 21:54:36 biery Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.10 2009/02/05 14:50:32 mommsen Exp $ $Name:  $"),
   fragMonCollection_(this)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -1315,11 +1315,19 @@ void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
 {
     XHTMLMaker* maker = XHTMLMaker::instance();
 
-    std::stringstream title;
+    std::ostringstream title;
     title << getApplicationDescriptor()->getClassName()
         << " instance " << getApplicationDescriptor()->getInstance();
     XHTMLMaker::Node* body = maker->start(title.str());
-    //How to add stylesheet?
+
+    std::ostringstream stylesheetLink;
+    stylesheetLink << "/" << getApplicationDescriptor()->getURN()
+        << "/styles.css";
+    XHTMLMaker::AttrMap stylesheetAttr;
+    stylesheetAttr[ "rel" ] = "stylesheet";
+    stylesheetAttr[ "type" ] = "text/css";
+    stylesheetAttr[ "href" ] = stylesheetLink.str();
+    maker->addNode("link", maker->getHead(), stylesheetAttr);
 
     XHTMLMaker::AttrMap tableAttr;
     tableAttr[ "border" ] = "0";
@@ -1372,8 +1380,8 @@ void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
 
     fragMonCollection_.addDOMElement(body);
 
-    // Dump the webpage to test.xhtml
-    maker->out();
+    // Dump the webpage to the output stream
+    maker->out(*out);
 
 }
 
