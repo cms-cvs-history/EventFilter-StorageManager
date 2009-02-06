@@ -15,8 +15,8 @@ Failed::Failed( my_context c ): my_base(c)
 Failed::~Failed()
 {
   cout << "Exiting " << stateName() << " state" << endl;
-  //TransitionRecord tr( stateName(), false );
-  //outermost_context().updateHistory( tr );
+  TransitionRecord tr( stateName(), false );
+  outermost_context().updateHistory( tr );
 }
 
 string Failed::do_stateName() const
