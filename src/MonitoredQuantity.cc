@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.5 2009/02/05 10:14:50 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.6 2009/02/05 19:27:41 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include <sys/time.h>
@@ -62,7 +62,7 @@ double MonitoredQuantity::getSampleRate(DataSetType dataSet) const
 double MonitoredQuantity::getSampleLatency(DataSetType dataSet) const
 {
   double value = getSampleRate(dataSet);
-  return (value) ? 1e6/value : 0;
+  return (value) ? 1e6/value : INFINITY;
 }
 
 double MonitoredQuantity::getValueSum(DataSetType dataSet) const
@@ -177,8 +177,8 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     workingSampleCount_ = 0;
     workingValueSum_ = 0.0;
     workingValueSumOfSquares_ = 0.0;
-    workingValueMin_ =  999999999.0;
-    workingValueMax_ = -999999999.0;
+    workingValueMin_ =  INFINITY;
+    workingValueMax_ = -INFINITY;
   }
 
   // lock out any interaction with the results while we update them
@@ -205,8 +205,8 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     recentSampleCount_ = 0;
     recentValueSum_ = 0.0;
     recentValueSumOfSquares_ = 0.0;
-    recentValueMin_ =  999999999.0;
-    recentValueMax_ = -999999999.0;
+    recentValueMin_ =  INFINITY;
+    recentValueMax_ = -INFINITY;
     recentDuration_ = 0.0;
 
     for (int idx = 0; idx < binCount_; ++idx) {
@@ -295,8 +295,8 @@ void MonitoredQuantity::reset()
     workingSampleCount_ = 0;
     workingValueSum_ = 0.0;
     workingValueSumOfSquares_ = 0.0;
-    workingValueMin_ =  999999999.0;
-    workingValueMax_ = -999999999.0;
+    workingValueMin_ =  INFINITY;
+    workingValueMax_ = -INFINITY;
   }
 
   {
@@ -307,8 +307,8 @@ void MonitoredQuantity::reset()
       binSampleCount_[idx] = 0;
       binValueSum_[idx] = 0.0;
       binValueSumOfSquares_[idx] = 0.0;
-      binValueMin_[idx] =  999999999.0;
-      binValueMax_[idx] = -999999999.0;
+      binValueMin_[idx] =  INFINITY;
+      binValueMax_[idx] = -INFINITY;
       binDuration_[idx] = 0.0;
     }
 
@@ -318,8 +318,8 @@ void MonitoredQuantity::reset()
     fullValueSumOfSquares_ = 0.0;
     fullValueAverage_ = 0.0;
     fullValueRMS_ = 0.0;
-    fullValueMin_ =  999999999.0;
-    fullValueMax_ = -999999999.0;
+    fullValueMin_ =  INFINITY;
+    fullValueMax_ = -INFINITY;
     fullValueRate_ = 0.0;
     fullDuration_ = 0.0;
 
@@ -329,8 +329,8 @@ void MonitoredQuantity::reset()
     recentValueSumOfSquares_ = 0.0;
     recentValueAverage_ = 0.0;
     recentValueRMS_ = 0.0;
-    recentValueMin_ =  999999999.0;
-    recentValueMax_ = -999999999.0;
+    recentValueMin_ =  INFINITY;
+    recentValueMax_ = -INFINITY;
     recentValueRate_ = 0.0;
     recentDuration_ = 0.0;
   }
