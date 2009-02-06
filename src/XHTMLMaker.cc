@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.cc,v 1.1.2.3 2009/02/06 11:58:49 mommsen Exp $
+// $Id: XHTMLMaker.cc,v 1.1.2.4 2009/02/06 13:24:04 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
@@ -8,6 +8,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
+#include <xercesc/framework/MemBufFormatTarget.hpp>
 
 using namespace std;
 using namespace xercesc;
@@ -215,11 +216,9 @@ void XHTMLMaker::out( const string& filename )
 ////////////////////////////////////
 void XHTMLMaker::out( string& dest )
 {
-  _setWriterFeatures();
-  XMLCh* xch = _writer->writeToString( *_doc );
-  char* ch = xercesc::XMLString::transcode( xch );
-  dest = string( ch );
-  _cleanup();
+   std::ostringstream stream;
+   out(stream);
+   dest = stream.str();
 }
 
 //////////////////////////////////////////////
@@ -227,7 +226,12 @@ void XHTMLMaker::out( string& dest )
 //////////////////////////////////////////////
 void XHTMLMaker::out( std::ostream& dest )
 {
-  
+  _setWriterFeatures();
+  MemBufFormatTarget* ftar = new MemBufFormatTarget();
+  _writer->writeNode( ftar, *_doc );
+  dest << ftar->getRawBuffer();
+  delete ftar;
+  _cleanup();
 }
 
 
