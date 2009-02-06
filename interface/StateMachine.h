@@ -88,12 +88,7 @@ namespace stor
 
   public:
 
-    TransitionRecord( const std::string& state_name, bool is_entry )
-    {
-      _stateName = state_name;
-      _isEntry = is_entry;
-      gettimeofday( &_timestamp, 0 );
-    }
+    TransitionRecord( const std::string& state_name, bool is_entry );
 
     const std::string& stateName() const { return _stateName; }
     bool isEntry() const { return _isEntry; }
@@ -116,7 +111,9 @@ namespace stor
 
   public:
 
-    StateMachine( DiskWriter* dw, EventDistributor* ed, FragmentProcessor* fp );
+    StateMachine( DiskWriter* dw,
+                  EventDistributor* ed,
+                  FragmentProcessor* fp );
 
     //void processI2OFragment();
     std::string getCurrentStateName();
