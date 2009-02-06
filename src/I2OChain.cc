@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.3 2009/02/06 02:23:04 paterno Exp $
+// $Id: I2OChain.cc,v 1.1.2.4 2009/02/06 14:31:59 paterno Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -164,6 +164,14 @@ namespace stor
   unsigned long* I2OChain::getBufferData()
   {
     return _data ?  _data->getBufferData() : 0UL;
+  }
+
+  void I2OChain::release()
+  {
+    // A default-constructed chain controls no resources; we can
+    // relinquish our control over any controlled Reference by
+    // becoming like a default-constructed chain.
+    I2OChain().swap(*this);
   }
 
 } // namespace stor

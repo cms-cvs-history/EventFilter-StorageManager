@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.4 2009/02/06 02:23:04 paterno Exp $
+// $Id: I2OChain.h,v 1.1.2.5 2009/02/06 14:31:59 paterno Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -28,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/02/06 02:23:04 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/02/06 14:31:59 $
    */
 
 
@@ -114,8 +114,17 @@ namespace stor {
        returned.
     */
     unsigned long* getBufferData();
+
+
+    /**
+       Abandon management of the managed Reference, if there is
+       one. After this call, *this will be in the same state as if it
+       had been default-constructed.
+     */
+    void release();
     
   private:
+    
     boost::shared_ptr<detail::ChainData> _data;
   };
   

@@ -39,6 +39,8 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(assign_chain);
   CPPUNIT_TEST(swap_chain);
   CPPUNIT_TEST(copying_does_not_exhaust_buffer);
+  CPPUNIT_TEST(release_chain);
+  CPPUNIT_TEST(release_default_chain);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -52,6 +54,8 @@ public:
   void assign_chain();
   void swap_chain();
   void copying_does_not_exhaust_buffer();
+  void release_chain();
+  void release_default_chain();
 
 private:
   // Allocate a new frame from the (global) Pool.
@@ -221,6 +225,37 @@ testI2OChain::copying_does_not_exhaust_buffer()
                  memory_consumed_by_one_frame);                 
 }
 
+void
+testI2OChain::release_chain()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() ==0);
+  {
+    stor::I2OChain frag(allocate_frame());
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+    frag.release();
+    CPPUNIT_ASSERT(frag.empty());
+    CPPUNIT_ASSERT(frag.getBufferData() == 0);
+    CPPUNIT_ASSERT(outstanding_bytes() == 0);
+    
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() ==0);
+}
+
+void
+testI2OChain::release_default_chain()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() ==0);
+  {
+    stor::I2OChain empty;
+    CPPUNIT_ASSERT(outstanding_bytes() == 0);
+    empty.release();
+    CPPUNIT_ASSERT(empty.empty());
+    CPPUNIT_ASSERT(empty.getBufferData() == 0);
+    CPPUNIT_ASSERT(outstanding_bytes() == 0);    
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() ==0);
+}
+
 
 Reference*
 testI2OChain::allocate_frame()
@@ -235,6 +270,7 @@ testI2OChain::outstanding_bytes()
 {
   return g_pool->getMemoryUsage().getUsed();
 }
+
 
 // This macro writes the 'main' for this test.
 CPPUNIT_TEST_SUITE_REGISTRATION(testI2OChain);
