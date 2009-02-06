@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.5 2009/02/04 21:49:21 biery Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.7 2009/02/05 19:27:42 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -14,9 +14,9 @@ namespace stor
    * This class keeps track of statistics for a set of sample values 
    * and provides timing information on the samples.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/02/04 21:49:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/02/05 19:27:42 $
    */
 
   class MonitoredQuantity
@@ -29,7 +29,7 @@ namespace stor
     enum DataSetType { FULL = 0,      // the full data set (all samples)
                        RECENT = 1 };  // recent data only
 
-    MonitoredQuantity(double timeWindowForRecentResults = 10.0);
+    explicit MonitoredQuantity(double timeWindowForRecentResults = 10.0);
 
     /**
      * Adds the specified doubled valued sample value to the monitor instance.

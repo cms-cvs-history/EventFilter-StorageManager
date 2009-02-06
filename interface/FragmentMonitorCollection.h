@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.3 2009/02/04 21:51:56 biery Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.4 2009/02/05 14:48:56 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -14,9 +14,9 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities related to fragments
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/02/04 21:51:56 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/05 14:48:56 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -32,7 +32,7 @@ namespace stor {
 
   public:
 
-    FragmentMonitorCollection(xdaq::Application*);
+    explicit FragmentMonitorCollection(xdaq::Application*);
 
     const MonitoredQuantity& getAllFragmentSizeMQ() const {
       return allFragmentSizes;
