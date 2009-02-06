@@ -36,6 +36,8 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(default_chain);
   CPPUNIT_TEST(nonempty_chain_cleans_up_nice);
   CPPUNIT_TEST(copy_chain);
+  CPPUNIT_TEST(assign_chain);
+  CPPUNIT_TEST(swap_chain);
   CPPUNIT_TEST(copying_does_not_exhaust_buffer);
 
   CPPUNIT_TEST_SUITE_END();
@@ -47,6 +49,8 @@ public:
   void default_chain();
   void nonempty_chain_cleans_up_nice();
   void copy_chain();
+  void assign_chain();
+  void swap_chain();
   void copying_does_not_exhaust_buffer();
 
 private:
@@ -77,6 +81,8 @@ testI2OChain::default_chain()
   stor::I2OChain frag;
   CPPUNIT_ASSERT(frag.empty());
   CPPUNIT_ASSERT(!frag.complete());
+  size_t memory_consumed_by_zero_frames = outstanding_bytes();
+  CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
 }
 
 void
@@ -117,6 +123,66 @@ testI2OChain::copy_chain()
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
+
+void
+testI2OChain::assign_chain()
+{
+  stor::I2OChain frag1(allocate_frame());
+  size_t memory_consumed_by_one_frame = outstanding_bytes();
+  CPPUNIT_ASSERT(memory_consumed_by_one_frame != 0);
+  
+  stor::I2OChain frag2(allocate_frame());
+  size_t memory_consumed_by_two_frames = outstanding_bytes();
+  CPPUNIT_ASSERT(memory_consumed_by_two_frames > memory_consumed_by_one_frame);
+
+  stor::I2OChain no_frags;
+  CPPUNIT_ASSERT(no_frags.empty());
+
+  // Assigning to frag2 should release the resources associated with frag2.
+  frag2 = no_frags;
+  CPPUNIT_ASSERT(outstanding_bytes() == memory_consumed_by_one_frame);  
+  CPPUNIT_ASSERT(frag2.empty());
+
+  // Assigning frag1 to frag2 should consume no new resources
+  frag2 = frag1;
+  CPPUNIT_ASSERT(outstanding_bytes() == memory_consumed_by_one_frame);  
+  CPPUNIT_ASSERT(!frag2.empty());
+  CPPUNIT_ASSERT(frag2.getBufferData() == frag1.getBufferData());  
+
+  // Assigning no_frags to frag1 and frag2 should release all resources.
+  CPPUNIT_ASSERT(no_frags.empty());
+  frag1 = no_frags;
+  frag2 = no_frags;
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+void
+testI2OChain::swap_chain()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    stor::I2OChain frag(allocate_frame());
+    size_t memory_consumed_by_one_frame = outstanding_bytes();
+    CPPUNIT_ASSERT(memory_consumed_by_one_frame != 0);
+    CPPUNIT_ASSERT(!frag.empty());
+    unsigned long* data_location = frag.getBufferData();
+    
+    stor::I2OChain no_frags;
+    CPPUNIT_ASSERT(no_frags.empty());
+    CPPUNIT_ASSERT(outstanding_bytes() == memory_consumed_by_one_frame);
+    
+    // Swapping should not change the amount of allocated memory, but
+    // it should reverse the roles: no_frags should be non-empty, and
+    // frags should be empty.
+    std::swap(no_frags, frag);
+    CPPUNIT_ASSERT(outstanding_bytes() == memory_consumed_by_one_frame);
+    CPPUNIT_ASSERT(frag.empty());
+    CPPUNIT_ASSERT(!no_frags.empty());
+    CPPUNIT_ASSERT(no_frags.getBufferData() == data_location);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
 
 void
 testI2OChain::copying_does_not_exhaust_buffer()

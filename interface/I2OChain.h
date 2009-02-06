@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.3 2009/01/30 20:34:08 paterno Exp $
+// $Id: I2OChain.h,v 1.1.2.4 2009/02/06 02:23:04 paterno Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -28,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 20:34:08 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/06 02:23:04 $
    */
 
 
@@ -68,6 +68,21 @@ namespace stor {
        unless that I2OChain is the last one managing that Reference.
     */
     ~I2OChain();
+
+    /**
+       Assigning to an I2OChain causes the left-hand side of the
+       assignment to relinquish management of any Reference it might
+       have had. If the left-hand side was the only chain managing
+       that Reference, it will be released. After the assignment, the
+       left-hand side shares management of the underlying Reference of
+       the right-hand side.
+     */
+    I2OChain& operator=(I2OChain const& rhs);
+
+    /**
+       Standard swap.
+     */
+    void swap(I2OChain& other);
 
     /**
      * Returns true if there is no Reference managed by *this.

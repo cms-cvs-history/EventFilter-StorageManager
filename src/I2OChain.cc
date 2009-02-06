@@ -1,5 +1,6 @@
-// $Id: I2OChain.cc,v 1.1.2.2 2009/01/30 20:34:08 paterno Exp $
+// $Id: I2OChain.cc,v 1.1.2.3 2009/02/06 02:23:04 paterno Exp $
 
+#include <algorithm>
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/Types.h"
 
@@ -30,6 +31,7 @@ namespace stor
       bool complete() const;
       void markComplete();
       unsigned long* getBufferData();
+      void swap(ChainData& other);
 
     private:
       std::vector<QueueID> _streamTags;
@@ -87,6 +89,15 @@ namespace stor
         ?  static_cast<unsigned long*>(_ref->getDataLocation()) 
         : 0UL;
     }
+
+    inline void ChainData::swap(ChainData& other)
+    {
+      _streamTags.swap(other._streamTags);
+      _dqmEventConsumerTags.swap(other._dqmEventConsumerTags);
+      _eventConsumerTags.swap(other._eventConsumerTags);
+      std::swap(_ref, other._ref);
+      std::swap(_complete, other._complete);
+    }
   } // namespace detail
 
 
@@ -110,6 +121,19 @@ namespace stor
   {
   }
 
+  I2OChain& I2OChain::operator=(I2OChain const& rhs)
+  {
+    // This is the standard copy/swap algorithm, to obtain the strong
+    // exception safety guarantee.
+    I2OChain temp(rhs);
+    swap(temp);
+    return *this;
+  }
+  
+  void I2OChain::swap(I2OChain& other)
+  {
+    _data.swap(other._data);
+  }
 
   bool I2OChain::empty() const
   {
