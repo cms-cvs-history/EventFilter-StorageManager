@@ -27,34 +27,35 @@ class testMonitoredQuantity : public CppUnit::TestFixture
 
 public:
   testMonitoredQuantity();
-
-  void accumulateSamples
-  (
-    const unsigned int sampleCount,
-    double &squareSum
-  );
-
-  void testResults
-  (
-    MonitoredQuantity::DataSetType type,
-    const unsigned int cycleCount,
-    const unsigned int sampleCount,
-    const double squareSum
-  );
-
   void testEmpty();
   void testFull();
   void testRecent();
   void testDisable();
 
 private:
+
+  void accumulateSamples
+  (
+    unsigned int sampleCount,
+    double &squareSum
+  );
+
+  void testResults
+  (
+    MonitoredQuantity::DataSetType type,
+    unsigned int cycleCount,
+    unsigned int sampleCount,
+    double squareSum
+  );
+
+
   MonitoredQuantity _quantity;
 
   const double _multiplier;
 };
 
 testMonitoredQuantity::testMonitoredQuantity() :
-_multiplier(drand48()*100)
+  _multiplier(drand48()*100)
 {
   //Only 2 bins deep history for testing
   _quantity.setNewTimeWindowForRecentResults(2);
@@ -64,10 +65,11 @@ _multiplier(drand48()*100)
 
 void testMonitoredQuantity::accumulateSamples
 (
-  const unsigned int sampleCount,
+  unsigned int sampleCount,
   double &squareSum
 )
 {
+  assert(!isnan(squareSum));
   for (
     unsigned int i = 1;
     i <= sampleCount;
@@ -84,9 +86,9 @@ void testMonitoredQuantity::accumulateSamples
 void testMonitoredQuantity::testResults
 (
   MonitoredQuantity::DataSetType type,
-  const unsigned int cycleCount,
-  const unsigned int sampleCount,
-  const double squareSum
+  unsigned int cycleCount,
+  unsigned int sampleCount,
+  double squareSum
 )
 {
   // we don't expect an exact agreement due to rounding precision
@@ -135,11 +137,28 @@ void testMonitoredQuantity::testResults
 
   if (sampleCount > 0)
   {
-    CPPUNIT_ASSERT(
-      fabs(
-        _quantity.getValueRMS(type) -
-        sqrt((squareSum/(cycleCount*sampleCount))-pow(_quantity.getValueAverage(type),2))
-      ) < smallValue);
+    unsigned long numEntries = cycleCount * sampleCount;
+    double rmsSquared = pow(_quantity.getValueRMS(type), 2);
+    double expectedSquare = squareSum/numEntries 
+      - pow(_quantity.getValueAverage(type),2);
+
+    double difference = rmsSquared - expectedSquare;
+    std::cerr << "\n type " << type;
+    std::cerr << "\n square sum " << squareSum;
+    std::cerr << "\n cycle count " << cycleCount;
+    std::cerr << "\n sample count " << sampleCount;
+    std::cerr << "\n RMS:        " << _quantity.getValueRMS(type);
+    std::cerr << "\n expected square: " << expectedSquare;
+    std::cerr << "\n difference: " << difference;
+
+    std::cerr << '\n';
+
+    CPPUNIT_ASSERT(fabs(difference) < smallValue);
+//     CPPUNIT_ASSERT(
+//       fabs(
+//            _quantity.getValueRMS(type) -
+//            sqrt((squareSum/(cycleCount*sampleCount))-pow(_quantity.getValueAverage(type),2))
+//            ) < smallValue);
   }
 }
 
@@ -157,8 +176,8 @@ void testMonitoredQuantity::testEmpty()
 
 void testMonitoredQuantity::testFull()
 {
-  const int sampleCount = 100;
-  double squareSum;
+  int sampleCount = 100;
+  double squareSum = 0.0;
 
   _quantity.reset();
 
@@ -170,8 +189,8 @@ void testMonitoredQuantity::testFull()
 
 void testMonitoredQuantity::testRecent()
 {
-  const int sampleCount = 50;
-  double squareSum, totalSquareSum;
+  int sampleCount = 50;
+  double squareSum=0.0, totalSquareSum=0.0;
 
   _quantity.reset();
 
@@ -190,8 +209,8 @@ void testMonitoredQuantity::testRecent()
 
 void testMonitoredQuantity::testDisable()
 {
-  const int sampleCount = 50;
-  double squareSum, dummySquareSum;
+  int sampleCount = 50;
+  double squareSum(0.0), dummySquareSum(0.0);
 
   _quantity.reset();
 
