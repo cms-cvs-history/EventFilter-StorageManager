@@ -96,6 +96,12 @@ int main()
 
   cout << "**** End transition history ****" << endl;
 
+  // explicitly terminate the state machine before exiting so that we don't
+  // get into a situation where a state object is trying to access the
+  // state machine in its destructor, but the state machine has already
+  // been destroyed
+  machine.terminate();
+
   return 0;
 
 }

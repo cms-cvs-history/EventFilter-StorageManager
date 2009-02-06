@@ -74,6 +74,12 @@ namespace stor {
          */
         ~fsmSoap()
         {
+            // explicitly terminate the state machine before deleting it so
+            // that we void the situation where a state object is trying to
+            // access the state machine in its destructor, but the state
+            // machine has already been destroyed
+            stateMachine->terminate();
+
             delete stateMachine;
         };
         
