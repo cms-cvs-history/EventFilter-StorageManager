@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.6 2009/02/05 14:51:46 mommsen Exp $
+// $Id: XHTMLMaker.cc,v 1.1.2.3 2009/02/06 11:58:49 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
@@ -86,12 +86,12 @@ XHTMLMaker::Node* XHTMLMaker::start( const string& title )
   Node* el_xhtml = _doc->getDocumentElement();
 
   // Head:
-  Node* el_head = _doc->createElement( _xs( "head" ) );
-  el_xhtml->appendChild( el_head );
+  _head = _doc->createElement( _xs( "head" ) );
+  el_xhtml->appendChild( _head );
 
   // Title:
   Node* el_title = _doc->createElement( _xs( "title" ) );
-  el_head->appendChild( el_title );
+  _head->appendChild( el_title );
   DOMText* txt_title = _doc->createTextNode( _xs( title ) );
   el_title->appendChild( txt_title );
 
@@ -140,8 +140,8 @@ void XHTMLMaker::addText( Node* parent, const string& data )
 
 void XHTMLMaker::addText( Node* parent, const double& value, const int& precision )
 {
-    std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(precision) << value;
+    ostringstream tmpString;
+    tmpString << fixed << setprecision( precision ) << value;
     addText( parent, tmpString.str() );
 }
 

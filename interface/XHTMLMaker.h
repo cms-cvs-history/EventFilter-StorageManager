@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.6 2009/02/05 14:51:46 mommsen Exp $
+// $Id: XHTMLMaker.h,v 1.1.2.3 2009/02/06 11:58:49 mommsen Exp $
 
 #ifndef XHTMLMAKER_H
 #define XHTMLMAKER_H
@@ -31,10 +31,13 @@ public:
   // Initialize page and return body element:
   Node* start( const std::string& title );
 
+  // Useful for css and javascript:
+  Node* getHead() const { return _head; }
+
   // Add child:
   Node* addNode( const std::string& name,
-		  Node* parent,
-		  const AttrMap& attrs );
+                 Node* parent,
+                 const AttrMap& attrs );
 
   // Add child to top level:
   Node* addNode( const std::string& name, const AttrMap& attrs )
@@ -81,6 +84,8 @@ private:
   xercesc::DOMDocument* _doc;
   xercesc::DOMWriter* _writer;
 
+  Node* _head;
+
   bool _page_started;
 
   // String to XMLCh:
@@ -98,8 +103,6 @@ private:
 };
 
 #endif
-
-
 
 /// emacs configuration
 /// Local Variables: -
