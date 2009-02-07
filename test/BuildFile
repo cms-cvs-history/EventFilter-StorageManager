@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.10 2009/02/04 10:59:01 mommsen Exp $
+# $Id: BuildFile,v 1.30.16.11 2009/02/05 23:08:05 paterno Exp $
 
 <environment>
   <use name=boost>
@@ -98,6 +98,10 @@
   </bin>
 
   <bin file=test_condition.cpp>
+  </bin>
+
+  <bin file=ConcurrentQueue_t.cpp>
+    <use name=cppunit>
   </bin>
 
 
