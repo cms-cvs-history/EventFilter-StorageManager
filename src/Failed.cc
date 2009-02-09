@@ -24,7 +24,42 @@ string Failed::do_stateName() const
   return string( "Failed" );
 }
 
-// void Failed::handleI2OEventMessage() const
-// {
-//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-// }
+void Failed::logFailRequest( const Fail& request )
+{
+  do_logInvalidEvent( "Fail", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logHaltRequest( const Halt& request )
+{
+  do_logInvalidEvent( "Halt", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logConfigureRequest( const Configure& request )
+{
+  do_logInvalidEvent( "Configure", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logReconfigureRequest( const Reconfigure& request )
+{
+  do_logInvalidEvent( "Reconfigure", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logEnableRequest( const Enable& request )
+{
+  do_logInvalidEvent( "Enable", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logStopRequest( const Stop& request )
+{
+  do_logInvalidEvent( "Stop", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logStopDoneRequest( const StopDone& request )
+{
+  do_logInvalidEvent( "StopDone", outermost_context().getCurrentStateName() );
+}
+
+void Failed::logEmergencyStopRequest( const EmergencyStop& request )
+{
+  do_logInvalidEvent( "EmergencyStop", outermost_context().getCurrentStateName() );
+}

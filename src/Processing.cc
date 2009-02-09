@@ -36,10 +36,10 @@ string Processing::do_stateName() const
   return string( "Processing" );
 }
 
-// void Processing::handleI2OEventMessage() const
-// {
-//   cout << "Handling I2O event message..." << endl;
-// }
+void Processing::logStopDoneRequest( const StopDone& request )
+{
+  do_logInvalidEvent( "StopDone", outermost_context().getCurrentStateName() );
+}
 
 void
 Processing::do_processI2OFragment( I2OChain& frag,

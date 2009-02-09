@@ -24,7 +24,7 @@ string Enabled::do_stateName() const
   return string( "Enabled" );
 }
 
-// void Enabled::handleI2OEventMessage() const
-// {
-//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-// }
+void Enabled::logReconfigureRequest( const Reconfigure& request )
+{
+  do_logInvalidEvent( "Reconfigure", outermost_context().getCurrentStateName() );
+}
