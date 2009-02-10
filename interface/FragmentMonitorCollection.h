@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.4 2009/02/05 14:48:56 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.5 2009/02/06 09:58:18 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/02/05 14:48:56 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/02/06 09:58:18 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -27,12 +27,18 @@ namespace stor {
     MonitoredQuantity eventFragmentSizes;
     MonitoredQuantity dqmEventFragmentSizes;
 
+    MonitoredQuantity allFragmentBandwidth;
     MonitoredQuantity eventFragmentBandwidth;
+    MonitoredQuantity dqmEventFragmentBandwidth;
 
 
   public:
 
     explicit FragmentMonitorCollection(xdaq::Application*);
+
+    void addEventFragmentSample(const double bytecount);
+
+    void addDQMEventFragmentSample(const double bytecount);
 
     const MonitoredQuantity& getAllFragmentSizeMQ() const {
       return allFragmentSizes;
@@ -55,11 +61,25 @@ namespace stor {
       return dqmEventFragmentSizes;
     }
 
+    const MonitoredQuantity& getAllFragmentBandwidthMQ() const {
+      return allFragmentBandwidth;
+    }
+    MonitoredQuantity& getAllFragmentBandwidthMQ() {
+      return allFragmentBandwidth;
+    }
+
     const MonitoredQuantity& getEventFragmentBandwidthMQ() const {
       return eventFragmentBandwidth;
     }
     MonitoredQuantity& getEventFragmentBandwidthMQ() {
       return eventFragmentBandwidth;
+    }
+
+    const MonitoredQuantity& getDQMEventFragmentBandwidthMQ() const {
+      return dqmEventFragmentBandwidth;
+    }
+    MonitoredQuantity& getDQMEventFragmentBandwidthMQ() {
+      return dqmEventFragmentBandwidth;
     }
 
 
