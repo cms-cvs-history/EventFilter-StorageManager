@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.7 2009/02/06 12:01:13 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.8 2009/02/10 14:03:32 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -91,11 +91,11 @@ void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent)
   tableAttr[ "frame" ] = "void";
   tableAttr[ "rules" ] = "group";
   tableAttr[ "class" ] = "states";
-  tableAttr[ "cellpadding" ] = "4";
+  tableAttr[ "cellpadding" ] = "2";
   tableAttr[ "width" ] = "100%";
 
-  XHTMLMaker::AttrMap tableHeaderAttr;
-  tableHeaderAttr[ "colspan" ] = "4";
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "4";
 
   XHTMLMaker::AttrMap tableValueAttr;
   tableValueAttr[ "align" ] = "right";
@@ -105,7 +105,7 @@ void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent)
 
   // Received Data Statistics header
   XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
-  XHTMLMaker::Node* tableDiv = maker->addNode("th", tableRow, tableHeaderAttr);
+  XHTMLMaker::Node* tableDiv = maker->addNode("th", tableRow, colspanAttr);
   maker->addText(tableDiv, "Received I2O Frames");
 
   // Parameter/Value header
