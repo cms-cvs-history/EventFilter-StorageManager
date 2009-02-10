@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.10 2009/02/05 14:50:32 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.11 2009/02/06 13:54:39 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -13,7 +13,6 @@
 #include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
-#include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -138,8 +137,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.10 2009/02/05 14:50:32 mommsen Exp $ $Name:  $"),
-  fragMonCollection_(this)
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.11 2009/02/06 13:54:39 mommsen Exp $ $Name:  $"),
+  _fragMonCollection(this)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -497,6 +496,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                          +thislen;
          addMeasurement(actualFrameSize);
+         _fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // add this output module to the monitoring
          bool alreadyStoredOutMod = false;
@@ -546,6 +546,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                     + len;
     addMeasurement(actualFrameSize);
+    _fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // add this output module to the monitoring
     bool alreadyStoredOutMod = false;
@@ -681,6 +682,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
          addMeasurement(actualFrameSize);
+         _fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -758,6 +760,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
     addMeasurement(actualFrameSize);
+    _fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -928,6 +931,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
          addMeasurement(actualFrameSize);
+         _fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -995,6 +999,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
     addMeasurement(actualFrameSize);
+    _fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -1155,6 +1160,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
                                          +thislen;
          addMeasurement(actualFrameSize);
          addDQMMeasurement(actualFrameSize);
+         _fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
          // no data sender list update yet for DQM data, should add it here
       }
@@ -1185,6 +1191,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
                                     + len;
     addMeasurement(actualFrameSize);
     addDQMMeasurement(actualFrameSize);
+    _fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
     // no data sender list update yet for DQM data, should add it here
   }
@@ -1202,8 +1209,6 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 //////////// ***  Performance //////////////////////////////////////////////////////////
 void StorageManager::addMeasurement(unsigned long size)
 {
-  MonitoredQuantity& eventSizeMQ = fragMonCollection_.getEventFragmentSizeMQ();
-  eventSizeMQ.addSample(static_cast<double>(size) / 1048576.0);
   // for bandwidth performance measurements, first sample based
   if ( pmeter_->addSample(size) )
   {
@@ -1309,9 +1314,8 @@ void StorageManager::addDQMMeasurement(unsigned long size)
   DQMreceivedVolume_ = DQMpmeter_->totalvolumemb();
 }
 
-//////////// *** Refactored default web page ///////////////////////////////////////////////
-void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
-  throw (xgi::exception::Exception)
+//////////// *** Refactored method to get default web page body ///////////////////////////
+XHTMLMaker::Node* StorageManager::createWebPageBody()
 {
     XHTMLMaker* maker = XHTMLMaker::instance();
 
@@ -1378,11 +1382,64 @@ void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
     xdaqImgAttr[ "border" ] = "0";
     maker->addNode("img", xdaqLink, xdaqImgAttr);
 
-    fragMonCollection_.addDOMElement(body);
+   return body;
+}
+
+//////////// *** Refactored default web page ///////////////////////////////////////////////
+void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+    XHTMLMaker* maker = XHTMLMaker::instance();
+
+    // Create the body with the standard header
+    XHTMLMaker::Node* body = createWebPageBody();
+
+    //TODO: Failed printout
+
+    // Main statistics table
+    XHTMLMaker::AttrMap tableAttr;
+    tableAttr[ "border" ] = "0";
+    tableAttr[ "cellspacing" ] = "7";
+    tableAttr[ "width" ] = "100%";
+    tableAttr[ "frame" ] = "void";
+    tableAttr[ "rules" ] = "group"; //or groups?
+    tableAttr[ "class" ] = "states";
+    XHTMLMaker::Node* table = maker->addNode("table", body, tableAttr);
+
+    XHTMLMaker::AttrMap specialRowAttr;
+    specialRowAttr[ "class" ] = "special";
+
+    XHTMLMaker::AttrMap colspanAttr;
+    colspanAttr[ "colspan" ] = "2";
+
+    XHTMLMaker::AttrMap tableValueAttr;
+    tableValueAttr[ "align" ] = "right";
+
+    XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
+    XHTMLMaker::Node* tableDiv = maker->addNode("th", tableRow, colspanAttr);
+    maker->addText(tableDiv, "Storage Manager Statistics");
+
+    // Run number
+    tableRow = maker->addNode("tr", table);
+    tableDiv = maker->addNode("td", tableRow);
+    maker->addText(tableDiv, "Run Number");
+    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+    maker->addText(tableDiv, runNumber_, 0);
+
+    // Total events received
+    tableRow = maker->addNode("tr", table, specialRowAttr);
+    tableDiv = maker->addNode("td", tableRow);
+    maker->addText(tableDiv, "Total (non-unique) Events Received");
+    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+    maker->addText(tableDiv, receivedEvents_, 0);
+
+    // Add the received data statistics table
+    tableRow = maker->addNode("tr", table);
+    tableDiv = maker->addNode("td", tableRow, colspanAttr);
+    _fragMonCollection.addDOMElement(tableDiv);
 
     // Dump the webpage to the output stream
     maker->out(*out);
-
 }
 
 //////////// *** Default web page //////////////////////////////////////////////////////////
@@ -1390,9 +1447,9 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   const MonitoredQuantity& eventSizeMQ =
-    fragMonCollection_.getEventFragmentSizeMQ();
+    _fragMonCollection.getEventFragmentSizeMQ();
   const MonitoredQuantity& eventBandwidthMQ =
-    fragMonCollection_.getEventFragmentBandwidthMQ();
+    _fragMonCollection.getEventFragmentBandwidthMQ();
   *out << "<html>"                                                   << endl;
   *out << "<head>"                                                   << endl;
   *out << "<link type=\"text/css\" rel=\"stylesheet\"";
@@ -5313,7 +5370,7 @@ void StorageManager::startNewMonitorWorkloop() throw (evf::Exception)
 bool StorageManager::newMonitorAction(toolbox::task::WorkLoop* wl)
 {
   ::sleep(MonitoredQuantity::EXPECTED_CALCULATION_INTERVAL);
-  fragMonCollection_.calculateStatistics();
+  _fragMonCollection.calculateStatistics();
   return true;
 }
 
