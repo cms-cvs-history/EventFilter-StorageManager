@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.7 2009/02/04 21:54:36 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.8 2009/02/05 14:49:39 mommsen Exp $
 */
 
 #include <string>
@@ -28,6 +28,7 @@
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -111,6 +112,7 @@ namespace stor {
     void stopAction();
     void haltAction();
 
+    XHTMLMaker::Node* createWebPageBody();
     void newDefaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void defaultWebPage
@@ -353,7 +355,7 @@ namespace stor {
     };
 
     // tests of new Monitor classes
-    FragmentMonitorCollection fragMonCollection_;
+    FragmentMonitorCollection _fragMonCollection;
     toolbox::task::WorkLoop *wlNewMonitor_;      
     toolbox::task::ActionSignature *asNewMonitor_;
 
