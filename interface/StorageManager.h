@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.8 2009/02/05 14:49:39 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.9 2009/02/10 14:04:05 mommsen Exp $
 */
 
 #include <string>
@@ -113,6 +113,8 @@ namespace stor {
     void haltAction();
 
     XHTMLMaker::Node* createWebPageBody();
+    void addDOMforResourceUsage(xercesc::DOMElement *parent);
+
     void newDefaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void defaultWebPage

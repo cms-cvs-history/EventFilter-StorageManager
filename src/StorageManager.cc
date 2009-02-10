@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.11 2009/02/06 13:54:39 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.12 2009/02/10 14:02:42 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -137,7 +137,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.11 2009/02/06 13:54:39 mommsen Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.12 2009/02/10 14:02:42 mommsen Exp $ $Name:  $"),
   _fragMonCollection(this)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -1385,6 +1385,120 @@ XHTMLMaker::Node* StorageManager::createWebPageBody()
    return body;
 }
 
+//////////// *** Refactored resource usage ///////////////////////////////////////////////
+void StorageManager::addDOMforResourceUsage(xercesc::DOMElement *parent)
+{
+    XHTMLMaker* maker = XHTMLMaker::instance();
+
+    XHTMLMaker::AttrMap tableAttr;
+    tableAttr[ "frame" ] = "void";
+    tableAttr[ "rules" ] = "group";
+    tableAttr[ "class" ] = "states";
+    tableAttr[ "cellpadding" ] = "2";
+    tableAttr[ "width" ] = "100%";
+
+    XHTMLMaker::AttrMap colspanAttr;
+    colspanAttr[ "colspan" ] = "2";
+
+    XHTMLMaker::AttrMap innerTableAttr;
+    innerTableAttr[ "width" ] = "50%";
+    innerTableAttr[ "valign" ] = "top";
+
+    XHTMLMaker::AttrMap tableValueAttr;
+    tableValueAttr[ "align" ] = "right";
+    tableValueAttr[ "width" ] = "55%";
+
+    XHTMLMaker::AttrMap warningAttr = tableValueAttr;
+    warningAttr[ "bgcolor" ] = "#EF5A10";
+
+    XHTMLMaker::Node* outerTable = maker->addNode("table", parent, tableAttr);
+    XHTMLMaker::Node* outerTableRow = maker->addNode("tr", outerTable);
+    XHTMLMaker::Node* outerTableDiv = maker->addNode("th", outerTableRow, colspanAttr);
+    maker->addText(outerTableDiv, "Resource Usage");
+
+    outerTableRow = maker->addNode("tr", outerTable);
+    outerTableDiv = maker->addNode("td", outerTableRow, innerTableAttr);
+    XHTMLMaker::Node* table = maker->addNode("table", outerTableDiv, tableAttr);
+
+    // Memory pool usage
+    XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
+    XHTMLMaker::Node* tableDiv;
+    if (pool_)
+    {
+        tableDiv = maker->addNode("td", tableRow);
+        maker->addText(tableDiv, "Memory pool used (bytes)");
+        tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+        maker->addText(tableDiv, pool_->getMemoryUsage().getUsed(), 0);
+    }
+    else
+    {
+        tableDiv = maker->addNode("td", tableRow, colspanAttr);
+        maker->addText(tableDiv, "Memory pool pointer not yet available");
+    }
+
+
+    // Disk usage
+    int nD = nLogicalDisk_;
+    if (nD == 0) nD=1;
+    for(int i=0;i<nD;++i) {
+        string path(filePath_);
+        if(nLogicalDisk_>0) {
+            std::ostringstream oss;
+            oss << "/" << setfill('0') << std::setw(2) << i; 
+            path += oss.str();
+        }
+        struct statfs64 buf;
+        int retVal = statfs64(path.c_str(), &buf);
+        double btotal = 0;
+        double bfree = 0;
+        unsigned int used = 0;
+        if(retVal==0) {
+            unsigned int blksize = buf.f_bsize;
+            btotal = buf.f_blocks * blksize / 1024 / 1024 /1024;
+            bfree  = buf.f_bavail  * blksize / 1024 / 1024 /1024;
+            used   = (int)(100 * (1. - bfree / btotal)); 
+        }
+
+        tableRow = maker->addNode("tr", table);
+        tableDiv = maker->addNode("td", tableRow);
+        {
+            std::ostringstream tmpString;
+            tmpString << "Disk " << i << " usage";
+            maker->addText(tableDiv, tmpString.str());
+        }
+        if(used>89)
+            tableDiv = maker->addNode("td", tableRow, warningAttr);
+        else
+            tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+        {
+            std::ostringstream tmpString;
+            tmpString << used << "% (" << btotal-bfree << " of " << btotal << " GB)";
+            maker->addText(tableDiv, tmpString.str());
+        }
+    }
+
+    outerTableDiv = maker->addNode("td", outerTableRow, innerTableAttr);
+    table = maker->addNode("table", outerTableDiv, tableAttr);
+    
+    // # copy worker
+    tableRow = maker->addNode("tr", table);
+    tableDiv = maker->addNode("td", tableRow);
+    maker->addText(tableDiv, "# CopyWorker");
+    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+    int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
+    maker->addText(tableDiv, ps1, 0);
+
+    // # inject worker
+    tableRow = maker->addNode("tr", table);
+    tableDiv = maker->addNode("td", tableRow);
+    maker->addText(tableDiv, "# InjectWorker");
+    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+    int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
+    maker->addText(tableDiv, ps2, 0);
+
+}
+
+
 //////////// *** Refactored default web page ///////////////////////////////////////////////
 void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
@@ -1432,6 +1546,12 @@ void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
     maker->addText(tableDiv, "Total (non-unique) Events Received");
     tableDiv = maker->addNode("td", tableRow, tableValueAttr);
     maker->addText(tableDiv, receivedEvents_, 0);
+
+
+    // Resource usage
+    tableRow = maker->addNode("tr", table);
+    tableDiv = maker->addNode("td", tableRow, colspanAttr);
+    addDOMforResourceUsage(tableDiv);
 
     // Add the received data statistics table
     tableRow = maker->addNode("tr", table);
