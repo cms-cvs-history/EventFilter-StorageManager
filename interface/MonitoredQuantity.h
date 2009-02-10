@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.7 2009/02/05 19:27:42 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.8 2009/02/06 09:58:18 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -15,8 +15,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/02/05 19:27:42 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/02/06 09:58:18 $
    */
 
   class MonitoredQuantity
@@ -34,12 +34,12 @@ namespace stor
     /**
      * Adds the specified doubled valued sample value to the monitor instance.
      */
-    void addSample(double value = 1.0);
+    void addSample(const double value = 1.0);
 
     /**
      * Adds the specified integer valued sample value to the monitor instance.
      */
-    void addSample(int value = 1);
+    void addSample(const int value = 1);
 
     /**
      * Returns the number of samples stored in the monitor.
@@ -139,7 +139,7 @@ namespace stor
     /**
      * Tests whether the monitor is currently enabled.
      */
-    bool isEnabled() const {return enabled_;}
+    bool isEnabled() const {return _enabled;}
 
     /**
      * Returns the length of the time window that has been specified
@@ -150,7 +150,7 @@ namespace stor
      * time window.)
      */
     double getTimeWindowForRecentResults() const {
-      return intervalForRecentStats_;
+      return _intervalForRecentStats;
     }
 
     /**
@@ -163,49 +163,49 @@ namespace stor
 
   private:
 
-    double lastCalculationTime_;
-    long long workingSampleCount_;
-    double workingValueSum_;
-    double workingValueSumOfSquares_;
-    double workingValueMin_;
-    double workingValueMax_;
-    boost::mutex accumulationMutex_;
+    double _lastCalculationTime;
+    long long _workingSampleCount;
+    double _workingValueSum;
+    double _workingValueSumOfSquares;
+    double _workingValueMin;
+    double _workingValueMax;
+    boost::mutex _accumulationMutex;
 
-    int binCount_;
-    int workingBinId_;
-    std::vector<long long> binSampleCount_;
-    std::vector<double> binValueSum_;
-    std::vector<double> binValueSumOfSquares_;
-    std::vector<double> binValueMin_;
-    std::vector<double> binValueMax_;
-    std::vector<double> binDuration_;
+    int _binCount;
+    int _workingBinId;
+    std::vector<long long> _binSampleCount;
+    std::vector<double> _binValueSum;
+    std::vector<double> _binValueSumOfSquares;
+    std::vector<double> _binValueMin;
+    std::vector<double> _binValueMax;
+    std::vector<double> _binDuration;
 
-    long long fullSampleCount_;
-    double fullSampleRate_;
-    double fullValueSum_;
-    double fullValueSumOfSquares_;
-    double fullValueAverage_;
-    double fullValueRMS_;
-    double fullValueMin_;
-    double fullValueMax_;
-    double fullValueRate_;
-    double fullDuration_;
+    long long _fullSampleCount;
+    double _fullSampleRate;
+    double _fullValueSum;
+    double _fullValueSumOfSquares;
+    double _fullValueAverage;
+    double _fullValueRMS;
+    double _fullValueMin;
+    double _fullValueMax;
+    double _fullValueRate;
+    double _fullDuration;
 
-    long long recentSampleCount_;
-    double recentSampleRate_;
-    double recentValueSum_;
-    double recentValueSumOfSquares_;
-    double recentValueAverage_;
-    double recentValueRMS_;
-    double recentValueMin_;
-    double recentValueMax_;
-    double recentValueRate_;
-    double recentDuration_;
+    long long _recentSampleCount;
+    double _recentSampleRate;
+    double _recentValueSum;
+    double _recentValueSumOfSquares;
+    double _recentValueAverage;
+    double _recentValueRMS;
+    double _recentValueMin;
+    double _recentValueMax;
+    double _recentValueRate;
+    double _recentDuration;
 
-    mutable boost::mutex resultsMutex_;
+    mutable boost::mutex _resultsMutex;
 
-    bool enabled_;
-    double intervalForRecentStats_;  // seconds
+    bool _enabled;
+    double _intervalForRecentStats;  // seconds
 
   };
 
