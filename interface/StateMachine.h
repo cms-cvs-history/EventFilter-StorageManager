@@ -7,6 +7,7 @@
 #include "toolbox/task/WorkLoop.h"
 
 #include <boost/statechart/event.hpp>
+#include <boost/statechart/in_state_reaction.hpp>
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
 #include <boost/statechart/transition.hpp>
@@ -247,9 +248,12 @@ namespace stor
 
   public:
 
+    void logReconfigureRequest( const Reconfigure& request );
+
     typedef bsc::transition<EmergencyStop,Stopped> ET;
     typedef bsc::transition<StopDone,Stopped> DT;
-    typedef boost::mpl::list<ET,DT> reactions;
+    typedef bsc::in_state_reaction<Reconfigure,Enabled,&Enabled::logReconfigureRequest> RecfgIR;
+    typedef boost::mpl::list<ET,DT,RecfgIR> reactions;
 
     Enabled( my_context );
     virtual ~Enabled();
@@ -266,8 +270,11 @@ namespace stor
 
   public:
 
+    void logStopDoneRequest( const StopDone& request );
+
     typedef bsc::transition<Stop,DrainingQueues> DT;
-    typedef boost::mpl::list<DT> reactions;
+    typedef bsc::in_state_reaction<StopDone,Processing,&Processing::logStopDoneRequest> StopDoneIR;
+    typedef boost::mpl::list<DT,StopDoneIR> reactions;
 
     Processing( my_context );
     virtual ~Processing();

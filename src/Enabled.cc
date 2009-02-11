@@ -23,3 +23,17 @@ string Enabled::do_stateName() const
 {
   return string( "Enabled" );
 }
+
+void Enabled::logReconfigureRequest( const Reconfigure& request )
+{
+  outermost_context().unconsumed_event( request );
+}
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

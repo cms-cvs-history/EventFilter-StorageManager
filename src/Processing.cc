@@ -36,6 +36,12 @@ string Processing::do_stateName() const
   return string( "Processing" );
 }
 
+void Processing::logStopDoneRequest( const StopDone& request )
+{
+  outermost_context().unconsumed_event( request );
+}
+
+
 void
 Processing::do_processI2OFragment( I2OChain& frag,
 				   EventDistributor& ed,
@@ -43,3 +49,12 @@ Processing::do_processI2OFragment( I2OChain& frag,
 {
   cout << "Processing a fragment\n";
 }
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

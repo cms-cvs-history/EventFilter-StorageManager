@@ -47,3 +47,12 @@ Operations::do_processI2OFragment( I2OChain&         /* unused */ ,
 	    << " state cannot handle I2O messages\n";
 }
 
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
+

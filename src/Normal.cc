@@ -23,3 +23,12 @@ string Normal::do_stateName() const
 {
   return string( "Normal" );
 }
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

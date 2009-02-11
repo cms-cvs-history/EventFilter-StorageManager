@@ -23,3 +23,12 @@ string Failed::do_stateName() const
 {
   return string( "Failed" );
 }
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
