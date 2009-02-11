@@ -97,6 +97,7 @@ testI2OChain::default_chain()
   stor::I2OChain frag;
   CPPUNIT_ASSERT(frag.empty());
   CPPUNIT_ASSERT(!frag.complete());
+  CPPUNIT_ASSERT(!frag.faulty());
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
 }
@@ -112,6 +113,9 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(!frag.complete());
     frag.markComplete();
     CPPUNIT_ASSERT(frag.complete());
+    CPPUNIT_ASSERT(!frag.faulty());
+    frag.markFaulty();
+    CPPUNIT_ASSERT(frag.faulty());
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }

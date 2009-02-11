@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.6 2009/02/06 17:59:05 paterno Exp $
+// $Id: I2OChain.h,v 1.1.2.7 2009/02/06 22:59:51 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -28,9 +28,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/02/06 17:59:05 $
+   * $Author: biery $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/02/06 22:59:51 $
    */
 
 
@@ -96,6 +96,12 @@ namespace stor {
     bool complete() const;
 
     /**
+     * Returns true if the chain has been marked faulty (the internal
+     * data does not represent a complete, valid message).
+     */
+    bool faulty() const;
+
+    /**
        Adds fragments from another chain to the current chain taking
        care that all fragments are chained in the right order. This
        destructively modifies newpart so that it no longer is part of
@@ -108,6 +114,14 @@ namespace stor {
        Mark this chain as known to be complete.
      */
     void markComplete();
+
+    /**
+       Mark this chain as known to be faulty.  The failure modes that
+       result in a chain being marked faulty include chains that have
+       duplicate fragments and chains that never become complete after
+       a timeout interval.
+     */
+    void markFaulty();
 
     /**
        Return the address at which the data in buffer managed by the

@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.5 2009/02/06 17:59:05 paterno Exp $
+// $Id: I2OChain.cc,v 1.1.2.6 2009/02/06 22:59:51 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -31,7 +31,9 @@ namespace stor
       ~ChainData();
       bool empty() const;
       bool complete() const;
+      bool faulty() const;
       void markComplete();
+      void markFaulty();
       unsigned long* getBufferData();
       void swap(ChainData& other);
 
@@ -43,6 +45,7 @@ namespace stor
       toolbox::mem::Reference* _ref;
     
       bool  _complete;
+      bool  _faulty;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -51,7 +54,8 @@ namespace stor
       _dqmEventConsumerTags(),
       _eventConsumerTags(),
       _ref(pRef),
-      _complete(false)
+      _complete(false),
+      _faulty(false)
     { }
 
     // A ChainData that has a Reference is in charge of releasing
@@ -80,9 +84,19 @@ namespace stor
       return _complete;
     }
 
+    inline bool ChainData::faulty() const
+    {
+      return _faulty;
+    }
+
     inline void ChainData::markComplete()
     {
       _complete = true;
+    }
+
+    inline void ChainData::markFaulty()
+    {
+      _faulty = true;
     }
 
     inline unsigned long* ChainData::getBufferData()
@@ -99,6 +113,7 @@ namespace stor
       _eventConsumerTags.swap(other._eventConsumerTags);
       std::swap(_ref, other._ref);
       std::swap(_complete, other._complete);
+      std::swap(_faulty, other._faulty);
     }
   } // namespace detail
 
@@ -160,6 +175,13 @@ namespace stor
   }
 
 
+  bool I2OChain::faulty() const
+  {
+    if (!_data) return false;
+    return _data->faulty();
+  }
+
+
   void I2OChain::addToChain(I2OChain &chain)
   {
   }
@@ -169,6 +191,13 @@ namespace stor
     // TODO:: Should we throw an exception if _data is null? If so, what
     // type? Right now, we do nothing if _data is null.
     if (_data) _data->markComplete();
+  }
+
+  void I2OChain::markFaulty()
+  {
+    // TODO:: Should we throw an exception if _data is null? If so, what
+    // type? Right now, we do nothing if _data is null.
+    if (_data) _data->markFaulty();
   }
 
   unsigned long* I2OChain::getBufferData()
