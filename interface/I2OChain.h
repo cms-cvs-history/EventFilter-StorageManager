@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.7 2009/02/06 22:59:51 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.8 2009/02/11 18:09:00 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/02/06 22:59:51 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/02/11 18:09:00 $
    */
 
 
@@ -139,26 +139,22 @@ namespace stor {
     void release();
 
     /**
-       Returns the I2O message code for the chain.  Valid values
-       are I2O_SM_PREAMBLE, I2O_SM_DATA, I2O_SM_ERROR, and
-       I2O_SM_DQM from EventFilter/Utilities/interface/i2oEvfMsgs.h.
+       Returns the message code for the chain.  Valid values
+       are Header::INVALID, Header::INIT, Header::EVENT, Header::DQM_EVENT,
+       and Header::ERROR_EVENT from IOPool/Streamer/interface/MsgHeader.h.
      */
-    unsigned short getI2OMessageCode() const {return _i2oMessageCode;}
+    unsigned char getMessageCode() const;
 
     /**
        Returns the fragment key for the chain.  The fragment key
        is the entity that uniquely identifies all of the fragments
        from a particular event.
      */
-    FragKey const& getFragmentKey() const {return _fragKey;}
+    FragKey getFragmentKey() const;
 
   private:
 
     boost::shared_ptr<detail::ChainData> _data;
-
-    void parseI2OHeader();
-    unsigned short _i2oMessageCode;
-    FragKey _fragKey;
   };
   
 } // namespace stor

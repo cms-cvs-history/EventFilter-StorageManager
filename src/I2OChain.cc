@@ -1,6 +1,7 @@
-// $Id: I2OChain.cc,v 1.1.2.6 2009/02/06 22:59:51 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.7 2009/02/11 18:09:00 biery Exp $
 
 #include <algorithm>
+#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/Types.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
@@ -28,7 +29,7 @@ namespace stor
     {
     public:
       explicit ChainData(toolbox::mem::Reference* pRef);
-      ~ChainData();
+      virtual ~ChainData();
       bool empty() const;
       bool complete() const;
       bool faulty() const;
@@ -36,16 +37,22 @@ namespace stor
       void markFaulty();
       unsigned long* getBufferData();
       void swap(ChainData& other);
+      unsigned char getMessageCode() const {return _messageCode;}
+      FragKey const& getFragmentKey() const {return _fragKey;}
 
     private:
       std::vector<QueueID> _streamTags;
       std::vector<QueueID> _dqmEventConsumerTags;
       std::vector<QueueID> _eventConsumerTags;
-    
+
+    protected:
       toolbox::mem::Reference* _ref;
-    
+
       bool  _complete;
       bool  _faulty;
+
+      unsigned char _messageCode;
+      FragKey _fragKey;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -55,7 +62,9 @@ namespace stor
       _eventConsumerTags(),
       _ref(pRef),
       _complete(false),
-      _faulty(false)
+      _faulty(false),
+      _messageCode(Header::INVALID),
+      _fragKey(Header::INVALID,0,0,0,0,0)
     { }
 
     // A ChainData that has a Reference is in charge of releasing
@@ -114,30 +123,196 @@ namespace stor
       std::swap(_ref, other._ref);
       std::swap(_complete, other._complete);
       std::swap(_faulty, other._faulty);
+      std::swap(_messageCode, other._messageCode);
+      std::swap(_fragKey, other._fragKey);
+    }
+
+    class InitMsgData : public ChainData
+    {
+    public:
+      explicit InitMsgData(toolbox::mem::Reference* pRef);
+      ~InitMsgData() {}
+
+    private:
+      void parseI2OHeader();
+    };
+
+    inline InitMsgData::InitMsgData(toolbox::mem::Reference* pRef) :
+      ChainData(pRef)
+    {
+      parseI2OHeader();
+    }
+
+    inline void InitMsgData::parseI2OHeader()
+    {
+      if (_ref)
+        {
+          _messageCode = Header::INIT;
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_PREAMBLE_MESSAGE_FRAME*) _ref->getDataLocation();
+          _fragKey.code_ = _messageCode;
+          _fragKey.run_ = 0;
+          _fragKey.event_ = i2oMsg->hltTid;
+          _fragKey.secondaryId_ = i2oMsg->outModID;
+          _fragKey.originatorPid_ = i2oMsg->fuProcID;
+          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+        }
+    }
+
+    class EventMsgData : public ChainData
+    {
+    public:
+      explicit EventMsgData(toolbox::mem::Reference* pRef);
+      ~EventMsgData() {}
+
+    private:
+      void parseI2OHeader();
+    };
+
+    inline EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
+      ChainData(pRef)
+    {
+      parseI2OHeader();
+    }
+
+    inline void EventMsgData::parseI2OHeader()
+    {
+      if (_ref)
+        {
+          _messageCode = Header::EVENT;
+          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_DATA_MESSAGE_FRAME*) _ref->getDataLocation();
+          _fragKey.code_ = _messageCode;
+          _fragKey.run_ = i2oMsg->runID;
+          _fragKey.event_ = i2oMsg->eventID;
+          _fragKey.secondaryId_ = i2oMsg->outModID;
+          _fragKey.originatorPid_ = i2oMsg->fuProcID;
+          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+        }
+    }
+
+    class DQMEventMsgData : public ChainData
+    {
+    public:
+      explicit DQMEventMsgData(toolbox::mem::Reference* pRef);
+      ~DQMEventMsgData() {}
+
+    private:
+      void parseI2OHeader();
+    };
+
+    inline DQMEventMsgData::DQMEventMsgData(toolbox::mem::Reference* pRef) :
+      ChainData(pRef)
+    {
+      parseI2OHeader();
+    }
+
+    inline void DQMEventMsgData::parseI2OHeader()
+    {
+      if (_ref)
+        {
+          _messageCode = Header::DQM_EVENT;
+          I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_DQM_MESSAGE_FRAME*) _ref->getDataLocation();
+          _fragKey.code_ = _messageCode;
+          _fragKey.run_ = i2oMsg->runID;
+          _fragKey.event_ = i2oMsg->eventAtUpdateID;
+          _fragKey.secondaryId_ = i2oMsg->folderID;
+          _fragKey.originatorPid_ = i2oMsg->fuProcID;
+          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+        }
+    }
+
+    class ErrorEventMsgData : public ChainData
+    {
+    public:
+      explicit ErrorEventMsgData(toolbox::mem::Reference* pRef);
+      ~ErrorEventMsgData() {}
+
+    private:
+      void parseI2OHeader();
+    };
+
+    inline ErrorEventMsgData::ErrorEventMsgData(toolbox::mem::Reference* pRef) :
+      ChainData(pRef)
+    {
+      parseI2OHeader();
+    }
+
+    inline void ErrorEventMsgData::parseI2OHeader()
+    {
+      if (_ref)
+        {
+          _messageCode = Header::ERROR_EVENT;
+          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_DATA_MESSAGE_FRAME*) _ref->getDataLocation();
+          _fragKey.code_ = _messageCode;
+          _fragKey.run_ = i2oMsg->runID;
+          _fragKey.event_ = i2oMsg->eventID;
+          _fragKey.secondaryId_ = i2oMsg->outModID;
+          _fragKey.originatorPid_ = i2oMsg->fuProcID;
+          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+        }
     }
   } // namespace detail
 
 
   // A default-constructed I2OChain has a null (shared) pointer.
   I2OChain::I2OChain() :
-    _data(),
-    _i2oMessageCode(0),
-    _fragKey(0,0,0,0,0,0)
+    _data()
   { 
   }
 
-  I2OChain::I2OChain(toolbox::mem::Reference* pRef) :
-    _data(new detail::ChainData(pRef)),
-    _i2oMessageCode(0),
-    _fragKey(0,0,0,0,0,0)
+  I2OChain::I2OChain(toolbox::mem::Reference* pRef)
   {
-    parseI2OHeader();
+    if (pRef)
+      {
+        I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+          (I2O_PRIVATE_MESSAGE_FRAME*) pRef->getDataLocation();
+        unsigned short i2oMessageCode = pvtMsg->XFunctionCode;
+
+        switch (i2oMessageCode)
+          {
+
+          case I2O_SM_PREAMBLE:
+            {
+              _data.reset(new detail::InitMsgData(pRef));
+              break;
+            }
+
+          case I2O_SM_DATA:
+            {
+              _data.reset(new detail::EventMsgData(pRef));
+              break;
+            }
+
+          case I2O_SM_DQM:
+            {
+              _data.reset(new detail::DQMEventMsgData(pRef));
+              break;
+            }
+
+          case I2O_SM_ERROR:
+            {
+              _data.reset(new detail::ErrorEventMsgData(pRef));
+              break;
+            }
+
+          default:
+            {
+              std::stringstream msg;
+              msg << "Invalid I2O fragment passed to I2OChain constructor, "
+                  << "I2O message code = " << i2oMessageCode;
+              XCEPT_RAISE(stor::exception::Exception, msg.str());
+              break;
+            }
+
+          }
+      }
   }
 
   I2OChain::I2OChain(I2OChain const& other) :
-    _data(other._data),
-    _i2oMessageCode(other._i2oMessageCode),
-    _fragKey(other._fragKey)
+    _data(other._data)
   { }
 
   I2OChain::~I2OChain()
@@ -156,8 +331,6 @@ namespace stor
   void I2OChain::swap(I2OChain& other)
   {
     _data.swap(other._data);
-    std::swap(_i2oMessageCode, other._i2oMessageCode);
-    std::swap(_fragKey, other._fragKey);
   }
 
   bool I2OChain::empty() const
@@ -213,92 +386,16 @@ namespace stor
     I2OChain().swap(*this);
   }
 
-  void I2OChain::parseI2OHeader()
+  unsigned char I2OChain::getMessageCode() const
   {
-    if (empty())
-      {
-        _i2oMessageCode = 0;
-        _fragKey.code_ = 0;
-        _fragKey.run_ = 0;
-        _fragKey.event_ = 0;
-        _fragKey.secondaryId_ = 0;
-        _fragKey.originatorPid_ = 0;
-        _fragKey.originatorGuid_ = 0;
-      }
-    else
-      {
-        I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-          (I2O_PRIVATE_MESSAGE_FRAME*) getBufferData();
-        _i2oMessageCode = pvtMsg->XFunctionCode;
+    if (!_data) return Header::INVALID;
+    return _data->getMessageCode();
+  }
 
-        switch (_i2oMessageCode)
-          {
-
-          case I2O_SM_PREAMBLE:
-            {
-              I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
-                (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
-              _fragKey.code_ = Header::INIT;
-              _fragKey.run_ = 0;
-              _fragKey.event_ = i2oMsg->hltTid;
-              _fragKey.secondaryId_ = i2oMsg->outModID;
-              _fragKey.originatorPid_ = i2oMsg->fuProcID;
-              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
-              break;
-            }
-
-          case I2O_SM_DATA:
-            {
-              I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
-                (I2O_SM_DATA_MESSAGE_FRAME*) pvtMsg;
-              _fragKey.code_ = Header::EVENT;
-              _fragKey.run_ = i2oMsg->runID;
-              _fragKey.event_ = i2oMsg->eventID;
-              _fragKey.secondaryId_ = i2oMsg->outModID;
-              _fragKey.originatorPid_ = i2oMsg->fuProcID;
-              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
-              break;
-            }
-
-          case I2O_SM_ERROR:
-            {
-              I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
-                (I2O_SM_DATA_MESSAGE_FRAME*) pvtMsg;
-              _fragKey.code_ = Header::ERROR_EVENT;
-              _fragKey.run_ = i2oMsg->runID;
-              _fragKey.event_ = i2oMsg->eventID;
-              _fragKey.secondaryId_ = i2oMsg->outModID;
-              _fragKey.originatorPid_ = i2oMsg->fuProcID;
-              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
-              break;
-            }
-
-          case I2O_SM_DQM:
-            {
-              I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
-                (I2O_SM_DQM_MESSAGE_FRAME*) pvtMsg;
-              _fragKey.code_ = Header::DQM_EVENT;
-              _fragKey.run_ = i2oMsg->runID;
-              _fragKey.event_ = i2oMsg->eventAtUpdateID;
-              _fragKey.secondaryId_ = i2oMsg->folderID;
-              _fragKey.originatorPid_ = i2oMsg->fuProcID;
-              _fragKey.originatorGuid_ = i2oMsg->fuGUID;
-              break;
-            }
-
-          default:
-            {
-              _fragKey.code_ = 0;
-              _fragKey.run_ = 0;
-              _fragKey.event_ = 0;
-              _fragKey.secondaryId_ = 0;
-              _fragKey.originatorPid_ = 0;
-              _fragKey.originatorGuid_ = 0;
-              break;
-            }
-
-          }
-      }
+  FragKey I2OChain::getFragmentKey() const
+  {
+    if (!_data) return FragKey(Header::INVALID,0,0,0,0,0);
+    return _data->getFragmentKey();
   }
 
 } // namespace stor
