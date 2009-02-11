@@ -9,7 +9,7 @@ class testCommandQueue : public CppUnit::TestFixture
 {
   CPPUNIT_TEST_SUITE(testCommandQueue);
   CPPUNIT_TEST(default_q_is_empty);
-  CPPUNIT_TEST(matched_pops_and_pushes);
+  CPPUNIT_TEST(matched_deqs_and_enqs);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -18,7 +18,7 @@ public:
   void tearDown();
 
   void default_q_is_empty();
-  void matched_pops_and_pushes();
+  void matched_deqs_and_enqs();
 
 private:
   // No data members yet.
@@ -44,19 +44,20 @@ testCommandQueue::default_q_is_empty()
 }
 
 void
-testCommandQueue::matched_pops_and_pushes()
+testCommandQueue::matched_deqs_and_enqs()
 {
+  unsigned long wait_usec = 1000; // wait time in microseconds
   typedef boost::shared_ptr<boost::statechart::event_base> event_ptr;
   stor::CommandQueue q;
-  q.push_front(event_ptr(new stor::Configure));
+  q.enq_timed_wait(event_ptr(new stor::Configure), wait_usec);
   CPPUNIT_ASSERT(q.size() == 1);
-  q.push_front(event_ptr(new stor::Enable));
-  q.push_front(event_ptr(new stor::EmergencyStop));
+  q.enq_timed_wait(event_ptr(new stor::Enable), wait_usec);
+  q.enq_timed_wait(event_ptr(new stor::EmergencyStop), wait_usec);
   CPPUNIT_ASSERT(q.size() == 3);
   event_ptr discard;
-  CPPUNIT_ASSERT(q.pop_back(discard));
-  CPPUNIT_ASSERT(q.pop_back(discard));
-  CPPUNIT_ASSERT(q.pop_back(discard));
+  CPPUNIT_ASSERT(q.deq_nowait(discard));
+  CPPUNIT_ASSERT(q.deq_nowait(discard));
+  CPPUNIT_ASSERT(q.deq_nowait(discard));
   CPPUNIT_ASSERT(q.empty());
 }
 

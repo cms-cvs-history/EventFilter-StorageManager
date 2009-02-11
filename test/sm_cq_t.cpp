@@ -19,17 +19,18 @@ int main()
 
   CommandQueue q;
 
-  /*  q.push_front( shared_ptr<event_base>( new Configure() ) );
-  q.push_front( shared_ptr<event_base>( new Enable() ) );
-  q.push_front( shared_ptr<event_base>( new Enable() ) );
-  q.push_front( shared_ptr<event_base>( new Stop() ) );
-  q.push_front( shared_ptr<event_base>( new Halt() ) );
-  q.push_front( shared_ptr<event_base>( new Reconfigure() ) );
-  q.push_front( shared_ptr<event_base>( new EmergencyStop() ) );
-  q.push_front( shared_ptr<event_base>( new StopDone() ) );
+  /*
+  q.enq_nowait( shared_ptr<event_base>( new Configure() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Enable() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Enable() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Stop() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Halt() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Reconfigure() ) );
+  q.enq_nowait( shared_ptr<event_base>( new EmergencyStop() ) );
+  q.enq_nowait( shared_ptr<event_base>( new StopDone() ) );
   */
-  q.push_front( shared_ptr<event_base>( new Fail() ) );
-  q.push_front( shared_ptr<event_base>( new Configure() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Fail() ) );
+  q.enq_nowait( shared_ptr<event_base>( new Configure() ) );
 
   m.initiate();
 
@@ -37,7 +38,7 @@ int main()
 
   while( !q.empty() )
     {
-      if( !q.pop_back( evt ) )
+      if( !q.deq_nowait( evt ) )
 	{
 	  cerr << "Queue was not empty but pop_back failed"
 	       << endl;
