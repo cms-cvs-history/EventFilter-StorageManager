@@ -17,12 +17,12 @@ StateMachine::StateMachine( DiskWriter* dw, EventDistributor* ed, FragmentProces
 }
 
 Operations const&
-StateMachine::getCurrentState()
+StateMachine::getCurrentState() const
 {
   return state_cast<Operations const&>();
 }
 
-string StateMachine::getCurrentStateName()
+string StateMachine::getCurrentStateName() const
 {
   return getCurrentState().stateName();
 }

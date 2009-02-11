@@ -19,18 +19,18 @@ std::ostream& stor::operator << ( std::ostream& os,
 {
 
   os << tr.timeStamp().tv_sec << "."
-     << tr.timeStamp().tv_usec << ":";
+     << tr.timeStamp().tv_usec << ": ";
 
   if( tr.isEntry() )
     {
-      cout << "entered";
+      os << "entered";
     }
   else
     {
-      cout << "exited";
+      os << "exited";
     }
 
-  cout << " " << tr.stateName();
+  os << " " << tr.stateName();
 
   return os;
 

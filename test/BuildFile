@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.12 2009/02/07 05:16:47 paterno Exp $
+# $Id: BuildFile,v 1.30.16.13 2009/02/10 15:52:38 dshpakov Exp $
 
 <environment>
   <use name=boost>
@@ -69,6 +69,9 @@
   </bin>
 
   <bin file=state_machine.cpp>
+  </bin>
+
+  <bin file=state_machine_t.cpp>
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>

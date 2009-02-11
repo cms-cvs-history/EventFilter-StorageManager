@@ -130,8 +130,8 @@ namespace stor
                   FragmentProcessor* fp );
 
     //void processI2OFragment();
-    std::string getCurrentStateName();
-    Operations const& getCurrentState();
+    std::string getCurrentStateName() const;
+    Operations const& getCurrentState() const;
 
     void updateHistory( const TransitionRecord& tr );
     void clearHistory() { _history.clear(); }
