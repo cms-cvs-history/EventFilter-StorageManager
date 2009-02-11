@@ -1,5 +1,5 @@
 #!/bin/bash
-# $Id: check_left_files_opensize.sh,v 1.2.10.1 2008/12/22 19:12:50 biery Exp $
+# $Id: check_left_files_opensize.sh,v 1.2.12.1 2008/12/22 19:18:00 biery Exp $
 
 # This script iterates over all files in the list of hosts provided and calls
 # injection script with --check option to show a status report.

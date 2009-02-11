@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.4.1 2008/12/22 19:12:51 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.1 2008/12/22 19:18:00 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"

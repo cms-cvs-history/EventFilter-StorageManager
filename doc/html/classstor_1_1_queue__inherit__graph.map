@@ -1,0 +1,5 @@
+<area shape="rect" href="$classstor_1_1_d_q_m_event_consumer_queue.html" title="Queue holding I2OChains of complete DQM events (histograms) waiting to be served..." alt="" coords="5,224,237,326">
+<area shape="rect" href="$classstor_1_1_d_q_m_event_queue.html" title="Queue holding I2OChains of complete DQM events (histograms) waiting to be processed..." alt="" coords="261,224,427,326">
+<area shape="rect" href="$classstor_1_1_event_consumer_queue.html" title="Queue holding I2OChains of complete events waiting to be served over HTTP to an event..." alt="" coords="451,224,651,326">
+<area shape="rect" href="$classstor_1_1_fragment_queue.html" title="Queue holding I2OChains of event fragments." alt="" coords="675,224,835,326">
+<area shape="rect" href="$classstor_1_1_stream_queue.html" title="Queue holding I2OChains of complete events waiting to be written to the appropriate..." alt="" coords="859,224,1005,326">

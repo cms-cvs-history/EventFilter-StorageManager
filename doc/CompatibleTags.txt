@@ -1,0 +1,24 @@
+This file contains a list of compatible CMSSW tags for storage manager
+development.
+
+For development in the refdev01_scratch_branch of the
+EventFilter/StorageManager package, please use the following tags
+with the specified releases:
+
+CMSSW_3_0_0_pre8:
+ - EventFilter/SMProxyServer V01-08-08
+ - EventFilter/ResourceBroker V00-12-02
+
+CMSSW_3_0_0_pre7:
+ - EventFilter/SMProxyServer V01-08-08
+ - EventFilter/ResourceBroker V00-12-02
+
+CMSSW_3_0_0_pre6:
+ - EventFilter/ResourceBroker V00-12-02
+
+CMSSW_3_0_0_pre5:
+ - EventFilter/ResourceBroker V00-12-02
+
+CMSSW_3_0_0_pre3:
+ - IOPool/Streamer/interface/HLTInfo.h 1.13
+ - EventFilter/ResourceBroker V00-12-02

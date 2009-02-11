@@ -10,17 +10,13 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.4.1 2008/12/22 19:12:50 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.10 2009/02/10 15:35:26 mommsen Exp $
 */
 
 #include <string>
-#include <list>
 #include <map>
 
-#include "FWCore/PluginManager/interface/ProblemTracker.h"
-#include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "EventFilter/Utilities/interface/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
@@ -31,10 +27,8 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
-
-#include "FWCore/PluginManager/interface/PluginManager.h"
-
-#include "toolbox/mem/Reference.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -46,13 +40,21 @@
 #include "xdata/Boolean.h"
 #include "xdata/Vector.h"
 
-#include "xgi/Input.h"
-#include "xgi/Output.h"
 #include "xgi/exception/Exception.h"
 
 #include "boost/shared_ptr.hpp"
-#include "boost/thread/thread.hpp"
+#include "boost/thread/mutex.hpp"
 
+namespace toolbox { 
+  namespace mem {
+    class Reference;
+  }
+}
+
+namespace xgi {
+  class Input;
+  class Output;
+}
 
 namespace stor {
 
@@ -85,9 +87,17 @@ namespace stor {
     // @@EM added monitoring workloop
     void startMonitoringWorkLoop() throw (evf::Exception);
     bool monitoring(toolbox::task::WorkLoop* wl);
-    
+
+    // tests of new Monitor classes
+    void startNewMonitorWorkloop() throw (evf::Exception);
+    bool newMonitorAction(toolbox::task::WorkLoop* wl);
+
 ////////////////////////////////////////////////////////////////////////////////
    private:  
+    StorageManager(StorageManager const&); // not implemented
+    StorageManager& operator=(StorageManager const&); // not implemented
+
+
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
     void receiveDataMessage(toolbox::mem::Reference *ref);
     void receiveErrorDataMessage(toolbox::mem::Reference *ref);
@@ -102,8 +112,11 @@ namespace stor {
     void stopAction();
     void haltAction();
 
-    void checkDirectoryOK(const std::string dir) const;
+    XHTMLMaker::Node* createWebPageBody();
+    void addDOMforResourceUsage(xercesc::DOMElement *parent);
 
+    void newDefaultWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
@@ -126,9 +139,6 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void DQMconsumerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-
-
-    void parseFileEntry(const std::string &in, std::string &out, unsigned int &nev, unsigned long long &sz) const;
 
     std::string findStreamName(const std::string &in) const;
 	
@@ -218,6 +228,8 @@ namespace stor {
     // *** for received data performance measurements
     void addMeasurement(unsigned long size);
     stor::SMPerformanceMeter *pmeter_;
+    void addDQMMeasurement(unsigned long size);
+    stor::SMPerformanceMeter *DQMpmeter_;
 
     // *** measurements for last set of samples
     xdata::UnsignedInteger32 samples_; // number of samples/frames per measurement
@@ -278,6 +290,36 @@ namespace stor {
     xdata::Double store_meanRate2_;         // number of frames/s
     xdata::Double store_meanLatency2_;      // micro-seconds/frame
 
+    // Statistics for received DQM data
+    // *** measurements for last set of samples
+    xdata::UnsignedInteger32 DQMsamples_; // number of samples/frames per measurement
+    xdata::UnsignedInteger32 DQMperiod4samples_; // time period per measurement
+    xdata::Double DQMinstantBandwidth_; // bandwidth in MB/s
+    xdata::Double DQMinstantRate_;      // number of frames/s
+    xdata::Double DQMinstantLatency_;   // micro-seconds/frame
+    xdata::Double DQMmaxBandwidth_;     // maximum bandwidth in MB/s
+    xdata::Double DQMminBandwidth_;     // minimum bandwidth in MB/s
+    // *** measurements for last time period
+    xdata::Double DQMinstantBandwidth2_;// bandwidth in MB/s
+    xdata::Double DQMinstantRate2_;     // number of frames/s
+    xdata::Double DQMinstantLatency2_;  // micro-seconds/frame
+    xdata::Double DQMmaxBandwidth2_;    // maximum bandwidth in MB/s
+    xdata::Double DQMminBandwidth2_;    // minimum bandwidth in MB/s
+
+    // *** measurements for all samples
+    xdata::Double DQMduration_;         // time for run in seconds
+    xdata::UnsignedInteger32 DQMtotalSamples_; //number of samples/frames per measurement
+    xdata::Double DQMmeanBandwidth_;    // bandwidth in MB/s
+    xdata::Double DQMmeanRate_;         // number of frames/s
+    xdata::Double DQMmeanLatency_;      // micro-seconds/frame
+    xdata::Double DQMreceivedVolume_;   // total received data in MB
+
+    xdata::Double DQMduration2_;         // time for run in seconds
+    xdata::UnsignedInteger32 DQMtotalSamples2_; //number of samples/frames per measurement
+    xdata::Double DQMmeanBandwidth2_;    // bandwidth in MB/s
+    xdata::Double DQMmeanRate2_;         // number of frames/s
+    xdata::Double DQMmeanLatency2_;      // micro-seconds/frame
+
     // *** additional flashlist contents (rest was already there)
     xdata::String            class_;
     xdata::UnsignedInteger32 instance_;
@@ -313,6 +355,11 @@ namespace stor {
       DEFAULT_PURGE_TIME = 120,
       DEFAULT_READY_TIME = 30
     };
+
+    // tests of new Monitor classes
+    FragmentMonitorCollection _fragMonCollection;
+    toolbox::task::WorkLoop *wlNewMonitor_;      
+    toolbox::task::ActionSignature *asNewMonitor_;
 
   }; 
 } 
