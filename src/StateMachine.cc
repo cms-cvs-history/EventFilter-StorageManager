@@ -31,3 +31,18 @@ void StateMachine::updateHistory( const TransitionRecord& tr )
 {
   _history.push_back( tr );
 }
+
+void StateMachine::dumpHistory( ostream& os ) const
+{
+
+  cout << "**** Begin transition history ****" << endl;
+
+  for( StateMachine::History::const_iterator j = _history.begin();
+       j != _history.end(); ++j )
+    {
+      os << "  " << *j << endl;
+    }
+
+  cout << "**** End transition history ****" << endl;
+
+}

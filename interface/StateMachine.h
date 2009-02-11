@@ -12,6 +12,7 @@
 #include <boost/statechart/in_state_reaction.hpp>
 #include <boost/mpl/list.hpp>
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <ctime>
@@ -97,11 +98,15 @@ namespace stor
 
   public:
 
-    TransitionRecord( const std::string& state_name, bool is_entry );
+    TransitionRecord( const std::string& state_name,
+                      bool is_entry );
 
     const std::string& stateName() const { return _stateName; }
     bool isEntry() const { return _isEntry; }
     const struct timeval& timeStamp() const { return _timestamp; }
+
+    friend std::ostream& operator << ( std::ostream&,
+                                       const TransitionRecord& );
 
   private:
 
@@ -129,9 +134,12 @@ namespace stor
     Operations const& getCurrentState();
 
     void updateHistory( const TransitionRecord& tr );
+    void clearHistory() { _history.clear(); }
 
     typedef std::vector<TransitionRecord> History;
     const History& history() const { return _history; }
+
+    void dumpHistory( std::ostream& ) const;
 
     DiskWriter* getDiskWriter() { return _diskWriter; }
     EventDistributor* getEventDistributor() { return _eventDistributor; }

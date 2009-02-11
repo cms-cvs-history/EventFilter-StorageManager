@@ -19,7 +19,7 @@ int main()
 
   CommandQueue q;
 
-  q.push_front( shared_ptr<event_base>( new Configure() ) );
+  /*  q.push_front( shared_ptr<event_base>( new Configure() ) );
   q.push_front( shared_ptr<event_base>( new Enable() ) );
   q.push_front( shared_ptr<event_base>( new Enable() ) );
   q.push_front( shared_ptr<event_base>( new Stop() ) );
@@ -27,6 +27,7 @@ int main()
   q.push_front( shared_ptr<event_base>( new Reconfigure() ) );
   q.push_front( shared_ptr<event_base>( new EmergencyStop() ) );
   q.push_front( shared_ptr<event_base>( new StopDone() ) );
+  */
   q.push_front( shared_ptr<event_base>( new Fail() ) );
   q.push_front( shared_ptr<event_base>( new Configure() ) );
 

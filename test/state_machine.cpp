@@ -12,9 +12,9 @@
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 
-using namespace std;
 using namespace boost::statechart;
 using namespace stor;
+using namespace std;
 
 using boost::shared_ptr;
 
@@ -75,26 +75,7 @@ int main()
 
     }
 
-  StateMachine::History h = machine.history();
-
-  cout << "**** Begin transition history ****" << endl;
-
-  for( StateMachine::History::const_iterator j = h.begin(); j != h.end(); ++j )
-    {
-      cout << "  " << j->timeStamp().tv_sec << "."
-	   << j->timeStamp().tv_usec << ": ";
-      if( j->isEntry() )
-	{
-	  cout << "entered";
-	}
-      else
-	{
-	  cout << "exited";
-	}
-      cout << " " << j->stateName() << endl;
-    }
-
-  cout << "**** End transition history ****" << endl;
+  machine.dumpHistory( cout );
 
   // explicitly terminate the state machine before exiting so that we don't
   // get into a situation where a state object is trying to access the

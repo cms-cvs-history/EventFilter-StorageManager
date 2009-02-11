@@ -3,8 +3,8 @@
 #include <iostream>
 #include <sys/time.h>
 
-using namespace std;
 using namespace stor;
+using namespace std;
 
 TransitionRecord::TransitionRecord( const std::string& state_name,
 				    bool is_entry ):
@@ -12,4 +12,26 @@ TransitionRecord::TransitionRecord( const std::string& state_name,
   _isEntry( is_entry )
 {
   gettimeofday( &_timestamp, NULL );
+}
+
+std::ostream& stor::operator << ( std::ostream& os,
+				  const TransitionRecord& tr )
+{
+
+  os << tr.timeStamp().tv_sec << "."
+     << tr.timeStamp().tv_usec << ":";
+
+  if( tr.isEntry() )
+    {
+      cout << "entered";
+    }
+  else
+    {
+      cout << "exited";
+    }
+
+  cout << " " << tr.stateName();
+
+  return os;
+
 }
