@@ -23,8 +23,3 @@ string Enabled::do_stateName() const
 {
   return string( "Enabled" );
 }
-
-void Enabled::logReconfigureRequest( const Reconfigure& request )
-{
-  do_logInvalidEvent( "Reconfigure", outermost_context().getCurrentStateName() );
-}

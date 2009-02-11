@@ -47,10 +47,3 @@ Operations::do_processI2OFragment( I2OChain&         /* unused */ ,
 	    << " state cannot handle I2O messages\n";
 }
 
-void
-Operations::do_logInvalidEvent( const std::string& eventName,
-                                const std::string& currentStateName ) const
-{
-  std::cerr << "The " << eventName << " event is not supported from the "
-            << currentStateName << " state!" << std::endl;
-}
