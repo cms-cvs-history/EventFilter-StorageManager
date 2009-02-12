@@ -58,22 +58,27 @@ int main()
 
   StateMachine machine( 0, 0, 0 );  // will need real worker objects soon
 
-  for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
-    {
+//   for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
+//     {
 
-      machine.initiate(); // expect Halted
-      onePass( machine, it );
+//       machine.initiate(); // expect Halted
+//       onePass( machine, it );
 
-      machine.initiate();
-      machine.process_event( *(emap[ "Configure" ]) ); // expect Configured
-      onePass( machine, it );
+//       machine.initiate();
+//       machine.process_event( *(emap[ "Configure" ]) ); // expect Configured
+//       onePass( machine, it );
 
-      machine.initiate();
-      machine.process_event( *(emap[ "Configure" ]) );
-      machine.process_event( *(emap[ "Enable" ]) ); // expect Processing
-      onePass( machine, it );
+//       machine.initiate();
+//       machine.process_event( *(emap[ "Configure" ]) );
+//       machine.process_event( *(emap[ "Enable" ]) ); // expect Processing
+//       onePass( machine, it );
 
-    }
+//     }
+
+  machine.initiate();
+  machine.process_event( *(emap[ "Configure" ]) );
+  machine.process_event( *(emap[ "Enable" ]) ); // expect Processing
+  machine.process_event( *(emap[ "StopDone" ]) );
 
   machine.dumpHistory( cout );
 

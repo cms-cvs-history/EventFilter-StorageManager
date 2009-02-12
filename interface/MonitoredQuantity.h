@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.9 2009/02/10 11:02:00 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.10 2009/02/12 15:11:22 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -15,8 +15,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/02/10 11:02:00 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/02/12 15:11:22 $
    */
 
   class MonitoredQuantity
@@ -40,6 +40,11 @@ namespace stor
      * Adds the specified integer valued sample value to the monitor instance.
      */
     void addSample(const int value = 1);
+
+    /**
+     * Adds the specified uint32_t valued sample value to the monitor instance.
+     */
+    void addSample(const uint32_t value = 1);
 
     /**
      * Returns the number of samples stored in the monitor.
@@ -105,6 +110,11 @@ namespace stor
     double getDuration(DataSetType dataSet = FULL) const;
 
     /**
+     * Returns the value of the last added sample
+     */
+    double getLastSampleValue() const {return _lastSampleValue;}
+
+    /**
      * Forces a calculation of the statistics for the monitored quantity.
      * The frequency of the updates to the statistics is driven by how
      * often this method is called.  It is expected that this method
@@ -164,6 +174,7 @@ namespace stor
   private:
 
     double _lastCalculationTime;
+    double _lastSampleValue;
     long long _workingSampleCount;
     double _workingValueSum;
     double _workingValueSumOfSquares;

@@ -9,6 +9,7 @@
 #include "toolbox/mem/MemoryPoolFactory.h"
 #include "toolbox/mem/exception/Exception.h"
 
+#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
@@ -43,6 +44,7 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(copying_does_not_exhaust_buffer);
   CPPUNIT_TEST(release_chain);
   CPPUNIT_TEST(release_default_chain);
+  CPPUNIT_TEST(invalid_fragment);
   CPPUNIT_TEST(populate_i2o_header);
   CPPUNIT_TEST(copy_i2o_header);
   CPPUNIT_TEST(assign_i2o_header);
@@ -63,6 +65,7 @@ public:
   void copying_does_not_exhaust_buffer();
   void release_chain();
   void release_default_chain();
+  void invalid_fragment();
   void populate_i2o_header();
   void copy_i2o_header();
   void assign_i2o_header();
@@ -97,6 +100,7 @@ testI2OChain::default_chain()
   stor::I2OChain frag;
   CPPUNIT_ASSERT(frag.empty());
   CPPUNIT_ASSERT(!frag.complete());
+  CPPUNIT_ASSERT(!frag.faulty());
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
 }
@@ -112,6 +116,9 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(!frag.complete());
     frag.markComplete();
     CPPUNIT_ASSERT(frag.complete());
+    CPPUNIT_ASSERT(!frag.faulty());
+    frag.markFaulty();
+    CPPUNIT_ASSERT(frag.faulty());
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -268,6 +275,31 @@ testI2OChain::release_default_chain()
   CPPUNIT_ASSERT(outstanding_bytes() ==0);
 }
 
+void 
+testI2OChain::invalid_fragment()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    pvtMsg->XFunctionCode = 0xff;
+    try {
+      stor::I2OChain frag(ref);
+
+      // we should  not get here because the I2OChain
+      // constructor should throw an exception for
+      // an invalid fragment
+      CPPUNIT_ASSERT(false);
+    }
+    catch (stor::exception::Exception& excpt) {
+      CPPUNIT_ASSERT(outstanding_bytes() != 0);
+      ref->release();
+    }
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
 void
 testI2OChain::populate_i2o_header()
 {
@@ -291,7 +323,7 @@ testI2OChain::populate_i2o_header()
     i2oMsg->fuGUID = value4;
 
     stor::I2OChain initMsgFrag(ref);
-    CPPUNIT_ASSERT(initMsgFrag.getI2OMessageCode() == I2O_SM_PREAMBLE);
+    CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == Header::INIT);
     stor::FragKey const& fragmentKey = initMsgFrag.getFragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
@@ -331,7 +363,7 @@ testI2OChain::copy_i2o_header()
     stor::I2OChain copy(eventMsgFrag);
 
     {
-      CPPUNIT_ASSERT(eventMsgFrag.getI2OMessageCode() == I2O_SM_DATA);
+      CPPUNIT_ASSERT(eventMsgFrag.getMessageCode() == Header::EVENT);
       stor::FragKey const& fragmentKey = eventMsgFrag.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
@@ -342,7 +374,7 @@ testI2OChain::copy_i2o_header()
     }
 
     {
-      CPPUNIT_ASSERT(copy.getI2OMessageCode() == I2O_SM_DATA);
+      CPPUNIT_ASSERT(copy.getMessageCode() == Header::EVENT);
       stor::FragKey const& fragmentKey = copy.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
@@ -383,7 +415,7 @@ testI2OChain::assign_i2o_header()
     stor::I2OChain copy = eventMsgFrag;
 
     {
-      CPPUNIT_ASSERT(eventMsgFrag.getI2OMessageCode() == I2O_SM_ERROR);
+      CPPUNIT_ASSERT(eventMsgFrag.getMessageCode() == Header::ERROR_EVENT);
       stor::FragKey const& fragmentKey = eventMsgFrag.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::ERROR_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
@@ -394,7 +426,7 @@ testI2OChain::assign_i2o_header()
     }
 
     {
-      CPPUNIT_ASSERT(copy.getI2OMessageCode() == I2O_SM_ERROR);
+      CPPUNIT_ASSERT(copy.getMessageCode() == Header::ERROR_EVENT);
       stor::FragKey const& fragmentKey = copy.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::ERROR_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
@@ -445,7 +477,7 @@ testI2OChain::swap_i2o_header()
     stor::I2OChain frag2(ref);
 
     {
-      CPPUNIT_ASSERT(frag1.getI2OMessageCode() == I2O_SM_DQM);
+      CPPUNIT_ASSERT(frag1.getMessageCode() == Header::DQM_EVENT);
       stor::FragKey const& fragmentKey = frag1.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
@@ -456,7 +488,7 @@ testI2OChain::swap_i2o_header()
     }
 
     {
-      CPPUNIT_ASSERT(frag2.getI2OMessageCode() == I2O_SM_DQM);
+      CPPUNIT_ASSERT(frag2.getMessageCode() == Header::DQM_EVENT);
       stor::FragKey const& fragmentKey = frag2.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value5);
@@ -469,7 +501,7 @@ testI2OChain::swap_i2o_header()
     std::swap(frag1, frag2);
 
     {
-      CPPUNIT_ASSERT(frag1.getI2OMessageCode() == I2O_SM_DQM);
+      CPPUNIT_ASSERT(frag1.getMessageCode() == Header::DQM_EVENT);
       stor::FragKey const& fragmentKey = frag1.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value5);
@@ -480,7 +512,7 @@ testI2OChain::swap_i2o_header()
     }
 
     {
-      CPPUNIT_ASSERT(frag2.getI2OMessageCode() == I2O_SM_DQM);
+      CPPUNIT_ASSERT(frag2.getMessageCode() == Header::DQM_EVENT);
       stor::FragKey const& fragmentKey = frag2.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
@@ -517,7 +549,7 @@ testI2OChain::release_i2o_header()
 
     stor::I2OChain initMsgFrag(ref);
     initMsgFrag.release();
-    CPPUNIT_ASSERT(initMsgFrag.getI2OMessageCode() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == 0);
     stor::FragKey const& fragmentKey = initMsgFrag.getFragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == 0);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
@@ -535,6 +567,14 @@ testI2OChain::allocate_frame()
 {
   Reference* temp = g_factory->getFrame(g_pool, 1024);
   assert(temp);
+
+  // 11-Feb-2009, KAB - provide a default value for the I2O message type
+  // so that the I2OChain constructor doesn't throw an exception when
+  // it tries to determine what type of message is in the buffer
+  I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+    (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
+  pvtMsg->XFunctionCode = I2O_SM_ERROR;
+
   return temp;
 }
 

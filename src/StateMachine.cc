@@ -1,7 +1,5 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
-#include <typeinfo>
-
 using namespace stor;
 using namespace std;
 
@@ -48,21 +46,3 @@ void StateMachine::dumpHistory( ostream& os ) const
   cout << "**** End transition history ****" << endl;
 
 }
-
-void StateMachine::unconsumed_event( bsc::event_base const &event)
-{
-  std::cerr << "The " << 
-    //event.dynamic_type()
-    typeid(event).name()
-    << " event is not supported from the "
-    << getCurrentStateName() << " state!" << std::endl;
-}
-
-
-
-/// emacs configuration
-/// Local Variables: -
-/// mode: c++ -
-/// c-basic-offset: 2 -
-/// indent-tabs-mode: nil -
-/// End: -

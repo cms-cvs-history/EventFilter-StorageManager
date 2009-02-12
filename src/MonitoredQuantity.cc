@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.8 2009/02/10 11:08:36 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.9 2009/02/12 15:11:38 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include <sys/time.h>
@@ -28,9 +28,16 @@ void MonitoredQuantity::addSample(const double value)
 
   if (value < _workingValueMin) _workingValueMin = value;
   if (value > _workingValueMax) _workingValueMax = value;
+
+  _lastSampleValue = value;
 }
 
 void  MonitoredQuantity::addSample(const int value)
+{
+  addSample(static_cast<double>(value));
+}
+
+void  MonitoredQuantity::addSample(const uint32_t value)
 {
   addSample(static_cast<double>(value));
 }

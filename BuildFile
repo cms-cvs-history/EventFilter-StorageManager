@@ -1,3 +1,4 @@
+<Flags CXXFLAGS="-g">
 <use name=xdaq>
 <use name=mimetic>
 <use name=xerces-c>

@@ -28,12 +28,3 @@ string Stopped::do_stateName() const
 // {
 //   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
 // }
-
-
-
-/// emacs configuration
-/// Local Variables: -
-/// mode: c++ -
-/// c-basic-offset: 2 -
-/// indent-tabs-mode: nil -
-/// End: -

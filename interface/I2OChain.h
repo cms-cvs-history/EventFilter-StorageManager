@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.7 2009/02/06 22:59:51 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.9 2009/02/11 21:00:49 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/02/06 22:59:51 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/02/11 21:00:49 $
    */
 
 
@@ -96,6 +96,12 @@ namespace stor {
     bool complete() const;
 
     /**
+     * Returns true if the chain has been marked faulty (the internal
+     * data does not represent a complete, valid message).
+     */
+    bool faulty() const;
+
+    /**
        Adds fragments from another chain to the current chain taking
        care that all fragments are chained in the right order. This
        destructively modifies newpart so that it no longer is part of
@@ -108,6 +114,14 @@ namespace stor {
        Mark this chain as known to be complete.
      */
     void markComplete();
+
+    /**
+       Mark this chain as known to be faulty.  The failure modes that
+       result in a chain being marked faulty include chains that have
+       duplicate fragments and chains that never become complete after
+       a timeout interval.
+     */
+    void markFaulty();
 
     /**
        Return the address at which the data in buffer managed by the
@@ -125,26 +139,22 @@ namespace stor {
     void release();
 
     /**
-       Returns the I2O message code for the chain.  Valid values
-       are I2O_SM_PREAMBLE, I2O_SM_DATA, I2O_SM_ERROR, and
-       I2O_SM_DQM from EventFilter/Utilities/interface/i2oEvfMsgs.h.
+       Returns the message code for the chain.  Valid values
+       are Header::INVALID, Header::INIT, Header::EVENT, Header::DQM_EVENT,
+       and Header::ERROR_EVENT from IOPool/Streamer/interface/MsgHeader.h.
      */
-    unsigned short getI2OMessageCode() const {return _i2oMessageCode;}
+    unsigned char getMessageCode() const;
 
     /**
        Returns the fragment key for the chain.  The fragment key
        is the entity that uniquely identifies all of the fragments
        from a particular event.
      */
-    FragKey const& getFragmentKey() const {return _fragKey;}
+    FragKey getFragmentKey() const;
 
   private:
 
     boost::shared_ptr<detail::ChainData> _data;
-
-    void parseI2OHeader();
-    unsigned short _i2oMessageCode;
-    FragKey _fragKey;
   };
   
 } // namespace stor

@@ -3,9 +3,14 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <list>
 
+#include <iostream> // debugging
+
+#include "boost/thread/condition.hpp"
 #include "boost/thread/mutex.hpp"
+#include "boost/thread/xtime.hpp"
 
 namespace stor
 {
@@ -17,45 +22,227 @@ namespace stor
     typedef T value_type;
     typedef std::list<value_type> sequence_type;
     typedef typename sequence_type::size_type size_type;
+
+    /**
+       ConcurrentQueue is always bounded. By default, the bound is
+       absurdly large.
+    */
+    explicit ConcurrentQueue(size_type max = 
+                             std::numeric_limits<size_type>::max());
+
+    /**
+       Add a copy of item to the queue.  If successful, return true;
+       on failure, false.  This function will fail without waiting if
+       the queue is full. This may throw any exception thrown by the
+       assignment operator of type value_type, or bad_alloc.
+    */
+    bool enq_nowait(value_type const& item);
+
     
-    void push_front(value_type p);
-    bool pop_back(value_type& p);
+    /**
+       Add a copy of item to the queue. If the queue is full wait
+       until it becomes non-full. This may throw any exception thrown
+       by the assignment operator of type value_type, or bad_alloc.
+     */
+
+    void enq_wait(value_type const& p);
+
+    /**
+       Add a copy of item to the queue. If the queue is full wait
+       until it becomes non-full or until wait_sec seconds have
+       passed. Return true if the items has been put onto the queue or
+       false if the timeout has expired. This may throw any exception
+       thrown by the assignment operator of type value_type, or
+       bad_alloc.
+     */
+    bool enq_timed_wait(value_type const& p, unsigned long wait_sec);
+
+
+    /**
+       Assign the value at the head of the queue to item and then
+       remove the head of the queue. If successful, return true; on
+       failure, return false. This function fill fail without waiting
+       if the queue is empty. This function may throw any exception
+       thrown by the assignment operator of type value_type.
+     */
+    bool deq_nowait(value_type& item);
+
+    /**
+       Assign the value of the head of the queue to item and then
+       remove the head of the queue. If the queue is empty wait until
+       is has become non-empty. This may throw any exception thrown by
+       the assignment operator of type value_type.
+     */
+    void deq_wait(value_type& item);
+
+    /**
+       Assign the value at the head of the queue to item and then
+       remove the head of the queue. If the queue is empty wait until
+       is has become non-empty or until wait_sec seconds have
+       passed. Return true if an item has been removed from the queue
+       or false if the timeout has expired. This may throw any
+       exception thrown by the assignment operator of type value_type.
+     */
+    bool deq_timed_wait(value_type& p, unsigned long wait_sec);
+
+    /**
+       Return true if the queue is empty, and false if it is not.
+     */
     bool empty() const;
+
+    /**
+       Return the size of the queue, that is, the number of items it
+       contains.
+     */
     size_type size() const;
+
+    /**
+       Return the capacity of the queue, that is, the maximum number
+       of items it can contain.
+     */
+    size_type capacity() const;
+
+    /**
+       Remove all items from the queue. This changes the size to zero
+       but does not change the capacity.
+     */
     void clear();
 
   private:
     typedef boost::mutex::scoped_lock lock_t;
+
     mutable boost::mutex  _protect_elements;
+    mutable boost::condition _queue_not_empty;
+    mutable boost::condition _queue_not_full;
+
     sequence_type _elements;
+    size_type _capacity;
+    /*
+      N.B.: we rely on size_type *not* being some synthesized large
+      type, so that reading the value is an atomic action, as is
+      incrementing or decrementing the value. We do *not* assume that
+      there is any atomic get_and_increment or get_and_decrement
+      operation.
+    */
+    size_type _size;
+
+    /*
+      These private member functions assume that whatever locks
+      necessary for safe operation have already been obtained.
+     */
+
+    /*
+      Insert the given item into the list, if it is not already full,
+      and increment size. Return true if the item is inserted, and
+      false if not.
+    */
+    bool _insert_if_possible(value_type const& item);
+
+    /*
+      Insert the given item into the list, and increment size. It is
+      assumed not to be full.
+     */
+    void _insert(value_type const& item);
+
+    /*
+      Remove the object at the head of the queue, if there is one, and
+      assign item the value of this object.The assignment may throw an
+      exception; even if it does, the head will have been removed from
+      the queue, and the size appropriately adjusted. It is assumed
+      the queue is nonempty. Return true if the queue was nonempty,
+      and false if the queue was empty.
+     */
+    bool _remove_head_if_possible(value_type& item);
+
+    /*
+      Remove the object at the head of the queue, and assign item the
+      value of this object. The assignment may throw an exception;
+      even if it does, the head will have been removed from the queue,
+      and the size appropriately adjusted. It is assumed the queue is
+      nonempty.
+     */
+    void _remove_head(value_type& item);
   };
 
+  //------------------------------------------------------------------
+  // Implementation follows
+  //------------------------------------------------------------------
+
   template <class T>
-  void 
-  ConcurrentQueue<T>::push_front(value_type item)
+  ConcurrentQueue<T>::ConcurrentQueue(size_type max) :
+    _protect_elements(),
+    _elements(),
+    _capacity(max),
+    _size(0)
   {
-    lock_t lock(_protect_elements);
-    // Signal the condition here.
-    _elements.push_back(item);
   }
 
   template <class T>
-  bool 
-  ConcurrentQueue<T>::pop_back(value_type& item)
+  bool
+  ConcurrentQueue<T>::enq_nowait(value_type const& item)
   {
     lock_t lock(_protect_elements);
-    if (_elements.empty()) return false; // wait for condition here
-    item = _elements.back();
-    _elements.pop_back();
-    return true;
+    return _insert_if_possible(item);
+  }
+
+  template <class T>
+  void
+  ConcurrentQueue<T>::enq_wait(value_type const& item)
+  {
+    lock_t lock(_protect_elements);
+    while ( _size >= _capacity) _queue_not_full.wait(lock);
+    _insert(item);
+  }
+
+  template <class T>
+  bool
+  ConcurrentQueue<T>::enq_timed_wait(value_type const& item, 
+                                     unsigned long wait_sec)
+  {
+    lock_t lock(_protect_elements);
+    if (! (_size < _capacity) )
+      {
+        boost::xtime now;
+        if (boost::xtime_get(&now, CLOCK_MONOTONIC) != CLOCK_MONOTONIC) 
+          return false;
+        now.sec += wait_sec;
+        _queue_not_full.timed_wait(lock, now);
+      }
+    return  _insert_if_possible(item);
+  }
+
+  template <class T>
+  bool
+  ConcurrentQueue<T>::deq_nowait(value_type& item)
+  {
+    lock_t lock(_protect_elements);
+    return _remove_head_if_possible(item);
+  }
+
+  template <class T>
+  void
+  ConcurrentQueue<T>::deq_wait(value_type& item)
+  {
+    lock_t lock(_protect_elements);
+    while (_size == 0) _queue_not_empty.wait(lock);
+    _remove_head(item);
+  }
+
+  template <class T>
+  bool
+  ConcurrentQueue<T>::deq_timed_wait(value_type& item,
+                                     unsigned long wait_usec)
+  {
+    lock_t lock(_protect_elements);
+    return false;
   }
 
   template <class T>
   bool 
   ConcurrentQueue<T>::empty() const
   {
-    lock_t lock(_protect_elements);    
-    return _elements.empty();
+    // No lock is necessary: the read is atomic.
+    return _size == 0;
   }
 
 
@@ -63,8 +250,16 @@ namespace stor
   typename ConcurrentQueue<T>::size_type 
   ConcurrentQueue<T>::size() const
   {
-    lock_t lock(_protect_elements);
-    return _elements.size();
+    // No lock is necessary: the read is atomic.
+    return _size;
+  }
+
+  template <class T>
+  typename ConcurrentQueue<T>::size_type
+  ConcurrentQueue<T>::capacity() const
+  {
+    // No lock is necessary: the read is atomic.
+    return _capacity;
   }
 
   template <class T>
@@ -74,6 +269,62 @@ namespace stor
     lock_t lock(_protect_elements);
     _elements.clear();
   }
+
+  //-----------------------------------------------------------
+  // Private member functions
+  //-----------------------------------------------------------
+
+  template <class T>
+  bool
+  ConcurrentQueue<T>::_insert_if_possible(value_type const& item)
+  {
+    bool item_accepted = false;
+    if (_size < _capacity)
+      {
+        _insert(item);
+        item_accepted = true;
+      }
+    return item_accepted;
+  }
+
+  template <class T>
+  void
+  ConcurrentQueue<T>::_insert(value_type const& item)
+  {
+    _elements.push_back(item);
+    _queue_not_empty.notify_one();
+    ++_size;
+  }
+
+  template <class T>
+  bool
+  ConcurrentQueue<T>::_remove_head_if_possible(value_type& item)
+  {
+    bool item_obtained = false;
+    if (!_elements.empty())
+      {
+        _remove_head(item);
+        item_obtained = true;
+      }
+    return item_obtained;
+  }
+
+  template <class T>
+  void
+  ConcurrentQueue<T>::_remove_head(value_type& item)
+  {
+    sequence_type holder;
+    // Move the item out of _elements in a manner that will not throw.
+    holder.splice(holder.begin(), _elements, _elements.begin());
+    // Record the change in the length of _elements.
+    --_size;
+
+    _queue_not_full.notify_one();
+    
+    // Assign the item. This might throw.
+    item = holder.front();
+  }
+
 }
 
 #endif

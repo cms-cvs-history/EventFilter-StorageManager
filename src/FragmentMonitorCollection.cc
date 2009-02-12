@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.9 2009/02/10 15:36:01 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.11 2009/02/12 15:12:47 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -58,13 +58,24 @@ void FragmentMonitorCollection::do_calculateStatistics()
 void FragmentMonitorCollection::do_updateInfoSpace()
 {
   // Lock the infospace to assure that all items are consistent
-  _infoSpace->lock();
-  _receivedFrames = static_cast<uint32_t>(allFragmentSizes.getSampleRate());
-  _receivedFramesSize = static_cast<uint32_t>(allFragmentSizes.getValueSum());
-  _receivedFramesBandwidth = allFragmentSizes.getValueRate(MonitoredQuantity::RECENT);
-  _infoSpace->unlock();
-  // Can these updates throw?
-  // If so, we'll need to catch it and release the lock on the infospace.
+  try
+  {
+    _infoSpace->lock();
+    _receivedFrames = static_cast<uint32_t>(allFragmentSizes.getSampleRate());
+    _receivedFramesSize = static_cast<uint32_t>(allFragmentSizes.getValueSum());
+    _receivedFramesBandwidth = allFragmentSizes.getValueRate(MonitoredQuantity::RECENT);
+    _infoSpace->unlock();
+  }
+  catch (...)
+  {
+    _infoSpace->unlock();
+ 
+    std::ostringstream oss;
+    oss << "Failed to update values of items in info space " << _infoSpace->name() 
+      << " : unknown exception";
+    
+    XCEPT_RAISE(stor::exception::Monitoring, oss.str());
+  }
 
   try
   {
@@ -73,17 +84,16 @@ void FragmentMonitorCollection::do_updateInfoSpace()
   }
   catch (xdata::exception::Exception &e)
   {
-      std::stringstream oss;
-      
-      oss << "Failed to fire item group changed for info space " 
-        << _infoSpace->name();
-      
-      XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
+    std::ostringstream oss;
+    oss << "Failed to fire item group changed for info space " 
+      << _infoSpace->name();
+    
+    XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
   }
 }
 
 
-void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent)
+void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent) const
 {
   XHTMLMaker* maker = XHTMLMaker::instance();
 

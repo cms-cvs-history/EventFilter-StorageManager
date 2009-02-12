@@ -26,14 +26,5 @@ string Enabled::do_stateName() const
 
 void Enabled::logReconfigureRequest( const Reconfigure& request )
 {
-  outermost_context().unconsumed_event( request );
+  do_logInvalidEvent( "Reconfigure", outermost_context().getCurrentStateName() );
 }
-
-
-
-/// emacs configuration
-/// Local Variables: -
-/// mode: c++ -
-/// c-basic-offset: 2 -
-/// indent-tabs-mode: nil -
-/// End: -
