@@ -1,7 +1,0 @@
-<area shape="rect" href="$classstor_1_1_fragment_store.html" title="Stores incomplete events." alt="" coords="31,600,185,717">
-<area shape="rect" href="$classstor_1_1_event_distributor.html" title="Distributes complete events to appropriate queues." alt="" coords="209,548,452,769">
-<area shape="rect" href="$classstor_1_1_stream_queue.html" title="Queue holding I2OChains of complete events waiting to be written to the appropriate..." alt="" coords="195,261,341,363">
-<area shape="rect" href="$classstor_1_1_queue.html" title="Generic queue class holding I2OChains." alt="" coords="215,5,321,176">
-<area shape="rect" href="$classstor_1_1_d_q_m_event_queue.html" title="Queue holding I2OChains of complete DQM events (histograms) waiting to be processed..." alt="" coords="5,261,171,363">
-<area shape="rect" href="$classstor_1_1_fragment_queue.html" title="Queue holding I2OChains of event fragments." alt="" coords="613,421,773,523">
-<area shape="rect" href="$classstor_1_1_event_consumer_queue_collection.html" title="A collection of Event consumer queues." alt="" coords="365,227,629,397">
