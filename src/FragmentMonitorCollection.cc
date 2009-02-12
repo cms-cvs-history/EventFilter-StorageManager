@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.8 2009/02/10 14:03:32 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.9 2009/02/10 15:36:01 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -83,7 +83,7 @@ void FragmentMonitorCollection::do_updateInfoSpace()
 }
 
 
-void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent)
+void FragmentMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent) const
 {
   XHTMLMaker* maker = XHTMLMaker::instance();
 
