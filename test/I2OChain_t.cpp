@@ -37,6 +37,7 @@ class testI2OChain : public CppUnit::TestFixture
 {
   CPPUNIT_TEST_SUITE(testI2OChain);
   CPPUNIT_TEST(default_chain);
+  CPPUNIT_TEST(null_reference);
   CPPUNIT_TEST(nonempty_chain_cleans_up_nice);
   CPPUNIT_TEST(copy_chain);
   CPPUNIT_TEST(assign_chain);
@@ -46,10 +47,11 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(release_default_chain);
   CPPUNIT_TEST(invalid_fragment);
   CPPUNIT_TEST(populate_i2o_header);
-  CPPUNIT_TEST(copy_i2o_header);
-  CPPUNIT_TEST(assign_i2o_header);
-  CPPUNIT_TEST(swap_i2o_header);
-  CPPUNIT_TEST(release_i2o_header);
+  CPPUNIT_TEST(copy_with_valid_header);
+  CPPUNIT_TEST(assign_with_valid_header);
+  CPPUNIT_TEST(swap_with_valid_header);
+  CPPUNIT_TEST(release_with_valid_header);
+  CPPUNIT_TEST(add_fragment);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -58,6 +60,7 @@ public:
   void tearDown();
 
   void default_chain();
+  void null_reference();
   void nonempty_chain_cleans_up_nice();
   void copy_chain();
   void assign_chain();
@@ -67,10 +70,11 @@ public:
   void release_default_chain();
   void invalid_fragment();
   void populate_i2o_header();
-  void copy_i2o_header();
-  void assign_i2o_header();
-  void swap_i2o_header();
-  void release_i2o_header();
+  void copy_with_valid_header();
+  void assign_with_valid_header();
+  void swap_with_valid_header();
+  void release_with_valid_header();
+  void add_fragment();
 
 private:
   // Allocate a new frame from the (global) Pool.
@@ -101,6 +105,23 @@ testI2OChain::default_chain()
   CPPUNIT_ASSERT(frag.empty());
   CPPUNIT_ASSERT(!frag.complete());
   CPPUNIT_ASSERT(!frag.faulty());
+  CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
+  CPPUNIT_ASSERT(frag.getFragmentCount() == 0);
+  //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
+  size_t memory_consumed_by_zero_frames = outstanding_bytes();
+  CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
+}
+
+void 
+testI2OChain::null_reference()
+{
+  stor::I2OChain frag(0);
+  CPPUNIT_ASSERT(frag.empty());
+  CPPUNIT_ASSERT(!frag.complete());
+  CPPUNIT_ASSERT(!frag.faulty());
+  CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
+  CPPUNIT_ASSERT(frag.getFragmentCount() == 0);
+  //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
 }
@@ -114,11 +135,13 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
-    frag.markComplete();
-    CPPUNIT_ASSERT(frag.complete());
-    CPPUNIT_ASSERT(!frag.faulty());
+    //frag.markComplete();
+    //CPPUNIT_ASSERT(frag.complete());
+    CPPUNIT_ASSERT(frag.faulty());  // because the buffer is empty
     frag.markFaulty();
     CPPUNIT_ASSERT(frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -281,21 +304,126 @@ testI2OChain::invalid_fragment()
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     Reference* ref = allocate_frame();
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(!frag.complete());
+    CPPUNIT_ASSERT(frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    Reference* ref = allocate_frame();
     I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
       (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+      (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
     pvtMsg->XFunctionCode = 0xff;
-    try {
-      stor::I2OChain frag(ref);
+    smMsg->numFrames = 0;
+    smMsg->frameCount = 0;
 
-      // we should  not get here because the I2OChain
-      // constructor should throw an exception for
-      // an invalid fragment
-      CPPUNIT_ASSERT(false);
-    }
-    catch (stor::exception::Exception& excpt) {
-      CPPUNIT_ASSERT(outstanding_bytes() != 0);
-      ref->release();
-    }
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(!frag.complete());
+    CPPUNIT_ASSERT(frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+      (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_ERROR;
+    smMsg->numFrames = 0;
+    smMsg->frameCount = 0;
+
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(!frag.complete());
+    CPPUNIT_ASSERT(frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+  }
+  {
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+      (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_ERROR;
+    smMsg->numFrames = 3;
+    smMsg->frameCount = 3;
+
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(!frag.complete());
+    CPPUNIT_ASSERT(frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+      (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_ERROR;
+    smMsg->numFrames = 2;
+    smMsg->frameCount = 100;
+
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(!frag.complete());
+    CPPUNIT_ASSERT(frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+      (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_ERROR;
+    smMsg->numFrames = 1;
+    smMsg->frameCount = 0;
+
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(frag.complete());
+    CPPUNIT_ASSERT(!frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+      (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_ERROR;
+    smMsg->numFrames = 2;
+    smMsg->frameCount = 1;
+
+    stor::I2OChain frag(ref);
+    CPPUNIT_ASSERT(!frag.empty());
+    CPPUNIT_ASSERT(!frag.complete());
+    CPPUNIT_ASSERT(!frag.faulty());
+    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -313,9 +441,9 @@ testI2OChain::populate_i2o_header()
     Reference* ref = allocate_frame();
     I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
       (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
-    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
     I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
       (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
     i2oMsg->hltTid = value1;
     i2oMsg->rbBufferID = 2;
     i2oMsg->outModID = value2;
@@ -324,7 +452,7 @@ testI2OChain::populate_i2o_header()
 
     stor::I2OChain initMsgFrag(ref);
     CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == Header::INIT);
-    stor::FragKey const& fragmentKey = initMsgFrag.getFragmentKey();
+    stor::FragKey fragmentKey = initMsgFrag.getFragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
     CPPUNIT_ASSERT(fragmentKey.event_ == value1);
@@ -336,7 +464,7 @@ testI2OChain::populate_i2o_header()
 }
 
 void
-testI2OChain::copy_i2o_header()
+testI2OChain::copy_with_valid_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -349,9 +477,11 @@ testI2OChain::copy_i2o_header()
     Reference* ref = allocate_frame();
     I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
       (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
-    pvtMsg->XFunctionCode = I2O_SM_DATA;
     I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
       (I2O_SM_DATA_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_DATA;
+    i2oMsg->numFrames = 1;
+    i2oMsg->frameCount = 0;
     i2oMsg->rbBufferID = 2;
     i2oMsg->runID = value1;
     i2oMsg->eventID = value2;
@@ -364,7 +494,7 @@ testI2OChain::copy_i2o_header()
 
     {
       CPPUNIT_ASSERT(eventMsgFrag.getMessageCode() == Header::EVENT);
-      stor::FragKey const& fragmentKey = eventMsgFrag.getFragmentKey();
+      stor::FragKey fragmentKey = eventMsgFrag.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -375,7 +505,7 @@ testI2OChain::copy_i2o_header()
 
     {
       CPPUNIT_ASSERT(copy.getMessageCode() == Header::EVENT);
-      stor::FragKey const& fragmentKey = copy.getFragmentKey();
+      stor::FragKey fragmentKey = copy.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -388,7 +518,7 @@ testI2OChain::copy_i2o_header()
 }
 
 void
-testI2OChain::assign_i2o_header()
+testI2OChain::assign_with_valid_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -401,9 +531,11 @@ testI2OChain::assign_i2o_header()
     Reference* ref = allocate_frame();
     I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
       (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
-    pvtMsg->XFunctionCode = I2O_SM_ERROR;
     I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
       (I2O_SM_DATA_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_ERROR;
+    i2oMsg->numFrames = 1;
+    i2oMsg->frameCount = 0;
     i2oMsg->rbBufferID = 2;
     i2oMsg->runID = value1;
     i2oMsg->eventID = value2;
@@ -416,7 +548,7 @@ testI2OChain::assign_i2o_header()
 
     {
       CPPUNIT_ASSERT(eventMsgFrag.getMessageCode() == Header::ERROR_EVENT);
-      stor::FragKey const& fragmentKey = eventMsgFrag.getFragmentKey();
+      stor::FragKey fragmentKey = eventMsgFrag.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::ERROR_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -427,7 +559,7 @@ testI2OChain::assign_i2o_header()
 
     {
       CPPUNIT_ASSERT(copy.getMessageCode() == Header::ERROR_EVENT);
-      stor::FragKey const& fragmentKey = copy.getFragmentKey();
+      stor::FragKey fragmentKey = copy.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::ERROR_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -440,7 +572,7 @@ testI2OChain::assign_i2o_header()
 }
 
 void
-testI2OChain::swap_i2o_header()
+testI2OChain::swap_with_valid_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -453,9 +585,11 @@ testI2OChain::swap_i2o_header()
     Reference* ref = allocate_frame();
     I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
       (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
-    pvtMsg->XFunctionCode = I2O_SM_DQM;
     I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
       (I2O_SM_DQM_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_DQM;
+    i2oMsg->numFrames = 1;
+    i2oMsg->frameCount = 0;
     i2oMsg->rbBufferID = 2;
     i2oMsg->runID = value1;
     i2oMsg->eventAtUpdateID = value2;
@@ -466,8 +600,10 @@ testI2OChain::swap_i2o_header()
 
     ref = allocate_frame();
     pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
-    pvtMsg->XFunctionCode = I2O_SM_DQM;
     i2oMsg = (I2O_SM_DQM_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_DQM;
+    i2oMsg->numFrames = 1;
+    i2oMsg->frameCount = 0;
     i2oMsg->rbBufferID = 3;
     i2oMsg->runID = value5;
     i2oMsg->eventAtUpdateID = value4;
@@ -478,7 +614,7 @@ testI2OChain::swap_i2o_header()
 
     {
       CPPUNIT_ASSERT(frag1.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey const& fragmentKey = frag1.getFragmentKey();
+      stor::FragKey fragmentKey = frag1.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -489,7 +625,7 @@ testI2OChain::swap_i2o_header()
 
     {
       CPPUNIT_ASSERT(frag2.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey const& fragmentKey = frag2.getFragmentKey();
+      stor::FragKey fragmentKey = frag2.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value5);
       CPPUNIT_ASSERT(fragmentKey.event_ == value4);
@@ -502,7 +638,7 @@ testI2OChain::swap_i2o_header()
 
     {
       CPPUNIT_ASSERT(frag1.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey const& fragmentKey = frag1.getFragmentKey();
+      stor::FragKey fragmentKey = frag1.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value5);
       CPPUNIT_ASSERT(fragmentKey.event_ == value4);
@@ -513,7 +649,7 @@ testI2OChain::swap_i2o_header()
 
     {
       CPPUNIT_ASSERT(frag2.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey const& fragmentKey = frag2.getFragmentKey();
+      stor::FragKey fragmentKey = frag2.getFragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -526,7 +662,7 @@ testI2OChain::swap_i2o_header()
 }
 
 void
-testI2OChain::release_i2o_header()
+testI2OChain::release_with_valid_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -538,9 +674,11 @@ testI2OChain::release_i2o_header()
     Reference* ref = allocate_frame();
     I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
       (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
-    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
     I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
       (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 1;
+    i2oMsg->frameCount = 0;
     i2oMsg->hltTid = value1;
     i2oMsg->rbBufferID = 2;
     i2oMsg->outModID = value2;
@@ -548,9 +686,18 @@ testI2OChain::release_i2o_header()
     i2oMsg->fuGUID = value4;
 
     stor::I2OChain initMsgFrag(ref);
+    CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == Header::INIT);
+    stor::FragKey fragmentKey = initMsgFrag.getFragmentKey();
+    CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
+    CPPUNIT_ASSERT(fragmentKey.run_ == 0);
+    CPPUNIT_ASSERT(fragmentKey.event_ == value1);
+    CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value2);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value3);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value4);
+
     initMsgFrag.release();
     CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == 0);
-    stor::FragKey const& fragmentKey = initMsgFrag.getFragmentKey();
+    fragmentKey = initMsgFrag.getFragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == 0);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
     CPPUNIT_ASSERT(fragmentKey.event_ == 0);
@@ -561,20 +708,408 @@ testI2OChain::release_i2o_header()
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
+void
+testI2OChain::add_fragment()
+{
+  unsigned int value1 = 0xa5a5d2d2;
+  unsigned int value2 = 0xb4b4e1e1;
+  unsigned int value3 = 0xc3c3f0f0;
+  unsigned int value4 = 0x12345678;
+
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add two fragments together (normal order)
+
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 2;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag1(ref);
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 2;
+    i2oMsg->frameCount = 1;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag2(ref);
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add two fragments together (reverse order)
+
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 2;
+    i2oMsg->frameCount = 1;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag1(ref);
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 2;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag2(ref);
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    // verify that adding a fragment to a complete chain throws an exception
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 2;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag3(ref);
+
+    try
+      {
+        frag1.addToChain(frag3);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::Exception& excpt)
+      {
+      }
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag3.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag3.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add three fragments together (normal order)
+
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag1(ref);
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 1;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag2(ref);
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 2;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag3(ref);
+
+    frag1.addToChain(frag3);
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag3.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag3.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add three fragments together (reverse order)
+
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 2;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag1(ref);
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 1;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag2(ref);
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag3(ref);
+
+    frag1.addToChain(frag3);
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag3.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag3.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add three fragments together (mixed order)
+
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 2;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag1(ref);
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag2(ref);
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 1;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag3(ref);
+
+    frag1.addToChain(frag3);
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag3.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag3.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // verify that adding duplicate frames makes a chain faulty
+
+    Reference* ref = allocate_frame();
+    I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+      (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag1(ref);
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag2(ref);
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    // verify that adding a fragment to a faulty chain throws an exception
+
+    ref = allocate_frame();
+    pvtMsg = (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
+    pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
+    i2oMsg->numFrames = 3;
+    i2oMsg->frameCount = 0;
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = value2;
+    i2oMsg->fuProcID = value3;
+    i2oMsg->fuGUID = value4;
+    stor::I2OChain frag3(ref);
+
+    try
+      {
+        frag1.addToChain(frag3);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::Exception& excpt)
+      {
+      }
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag3.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag3.faulty());
+
+    // verify that adding a fragment to an empty chain throws an exception
+
+    stor::I2OChain frag4;
+
+    try
+      {
+        frag4.addToChain(frag3);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::Exception& excpt)
+      {
+      }
+    CPPUNIT_ASSERT(frag4.empty());
+    CPPUNIT_ASSERT(!frag3.empty());
+    CPPUNIT_ASSERT(!frag4.complete());
+    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(!frag4.faulty());
+    CPPUNIT_ASSERT(!frag3.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
 
 Reference*
 testI2OChain::allocate_frame()
 {
   Reference* temp = g_factory->getFrame(g_pool, 1024);
   assert(temp);
-
-  // 11-Feb-2009, KAB - provide a default value for the I2O message type
-  // so that the I2OChain constructor doesn't throw an exception when
-  // it tries to determine what type of message is in the buffer
-  I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-    (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
-  pvtMsg->XFunctionCode = I2O_SM_ERROR;
-
   return temp;
 }
 
