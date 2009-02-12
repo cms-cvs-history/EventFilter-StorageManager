@@ -40,7 +40,7 @@ int main()
     {
       if( !q.deq_nowait( evt ) )
 	{
-	  cerr << "Queue was not empty but pop_back failed"
+	  cerr << "Queue was not empty but deq_nowait failed"
 	       << endl;
 	  exit(1);
 	}
