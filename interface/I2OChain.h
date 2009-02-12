@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.8 2009/02/11 18:09:00 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.9 2009/02/11 21:00:49 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/02/11 18:09:00 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/02/11 21:00:49 $
    */
 
 
@@ -55,6 +55,9 @@ namespace stor {
        pRef, and assure that release is called on it only once,
        regardless of how many copies of the I2OChain object have been
        made.
+       NOTE that if the message fragment contained in the XDAQ
+       buffer is corrupted in some way, the chain will be marked "faulty"
+       and should not be used in normal fragment processing.
     */
     explicit I2OChain(toolbox::mem::Reference* pRef);
 
@@ -97,7 +100,8 @@ namespace stor {
 
     /**
      * Returns true if the chain has been marked faulty (the internal
-     * data does not represent a complete, valid message).
+     * data does not represent a valid message fragment or the fragments
+     * in the chain do not represent a complete, valid message).
      */
     bool faulty() const;
 
@@ -106,14 +110,21 @@ namespace stor {
        care that all fragments are chained in the right order. This
        destructively modifies newpart so that it no longer is part of
        managing any Reference: newpart is made empty.
-     
+
+       If newpart contains chain elements that do not have the same
+       fragment key (FragKey) as the current chain, an exception is thrown.
+
+       If newpart contains chain elements that already appear to exist
+       in the current chain (e.g. fragment number 3 is added a second time),
+       no exceptions are thrown and newpart is made empty, but the current
+       chain is marked as faulty.
      */
     void addToChain(I2OChain& newpart);
 
     /**
        Mark this chain as known to be complete.
      */
-    void markComplete();
+    //void markComplete();
 
     /**
        Mark this chain as known to be faulty.  The failure modes that
@@ -151,6 +162,53 @@ namespace stor {
        from a particular event.
      */
     FragKey getFragmentKey() const;
+
+    /**
+       Returns the number of frames currently contained in the chain.
+       NOTE that this will be less than the total number of expected frames
+       before the chain is complete and equal to the total number of expected
+       frames after the chain is complete.  And it can be zero if the
+       chain is empty.  If the chain is faulty, this method still returns
+       the number of fragments contained in the chain, but those fragments
+       may not correspond to a valid I2O message.
+     */
+    unsigned int getFragmentCount() const;
+
+    /**
+       Returns the total size of all of the contained message fragments.
+       For chains that are marked complete, this is the size of the actual
+       INIT, EVENT, DQM_EVENT, or ERROR_EVENT message contained in the chain.
+       For incomplete chains, this method will return an invalid value.
+       If the chain has been marked as "faulty", this method will
+       return the total size of the data that will be returned from
+       the getDataSize() method on each of the fragments, even though
+       those fragments may not correspond to actual storage manager messages.
+     */
+    unsigned long getTotalDataSize() const;
+
+    /**
+       Returns the start address of the specified message fragment
+       (indexed from 0 to N-1, where N is the total number of fragments).
+       For complete chains, this method returns pointers to the actual
+       INIT, EVENT, DQM_EVENT, or ERROR_EVENT message fragments.
+       If the chain has been marked as "faulty", this method will still
+       return a valid data location for all fragment indices.  However,
+       in that case, the data may not correspond to an underlying
+       INIT, EVENT, etc. message.
+     */
+    unsigned long* getDataLocation(int fragmentIndex) const;
+
+    /**
+       Returns the size of the specified message fragment
+       (indexed from 0 to N-1, where N is the total number of fragments).
+       For complete chains, this method returns the sizes of the actual
+       INIT, EVENT, ERROR_EVENT, or DQM_EVENT message fragments.
+       (If the chain has been marked as "faulty", this method will still
+       return a valid data size for all fragment indices.  However,
+       in that case, the sizes may not correspond to the underlying
+       INIT, EVENT, etc. message.)
+     */
+    unsigned long getDataSize(int fragmentIndex) const;
 
   private:
 

@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.7 2009/02/11 18:09:00 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.8 2009/02/11 21:00:50 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -27,18 +27,27 @@ namespace stor
     ///////////////////////////////////////////////////////////////////
     class ChainData
     {
+      enum BitMasksForFaulty { CORRUPT_HEADER = 0x1,
+                               TOTAL_COUNT_MISMATCH = 0x2,
+                               DUPLICATE_FRAGMENT = 0x4,
+                               INCOMPLETE_MESSAGE = 0x8,
+                               EXTERNALLY_REQUESTED = 0x10000 };
+
     public:
       explicit ChainData(toolbox::mem::Reference* pRef);
       virtual ~ChainData();
       bool empty() const;
       bool complete() const;
       bool faulty() const;
+      void addToChain(ChainData const& newpart);
       void markComplete();
       void markFaulty();
+      void markCorrupt();
       unsigned long* getBufferData();
       void swap(ChainData& other);
       unsigned char getMessageCode() const {return _messageCode;}
       FragKey const& getFragmentKey() const {return _fragKey;}
+      unsigned int getFragmentCount() const {return _fragmentCount;}
 
     private:
       std::vector<QueueID> _streamTags;
@@ -48,11 +57,13 @@ namespace stor
     protected:
       toolbox::mem::Reference* _ref;
 
-      bool  _complete;
-      bool  _faulty;
+      bool _complete;
+      unsigned int _faultyBits;
 
       unsigned char _messageCode;
       FragKey _fragKey;
+      unsigned int _fragmentCount;
+      unsigned int _expectedNumberOfFragments;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -62,10 +73,28 @@ namespace stor
       _eventConsumerTags(),
       _ref(pRef),
       _complete(false),
-      _faulty(false),
+      _faultyBits(0),
       _messageCode(Header::INVALID),
-      _fragKey(Header::INVALID,0,0,0,0,0)
-    { }
+      _fragKey(Header::INVALID,0,0,0,0,0),
+      _fragmentCount(0),
+      _expectedNumberOfFragments(1)
+    {
+      if (pRef)
+        {
+          _fragmentCount = 1;
+
+          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) pRef->getDataLocation();
+          _expectedNumberOfFragments = smMsg->numFrames;
+          if (smMsg->numFrames < 1 ||
+              smMsg->frameCount >= smMsg->numFrames) {
+            markCorrupt();
+          }
+          else if (smMsg->numFrames == 1) {
+            markComplete();
+          }
+        }
+    }
 
     // A ChainData that has a Reference is in charge of releasing
     // it. Because releasing a Reference can throw an exception, we have
@@ -78,6 +107,9 @@ namespace stor
     {
       if (_ref) 
         {
+          //std::cout << std::endl << std::endl << std::hex
+          //          << "### releasing 0x" << ((int) _ref)
+          //          << std::dec << std::endl << std::endl;
           try { _ref->release(); }
           catch (...) { /* swallow any exception. */ }
         }
@@ -95,7 +127,103 @@ namespace stor
 
     inline bool ChainData::faulty() const
     {
-      return _faulty;
+      return (_faultyBits != 0);
+    }
+
+    inline void ChainData::addToChain(ChainData const& newpart)
+    {
+      // this method expects to be called with non-null _ref
+      // for both the current chain and the new part!
+
+      bool fragmentWasAdded = false;
+
+      // determine the index of the new fragment
+      I2O_SM_MULTIPART_MESSAGE_FRAME *thatMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) newpart._ref->getDataLocation();
+      unsigned int newIndex = thatMsg->frameCount;
+      //std::cout << "newIndex = " << newIndex << std::endl;
+
+      // verify that the total fragment counts match
+      unsigned int newFragmentTotalCount = thatMsg->numFrames;
+      if (newFragmentTotalCount != _expectedNumberOfFragments)
+        {
+          _faultyBits |= TOTAL_COUNT_MISMATCH;
+        }
+
+      // if the new fragment goes at the head of the chain, handle that here
+      I2O_SM_MULTIPART_MESSAGE_FRAME *fragMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) _ref->getDataLocation();
+      unsigned int firstIndex = fragMsg->frameCount;
+      //std::cout << "firstIndex = " << firstIndex << std::endl;
+      if (newIndex < firstIndex)
+        {
+          newpart._ref->setNextReference(_ref);
+          _ref = newpart._ref->duplicate();
+          fragmentWasAdded = true;
+        }
+
+      else
+        {
+          // loop over the existing fragments and insert the new one
+          // in the correct place
+          toolbox::mem::Reference* curRef = _ref;
+          for (unsigned int idx = 0; idx < _fragmentCount; ++idx)
+            {
+              // if we have a duplicate fragment, add it after the existing
+              // one and indicate the error
+              I2O_SM_MULTIPART_MESSAGE_FRAME *curMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+              unsigned int curIndex = curMsg->frameCount;
+              //std::cout << "curIndex = " << curIndex << std::endl;
+              if (newIndex == curIndex) 
+                {
+                  _faultyBits |= DUPLICATE_FRAGMENT;
+                  newpart._ref->setNextReference(curRef->getNextReference());
+                  curRef->setNextReference(newpart._ref->duplicate());
+                  fragmentWasAdded = true;
+                  break;
+                }
+
+              // if we have reached the end of the chain, add the
+              // new fragment to the end
+              //std::cout << "nextRef = " << ((int) nextRef) << std::endl;
+              toolbox::mem::Reference* nextRef = curRef->getNextReference();
+              if (nextRef == 0)
+                {
+                  curRef->setNextReference(newpart._ref->duplicate());
+                  fragmentWasAdded = true;
+                  break;
+                }
+
+              I2O_SM_MULTIPART_MESSAGE_FRAME *nextMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) nextRef->getDataLocation();
+              unsigned int nextIndex = nextMsg->frameCount;
+              //std::cout << "nextIndex = " << nextIndex << std::endl;
+              if (newIndex > curIndex && newIndex < nextIndex)
+                {
+                  newpart._ref->setNextReference(curRef->getNextReference());
+                  curRef->setNextReference(newpart._ref->duplicate());
+                  fragmentWasAdded = true;
+                  break;
+                }
+
+              curRef = nextRef;
+            }
+        }
+
+      // update the fragment count and check if the chain is now complete
+      if (! fragmentWasAdded)
+        {
+          // this should never happen - if it does, there is a logic
+          // error in the loop above
+          XCEPT_RAISE(stor::exception::Exception,
+                      "A fragment was unable to be added to a chain.");
+        }
+      ++_fragmentCount;
+      if (! faulty() && _fragmentCount == _expectedNumberOfFragments)
+        {
+          markComplete();
+        }
     }
 
     inline void ChainData::markComplete()
@@ -105,7 +233,12 @@ namespace stor
 
     inline void ChainData::markFaulty()
     {
-      _faulty = true;
+      _faultyBits |= EXTERNALLY_REQUESTED;
+    }
+
+    inline void ChainData::markCorrupt()
+    {
+      _faultyBits |= CORRUPT_HEADER;
     }
 
     inline unsigned long* ChainData::getBufferData()
@@ -122,9 +255,11 @@ namespace stor
       _eventConsumerTags.swap(other._eventConsumerTags);
       std::swap(_ref, other._ref);
       std::swap(_complete, other._complete);
-      std::swap(_faulty, other._faulty);
+      std::swap(_faultyBits, other._faultyBits);
       std::swap(_messageCode, other._messageCode);
       std::swap(_fragKey, other._fragKey);
+      std::swap(_fragmentCount, other._fragmentCount);
+      std::swap(_expectedNumberOfFragments, other._expectedNumberOfFragments);
     }
 
     class InitMsgData : public ChainData
@@ -300,10 +435,8 @@ namespace stor
 
           default:
             {
-              std::stringstream msg;
-              msg << "Invalid I2O fragment passed to I2OChain constructor, "
-                  << "I2O message code = " << i2oMessageCode;
-              XCEPT_RAISE(stor::exception::Exception, msg.str());
+              _data.reset(new detail::ChainData(pRef));
+              _data->markCorrupt();
               break;
             }
 
@@ -316,8 +449,7 @@ namespace stor
   { }
 
   I2OChain::~I2OChain()
-  {
-  }
+  { }
 
   I2OChain& I2OChain::operator=(I2OChain const& rhs)
   {
@@ -355,16 +487,74 @@ namespace stor
   }
 
 
-  void I2OChain::addToChain(I2OChain &chain)
+  void I2OChain::addToChain(I2OChain &newpart)
   {
+    // fragments can not be added to empty, complete, or faulty chains.
+    if (empty())
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+                    "A fragment may not be added to an empty chain.");
+      }
+    if (complete())
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+                    "A fragment may not be added to a complete chain.");
+      }
+    if (faulty())
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+                    "A fragment may not be added to a faulty chain.");
+      }
+
+    // empty, complete, or faulty new parts can not be added to chains
+    if (newpart.empty())
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+                    "An empty chain may not be added to an existing chain.");
+      }
+    if (newpart.complete())
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+                    "A complete chain may not be added to an existing chain.");
+      }
+    if (newpart.faulty())
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+                    "A faulty chain may not be added to an existing chain.");
+      }
+
+    // require the new part and this chain to have the same fragment key
+    FragKey thisKey = getFragmentKey();
+    FragKey thatKey = newpart.getFragmentKey();
+    // should change this to != once we implement that operator in FragKey
+    if (thisKey < thatKey || thatKey < thisKey)
+      {
+        std::stringstream msg;
+        msg << "A fragment key mismatch was detected when trying to add "
+            << "a chain link to an existing chain. "
+            << "Existing key values = ("
+            << thisKey.code_ << "," << thisKey.run_ << ","
+            << thisKey.event_ << "," << thisKey.secondaryId_ << ","
+            << thisKey.originatorPid_ << "," << thisKey.originatorGuid_
+            << "), new key values = ("
+            << thatKey.code_ << "," << thatKey.run_ << ","
+            << thatKey.event_ << "," << thatKey.secondaryId_ << ","
+            << thatKey.originatorPid_ << "," << thatKey.originatorGuid_
+            << ").";
+        XCEPT_RAISE(stor::exception::Exception, msg.str());
+      }
+
+    // add the fragment to the current chain
+    _data->addToChain(*(newpart._data));
+    newpart.release();
   }
 
-  void I2OChain::markComplete()
-  {
-    // TODO:: Should we throw an exception if _data is null? If so, what
-    // type? Right now, we do nothing if _data is null.
-    if (_data) _data->markComplete();
-  }
+  //void I2OChain::markComplete()
+  //{
+  //  // TODO:: Should we throw an exception if _data is null? If so, what
+  //  // type? Right now, we do nothing if _data is null.
+  //  if (_data) _data->markComplete();
+  //}
 
   void I2OChain::markFaulty()
   {
@@ -396,6 +586,12 @@ namespace stor
   {
     if (!_data) return FragKey(Header::INVALID,0,0,0,0,0);
     return _data->getFragmentKey();
+  }
+
+  unsigned int I2OChain::getFragmentCount() const
+  {
+    if (!_data) return 0;
+    return _data->getFragmentCount();
   }
 
 } // namespace stor
