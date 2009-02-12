@@ -2,9 +2,12 @@
 #include "cppunit/extensions/HelperMacros.h"
 
 #include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
+#include "FWCore/Utilities/interface/CPUTimer.h"
 #include "boost/thread.hpp"
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
+
+#include <math.h>
 
 typedef stor::ConcurrentQueue<int> queue_t;
 
@@ -69,6 +72,7 @@ void DrainQueue::operator()()
     {
       sleep(_delay);
       if (_sharedQueue->deq_nowait(val)) ++_counter;
+      else return;
     }
 }
 
@@ -84,6 +88,7 @@ class testConcurrentQueue : public CppUnit::TestFixture
   CPPUNIT_TEST(queue_is_fifo);
   CPPUNIT_TEST(enq_and_deq);
   CPPUNIT_TEST(many_fillers);
+  CPPUNIT_TEST(enq_timing);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -95,6 +100,8 @@ public:
   void queue_is_fifo();
   void enq_and_deq();
   void many_fillers();
+
+  void enq_timing();
 
 private:
   // No data members yet.
@@ -126,7 +133,6 @@ testConcurrentQueue::queue_is_fifo()
   q.enq_nowait(3);
   int value(0);
   CPPUNIT_ASSERT(q.deq_nowait(value));
-  std::cerr << "Value should be 1: " << value << '\n';
   CPPUNIT_ASSERT(value == 1);
   CPPUNIT_ASSERT(q.deq_nowait(value));
   CPPUNIT_ASSERT(value == 2);
@@ -155,25 +161,68 @@ testConcurrentQueue::many_fillers()
   //size_t num_fillers(100);
   size_t num_fillers(3);
   unsigned int num_items(1000);
-  unsigned int delay(0);
   
   boost::thread_group producers;
   for (unsigned int i = 0; i < num_fillers; ++i)
     {
-      //producers.add_thread(new boost::thread(FillQueue(q, delay, num_items)));
       using boost::bind;
       using boost::thread;
       FillQueue last(q, 0, num_items);
       producers.add_thread(new thread(bind(&FillQueue::waiting_fill,
                                            &last)));
     }
-  //  boost::thread consumer(DrainQueue(q, 0));
   producers.join_all();
-  //consumer.join();
   CPPUNIT_ASSERT(q->size() == num_items * num_fillers);
 }
 
+void
+testConcurrentQueue::enq_timing()
+{
+  queue_t q(1);
 
+  // Queue is initially empty, so the first call should succeed.
+  CPPUNIT_ASSERT(q.enq_nowait(1));
+  CPPUNIT_ASSERT(q.size() == 1);
+  CPPUNIT_ASSERT(q.capacity() == 1);
+
+  // The queue is now full. The next enq should fail.
+  edm::CPUTimer t;
+  queue_t::value_type value;
+  t.start();
+  CPPUNIT_ASSERT(!q.enq_nowait(1));
+  t.stop();
+  // We somewhat arbitrarily choose 10 milliseconds as "immediately
+  // enough".
+  CPPUNIT_ASSERT(t.realTime() < 0.01);  
+
+  // Now test the timeout version, with a range of timeouts.
+  for (unsigned long wait_time = 0; wait_time < 3; ++wait_time)
+    {
+      t.reset();
+      CPPUNIT_ASSERT(q.size() == 1);
+      t.start();
+      CPPUNIT_ASSERT(!q.enq_timed_wait(1, wait_time));
+      t.stop();
+      // We somewhat arbitrarily choose 10 milliseconds as "good enough
+      // resolution".
+      CPPUNIT_ASSERT(fabs(t.realTime()-wait_time) < 0.01);
+    }
+
+  // Now test the version that waits indefinitiely. We fill the queue,
+  // start a draining thread that delays before eac deq, and then make
+  // sure we do eventually return from the call to enq_wait.
+  boost::shared_ptr<queue_t> qptr(new queue_t(1));
+  CPPUNIT_ASSERT(qptr->capacity() == 1);
+  CPPUNIT_ASSERT(qptr->enq_nowait(1));
+  CPPUNIT_ASSERT(qptr->size() == 1);
+
+  unsigned long delay = 2;
+  boost::thread consumer(DrainQueue(qptr,2));
+
+  qptr->enq_wait(2);
+  consumer.join();
+  CPPUNIT_ASSERT(qptr->empty());  
+}
 
 // This macro writes the 'main' for this test.
 CPPUNIT_TEST_SUITE_REGISTRATION(testConcurrentQueue);
