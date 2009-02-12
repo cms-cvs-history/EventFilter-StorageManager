@@ -1,10 +1,9 @@
-// $Id: StorageManager.cc,v 1.92.4.12 2009/02/10 14:02:42 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.13 2009/02/10 15:35:42 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
-#include <sys/stat.h>
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
@@ -137,8 +136,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.12 2009/02/10 14:02:42 mommsen Exp $ $Name:  $"),
-  _fragMonCollection(this)
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.13 2009/02/10 15:35:42 mommsen Exp $ $Name: refdev01_scratch_branch $"),
+  _fragMonCollection(this),
+  _webPageHelper(this->getApplicationDescriptor())
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -1314,252 +1314,21 @@ void StorageManager::addDQMMeasurement(unsigned long size)
   DQMreceivedVolume_ = DQMpmeter_->totalvolumemb();
 }
 
-//////////// *** Refactored method to get default web page body ///////////////////////////
-XHTMLMaker::Node* StorageManager::createWebPageBody()
-{
-    XHTMLMaker* maker = XHTMLMaker::instance();
-
-    std::ostringstream title;
-    title << getApplicationDescriptor()->getClassName()
-        << " instance " << getApplicationDescriptor()->getInstance();
-    XHTMLMaker::Node* body = maker->start(title.str());
-
-    std::ostringstream stylesheetLink;
-    stylesheetLink << "/" << getApplicationDescriptor()->getURN()
-        << "/styles.css";
-    XHTMLMaker::AttrMap stylesheetAttr;
-    stylesheetAttr[ "rel" ] = "stylesheet";
-    stylesheetAttr[ "type" ] = "text/css";
-    stylesheetAttr[ "href" ] = stylesheetLink.str();
-    maker->addNode("link", maker->getHead(), stylesheetAttr);
-
-    XHTMLMaker::AttrMap tableAttr;
-    tableAttr[ "border" ] = "0";
-    tableAttr[ "cellspacing" ] = "7";
-    tableAttr[ "width" ] = "100%";
-    XHTMLMaker::Node* table = maker->addNode("table", body, tableAttr);
-
-    XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
-
-    XHTMLMaker::AttrMap tableDivAttr;
-    tableDivAttr[ "align" ] = "left";
-    tableDivAttr[ "width" ] = "64";
-    XHTMLMaker::Node* tableDiv = maker->addNode("td", tableRow, tableDivAttr);
-
-    XHTMLMaker::AttrMap smImgAttr;
-    smImgAttr[ "align" ] = "middle";
-    smImgAttr[ "src" ] = "/evf/images/smicon.jpg"; // $XDAQ_DOCUMENT_ROOT is prepended to this path
-    smImgAttr[ "alt" ] = "main";
-    smImgAttr[ "width" ] = "64";
-    smImgAttr[ "height" ] = "64";
-    smImgAttr[ "border" ] = "0";
-    maker->addNode("img", tableDiv, smImgAttr);
-
-    tableDivAttr[ "width" ] = "40%";
-    tableDiv = maker->addNode("td", tableRow, tableDivAttr);
-    XHTMLMaker::Node* header = maker->addNode("h3", tableDiv);
-    maker->addText(header, title.str());
-    
-    tableDivAttr[ "width" ] = "30%";
-    tableDiv = maker->addNode("td", tableRow, tableDivAttr);
-    header = maker->addNode("h3", tableDiv);
-    maker->addText(header, fsm_.stateName()->toString());
-    
-    tableDivAttr[ "align" ] = "right";
-    tableDivAttr[ "width" ] = "64";
-    tableDiv = maker->addNode("td", tableRow, tableDivAttr);
-
-    XHTMLMaker::AttrMap xdaqLinkAttr;
-    xdaqLinkAttr[ "href" ] = "/urn:xdaq-application:lid=3";
-    XHTMLMaker::Node* xdaqLink = maker->addNode("a", tableDiv, xdaqLinkAttr);
-
-    XHTMLMaker::AttrMap xdaqImgAttr;
-    xdaqImgAttr[ "align" ] = "middle";
-    xdaqImgAttr[ "src" ] = "/hyperdaq/images/HyperDAQ.jpg"; // $XDAQ_DOCUMENT_ROOT is prepended to this path
-    xdaqImgAttr[ "alt" ] = "HyperDAQ";
-    xdaqImgAttr[ "width" ] = "64";
-    xdaqImgAttr[ "height" ] = "64";
-    xdaqImgAttr[ "border" ] = "0";
-    maker->addNode("img", xdaqLink, xdaqImgAttr);
-
-   return body;
-}
-
-//////////// *** Refactored resource usage ///////////////////////////////////////////////
-void StorageManager::addDOMforResourceUsage(xercesc::DOMElement *parent)
-{
-    XHTMLMaker* maker = XHTMLMaker::instance();
-
-    XHTMLMaker::AttrMap tableAttr;
-    tableAttr[ "frame" ] = "void";
-    tableAttr[ "rules" ] = "group";
-    tableAttr[ "class" ] = "states";
-    tableAttr[ "cellpadding" ] = "2";
-    tableAttr[ "width" ] = "100%";
-
-    XHTMLMaker::AttrMap colspanAttr;
-    colspanAttr[ "colspan" ] = "2";
-
-    XHTMLMaker::AttrMap innerTableAttr;
-    innerTableAttr[ "width" ] = "50%";
-    innerTableAttr[ "valign" ] = "top";
-
-    XHTMLMaker::AttrMap tableValueAttr;
-    tableValueAttr[ "align" ] = "right";
-    tableValueAttr[ "width" ] = "55%";
-
-    XHTMLMaker::AttrMap warningAttr = tableValueAttr;
-    warningAttr[ "bgcolor" ] = "#EF5A10";
-
-    XHTMLMaker::Node* outerTable = maker->addNode("table", parent, tableAttr);
-    XHTMLMaker::Node* outerTableRow = maker->addNode("tr", outerTable);
-    XHTMLMaker::Node* outerTableDiv = maker->addNode("th", outerTableRow, colspanAttr);
-    maker->addText(outerTableDiv, "Resource Usage");
-
-    outerTableRow = maker->addNode("tr", outerTable);
-    outerTableDiv = maker->addNode("td", outerTableRow, innerTableAttr);
-    XHTMLMaker::Node* table = maker->addNode("table", outerTableDiv, tableAttr);
-
-    // Memory pool usage
-    XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
-    XHTMLMaker::Node* tableDiv;
-    if (pool_)
-    {
-        tableDiv = maker->addNode("td", tableRow);
-        maker->addText(tableDiv, "Memory pool used (bytes)");
-        tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-        maker->addText(tableDiv, pool_->getMemoryUsage().getUsed(), 0);
-    }
-    else
-    {
-        tableDiv = maker->addNode("td", tableRow, colspanAttr);
-        maker->addText(tableDiv, "Memory pool pointer not yet available");
-    }
-
-
-    // Disk usage
-    int nD = nLogicalDisk_;
-    if (nD == 0) nD=1;
-    for(int i=0;i<nD;++i) {
-        string path(filePath_);
-        if(nLogicalDisk_>0) {
-            std::ostringstream oss;
-            oss << "/" << setfill('0') << std::setw(2) << i; 
-            path += oss.str();
-        }
-        struct statfs64 buf;
-        int retVal = statfs64(path.c_str(), &buf);
-        double btotal = 0;
-        double bfree = 0;
-        unsigned int used = 0;
-        if(retVal==0) {
-            unsigned int blksize = buf.f_bsize;
-            btotal = buf.f_blocks * blksize / 1024 / 1024 /1024;
-            bfree  = buf.f_bavail  * blksize / 1024 / 1024 /1024;
-            used   = (int)(100 * (1. - bfree / btotal)); 
-        }
-
-        tableRow = maker->addNode("tr", table);
-        tableDiv = maker->addNode("td", tableRow);
-        {
-            std::ostringstream tmpString;
-            tmpString << "Disk " << i << " usage";
-            maker->addText(tableDiv, tmpString.str());
-        }
-        if(used>89)
-            tableDiv = maker->addNode("td", tableRow, warningAttr);
-        else
-            tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-        {
-            std::ostringstream tmpString;
-            tmpString << used << "% (" << btotal-bfree << " of " << btotal << " GB)";
-            maker->addText(tableDiv, tmpString.str());
-        }
-    }
-
-    outerTableDiv = maker->addNode("td", outerTableRow, innerTableAttr);
-    table = maker->addNode("table", outerTableDiv, tableAttr);
-    
-    // # copy worker
-    tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow);
-    maker->addText(tableDiv, "# CopyWorker");
-    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-    int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
-    maker->addText(tableDiv, ps1, 0);
-
-    // # inject worker
-    tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow);
-    maker->addText(tableDiv, "# InjectWorker");
-    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-    int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
-    maker->addText(tableDiv, ps2, 0);
-
-}
-
 
 //////////// *** Refactored default web page ///////////////////////////////////////////////
 void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-    XHTMLMaker* maker = XHTMLMaker::instance();
-
-    // Create the body with the standard header
-    XHTMLMaker::Node* body = createWebPageBody();
-
-    //TODO: Failed printout
-
-    // Main statistics table
-    XHTMLMaker::AttrMap tableAttr;
-    tableAttr[ "border" ] = "0";
-    tableAttr[ "cellspacing" ] = "7";
-    tableAttr[ "width" ] = "100%";
-    tableAttr[ "frame" ] = "void";
-    tableAttr[ "rules" ] = "group"; //or groups?
-    tableAttr[ "class" ] = "states";
-    XHTMLMaker::Node* table = maker->addNode("table", body, tableAttr);
-
-    XHTMLMaker::AttrMap specialRowAttr;
-    specialRowAttr[ "class" ] = "special";
-
-    XHTMLMaker::AttrMap colspanAttr;
-    colspanAttr[ "colspan" ] = "2";
-
-    XHTMLMaker::AttrMap tableValueAttr;
-    tableValueAttr[ "align" ] = "right";
-
-    XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
-    XHTMLMaker::Node* tableDiv = maker->addNode("th", tableRow, colspanAttr);
-    maker->addText(tableDiv, "Storage Manager Statistics");
-
-    // Run number
-    tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow);
-    maker->addText(tableDiv, "Run Number");
-    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-    maker->addText(tableDiv, runNumber_, 0);
-
-    // Total events received
-    tableRow = maker->addNode("tr", table, specialRowAttr);
-    tableDiv = maker->addNode("td", tableRow);
-    maker->addText(tableDiv, "Total (non-unique) Events Received");
-    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-    maker->addText(tableDiv, receivedEvents_, 0);
-
-
-    // Resource usage
-    tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow, colspanAttr);
-    addDOMforResourceUsage(tableDiv);
-
-    // Add the received data statistics table
-    tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow, colspanAttr);
-    _fragMonCollection.addDOMElement(tableDiv);
-
-    // Dump the webpage to the output stream
-    maker->out(*out);
+    _webPageHelper.defaultWebPage(
+        out,
+        fsm_.stateName()->toString(),
+        runNumber_,
+        receivedEvents_,
+        _fragMonCollection,
+        pool_,
+        nLogicalDisk_,
+        filePath_
+    );
 }
 
 //////////// *** Default web page //////////////////////////////////////////////////////////
