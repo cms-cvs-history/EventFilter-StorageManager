@@ -1,4 +1,4 @@
-// $Id$
+// $Id: WebPageHelper.h,v 1.1.2.1 2009/02/12 11:22:40 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -10,16 +10,17 @@
 #include "xgi/Output.h"
 
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 namespace stor {
 
   /**
-   * WebPageHelper
+   * Helper class to handle web page requests
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/02/12 11:22:40 $
    */
   
   class WebPageHelper
@@ -28,12 +29,14 @@ namespace stor {
     
     explicit WebPageHelper(xdaq::ApplicationDescriptor*);
 
+    /**
+     * Generates the default monitoring webpage for the SM
+     */
     void defaultWebPage
     (
       xgi::Output*, 
       const std::string stateName,
-      const unsigned int runNumber,
-      const unsigned int receivedEvents,
+      const RunMonitorCollection&,
       const FragmentMonitorCollection&,
       toolbox::mem::Pool*,
       const int nLogicalDisk,
@@ -42,9 +45,15 @@ namespace stor {
 
 
   private:
-    
+
+    /**
+     * Returns the webpage body with the standard header as XHTML node
+     */
     XHTMLMaker::Node* createWebPageBody(const std::string stateName);
     
+    /**
+     * Adds the resource table to the parent DOM element
+     */
     void addDOMforResourceUsage
     (
       xercesc::DOMElement *parent,

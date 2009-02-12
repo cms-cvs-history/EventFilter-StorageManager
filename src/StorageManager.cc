@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.13 2009/02/10 15:35:42 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.14 2009/02/12 11:23:54 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -136,7 +136,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   progressMarker_(ProgressMarker::instance()->idle()),
   lastEventSeen_(0),
   lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.13 2009/02/10 15:35:42 mommsen Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.14 2009/02/12 11:23:54 mommsen Exp $ $Name:  $"),
+  _runMonCollection(this),
   _fragMonCollection(this),
   _webPageHelper(this->getApplicationDescriptor())
 {  
@@ -709,6 +710,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          //if(status == 1) ++(storedEvents_.value_);
          if(status == 1) {
            ++(receivedEvents_.value_);
+           _runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
+           _runMonCollection.getEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
+
            uint32 moduleId = thisMsgCopy.outModID;
            if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
              std::string moduleLabel = modId2ModOutMap_[moduleId];
@@ -774,7 +778,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
     //update last event seen
     lastEventSeen_ = localMsgCopy.eventID;
-
+    
     // for data sender list update
     // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
     bool isLocal = false;
@@ -787,6 +791,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     //if(status == 1) ++(storedEvents_.value_);
     if(status == 1) {
       ++(receivedEvents_.value_);
+      _runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
+      _runMonCollection.getEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
+
       uint32 moduleId = localMsgCopy.outModID;
       if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
         std::string moduleLabel = modId2ModOutMap_[moduleId];
@@ -948,6 +955,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
 
          //update last error event seen
          lastErrorEventSeen_ = thisMsgCopy.eventID;
+         _runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
+         _runMonCollection.getErrorEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
 
          // TODO need to fix this as the outModId is not valid for error events
          /*
@@ -1013,6 +1022,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
 
     //update last error event seen
     lastErrorEventSeen_ = localMsgCopy.eventID;
+    _runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
+    _runMonCollection.getErrorEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
 
     // for data sender list update
     // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
@@ -1322,8 +1333,7 @@ void StorageManager::newDefaultWebPage(xgi::Input *in, xgi::Output *out)
     _webPageHelper.defaultWebPage(
         out,
         fsm_.stateName()->toString(),
-        runNumber_,
-        receivedEvents_,
+        _runMonCollection,
         _fragMonCollection,
         pool_,
         nLogicalDisk_,
@@ -5259,6 +5269,7 @@ void StorageManager::startNewMonitorWorkloop() throw (evf::Exception)
 bool StorageManager::newMonitorAction(toolbox::task::WorkLoop* wl)
 {
   ::sleep(MonitoredQuantity::EXPECTED_CALCULATION_INTERVAL);
+  _runMonCollection.calculateStatistics();
   _fragMonCollection.calculateStatistics();
   return true;
 }

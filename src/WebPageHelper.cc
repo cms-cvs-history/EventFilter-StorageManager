@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.2 2009/01/30 10:49:57 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.1 2009/02/12 11:22:40 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -19,8 +19,7 @@ void WebPageHelper::defaultWebPage
 (
   xgi::Output *out, 
   const std::string stateName,
-  const unsigned int runNumber,
-  const unsigned int receivedEvents,
+  const RunMonitorCollection &runMonCollection,
   const FragmentMonitorCollection &fragMonCollection,
   toolbox::mem::Pool *pool,
   const int nLogicalDisk,
@@ -33,54 +32,15 @@ void WebPageHelper::defaultWebPage
   XHTMLMaker::Node* body = createWebPageBody(stateName);
 
   //TODO: Failed printout
-  
-  // Main statistics table
-  XHTMLMaker::AttrMap tableAttr;
-  tableAttr[ "border" ] = "0";
-  tableAttr[ "cellspacing" ] = "7";
-  tableAttr[ "width" ] = "100%";
-  tableAttr[ "frame" ] = "void";
-  tableAttr[ "rules" ] = "group"; //or groups?
-  tableAttr[ "class" ] = "states";
-  XHTMLMaker::Node* table = maker->addNode("table", body, tableAttr);
-  
-  XHTMLMaker::AttrMap specialRowAttr;
-  specialRowAttr[ "class" ] = "special";
-  
-  XHTMLMaker::AttrMap colspanAttr;
-  colspanAttr[ "colspan" ] = "2";
-  
-  XHTMLMaker::AttrMap tableValueAttr;
-  tableValueAttr[ "align" ] = "right";
 
-  XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
-  XHTMLMaker::Node* tableDiv = maker->addNode("th", tableRow, colspanAttr);
-  maker->addText(tableDiv, "Storage Manager Statistics");
+  // Run and event summary
+  runMonCollection.addDOMElement(body);
   
-  // Run number
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow);
-  maker->addText(tableDiv, "Run Number");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, runNumber, 0);
-  
-  // Total events received
-  tableRow = maker->addNode("tr", table, specialRowAttr);
-  tableDiv = maker->addNode("td", tableRow);
-  maker->addText(tableDiv, "Total (non-unique) Events Received");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, receivedEvents, 0);
-  
-
   // Resource usage
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow, colspanAttr);
-  addDOMforResourceUsage(tableDiv, pool, nLogicalDisk, filePath);
+  addDOMforResourceUsage(body, pool, nLogicalDisk, filePath);
   
   // Add the received data statistics table
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow, colspanAttr);
-  fragMonCollection.addDOMElement(tableDiv);
+  fragMonCollection.addDOMElement(body);
   
   // Dump the webpage to the output stream
   maker->out(*out);
@@ -154,6 +114,8 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   xdaqImgAttr[ "height" ] = "64";
   xdaqImgAttr[ "border" ] = "0";
   maker->addNode("img", xdaqLink, xdaqImgAttr);
+
+  maker->addNode("hr", body);
   
   return body;
 }
@@ -173,15 +135,24 @@ void WebPageHelper::addDOMforResourceUsage
   tableAttr[ "frame" ] = "void";
   tableAttr[ "rules" ] = "group";
   tableAttr[ "class" ] = "states";
-  tableAttr[ "cellpadding" ] = "2";
+  tableAttr[ "cellspacing" ] = "0";
+  tableAttr[ "cellpadding" ] = "0";
   tableAttr[ "width" ] = "100%";
   
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "2";
+
+  XHTMLMaker::AttrMap halfWidthAttr;
+  halfWidthAttr[ "width" ] = "50%";
   
   XHTMLMaker::AttrMap innerTableAttr;
-  innerTableAttr[ "width" ] = "50%";
+  innerTableAttr[ "width" ] = "100%";
   innerTableAttr[ "valign" ] = "top";
+  innerTableAttr[ "cellpadding" ] = "2";
+
+  XHTMLMaker::AttrMap tableLabelAttr;
+  tableLabelAttr[ "align" ] = "left";
+  tableLabelAttr[ "width" ] = "45%";
   
   XHTMLMaker::AttrMap tableValueAttr;
   tableValueAttr[ "align" ] = "right";
@@ -196,15 +167,15 @@ void WebPageHelper::addDOMforResourceUsage
   maker->addText(outerTableDiv, "Resource Usage");
   
   outerTableRow = maker->addNode("tr", outerTable);
-  outerTableDiv = maker->addNode("td", outerTableRow, innerTableAttr);
-  XHTMLMaker::Node* table = maker->addNode("table", outerTableDiv, tableAttr);
+  outerTableDiv = maker->addNode("td", outerTableRow, halfWidthAttr);
+  XHTMLMaker::Node* table = maker->addNode("table", outerTableDiv, innerTableAttr);
   
   // Memory pool usage
   XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
   XHTMLMaker::Node* tableDiv;
   if (pool)
   {
-    tableDiv = maker->addNode("td", tableRow);
+    tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
     maker->addText(tableDiv, "Memory pool used (bytes)");
     tableDiv = maker->addNode("td", tableRow, tableValueAttr);
     maker->addText(tableDiv, pool->getMemoryUsage().getUsed(), 0);
@@ -238,7 +209,7 @@ void WebPageHelper::addDOMforResourceUsage
     }
     
     tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow);
+    tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
     {
       std::ostringstream tmpString;
       tmpString << "Disk " << i << " usage";
@@ -255,12 +226,12 @@ void WebPageHelper::addDOMforResourceUsage
     }
   }
   
-  outerTableDiv = maker->addNode("td", outerTableRow, innerTableAttr);
-  table = maker->addNode("table", outerTableDiv, tableAttr);
+  outerTableDiv = maker->addNode("td", outerTableRow, halfWidthAttr);
+  table = maker->addNode("table", outerTableDiv, innerTableAttr);
   
   // # copy worker
   tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow);
+  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
   maker->addText(tableDiv, "# CopyWorker");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
   int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
@@ -268,7 +239,7 @@ void WebPageHelper::addDOMforResourceUsage
   
   // # inject worker
   tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow);
+  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
   maker->addText(tableDiv, "# InjectWorker");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
   int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
