@@ -6,10 +6,11 @@
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WorkLoop.h"
 
+#include <boost/statechart/event.hpp>
+#include <boost/statechart/in_state_reaction.hpp>
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
 #include <boost/statechart/transition.hpp>
-#include <boost/statechart/in_state_reaction.hpp>
 #include <boost/mpl/list.hpp>
 
 #include <iostream>
@@ -72,20 +73,12 @@ namespace stor
 
     std::string stateName() const;
 
-    // use of this doesn't work from Normal in_state_reaction
-    //void logHaltRequest2( const Halt& request )
-    //{
-    //  do_logInvalidEvent( "Halt", "Unknown" );
-    //}
-
   protected:
 
     virtual void do_processI2OFragment( I2OChain& frag,
 				        EventDistributor& ed,
 				        FragmentStore& fs ) const;
     virtual std::string do_stateName() const = 0;
-    virtual void do_logInvalidEvent( const std::string& eventName,
-                                     const std::string& currentStateName) const;
 
   };
 
@@ -145,6 +138,9 @@ namespace stor
     EventDistributor* getEventDistributor() { return _eventDistributor; }
     FragmentProcessor* getFragmentProcessor() { return _fragmentProcessor; }
 
+    void unconsumed_event( bsc::event_base const& );
+
+
   private:
 
     History _history;
@@ -164,25 +160,6 @@ namespace stor
   {
 
   public:
-    void logFailRequest( const Fail& request );
-    void logHaltRequest( const Halt& request );
-    void logConfigureRequest( const Configure& request );
-    void logReconfigureRequest( const Reconfigure& request );
-    void logEnableRequest( const Enable& request );
-    void logStopRequest( const Stop& request );
-    void logStopDoneRequest( const StopDone& request );
-    void logEmergencyStopRequest( const EmergencyStop& request );
-
-    typedef bsc::in_state_reaction<Fail,Failed,&Failed::logFailRequest> FailIR;
-    typedef bsc::in_state_reaction<Halt,Failed,&Failed::logHaltRequest> HaltIR;
-    typedef bsc::in_state_reaction<Configure,Failed,&Failed::logConfigureRequest> CfgIR;
-    typedef bsc::in_state_reaction<Reconfigure,Failed,&Failed::logReconfigureRequest> RecfgIR;
-    typedef bsc::in_state_reaction<Enable,Failed,&Failed::logEnableRequest> EnableIR;
-    typedef bsc::in_state_reaction<Stop,Failed,&Failed::logStopRequest> StopIR;
-    typedef bsc::in_state_reaction<StopDone,Failed,&Failed::logStopDoneRequest> StopDoneIR;
-    typedef bsc::in_state_reaction<EmergencyStop,Failed,&Failed::logEmergencyStopRequest> EmStopIR;
-    typedef boost::mpl::list<FailIR, HaltIR, CfgIR, RecfgIR, EnableIR,
-                             StopIR, StopDoneIR, EmStopIR> reactions;
 
     Failed( my_context );
     virtual ~Failed();
@@ -198,25 +175,9 @@ namespace stor
   {
 
   public:
-    //void logHaltRequest( const bsc::event_base& request );  // does not compile
-    void logHaltRequest( const Halt& request );
-    void logConfigureRequest( const Configure& request );
-    void logReconfigureRequest( const Reconfigure& request );
-    void logEnableRequest( const Enable& request );
-    void logStopRequest( const Stop& request );
-    void logStopDoneRequest( const StopDone& request );
-    void logEmergencyStopRequest( const EmergencyStop& request );
 
     typedef bsc::transition<Fail,Failed> FT;
-    typedef bsc::in_state_reaction<Halt,Normal,&Normal::logHaltRequest> HaltIR;
-    typedef bsc::in_state_reaction<Configure,Normal,&Normal::logConfigureRequest> CfgIR;
-    typedef bsc::in_state_reaction<Reconfigure,Normal,&Normal::logReconfigureRequest> RecfgIR;
-    typedef bsc::in_state_reaction<Enable,Normal,&Normal::logEnableRequest> EnableIR;
-    typedef bsc::in_state_reaction<Stop,Normal,&Normal::logStopRequest> StopIR;
-    typedef bsc::in_state_reaction<StopDone,Normal,&Normal::logStopDoneRequest> StopDoneIR;
-    typedef bsc::in_state_reaction<EmergencyStop,Normal,&Normal::logEmergencyStopRequest> EmStopIR;
-    typedef boost::mpl::list<FT, HaltIR, CfgIR, RecfgIR, EnableIR,
-                             StopIR, StopDoneIR, EmStopIR> reactions;
+    typedef boost::mpl::list<FT> reactions;
 
     Normal( my_context );
     virtual ~Normal();
