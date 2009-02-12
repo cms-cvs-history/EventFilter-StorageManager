@@ -89,6 +89,7 @@ class testConcurrentQueue : public CppUnit::TestFixture
   CPPUNIT_TEST(enq_and_deq);
   CPPUNIT_TEST(many_fillers);
   CPPUNIT_TEST(enq_timing);
+  CPPUNIT_TEST(change_capacity);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -100,8 +101,8 @@ public:
   void queue_is_fifo();
   void enq_and_deq();
   void many_fillers();
-
   void enq_timing();
+  void change_capacity();
 
 private:
   // No data members yet.
@@ -222,6 +223,24 @@ testConcurrentQueue::enq_timing()
   qptr->enq_wait(2);
   consumer.join();
   CPPUNIT_ASSERT(qptr->empty());  
+}
+
+void
+testConcurrentQueue::change_capacity()
+{
+  queue_t q(1);
+  CPPUNIT_ASSERT(q.enq_nowait(1));
+  CPPUNIT_ASSERT(!q.enq_nowait(1));
+  CPPUNIT_ASSERT(!q.set_capacity(2));  // did not reset
+  CPPUNIT_ASSERT(!q.enq_nowait(3));    // ... so this fails.
+
+  q.clear();
+  CPPUNIT_ASSERT(q.set_capacity(2));
+  CPPUNIT_ASSERT(q.enq_nowait(1));
+  CPPUNIT_ASSERT(q.enq_nowait(2));
+  CPPUNIT_ASSERT(!q.enq_nowait(3));
+  CPPUNIT_ASSERT(q.size() == 2);
+  CPPUNIT_ASSERT(q.capacity() == 2);  
 }
 
 // This macro writes the 'main' for this test.

@@ -31,20 +31,31 @@ namespace stor
                              std::numeric_limits<size_type>::max());
 
     /**
+       Applications should arrange to make sure that the destructor of
+       a ConcurrentQueue is not called while some other thread is
+       using that queue. There is some protection against doing this,
+       but it seems impossible to make sufficient protection.
+     */
+    ~ConcurrentQueue();
+
+    /**
+       Copying a ConcurrentQueue is illegal, as is asigning to a
+       ConcurrentQueue.
+     */
+
+    /**
        Add a copy of item to the queue.  If successful, return true;
        on failure, false.  This function will fail without waiting if
        the queue is full. This may throw any exception thrown by the
        assignment operator of type value_type, or bad_alloc.
     */
     bool enq_nowait(value_type const& item);
-
     
     /**
        Add a copy of item to the queue. If the queue is full wait
        until it becomes non-full. This may throw any exception thrown
        by the assignment operator of type value_type, or bad_alloc.
      */
-
     void enq_wait(value_type const& p);
 
     /**
@@ -56,7 +67,6 @@ namespace stor
        bad_alloc.
      */
     bool enq_timed_wait(value_type const& p, unsigned long wait_sec);
-
 
     /**
        Assign the value at the head of the queue to item and then
@@ -101,6 +111,13 @@ namespace stor
        of items it can contain.
      */
     size_type capacity() const;
+
+    /**
+       Reset the capacity of the queue. This can only be done if the
+       queue is empty. This function returns false if the queue was
+       not modified, and true if it was modified.
+     */
+    bool set_capacity(size_type n);
 
     /**
        Remove all items from the queue. This changes the size to zero
@@ -162,6 +179,14 @@ namespace stor
       nonempty.
      */
     void _remove_head(value_type& item);
+
+
+    /*
+      These functions are declared private and not implemented to
+      prevent their use.
+     */
+    ConcurrentQueue(ConcurrentQueue<T> const&);
+    ConcurrentQueue& operator=(ConcurrentQueue<T> const&);
   };
 
   //------------------------------------------------------------------
@@ -175,6 +200,14 @@ namespace stor
     _capacity(max),
     _size(0)
   {
+  }
+
+  template <class T>
+  ConcurrentQueue<T>::~ConcurrentQueue()
+  {
+    lock_t lock(_protect_elements);
+    _elements.clear();
+    _size = 0;
   }
 
   template <class T>
@@ -234,6 +267,7 @@ namespace stor
                                      unsigned long wait_usec)
   {
     lock_t lock(_protect_elements);
+    // THis is not yet implemented
     return false;
   }
 
@@ -263,11 +297,22 @@ namespace stor
   }
 
   template <class T>
+  bool
+  ConcurrentQueue<T>::set_capacity(size_type newcapacity)
+  {
+    lock_t lock(_protect_elements);
+    bool is_empty = (_size == 0);
+    if (is_empty) _capacity = newcapacity;
+    return is_empty;
+  }
+
+  template <class T>
   void 
   ConcurrentQueue<T>::clear()
   {
     lock_t lock(_protect_elements);
     _elements.clear();
+    _size = 0;
   }
 
   //-----------------------------------------------------------
@@ -292,8 +337,8 @@ namespace stor
   ConcurrentQueue<T>::_insert(value_type const& item)
   {
     _elements.push_back(item);
-    _queue_not_empty.notify_one();
     ++_size;
+    _queue_not_empty.notify_one();
   }
 
   template <class T>
@@ -301,7 +346,7 @@ namespace stor
   ConcurrentQueue<T>::_remove_head_if_possible(value_type& item)
   {
     bool item_obtained = false;
-    if (!_elements.empty())
+    if (!_size == 0)
       {
         _remove_head(item);
         item_obtained = true;
