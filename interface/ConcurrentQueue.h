@@ -1,4 +1,6 @@
-// $Id: RunMonitorCollection.h,v 1.1.2.1 2009/02/12 15:14:09 mommsen Exp $
+// $Id: ConcurrentQueue.h,v 1.1.2.5 2009/02/13 15:11:20 mommsen Exp $
+
+
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
 #define EventFilter_StorageManager_ConcurrentQueue_h
 
@@ -16,14 +18,108 @@
 namespace stor
 {
   /**
-   * Class template for concurrent queues
-   *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+     Class template ConcurrentQueue provides a FIFO that can be used
+     to communicate data between multiple producer and consumer
+     threads in an application.
+
+     The template policy EnqPolicy determines the behavior of the
+     enq_nowait function. In all cases, this function will return
+     promptly (that is, it will not wait for a full queue to become
+     not-full). However, what is done in the case of the queue being
+     full depends on the policy chosen:
+
+        FailIfFull: the function will return false, without
+        modifying the queue.
+
+        KeepNewest: the function returns void; the head of the
+        FIFO is popped (and destroyed), and the new item is added to
+        the FIFO.
+
+        RejectNewest: the function returns void; the new item is
+        not put onto the FIFO.
    */
 
   template <class T>
+  struct FailIfFull
+  {
+    typedef bool return_type;
+
+    typedef T value_type;
+    typedef std::list<value_type> sequence_type;
+    typedef typename sequence_type::size_type size_type;
+
+    static return_type do_enq(value_type const& item,
+                              sequence_type& elements,
+                              size_type& size,
+                              size_type& capacity,
+                              boost::condition& nonempty)
+    {
+      bool have_room = size < capacity;
+      if (have_room)
+        {
+          elements.push_back(item);
+          ++size;
+          nonempty.notify_one();
+        }
+      return have_room;
+    }                       
+  };
+
+  template <class T>
+  struct KeepNewest
+  {
+    typedef void return_type;
+
+    typedef T value_type;
+    typedef std::list<value_type> sequence_type;
+    typedef typename sequence_type::size_type size_type;
+    static return_type do_enq(value_type const& item,
+                              sequence_type& elements,
+                              size_type& size,
+                              size_type& capacity,
+                              boost::condition& nonempty)
+    {
+      if (size==capacity) 
+        { 
+          elements.pop_front();
+          --size;
+        }
+      elements.push_back(item);
+      ++size;
+      nonempty.notify_one();
+    }   
+  };
+
+
+  template <class T>
+  struct RejectNewest
+  {
+    typedef void return_type;
+
+    typedef T value_type;
+    typedef std::list<value_type> sequence_type;
+    typedef typename sequence_type::size_type size_type;
+    static return_type do_enq(value_type const& item,
+                              sequence_type& elements,
+                              size_type& size,
+                              size_type& capacity,
+                              boost::condition& nonempty)
+    {
+      if (size < capacity)
+        {
+          elements.push_back(item);
+          ++size;
+          nonempty.notify_one();
+        }
+    }   
+
+  };
+
+  /**
+     ConcurrentQueue<T> class template declaration.
+   */
+
+  template <class T, class EnqPolicy=FailIfFull<T> >
   class ConcurrentQueue
   {
   public:
@@ -48,8 +144,16 @@ namespace stor
 
     /**
        Copying a ConcurrentQueue is illegal, as is asigning to a
-       ConcurrentQueue.
+       ConcurrentQueue. The copy constructor and copy assignment
+       operator are both private and unimplemented.
      */
+
+    /**
+       Add a copy if item to the queue, according to the rules
+       determined by the EnqPolicy; see documentation above the the
+       provided EnqPolicy choices.
+     */
+    typename EnqPolicy::return_type enq(value_type const& item);
 
     /**
        Add a copy of item to the queue.  If successful, return true;
@@ -193,16 +297,16 @@ namespace stor
       These functions are declared private and not implemented to
       prevent their use.
      */
-    ConcurrentQueue(ConcurrentQueue<T> const&);
-    ConcurrentQueue& operator=(ConcurrentQueue<T> const&);
+    ConcurrentQueue(ConcurrentQueue<T,EnqPolicy> const&);
+    ConcurrentQueue& operator=(ConcurrentQueue<T,EnqPolicy> const&);
   };
 
   //------------------------------------------------------------------
   // Implementation follows
   //------------------------------------------------------------------
 
-  template <class T>
-  ConcurrentQueue<T>::ConcurrentQueue(size_type max) :
+  template <class T, class EnqPolicy>
+  ConcurrentQueue<T,EnqPolicy>::ConcurrentQueue(size_type max) :
     _protect_elements(),
     _elements(),
     _capacity(max),
@@ -210,34 +314,43 @@ namespace stor
   {
   }
 
-  template <class T>
-  ConcurrentQueue<T>::~ConcurrentQueue()
+  template <class T, class EnqPolicy>
+  ConcurrentQueue<T,EnqPolicy>::~ConcurrentQueue()
   {
     lock_t lock(_protect_elements);
     _elements.clear();
     _size = 0;
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
+  typename EnqPolicy::return_type
+  ConcurrentQueue<T,EnqPolicy>::enq(value_type const& item)
+  {
+    lock_t lock(_protect_elements);
+    return EnqPolicy::do_enq(item, _elements, 
+                             _size, _capacity, _queue_not_empty);
+  }
+
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::enq_nowait(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::enq_nowait(value_type const& item)
   {
     lock_t lock(_protect_elements);
     return _insert_if_possible(item);
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   void
-  ConcurrentQueue<T>::enq_wait(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::enq_wait(value_type const& item)
   {
     lock_t lock(_protect_elements);
     while ( _size >= _capacity) _queue_not_full.wait(lock);
     _insert(item);
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::enq_timed_wait(value_type const& item, 
+  ConcurrentQueue<T,EnqPolicy>::enq_timed_wait(value_type const& item, 
                                      unsigned long wait_sec)
   {
     lock_t lock(_protect_elements);
@@ -252,26 +365,26 @@ namespace stor
     return  _insert_if_possible(item);
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::deq_nowait(value_type& item)
+  ConcurrentQueue<T,EnqPolicy>::deq_nowait(value_type& item)
   {
     lock_t lock(_protect_elements);
     return _remove_head_if_possible(item);
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   void
-  ConcurrentQueue<T>::deq_wait(value_type& item)
+  ConcurrentQueue<T,EnqPolicy>::deq_wait(value_type& item)
   {
     lock_t lock(_protect_elements);
     while (_size == 0) _queue_not_empty.wait(lock);
     _remove_head(item);
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::deq_timed_wait(value_type& item,
+  ConcurrentQueue<T,EnqPolicy>::deq_timed_wait(value_type& item,
                                      unsigned long wait_usec)
   {
     lock_t lock(_protect_elements);
@@ -279,34 +392,34 @@ namespace stor
     return false;
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool 
-  ConcurrentQueue<T>::empty() const
+  ConcurrentQueue<T,EnqPolicy>::empty() const
   {
     // No lock is necessary: the read is atomic.
     return _size == 0;
   }
 
 
-  template <class T>
-  typename ConcurrentQueue<T>::size_type 
-  ConcurrentQueue<T>::size() const
+  template <class T, class EnqPolicy>
+  typename ConcurrentQueue<T,EnqPolicy>::size_type 
+  ConcurrentQueue<T,EnqPolicy>::size() const
   {
     // No lock is necessary: the read is atomic.
     return _size;
   }
 
-  template <class T>
-  typename ConcurrentQueue<T>::size_type
-  ConcurrentQueue<T>::capacity() const
+  template <class T, class EnqPolicy>
+  typename ConcurrentQueue<T,EnqPolicy>::size_type
+  ConcurrentQueue<T,EnqPolicy>::capacity() const
   {
     // No lock is necessary: the read is atomic.
     return _capacity;
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::set_capacity(size_type newcapacity)
+  ConcurrentQueue<T,EnqPolicy>::set_capacity(size_type newcapacity)
   {
     lock_t lock(_protect_elements);
     bool is_empty = (_size == 0);
@@ -314,9 +427,9 @@ namespace stor
     return is_empty;
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   void 
-  ConcurrentQueue<T>::clear()
+  ConcurrentQueue<T,EnqPolicy>::clear()
   {
     lock_t lock(_protect_elements);
     _elements.clear();
@@ -327,9 +440,9 @@ namespace stor
   // Private member functions
   //-----------------------------------------------------------
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::_insert_if_possible(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::_insert_if_possible(value_type const& item)
   {
     bool item_accepted = false;
     if (_size < _capacity)
@@ -340,18 +453,18 @@ namespace stor
     return item_accepted;
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   void
-  ConcurrentQueue<T>::_insert(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::_insert(value_type const& item)
   {
     _elements.push_back(item);
     ++_size;
     _queue_not_empty.notify_one();
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T>::_remove_head_if_possible(value_type& item)
+  ConcurrentQueue<T,EnqPolicy>::_remove_head_if_possible(value_type& item)
   {
     bool item_obtained = false;
     if (!_size == 0)
@@ -362,9 +475,9 @@ namespace stor
     return item_obtained;
   }
 
-  template <class T>
+  template <class T, class EnqPolicy>
   void
-  ConcurrentQueue<T>::_remove_head(value_type& item)
+  ConcurrentQueue<T,EnqPolicy>::_remove_head(value_type& item)
   {
     sequence_type holder;
     // Move the item out of _elements in a manner that will not throw.

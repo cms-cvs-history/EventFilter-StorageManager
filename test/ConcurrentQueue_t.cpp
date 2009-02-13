@@ -91,6 +91,9 @@ class testConcurrentQueue : public CppUnit::TestFixture
   CPPUNIT_TEST(many_fillers);
   CPPUNIT_TEST(enq_timing);
   CPPUNIT_TEST(change_capacity);
+  CPPUNIT_TEST(failiffull);
+  CPPUNIT_TEST(keepnewest);
+  CPPUNIT_TEST(rejectnewest);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -104,6 +107,9 @@ public:
   void many_fillers();
   void enq_timing();
   void change_capacity();
+  void failiffull();
+  void keepnewest();
+  void rejectnewest();
 
 private:
   // No data members yet.
@@ -188,7 +194,8 @@ testConcurrentQueue::many_fillers()
 void
 testConcurrentQueue::enq_timing()
 {
-  std::cerr << "\nConcurrentQueue_t::enq_timing\n";
+  std::cerr << "\nConcurrentQueue_t::enq_timing "
+            << "(this may take up to 30 seconds)\n";
   queue_t q(1);
 
   // Queue is initially empty, so the first call should succeed.
@@ -253,9 +260,47 @@ testConcurrentQueue::change_capacity()
   CPPUNIT_ASSERT(q.capacity() == 2);  
 }
 
+void
+testConcurrentQueue::failiffull()
+{
+  std::cerr << "\nConcurrentQueue_t::failiffull\n";
+  stor::ConcurrentQueue<int, stor::FailIfFull<int> > q(1);  
+  CPPUNIT_ASSERT(q.enq(1));
+  CPPUNIT_ASSERT(!q.enq(2));
+  CPPUNIT_ASSERT(q.size() == 1);
+  int value;
+  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(value==1);
+}
+
+void
+testConcurrentQueue::keepnewest()
+{
+  std::cerr << "\nConcurrentQueue_t::keepnewest\n";
+  stor::ConcurrentQueue<int, stor::KeepNewest<int> > q(1);
+  q.enq(1);
+  q.enq(2);
+  CPPUNIT_ASSERT(q.size() == 1);
+  int value;
+  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(value == 2);
+}
+
+void
+testConcurrentQueue::rejectnewest()
+{
+  std::cerr << "\nConcurrentQueue_t::rejectnewest\n";
+  stor::ConcurrentQueue<int, stor::RejectNewest<int> > q(1);
+  q.enq(1);
+  q.enq(2);
+  CPPUNIT_ASSERT(q.size() == 1);
+  int value;
+  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(value == 1);
+}
+
 // This macro writes the 'main' for this test.
 CPPUNIT_TEST_SUITE_REGISTRATION(testConcurrentQueue);
-
 
 /// emacs configuration
 /// Local Variables: -
