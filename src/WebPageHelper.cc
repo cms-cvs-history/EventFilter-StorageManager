@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.1 2009/02/12 11:22:40 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.2 2009/02/12 15:15:15 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -41,6 +41,8 @@ void WebPageHelper::defaultWebPage
   
   // Add the received data statistics table
   fragMonCollection.addDOMElement(body);
+
+  addDOMforSMLinks(body);
   
   // Dump the webpage to the output stream
   maker->out(*out);
@@ -78,6 +80,11 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   tableDivAttr[ "align" ] = "left";
   tableDivAttr[ "width" ] = "64";
   XHTMLMaker::Node* tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+
+  XHTMLMaker::AttrMap smLinkAttr;
+  smLinkAttr[ "href" ] = _appDescriptor->getContextDescriptor()->getURL()
+    + "/" + _appDescriptor->getURN();
+  XHTMLMaker::Node* smLink = maker->addNode("a", tableDiv, smLinkAttr);
   
   XHTMLMaker::AttrMap smImgAttr;
   smImgAttr[ "align" ] = "middle";
@@ -86,7 +93,7 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   smImgAttr[ "width" ] = "64";
   smImgAttr[ "height" ] = "64";
   smImgAttr[ "border" ] = "0";
-  maker->addNode("img", tableDiv, smImgAttr);
+  maker->addNode("img", smLink, smImgAttr);
   
   tableDivAttr[ "width" ] = "40%";
   tableDiv = maker->addNode("td", tableRow, tableDivAttr);
@@ -118,6 +125,45 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   maker->addNode("hr", body);
   
   return body;
+}
+
+
+void WebPageHelper::addDOMforSMLinks(xercesc::DOMElement *parent)
+{
+  XHTMLMaker* maker = XHTMLMaker::instance();
+
+  std::string url = _appDescriptor->getContextDescriptor()->getURL()
+    + "/" + _appDescriptor->getURN();
+
+  XHTMLMaker::AttrMap linkAttr;
+  XHTMLMaker::Node *link;
+
+  maker->addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/storedData";
+  link = maker->addNode("a", parent, linkAttr);
+  maker->addText(link, "Stored data web page (remainder of old default web page)");
+
+  maker->addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/rbsenderlist";
+  link = maker->addNode("a", parent, linkAttr);
+  maker->addText(link, "RB Sender list web page");
+
+  maker->addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/streameroutput";
+  link = maker->addNode("a", parent, linkAttr);
+  maker->addText(link, "Streamer Output Status web page");
+
+  maker->addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/EventServerStats?update=off";
+  link = maker->addNode("a", parent, linkAttr);
+  maker->addText(link, "Event Server Statistics");
+
+  maker->addNode("hr", parent);
+
 }
 
 

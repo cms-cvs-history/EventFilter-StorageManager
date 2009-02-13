@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.1 2009/02/12 11:22:40 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.2 2009/02/12 15:14:53 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -19,8 +19,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/02/12 11:22:40 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/02/12 15:14:53 $
    */
   
   class WebPageHelper
@@ -50,6 +50,11 @@ namespace stor {
      * Returns the webpage body with the standard header as XHTML node
      */
     XHTMLMaker::Node* createWebPageBody(const std::string stateName);
+
+    /**
+     * Adds the links for the other SM webpages
+     */
+    void addDOMforSMLinks(xercesc::DOMElement *parent);
     
     /**
      * Adds the resource table to the parent DOM element
