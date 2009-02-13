@@ -7,14 +7,12 @@ using namespace stor;
 
 Enabled::Enabled( my_context c ): my_base(c)
 {
-  cout << "Entering " << stateName() << " state" << endl;
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
 }
 
 Enabled::~Enabled()
 {
-  cout << "Clearing queues, closing files, and exiting " << stateName() << " state" << endl;
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
 }
@@ -28,8 +26,6 @@ void Enabled::logReconfigureRequest( const Reconfigure& request )
 {
   outermost_context().unconsumed_event( request );
 }
-
-
 
 /// emacs configuration
 /// Local Variables: -

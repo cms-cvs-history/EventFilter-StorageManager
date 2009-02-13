@@ -18,7 +18,6 @@ Processing::Processing( my_context c ): my_base(c)
       return;
     }
 
-  cout << "Entering " << stateName() << " state, counter = " << _counter << endl;
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
 
@@ -26,7 +25,6 @@ Processing::Processing( my_context c ): my_base(c)
 
 Processing::~Processing()
 {
-  cout << "Exiting " << stateName() << " state" << endl;
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
 }
@@ -41,7 +39,6 @@ void Processing::logStopDoneRequest( const StopDone& request )
   outermost_context().unconsumed_event( request );
 }
 
-
 void
 Processing::do_processI2OFragment( I2OChain& frag,
 				   EventDistributor& ed,
@@ -49,8 +46,6 @@ Processing::do_processI2OFragment( I2OChain& frag,
 {
   cout << "Processing a fragment\n";
 }
-
-
 
 /// emacs configuration
 /// Local Variables: -
