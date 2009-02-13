@@ -8,6 +8,7 @@
 #include "boost/bind.hpp"
 
 #include <math.h>
+#include <vector>
 
 typedef stor::ConcurrentQueue<int> queue_t;
 
@@ -121,6 +122,7 @@ testConcurrentQueue::tearDown()
 void 
 testConcurrentQueue::default_q_is_empty()
 {
+  std::cerr << "\nConcurrentQueue_t::default_q_is_empty\n";
   stor::ConcurrentQueue<int> q;
   CPPUNIT_ASSERT(q.empty());
 }
@@ -128,6 +130,7 @@ testConcurrentQueue::default_q_is_empty()
 void
 testConcurrentQueue::queue_is_fifo()
 {
+  std::cerr << "\nConcurrentQueue_t::queue_is_fifo\n";
   stor::ConcurrentQueue<int> q;
   q.enq_nowait(1);
   q.enq_nowait(2);
@@ -145,6 +148,7 @@ testConcurrentQueue::queue_is_fifo()
 void
 testConcurrentQueue::enq_and_deq()
 {
+  std::cerr << "\nConcurrentQueue_t::enq_and_deq\n";
   boost::shared_ptr<queue_t> q(new queue_t);
   unsigned int delay = 0;
   unsigned int num_items = 10000;
@@ -158,19 +162,24 @@ testConcurrentQueue::enq_and_deq()
 void
 testConcurrentQueue::many_fillers()
 {
-  boost::shared_ptr<queue_t> q(new queue_t(1000000));
-  //size_t num_fillers(100);
+  std::cerr << "\nConcurrentQueue_t::many_fillers\n";
   size_t num_fillers(3);
-  unsigned int num_items(1000);
+  unsigned int num_items(10);
+  boost::shared_ptr<queue_t> q(new queue_t(num_items*num_fillers+1));
   
   boost::thread_group producers;
-  for (unsigned int i = 0; i < num_fillers; ++i)
+  typedef std::vector<FillQueue> fillers_t;
+  fillers_t  fillers(num_fillers, FillQueue(q, 0, num_items));
+  for (fillers_t::iterator
+         i = fillers.begin(),
+         e = fillers.end();
+       i != e;
+       ++i)
     {
       using boost::bind;
       using boost::thread;
-      FillQueue last(q, 0, num_items);
-      producers.add_thread(new thread(bind(&FillQueue::waiting_fill,
-                                           &last)));
+      producers.add_thread(new thread(bind(&FillQueue::waiting_fill, 
+                                           &*i)));
     }
   producers.join_all();
   CPPUNIT_ASSERT(q->size() == num_items * num_fillers);
@@ -179,6 +188,7 @@ testConcurrentQueue::many_fillers()
 void
 testConcurrentQueue::enq_timing()
 {
+  std::cerr << "\nConcurrentQueue_t::enq_timing\n";
   queue_t q(1);
 
   // Queue is initially empty, so the first call should succeed.
@@ -188,7 +198,6 @@ testConcurrentQueue::enq_timing()
 
   // The queue is now full. The next enq should fail.
   edm::CPUTimer t;
-  queue_t::value_type value;
   t.start();
   CPPUNIT_ASSERT(!q.enq_nowait(1));
   t.stop();
@@ -210,17 +219,17 @@ testConcurrentQueue::enq_timing()
     }
 
   // Now test the version that waits indefinitiely. We fill the queue,
-  // start a draining thread that delays before eac deq, and then make
-  // sure we do eventually return from the call to enq_wait.
+  // start a draining thread that delays before each deq, and then
+  // make sure do eventually return from the call to enq_wait.
   boost::shared_ptr<queue_t> qptr(new queue_t(1));
   CPPUNIT_ASSERT(qptr->capacity() == 1);
   CPPUNIT_ASSERT(qptr->enq_nowait(1));
   CPPUNIT_ASSERT(qptr->size() == 1);
 
   unsigned long delay = 2;
-  boost::thread consumer(DrainQueue(qptr,2));
+  boost::thread consumer(DrainQueue(qptr,delay));
 
-  qptr->enq_wait(2);
+  qptr->enq_wait(delay);
   consumer.join();
   CPPUNIT_ASSERT(qptr->empty());  
 }
@@ -228,6 +237,7 @@ testConcurrentQueue::enq_timing()
 void
 testConcurrentQueue::change_capacity()
 {
+  std::cerr << "\nConcurrentQueue_t::change_capacity\n";
   queue_t q(1);
   CPPUNIT_ASSERT(q.enq_nowait(1));
   CPPUNIT_ASSERT(!q.enq_nowait(1));
