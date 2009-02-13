@@ -1,3 +1,4 @@
+// $Id: RunMonitorCollection.h,v 1.1.2.1 2009/02/12 15:14:09 mommsen Exp $
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
 #define EventFilter_StorageManager_ConcurrentQueue_h
 
@@ -14,6 +15,13 @@
 
 namespace stor
 {
+  /**
+   * Class template for concurrent queues
+   *
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
+   */
 
   template <class T>
   class ConcurrentQueue
