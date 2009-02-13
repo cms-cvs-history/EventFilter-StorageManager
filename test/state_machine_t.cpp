@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <list>
+#include <vector>
 
 #include <boost/statechart/event_base.hpp>
 #include <boost/shared_ptr.hpp>
@@ -16,6 +17,7 @@ using boost::shared_ptr;
 // Typedefs:
 typedef map< string, shared_ptr<event_base> > EventMap;
 typedef list<string> EventList;
+typedef vector<string> TransitionList;
 
 //////////////////////////////////////////////////////
 //// Exit with non-zero code if unexpected state: ////
@@ -61,6 +63,85 @@ void checkSignals( StateMachine& m,
 	}
       m.process_event( *(j->second) );
       checkState( m, expected );
+    }
+
+}
+
+////////////////////////////////////////////////////////////////////
+//// Check if history matches expected sequence of transitions: ////
+////////////////////////////////////////////////////////////////////
+void checkHistory( const StateMachine& m,
+		   const string& from_state,
+		   const string& to_state,
+		   const TransitionList& steps )
+{
+
+  const StateMachine::History h = m.history();
+  const unsigned int hsize = h.size();
+  const unsigned int ssize = steps.size();
+
+  bool ok = true;
+
+  if( ssize * 2 + 2 != hsize )
+    {
+      ok = false;
+    }
+
+  if( ok )
+    {
+      if( h[0].stateName() != from_state )
+	{
+	  ok = false;
+	}
+    }
+ 
+  if( ok )
+    {
+
+      unsigned int i = 0;
+
+      while( i < ssize )
+	{
+
+	  if( h[ 2*i + 1 ].stateName() != steps[i] )
+	    {
+	      ok = false;
+	      break;
+	    }
+
+	  if( h[ 2*i + 2 ].stateName() != steps[i] )
+	    {
+	      ok = false;
+	      break;
+	    }
+
+	  ++i;
+
+	}
+
+    }
+
+  if( ok )
+    {
+      if( h[ hsize - 1 ].stateName() != to_state )
+	{
+	  ok = false;
+	}
+    }
+
+  if( !ok )
+    {
+      cerr << "**** History mismatch ****" << endl;
+      cerr << "Actual:" << endl;
+      m.dumpHistory( cerr );
+      cerr << "Expected:" << endl;
+      cerr << " from " << from_state;
+      for( unsigned int j = 0; j < ssize; ++j )
+	{
+	  cerr << " to " << steps[j];
+	}
+      cerr << " to " << to_state << endl;
+      exit(3);
     }
 
 }
@@ -123,12 +204,16 @@ int main()
   //// Check Reconfigure from stopped: ////
   //
 
-  m.clearHistory();
   m.process_event( Stop() );
   checkState( m, "Stopped" );
+
+  m.clearHistory();
   m.process_event( Reconfigure() );
   checkState( m, "Stopped" );
-  m.dumpHistory( cout );
+
+  TransitionList steps;
+  steps.push_back( "Ready" );
+  checkHistory( m, "Stopped", "Stopped", steps );
 
   //
   //// Failed: ////
