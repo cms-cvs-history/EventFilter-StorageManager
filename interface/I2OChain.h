@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.11 2009/02/13 21:07:12 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.12 2009/02/13 21:51:10 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/02/13 21:07:12 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/02/13 21:51:10 $
    */
 
 
@@ -217,6 +217,10 @@ namespace stor {
        so this method is probably only useful for testing.
      */
     unsigned int getFragmentID(int fragmentIndex) const;
+
+    // methods to access data in INIT messages
+    std::string outputModuleLabel() const;
+    uint32 outputModuleId() const;
 
   private:
 

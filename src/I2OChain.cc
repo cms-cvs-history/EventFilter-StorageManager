@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.13 2009/02/13 21:07:12 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.14 2009/02/13 21:51:10 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -6,6 +6,7 @@
 #include "EventFilter/StorageManager/interface/Types.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
+#include "IOPool/Streamer/interface/InitMessage.h"
 
 namespace stor
 {
@@ -56,6 +57,9 @@ namespace stor
       unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
 
+      std::string outputModuleLabel() const;
+      uint32 outputModuleId() const;
+
     private:
       std::vector<QueueID> _streamTags;
       std::vector<QueueID> _dqmEventConsumerTags;
@@ -74,6 +78,9 @@ namespace stor
 
       virtual unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
       void validateI2OHeaders(unsigned short expectedI2OMessageCode);
+
+      virtual std::string do_outputModuleLabel() const;
+      virtual uint32 do_outputModuleId() const;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -102,7 +109,7 @@ namespace stor
                 {
                   _faultyBits |= INVALID_REFERENCE;
                 }
-              else if ((pvtMsg->StdMessageFrame.MessageSize*4) <
+              else if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
                        sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
                 {
                   _faultyBits |= CORRUPT_HEADER;
@@ -427,6 +434,16 @@ namespace stor
         }
     }
 
+    std::string ChainData::outputModuleLabel() const
+    {
+      return do_outputModuleLabel();
+    }
+
+    uint32 ChainData::outputModuleId() const
+    {
+      return do_outputModuleId();
+    }
+
     inline unsigned char*
     ChainData::do_getMessageLocation(unsigned char* dataLoc) const
     {
@@ -445,7 +462,7 @@ namespace stor
             {
               _faultyBits |= INVALID_REFERENCE;
             }
-          else if ((pvtMsg->StdMessageFrame.MessageSize*4) <
+          else if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
                    sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
             {
               _faultyBits |= CORRUPT_HEADER;
@@ -483,6 +500,22 @@ namespace stor
         }
     }
 
+    inline std::string ChainData::do_outputModuleLabel() const
+    {
+      std::stringstream msg;
+      msg << "An output module label is only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::Exception, msg.str());
+    }
+
+    inline uint32 ChainData::do_outputModuleId() const
+    {
+      std::stringstream msg;
+      msg << "An output module ID is only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::Exception, msg.str());
+    }
+
     class InitMsgData : public ChainData
     {
     public:
@@ -491,6 +524,8 @@ namespace stor
 
     protected:
       unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+      std::string do_outputModuleLabel() const;
+      uint32 do_outputModuleId() const;
 
     private:
       void parseI2OHeader();
@@ -525,6 +560,38 @@ namespace stor
         {
           return dataLoc;
         }
+    }
+
+    std::string InitMsgData::do_outputModuleLabel() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An output module label can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::Exception, msg.str());
+        }
+
+      unsigned char* firstFragLoc = dataLocation(0);
+      //unsigned long firstFragSize = dataSize(0);
+      InitMsgView view(firstFragLoc);
+      return view.outputModuleLabel();
+    }
+
+    uint32 InitMsgData::do_outputModuleId() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An output module ID can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::Exception, msg.str());
+        }
+
+      unsigned char* firstFragLoc = dataLocation(0);
+      //unsigned long firstFragSize = dataSize(0);
+      InitMsgView view(firstFragLoc);
+      return view.outputModuleId();
     }
 
     inline void InitMsgData::parseI2OHeader()
@@ -737,7 +804,7 @@ namespace stor
       {
         I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
           (I2O_PRIVATE_MESSAGE_FRAME*) pRef->getDataLocation();
-        if (!pvtMsg || ((pvtMsg->StdMessageFrame.MessageSize*4) <
+        if (!pvtMsg || ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
                         sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME)))
           {
             _data.reset(new detail::ChainData(pRef));
@@ -945,6 +1012,26 @@ namespace stor
   {
     if (!_data) return 0;
     return _data->getFragmentID(fragmentIndex);
+  }
+
+  std::string I2OChain::outputModuleLabel() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+          "The output module label can not be determined from an empty I2OChain.");
+      }
+    return _data->outputModuleLabel();
+  }
+
+  uint32 I2OChain::outputModuleId() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::Exception,
+          "The output module ID can not be determined from an empty I2OChain.");
+      }
+    return _data->outputModuleId();
   }
 
 } // namespace stor
