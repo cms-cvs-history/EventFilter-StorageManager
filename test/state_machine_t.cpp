@@ -84,6 +84,8 @@ void checkHistory( const StateMachine& m,
 
   if( ssize * 2 + 2 != hsize )
     {
+      cout << "Debug 1" << endl;
+      cout << ssize << " " << hsize << endl;
       ok = false;
     }
 
@@ -91,6 +93,7 @@ void checkHistory( const StateMachine& m,
     {
       if( h[0].stateName() != from_state )
 	{
+	  cout << "Debug 2" << endl;
 	  ok = false;
 	}
     }
@@ -105,12 +108,14 @@ void checkHistory( const StateMachine& m,
 
 	  if( h[ 2*i + 1 ].stateName() != steps[i] )
 	    {
+	      cout << "Debug 3" << endl;
 	      ok = false;
 	      break;
 	    }
 
 	  if( h[ 2*i + 2 ].stateName() != steps[i] )
 	    {
+	      cout << "Debug 4" << endl;
 	      ok = false;
 	      break;
 	    }
@@ -125,6 +130,7 @@ void checkHistory( const StateMachine& m,
     {
       if( h[ hsize - 1 ].stateName() != to_state )
 	{
+	  cout << "Debug 5" << endl;
 	  ok = false;
 	}
     }
@@ -201,17 +207,27 @@ int main()
   checkSignals( m, elist, "Processing" );
 
   //
-  //// Check Reconfigure from stopped: ////
+  //// Make sure it goes through DrainingQueues: ////
   //
 
+  m.clearHistory();
   m.process_event( Stop() );
   checkState( m, "Stopped" );
+
+  TransitionList steps;
+  steps.push_back( "DrainingQueues" );
+  steps.push_back( "Enabled" );
+  checkHistory( m, "Processing", "Stopped", steps );
+
+  //
+  //// Check Reconfigure: ////
+  //
 
   m.clearHistory();
   m.process_event( Reconfigure() );
   checkState( m, "Stopped" );
 
-  TransitionList steps;
+  steps.clear();
   steps.push_back( "Ready" );
   checkHistory( m, "Stopped", "Stopped", steps );
 
