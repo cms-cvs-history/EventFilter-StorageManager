@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.10 2009/02/12 11:24:57 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.1 2009/02/12 15:14:04 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -13,6 +13,8 @@ RunMonitorCollection::RunMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app, "Run")
 {
   _infoSpaceItems.push_back(std::make_pair("runNumber", &_runNumber));
+  _infoSpaceItems.push_back(std::make_pair("receivedEvents", &_receivedEvents));
+  _infoSpaceItems.push_back(std::make_pair("receivedErrorEvents", &_receivedErrorEvents));
 
   putItemsIntoInfoSpace();
 }
@@ -33,7 +35,9 @@ void RunMonitorCollection::do_updateInfoSpace()
   try
   {
     _infoSpace->lock();
-    _runNumber = static_cast<uint32_t>(runNumbersSeen.getLastSampleValue());
+    _runNumber = static_cast<xdata::UnsignedInteger32>(runNumbersSeen.getLastSampleValue());
+    _receivedEvents = static_cast<xdata::UnsignedInteger32>(eventIDsReceived.getSampleCount());
+    _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(errorEventIDsReceived.getSampleCount());
     _infoSpace->unlock();
   }
   catch (...)
