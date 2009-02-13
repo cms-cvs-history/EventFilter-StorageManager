@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.8 2009/02/11 21:00:50 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.9 2009/02/12 23:31:16 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -27,10 +27,11 @@ namespace stor
     ///////////////////////////////////////////////////////////////////
     class ChainData
     {
-      enum BitMasksForFaulty { CORRUPT_HEADER = 0x1,
-                               TOTAL_COUNT_MISMATCH = 0x2,
-                               DUPLICATE_FRAGMENT = 0x4,
-                               INCOMPLETE_MESSAGE = 0x8,
+      enum BitMasksForFaulty { INVALID_REFERENCE = 0x1,
+                               CORRUPT_HEADER = 0x2,
+                               TOTAL_COUNT_MISMATCH = 0x4,
+                               DUPLICATE_FRAGMENT = 0x8,
+                               INCOMPLETE_MESSAGE = 0x10,
                                EXTERNALLY_REQUESTED = 0x10000 };
 
     public:
@@ -42,6 +43,7 @@ namespace stor
       void addToChain(ChainData const& newpart);
       void markComplete();
       void markFaulty();
+      void markBadReference();
       void markCorrupt();
       unsigned long* getBufferData();
       void swap(ChainData& other);
@@ -212,7 +214,7 @@ namespace stor
         }
 
       // update the fragment count and check if the chain is now complete
-      if (! fragmentWasAdded)
+      if (!fragmentWasAdded)
         {
           // this should never happen - if it does, there is a logic
           // error in the loop above
@@ -220,7 +222,7 @@ namespace stor
                       "A fragment was unable to be added to a chain.");
         }
       ++_fragmentCount;
-      if (! faulty() && _fragmentCount == _expectedNumberOfFragments)
+      if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
         }
@@ -239,6 +241,11 @@ namespace stor
     inline void ChainData::markCorrupt()
     {
       _faultyBits |= CORRUPT_HEADER;
+    }
+
+    inline void ChainData::markBadReference()
+    {
+      _faultyBits |= INVALID_REFERENCE;
     }
 
     inline unsigned long* ChainData::getBufferData()
@@ -280,7 +287,7 @@ namespace stor
 
     inline void InitMsgData::parseI2OHeader()
     {
-      if (_ref)
+      if (!empty() && !faulty())
         {
           _messageCode = Header::INIT;
           I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
@@ -312,7 +319,7 @@ namespace stor
 
     inline void EventMsgData::parseI2OHeader()
     {
-      if (_ref)
+      if (!empty() && !faulty())
         {
           _messageCode = Header::EVENT;
           I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
@@ -344,7 +351,7 @@ namespace stor
 
     inline void DQMEventMsgData::parseI2OHeader()
     {
-      if (_ref)
+      if (!empty() && !faulty())
         {
           _messageCode = Header::DQM_EVENT;
           I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
@@ -376,7 +383,7 @@ namespace stor
 
     inline void ErrorEventMsgData::parseI2OHeader()
     {
-      if (_ref)
+      if (!empty() && !faulty())
         {
           _messageCode = Header::ERROR_EVENT;
           I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
@@ -404,8 +411,22 @@ namespace stor
       {
         I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
           (I2O_PRIVATE_MESSAGE_FRAME*) pRef->getDataLocation();
-        unsigned short i2oMessageCode = pvtMsg->XFunctionCode;
+        if (!pvtMsg)
+          {
+            _data.reset(new detail::ChainData(pRef));
+            _data->markBadReference();
+            return;
+          }
 
+        if (pvtMsg->StdMessageFrame.MessageSize <
+            sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
+          {
+            _data.reset(new detail::ChainData(pRef));
+            _data->markCorrupt();
+            return;
+          }
+
+        unsigned short i2oMessageCode = pvtMsg->XFunctionCode;
         switch (i2oMessageCode)
           {
 
