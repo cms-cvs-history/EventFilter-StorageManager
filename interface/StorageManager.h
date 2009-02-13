@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.12 2009/02/12 15:14:53 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.13 2009/02/13 11:29:36 mommsen Exp $
 */
 
 #include <string>
@@ -200,7 +200,6 @@ namespace stor {
     xdata::UnsignedInteger32 connectedRBs_;
 
     xdata::UnsignedInteger32 storedEvents_;
-    xdata::UnsignedInteger32 dqmRecords_;
     xdata::UnsignedInteger32 closedFiles_;
     xdata::UnsignedInteger32 openFiles_;
     xdata::Vector<xdata::String> fileList_;
