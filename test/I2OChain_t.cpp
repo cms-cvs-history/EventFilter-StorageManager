@@ -659,6 +659,8 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag2.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -677,6 +679,8 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag2.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
 
     // verify that adding a fragment to a complete chain throws an exception
 
@@ -727,6 +731,10 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -757,6 +765,10 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -787,15 +799,19 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     // verify that adding duplicate frames makes a chain faulty
 
-    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    Reference* ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag1(ref);
 
-    ref = allocate_frame_with_sample_header(0, 3);
+    ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag2(ref);
 
     frag1.addToChain(frag2);
@@ -818,6 +834,11 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentCount() == 3);
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 0);
 
     // verify that adding a fragment to an empty chain throws an exception
 

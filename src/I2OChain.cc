@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.11 2009/02/13 18:27:23 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.12 2009/02/13 18:56:44 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -51,6 +51,10 @@ namespace stor
       unsigned char getMessageCode() const {return _messageCode;}
       FragKey const& getFragmentKey() const {return _fragKey;}
       unsigned int getFragmentCount() const {return _fragmentCount;}
+      unsigned long getTotalDataSize() const;
+      unsigned long getDataSize(int fragmentIndex) const;
+      unsigned char* getDataLocation(int fragmentIndex) const;
+      unsigned int getFragmentID(int fragmentIndex) const;
 
     private:
       std::vector<QueueID> _streamTags;
@@ -68,6 +72,7 @@ namespace stor
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
 
+      virtual unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
       void validateI2OHeaders(unsigned short expectedI2OMessageCode);
     };
 
@@ -162,8 +167,8 @@ namespace stor
     // (both the existing chain and the new part must be non-empty!)
     void ChainData::addToChain(ChainData const& newpart)
     {
-      // if either the current chain or the newpart are faulty,
-      // we simply append the new stuff to the end of the existing fragments
+      // if either the current chain or the newpart are faulty, we
+      // simply append the new stuff to the end of the existing chain
       if (faulty() || newpart.faulty())
         {
           // update our fragment count to include the new fragments
@@ -188,91 +193,112 @@ namespace stor
           return;
         }
 
-      bool fragmentWasAdded = false;
-
-      // determine the index of the new fragment
-      I2O_SM_MULTIPART_MESSAGE_FRAME *thatMsg =
-        (I2O_SM_MULTIPART_MESSAGE_FRAME*) newpart._ref->getDataLocation();
-      unsigned int newIndex = thatMsg->frameCount;
-      //std::cout << "newIndex = " << newIndex << std::endl;
-
-      // verify that the total fragment counts match
-      unsigned int newFragmentTotalCount = thatMsg->numFrames;
-      if (newFragmentTotalCount != _expectedNumberOfFragments)
+      // loop over the fragments in the new part
+      toolbox::mem::Reference* newRef = newpart._ref;
+      while (newRef)
         {
-          _faultyBits |= TOTAL_COUNT_MISMATCH;
-        }
+          // unlink the next element in the new chain from that chain
+          toolbox::mem::Reference* nextNewRef = newRef->getNextReference();
+          newRef->setNextReference(0);
 
-      // if the new fragment goes at the head of the chain, handle that here
-      I2O_SM_MULTIPART_MESSAGE_FRAME *fragMsg =
-        (I2O_SM_MULTIPART_MESSAGE_FRAME*) _ref->getDataLocation();
-      unsigned int firstIndex = fragMsg->frameCount;
-      //std::cout << "firstIndex = " << firstIndex << std::endl;
-      if (newIndex < firstIndex)
-        {
-          newpart._ref->setNextReference(_ref);
-          _ref = newpart._ref->duplicate();
-          fragmentWasAdded = true;
-        }
+          // if the new fragment that we're working with is the first one
+          // in its chain, we need to duplicate it (now that it is unlinked)
+          // This is necessary since it is still being managed by an I2OChain
+          // somewhere.  The subsequent fragments in the new part do not
+          // need to be duplicated since we explicitly unlinked them from
+          // the first one.
+          if (newRef == newpart._ref) {newRef = newpart._ref->duplicate();}
 
-      else
-        {
-          // loop over the existing fragments and insert the new one
-          // in the correct place
-          toolbox::mem::Reference* curRef = _ref;
-          for (unsigned int idx = 0; idx < _fragmentCount; ++idx)
+          // we want to track whether the fragment was added (it *always* should be)
+          bool fragmentWasAdded = false;
+
+          // determine the index of the new fragment
+          I2O_SM_MULTIPART_MESSAGE_FRAME *thatMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) newRef->getDataLocation();
+          unsigned int newIndex = thatMsg->frameCount;
+          //std::cout << "newIndex = " << newIndex << std::endl;
+
+          // verify that the total fragment counts match
+          unsigned int newFragmentTotalCount = thatMsg->numFrames;
+          if (newFragmentTotalCount != _expectedNumberOfFragments)
             {
-              // if we have a duplicate fragment, add it after the existing
-              // one and indicate the error
-              I2O_SM_MULTIPART_MESSAGE_FRAME *curMsg =
-                (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
-              unsigned int curIndex = curMsg->frameCount;
-              //std::cout << "curIndex = " << curIndex << std::endl;
-              if (newIndex == curIndex) 
-                {
-                  _faultyBits |= DUPLICATE_FRAGMENT;
-                  newpart._ref->setNextReference(curRef->getNextReference());
-                  curRef->setNextReference(newpart._ref->duplicate());
-                  fragmentWasAdded = true;
-                  break;
-                }
-
-              // if we have reached the end of the chain, add the
-              // new fragment to the end
-              //std::cout << "nextRef = " << ((int) nextRef) << std::endl;
-              toolbox::mem::Reference* nextRef = curRef->getNextReference();
-              if (nextRef == 0)
-                {
-                  curRef->setNextReference(newpart._ref->duplicate());
-                  fragmentWasAdded = true;
-                  break;
-                }
-
-              I2O_SM_MULTIPART_MESSAGE_FRAME *nextMsg =
-                (I2O_SM_MULTIPART_MESSAGE_FRAME*) nextRef->getDataLocation();
-              unsigned int nextIndex = nextMsg->frameCount;
-              //std::cout << "nextIndex = " << nextIndex << std::endl;
-              if (newIndex > curIndex && newIndex < nextIndex)
-                {
-                  newpart._ref->setNextReference(curRef->getNextReference());
-                  curRef->setNextReference(newpart._ref->duplicate());
-                  fragmentWasAdded = true;
-                  break;
-                }
-
-              curRef = nextRef;
+              _faultyBits |= TOTAL_COUNT_MISMATCH;
             }
+
+          // if the new fragment goes at the head of the chain, handle that here
+          I2O_SM_MULTIPART_MESSAGE_FRAME *fragMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) _ref->getDataLocation();
+          unsigned int firstIndex = fragMsg->frameCount;
+          //std::cout << "firstIndex = " << firstIndex << std::endl;
+          if (newIndex < firstIndex)
+            {
+              newRef->setNextReference(_ref);
+              _ref = newRef;
+              fragmentWasAdded = true;
+            }
+
+          else
+            {
+              // loop over the existing fragments and insert the new one
+              // in the correct place
+              toolbox::mem::Reference* curRef = _ref;
+              for (unsigned int idx = 0; idx < _fragmentCount; ++idx)
+                {
+                  // if we have a duplicate fragment, add it after the existing
+                  // one and indicate the error
+                  I2O_SM_MULTIPART_MESSAGE_FRAME *curMsg =
+                    (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+                  unsigned int curIndex = curMsg->frameCount;
+                  //std::cout << "curIndex = " << curIndex << std::endl;
+                  if (newIndex == curIndex) 
+                    {
+                      _faultyBits |= DUPLICATE_FRAGMENT;
+                      newRef->setNextReference(curRef->getNextReference());
+                      curRef->setNextReference(newRef);
+                      fragmentWasAdded = true;
+                      break;
+                    }
+
+                  // if we have reached the end of the chain, add the
+                  // new fragment to the end
+                  //std::cout << "nextRef = " << ((int) nextRef) << std::endl;
+                  toolbox::mem::Reference* nextRef = curRef->getNextReference();
+                  if (nextRef == 0)
+                    {
+                      curRef->setNextReference(newRef);
+                      fragmentWasAdded = true;
+                      break;
+                    }
+
+                  I2O_SM_MULTIPART_MESSAGE_FRAME *nextMsg =
+                    (I2O_SM_MULTIPART_MESSAGE_FRAME*) nextRef->getDataLocation();
+                  unsigned int nextIndex = nextMsg->frameCount;
+                  //std::cout << "nextIndex = " << nextIndex << std::endl;
+                  if (newIndex > curIndex && newIndex < nextIndex)
+                    {
+                      newRef->setNextReference(curRef->getNextReference());
+                      curRef->setNextReference(newRef);
+                      fragmentWasAdded = true;
+                      break;
+                    }
+
+                  curRef = nextRef;
+                }
+            }
+
+          // update the fragment count and check if the chain is now complete
+          if (!fragmentWasAdded)
+            {
+              // this should never happen - if it does, there is a logic
+              // error in the loop above
+              XCEPT_RAISE(stor::exception::Exception,
+                          "A fragment was unable to be added to a chain.");
+            }
+          ++_fragmentCount;
+
+          newRef = nextNewRef;
         }
 
-      // update the fragment count and check if the chain is now complete
-      if (!fragmentWasAdded)
-        {
-          // this should never happen - if it does, there is a logic
-          // error in the loop above
-          XCEPT_RAISE(stor::exception::Exception,
-                      "A fragment was unable to be added to a chain.");
-        }
-      ++_fragmentCount;
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
@@ -313,6 +339,98 @@ namespace stor
       std::swap(_fragKey, other._fragKey);
       std::swap(_fragmentCount, other._fragmentCount);
       std::swap(_expectedNumberOfFragments, other._expectedNumberOfFragments);
+    }
+
+    unsigned long ChainData::getTotalDataSize() const
+    {
+      unsigned long totalSize = 0;
+      toolbox::mem::Reference* curRef = _ref;
+      for (unsigned int idx = 0; idx < _fragmentCount; ++idx)
+        {
+          I2O_MESSAGE_FRAME *i2oMsg =
+            (I2O_MESSAGE_FRAME*) curRef->getDataLocation();
+          if (!faulty())
+            {
+              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) i2oMsg;
+              totalSize += smMsg->dataSize;
+            }
+          else if (i2oMsg)
+            {
+              totalSize += i2oMsg->MessageSize;
+            }
+
+          curRef = curRef->getNextReference();
+        }
+      return totalSize;
+    }
+
+    unsigned long ChainData::getDataSize(int fragmentIndex) const
+    {
+      toolbox::mem::Reference* curRef = _ref;
+      for (int idx = 0; idx < fragmentIndex; ++idx)
+        {
+          curRef = curRef->getNextReference();
+        }
+
+      I2O_MESSAGE_FRAME *i2oMsg =
+        (I2O_MESSAGE_FRAME*) curRef->getDataLocation();
+      if (!faulty())
+        {
+          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) i2oMsg;
+          return smMsg->dataSize;
+        }
+      else if (i2oMsg)
+        {
+          return i2oMsg->MessageSize;
+        }
+      return 0;
+    }
+
+    unsigned char* ChainData::getDataLocation(int fragmentIndex) const
+    {
+      toolbox::mem::Reference* curRef = _ref;
+      for (int idx = 0; idx < fragmentIndex; ++idx)
+        {
+          curRef = curRef->getNextReference();
+        }
+
+      if (!faulty())
+        {
+          return do_getMessageLocation(static_cast<unsigned char*>
+                                       (curRef->getDataLocation()));
+        }
+      else
+        {
+          return static_cast<unsigned char*>(curRef->getDataLocation());
+        }
+    }
+
+    unsigned int ChainData::getFragmentID(int fragmentIndex) const
+    {
+      toolbox::mem::Reference* curRef = _ref;
+      for (int idx = 0; idx < fragmentIndex; ++idx)
+        {
+          curRef = curRef->getNextReference();
+        }
+
+      if (parsable())
+        {
+          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+          return smMsg->frameCount;
+        }
+      else
+        {
+          return 0;
+        }
+    }
+
+    inline unsigned char*
+    ChainData::do_getMessageLocation(unsigned char* dataLoc) const
+    {
+      return dataLoc;
     }
 
     void ChainData::validateI2OHeaders(unsigned short expectedI2OMessageCode)
@@ -371,6 +489,9 @@ namespace stor
       explicit InitMsgData(toolbox::mem::Reference* pRef);
       ~InitMsgData() {}
 
+    protected:
+      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+
     private:
       void parseI2OHeader();
     };
@@ -388,6 +509,21 @@ namespace stor
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
+        }
+    }
+
+    inline unsigned char*
+    InitMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    {
+      if (parsable())
+        {
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_PREAMBLE_MESSAGE_FRAME*) dataLoc;
+          return (unsigned char*) i2oMsg->dataPtr();
+        }
+      else
+        {
+          return dataLoc;
         }
     }
 
@@ -413,6 +549,9 @@ namespace stor
       explicit EventMsgData(toolbox::mem::Reference* pRef);
       ~EventMsgData() {}
 
+    protected:
+      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+
     private:
       void parseI2OHeader();
     };
@@ -430,6 +569,21 @@ namespace stor
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
+        }
+    }
+
+    inline unsigned char*
+    EventMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    {
+      if (parsable())
+        {
+          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_DATA_MESSAGE_FRAME*) dataLoc;
+          return (unsigned char*) i2oMsg->dataPtr();
+        }
+      else
+        {
+          return dataLoc;
         }
     }
 
@@ -455,6 +609,9 @@ namespace stor
       explicit DQMEventMsgData(toolbox::mem::Reference* pRef);
       ~DQMEventMsgData() {}
 
+    protected:
+      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+
     private:
       void parseI2OHeader();
     };
@@ -472,6 +629,21 @@ namespace stor
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
+        }
+    }
+
+    inline unsigned char*
+    DQMEventMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    {
+      if (parsable())
+        {
+          I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_DQM_MESSAGE_FRAME*) dataLoc;
+          return (unsigned char*) i2oMsg->dataPtr();
+        }
+      else
+        {
+          return dataLoc;
         }
     }
 
@@ -497,6 +669,9 @@ namespace stor
       explicit ErrorEventMsgData(toolbox::mem::Reference* pRef);
       ~ErrorEventMsgData() {}
 
+    protected:
+      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+
     private:
       void parseI2OHeader();
     };
@@ -514,6 +689,21 @@ namespace stor
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
+        }
+    }
+
+    inline unsigned char*
+    ErrorEventMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    {
+      if (parsable())
+        {
+          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+            (I2O_SM_DATA_MESSAGE_FRAME*) dataLoc;
+          return (unsigned char*) i2oMsg->dataPtr();
+        }
+      else
+        {
+          return dataLoc;
         }
     }
 
@@ -731,6 +921,30 @@ namespace stor
   {
     if (!_data) return 0;
     return _data->getFragmentCount();
+  }
+
+  unsigned long I2OChain::getTotalDataSize() const
+  {
+    if (!_data) return 0UL;
+    return _data->getTotalDataSize();
+  }
+
+  unsigned long I2OChain::getDataSize(int fragmentIndex) const
+  {
+    if (!_data) return 0UL;
+    return _data->getDataSize(fragmentIndex);
+  }
+
+  unsigned char* I2OChain::getDataLocation(int fragmentIndex) const
+  {
+    if (!_data) return 0UL;
+    return _data->getDataLocation(fragmentIndex);
+  }
+
+  unsigned int I2OChain::getFragmentID(int fragmentIndex) const
+  {
+    if (!_data) return 0;
+    return _data->getFragmentID(fragmentIndex);
   }
 
 } // namespace stor

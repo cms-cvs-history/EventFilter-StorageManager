@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.9 2009/02/11 21:00:49 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.10 2009/02/12 23:31:15 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/02/11 21:00:49 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/02/12 23:31:15 $
    */
 
 
@@ -187,18 +187,6 @@ namespace stor {
     unsigned long getTotalDataSize() const;
 
     /**
-       Returns the start address of the specified message fragment
-       (indexed from 0 to N-1, where N is the total number of fragments).
-       For complete chains, this method returns pointers to the actual
-       INIT, EVENT, DQM_EVENT, or ERROR_EVENT message fragments.
-       If the chain has been marked as "faulty", this method will still
-       return a valid data location for all fragment indices.  However,
-       in that case, the data may not correspond to an underlying
-       INIT, EVENT, etc. message.
-     */
-    unsigned long* getDataLocation(int fragmentIndex) const;
-
-    /**
        Returns the size of the specified message fragment
        (indexed from 0 to N-1, where N is the total number of fragments).
        For complete chains, this method returns the sizes of the actual
@@ -209,6 +197,26 @@ namespace stor {
        INIT, EVENT, etc. message.)
      */
     unsigned long getDataSize(int fragmentIndex) const;
+
+    /**
+       Returns the start address of the specified message fragment
+       (indexed from 0 to N-1, where N is the total number of fragments).
+       For complete chains, this method returns pointers to the actual
+       INIT, EVENT, DQM_EVENT, or ERROR_EVENT message fragments.
+       If the chain has been marked as "faulty", this method will still
+       return a valid data location for all fragment indices.  However,
+       in that case, the data may not correspond to an underlying
+       INIT, EVENT, etc. message.
+     */
+    unsigned char* getDataLocation(int fragmentIndex) const;
+
+    /**
+       Returns the fragmentID of the specified message fragment
+       (indexed from 0 to N-1, where N is the total number of fragments).
+       This value varies from 0 to N-1 and should match the fragment index,
+       so this method is probably only useful for testing.
+     */
+    unsigned int getFragmentID(int fragmentIndex) const;
 
   private:
 
