@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.11 2009/02/12 11:23:54 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.12 2009/02/12 15:14:53 mommsen Exp $
 */
 
 #include <string>
@@ -113,12 +113,12 @@ namespace stor {
     void stopAction();
     void haltAction();
 
-    void newDefaultWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
       {css_.css(in,out);}
+    void storedDataWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void rbsenderWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void streamerOutputWebPage
@@ -178,7 +178,6 @@ namespace stor {
     xdata::Integer compressionLevelDQM_;
 
     evf::Css css_;
-    xdata::UnsignedInteger32 receivedFrames_;
     int pool_is_set_;
     toolbox::mem::Pool *pool_;
 
@@ -201,8 +200,6 @@ namespace stor {
     xdata::UnsignedInteger32 connectedRBs_;
 
     xdata::UnsignedInteger32 storedEvents_;
-    xdata::UnsignedInteger32 receivedEvents_;
-    xdata::UnsignedInteger32 receivedErrorEvents_;
     xdata::UnsignedInteger32 dqmRecords_;
     xdata::UnsignedInteger32 closedFiles_;
     xdata::UnsignedInteger32 openFiles_;
@@ -222,41 +219,6 @@ namespace stor {
     xdata::Vector<xdata::UnsignedInteger32> fileSize_;
     xdata::Vector<xdata::String> namesOfStream_;
     xdata::Vector<xdata::String> namesOfOutMod_;
-
-    // *** for received data performance measurements
-    void addMeasurement(unsigned long size);
-    stor::SMPerformanceMeter *pmeter_;
-    void addDQMMeasurement(unsigned long size);
-    stor::SMPerformanceMeter *DQMpmeter_;
-
-    // *** measurements for last set of samples
-    xdata::UnsignedInteger32 samples_; // number of samples/frames per measurement
-    xdata::UnsignedInteger32 period4samples_; // time period per measurement
-    xdata::Double instantBandwidth_; // bandwidth in MB/s
-    xdata::Double instantRate_;      // number of frames/s
-    xdata::Double instantLatency_;   // micro-seconds/frame
-    xdata::Double maxBandwidth_;     // maximum bandwidth in MB/s
-    xdata::Double minBandwidth_;     // minimum bandwidth in MB/s
-    // *** measurements for last time period
-    xdata::Double instantBandwidth2_;// bandwidth in MB/s
-    xdata::Double instantRate2_;     // number of frames/s
-    xdata::Double instantLatency2_;  // micro-seconds/frame
-    xdata::Double maxBandwidth2_;    // maximum bandwidth in MB/s
-    xdata::Double minBandwidth2_;    // minimum bandwidth in MB/s
-
-    // *** measurements for all samples
-    xdata::Double duration_;         // time for run in seconds
-    xdata::UnsignedInteger32 totalSamples_; //number of samples/frames per measurement
-    xdata::Double meanBandwidth_;    // bandwidth in MB/s
-    xdata::Double meanRate_;         // number of frames/s
-    xdata::Double meanLatency_;      // micro-seconds/frame
-    xdata::Double receivedVolume_;   // total received data in MB
-
-    xdata::Double duration2_;         // time for run in seconds
-    xdata::UnsignedInteger32 totalSamples2_; //number of samples/frames per measurement
-    xdata::Double meanBandwidth2_;    // bandwidth in MB/s
-    xdata::Double meanRate2_;         // number of frames/s
-    xdata::Double meanLatency2_;      // micro-seconds/frame
 
     // *** for stored data performance measurements
     // *** measurements for last set of samples
@@ -288,36 +250,6 @@ namespace stor {
     xdata::Double store_meanRate2_;         // number of frames/s
     xdata::Double store_meanLatency2_;      // micro-seconds/frame
 
-    // Statistics for received DQM data
-    // *** measurements for last set of samples
-    xdata::UnsignedInteger32 DQMsamples_; // number of samples/frames per measurement
-    xdata::UnsignedInteger32 DQMperiod4samples_; // time period per measurement
-    xdata::Double DQMinstantBandwidth_; // bandwidth in MB/s
-    xdata::Double DQMinstantRate_;      // number of frames/s
-    xdata::Double DQMinstantLatency_;   // micro-seconds/frame
-    xdata::Double DQMmaxBandwidth_;     // maximum bandwidth in MB/s
-    xdata::Double DQMminBandwidth_;     // minimum bandwidth in MB/s
-    // *** measurements for last time period
-    xdata::Double DQMinstantBandwidth2_;// bandwidth in MB/s
-    xdata::Double DQMinstantRate2_;     // number of frames/s
-    xdata::Double DQMinstantLatency2_;  // micro-seconds/frame
-    xdata::Double DQMmaxBandwidth2_;    // maximum bandwidth in MB/s
-    xdata::Double DQMminBandwidth2_;    // minimum bandwidth in MB/s
-
-    // *** measurements for all samples
-    xdata::Double DQMduration_;         // time for run in seconds
-    xdata::UnsignedInteger32 DQMtotalSamples_; //number of samples/frames per measurement
-    xdata::Double DQMmeanBandwidth_;    // bandwidth in MB/s
-    xdata::Double DQMmeanRate_;         // number of frames/s
-    xdata::Double DQMmeanLatency_;      // micro-seconds/frame
-    xdata::Double DQMreceivedVolume_;   // total received data in MB
-
-    xdata::Double DQMduration2_;         // time for run in seconds
-    xdata::UnsignedInteger32 DQMtotalSamples2_; //number of samples/frames per measurement
-    xdata::Double DQMmeanBandwidth2_;    // bandwidth in MB/s
-    xdata::Double DQMmeanRate2_;         // number of frames/s
-    xdata::Double DQMmeanLatency2_;      // micro-seconds/frame
-
     // *** additional flashlist contents (rest was already there)
     xdata::String            class_;
     xdata::UnsignedInteger32 instance_;
@@ -342,8 +274,6 @@ namespace stor {
     typedef std::map<std::string,streammon>::iterator ismap;
     smap	 streams_;
 
-    unsigned int lastEventSeen_; // report last seen event id
-    unsigned int lastErrorEventSeen_; // report last error event id seen
     boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
 
     std::string sm_cvs_version_;
