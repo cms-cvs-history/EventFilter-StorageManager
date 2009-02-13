@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.12 2009/02/13 18:56:44 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.13 2009/02/13 21:07:12 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -48,12 +48,12 @@ namespace stor
       void markCorrupt();
       unsigned long* getBufferData();
       void swap(ChainData& other);
-      unsigned char getMessageCode() const {return _messageCode;}
-      FragKey const& getFragmentKey() const {return _fragKey;}
-      unsigned int getFragmentCount() const {return _fragmentCount;}
-      unsigned long getTotalDataSize() const;
-      unsigned long getDataSize(int fragmentIndex) const;
-      unsigned char* getDataLocation(int fragmentIndex) const;
+      unsigned int messageCode() const {return _messageCode;}
+      FragKey const& fragmentKey() const {return _fragKey;}
+      unsigned int fragmentCount() const {return _fragmentCount;}
+      unsigned long totalDataSize() const;
+      unsigned long dataSize(int fragmentIndex) const;
+      unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
 
     private:
@@ -67,7 +67,7 @@ namespace stor
       bool _complete;
       unsigned int _faultyBits;
 
-      unsigned char _messageCode;
+      unsigned int _messageCode;
       FragKey _fragKey;
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
@@ -102,8 +102,8 @@ namespace stor
                 {
                   _faultyBits |= INVALID_REFERENCE;
                 }
-              else if (pvtMsg->StdMessageFrame.MessageSize <
-                  sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
+              else if ((pvtMsg->StdMessageFrame.MessageSize*4) <
+                       sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
                 {
                   _faultyBits |= CORRUPT_HEADER;
                 }
@@ -341,7 +341,7 @@ namespace stor
       std::swap(_expectedNumberOfFragments, other._expectedNumberOfFragments);
     }
 
-    unsigned long ChainData::getTotalDataSize() const
+    unsigned long ChainData::totalDataSize() const
     {
       unsigned long totalSize = 0;
       toolbox::mem::Reference* curRef = _ref;
@@ -357,7 +357,7 @@ namespace stor
             }
           else if (i2oMsg)
             {
-              totalSize += i2oMsg->MessageSize;
+              totalSize += (i2oMsg->MessageSize*4);
             }
 
           curRef = curRef->getNextReference();
@@ -365,7 +365,7 @@ namespace stor
       return totalSize;
     }
 
-    unsigned long ChainData::getDataSize(int fragmentIndex) const
+    unsigned long ChainData::dataSize(int fragmentIndex) const
     {
       toolbox::mem::Reference* curRef = _ref;
       for (int idx = 0; idx < fragmentIndex; ++idx)
@@ -383,12 +383,12 @@ namespace stor
         }
       else if (i2oMsg)
         {
-          return i2oMsg->MessageSize;
+          return (i2oMsg->MessageSize*4);
         }
       return 0;
     }
 
-    unsigned char* ChainData::getDataLocation(int fragmentIndex) const
+    unsigned char* ChainData::dataLocation(int fragmentIndex) const
     {
       toolbox::mem::Reference* curRef = _ref;
       for (int idx = 0; idx < fragmentIndex; ++idx)
@@ -445,7 +445,7 @@ namespace stor
             {
               _faultyBits |= INVALID_REFERENCE;
             }
-          else if (pvtMsg->StdMessageFrame.MessageSize <
+          else if ((pvtMsg->StdMessageFrame.MessageSize*4) <
                    sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
             {
               _faultyBits |= CORRUPT_HEADER;
@@ -737,7 +737,7 @@ namespace stor
       {
         I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
           (I2O_PRIVATE_MESSAGE_FRAME*) pRef->getDataLocation();
-        if (!pvtMsg || (pvtMsg->StdMessageFrame.MessageSize <
+        if (!pvtMsg || ((pvtMsg->StdMessageFrame.MessageSize*4) <
                         sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME)))
           {
             _data.reset(new detail::ChainData(pRef));
@@ -853,8 +853,8 @@ namespace stor
       }
 
     // require the new part and this chain to have the same fragment key
-    FragKey thisKey = getFragmentKey();
-    FragKey thatKey = newpart.getFragmentKey();
+    FragKey thisKey = fragmentKey();
+    FragKey thatKey = newpart.fragmentKey();
     // should change this to != once we implement that operator in FragKey
     if (thisKey < thatKey || thatKey < thisKey)
       {
@@ -905,40 +905,40 @@ namespace stor
     I2OChain().swap(*this);
   }
 
-  unsigned char I2OChain::getMessageCode() const
+  unsigned int I2OChain::messageCode() const
   {
     if (!_data) return Header::INVALID;
-    return _data->getMessageCode();
+    return _data->messageCode();
   }
 
-  FragKey I2OChain::getFragmentKey() const
+  FragKey I2OChain::fragmentKey() const
   {
     if (!_data) return FragKey(Header::INVALID,0,0,0,0,0);
-    return _data->getFragmentKey();
+    return _data->fragmentKey();
   }
 
-  unsigned int I2OChain::getFragmentCount() const
+  unsigned int I2OChain::fragmentCount() const
   {
     if (!_data) return 0;
-    return _data->getFragmentCount();
+    return _data->fragmentCount();
   }
 
-  unsigned long I2OChain::getTotalDataSize() const
+  unsigned long I2OChain::totalDataSize() const
   {
     if (!_data) return 0UL;
-    return _data->getTotalDataSize();
+    return _data->totalDataSize();
   }
 
-  unsigned long I2OChain::getDataSize(int fragmentIndex) const
+  unsigned long I2OChain::dataSize(int fragmentIndex) const
   {
     if (!_data) return 0UL;
-    return _data->getDataSize(fragmentIndex);
+    return _data->dataSize(fragmentIndex);
   }
 
-  unsigned char* I2OChain::getDataLocation(int fragmentIndex) const
+  unsigned char* I2OChain::dataLocation(int fragmentIndex) const
   {
     if (!_data) return 0UL;
-    return _data->getDataLocation(fragmentIndex);
+    return _data->dataLocation(fragmentIndex);
   }
 
   unsigned int I2OChain::getFragmentID(int fragmentIndex) const

@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.10 2009/02/12 23:31:15 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.11 2009/02/13 21:07:12 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/02/12 23:31:15 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/02/13 21:07:12 $
    */
 
 
@@ -154,14 +154,14 @@ namespace stor {
        are Header::INVALID, Header::INIT, Header::EVENT, Header::DQM_EVENT,
        and Header::ERROR_EVENT from IOPool/Streamer/interface/MsgHeader.h.
      */
-    unsigned char getMessageCode() const;
+    unsigned int messageCode() const;
 
     /**
        Returns the fragment key for the chain.  The fragment key
        is the entity that uniquely identifies all of the fragments
        from a particular event.
      */
-    FragKey getFragmentKey() const;
+    FragKey fragmentKey() const;
 
     /**
        Returns the number of frames currently contained in the chain.
@@ -172,7 +172,7 @@ namespace stor {
        the number of fragments contained in the chain, but those fragments
        may not correspond to a valid I2O message.
      */
-    unsigned int getFragmentCount() const;
+    unsigned int fragmentCount() const;
 
     /**
        Returns the total size of all of the contained message fragments.
@@ -181,10 +181,10 @@ namespace stor {
        For incomplete chains, this method will return an invalid value.
        If the chain has been marked as "faulty", this method will
        return the total size of the data that will be returned from
-       the getDataSize() method on each of the fragments, even though
+       the dataSize() method on each of the fragments, even though
        those fragments may not correspond to actual storage manager messages.
      */
-    unsigned long getTotalDataSize() const;
+    unsigned long totalDataSize() const;
 
     /**
        Returns the size of the specified message fragment
@@ -196,7 +196,7 @@ namespace stor {
        in that case, the sizes may not correspond to the underlying
        INIT, EVENT, etc. message.)
      */
-    unsigned long getDataSize(int fragmentIndex) const;
+    unsigned long dataSize(int fragmentIndex) const;
 
     /**
        Returns the start address of the specified message fragment
@@ -208,7 +208,7 @@ namespace stor {
        in that case, the data may not correspond to an underlying
        INIT, EVENT, etc. message.
      */
-    unsigned char* getDataLocation(int fragmentIndex) const;
+    unsigned char* dataLocation(int fragmentIndex) const;
 
     /**
        Returns the fragmentID of the specified message fragment

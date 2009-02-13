@@ -110,8 +110,8 @@ testI2OChain::default_chain()
   CPPUNIT_ASSERT(frag.empty());
   CPPUNIT_ASSERT(!frag.complete());
   CPPUNIT_ASSERT(!frag.faulty());
-  CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-  CPPUNIT_ASSERT(frag.getFragmentCount() == 0);
+  CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+  CPPUNIT_ASSERT(frag.fragmentCount() == 0);
   //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
@@ -124,8 +124,8 @@ testI2OChain::null_reference()
   CPPUNIT_ASSERT(frag.empty());
   CPPUNIT_ASSERT(!frag.complete());
   CPPUNIT_ASSERT(!frag.faulty());
-  CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-  CPPUNIT_ASSERT(frag.getFragmentCount() == 0);
+  CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+  CPPUNIT_ASSERT(frag.fragmentCount() == 0);
   //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
@@ -145,8 +145,8 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(frag.faulty());  // because the buffer is empty
     frag.markFaulty();
     CPPUNIT_ASSERT(frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -313,8 +313,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
     CPPUNIT_ASSERT(frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -324,8 +324,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
     CPPUNIT_ASSERT(frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -335,8 +335,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
     CPPUNIT_ASSERT(frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   {
@@ -345,8 +345,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
     CPPUNIT_ASSERT(frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -356,8 +356,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
     CPPUNIT_ASSERT(frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::INVALID);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -367,8 +367,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(frag.complete());
     CPPUNIT_ASSERT(!frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -378,8 +378,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
     CPPUNIT_ASSERT(!frag.faulty());
-    CPPUNIT_ASSERT(frag.getMessageCode() == Header::ERROR_EVENT);
-    CPPUNIT_ASSERT(frag.getFragmentCount() == 1);
+    CPPUNIT_ASSERT(frag.messageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -405,8 +405,8 @@ testI2OChain::populate_i2o_header()
     i2oMsg->fuGUID = value4;
 
     stor::I2OChain initMsgFrag(ref);
-    CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == Header::INIT);
-    stor::FragKey fragmentKey = initMsgFrag.getFragmentKey();
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
+    stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
     CPPUNIT_ASSERT(fragmentKey.event_ == value1);
@@ -442,8 +442,8 @@ testI2OChain::copy_with_valid_header()
     stor::I2OChain copy(eventMsgFrag);
 
     {
-      CPPUNIT_ASSERT(eventMsgFrag.getMessageCode() == Header::EVENT);
-      stor::FragKey fragmentKey = eventMsgFrag.getFragmentKey();
+      CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
+      stor::FragKey fragmentKey = eventMsgFrag.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -453,8 +453,8 @@ testI2OChain::copy_with_valid_header()
     }
 
     {
-      CPPUNIT_ASSERT(copy.getMessageCode() == Header::EVENT);
-      stor::FragKey fragmentKey = copy.getFragmentKey();
+      CPPUNIT_ASSERT(copy.messageCode() == Header::EVENT);
+      stor::FragKey fragmentKey = copy.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -491,8 +491,8 @@ testI2OChain::assign_with_valid_header()
     stor::I2OChain copy = eventMsgFrag;
 
     {
-      CPPUNIT_ASSERT(eventMsgFrag.getMessageCode() == Header::ERROR_EVENT);
-      stor::FragKey fragmentKey = eventMsgFrag.getFragmentKey();
+      CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::ERROR_EVENT);
+      stor::FragKey fragmentKey = eventMsgFrag.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::ERROR_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -502,8 +502,8 @@ testI2OChain::assign_with_valid_header()
     }
 
     {
-      CPPUNIT_ASSERT(copy.getMessageCode() == Header::ERROR_EVENT);
-      stor::FragKey fragmentKey = copy.getFragmentKey();
+      CPPUNIT_ASSERT(copy.messageCode() == Header::ERROR_EVENT);
+      stor::FragKey fragmentKey = copy.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::ERROR_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -548,8 +548,8 @@ testI2OChain::swap_with_valid_header()
     stor::I2OChain frag2(ref);
 
     {
-      CPPUNIT_ASSERT(frag1.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey fragmentKey = frag1.getFragmentKey();
+      CPPUNIT_ASSERT(frag1.messageCode() == Header::DQM_EVENT);
+      stor::FragKey fragmentKey = frag1.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -559,8 +559,8 @@ testI2OChain::swap_with_valid_header()
     }
 
     {
-      CPPUNIT_ASSERT(frag2.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey fragmentKey = frag2.getFragmentKey();
+      CPPUNIT_ASSERT(frag2.messageCode() == Header::DQM_EVENT);
+      stor::FragKey fragmentKey = frag2.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value5);
       CPPUNIT_ASSERT(fragmentKey.event_ == value4);
@@ -572,8 +572,8 @@ testI2OChain::swap_with_valid_header()
     std::swap(frag1, frag2);
 
     {
-      CPPUNIT_ASSERT(frag1.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey fragmentKey = frag1.getFragmentKey();
+      CPPUNIT_ASSERT(frag1.messageCode() == Header::DQM_EVENT);
+      stor::FragKey fragmentKey = frag1.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value5);
       CPPUNIT_ASSERT(fragmentKey.event_ == value4);
@@ -583,8 +583,8 @@ testI2OChain::swap_with_valid_header()
     }
 
     {
-      CPPUNIT_ASSERT(frag2.getMessageCode() == Header::DQM_EVENT);
-      stor::FragKey fragmentKey = frag2.getFragmentKey();
+      CPPUNIT_ASSERT(frag2.messageCode() == Header::DQM_EVENT);
+      stor::FragKey fragmentKey = frag2.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::DQM_EVENT);
       CPPUNIT_ASSERT(fragmentKey.run_ == value1);
       CPPUNIT_ASSERT(fragmentKey.event_ == value2);
@@ -616,8 +616,8 @@ testI2OChain::release_with_valid_header()
     i2oMsg->fuGUID = value4;
 
     stor::I2OChain initMsgFrag(ref);
-    CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == Header::INIT);
-    stor::FragKey fragmentKey = initMsgFrag.getFragmentKey();
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
+    stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
     CPPUNIT_ASSERT(fragmentKey.event_ == value1);
@@ -626,8 +626,8 @@ testI2OChain::release_with_valid_header()
     CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value4);
 
     initMsgFrag.release();
-    CPPUNIT_ASSERT(initMsgFrag.getMessageCode() == 0);
-    fragmentKey = initMsgFrag.getFragmentKey();
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == 0);
+    fragmentKey = initMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == 0);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
     CPPUNIT_ASSERT(fragmentKey.event_ == 0);
@@ -835,7 +835,7 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
 
-    CPPUNIT_ASSERT(frag1.getFragmentCount() == 3);
+    CPPUNIT_ASSERT(frag1.fragmentCount() == 3);
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 0);
