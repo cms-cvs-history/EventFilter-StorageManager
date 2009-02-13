@@ -806,21 +806,14 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
 
-    // verify that adding a fragment to a faulty chain throws an exception
+    // verify that adding a fragment to a faulty chain works
 
     ref = allocate_frame_with_sample_header(0, 3);
     stor::I2OChain frag3(ref);
 
-    try
-      {
-        frag1.addToChain(frag3);
-        CPPUNIT_ASSERT(false);
-      }
-    catch (stor::exception::Exception& excpt)
-      {
-      }
+    frag1.addToChain(frag3);
     CPPUNIT_ASSERT(!frag1.empty());
-    CPPUNIT_ASSERT(!frag3.empty());
+    CPPUNIT_ASSERT(frag3.empty());
     CPPUNIT_ASSERT(!frag1.complete());
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(frag1.faulty());
@@ -828,18 +821,20 @@ testI2OChain::add_fragment()
 
     // verify that adding a fragment to an empty chain throws an exception
 
-    stor::I2OChain frag4;
+    ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag4(ref);
+    stor::I2OChain frag5;
 
     try
       {
-        frag4.addToChain(frag3);
+        frag5.addToChain(frag4);
         CPPUNIT_ASSERT(false);
       }
     catch (stor::exception::Exception& excpt)
       {
       }
-    CPPUNIT_ASSERT(frag4.empty());
-    CPPUNIT_ASSERT(!frag3.empty());
+    CPPUNIT_ASSERT(frag5.empty());
+    CPPUNIT_ASSERT(!frag4.empty());
     CPPUNIT_ASSERT(!frag4.complete());
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(!frag4.faulty());

@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.10 2009/02/13 01:16:37 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.11 2009/02/13 18:27:23 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -158,10 +158,35 @@ namespace stor
         ((_faultyBits & CORRUPT_HEADER) == 0);
     }
 
+    // this method currently does NOT support operation on empty chains
+    // (both the existing chain and the new part must be non-empty!)
     void ChainData::addToChain(ChainData const& newpart)
     {
-      // this method expects to be called with non-null _ref
-      // for both the current chain and the new part!
+      // if either the current chain or the newpart are faulty,
+      // we simply append the new stuff to the end of the existing fragments
+      if (faulty() || newpart.faulty())
+        {
+          // update our fragment count to include the new fragments
+          toolbox::mem::Reference* curRef = newpart._ref;
+          while (curRef) {
+            ++_fragmentCount;
+            curRef = curRef->getNextReference();
+          }
+
+          // append the new fragments to the end of the existing chain
+          toolbox::mem::Reference* lastRef = _ref;
+          curRef = _ref->getNextReference();
+          while (curRef) {
+            lastRef = curRef;
+            curRef = curRef->getNextReference();
+          }
+          lastRef->setNextReference(newpart._ref->duplicate());
+
+          // merge the faulty flags from the new part into the existing flags
+          _faultyBits |= newpart._faultyBits;
+
+          return;
+        }
 
       bool fragmentWasAdded = false;
 
@@ -624,11 +649,6 @@ namespace stor
         XCEPT_RAISE(stor::exception::Exception,
                     "A fragment may not be added to a complete chain.");
       }
-    if (faulty())
-      {
-        XCEPT_RAISE(stor::exception::Exception,
-                    "A fragment may not be added to a faulty chain.");
-      }
 
     // empty, complete, or faulty new parts can not be added to chains
     if (newpart.empty())
@@ -640,11 +660,6 @@ namespace stor
       {
         XCEPT_RAISE(stor::exception::Exception,
                     "A complete chain may not be added to an existing chain.");
-      }
-    if (newpart.faulty())
-      {
-        XCEPT_RAISE(stor::exception::Exception,
-                    "A faulty chain may not be added to an existing chain.");
       }
 
     // require the new part and this chain to have the same fragment key
