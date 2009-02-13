@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.9 2009/02/12 23:31:16 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.10 2009/02/13 01:16:37 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -30,8 +30,9 @@ namespace stor
       enum BitMasksForFaulty { INVALID_REFERENCE = 0x1,
                                CORRUPT_HEADER = 0x2,
                                TOTAL_COUNT_MISMATCH = 0x4,
-                               DUPLICATE_FRAGMENT = 0x8,
-                               INCOMPLETE_MESSAGE = 0x10,
+                               FRAGMENTS_OUT_OF_ORDER = 0x8,
+                               DUPLICATE_FRAGMENT = 0x10,
+                               INCOMPLETE_MESSAGE = 0x20,
                                EXTERNALLY_REQUESTED = 0x10000 };
 
     public:
@@ -40,10 +41,10 @@ namespace stor
       bool empty() const;
       bool complete() const;
       bool faulty() const;
+      bool parsable() const;
       void addToChain(ChainData const& newpart);
       void markComplete();
       void markFaulty();
-      void markBadReference();
       void markCorrupt();
       unsigned long* getBufferData();
       void swap(ChainData& other);
@@ -66,6 +67,8 @@ namespace stor
       FragKey _fragKey;
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
+
+      void validateI2OHeaders(unsigned short expectedI2OMessageCode);
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -79,22 +82,39 @@ namespace stor
       _messageCode(Header::INVALID),
       _fragKey(Header::INVALID,0,0,0,0,0),
       _fragmentCount(0),
-      _expectedNumberOfFragments(1)
+      _expectedNumberOfFragments(0)
     {
       if (pRef)
         {
-          _fragmentCount = 1;
+          toolbox::mem::Reference* curRef = pRef;
+          while (curRef)
+            {
+              ++_fragmentCount;
 
-          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-            (I2O_SM_MULTIPART_MESSAGE_FRAME*) pRef->getDataLocation();
-          _expectedNumberOfFragments = smMsg->numFrames;
-          if (smMsg->numFrames < 1 ||
-              smMsg->frameCount >= smMsg->numFrames) {
-            markCorrupt();
-          }
-          else if (smMsg->numFrames == 1) {
-            markComplete();
-          }
+              I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+                (I2O_PRIVATE_MESSAGE_FRAME*) curRef->getDataLocation();
+              if (!pvtMsg)
+                {
+                  _faultyBits |= INVALID_REFERENCE;
+                }
+              else if (pvtMsg->StdMessageFrame.MessageSize <
+                  sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
+                {
+                  _faultyBits |= CORRUPT_HEADER;
+                }
+              else
+                {
+                  I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+                    (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+                  _expectedNumberOfFragments = smMsg->numFrames;
+                  if (_expectedNumberOfFragments < 1 ||
+                      smMsg->frameCount >= _expectedNumberOfFragments) {
+                    _faultyBits |= CORRUPT_HEADER;
+                  }
+                }
+
+              curRef = curRef->getNextReference();
+            }
         }
     }
 
@@ -132,7 +152,13 @@ namespace stor
       return (_faultyBits != 0);
     }
 
-    inline void ChainData::addToChain(ChainData const& newpart)
+    inline bool ChainData::parsable() const
+    {
+      return (_ref) && ((_faultyBits & INVALID_REFERENCE) == 0) &&
+        ((_faultyBits & CORRUPT_HEADER) == 0);
+    }
+
+    void ChainData::addToChain(ChainData const& newpart)
     {
       // this method expects to be called with non-null _ref
       // for both the current chain and the new part!
@@ -243,11 +269,6 @@ namespace stor
       _faultyBits |= CORRUPT_HEADER;
     }
 
-    inline void ChainData::markBadReference()
-    {
-      _faultyBits |= INVALID_REFERENCE;
-    }
-
     inline unsigned long* ChainData::getBufferData()
     {
       return _ref 
@@ -269,6 +290,56 @@ namespace stor
       std::swap(_expectedNumberOfFragments, other._expectedNumberOfFragments);
     }
 
+    void ChainData::validateI2OHeaders(unsigned short expectedI2OMessageCode)
+    {
+      int previousIndex = -1;
+      toolbox::mem::Reference* curRef = _ref;
+      while (curRef)
+        {
+          I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+            (I2O_PRIVATE_MESSAGE_FRAME*) curRef->getDataLocation();
+          if (!pvtMsg)
+            {
+              _faultyBits |= INVALID_REFERENCE;
+            }
+          else if (pvtMsg->StdMessageFrame.MessageSize <
+                   sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
+            {
+              _faultyBits |= CORRUPT_HEADER;
+            }
+          else
+            {
+              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+              if (pvtMsg->XFunctionCode != expectedI2OMessageCode)
+                {
+                  _faultyBits |= CORRUPT_HEADER;
+                }
+              if (smMsg->numFrames != _expectedNumberOfFragments)
+                {
+                  _faultyBits |= TOTAL_COUNT_MISMATCH;
+                }
+
+              int thisIndex = static_cast<int>(smMsg->frameCount);
+              if (thisIndex == previousIndex)
+                {
+                  _faultyBits |= DUPLICATE_FRAGMENT;
+                }
+              if (thisIndex < previousIndex)
+                {
+                  _faultyBits |= FRAGMENTS_OUT_OF_ORDER;
+                }
+              previousIndex = thisIndex;
+
+              // we could also check the fields that we use for the
+              // fragment key, but that would need intelligence from
+              // the ChainData child classes...
+            }
+
+          curRef = curRef->getNextReference();
+        }
+    }
+
     class InitMsgData : public ChainData
     {
     public:
@@ -283,11 +354,21 @@ namespace stor
       ChainData(pRef)
     {
       parseI2OHeader();
+
+      if (_fragmentCount > 1)
+        {
+          validateI2OHeaders(I2O_SM_PREAMBLE);
+        }
+
+      if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
+        {
+          markComplete();
+        }
     }
 
     inline void InitMsgData::parseI2OHeader()
     {
-      if (!empty() && !faulty())
+      if (parsable())
         {
           _messageCode = Header::INIT;
           I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
@@ -315,11 +396,21 @@ namespace stor
       ChainData(pRef)
     {
       parseI2OHeader();
+
+      if (_fragmentCount > 1)
+        {
+          validateI2OHeaders(I2O_SM_DATA);
+        }
+
+      if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
+        {
+          markComplete();
+        }
     }
 
     inline void EventMsgData::parseI2OHeader()
     {
-      if (!empty() && !faulty())
+      if (parsable())
         {
           _messageCode = Header::EVENT;
           I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
@@ -347,11 +438,21 @@ namespace stor
       ChainData(pRef)
     {
       parseI2OHeader();
+
+      if (_fragmentCount > 1)
+        {
+          validateI2OHeaders(I2O_SM_DQM);
+        }
+
+      if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
+        {
+          markComplete();
+        }
     }
 
     inline void DQMEventMsgData::parseI2OHeader()
     {
-      if (!empty() && !faulty())
+      if (parsable())
         {
           _messageCode = Header::DQM_EVENT;
           I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
@@ -379,11 +480,21 @@ namespace stor
       ChainData(pRef)
     {
       parseI2OHeader();
+
+      if (_fragmentCount > 1)
+        {
+          validateI2OHeaders(I2O_SM_ERROR);
+        }
+
+      if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
+        {
+          markComplete();
+        }
     }
 
     inline void ErrorEventMsgData::parseI2OHeader()
     {
-      if (!empty() && !faulty())
+      if (parsable())
         {
           _messageCode = Header::ERROR_EVENT;
           I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
@@ -411,18 +522,10 @@ namespace stor
       {
         I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
           (I2O_PRIVATE_MESSAGE_FRAME*) pRef->getDataLocation();
-        if (!pvtMsg)
+        if (!pvtMsg || (pvtMsg->StdMessageFrame.MessageSize <
+                        sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME)))
           {
             _data.reset(new detail::ChainData(pRef));
-            _data->markBadReference();
-            return;
-          }
-
-        if (pvtMsg->StdMessageFrame.MessageSize <
-            sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
-          {
-            _data.reset(new detail::ChainData(pRef));
-            _data->markCorrupt();
             return;
           }
 
