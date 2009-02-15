@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.15 2009/02/13 23:02:45 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.16 2009/02/15 22:02:04 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -572,10 +572,16 @@ namespace stor
 
     private:
       void parseI2OHeader();
+      void cacheHeaderFields() const;
+
+      mutable bool _headerFieldsCached;
+      mutable std::string _outputModuleLabel;
+      mutable uint32 _outputModuleId;
     };
 
     inline InitMsgData::InitMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef)
+      ChainData(pRef),
+      _headerFieldsCached(false)
     {
       parseI2OHeader();
 
@@ -615,10 +621,8 @@ namespace stor
           XCEPT_RAISE(stor::exception::Exception, msg.str());
         }
 
-      unsigned char* firstFragLoc = dataLocation(0);
-      //unsigned long firstFragSize = dataSize(0);
-      InitMsgView view(firstFragLoc);
-      return view.outputModuleLabel();
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _outputModuleLabel;
     }
 
     uint32 InitMsgData::do_outputModuleId() const
@@ -631,10 +635,51 @@ namespace stor
           XCEPT_RAISE(stor::exception::Exception, msg.str());
         }
 
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _outputModuleId;
+    }
+
+    void InitMsgData::cacheHeaderFields() const
+    {
       unsigned char* firstFragLoc = dataLocation(0);
-      //unsigned long firstFragSize = dataSize(0);
-      InitMsgView view(firstFragLoc);
-      return view.outputModuleId();
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
+
+      // if there is only one fragment, use it
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      // otherwise, check if the first fragment is large enough to hold
+      // the full INIT message header  (we require some minimal fixed
+      // size in the hope that we don't parse garbage when we overlay
+      // the InitMsgView on the buffer)
+      else if (firstFragSize > 4096)
+        {
+          InitMsgView view(firstFragLoc);
+          if (view.headerSize() <= firstFragSize)
+            {
+              useFirstFrag = true;
+            }
+        }
+
+      boost::shared_ptr<InitMsgView> msgView;
+      boost::shared_ptr< std::vector<unsigned char> >
+        tempBuffer(new std::vector<unsigned char>());
+      if (useFirstFrag)
+        {
+          msgView.reset(new InitMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(*tempBuffer);
+          msgView.reset(new InitMsgView(&(*tempBuffer)[0]));
+        }
+
+      _outputModuleId = msgView->outputModuleId();
+      _outputModuleLabel = msgView->outputModuleLabel();
+
+      _headerFieldsCached = true;
     }
 
     inline void InitMsgData::parseI2OHeader()
