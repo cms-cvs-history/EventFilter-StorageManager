@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.12 2009/02/13 21:51:10 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.13 2009/02/13 23:02:45 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/02/13 21:51:10 $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/02/13 23:02:45 $
    */
 
 
@@ -217,6 +217,17 @@ namespace stor {
        so this method is probably only useful for testing.
      */
     unsigned int getFragmentID(int fragmentIndex) const;
+
+    /**
+       Copies the internally managed fragments to the specified
+       vector in one contiguous set.  Note that *NO* tests are done by
+       this method - it can be run on empty, incomplete, faulty, and
+       complete chains - and the result could be an incomplete or faulty
+       storage manager message or worse.  If the I2O fragments in the chain
+       are corrupt, the data copied into the buffer could be the raw
+       I2O messages, including headers.
+     */
+    void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
     // methods to access data in INIT messages
     std::string outputModuleLabel() const;

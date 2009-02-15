@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.14 2009/02/13 21:51:10 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.15 2009/02/13 23:02:45 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -56,6 +56,7 @@ namespace stor
       unsigned long dataSize(int fragmentIndex) const;
       unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
+      void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
       std::string outputModuleLabel() const;
       uint32 outputModuleId() const;
@@ -76,7 +77,7 @@ namespace stor
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
 
-      virtual unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+      virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       void validateI2OHeaders(unsigned short expectedI2OMessageCode);
 
       virtual std::string do_outputModuleLabel() const;
@@ -405,7 +406,7 @@ namespace stor
 
       if (!faulty())
         {
-          return do_getMessageLocation(static_cast<unsigned char*>
+          return do_fragmentLocation(static_cast<unsigned char*>
                                        (curRef->getDataLocation()));
         }
       else
@@ -434,6 +435,48 @@ namespace stor
         }
     }
 
+    void ChainData::
+    copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
+    {
+      unsigned long fullSize = totalDataSize();
+      if (targetBuffer.capacity() < fullSize)
+        {
+          targetBuffer.resize(fullSize);
+        }
+      unsigned char* targetLoc = (unsigned char*)&targetBuffer[0];
+
+      toolbox::mem::Reference* curRef = _ref;
+      while (curRef)
+        {
+          unsigned char* fragmentLoc =
+            (unsigned char*) curRef->getDataLocation();
+          unsigned long sourceSize = 0;
+          unsigned char* sourceLoc = 0;
+
+          if (!faulty())
+            {
+              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) fragmentLoc;
+              sourceSize = smMsg->dataSize;
+              sourceLoc = do_fragmentLocation(fragmentLoc);
+            }
+          else if (fragmentLoc)
+            {
+              I2O_MESSAGE_FRAME *i2oMsg = (I2O_MESSAGE_FRAME*) fragmentLoc;
+              sourceSize = i2oMsg->MessageSize * 4;
+              sourceLoc = fragmentLoc;
+            }
+
+          if (sourceSize > 0)
+            {
+              std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
+              targetLoc += sourceSize;
+            }
+
+          curRef = curRef->getNextReference();
+        }
+    }
+
     std::string ChainData::outputModuleLabel() const
     {
       return do_outputModuleLabel();
@@ -445,7 +488,7 @@ namespace stor
     }
 
     inline unsigned char*
-    ChainData::do_getMessageLocation(unsigned char* dataLoc) const
+    ChainData::do_fragmentLocation(unsigned char* dataLoc) const
     {
       return dataLoc;
     }
@@ -523,7 +566,7 @@ namespace stor
       ~InitMsgData() {}
 
     protected:
-      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+      unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       std::string do_outputModuleLabel() const;
       uint32 do_outputModuleId() const;
 
@@ -548,7 +591,7 @@ namespace stor
     }
 
     inline unsigned char*
-    InitMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    InitMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
       if (parsable())
         {
@@ -617,7 +660,7 @@ namespace stor
       ~EventMsgData() {}
 
     protected:
-      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+      unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
 
     private:
       void parseI2OHeader();
@@ -640,7 +683,7 @@ namespace stor
     }
 
     inline unsigned char*
-    EventMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    EventMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
       if (parsable())
         {
@@ -677,7 +720,7 @@ namespace stor
       ~DQMEventMsgData() {}
 
     protected:
-      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+      unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
 
     private:
       void parseI2OHeader();
@@ -700,7 +743,7 @@ namespace stor
     }
 
     inline unsigned char*
-    DQMEventMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    DQMEventMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
       if (parsable())
         {
@@ -737,7 +780,7 @@ namespace stor
       ~ErrorEventMsgData() {}
 
     protected:
-      unsigned char* do_getMessageLocation(unsigned char* dataLoc) const;
+      unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
 
     private:
       void parseI2OHeader();
@@ -760,7 +803,7 @@ namespace stor
     }
 
     inline unsigned char*
-    ErrorEventMsgData::do_getMessageLocation(unsigned char* dataLoc) const
+    ErrorEventMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
       if (parsable())
         {
@@ -1012,6 +1055,13 @@ namespace stor
   {
     if (!_data) return 0;
     return _data->getFragmentID(fragmentIndex);
+  }
+
+  void I2OChain::
+  copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
+  {
+    if (!_data) return;
+    return _data->copyFragmentsIntoBuffer(targetBuffer);
   }
 
   std::string I2OChain::outputModuleLabel() const

@@ -1,8 +1,8 @@
-// $Id: FragmentCollector.cc,v 1.43.2.1 2008/12/22 19:12:51 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.1 2008/12/22 19:18:00 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
-
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -751,29 +751,15 @@ namespace stor
    */
   int FragmentCollector::assembleFragments(std::map<int, FragEntry>& fragmentMap)
   {
-    // first make sure we have enough room; use an overestimate
-    unsigned int max_sizePerFrame = fragmentMap[1].buffer_size_;
-    if((fragmentMap.size() * max_sizePerFrame) > event_area_.capacity())
+    I2OChain mainChain((toolbox::mem::Reference*)fragmentMap[1].buffer_object_);
+    for (unsigned int idx = 2; idx <= fragmentMap.size(); ++idx)
     {
-      event_area_.resize(fragmentMap.size() * max_sizePerFrame);
+      I2OChain tmpChain((toolbox::mem::Reference*)fragmentMap[idx].buffer_object_);
+      mainChain.addToChain(tmpChain);
     }
-    unsigned char* pos = (unsigned char*)&event_area_[0];
-	
-    int sum=0;
-    unsigned int lastpos=0;
-    for (unsigned int idx = 1; idx <= fragmentMap.size(); ++idx)
-    {
-      FragEntry& workingEntry = fragmentMap[idx];
-      int dsize = workingEntry.buffer_size_;
-      sum+=dsize;
-      unsigned char* from=(unsigned char*)workingEntry.buffer_address_;
-      copy(from,from+dsize,pos+lastpos);
-      lastpos = lastpos + dsize;
-      // ask deleter to kill off the buffer
-      (*buffer_deleter_)(&workingEntry);
-    }
+    mainChain.copyFragmentsIntoBuffer(event_area_);
 
-    return sum;
+    return mainChain.totalDataSize();
   }
 
   /**
