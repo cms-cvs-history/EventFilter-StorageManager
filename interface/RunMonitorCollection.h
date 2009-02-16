@@ -1,10 +1,9 @@
-// $Id: RunMonitorCollection.h,v 1.1.2.1 2009/02/12 15:14:09 mommsen Exp $
+// $Id: RunMonitorCollection.h,v 1.1.2.2 2009/02/13 14:19:41 mommsen Exp $
 
 #ifndef StorageManager_RunMonitorCollection_h
 #define StorageManager_RunMonitorCollection_h
 
 #include "xdata/UnsignedInteger32.h"
-#include "xdata/Double.h"
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 
@@ -16,8 +15,8 @@ namespace stor {
    * in the current run
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/02/12 15:14:09 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/02/13 14:19:41 $
    */
   
   class RunMonitorCollection : public MonitorCollection

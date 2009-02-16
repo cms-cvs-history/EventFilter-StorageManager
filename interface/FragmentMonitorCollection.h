@@ -1,10 +1,10 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.7 2009/02/12 11:24:57 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.8 2009/02/13 14:19:41 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
 
-#include "xdata/UnsignedInteger32.h"
 #include "xdata/Double.h"
+#include "xdata/UnsignedInteger32.h"
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/02/12 11:24:57 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/02/13 14:19:41 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
