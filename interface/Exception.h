@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.1.2.1 2009/02/04 13:27:08 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.1 2009/02/04 17:51:25 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -46,6 +46,11 @@ XCEPT_DEFINE_EXCEPTION(stor, StateMachine)
  * Exception raised in case of a monitoring error
  */
 XCEPT_DEFINE_EXCEPTION(stor, Monitoring)
+
+/**
+ * Exception raised in case of problems accessing the info space
+ */
+XCEPT_DEFINE_EXCEPTION(stor, Infospace)
 
 
 #endif // _storagemanager_Exception_h_
