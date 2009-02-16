@@ -265,8 +265,8 @@ testConcurrentQueue::failiffull()
 {
   std::cerr << "\nConcurrentQueue_t::failiffull\n";
   stor::ConcurrentQueue<int, stor::FailIfFull<int> > q(1);  
-  CPPUNIT_ASSERT(q.enq(1));
-  CPPUNIT_ASSERT(!q.enq(2));
+  CPPUNIT_ASSERT(q.enq_nowait(1));
+  CPPUNIT_ASSERT(!q.enq_nowait(2));
   CPPUNIT_ASSERT(q.size() == 1);
   int value;
   CPPUNIT_ASSERT(q.deq_nowait(value));
@@ -278,8 +278,8 @@ testConcurrentQueue::keepnewest()
 {
   std::cerr << "\nConcurrentQueue_t::keepnewest\n";
   stor::ConcurrentQueue<int, stor::KeepNewest<int> > q(1);
-  q.enq(1);
-  q.enq(2);
+  q.enq_nowait(1);
+  q.enq_nowait(2);
   CPPUNIT_ASSERT(q.size() == 1);
   int value;
   CPPUNIT_ASSERT(q.deq_nowait(value));
@@ -291,8 +291,8 @@ testConcurrentQueue::rejectnewest()
 {
   std::cerr << "\nConcurrentQueue_t::rejectnewest\n";
   stor::ConcurrentQueue<int, stor::RejectNewest<int> > q(1);
-  q.enq(1);
-  q.enq(2);
+  q.enq_nowait(1);
+  q.enq_nowait(2);
   CPPUNIT_ASSERT(q.size() == 1);
   int value;
   CPPUNIT_ASSERT(q.deq_nowait(value));

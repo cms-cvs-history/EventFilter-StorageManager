@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.5 2009/02/13 15:11:20 mommsen Exp $
+// $Id: ConcurrentQueue.h,v 1.1.2.6 2009/02/13 17:26:02 paterno Exp $
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -151,18 +151,12 @@ namespace stor
     /**
        Add a copy if item to the queue, according to the rules
        determined by the EnqPolicy; see documentation above the the
-       provided EnqPolicy choices.
+       provided EnqPolicy choices.  This may throw any exception
+       thrown by the assignment operator of type value_type, or
+       bad_alloc.
      */
-    typename EnqPolicy::return_type enq(value_type const& item);
+    typename EnqPolicy::return_type enq_nowait(value_type const& item);
 
-    /**
-       Add a copy of item to the queue.  If successful, return true;
-       on failure, false.  This function will fail without waiting if
-       the queue is full. This may throw any exception thrown by the
-       assignment operator of type value_type, or bad_alloc.
-    */
-    bool enq_nowait(value_type const& item);
-    
     /**
        Add a copy of item to the queue. If the queue is full wait
        until it becomes non-full. This may throw any exception thrown
@@ -324,19 +318,11 @@ namespace stor
 
   template <class T, class EnqPolicy>
   typename EnqPolicy::return_type
-  ConcurrentQueue<T,EnqPolicy>::enq(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::enq_nowait(value_type const& item)
   {
     lock_t lock(_protect_elements);
     return EnqPolicy::do_enq(item, _elements, 
                              _size, _capacity, _queue_not_empty);
-  }
-
-  template <class T, class EnqPolicy>
-  bool
-  ConcurrentQueue<T,EnqPolicy>::enq_nowait(value_type const& item)
-  {
-    lock_t lock(_protect_elements);
-    return _insert_if_possible(item);
   }
 
   template <class T, class EnqPolicy>
