@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.8 2009/02/13 14:19:41 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.9 2009/02/16 13:38:17 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/02/13 14:19:41 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/02/16 13:38:17 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -84,6 +84,10 @@ namespace stor {
 
 
   private:
+
+    //Prevent copying of the FragmentMonitorCollection
+    FragmentMonitorCollection(FragmentMonitorCollection const&);
+    FragmentMonitorCollection& operator=(FragmentMonitorCollection const&);
 
     virtual void do_calculateStatistics();
     

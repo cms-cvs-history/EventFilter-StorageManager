@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.h,v 1.1.2.2 2009/02/13 14:19:41 mommsen Exp $
+// $Id: RunMonitorCollection.h,v 1.1.2.3 2009/02/16 13:38:17 mommsen Exp $
 
 #ifndef StorageManager_RunMonitorCollection_h
 #define StorageManager_RunMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * in the current run
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/02/13 14:19:41 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/02/16 13:38:17 $
    */
   
   class RunMonitorCollection : public MonitorCollection
@@ -63,6 +63,10 @@ namespace stor {
 
 
   private:
+
+    //Prevent copying of the RunMonitorCollection
+    RunMonitorCollection(RunMonitorCollection const&);
+    RunMonitorCollection& operator=(RunMonitorCollection const&);
 
     virtual void do_calculateStatistics();
     

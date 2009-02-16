@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.6 2009/02/12 11:24:57 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.1.2.7 2009/02/16 13:38:55 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -22,8 +22,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/02/12 11:24:57 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/02/16 13:38:55 $
    */
   
   class MonitorCollection
@@ -79,6 +79,13 @@ namespace stor {
     infoSpaceItems_t _infoSpaceItems;
 
     std::list<std::string> _infoSpaceItemNames;
+
+  private:
+
+    //Prevent copying of the MonitorCollection
+    MonitorCollection(MonitorCollection const&);
+    MonitorCollection& operator=(MonitorCollection const&);
+
   };
   
 } // namespace stor

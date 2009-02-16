@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.9 2009/02/10 11:02:00 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.10 2009/02/12 15:11:22 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -15,8 +15,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/02/10 11:02:00 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/02/12 15:11:22 $
    */
 
   class MonitoredQuantity
@@ -172,6 +172,10 @@ namespace stor
     static double getCurrentTime();
 
   private:
+
+    //Prevent copying of the MonitoredQuantity
+    MonitoredQuantity(MonitoredQuantity const&);
+    MonitoredQuantity& operator=(MonitoredQuantity const&);
 
     double _lastCalculationTime;
     double _lastSampleValue;
