@@ -1,5 +1,6 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.11 2009/02/12 15:12:47 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.12 2009/02/13 14:19:42 mommsen Exp $
 
+#include <string>
 #include <sstream>
 #include <iomanip>
 
@@ -73,6 +74,9 @@ void FragmentMonitorCollection::do_calculateStatistics()
 
 void FragmentMonitorCollection::do_updateInfoSpace()
 {
+  std::string errorMsg =
+    "Failed to update values of items in info space " + _infoSpace->name();
+
   // Lock the infospace to assure that all items are consistent
   try
   {
@@ -110,15 +114,20 @@ void FragmentMonitorCollection::do_updateInfoSpace()
 
     _infoSpace->unlock();
   }
+  catch(std::exception &e)
+  {
+    _infoSpace->unlock();
+ 
+    errorMsg += ": ";
+    errorMsg += e.what();
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
+  }
   catch (...)
   {
     _infoSpace->unlock();
  
-    std::ostringstream oss;
-    oss << "Failed to update values of items in info space " << _infoSpace->name() 
-      << " : unknown exception";
-    
-    XCEPT_RAISE(stor::exception::Monitoring, oss.str());
+    errorMsg += " : unknown exception";
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
   }
 
   try
@@ -128,11 +137,7 @@ void FragmentMonitorCollection::do_updateInfoSpace()
   }
   catch (xdata::exception::Exception &e)
   {
-    std::ostringstream oss;
-    oss << "Failed to fire item group changed for info space " 
-      << _infoSpace->name();
-    
-    XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
+    XCEPT_RETHROW(stor::exception::Monitoring, errorMsg, e);
   }
 }
 

@@ -1,5 +1,6 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.1 2009/02/12 15:14:04 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.2 2009/02/13 14:19:42 mommsen Exp $
 
+#include <string>
 #include <sstream>
 #include <iomanip>
 
@@ -31,6 +32,9 @@ void RunMonitorCollection::do_calculateStatistics()
 
 void RunMonitorCollection::do_updateInfoSpace()
 {
+  std::string errorMsg =
+    "Failed to update values of items in info space " + _infoSpace->name();
+
   // Lock the infospace to assure that all items are consistent
   try
   {
@@ -40,15 +44,20 @@ void RunMonitorCollection::do_updateInfoSpace()
     _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(errorEventIDsReceived.getSampleCount());
     _infoSpace->unlock();
   }
+  catch(std::exception &e)
+  {
+    _infoSpace->unlock();
+ 
+    errorMsg += ": ";
+    errorMsg += e.what();
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
+  }
   catch (...)
   {
     _infoSpace->unlock();
-    
-    std::ostringstream oss;
-    oss << "Failed to update values of items in info space " << _infoSpace->name() 
-      << " : unknown exception";
-    
-    XCEPT_RAISE(stor::exception::Monitoring, oss.str());
+ 
+    errorMsg += " : unknown exception";
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
   }
 
   try
@@ -58,11 +67,7 @@ void RunMonitorCollection::do_updateInfoSpace()
   }
   catch (xdata::exception::Exception &e)
   {
-    std::ostringstream oss;
-    oss << "Failed to fire item group changed for info space " 
-      << _infoSpace->name();
-    
-    XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
+    XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
   }
 }
 

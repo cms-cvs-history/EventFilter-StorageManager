@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.1.2.4 2009/02/05 14:50:59 mommsen Exp $
+// $Id: MonitorCollection.cc,v 1.1.2.5 2009/02/12 11:24:57 mommsen Exp $
 
 #include <sstream>
 
@@ -23,6 +23,13 @@ MonitorCollection::MonitorCollection
   _infoSpace = xdata::getInfoSpaceFactory()->get(urn.toString());
 
 }
+
+void MonitorCollection::update()
+{
+  calculateStatistics();
+  updateInfoSpace();
+}
+
 
 void MonitorCollection::calculateStatistics()
 {
