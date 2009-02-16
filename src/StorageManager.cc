@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.15 2009/02/12 15:15:15 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.16 2009/02/13 11:29:35 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -11,6 +11,8 @@
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
+#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -128,9 +130,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.15 2009/02/12 15:15:15 mommsen Exp $ $Name: refdev01_scratch_branch $"),
-  _runMonCollection(this),
-  _fragMonCollection(this),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.16 2009/02/13 11:29:35 mommsen Exp $ $Name:  $"),
+  _statReporter(new StatisticsReporter(this)),
   _webPageHelper(this->getApplicationDescriptor())
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -292,7 +293,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
-  startNewMonitorWorkloop();
 }
 
 StorageManager::~StorageManager()
@@ -318,6 +318,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
@@ -421,7 +423,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                          +thislen;
-         _fragMonCollection.addEventFragmentSample(actualFrameSize);
+         fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // add this output module to the monitoring
          bool alreadyStoredOutMod = false;
@@ -470,7 +472,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                     + len;
-    _fragMonCollection.addEventFragmentSample(actualFrameSize);
+    fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // add this output module to the monitoring
     bool alreadyStoredOutMod = false;
@@ -505,6 +507,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  RunMonitorCollection& runMonCollection = _statReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -604,7 +609,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
-         _fragMonCollection.addEventFragmentSample(actualFrameSize);
+         fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -627,8 +632,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
          //if(status == 1) ++(storedEvents_.value_);
          if(status == 1) {
-           _runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
-           _runMonCollection.getEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
+           runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
+           runMonCollection.getEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
 
            uint32 moduleId = thisMsgCopy.outModID;
            if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
@@ -680,7 +685,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
-    _fragMonCollection.addEventFragmentSample(actualFrameSize);
+    fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -703,8 +708,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
     //if(status == 1) ++(storedEvents_.value_);
     if(status == 1) {
-      _runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
-      _runMonCollection.getEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
+      runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
+      runMonCollection.getEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
 
       uint32 moduleId = localMsgCopy.outModID;
       if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
@@ -749,6 +754,9 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  RunMonitorCollection& runMonCollection = _statReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -848,7 +856,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
-         _fragMonCollection.addEventFragmentSample(actualFrameSize);
+         fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -864,12 +872,12 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
          //bool isLocal = true;
 
          //update last error event seen
-         _runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
+         runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
          // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
          // independent of the result of the updateFUSender4data() call since we
          // know that the result is unlikely to be "success"
          //if(status == 1) {
-         _runMonCollection.getErrorEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
+         runMonCollection.getErrorEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
          //}
 
          // TODO need to fix this as the outModId is not valid for error events
@@ -914,7 +922,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
-    _fragMonCollection.addEventFragmentSample(actualFrameSize);
+    fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -927,13 +935,13 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     }
 
     //update last error event seen
-    _runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
+    runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
 
     // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
     // independent of the result of the updateFUSender4data() call since we
     // know that the result is unlikely to be "success"
     //if(status == 1) {
-    _runMonCollection.getErrorEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
+    runMonCollection.getErrorEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
     //}
 
     // for data sender list update
@@ -977,6 +985,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -1072,7 +1082,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
                                          +thislen;
-         _fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
+         fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
          // no data sender list update yet for DQM data, should add it here
       }
@@ -1101,7 +1111,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
                                     + len;
-    _fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
+    fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
     // no data sender list update yet for DQM data, should add it here
   }
@@ -1123,8 +1133,7 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     _webPageHelper.defaultWebPage(
         out,
         fsm_.stateName()->toString(),
-        _runMonCollection,
-        _fragMonCollection,
+        _statReporter,
         pool_,
         nLogicalDisk_,
         filePath_
@@ -4609,32 +4618,6 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 	  delete proxy;
 	}
     }
-}
-
-void StorageManager::startNewMonitorWorkloop() throw (evf::Exception)
-{
-  try {
-    wlNewMonitor_=
-      toolbox::task::getWorkLoopFactory()->getWorkLoop(sourceId_+"NewMonitor",
-						       "waiting");
-    if (!wlNewMonitor_->isActive()) wlNewMonitor_->activate();
-    asNewMonitor_ = toolbox::task::bind(this,&StorageManager::newMonitorAction,
-				      sourceId_+"NewMonitor");
-    wlNewMonitor_->submit(asNewMonitor_);
-  }
-  catch (xcept::Exception& e) {
-    string msg = "Failed to start workloop 'NewMonitor'.";
-    XCEPT_RETHROW(evf::Exception,msg,e);
-  }
-}
-
-
-bool StorageManager::newMonitorAction(toolbox::task::WorkLoop* wl)
-{
-  ::sleep(MonitoredQuantity::EXPECTED_CALCULATION_INTERVAL);
-  _runMonCollection.calculateStatistics();
-  _fragMonCollection.calculateStatistics();
-  return true;
 }
 
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)

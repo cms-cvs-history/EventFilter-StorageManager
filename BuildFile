@@ -1,3 +1,4 @@
+<Flags CXXFLAGS="-ggdb">
 <use name=xdaq>
 <use name=mimetic>
 <use name=xerces-c>

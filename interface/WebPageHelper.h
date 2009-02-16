@@ -1,16 +1,17 @@
-// $Id: WebPageHelper.h,v 1.1.2.2 2009/02/12 15:14:53 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.3 2009/02/13 11:27:47 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
 
 #include <string>
 
+#include "boost/shared_ptr.hpp"
+
 #include "toolbox/mem/Pool.h"
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
 
-#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 namespace stor {
@@ -19,8 +20,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/02/12 15:14:53 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/02/13 11:27:47 $
    */
   
   class WebPageHelper
@@ -36,8 +37,7 @@ namespace stor {
     (
       xgi::Output*, 
       const std::string stateName,
-      const RunMonitorCollection&,
-      const FragmentMonitorCollection&,
+      const boost::shared_ptr<StatisticsReporter>&,
       toolbox::mem::Pool*,
       const int nLogicalDisk,
       const std::string filePath

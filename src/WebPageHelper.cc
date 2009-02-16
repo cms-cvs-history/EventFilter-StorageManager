@@ -1,10 +1,12 @@
-// $Id: WebPageHelper.cc,v 1.1.2.2 2009/02/12 15:15:15 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.3 2009/02/13 11:27:47 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <sys/statfs.h>
 
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 
 using namespace stor;
@@ -19,8 +21,7 @@ void WebPageHelper::defaultWebPage
 (
   xgi::Output *out, 
   const std::string stateName,
-  const RunMonitorCollection &runMonCollection,
-  const FragmentMonitorCollection &fragMonCollection,
+  const boost::shared_ptr<StatisticsReporter>& statReporter,
   toolbox::mem::Pool *pool,
   const int nLogicalDisk,
   const std::string filePath
@@ -34,13 +35,13 @@ void WebPageHelper::defaultWebPage
   //TODO: Failed printout
 
   // Run and event summary
-  runMonCollection.addDOMElement(body);
+  statReporter->getRunMonitorCollection().addDOMElement(body);
   
   // Resource usage
   addDOMforResourceUsage(body, pool, nLogicalDisk, filePath);
   
   // Add the received data statistics table
-  fragMonCollection.addDOMElement(body);
+  statReporter->getFragmentMonitorCollection().addDOMElement(body);
 
   addDOMforSMLinks(body);
   

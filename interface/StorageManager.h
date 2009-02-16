@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.13 2009/02/13 11:29:36 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.14 2009/02/13 14:18:43 mommsen Exp $
 */
 
 #include <string>
@@ -27,8 +27,7 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
-#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 
 #include "xdaq/Application.h"
@@ -283,12 +282,7 @@ namespace stor {
       DEFAULT_READY_TIME = 30
     };
 
-    // tests of new Monitor classes
-    RunMonitorCollection _runMonCollection;
-    FragmentMonitorCollection _fragMonCollection;
-    toolbox::task::WorkLoop *wlNewMonitor_;      
-    toolbox::task::ActionSignature *asNewMonitor_;
-
+    boost::shared_ptr<StatisticsReporter> _statReporter;
     WebPageHelper _webPageHelper;
 
   }; 
