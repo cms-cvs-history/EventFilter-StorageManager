@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.13 2009/02/10 15:52:38 dshpakov Exp $
+# $Id: BuildFile,v 1.30.16.14 2009/02/11 13:13:57 dshpakov Exp $
 
 <environment>
   <use name=boost>
@@ -110,5 +110,7 @@
     <use name=cppunit>
   </bin>
 
+  <bin file=processCount_t.cpp>
+  </bin>
 
 </environment>
