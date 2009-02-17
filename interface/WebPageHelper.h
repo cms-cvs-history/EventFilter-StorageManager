@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.3 2009/02/13 11:27:47 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.4 2009/02/16 16:13:03 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -20,8 +20,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/02/13 11:27:47 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/16 16:13:03 $
    */
   
   class WebPageHelper
@@ -42,6 +42,11 @@ namespace stor {
       const int nLogicalDisk,
       const std::string filePath
     );
+
+    /**
+     * Returns the number of instances for the given process name
+     */
+    int getProcessCount(std::string processName) const;
 
 
   private:

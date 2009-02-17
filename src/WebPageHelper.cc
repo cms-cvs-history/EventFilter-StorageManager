@@ -1,8 +1,9 @@
-// $Id: WebPageHelper.cc,v 1.1.2.3 2009/02/13 11:27:47 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.4 2009/02/16 16:13:04 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdio.h>
 #include <sys/statfs.h>
 
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
@@ -281,19 +282,36 @@ void WebPageHelper::addDOMforResourceUsage
   tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
   maker->addText(tableDiv, "# CopyWorker");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
-  maker->addText(tableDiv, ps1, 0);
+  maker->addText(tableDiv, getProcessCount("CopyWorker.pl"), 0);
   
   // # inject worker
   tableRow = maker->addNode("tr", table);
   tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
   maker->addText(tableDiv, "# InjectWorker");
   tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
-  maker->addText(tableDiv, ps2, 0);
+  maker->addText(tableDiv, getProcessCount("InjectWorker.pl"), 0);
   
 }
 
+
+int WebPageHelper::getProcessCount(std::string processName) const
+{
+
+  int count = -1;
+  char buf[128];
+  std::string command = "ps -C " + processName + " --no-header | wc -l";
+
+  FILE *fp = popen(command.c_str(), "r");
+  if ( fp )
+  {
+    if ( fgets(buf, sizeof(buf), fp) )
+    {
+      count = strtol(buf, '\0', 10);
+    }
+    pclose( fp );
+  }
+  return count;
+}
 
 
 /// emacs configuration
