@@ -692,7 +692,7 @@ testI2OChain::add_fragment()
         frag1.addToChain(frag3);
         CPPUNIT_ASSERT(false);
       }
-    catch (stor::exception::Exception& excpt)
+    catch (stor::exception::I2OChain& excpt)
       {
       }
     CPPUNIT_ASSERT(!frag1.empty());
@@ -851,7 +851,7 @@ testI2OChain::add_fragment()
         frag5.addToChain(frag4);
         CPPUNIT_ASSERT(false);
       }
-    catch (stor::exception::Exception& excpt)
+    catch (stor::exception::I2OChain& excpt)
       {
       }
     CPPUNIT_ASSERT(frag5.empty());
