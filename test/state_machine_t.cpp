@@ -17,7 +17,7 @@ using boost::shared_ptr;
 // Typedefs:
 typedef map< string, shared_ptr<event_base> > EventMap;
 typedef list<string> EventList;
-typedef vector<string> TransitionList;
+typedef vector<TransitionRecord> TransitionList;
 
 //////////////////////////////////////////////////////
 //// Exit with non-zero code if unexpected state: ////
@@ -71,8 +71,6 @@ void checkSignals( StateMachine& m,
 //// Check if history matches expected sequence of transitions: ////
 ////////////////////////////////////////////////////////////////////
 void checkHistory( const StateMachine& m,
-		   const string& from_state,
-		   const string& to_state,
 		   const TransitionList& steps )
 {
 
@@ -82,56 +80,21 @@ void checkHistory( const StateMachine& m,
 
   bool ok = true;
 
-  if( ssize * 2 + 2 != hsize )
+  if( ssize != hsize )
     {
-      cout << "Debug 1" << endl;
-      cout << ssize << " " << hsize << endl;
       ok = false;
     }
 
   if( ok )
     {
-      if( h[0].stateName() != from_state )
+      for( unsigned int i = 0; i < hsize; ++i )
 	{
-	  cout << "Debug 2" << endl;
-	  ok = false;
-	}
-    }
- 
-  if( ok )
-    {
-
-      unsigned int i = 0;
-
-      while( i < ssize )
-	{
-
-	  if( h[ 2*i + 1 ].stateName() != steps[i] )
+	  if( h[i].isEntry() != steps[i].isEntry() ||
+	      h[i].stateName() != steps[i].stateName() )
 	    {
-	      cout << "Debug 3" << endl;
 	      ok = false;
 	      break;
 	    }
-
-	  if( h[ 2*i + 2 ].stateName() != steps[i] )
-	    {
-	      cout << "Debug 4" << endl;
-	      ok = false;
-	      break;
-	    }
-
-	  ++i;
-
-	}
-
-    }
-
-  if( ok )
-    {
-      if( h[ hsize - 1 ].stateName() != to_state )
-	{
-	  cout << "Debug 5" << endl;
-	  ok = false;
 	}
     }
 
@@ -141,12 +104,18 @@ void checkHistory( const StateMachine& m,
       cerr << "Actual:" << endl;
       m.dumpHistory( cerr );
       cerr << "Expected:" << endl;
-      cerr << " from " << from_state;
       for( unsigned int j = 0; j < ssize; ++j )
 	{
-	  cerr << " to " << steps[j];
+	  if( steps[j].isEntry() )
+	    {
+	      cerr << " Enter ";
+	    }
+	  else
+	    {
+	      cerr << " Exit ";
+	    }
+	  cerr << steps[j].stateName() << endl;
 	}
-      cerr << " to " << to_state << endl;
       exit(3);
     }
 
@@ -169,6 +138,8 @@ int main()
   m.initiate();
   checkState( m, "Halted" );
 
+  cout << "**** Testing illegal signals in Halted state ****" << endl;
+
   elist.clear();
   elist.push_back( "Stop" );
   elist.push_back( "Halt" );
@@ -184,6 +155,8 @@ int main()
   m.process_event( Configure() );
   checkState( m, "Stopped" );
 
+  cout << "**** Testing illegal signals in Stopped state ****" << endl;
+
   elist.clear();
   elist.push_back( "Stop" );
   elist.push_back( "EmergencyStop" );
@@ -197,6 +170,8 @@ int main()
 
   m.process_event( Enable() );
   checkState( m, "Processing" );
+
+  cout << "**** Testing illegal signals in Processing state ****" << endl;
 
   elist.clear();
   elist.push_back( "StopDone" );
@@ -214,10 +189,15 @@ int main()
   m.process_event( Stop() );
   checkState( m, "Stopped" );
 
+  cout << "**** Testing if DrainingQueues is entered and exited on Stop ****" << endl;
+
   TransitionList steps;
-  steps.push_back( "DrainingQueues" );
-  steps.push_back( "Enabled" );
-  checkHistory( m, "Processing", "Stopped", steps );
+  steps.push_back( TransitionRecord( "Processing", false ) );
+  steps.push_back( TransitionRecord( "DrainingQueues", true ) );
+  steps.push_back( TransitionRecord( "DrainingQueues", false ) );
+  steps.push_back( TransitionRecord( "Enabled", false ) );
+  steps.push_back( TransitionRecord( "Stopped", true ) );
+  checkHistory( m, steps );
 
   //
   //// Check Reconfigure: ////
@@ -227,9 +207,14 @@ int main()
   m.process_event( Reconfigure() );
   checkState( m, "Stopped" );
 
+  cout << "**** Testing if Reconfigure triggers the right sequence ****" << endl;
+
   steps.clear();
-  steps.push_back( "Ready" );
-  checkHistory( m, "Stopped", "Stopped", steps );
+  steps.push_back( TransitionRecord( "Stopped", false ) );
+  steps.push_back( TransitionRecord( "Ready", false ) );
+  steps.push_back( TransitionRecord( "Ready", true ) );
+  steps.push_back( TransitionRecord( "Stopped", true ) );
+  checkHistory( m, steps );
 
   //
   //// Failed: ////
@@ -237,6 +222,8 @@ int main()
 
   m.process_event( Fail() );
   checkState( m, "Failed" );
+
+  cout << "**** Making sure no signal changes Failed state ****" << endl;
 
   elist.clear();
   elist.push_back( "StopDone" );
@@ -250,6 +237,43 @@ int main()
 
   checkSignals( m, elist, "Failed" );
 
+  m.terminate();
+
+  //
+  //// Make sure each state can go to Failed: ////
+  //
+
+  cout << "**** Making sure Halted can go to Failed ****" << endl;
+
+  // Halted:
+  m.initiate();
+  checkState( m, "Halted" );
+  m.process_event( Fail() );
+  checkState( m, "Failed" );
+  m.terminate();
+
+  cout << "**** Making sure Stopped can go to Failed ****" << endl;
+
+  // Stopped:
+  m.initiate();
+  checkState( m, "Halted" );
+  m.process_event( Configure() );
+  checkState( m, "Stopped" );
+  m.process_event( Fail() );
+  checkState( m, "Failed" );
+  m.terminate();
+ 
+  cout << "**** Making sure Processing can go to Failed ****" << endl;
+
+  // Processing:
+  m.initiate();
+  checkState( m, "Halted" );
+  m.process_event( Configure() );
+  checkState( m, "Stopped" );
+  m.process_event( Enable() );
+  checkState( m, "Processing" );
+  m.process_event( Fail() );
+  checkState( m, "Failed" );
   m.terminate();
 
 }
