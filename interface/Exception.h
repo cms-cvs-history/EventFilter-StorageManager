@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.1 2009/02/04 17:51:25 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.2 2009/02/16 13:37:52 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -51,6 +51,21 @@ XCEPT_DEFINE_EXCEPTION(stor, Monitoring)
  * Exception raised in case of problems accessing the info space
  */
 XCEPT_DEFINE_EXCEPTION(stor, Infospace)
+
+/**
+ * Exception raised in case of missuse of I2OChain
+ */
+XCEPT_DEFINE_EXCEPTION(stor, I2OChain)
+
+/**
+ * Exception raised in case of asking for information from the wrong I2O message type
+ */
+XCEPT_DEFINE_EXCEPTION(stor, WrongI2OMessageType)
+
+/**
+ * Exception raised in case of requesting information from a faulty or incomplete init message
+ */
+XCEPT_DEFINE_EXCEPTION(stor, IncompleteInitMessage)
 
 
 #endif // _storagemanager_Exception_h_

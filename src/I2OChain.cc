@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.16 2009/02/15 22:02:04 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.17 2009/02/15 23:36:34 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -299,7 +299,7 @@ namespace stor
             {
               // this should never happen - if it does, there is a logic
               // error in the loop above
-              XCEPT_RAISE(stor::exception::Exception,
+              XCEPT_RAISE(stor::exception::I2OChain,
                           "A fragment was unable to be added to a chain.");
             }
           ++_fragmentCount;
@@ -548,7 +548,7 @@ namespace stor
       std::stringstream msg;
       msg << "An output module label is only available from a valid, ";
       msg << "complete INIT message.";
-      XCEPT_RAISE(stor::exception::Exception, msg.str());
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
     inline uint32 ChainData::do_outputModuleId() const
@@ -556,7 +556,7 @@ namespace stor
       std::stringstream msg;
       msg << "An output module ID is only available from a valid, ";
       msg << "complete INIT message.";
-      XCEPT_RAISE(stor::exception::Exception, msg.str());
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
     class InitMsgData : public ChainData
@@ -618,7 +618,7 @@ namespace stor
           std::stringstream msg;
           msg << "An output module label can not be determined from a ";
           msg << "faulty or incomplete INIT message.";
-          XCEPT_RAISE(stor::exception::Exception, msg.str());
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
         }
 
       if (! _headerFieldsCached) {cacheHeaderFields();}
@@ -632,7 +632,7 @@ namespace stor
           std::stringstream msg;
           msg << "An output module ID can not be determined from a ";
           msg << "faulty or incomplete INIT message.";
-          XCEPT_RAISE(stor::exception::Exception, msg.str());
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
         }
 
       if (! _headerFieldsCached) {cacheHeaderFields();}
@@ -986,24 +986,24 @@ namespace stor
     // fragments can not be added to empty, complete, or faulty chains.
     if (empty())
       {
-        XCEPT_RAISE(stor::exception::Exception,
+        XCEPT_RAISE(stor::exception::I2OChain,
                     "A fragment may not be added to an empty chain.");
       }
     if (complete())
       {
-        XCEPT_RAISE(stor::exception::Exception,
+        XCEPT_RAISE(stor::exception::I2OChain,
                     "A fragment may not be added to a complete chain.");
       }
 
     // empty, complete, or faulty new parts can not be added to chains
     if (newpart.empty())
       {
-        XCEPT_RAISE(stor::exception::Exception,
+        XCEPT_RAISE(stor::exception::I2OChain,
                     "An empty chain may not be added to an existing chain.");
       }
     if (newpart.complete())
       {
-        XCEPT_RAISE(stor::exception::Exception,
+        XCEPT_RAISE(stor::exception::I2OChain,
                     "A complete chain may not be added to an existing chain.");
       }
 
@@ -1025,7 +1025,7 @@ namespace stor
             << thatKey.event_ << "," << thatKey.secondaryId_ << ","
             << thatKey.originatorPid_ << "," << thatKey.originatorGuid_
             << ").";
-        XCEPT_RAISE(stor::exception::Exception, msg.str());
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
       }
 
     // add the fragment to the current chain
@@ -1113,7 +1113,7 @@ namespace stor
   {
     if (!_data)
       {
-        XCEPT_RAISE(stor::exception::Exception,
+        XCEPT_RAISE(stor::exception::I2OChain,
           "The output module label can not be determined from an empty I2OChain.");
       }
     return _data->outputModuleLabel();
@@ -1123,7 +1123,7 @@ namespace stor
   {
     if (!_data)
       {
-        XCEPT_RAISE(stor::exception::Exception,
+        XCEPT_RAISE(stor::exception::I2OChain,
           "The output module ID can not be determined from an empty I2OChain.");
       }
     return _data->outputModuleId();
