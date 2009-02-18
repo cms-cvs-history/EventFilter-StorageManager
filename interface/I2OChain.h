@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.13 2009/02/13 23:02:45 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.14 2009/02/15 22:02:04 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/02/13 23:02:45 $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/02/15 22:02:04 $
    */
 
 
@@ -148,6 +148,27 @@ namespace stor {
        had been default-constructed.
      */
     void release();
+
+    /**
+       Returns the time when the I2OChain was created. This time corresponds
+       to the time when the first fragment of the I2OChain was added.
+
+       The value corresponds to the number of seconds since the epoch
+       (including a fractional part good to the microsecond level).
+       A negative value indicates that an error occurred when fetching 
+       the time from the operating system.
+     */
+    double creationTime() const;
+
+    /**
+       Returns the time when the last fragment was added to the I2OChain.
+
+       The value corresponds to the number of seconds since the epoch
+       (including a fractional part good to the microsecond level).
+       A negative value indicates that an error occurred when fetching 
+       the time from the operating system.
+     */
+    double lastFragmentTime() const;
 
     /**
        Returns the message code for the chain.  Valid values
