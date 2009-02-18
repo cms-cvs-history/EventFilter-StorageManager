@@ -84,6 +84,8 @@ testI2OChain::default_chain()
   CPPUNIT_ASSERT(!frag.faulty());
   CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
   CPPUNIT_ASSERT(frag.fragmentCount() == 0);
+  CPPUNIT_ASSERT(frag.creationTime() == -1);
+  CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
   //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
@@ -98,6 +100,8 @@ testI2OChain::null_reference()
   CPPUNIT_ASSERT(!frag.faulty());
   CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
   CPPUNIT_ASSERT(frag.fragmentCount() == 0);
+  CPPUNIT_ASSERT(frag.creationTime() == -1);
+  CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
   //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
   size_t memory_consumed_by_zero_frames = outstanding_bytes();
   CPPUNIT_ASSERT(memory_consumed_by_zero_frames == 0);  
@@ -130,6 +134,8 @@ testI2OChain::copy_chain()
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     stor::I2OChain frag(allocate_frame());
+    double creationTime = frag.creationTime();
+    double lastFragmentTime = frag.lastFragmentTime();
     size_t memory_consumed_by_one_frame = outstanding_bytes();
     CPPUNIT_ASSERT(memory_consumed_by_one_frame != 0);
     {
@@ -139,6 +145,8 @@ testI2OChain::copy_chain()
       CPPUNIT_ASSERT(memory_consumed_after_copy ==
                      memory_consumed_by_one_frame);
       CPPUNIT_ASSERT(copy.getBufferData() == frag.getBufferData());
+      CPPUNIT_ASSERT(copy.creationTime() == creationTime); 
+      CPPUNIT_ASSERT(copy.lastFragmentTime() == lastFragmentTime); 
     }
     // Here the copy is gone, but the original remains; we should not
     // have released the resources.
@@ -171,6 +179,8 @@ testI2OChain::assign_chain()
   CPPUNIT_ASSERT(outstanding_bytes() == memory_consumed_by_one_frame);  
   CPPUNIT_ASSERT(!frag2.empty());
   CPPUNIT_ASSERT(frag2.getBufferData() == frag1.getBufferData());  
+  CPPUNIT_ASSERT(frag2.creationTime() == frag1.creationTime());  
+  CPPUNIT_ASSERT(frag2.lastFragmentTime() == frag1.lastFragmentTime());  
 
   // Assigning no_frags to frag1 and frag2 should release all resources.
   CPPUNIT_ASSERT(no_frags.empty());
@@ -189,7 +199,9 @@ testI2OChain::swap_chain()
     CPPUNIT_ASSERT(memory_consumed_by_one_frame != 0);
     CPPUNIT_ASSERT(!frag.empty());
     unsigned long* data_location = frag.getBufferData();
-    
+    double creationTime = frag.creationTime();
+    double lastFragmentTime = frag.lastFragmentTime();
+
     stor::I2OChain no_frags;
     CPPUNIT_ASSERT(no_frags.empty());
     CPPUNIT_ASSERT(outstanding_bytes() == memory_consumed_by_one_frame);
@@ -202,6 +214,8 @@ testI2OChain::swap_chain()
     CPPUNIT_ASSERT(frag.empty());
     CPPUNIT_ASSERT(!no_frags.empty());
     CPPUNIT_ASSERT(no_frags.getBufferData() == data_location);
+    CPPUNIT_ASSERT(no_frags.creationTime() == creationTime);
+    CPPUNIT_ASSERT(no_frags.lastFragmentTime() == lastFragmentTime);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -254,6 +268,8 @@ testI2OChain::release_chain()
     frag.release();
     CPPUNIT_ASSERT(frag.empty());
     CPPUNIT_ASSERT(frag.getBufferData() == 0);
+    CPPUNIT_ASSERT(frag.creationTime() == -1);
+    CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
     CPPUNIT_ASSERT(outstanding_bytes() == 0);
     
   }
@@ -434,6 +450,11 @@ testI2OChain::copy_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
     }
+
+    {
+      CPPUNIT_ASSERT(eventMsgFrag.creationTime() == copy.creationTime());
+      CPPUNIT_ASSERT(eventMsgFrag.lastFragmentTime() == copy.lastFragmentTime());
+    }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -483,6 +504,11 @@ testI2OChain::assign_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
     }
+
+    {
+      CPPUNIT_ASSERT(eventMsgFrag.creationTime() == copy.creationTime());
+      CPPUNIT_ASSERT(eventMsgFrag.lastFragmentTime() == copy.lastFragmentTime());
+    }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -508,7 +534,9 @@ testI2OChain::swap_with_valid_header()
     i2oMsg->fuProcID = value4;
     i2oMsg->fuGUID = value5;
     stor::I2OChain frag1(ref);
-
+    double creationTime1 = frag1.creationTime();
+    double lastFragmentTime1 = frag1.lastFragmentTime();
+ 
     ref = allocate_frame_with_basic_header(I2O_SM_DQM, 0, 1);
     i2oMsg = (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
     i2oMsg->rbBufferID = 3;
@@ -518,6 +546,8 @@ testI2OChain::swap_with_valid_header()
     i2oMsg->fuProcID = value2;
     i2oMsg->fuGUID = value1;
     stor::I2OChain frag2(ref);
+    double creationTime2 = frag2.creationTime();
+    double lastFragmentTime2 = frag2.lastFragmentTime();
 
     {
       CPPUNIT_ASSERT(frag1.messageCode() == Header::DQM_EVENT);
@@ -564,6 +594,13 @@ testI2OChain::swap_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
     }
+
+    {
+      CPPUNIT_ASSERT(frag1.creationTime() == creationTime2);
+      CPPUNIT_ASSERT(frag2.creationTime() == creationTime1);
+      CPPUNIT_ASSERT(frag1.lastFragmentTime() == lastFragmentTime2);
+      CPPUNIT_ASSERT(frag2.lastFragmentTime() == lastFragmentTime1);
+    }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -599,6 +636,8 @@ testI2OChain::release_with_valid_header()
 
     initMsgFrag.release();
     CPPUNIT_ASSERT(initMsgFrag.messageCode() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.creationTime() == -1);
+    CPPUNIT_ASSERT(initMsgFrag.lastFragmentTime() == -1);
     fragmentKey = initMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == 0);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
@@ -620,9 +659,11 @@ testI2OChain::add_fragment()
 
     Reference* ref = allocate_frame_with_sample_header(0, 2);
     stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
 
     ref = allocate_frame_with_sample_header(1, 2);
     stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -633,16 +674,21 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag2.faulty());
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     // add two fragments together (reverse order)
 
-    Reference* ref = allocate_frame_with_sample_header(1, 2);
-    stor::I2OChain frag1(ref);
-
-    ref = allocate_frame_with_sample_header(0, 2);
+    Reference* ref = allocate_frame_with_sample_header(0, 2);
     stor::I2OChain frag2(ref);
+    double creationTime2 = frag2.creationTime();
+
+    ref = allocate_frame_with_sample_header(1, 2);
+    stor::I2OChain frag1(ref);
+    double lastFragmentTime1 = frag1.lastFragmentTime();
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -654,10 +700,15 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
 
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime2);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime1);
+
     // verify that adding a fragment to a complete chain throws an exception
 
     ref = allocate_frame_with_sample_header(0, 2);
     stor::I2OChain frag3(ref);
+    double creationTime3 = frag3.creationTime();
+    double lastFragmentTime3 = frag3.lastFragmentTime();
 
     try
       {
@@ -673,6 +724,11 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime2);
+    CPPUNIT_ASSERT(frag3.creationTime() == creationTime3);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime1);
+    CPPUNIT_ASSERT(frag3.lastFragmentTime() == lastFragmentTime3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -680,9 +736,15 @@ testI2OChain::add_fragment()
 
     Reference* ref = allocate_frame_with_sample_header(0, 3);
     stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
 
     ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+
+    ref = allocate_frame_with_sample_header(2, 3);
+    stor::I2OChain frag3(ref);
+    double lastFragmentTime3 = frag3.lastFragmentTime();
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -692,8 +754,8 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
 
-    ref = allocate_frame_with_sample_header(2, 3);
-    stor::I2OChain frag3(ref);
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
 
     frag1.addToChain(frag3);
 
@@ -707,16 +769,26 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     // add three fragments together (reverse order)
 
-    Reference* ref = allocate_frame_with_sample_header(2, 3);
-    stor::I2OChain frag1(ref);
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag3(ref);
+    double creationTime3 = frag3.creationTime();
+    double lastFragmentTime3 = frag3.lastFragmentTime();
 
     ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag2(ref);
+    double creationTime2 = frag2.creationTime();
+
+    ref = allocate_frame_with_sample_header(2, 3);
+    stor::I2OChain frag1(ref);
+    double lastFragmentTime1 = frag1.lastFragmentTime();
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -726,8 +798,8 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
 
-    ref = allocate_frame_with_sample_header(0, 3);
-    stor::I2OChain frag3(ref);
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime2);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime1);
 
     frag1.addToChain(frag3);
 
@@ -741,6 +813,9 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime3);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -748,9 +823,15 @@ testI2OChain::add_fragment()
 
     Reference* ref = allocate_frame_with_sample_header(2, 3);
     stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
 
     ref = allocate_frame_with_sample_header(0, 3);
     stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+
+    ref = allocate_frame_with_sample_header(1, 3);
+    stor::I2OChain frag3(ref);
+    double lastFragmentTime3 = frag3.lastFragmentTime();
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -760,8 +841,8 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
 
-    ref = allocate_frame_with_sample_header(1, 3);
-    stor::I2OChain frag3(ref);
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
 
     frag1.addToChain(frag3);
 
@@ -775,6 +856,9 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
@@ -782,9 +866,11 @@ testI2OChain::add_fragment()
 
     Reference* ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
 
     ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -794,10 +880,14 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.faulty());
     CPPUNIT_ASSERT(!frag2.faulty());
 
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+
     // verify that adding a fragment to a faulty chain works
 
     ref = allocate_frame_with_sample_header(0, 3);
     stor::I2OChain frag3(ref);
+    double lastFragmentTime3 = frag3.lastFragmentTime();
 
     frag1.addToChain(frag3);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -811,6 +901,9 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 0);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime3);
 
     // verify that adding a fragment to an empty chain throws an exception
 
@@ -829,9 +922,9 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag5.empty());
     CPPUNIT_ASSERT(!frag4.empty());
     CPPUNIT_ASSERT(!frag4.complete());
-    CPPUNIT_ASSERT(!frag3.complete());
+    CPPUNIT_ASSERT(!frag5.complete());
     CPPUNIT_ASSERT(!frag4.faulty());
-    CPPUNIT_ASSERT(!frag3.faulty());
+    CPPUNIT_ASSERT(!frag5.faulty());
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
