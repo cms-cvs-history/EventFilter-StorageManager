@@ -1,9 +1,10 @@
-// $Id: I2OChain.cc,v 1.1.2.17 2009/02/15 23:36:34 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.18 2009/02/17 13:20:12 mommsen Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -52,6 +53,8 @@ namespace stor
       unsigned int messageCode() const {return _messageCode;}
       FragKey const& fragmentKey() const {return _fragKey;}
       unsigned int fragmentCount() const {return _fragmentCount;}
+      double creationTime() const {return _creationTime;}
+      double lastFragmentTime() const {return _lastFragmentTime;}
       unsigned long totalDataSize() const;
       unsigned long dataSize(int fragmentIndex) const;
       unsigned char* dataLocation(int fragmentIndex) const;
@@ -77,6 +80,9 @@ namespace stor
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
 
+      double _creationTime;
+      double _lastFragmentTime;
+
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       void validateI2OHeaders(unsigned short expectedI2OMessageCode);
 
@@ -95,10 +101,15 @@ namespace stor
       _messageCode(Header::INVALID),
       _fragKey(Header::INVALID,0,0,0,0,0),
       _fragmentCount(0),
-      _expectedNumberOfFragments(0)
+      _expectedNumberOfFragments(0),
+      _creationTime(-1),
+      _lastFragmentTime(-1)
     {
       if (pRef)
         {
+          _creationTime = utils::getCurrentTime();
+          _lastFragmentTime = _creationTime;
+
           toolbox::mem::Reference* curRef = pRef;
           while (curRef)
             {
@@ -197,6 +208,13 @@ namespace stor
 
           // merge the faulty flags from the new part into the existing flags
           _faultyBits |= newpart._faultyBits;
+
+          // update the time stamps
+          _lastFragmentTime = utils::getCurrentTime();
+          if (newpart.creationTime() < _creationTime)
+          {
+            _creationTime = newpart.creationTime();
+          }
 
           return;
         }
@@ -303,10 +321,17 @@ namespace stor
                           "A fragment was unable to be added to a chain.");
             }
           ++_fragmentCount;
-
+          
           newRef = nextNewRef;
         }
 
+      // update the time stamps
+      _lastFragmentTime = utils::getCurrentTime();
+      if (newpart.creationTime() < _creationTime)
+      {
+        _creationTime = newpart.creationTime();
+      }
+      
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
         {
           markComplete();
@@ -347,6 +372,8 @@ namespace stor
       std::swap(_fragKey, other._fragKey);
       std::swap(_fragmentCount, other._fragmentCount);
       std::swap(_expectedNumberOfFragments, other._expectedNumberOfFragments);
+      std::swap(_creationTime, other._creationTime);
+      std::swap(_lastFragmentTime, other._lastFragmentTime);
     }
 
     unsigned long ChainData::totalDataSize() const
@@ -1076,6 +1103,18 @@ namespace stor
   {
     if (!_data) return 0;
     return _data->fragmentCount();
+  }
+
+  double I2OChain::creationTime() const
+  {
+    if (!_data) return -1;
+    return _data->creationTime();
+  }
+
+  double I2OChain::lastFragmentTime() const
+  {
+    if (!_data) return -1;
+    return _data->lastFragmentTime();
   }
 
   unsigned long I2OChain::totalDataSize() const
