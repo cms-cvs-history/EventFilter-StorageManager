@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.10 2009/02/12 15:11:22 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.11 2009/02/16 15:52:25 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -6,6 +6,9 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 #include <vector>
+
+#include "EventFilter/StorageManager/interface/Utils.h"
+
 
 namespace stor
 {
@@ -15,8 +18,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/02/12 15:11:22 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/02/16 15:52:25 $
    */
 
   class MonitoredQuantity
@@ -121,7 +124,7 @@ namespace stor
      * will be called once per interval specified by
      * EXPECTED_CALCULATION_INTERVAL.
      */
-    void calculateStatistics(double currentTime = getCurrentTime());
+    void calculateStatistics(double currentTime = utils::getCurrentTime());
 
     /**
      * Resets the monitor (zeroes out all counters and restarts the
@@ -162,14 +165,6 @@ namespace stor
     double getTimeWindowForRecentResults() const {
       return _intervalForRecentStats;
     }
-
-    /**
-     * Returns the current time as a double.  The value corresponds to the
-     * number of seconds since the epoch (including a fractional part good to
-     * the microsecond level).  A negative value indicates that an error
-     * occurred when fetching the time from the operating system.
-     */
-    static double getCurrentTime();
 
   private:
 
