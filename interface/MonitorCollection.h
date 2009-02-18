@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.7 2009/02/16 13:38:55 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.1.2.8 2009/02/16 15:52:25 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -7,13 +7,13 @@
 #include <vector>
 #include <utility>
 #include <string>
-#include <xercesc/dom/DOMElement.hpp>
 
 #include "xdaq/Application.h"
 #include "xdata/InfoSpace.h"
 #include "xdata/Serializable.h"
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
+#include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 
 namespace stor {
@@ -22,8 +22,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/02/16 13:38:55 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/02/16 15:52:25 $
    */
   
   class MonitorCollection
@@ -58,14 +58,14 @@ namespace stor {
     /**
      * Adds a child node to the parent node
      */
-    void addDOMElement(xercesc::DOMElement*) const;
+    void addDOMElement(XHTMLMaker&, XHTMLMaker::Node*) const;
 
 
   protected:
 
     virtual void do_calculateStatistics() = 0;
     
-    virtual void do_addDOMElement(xercesc::DOMElement*) const = 0;
+    virtual void do_addDOMElement(XHTMLMaker&, XHTMLMaker::Node*) const = 0;
     
     virtual void do_updateInfoSpace() = 0;
 

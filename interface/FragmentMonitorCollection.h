@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.9 2009/02/16 13:38:17 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.10 2009/02/16 15:52:25 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/02/16 13:38:17 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/02/16 15:52:25 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -91,7 +91,7 @@ namespace stor {
 
     virtual void do_calculateStatistics();
     
-    virtual void do_addDOMElement(xercesc::DOMElement*) const;
+    virtual void do_addDOMElement(XHTMLMaker&, XHTMLMaker::Node*) const;
     
     virtual void do_updateInfoSpace();
 

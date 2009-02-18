@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.h,v 1.1.2.3 2009/02/16 13:38:17 mommsen Exp $
+// $Id: RunMonitorCollection.h,v 1.1.2.4 2009/02/16 15:52:25 mommsen Exp $
 
 #ifndef StorageManager_RunMonitorCollection_h
 #define StorageManager_RunMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * in the current run
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/02/16 13:38:17 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/16 15:52:25 $
    */
   
   class RunMonitorCollection : public MonitorCollection
@@ -70,7 +70,7 @@ namespace stor {
 
     virtual void do_calculateStatistics();
     
-    virtual void do_addDOMElement(xercesc::DOMElement*) const;
+    virtual void do_addDOMElement(XHTMLMaker&, XHTMLMaker::Node*) const;
     
     virtual void do_updateInfoSpace();
 

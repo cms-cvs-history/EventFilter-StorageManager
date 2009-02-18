@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.4 2009/02/16 16:13:04 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.5 2009/02/17 14:58:55 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -28,23 +28,27 @@ void WebPageHelper::defaultWebPage
   const std::string filePath
 )
 {
+  // new interface
+  // XHTMLMonitor theMonitor;
+  // XHTMLMaker maker;
+
   XHTMLMaker* maker = XHTMLMaker::instance();
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = createWebPageBody(stateName);
+  XHTMLMaker::Node* body = createWebPageBody(*maker, stateName);
 
   //TODO: Failed printout
 
   // Run and event summary
-  statReporter->getRunMonitorCollection().addDOMElement(body);
+  statReporter->getRunMonitorCollection().addDOMElement(*maker, body);
   
   // Resource usage
-  addDOMforResourceUsage(body, pool, nLogicalDisk, filePath);
+  addDOMforResourceUsage(*maker, body, pool, nLogicalDisk, filePath);
   
   // Add the received data statistics table
-  statReporter->getFragmentMonitorCollection().addDOMElement(body);
+  statReporter->getFragmentMonitorCollection().addDOMElement(*maker, body);
 
-  addDOMforSMLinks(body);
+  addDOMforSMLinks(*maker, body);
   
   // Dump the webpage to the output stream
   maker->out(*out);
@@ -52,14 +56,16 @@ void WebPageHelper::defaultWebPage
 }
 
 
-XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
+XHTMLMaker::Node* WebPageHelper::createWebPageBody
+(
+  XHTMLMaker& maker,
+  const std::string stateName
+)
 {
-  XHTMLMaker* maker = XHTMLMaker::instance();
-  
   std::ostringstream title;
   title << _appDescriptor->getClassName()
     << " instance " << _appDescriptor->getInstance();
-  XHTMLMaker::Node* body = maker->start(title.str());
+  XHTMLMaker::Node* body = maker.start(title.str());
   
   std::ostringstream stylesheetLink;
   stylesheetLink << "/" << _appDescriptor->getURN()
@@ -68,25 +74,25 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   stylesheetAttr[ "rel" ] = "stylesheet";
   stylesheetAttr[ "type" ] = "text/css";
   stylesheetAttr[ "href" ] = stylesheetLink.str();
-  maker->addNode("link", maker->getHead(), stylesheetAttr);
+  maker.addNode("link", maker.getHead(), stylesheetAttr);
   
   XHTMLMaker::AttrMap tableAttr;
   tableAttr[ "border" ] = "0";
   tableAttr[ "cellspacing" ] = "7";
   tableAttr[ "width" ] = "100%";
-  XHTMLMaker::Node* table = maker->addNode("table", body, tableAttr);
+  XHTMLMaker::Node* table = maker.addNode("table", body, tableAttr);
   
-  XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
   
   XHTMLMaker::AttrMap tableDivAttr;
   tableDivAttr[ "align" ] = "left";
   tableDivAttr[ "width" ] = "64";
-  XHTMLMaker::Node* tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, tableDivAttr);
 
   XHTMLMaker::AttrMap smLinkAttr;
   smLinkAttr[ "href" ] = _appDescriptor->getContextDescriptor()->getURL()
     + "/" + _appDescriptor->getURN();
-  XHTMLMaker::Node* smLink = maker->addNode("a", tableDiv, smLinkAttr);
+  XHTMLMaker::Node* smLink = maker.addNode("a", tableDiv, smLinkAttr);
   
   XHTMLMaker::AttrMap smImgAttr;
   smImgAttr[ "align" ] = "middle";
@@ -95,25 +101,25 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   smImgAttr[ "width" ] = "64";
   smImgAttr[ "height" ] = "64";
   smImgAttr[ "border" ] = "0";
-  maker->addNode("img", smLink, smImgAttr);
+  maker.addNode("img", smLink, smImgAttr);
   
   tableDivAttr[ "width" ] = "40%";
-  tableDiv = maker->addNode("td", tableRow, tableDivAttr);
-  XHTMLMaker::Node* header = maker->addNode("h3", tableDiv);
-  maker->addText(header, title.str());
+  tableDiv = maker.addNode("td", tableRow, tableDivAttr);
+  XHTMLMaker::Node* header = maker.addNode("h3", tableDiv);
+  maker.addText(header, title.str());
   
   tableDivAttr[ "width" ] = "30%";
-  tableDiv = maker->addNode("td", tableRow, tableDivAttr);
-  header = maker->addNode("h3", tableDiv);
-  maker->addText(header, stateName);
+  tableDiv = maker.addNode("td", tableRow, tableDivAttr);
+  header = maker.addNode("h3", tableDiv);
+  maker.addText(header, stateName);
   
   tableDivAttr[ "align" ] = "right";
   tableDivAttr[ "width" ] = "64";
-  tableDiv = maker->addNode("td", tableRow, tableDivAttr);
+  tableDiv = maker.addNode("td", tableRow, tableDivAttr);
   
   XHTMLMaker::AttrMap xdaqLinkAttr;
   xdaqLinkAttr[ "href" ] = "/urn:xdaq-application:lid=3";
-  XHTMLMaker::Node* xdaqLink = maker->addNode("a", tableDiv, xdaqLinkAttr);
+  XHTMLMaker::Node* xdaqLink = maker.addNode("a", tableDiv, xdaqLinkAttr);
   
   XHTMLMaker::AttrMap xdaqImgAttr;
   xdaqImgAttr[ "align" ] = "middle";
@@ -122,63 +128,64 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody(const std::string stateName)
   xdaqImgAttr[ "width" ] = "64";
   xdaqImgAttr[ "height" ] = "64";
   xdaqImgAttr[ "border" ] = "0";
-  maker->addNode("img", xdaqLink, xdaqImgAttr);
+  maker.addNode("img", xdaqLink, xdaqImgAttr);
 
-  maker->addNode("hr", body);
+  maker.addNode("hr", body);
   
   return body;
 }
 
 
-void WebPageHelper::addDOMforSMLinks(xercesc::DOMElement *parent)
+void WebPageHelper::addDOMforSMLinks
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent
+)
 {
-  XHTMLMaker* maker = XHTMLMaker::instance();
-
   std::string url = _appDescriptor->getContextDescriptor()->getURL()
     + "/" + _appDescriptor->getURN();
 
   XHTMLMaker::AttrMap linkAttr;
   XHTMLMaker::Node *link;
 
-  maker->addNode("hr", parent);
+  maker.addNode("hr", parent);
 
   linkAttr[ "href" ] = url + "/storedData";
-  link = maker->addNode("a", parent, linkAttr);
-  maker->addText(link, "Stored data web page (remainder of old default web page)");
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "Stored data web page (remainder of old default web page)");
 
-  maker->addNode("hr", parent);
+  maker.addNode("hr", parent);
 
   linkAttr[ "href" ] = url + "/rbsenderlist";
-  link = maker->addNode("a", parent, linkAttr);
-  maker->addText(link, "RB Sender list web page");
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "RB Sender list web page");
 
-  maker->addNode("hr", parent);
+  maker.addNode("hr", parent);
 
   linkAttr[ "href" ] = url + "/streameroutput";
-  link = maker->addNode("a", parent, linkAttr);
-  maker->addText(link, "Streamer Output Status web page");
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "Streamer Output Status web page");
 
-  maker->addNode("hr", parent);
+  maker.addNode("hr", parent);
 
   linkAttr[ "href" ] = url + "/EventServerStats?update=off";
-  link = maker->addNode("a", parent, linkAttr);
-  maker->addText(link, "Event Server Statistics");
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "Event Server Statistics");
 
-  maker->addNode("hr", parent);
+  maker.addNode("hr", parent);
 
 }
 
 
 void WebPageHelper::addDOMforResourceUsage
 (
-  xercesc::DOMElement *parent,
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
   toolbox::mem::Pool *pool,
   const int nLogicalDisk,
   const std::string filePath
 )
 {
-  XHTMLMaker* maker = XHTMLMaker::instance();
-  
   XHTMLMaker::AttrMap tableAttr;
   tableAttr[ "frame" ] = "void";
   tableAttr[ "rules" ] = "group";
@@ -209,29 +216,29 @@ void WebPageHelper::addDOMforResourceUsage
   XHTMLMaker::AttrMap warningAttr = tableValueAttr;
   warningAttr[ "bgcolor" ] = "#EF5A10";
   
-  XHTMLMaker::Node* outerTable = maker->addNode("table", parent, tableAttr);
-  XHTMLMaker::Node* outerTableRow = maker->addNode("tr", outerTable);
-  XHTMLMaker::Node* outerTableDiv = maker->addNode("th", outerTableRow, colspanAttr);
-  maker->addText(outerTableDiv, "Resource Usage");
+  XHTMLMaker::Node* outerTable = maker.addNode("table", parent, tableAttr);
+  XHTMLMaker::Node* outerTableRow = maker.addNode("tr", outerTable);
+  XHTMLMaker::Node* outerTableDiv = maker.addNode("th", outerTableRow, colspanAttr);
+  maker.addText(outerTableDiv, "Resource Usage");
   
-  outerTableRow = maker->addNode("tr", outerTable);
-  outerTableDiv = maker->addNode("td", outerTableRow, halfWidthAttr);
-  XHTMLMaker::Node* table = maker->addNode("table", outerTableDiv, innerTableAttr);
+  outerTableRow = maker.addNode("tr", outerTable);
+  outerTableDiv = maker.addNode("td", outerTableRow, halfWidthAttr);
+  XHTMLMaker::Node* table = maker.addNode("table", outerTableDiv, innerTableAttr);
   
   // Memory pool usage
-  XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
   XHTMLMaker::Node* tableDiv;
   if (pool)
   {
-    tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-    maker->addText(tableDiv, "Memory pool used (bytes)");
-    tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-    maker->addText(tableDiv, pool->getMemoryUsage().getUsed(), 0);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    maker.addText(tableDiv, "Memory pool used (bytes)");
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, pool->getMemoryUsage().getUsed(), 0);
   }
   else
   {
-    tableDiv = maker->addNode("td", tableRow, colspanAttr);
-    maker->addText(tableDiv, "Memory pool pointer not yet available");
+    tableDiv = maker.addNode("td", tableRow, colspanAttr);
+    maker.addText(tableDiv, "Memory pool pointer not yet available");
   }
   
   
@@ -256,40 +263,40 @@ void WebPageHelper::addDOMforResourceUsage
       used   = (int)(100 * (1. - bfree / btotal)); 
     }
     
-    tableRow = maker->addNode("tr", table);
-    tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     {
       std::ostringstream tmpString;
       tmpString << "Disk " << i << " usage";
-      maker->addText(tableDiv, tmpString.str());
+      maker.addText(tableDiv, tmpString.str());
     }
     if(used>89)
-      tableDiv = maker->addNode("td", tableRow, warningAttr);
+      tableDiv = maker.addNode("td", tableRow, warningAttr);
     else
-      tableDiv = maker->addNode("td", tableRow, tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     {
       std::ostringstream tmpString;
       tmpString << used << "% (" << btotal-bfree << " of " << btotal << " GB)";
-      maker->addText(tableDiv, tmpString.str());
+      maker.addText(tableDiv, tmpString.str());
     }
   }
   
-  outerTableDiv = maker->addNode("td", outerTableRow, halfWidthAttr);
-  table = maker->addNode("table", outerTableDiv, innerTableAttr);
+  outerTableDiv = maker.addNode("td", outerTableRow, halfWidthAttr);
+  table = maker.addNode("table", outerTableDiv, innerTableAttr);
   
   // # copy worker
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "# CopyWorker");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, getProcessCount("CopyWorker.pl"), 0);
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# CopyWorker");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, getProcessCount("CopyWorker.pl"), 0);
   
   // # inject worker
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "# InjectWorker");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, getProcessCount("InjectWorker.pl"), 0);
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# InjectWorker");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, getProcessCount("InjectWorker.pl"), 0);
   
 }
 

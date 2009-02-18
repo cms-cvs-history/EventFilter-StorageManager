@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.2 2009/02/13 14:19:42 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.3 2009/02/16 13:40:12 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -72,10 +72,8 @@ void RunMonitorCollection::do_updateInfoSpace()
 }
 
 
-void RunMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent) const
+void RunMonitorCollection::do_addDOMElement(XHTMLMaker& maker, XHTMLMaker::Node *parent) const
 {
-  XHTMLMaker* maker = XHTMLMaker::instance();
-
   XHTMLMaker::AttrMap tableAttr;
   tableAttr[ "frame" ] = "void";
   tableAttr[ "rules" ] = "group";
@@ -97,44 +95,44 @@ void RunMonitorCollection::do_addDOMElement(xercesc::DOMElement *parent) const
   tableValueAttr[ "align" ] = "right";
   tableValueAttr[ "width" ] = "23%";
 
-  XHTMLMaker::Node* table = maker->addNode("table", parent, tableAttr);
+  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
 
-  XHTMLMaker::Node* tableRow = maker->addNode("tr", table);
-  XHTMLMaker::Node* tableDiv = maker->addNode("th", tableRow, colspanAttr);
-  maker->addText(tableDiv, "Storage Manager Statistics");
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Storage Manager Statistics");
 
   // Run number and lumi section
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "Run number");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, runNumbersSeen.getLastSampleValue(), 0);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "Lumi section");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, lumiSectionsSeen.getLastSampleValue(), 0);
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Run number");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, runNumbersSeen.getLastSampleValue(), 0);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Lumi section");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, lumiSectionsSeen.getLastSampleValue(), 0);
 
   // Total events received
-  tableRow = maker->addNode("tr", table, specialRowAttr);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "Events received (non-unique)");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, eventIDsReceived.getSampleCount(), 0);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "Error events received");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, errorEventIDsReceived.getSampleCount(), 0);
+  tableRow = maker.addNode("tr", table, specialRowAttr);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Events received (non-unique)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventIDsReceived.getSampleCount(), 0);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Error events received");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, errorEventIDsReceived.getSampleCount(), 0);
 
   // Last event IDs
-  tableRow = maker->addNode("tr", table);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "Last event ID");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, eventIDsReceived.getLastSampleValue(), 0);
-  tableDiv = maker->addNode("td", tableRow, tableLabelAttr);
-  maker->addText(tableDiv, "Last error event ID");
-  tableDiv = maker->addNode("td", tableRow, tableValueAttr);
-  maker->addText(tableDiv, errorEventIDsReceived.getLastSampleValue(), 0);
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last event ID");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventIDsReceived.getLastSampleValue(), 0);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last error event ID");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, errorEventIDsReceived.getLastSampleValue(), 0);
 
 }
 
