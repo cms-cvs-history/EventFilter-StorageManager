@@ -4,34 +4,16 @@
 #include <assert.h>
 #include <vector>
 
-#include "toolbox/mem/HeapAllocator.h"
-#include "toolbox/mem/Reference.h"
-#include "toolbox/mem/MemoryPoolFactory.h"
-#include "toolbox/mem/exception/Exception.h"
-
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
-#include "IOPool/Streamer/interface/MsgHeader.h"
 
-using toolbox::mem::Pool;
-using toolbox::mem::MemoryPoolFactory;
-using toolbox::mem::getMemoryPoolFactory;
-using toolbox::mem::HeapAllocator;
-using toolbox::mem::Reference;
+#include "EventFilter/StorageManager/test/TestHelper.h"
 
+using stor::testhelper::outstanding_bytes;
+using stor::testhelper::allocate_frame;
+using stor::testhelper::allocate_frame_with_basic_header;
+using stor::testhelper::allocate_frame_with_sample_header;
 
-// There seems to be no sane way to create and destroy some of these
-// toolbox entities, so we use globals. valgrind complains about
-// leaked resources, but attempts to clean up resources (and to not
-// use global resources) does not remove the leaks.
-namespace
-{
-  MemoryPoolFactory*  g_factory(getMemoryPoolFactory());
-  toolbox::net::URN   g_urn("toolbox-mem-pool","myPool");
-  HeapAllocator* g_alloc(new HeapAllocator);
-  Pool*          g_pool(g_factory->createPool(g_urn, g_alloc));
-}
 
 class testI2OChain : public CppUnit::TestFixture
 {
@@ -77,17 +59,7 @@ public:
   void add_fragment();
 
 private:
-  // Allocate a new frame from the (global) Pool.
-  Reference* allocate_frame();
-  Reference* allocate_frame_with_basic_header(unsigned short code,
-                                              unsigned int frameIndex,
-                                              unsigned int totalFrameCount);
-  Reference* allocate_frame_with_sample_header(unsigned int frameIndex,
-                                               unsigned int totalFrameCount);
 
-  // Return the number of bytes currently allocated out of the
-  // (global) Pool.
-  size_t outstanding_bytes();
 };
 
 void
@@ -862,92 +834,6 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.faulty());
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-}
-
-
-Reference*
-testI2OChain::allocate_frame()
-{
-  const int bufferSize = 1024;
-  Reference* temp = g_factory->getFrame(g_pool, bufferSize);
-  assert(temp);
-
-  unsigned char* tmpPtr = static_cast<unsigned char*>(temp->getDataLocation());
-  for (int idx = 0; idx < bufferSize; ++idx)
-    {
-      tmpPtr[idx] = 0;
-    }
-
-  return temp;
-}
-
-Reference*
-testI2OChain::allocate_frame_with_basic_header(unsigned short code,
-                                               unsigned int frameIndex,
-                                               unsigned int totalFrameCount)
-{
-  const int bufferSize = 1024;
-  Reference* temp = g_factory->getFrame(g_pool, bufferSize);
-  assert(temp);
-
-  unsigned char* tmpPtr = static_cast<unsigned char*>(temp->getDataLocation());
-  for (int idx = 0; idx < bufferSize; ++idx)
-    {
-      tmpPtr[idx] = 0;
-    }
-
-  I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-    (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
-  I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-    (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
-  pvtMsg->StdMessageFrame.MessageSize = bufferSize;
-  pvtMsg->XFunctionCode = code;
-  smMsg->numFrames = totalFrameCount;
-  smMsg->frameCount = frameIndex;
-
-  return temp;
-}
-
-Reference*
-testI2OChain::allocate_frame_with_sample_header(unsigned int frameIndex,
-                                                unsigned int totalFrameCount)
-{
-  unsigned int value1 = 0xa5a5d2d2;
-  unsigned int value2 = 0xb4b4e1e1;
-  unsigned int value3 = 0xc3c3f0f0;
-  unsigned int value4 = 0x12345678;
-
-  const int bufferSize = 1024;
-  Reference* temp = g_factory->getFrame(g_pool, bufferSize);
-  assert(temp);
-
-  unsigned char* tmpPtr = static_cast<unsigned char*>(temp->getDataLocation());
-  for (int idx = 0; idx < bufferSize; ++idx)
-    {
-      tmpPtr[idx] = 0;
-    }
-
-  I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-    (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
-  I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
-    (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
-  pvtMsg->StdMessageFrame.MessageSize = bufferSize;
-  pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
-  smMsg->numFrames = totalFrameCount;
-  smMsg->frameCount = frameIndex;
-  smMsg->hltTid = value1;
-  smMsg->rbBufferID = 2;
-  smMsg->outModID = value2;
-  smMsg->fuProcID = value3;
-  smMsg->fuGUID = value4;
-
-  return temp;
-}
-
-size_t
-testI2OChain::outstanding_bytes()
-{
-  return g_pool->getMemoryUsage().getUsed();
 }
 
 
