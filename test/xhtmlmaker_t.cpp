@@ -6,14 +6,15 @@
 
 using namespace std;
 
-int main()
+void make_a_page( XHTMLMaker& maker,
+		  const string& title,
+		  const string& h_text,
+		  const string& url,
+		  const string& url_text,
+		  const string& p_text )
 {
 
-  XHTMLMonitor monitor;
-
-  XHTMLMaker maker;
-
-  XHTMLMaker::Node* body = maker.start( "Fancy Page" );
+  XHTMLMaker::Node* body = maker.start( title );
 
   XHTMLMaker::AttrMap lmap;
   lmap[ "rel" ] = "stylesheet";
@@ -27,18 +28,34 @@ int main()
   maker.addText( s, " " );
 
   XHTMLMaker::Node* h1 = maker.addNode( "h1", body );
-  maker.addText( h1, "Kinda Fancy Page" );
+  maker.addText( h1, h_text );
 
   XHTMLMaker::AttrMap pmap;
   XHTMLMaker::Node* p = maker.addNode( "p", body );
-  maker.addText( p, "Hi there" );
+  maker.addText( p, p_text );
 
   XHTMLMaker::AttrMap m;
-  m[ "href" ] = "http://www.google.com";
+  m[ "href" ] = url;
   m[ "id" ] = "my_id";
   XHTMLMaker::Node* link =
     maker.addNode( "a", p, m );
-  maker.addText( link, "Fancy Link" );
+  maker.addText( link, url_text );
+
+}
+
+int main()
+{
+
+  XHTMLMonitor monitor;
+
+  XHTMLMaker maker;
+
+  make_a_page( maker,
+	       "Fancy Page",
+	       "Kinda Fancy Page",
+	       "http://www.google.com",
+	       "Fancy Link",
+	       "Hi there" );
 
   maker.out( "test.xhtml" );
 
