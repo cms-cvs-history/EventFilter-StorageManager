@@ -43,7 +43,12 @@ void make_a_page( XHTMLMaker& maker,
 
 }
 
-int main()
+void initialize_make_write_terminate( const string& title,
+				      const string& h_text,
+				      const string& url,
+				      const string& url_text,
+				      const string& p_text,
+				      const string& file_name )
 {
 
   XHTMLMonitor monitor;
@@ -51,13 +56,64 @@ int main()
   XHTMLMaker maker;
 
   make_a_page( maker,
+	       title,
+	       h_text,
+	       url,
+	       url_text,
+	       p_text );
+
+  maker.out( file_name );
+
+}
+
+void make_one_make_two_write_one_write_two( const string& file_one,
+					    const string& file_two )
+{
+
+  XHTMLMonitor monitor;
+
+  XHTMLMaker maker_one;
+
+  make_a_page( maker_one,
 	       "Fancy Page",
 	       "Kinda Fancy Page",
 	       "http://www.google.com",
 	       "Fancy Link",
 	       "Hi there" );
 
-  maker.out( "test.xhtml" );
+  XHTMLMaker maker_two;
+
+  make_a_page( maker_two,
+	       "Another Page",
+	       "Not So Fancy Page",
+	       "http://www.cern.ch",
+	       "No Fun Here",
+	       "Get Lost" );
+
+  maker_one.out( file_one );
+
+  maker_two.out( file_two );
+
+}
+
+int main()
+{
+
+  make_one_make_two_write_one_write_two( "test_1.xhtml", "test_2.xhtml" );
+
+  initialize_make_write_terminate( "Fancy Page",
+				   "Kinda Fancy Page",
+				   "http://www.google.com",
+				   "Fancy Link",
+				   "Hi there",
+				   "test_3.xhtml" );
+
+  initialize_make_write_terminate( "Another Page",
+				   "Not So Fancy Page",
+				   "http://www.cern.ch",
+				   "No Fun Here",
+				   "Get Lost",
+				   "test_4.xhtml" );
 
   return 0;
 
