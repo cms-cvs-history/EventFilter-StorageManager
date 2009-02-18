@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.5 2009/02/17 14:58:55 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.6 2009/02/18 08:26:54 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -9,6 +9,7 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
+#include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
 
 using namespace stor;
 
@@ -28,30 +29,27 @@ void WebPageHelper::defaultWebPage
   const std::string filePath
 )
 {
-  // new interface
-  // XHTMLMonitor theMonitor;
-  // XHTMLMaker maker;
-
-  XHTMLMaker* maker = XHTMLMaker::instance();
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = createWebPageBody(*maker, stateName);
+  XHTMLMaker::Node* body = createWebPageBody(maker, stateName);
 
   //TODO: Failed printout
 
   // Run and event summary
-  statReporter->getRunMonitorCollection().addDOMElement(*maker, body);
+  statReporter->getRunMonitorCollection().addDOMElement(maker, body);
   
   // Resource usage
-  addDOMforResourceUsage(*maker, body, pool, nLogicalDisk, filePath);
+  addDOMforResourceUsage(maker, body, pool, nLogicalDisk, filePath);
   
   // Add the received data statistics table
-  statReporter->getFragmentMonitorCollection().addDOMElement(*maker, body);
+  statReporter->getFragmentMonitorCollection().addDOMElement(maker, body);
 
-  addDOMforSMLinks(*maker, body);
+  addDOMforSMLinks(maker, body);
   
   // Dump the webpage to the output stream
-  maker->out(*out);
+  maker.out(*out);
 
 }
 
