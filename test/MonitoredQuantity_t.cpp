@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 /////////////////////////////////////////////////////////////
 //
@@ -60,7 +61,7 @@ testMonitoredQuantity::testMonitoredQuantity() :
   //Only 2 bins deep history for testing
   _quantity.setNewTimeWindowForRecentResults(2);
 
-  srand48(static_cast<long int>(_quantity.getCurrentTime()));
+  srand48(static_cast<long int>(utils::getCurrentTime()));
 }
 
 void testMonitoredQuantity::accumulateSamples

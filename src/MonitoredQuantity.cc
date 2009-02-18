@@ -1,7 +1,7 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.8 2009/02/10 11:08:36 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.9 2009/02/12 15:11:38 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
-#include <sys/time.h>
+
 #include <math.h>
 
 using namespace stor;
@@ -19,7 +19,7 @@ void MonitoredQuantity::addSample(const double value)
   boost::mutex::scoped_lock sl(_accumulationMutex);
 
   if (_lastCalculationTime <= 0.0) {
-    _lastCalculationTime = getCurrentTime();
+    _lastCalculationTime = utils::getCurrentTime();
   }
 
   ++_workingSampleCount;
@@ -387,18 +387,6 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(double interval)
   // call the reset method to populate the correct initial values
   // for the internal sample data
   reset();
-}
-
-double MonitoredQuantity::getCurrentTime()
-{
-  double now = -1.0;
-  struct timeval timeStruct;
-  int status = gettimeofday(&timeStruct, 0);
-  if (status == 0) {
-    now = static_cast<double>(timeStruct.tv_sec) +
-      (static_cast<double>(timeStruct.tv_usec) / 1000000.0);
-  }
-  return now;
 }
 
 
