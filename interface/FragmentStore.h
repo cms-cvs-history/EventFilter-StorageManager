@@ -1,9 +1,11 @@
-// $Id: FragmentStore.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: FragmentStore.h,v 1.1.2.4 2009/01/30 20:32:21 paterno Exp $
 
 #ifndef StorageManager_FragmentStore_h
 #define StorageManager_FragmentStore_h
 
 #include <map>
+
+#include "IOPool/Streamer/interface/HLTInfo.h"
 
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
@@ -15,30 +17,33 @@ namespace stor {
    *
    * Uses a map of I2OChains to store incomplete events.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/01/30 20:32:21 $
    */
   
   class FragmentStore
   {
   public:
     
-    FragmentStore();
-    
-    ~FragmentStore();
-    
+    FragmentStore() {};
+
     /**
      * Adds fragments of the I2OChain to the fragment store.
      * If the passed fragments completes an event, it returns true.
      * In this case, the passed I2OChain contains the completed event.
      */
-    bool addFragment(I2OChain&);
+    const bool addFragment(I2OChain&);
 
     
   private:
 
-    std::map<unsigned int, I2OChain> _chains;
+    //Prevent copying of the FragmentStore
+    FragmentStore(FragmentStore const&);
+    FragmentStore& operator=(FragmentStore const&);
+
+    typedef std::map<FragKey, I2OChain> fragmentMap;
+    fragmentMap _chains;
     
     
   };
