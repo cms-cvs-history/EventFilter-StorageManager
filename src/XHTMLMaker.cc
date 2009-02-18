@@ -1,11 +1,10 @@
-// $Id: XHTMLMaker.cc,v 1.1.2.4 2009/02/06 13:24:04 dshpakov Exp $
+// $Id: XHTMLMaker.cc,v 1.1.2.5 2009/02/06 13:36:58 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 #include <sstream>
 #include <iomanip>
 #include <iostream>
-#include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
 #include <xercesc/framework/MemBufFormatTarget.hpp>
@@ -13,22 +12,9 @@
 using namespace std;
 using namespace xercesc;
 
-//////////////////////////////
-//// Singleton interface: ////
-//////////////////////////////
-
-XHTMLMaker* XHTMLMaker::_instance = (XHTMLMaker*)0;
-
-XHTMLMaker* XHTMLMaker::instance()
-{
-  if( !_instance ) _instance = new XHTMLMaker();
-  return _instance;
-}
 
 XHTMLMaker::XHTMLMaker()
 {
-
-  XMLPlatformUtils::Initialize();
 
   DOMImplementation* imp =
     DOMImplementationRegistry::getDOMImplementation( _xs("ls") );
@@ -66,6 +52,14 @@ XHTMLMaker::XHTMLMaker()
       return;
     }
 
+}
+
+/////////////////////
+//// Destructor: ////
+/////////////////////
+
+XHTMLMaker::~XHTMLMaker()
+{
 }
 
 ///////////////////////////////////////
@@ -177,15 +171,6 @@ void XHTMLMaker::_setWriterFeatures()
 
 }
 
-//////////////////
-//// Cleanup: ////
-//////////////////
-void XHTMLMaker::_cleanup()
-{
-  XMLPlatformUtils::Terminate();
-  _instance = 0;
-}
-
 //////////////////////////////
 //// Dump page to stdout: ////
 //////////////////////////////
@@ -196,7 +181,6 @@ void XHTMLMaker::out()
   fflush( stdout );
   _writer->writeNode( ftar, *_doc );
   delete ftar;
-  _cleanup();
 }
 
 ////////////////////////////////////
@@ -208,7 +192,6 @@ void XHTMLMaker::out( const string& filename )
   XMLFormatTarget* ftar = new LocalFileFormatTarget( _xs( filename ) );
   _writer->writeNode( ftar, *_doc );
   delete ftar;
-  _cleanup();
 }
 
 ////////////////////////////////////
@@ -217,7 +200,7 @@ void XHTMLMaker::out( const string& filename )
 void XHTMLMaker::out( string& dest )
 {
    std::ostringstream stream;
-   out(stream);
+   out( stream );
    dest = stream.str();
 }
 
@@ -231,10 +214,7 @@ void XHTMLMaker::out( std::ostream& dest )
   _writer->writeNode( ftar, *_doc );
   dest << ftar->getRawBuffer();
   delete ftar;
-  _cleanup();
 }
-
-
 
 /// emacs configuration
 /// Local Variables: -

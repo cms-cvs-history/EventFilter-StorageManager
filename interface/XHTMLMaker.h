@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: XHTMLMaker.h,v 1.1.2.3 2009/02/06 11:58:49 mommsen Exp $
+// $Id: XHTMLMaker.h,v 1.1.2.4 2009/02/06 13:24:04 dshpakov Exp $
 
 #ifndef XHTMLMAKER_H
 #define XHTMLMAKER_H
@@ -22,8 +22,8 @@ public:
   typedef xercesc::DOMElement Node;
   typedef std::map<std::string,std::string> AttrMap;
 
-  // Instance:
-  static XHTMLMaker* instance();
+  // Constructor:
+  XHTMLMaker();
 
   // Destructor:
   ~XHTMLMaker();
@@ -78,9 +78,6 @@ public:
 
 private:
 
-  XHTMLMaker();
-
-  static XHTMLMaker* _instance;
   xercesc::DOMDocument* _doc;
   xercesc::DOMWriter* _writer;
 
@@ -96,9 +93,6 @@ private:
 
   // Set DOMWriter features:
   void _setWriterFeatures();
-
-  // Cleanup:
-  void _cleanup();
 
 };
 
