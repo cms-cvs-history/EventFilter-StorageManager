@@ -1,3 +1,6 @@
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -45,6 +48,29 @@ Processing::do_processI2OFragment( I2OChain& frag,
 				   FragmentStore& fs ) const
 {
   cout << "Processing a fragment\n";
+
+  bool completed = fs.addFragment(frag);
+  if ( completed )
+  {
+    ed.addEventToRelevantQueues(frag);
+  }
+  else
+  {
+    this->noFragmentToProcess(ed, fs);
+  }
+}
+
+
+void
+Processing::do_noFragmentToProcess( EventDistributor& ed,
+                                    FragmentStore& fs ) const
+{
+  I2OChain staleEvent;
+  bool gotStaleEvent = fs.getStaleEvent(staleEvent, 5); // TODO: make the timeout configurable
+  if ( gotStaleEvent )
+  {
+    ed.addEventToRelevantQueues(staleEvent);
+  }
 }
 
 /// emacs configuration

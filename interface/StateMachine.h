@@ -3,9 +3,6 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
-#include "toolbox/lang/Class.h"
-#include "toolbox/task/WorkLoop.h"
-
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/in_state_reaction.hpp>
 #include <boost/statechart/state_machine.hpp>
@@ -71,6 +68,9 @@ namespace stor
 			     EventDistributor& ed,
                              FragmentStore& fs ) const;
 
+    void noFragmentToProcess( EventDistributor& ed,
+                              FragmentStore& fs ) const;
+
     std::string stateName() const;
 
   protected:
@@ -78,6 +78,10 @@ namespace stor
     virtual void do_processI2OFragment( I2OChain& frag,
 				        EventDistributor& ed,
 				        FragmentStore& fs ) const;
+
+    virtual void do_noFragmentToProcess( EventDistributor& ed,
+                                         FragmentStore& fs ) const;
+
     virtual std::string do_stateName() const = 0;
 
   };
@@ -285,13 +289,14 @@ namespace stor
     virtual void do_processI2OFragment( I2OChain& frag,
 				        EventDistributor& ed,
 				        FragmentStore& fs ) const;
+    virtual void do_noFragmentToProcess( EventDistributor& ed,
+                                         FragmentStore& fs ) const;
     static unsigned int _counter;
 
   };
 
   // DrainingQueues:
-  class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations,
-    public toolbox::lang::Class
+  class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations
   {
 
   public:
@@ -302,9 +307,8 @@ namespace stor
 
   private:
     virtual std::string do_stateName() const;
-    bool action( toolbox::task::WorkLoop* );
-
-    toolbox::task::WorkLoop *_workloop;
+    virtual void do_noFragmentToProcess( EventDistributor& ed,
+                                         FragmentStore& fs ) const;
     bool _doDraining;
 
   };

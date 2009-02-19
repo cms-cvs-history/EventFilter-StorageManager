@@ -27,6 +27,12 @@ void Operations::processI2OFragment( I2OChain& frag,
   do_processI2OFragment( frag, ed, fs );
 }
 
+void Operations::noFragmentToProcess( EventDistributor& ed,
+				      FragmentStore& fs ) const
+{
+  do_noFragmentToProcess( ed, fs );
+}
+
 std::string Operations::stateName() const
 {
   return do_stateName();
@@ -46,6 +52,12 @@ Operations::do_processI2OFragment( I2OChain&         /* unused */ ,
 	    << stateName()
 	    << " state cannot handle I2O messages\n";
 }
+
+
+void 
+Operations::do_noFragmentToProcess( EventDistributor& /* unused */ ,
+				    FragmentStore&    /* unused */ ) const
+{}
 
 
 

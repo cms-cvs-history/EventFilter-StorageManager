@@ -1,17 +1,21 @@
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
-#include "toolbox/task/Action.h"
-#include "toolbox/task/WorkLoopFactory.h"
-
 #include <iostream>
+#include <unistd.h>
 
 using namespace std;
 using namespace stor;
 
-DrainingQueues::DrainingQueues( my_context c ): my_base(c)
+DrainingQueues::DrainingQueues( my_context c ): my_base(c),
+_doDraining(true)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
+
+  _doDraining = false;
   post_event( StopDone() );
 }
 
@@ -32,14 +36,38 @@ string DrainingQueues::do_stateName() const
 // }
 
 
-void DrainingQueues::emergencyStop(const EmergencyStop &event)
+void
+DrainingQueues::do_noFragmentToProcess( EventDistributor& ed,
+                                        FragmentStore& fs ) const
 {
+  I2OChain staleEvent;
+  bool gotStaleEvent = true;  
+
+  while ( gotStaleEvent && _doDraining )
+  {
+    if ( ed.full() )
+    {
+      // The event distributor cannot accept any new events.
+      // Wait a bit then start over
+      ::usleep(1000); // TODO: make the timeout configurable
+    }
+    else
+    {
+      gotStaleEvent = fs.getStaleEvent(staleEvent, 0);
+      if ( gotStaleEvent )
+      {
+        ed.addEventToRelevantQueues(staleEvent);
+      }
+    }
+  }
+  // Make sure we clear the fragment store if we were interrupted
+  fs.clear();
 }
 
 
-bool DrainingQueues::action(toolbox::task::WorkLoop* wl)
+void DrainingQueues::emergencyStop(const EmergencyStop &event)
 {
-  return false;
+  _doDraining = false;
 }
 
 /// emacs configuration
