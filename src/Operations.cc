@@ -20,17 +20,14 @@ Operations::~Operations()
   //outermost_context().updateHistory( tr );
 }
 
-void Operations::processI2OFragment( I2OChain& frag,
-				     EventDistributor& ed,
-				     FragmentStore& fs ) const
+void Operations::processI2OFragment( I2OChain& frag ) const
 {
-  do_processI2OFragment( frag, ed, fs );
+  do_processI2OFragment( frag );
 }
 
-void Operations::noFragmentToProcess( EventDistributor& ed,
-				      FragmentStore& fs ) const
+void Operations::noFragmentToProcess() const
 {
-  do_noFragmentToProcess( ed, fs );
+  do_noFragmentToProcess();
 }
 
 std::string Operations::stateName() const
@@ -43,9 +40,7 @@ std::string Operations::stateName() const
 ////////////////////////////////////////////////////////////
 
 void 
-Operations::do_processI2OFragment( I2OChain&         /* unused */ ,
-				   EventDistributor& /* unused */ ,
-				   FragmentStore&    /* unused */ ) const
+Operations::do_processI2OFragment( I2OChain& /* unused */ ) const
 {
   // What should we really do here? 
   std::cerr << "Error: "
@@ -55,8 +50,7 @@ Operations::do_processI2OFragment( I2OChain&         /* unused */ ,
 
 
 void 
-Operations::do_noFragmentToProcess( EventDistributor& /* unused */ ,
-				    FragmentStore&    /* unused */ ) const
+Operations::do_noFragmentToProcess() const
 {}
 
 
