@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.3 2009/01/30 10:49:57 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.4 2009/02/19 13:14:16 mommsen Exp $
 
 #include <unistd.h>
 
@@ -9,7 +9,7 @@ using namespace stor;
 
 
 FragmentProcessor::FragmentProcessor() :
-_stateMachine(0, &_eventDistributor, this),
+_stateMachine(0, &_eventDistributor, this, &_fragmentStore),
 _timeout(100000),
 _doProcessMessages(true)
 {
@@ -42,11 +42,11 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
   
     if (foundFragment)
     {
-      currentState.processI2OFragment(fragment, _eventDistributor, _fragmentStore);
+      currentState.processI2OFragment( fragment );
     }
     else
     {
-      currentState.noFragmentToProcess(_eventDistributor, _fragmentStore);
+      currentState.noFragmentToProcess();
     }
   }
   return _doProcessMessages;

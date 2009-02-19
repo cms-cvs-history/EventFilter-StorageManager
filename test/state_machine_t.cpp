@@ -127,7 +127,7 @@ void checkHistory( const StateMachine& m,
 int main()
 {
 
-  StateMachine m( 0, 0, 0 );
+  StateMachine m( 0, 0, 0, 0 );
 
   EventList elist;
 

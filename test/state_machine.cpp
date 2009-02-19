@@ -34,9 +34,7 @@ void onePass( StateMachine& machine, const EventMap::const_iterator& it )
   cout << "### Arriving at " << machine.getCurrentState().stateName() << endl;
 
   I2OChain i2oc;
-  EventDistributor ed;
-  FragmentStore fs;
-  machine.getCurrentState().processI2OFragment( i2oc, ed, fs );
+  machine.getCurrentState().processI2OFragment( i2oc );
 
 }
 
@@ -56,7 +54,7 @@ int main()
   emap[ "StopDone" ] = shared_ptr<event_base>( new StopDone() );
   emap[ "Fail" ] = shared_ptr<event_base>( new Fail() );
 
-  StateMachine machine( 0, 0, 0 );  // will need real worker objects soon
+  StateMachine machine( 0, 0, 0, 0 );  // will need real worker objects soon
 
   for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
     {

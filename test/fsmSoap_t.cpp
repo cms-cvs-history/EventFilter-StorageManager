@@ -36,7 +36,7 @@ namespace stor {
         {
             std::cout << "Constructor" << std::endl;
             
-            stateMachine = new StateMachine( 0, 0, 0 );  // empty worker objects for now
+            stateMachine = new StateMachine( 0, 0, 0, 0 );  // empty worker objects for now
             stateMachine->initiate();
             
 	    xoap::bind(

@@ -15,7 +15,7 @@ using boost::shared_ptr;
 int main()
 {
 
-  StateMachine m( 0, 0, 0 );
+  StateMachine m( 0, 0, 0, 0 );
 
   CommandQueue q;
 
