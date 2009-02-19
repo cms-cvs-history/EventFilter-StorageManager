@@ -1,14 +1,16 @@
-// $Id: FragmentProcessor.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
 
 #include "toolbox/lang/Class.h"
+#include "toolbox/task/WaitingWorkLoop.h"
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/Types.h"
 
 
@@ -21,9 +23,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -35,20 +37,16 @@ namespace stor {
     ~FragmentProcessor();
     
     /**
-     * Processes the message queued in the command and
-     * fragment queue.
+     * The workloop action processing state machine commands from the
+     * command queue and handling I2O messages retrieved from the
+     * FragmentQueue
      */
-    void processMessages();
+    bool processMessages(toolbox::task::WorkLoop*);
 
     /**
      * Updates the statistics of processed fragments
      */
     void updateStatistics();
-
-    /**
-     * Hands the fragment to the current state
-     */
-    void haveStateProcessFragment(I2OChain&);
 
     /**
      * Registers a new event consumer with the EventDistributor
@@ -61,11 +59,18 @@ namespace stor {
 
   private:
 
-    FragmentQueue _fragmentQueue;
+    /**
+     * Processes all state machine events in the command queue
+     */
+    void processAllCommands();
+
     EventDistributor _eventDistributor;
+    StateMachine _stateMachine;
+    FragmentQueue _fragmentQueue;
     FragmentStore _fragmentStore;
 
-    
+    const unsigned int _timeout; // Waiting time in microseconds.
+    bool _doProcessMessages; // The workloop action is active while this is true.
   };
   
 } // namespace stor
