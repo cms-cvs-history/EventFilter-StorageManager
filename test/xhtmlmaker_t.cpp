@@ -6,9 +6,37 @@
 
 using namespace std;
 
-string fixed_1 = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\n  <head>\n    <title>Fancy Page</title>\n    <link href=\"xhtmlmaker_t.css\" rel=\"stylesheet\"/>\n    <script src=\"xhtmlmaker_t.js\" type=\"text/javascript\"> </script>\n  </head>\n\n  <body>\n    <h1>Kinda Fancy Page</h1>\n    <p>Hi there\n      <a href=\"http://www.google.com\" id=\"my_id\">Fancy Link</a>\n    </p>\n  </body>\n\n</html>\n";
+string fixed_1("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?>\n"
+	       "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+	       "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\n"
+	       "  <head>\n"
+	       "    <title>Fancy Page</title>\n"
+	       "    <link href=\"xhtmlmaker_t.css\" rel=\"stylesheet\"/>\n"
+	       "    <script src=\"xhtmlmaker_t.js\" type=\"text/javascript\"> </script>\n"
+	       "  </head>\n\n"
+	       "  <body>\n"
+	       "    <h1>Kinda Fancy Page</h1>\n"
+	       "    <p>Hi there\n"
+	       "      <a href=\"http://www.google.com\" id=\"my_id\">Fancy Link</a>\n"
+	       "    </p>\n"
+	       "  </body>\n\n"
+	       "</html>\n");
 
-string fixed_2 = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\n  <head>\n    <title>Another Page</title>\n    <link href=\"xhtmlmaker_t.css\" rel=\"stylesheet\"/>\n    <script src=\"xhtmlmaker_t.js\" type=\"text/javascript\"> </script>\n  </head>\n\n  <body>\n    <h1>Not So Fancy Page</h1>\n    <p>Get lost\n      <a href=\"http://www.cern.ch\" id=\"my_id\">No Fun Here</a>\n    </p>\n  </body>\n\n</html>\n";
+string fixed_2("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?>\n"
+	       "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+	       "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\n"
+	       "  <head>\n"
+	       "    <title>Another Page</title>\n"
+	       "    <link href=\"xhtmlmaker_t.css\" rel=\"stylesheet\"/>\n"
+	       "    <script src=\"xhtmlmaker_t.js\" type=\"text/javascript\"> </script>\n"
+	       "  </head>\n\n"
+	       "  <body>\n"
+	       "    <h1>Not So Fancy Page</h1>\n"
+	       "    <p>Get lost\n"
+	       "      <a href=\"http://www.cern.ch\" id=\"my_id\">No Fun Here</a>\n"
+	       "    </p>\n"
+	       "  </body>\n\n"
+	       "</html>\n");
 
 void make_a_page( XHTMLMaker& maker,
 		  const string& title,
