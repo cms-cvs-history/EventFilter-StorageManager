@@ -1,23 +1,8 @@
-// $Id: FragmentQueue.cc,v 1.1.2.1 2009/01/20 10:54:37 mommsen Exp $
+// $Id: FragmentQueue.cc,v 1.1.2.2 2009/01/30 10:49:57 mommsen Exp $
 
-#include "EventFilter/StorageManager/interface/FragmentQueue.h"
-
-using namespace stor;
-
-
-FragmentQueue::FragmentQueue() :
-Queue()
-{
-
-}
-
-
-FragmentQueue::~FragmentQueue()
-{
-
-}
-
-
+/**
+   This file is now obsolete.
+ */
 
 /// emacs configuration
 /// Local Variables: -

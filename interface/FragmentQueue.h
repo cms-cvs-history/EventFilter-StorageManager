@@ -1,33 +1,22 @@
-// $Id: FragmentQueue.h,v 1.1.2.1 2009/01/20 10:54:04 mommsen Exp $
+// $Id: FragmentQueue.h,v 1.1.2.2 2009/01/30 10:49:40 mommsen Exp $
 
-#ifndef StorageManager_FragmentQueue_h
-#define StorageManager_FragmentQueue_h
+#ifndef EventFilter_StorageManager_FragmentQueue_h
+#define EventFilter_StorageManager_FragmentQueue_h
 
-#include "EventFilter/StorageManager/interface/Queue.h"
-
+#include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 namespace stor {
 
   /**
    * Queue holding I2OChains of event fragments 
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/01/30 10:49:40 $
    */
-  
-  class FragmentQueue : public Queue
-  {
-  public:
-    
-    FragmentQueue();
-    
-    ~FragmentQueue();
-    
-    
-  private:
-    
-  };
+
+  typedef ConcurrentQueue<I2OChain> FragmentQueue;  
   
 } // namespace stor
 
