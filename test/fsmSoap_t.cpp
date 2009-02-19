@@ -2,6 +2,7 @@
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -35,8 +36,13 @@ namespace stor {
         xdaq::WebApplication(s)
         {
             std::cout << "Constructor" << std::endl;
+
+            DiskWriter dw;
+            EventDistributor ed;
+            FragmentProcessor fp;
+            FragmentStore fs;
             
-            stateMachine = new StateMachine( 0, 0, 0, 0 );  // empty worker objects for now
+            stateMachine = new StateMachine( &dw, &ed, &fp, &fs );
             stateMachine->initiate();
             
 	    xoap::bind(

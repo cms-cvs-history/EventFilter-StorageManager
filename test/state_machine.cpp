@@ -54,7 +54,12 @@ int main()
   emap[ "StopDone" ] = shared_ptr<event_base>( new StopDone() );
   emap[ "Fail" ] = shared_ptr<event_base>( new Fail() );
 
-  StateMachine machine( 0, 0, 0, 0 );  // will need real worker objects soon
+  DiskWriter dw;
+  EventDistributor ed;
+  FragmentProcessor fp;
+  FragmentStore fs;
+
+  StateMachine machine( &dw, &ed, &fp, &fs );
 
   for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
     {

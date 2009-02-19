@@ -6,6 +6,10 @@
 #include <boost/statechart/event_base.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 using namespace std;
@@ -127,7 +131,12 @@ void checkHistory( const StateMachine& m,
 int main()
 {
 
-  StateMachine m( 0, 0, 0, 0 );
+  DiskWriter dw;
+  EventDistributor ed;
+  FragmentProcessor fp;
+  FragmentStore fs;
+
+  StateMachine m( &dw, &ed, &fp, &fs );
 
   EventList elist;
 
