@@ -29,6 +29,7 @@ class testFragmentStore : public CppUnit::TestFixture
   CPPUNIT_TEST(testStaleEvent);
   CPPUNIT_TEST(testSingleIncompleteEvent);
   CPPUNIT_TEST(testOneOfManyIncompleteEvent);
+  CPPUNIT_TEST(testClear);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -39,6 +40,7 @@ public:
   void testStaleEvent();
   void testSingleIncompleteEvent();
   void testOneOfManyIncompleteEvent();
+  void testClear();
 
 private:
   unsigned int getEventNumber
@@ -265,6 +267,36 @@ void testFragmentStore::testOneOfManyIncompleteEvent()
       stor::FragKey fragmentKey = frag.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.event_ == getEventNumber(eventNum));
     }
+    CPPUNIT_ASSERT(fragmentStore.getStaleEvent(frag, 0) == false);
+    CPPUNIT_ASSERT(frag.empty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+
+void testFragmentStore::testClear()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    const unsigned int totalFragments = 5;
+    const unsigned int totalEvents = 15;
+    stor::I2OChain frag;
+    bool complete;
+    
+    for (unsigned int eventNum = 0; eventNum < totalEvents; ++eventNum)
+    {
+      for (unsigned int fragNum = 0; fragNum < totalFragments-1; ++fragNum)
+      {
+        frag = getFragment(eventNum,fragNum,totalFragments);
+        CPPUNIT_ASSERT(!frag.complete());
+        complete = fragmentStore.addFragment(frag);
+      }
+      CPPUNIT_ASSERT(!complete);
+      CPPUNIT_ASSERT(frag.empty());
+    }
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
+    fragmentStore.clear();
+    CPPUNIT_ASSERT(outstanding_bytes() == 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
