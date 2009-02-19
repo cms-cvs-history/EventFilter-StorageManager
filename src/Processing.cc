@@ -43,33 +43,40 @@ void Processing::logStopDoneRequest( const StopDone& request )
 }
 
 void
-Processing::do_processI2OFragment( I2OChain& frag,
-				   EventDistributor& ed,
-				   FragmentStore& fs ) const
+Processing::do_processI2OFragment( I2OChain& frag ) const
 {
   cout << "Processing a fragment\n";
 
-  bool completed = fs.addFragment(frag);
+  static unsigned int noFragmentCount;
+
+  bool completed = outermost_context().getFragmentStore()->addFragment(frag);
   if ( completed )
   {
-    ed.addEventToRelevantQueues(frag);
+    outermost_context().getEventDistributor()->addEventToRelevantQueues(frag);
   }
   else
   {
-    this->noFragmentToProcess(ed, fs);
+    // Only do the check every 100th fragment
+    // TODO: shall we make this number configurable?
+    ++noFragmentCount;
+    if ( noFragmentCount % 100 )
+    {
+      this->noFragmentToProcess();
+    }
   }
 }
 
 
 void
-Processing::do_noFragmentToProcess( EventDistributor& ed,
-                                    FragmentStore& fs ) const
+Processing::do_noFragmentToProcess() const
 {
   I2OChain staleEvent;
-  bool gotStaleEvent = fs.getStaleEvent(staleEvent, 5); // TODO: make the timeout configurable
+  bool gotStaleEvent = 
+    outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 5);
+    // TODO: make the timeout configurable
   if ( gotStaleEvent )
   {
-    ed.addEventToRelevantQueues(staleEvent);
+    outermost_context().getEventDistributor()->addEventToRelevantQueues(staleEvent);
   }
 }
 
