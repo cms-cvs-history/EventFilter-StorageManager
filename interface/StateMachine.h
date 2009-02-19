@@ -64,23 +64,17 @@ namespace stor
 
     Operations();
     virtual ~Operations() = 0;
-    void processI2OFragment( I2OChain& frag,
-			     EventDistributor& ed,
-                             FragmentStore& fs ) const;
+    void processI2OFragment( I2OChain& frag ) const;
 
-    void noFragmentToProcess( EventDistributor& ed,
-                              FragmentStore& fs ) const;
+    void noFragmentToProcess() const;
 
     std::string stateName() const;
 
   protected:
 
-    virtual void do_processI2OFragment( I2OChain& frag,
-				        EventDistributor& ed,
-				        FragmentStore& fs ) const;
+    virtual void do_processI2OFragment( I2OChain& frag ) const;
 
-    virtual void do_noFragmentToProcess( EventDistributor& ed,
-                                         FragmentStore& fs ) const;
+    virtual void do_noFragmentToProcess() const;
 
     virtual std::string do_stateName() const = 0;
 
@@ -124,7 +118,8 @@ namespace stor
 
     StateMachine( DiskWriter* dw,
                   EventDistributor* ed,
-                  FragmentProcessor* fp );
+                  FragmentProcessor* fp,
+                  FragmentStore* fs);
 
     //void processI2OFragment();
     std::string getCurrentStateName() const;
@@ -138,9 +133,10 @@ namespace stor
 
     void dumpHistory( std::ostream& ) const;
 
-    DiskWriter* getDiskWriter() { return _diskWriter; }
-    EventDistributor* getEventDistributor() { return _eventDistributor; }
-    FragmentProcessor* getFragmentProcessor() { return _fragmentProcessor; }
+    DiskWriter* getDiskWriter() const { return _diskWriter; }
+    EventDistributor* getEventDistributor() const { return _eventDistributor; }
+    FragmentProcessor* getFragmentProcessor() const { return _fragmentProcessor; }
+    FragmentStore* getFragmentStore() const { return _fragmentStore; }
 
     void unconsumed_event( bsc::event_base const& );
 
@@ -152,6 +148,7 @@ namespace stor
     DiskWriter* _diskWriter;
     EventDistributor* _eventDistributor;
     FragmentProcessor* _fragmentProcessor;
+    FragmentStore* _fragmentStore;
 
   };
 
@@ -286,11 +283,9 @@ namespace stor
   private:
 
     virtual std::string do_stateName() const;
-    virtual void do_processI2OFragment( I2OChain& frag,
-				        EventDistributor& ed,
-				        FragmentStore& fs ) const;
-    virtual void do_noFragmentToProcess( EventDistributor& ed,
-                                         FragmentStore& fs ) const;
+    virtual void do_processI2OFragment( I2OChain& frag ) const;
+    virtual void do_noFragmentToProcess() const;
+
     static unsigned int _counter;
 
   };
@@ -303,12 +298,11 @@ namespace stor
 
     DrainingQueues( my_context );
     virtual ~DrainingQueues();
-    void emergencyStop( const EmergencyStop& );
 
   private:
     virtual std::string do_stateName() const;
-    virtual void do_noFragmentToProcess( EventDistributor& ed,
-                                         FragmentStore& fs ) const;
+    virtual void do_noFragmentToProcess() const;
+
     bool _doDraining;
 
   };
