@@ -1,6 +1,7 @@
-// $Id: FragmentStore.cc,v 1.1.2.3 2009/01/30 10:49:57 mommsen Exp $
+// $Id: FragmentStore.cc,v 1.1.2.4 2009/02/18 11:46:27 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 using namespace stor;
 
@@ -14,9 +15,9 @@ const bool FragmentStore::addFragment(I2OChain &chain)
 
   // Use efficientAddOrUpdates pattern suggested by Item 24 of 
   // 'Effective STL' by Scott Meyers
-  fragmentMap::iterator pos = _chains.lower_bound(newKey);
+  fragmentMap::iterator pos = _store.lower_bound(newKey);
 
-  if(pos != _chains.end() && !(_chains.key_comp()(newKey, pos->first)))
+  if(pos != _store.end() && !(_store.key_comp()(newKey, pos->first)))
   {
     // key already exists
     pos->second.addToChain(chain);
@@ -24,7 +25,7 @@ const bool FragmentStore::addFragment(I2OChain &chain)
     if ( pos->second.complete() )
     {
       chain = pos->second;
-      _chains.erase(pos);
+      _store.erase(pos);
       return true;
     }
   }
@@ -32,14 +33,42 @@ const bool FragmentStore::addFragment(I2OChain &chain)
   {
     // The key does not exist in the map, add it to the map
     // Use pos as a hint to insert, so it can avoid another lookup
-    _chains.insert(pos, fragmentMap::value_type(newKey, chain));
+    _store.insert(pos, fragmentMap::value_type(newKey, chain));
+    chain.release();
 
     // We already handled the trivial case that the chain is complete.
-    // Thus, _chains will not have a complete event.
+    // Thus, _store will not have a complete event.
   }
 
   return false;
 }
+
+const bool FragmentStore::getStaleEvent(I2OChain &chain, double timeout)
+{
+  const double cutOffTime = utils::getCurrentTime() - timeout;
+  
+  fragmentMap::iterator pos = _store.begin();
+  fragmentMap::iterator end = _store.end();
+
+  while ( (pos->second.lastFragmentTime() > cutOffTime ) && (pos != end) )
+  {
+    ++pos;
+  }
+
+  if ( pos == end )
+  {
+    chain.release();
+    return false;
+  }
+  else
+  {
+    chain = pos->second;
+    _store.erase(pos);
+    chain.markFaulty();
+    return true;
+  }
+}
+
 
 
 /// emacs configuration

@@ -1,4 +1,4 @@
-// $Id: FragmentStore.h,v 1.1.2.4 2009/01/30 20:32:21 paterno Exp $
+// $Id: FragmentStore.h,v 1.1.2.5 2009/02/18 11:46:47 mommsen Exp $
 
 #ifndef StorageManager_FragmentStore_h
 #define StorageManager_FragmentStore_h
@@ -17,9 +17,9 @@ namespace stor {
    *
    * Uses a map of I2OChains to store incomplete events.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/01/30 20:32:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/02/18 11:46:47 $
    */
   
   class FragmentStore
@@ -32,8 +32,18 @@ namespace stor {
      * Adds fragments of the I2OChain to the fragment store.
      * If the passed fragments completes an event, it returns true.
      * In this case, the passed I2OChain contains the completed event.
+     * Otherwise, it returns false and the I2OChain is empty.
      */
     const bool addFragment(I2OChain&);
+
+
+    /**
+     * Checks for event fragments for which the last event fragment
+     * was added longer than timeout seconds ago. If it finds one
+     * it returns true and the I2OChain contains the faulty event.
+     * Otherwise it returns false and the I2OChain is empty.
+     */
+    const bool getStaleEvent(I2OChain&, double timeout);
 
     
   private:
@@ -43,7 +53,7 @@ namespace stor {
     FragmentStore& operator=(FragmentStore const&);
 
     typedef std::map<FragKey, I2OChain> fragmentMap;
-    fragmentMap _chains;
+    fragmentMap _store;
     
     
   };
