@@ -904,29 +904,57 @@ testI2OChain::add_fragment()
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
     CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime3);
-
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
     // verify that adding a fragment to an empty chain throws an exception
 
-    ref = allocate_frame_with_sample_header(0, 3);
-    stor::I2OChain frag4(ref);
-    stor::I2OChain frag5;
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag1(ref);
+    stor::I2OChain frag2;
 
     try
       {
-        frag5.addToChain(frag4);
+        frag2.addToChain(frag1);
         CPPUNIT_ASSERT(false);
       }
     catch (stor::exception::I2OChain& excpt)
       {
       }
-    CPPUNIT_ASSERT(frag5.empty());
-    CPPUNIT_ASSERT(!frag4.empty());
-    CPPUNIT_ASSERT(!frag4.complete());
-    CPPUNIT_ASSERT(!frag5.complete());
-    CPPUNIT_ASSERT(!frag4.faulty());
-    CPPUNIT_ASSERT(!frag5.faulty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // verify that adding a faulty chain to a chain works
+
+    Reference* ref = allocate_frame_with_sample_header(0, 2);
+    stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
+
+    ref = allocate_frame_with_sample_header(1, 2);
+    stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    frag2.markFaulty();
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(frag2.faulty());
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+
 }
 
 
