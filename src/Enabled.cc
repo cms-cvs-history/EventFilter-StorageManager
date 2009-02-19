@@ -1,3 +1,4 @@
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -15,6 +16,9 @@ Enabled::~Enabled()
 {
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
+
+  // Clear any fragments left in the fragment store
+  outermost_context().getFragmentStore()->clear();
 }
 
 string Enabled::do_stateName() const
