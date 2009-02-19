@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
+// $Id: EventDistributor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -22,9 +22,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
    */
   
   class EventDistributor
@@ -44,7 +44,7 @@ namespace stor {
      * Returns false if no further events can be processed,
      * e.g. the StreamQueue is full
      */
-    bool full();
+    const bool full() const;
 
     /**
      * Registers a new consumer

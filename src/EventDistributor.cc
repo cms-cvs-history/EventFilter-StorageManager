@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.2 2009/01/20 10:54:37 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.3 2009/01/30 10:49:57 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -23,7 +23,7 @@ void EventDistributor::addEventToRelevantQueues(I2OChain&)
 }
 
 
-bool EventDistributor::full()
+const bool EventDistributor::full() const
 {
   return false;
 }
