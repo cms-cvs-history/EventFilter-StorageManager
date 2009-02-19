@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.4 2009/02/19 13:14:16 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.5 2009/02/19 19:52:51 mommsen Exp $
 
 #include <unistd.h>
 
@@ -9,48 +9,71 @@ using namespace stor;
 
 
 FragmentProcessor::FragmentProcessor() :
-_stateMachine(0, &_eventDistributor, this, &_fragmentStore),
-_timeout(100000),
-_doProcessMessages(true)
+  _eventDistributor(),
+  _stateMachine(0, &_eventDistributor, this, &_fragmentStore),
+  _fragmentQueue(new FragmentQueue(100)), // this needs fixing!
+  _fragmentStore(),
+  _timeout(100*1000),
+  _actionIsActive(true)
 {
-
 }
-
 
 FragmentProcessor::~FragmentProcessor()
 {
-
 }
-
 
 bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
 {
   processAllCommands();
-
-  if ( _eventDistributor.full() )
-  {
-    // The event distributor cannot accept any new events.
-    // Wait a bit then start over
-    ::usleep(_timeout);
-  }
-  else
-  {
-    I2OChain fragment;
-    bool foundFragment = false /* = _fragmentQueue.deq_timed_wait(&fragment, _timeout) */;
-
-    const Operations& currentState = _stateMachine.getCurrentState();
-  
-    if (foundFragment)
-    {
-      currentState.processI2OFragment( fragment );
-    }
-    else
-    {
-      currentState.noFragmentToProcess();
-    }
-  }
-  return _doProcessMessages;
+  processOneFragmentIfPossible();
+  return _actionIsActive;
 }
+
+void FragmentProcessor::processOneFragmentIfPossible()
+{
+  if (_eventDistributor.full()) 
+    ::usleep(_timeout);
+  else 
+    processOneFragment();
+}
+
+void FragmentProcessor::processOneFragment()
+{
+  I2OChain fragment;
+  if (_fragmentQueue->deq_timed_wait(fragment, _timeout))
+    _stateMachine.getCurrentState().processI2OFragment(fragment);
+  else
+    _stateMachine.getCurrentState().noFragmentToProcess();  
+}
+
+// bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
+// {
+//   processAllCommands();
+
+//   if ( _eventDistributor.full() )
+//   {
+//     // The event distributor cannot accept any new events.
+//     // Wait a bit then start over
+//     ::usleep(_timeout);
+//   }
+//   else
+//   {
+//     I2OChain fragment;
+//     bool foundFragment =  _fragmentQueue.deq_timed_wait(fragment, _timeout);
+
+//     const Operations& currentState = _stateMachine.getCurrentState();
+  
+//     if (foundFragment)
+//     {
+//       currentState.processI2OFragment( fragment );
+//     }
+//     else
+//     {
+//       currentState.noFragmentToProcess();
+//     }
+//   }
+//   return _actionIsActive;
+// }
 
 
 void FragmentProcessor::updateStatistics()

@@ -1,10 +1,12 @@
-// $Id: FragmentProcessor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.4 2009/02/19 13:15:44 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
+
+#include "boost/shared_ptr.hpp"
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
@@ -24,8 +26,8 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/19 13:15:44 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -33,7 +35,7 @@ namespace stor {
   public:
     
     FragmentProcessor();
-    
+
     ~FragmentProcessor();
     
     /**
@@ -64,13 +66,24 @@ namespace stor {
      */
     void processAllCommands();
 
-    EventDistributor _eventDistributor;
-    StateMachine _stateMachine;
-    FragmentQueue _fragmentQueue;
-    FragmentStore _fragmentStore;
+    /**
+       Process a single fragment, if there is  place to put it.
+     */
+    void processOneFragmentIfPossible();
 
-    const unsigned int _timeout; // Waiting time in microseconds.
-    bool _doProcessMessages; // The workloop action is active while this is true.
+    /**
+       Process a single fragment. This should only be called if it has
+       already been determined there is a place to put it.
+     */
+    void processOneFragment();
+
+    EventDistributor                  _eventDistributor;
+    StateMachine                      _stateMachine;
+    boost::shared_ptr<FragmentQueue>  _fragmentQueue;
+    FragmentStore                     _fragmentStore;
+
+    const unsigned int                _timeout; // Waiting time in microseconds.
+    bool                              _actionIsActive;
   };
   
 } // namespace stor
