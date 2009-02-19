@@ -15,7 +15,6 @@ _doDraining(true)
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
 
-  _doDraining = false;
   post_event( StopDone() );
 }
 
@@ -23,6 +22,8 @@ DrainingQueues::~DrainingQueues()
 {
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
+
+  _doDraining = false;
 }
 
 string DrainingQueues::do_stateName() const
@@ -37,38 +38,24 @@ string DrainingQueues::do_stateName() const
 
 
 void
-DrainingQueues::do_noFragmentToProcess( EventDistributor& ed,
-                                        FragmentStore& fs ) const
+DrainingQueues::do_noFragmentToProcess() const
 {
   I2OChain staleEvent;
   bool gotStaleEvent = true;  
 
-  while ( gotStaleEvent && _doDraining )
+  EventDistributor *ed = outermost_context().getEventDistributor();
+
+  while ( gotStaleEvent && _doDraining && !ed->full() )
   {
-    if ( ed.full() )
+    gotStaleEvent = 
+      outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 0);
+    if ( gotStaleEvent )
     {
-      // The event distributor cannot accept any new events.
-      // Wait a bit then start over
-      ::usleep(1000); // TODO: make the timeout configurable
-    }
-    else
-    {
-      gotStaleEvent = fs.getStaleEvent(staleEvent, 0);
-      if ( gotStaleEvent )
-      {
-        ed.addEventToRelevantQueues(staleEvent);
-      }
+      ed->addEventToRelevantQueues(staleEvent);
     }
   }
-  // Make sure we clear the fragment store if we were interrupted
-  fs.clear();
 }
 
-
-void DrainingQueues::emergencyStop(const EmergencyStop &event)
-{
-  _doDraining = false;
-}
 
 /// emacs configuration
 /// Local Variables: -
