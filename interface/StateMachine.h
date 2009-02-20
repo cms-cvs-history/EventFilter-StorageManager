@@ -303,6 +303,9 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_noFragmentToProcess() const;
 
+    bool allQueuesAndWorkersAreEmpty() const;
+    void processStaleFragments() const;
+
     bool _doDraining;
 
   };

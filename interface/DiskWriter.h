@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
+// $Id: DiskWriter.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -14,9 +14,9 @@ namespace stor {
    * It gets the next event from the StreamQueue and writes it
    * to the appropriate stream file(s) on disk. 
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
    */
   
   class DiskWriter
@@ -52,6 +52,10 @@ namespace stor {
      */    
     void destroyStreams();
 
+    /**
+     * Checks if the disk writer is currently not processing any events.
+     */
+    bool empty();
 
   private:
 

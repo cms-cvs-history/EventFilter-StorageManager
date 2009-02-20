@@ -1,4 +1,4 @@
-// $Id: FragmentStore.h,v 1.1.2.6 2009/02/19 10:23:36 mommsen Exp $
+// $Id: FragmentStore.h,v 1.1.2.7 2009/02/19 13:11:07 mommsen Exp $
 
 #ifndef StorageManager_FragmentStore_h
 #define StorageManager_FragmentStore_h
@@ -18,8 +18,8 @@ namespace stor {
    * Uses a map of I2OChains to store incomplete events.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/02/19 10:23:36 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/02/19 13:11:07 $
    */
   
   class FragmentStore
@@ -51,6 +51,13 @@ namespace stor {
      */
     void clear()
     { _store.clear(); }
+
+
+    /**
+     * Checks if the fragment store is empty
+     */
+    bool empty()
+    { return _store.empty(); }
 
     
   private:

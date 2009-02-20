@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.2 2009/01/30 10:49:57 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 
@@ -43,6 +43,11 @@ void DiskWriter::parseEventStreamConfig()
 void DiskWriter::destroyStreams()
 {
 
+}
+
+bool DiskWriter::empty()
+{
+  return true;
 }
 
 

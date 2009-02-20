@@ -1,3 +1,4 @@
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -9,8 +10,7 @@
 using namespace std;
 using namespace stor;
 
-DrainingQueues::DrainingQueues( my_context c ): my_base(c),
-_doDraining(true)
+DrainingQueues::DrainingQueues( my_context c ): my_base(c)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
@@ -22,8 +22,6 @@ DrainingQueues::~DrainingQueues()
 {
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
-
-  _doDraining = false;
 }
 
 string DrainingQueues::do_stateName() const
@@ -31,21 +29,61 @@ string DrainingQueues::do_stateName() const
   return string( "DrainingQueues" );
 }
 
-// void DrainingQueues::handleI2OEventMessage() const
-// {
-//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-// }
-
-
 void
 DrainingQueues::do_noFragmentToProcess() const
 {
+  if ( allQueuesAndWorkersAreEmpty() )
+    {
+      //<queue collection> *qCollection = outermost_context.<getQueueCollection>
+      //boost::shared_ptr<CommandQueue> commandQueue =
+      //    <queue collection>.getCommandQueue();
+      //event_ptr stMachEvent( new StopDone() );
+      //commandQueue->enq(stMachEvent);
+    }
+}
+
+bool
+DrainingQueues::allQueuesAndWorkersAreEmpty() const
+{
+  // the order is important here - upstream entities first,
+  // followed by more downstream entities
+
+  EventDistributor *ed = outermost_context().getEventDistributor();
+  if ( ed->full() ) return false;
+
+  processStaleFragments();
+  FragmentStore *fs = outermost_context().getFragmentStore();
+  if ( ! fs->empty() ) return false;
+
+  //<queue collection> *qCollection = outermost_context.<getQueueCollection>
+  //boost::shared_ptr<StreamQueue> streamQueue =
+  //    <queue collection>.getStreamQueue();
+  //if ( ! streamQueue->empty() ) return false;
+
+  DiskWriter *ds = outermost_context().getDiskWriter();
+  if ( ! ds->empty() ) return false;
+
+  //<queue collection> *qCollection = outermost_context.<getQueueCollection>
+  //boost::shared_ptr<DQMEventQueue> dqmEventQueue =
+  //    <queue collection>.getDQMEventQueue();
+  //if ( ! dqmEventQueue->empty() ) return false;
+
+  //DQMEventProcessor *dqmEP = outermost_context.getDQMEventProcessor();
+  //if ( ! dqmEP->empty() ) return false;
+
+  return true;
+}
+
+void
+DrainingQueues::processStaleFragments() const
+{
   I2OChain staleEvent;
   bool gotStaleEvent = true;  
+  int loopCounter = 0;
 
   EventDistributor *ed = outermost_context().getEventDistributor();
 
-  while ( gotStaleEvent && _doDraining && !ed->full() )
+  while ( gotStaleEvent && !ed->full() && loopCounter++ < 10 )
   {
     gotStaleEvent = 
       outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 0);
