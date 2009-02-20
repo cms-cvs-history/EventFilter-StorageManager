@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.16 2009/02/13 11:29:35 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.17 2009/02/16 16:13:04 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -130,7 +130,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.16 2009/02/13 11:29:35 mommsen Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.17 2009/02/16 16:13:04 mommsen Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this)),
   _webPageHelper(this->getApplicationDescriptor())
 {  
@@ -1128,17 +1128,38 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 
 //////////// *** Refactored default web page ///////////////////////////////////////////////
 void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
-  throw (xgi::exception::Exception)
+throw (xgi::exception::Exception)
 {
+  std::string errorMsg = "Failed to create the default webpage";
+  
+  try
+  {
     _webPageHelper.defaultWebPage(
-        out,
-        fsm_.stateName()->toString(),
-        _statReporter,
-        pool_,
-        nLogicalDisk_,
-        filePath_
+      out,
+      fsm_.stateName()->toString(),
+      _statReporter,
+      pool_,
+      nLogicalDisk_,
+      filePath_
     );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
 }
+
 
 //////////// *** Store data web page //////////////////////////////////////////////////////////
 void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
@@ -4762,13 +4783,22 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   return true;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// *** Provides factory method for the instantiation of SM applications
-// should probably use the MACRO? Could a XDAQ version change cause problems?
-extern "C" xdaq::Application
-*instantiate_StorageManager(xdaq::ApplicationStub * stub)
-{
-  std::cout << "Going to construct a StorageManager instance "
-	    << std::endl;
-  return new stor::StorageManager(stub);
-}
+//////////////////////////////////////////////////////////////////////////
+// *** Provides factory method for the instantiation of SM applications //
+//////////////////////////////////////////////////////////////////////////
+// This macro is depreciated:
+XDAQ_INSTANTIATE(StorageManager)
+
+// One should use the XDAQ_INSTANTIATOR() in the header file
+// and this one here. But this breaks the backward compatibility,
+// as all xml configuration files would have to be changed to use
+// 'stor::StorageManager' instead of 'StorageManager'.
+// XDAQ_INSTANTIATOR_IMPL(stor::StorageManager)
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
