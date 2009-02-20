@@ -72,7 +72,6 @@ void make_a_page( XHTMLMaker& maker,
   XHTMLMaker::Node* link =
     maker.addNode( "a", p, m );
   maker.addText( link, url_text );
-
 }
 
 void initialize_make_terminate( const string& title,

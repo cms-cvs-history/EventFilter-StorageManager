@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: XHTMLMaker.h,v 1.1.2.4 2009/02/06 13:24:04 dshpakov Exp $
+// $Id: XHTMLMaker.h,v 1.1.2.5 2009/02/18 10:38:05 dshpakov Exp $
 
 #ifndef XHTMLMAKER_H
 #define XHTMLMAKER_H
@@ -80,16 +80,11 @@ private:
 
   xercesc::DOMDocument* _doc;
   xercesc::DOMWriter* _writer;
+  xercesc::DOMDocumentType* _typ;
 
   Node* _head;
 
   bool _page_started;
-
-  // String to XMLCh:
-  XMLCh* _xs( const std::string& str )
-  {
-    return xercesc::XMLString::transcode( str.data() );
-  }
 
   // Set DOMWriter features:
   void _setWriterFeatures();

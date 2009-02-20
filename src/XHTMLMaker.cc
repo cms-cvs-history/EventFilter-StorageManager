@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.cc,v 1.1.2.5 2009/02/06 13:36:58 mommsen Exp $
+// $Id: XHTMLMaker.cc,v 1.1.2.6 2009/02/18 10:38:06 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
@@ -12,24 +12,41 @@
 using namespace std;
 using namespace xercesc;
 
+namespace
+{
+  // String to XMLCh: Note that the Xerces-C++ documentation says you
+  // have to call XMLString::release(p) for every pointer p returned
+  // from XMLString::transcode().
+  inline XMLCh* _xs( const std::string& str )
+  {
+    // std::string::data() is not required to return a null-terminated
+    // byte array; c_str() is required to do so.
+    return xercesc::XMLString::transcode(str.c_str());
+  }
+  
+  inline XMLCh* _xs(const char* str)
+  {
+    return xercesc::XMLString::transcode(str);
+  }
+}
+
 
 XHTMLMaker::XHTMLMaker()
 {
-
+  XMLCh* xls = _xs("ls");
   DOMImplementation* imp =
-    DOMImplementationRegistry::getDOMImplementation( _xs("ls") );
+    DOMImplementationRegistry::getDOMImplementation(xls);
 
-  const XMLCh* xhtml_s = _xs( "html" );
-  const XMLCh* p_id = _xs( "-//W3C//DTD XHTML 1.0 Strict//EN" );
-  const XMLCh* s_id =
-    _xs( "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" );
+  XMLCh* xhtml_s =_xs("html") ;
+  XMLCh* p_id = _xs( "-//W3C//DTD XHTML 1.0 Strict//EN" );
+  XMLCh* s_id = _xs( "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" );
 
-  DOMDocumentType* typ =
-    imp->createDocumentType( xhtml_s, p_id, s_id );
+  _typ = imp->createDocumentType( xhtml_s, p_id, s_id );
 
-  const XMLCh* ns_uri = _xs( "http://www.w3.org/1999/xhtml" );
+  XMLCh* ns_uri = _xs( "http://www.w3.org/1999/xhtml" );
 
-  _doc = imp->createDocument( ns_uri, xhtml_s, typ );
+  _doc = imp->createDocument( ns_uri, xhtml_s, _typ );
+
 
   if( !_doc )
     {
@@ -37,21 +54,30 @@ XHTMLMaker::XHTMLMaker()
       return;
     }
 
-  _doc->setEncoding( _xs( "utf-8" ) );
+  XMLCh* encoding = _xs("utf-8");
+  _doc->setEncoding(encoding);
   //_doc->setStandalone( true );
-  _doc->setVersion( _xs( "1.0" ) );
+  XMLCh* version = _xs("1.0");
+  _doc->setVersion(version);
 
   _page_started = false;
 
   _writer =
     ( (DOMImplementationLS*)imp )->createDOMWriter();
 
+  XMLString::release(&xls);
+  XMLString::release(&xhtml_s);
+  XMLString::release(&p_id);
+  XMLString::release(&s_id);
+  XMLString::release(&ns_uri);
+  XMLString::release(&encoding);
+  XMLString::release(&version);
+
   if( !_writer )
     {
       cerr << "Cannot create DOM writer" << endl;
       return;
     }
-
 }
 
 /////////////////////
@@ -60,6 +86,9 @@ XHTMLMaker::XHTMLMaker()
 
 XHTMLMaker::~XHTMLMaker()
 {
+  delete _doc;
+  delete _writer;
+  delete _typ;
 }
 
 ///////////////////////////////////////
@@ -81,17 +110,26 @@ XHTMLMaker::Node* XHTMLMaker::start( const string& title )
   Node* el_xhtml = _doc->getDocumentElement();
 
   // Head:
-  _head = _doc->createElement( _xs( "head" ) );
+  XMLCh* h = _xs("head");
+  _head = _doc->createElement(h);
+  XMLString::release(&h);
   el_xhtml->appendChild( _head );
 
+
   // Title:
-  Node* el_title = _doc->createElement( _xs( "title" ) );
+  XMLCh* xtitle = _xs("title");
+  Node* el_title = _doc->createElement(xtitle);
+  XMLString::release(&xtitle);
   _head->appendChild( el_title );
-  DOMText* txt_title = _doc->createTextNode( _xs( title ) );
+  xtitle = _xs(title);
+  DOMText* txt_title = _doc->createTextNode(xtitle);
+  XMLString::release(&xtitle);
   el_title->appendChild( txt_title );
 
   // Body:
-  Node* el_body = _doc->createElement( _xs( "body" ) );
+  XMLCh* xbody = _xs("body");
+  Node* el_body = _doc->createElement(xbody);
+  XMLString::release(&xbody);
   el_xhtml->appendChild( el_body );
 
   return el_body;
@@ -106,13 +144,19 @@ XHTMLMaker::Node* XHTMLMaker::addNode( const string& name,
 				       XHTMLMaker::Node* parent,
 				       const AttrMap& attrs )
 {
-  Node* el = _doc->createElement( _xs( name ) );
+  XMLCh* xname = _xs(name);
+  Node* el = _doc->createElement(xname);
+  XMLString::release(&xname);
   parent->appendChild( el );
 
   for( AttrMap::const_iterator i = attrs.begin(); i != attrs.end();
 	 ++i )
     {
-      el->setAttribute( _xs( i->first ), _xs( i->second ) );
+      XMLCh* xfirst = _xs(i->first);
+      XMLCh* xsecond = _xs(i->second);
+      el->setAttribute(xfirst, xsecond);
+      XMLString::release(&xfirst);
+      XMLString::release(&xsecond);
     }
 
   return el;
@@ -125,7 +169,9 @@ XHTMLMaker::Node* XHTMLMaker::addNode( const string& name,
 
 void XHTMLMaker::addText( Node* parent, const string& data )
 {
-  DOMText* txt = _doc->createTextNode( _xs( data ) );
+  XMLCh* xdata = _xs(data);
+  DOMText* txt = _doc->createTextNode(xdata);
+  XMLString::release(&xdata);
   parent->appendChild( txt );
 }
 
@@ -189,8 +235,10 @@ void XHTMLMaker::out()
 void XHTMLMaker::out( const string& filename )
 {
   _setWriterFeatures();
-  XMLFormatTarget* ftar = new LocalFileFormatTarget( _xs( filename ) );
+  XMLCh* xfilename = _xs(filename);
+  XMLFormatTarget* ftar = new LocalFileFormatTarget(xfilename);
   _writer->writeNode( ftar, *_doc );
+  XMLString::release(&xfilename);
   delete ftar;
 }
 
