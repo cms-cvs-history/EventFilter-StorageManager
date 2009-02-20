@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include "boost/thread.hpp"
 
 using namespace std;
 
@@ -58,6 +59,7 @@ void make_a_page( XHTMLMaker& maker,
   smap[ "src" ] = "xhtmlmaker_t.js";
   XHTMLMaker::Node* s = maker.addNode( "script", maker.getHead(), smap );
   maker.addText( s, " " );
+
 
   XHTMLMaker::Node* h1 = maker.addNode( "h1", body );
   maker.addText( h1, h_text );
@@ -159,9 +161,39 @@ void initialize_make_terminate_repeat()
 
 }
 
-int main()
+void run_many_threads(unsigned num_thread_pairs)
+{
+  boost::thread_group threads;
+  for (unsigned i = 0; i != num_thread_pairs; ++i)
+    {
+      threads.add_thread(new boost::thread(&initialize_make_make_terminate));
+      threads.add_thread(new boost::thread(&initialize_make_terminate_repeat));
+    }
+  threads.join_all();
+}
+
+void try_run_many_threads(unsigned num_thread_pairs)
+{
+  try { run_many_threads(num_thread_pairs); }
+  catch ( ... )
+    {
+      std::cerr << "Died on an exception\n";
+    }
+}
+
+
+int main(int argc, char* argv[])
 {
   initialize_make_make_terminate();
   initialize_make_terminate_repeat();
+
+  // It seems the Xerces-C++ is not thread safe, at least in the
+  // manner in which we are using it. Activating the test below and
+  // running with 100 threads causes, in a reproducible manner, a
+  // segmentation violation.
+
+//   unsigned num_thread_pairs = 3;
+//   if (argc == 2) num_thread_pairs = atoi(argv[1]);
+//   try_run_many_threads(num_thread_pairs);
   return 0;
 }
