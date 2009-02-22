@@ -24,8 +24,8 @@ namespace stor
   class I2OChain;
   class DiskWriter;
   class EventDistributor;
-  class FragmentProcessor;
   class FragmentStore;
+  struct SharedResources;
 
   ////////////////////////////////////////////////
   //// Forward declarations of state classes: ////
@@ -118,8 +118,8 @@ namespace stor
 
     StateMachine( DiskWriter* dw,
                   EventDistributor* ed,
-                  FragmentProcessor* fp,
-                  FragmentStore* fs);
+                  FragmentStore* fs,
+                  SharedResources* sr);
 
     //void processI2OFragment();
     std::string getCurrentStateName() const;
@@ -135,8 +135,8 @@ namespace stor
 
     DiskWriter* getDiskWriter() const { return _diskWriter; }
     EventDistributor* getEventDistributor() const { return _eventDistributor; }
-    FragmentProcessor* getFragmentProcessor() const { return _fragmentProcessor; }
     FragmentStore* getFragmentStore() const { return _fragmentStore; }
+    SharedResources* getSharedResources() const { return _sharedResources; }
 
     void unconsumed_event( bsc::event_base const& );
 
@@ -147,8 +147,8 @@ namespace stor
 
     DiskWriter* _diskWriter;
     EventDistributor* _eventDistributor;
-    FragmentProcessor* _fragmentProcessor;
     FragmentStore* _fragmentStore;
+    SharedResources* _sharedResources;
 
   };
 

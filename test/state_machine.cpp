@@ -9,8 +9,8 @@
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
-#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 using namespace boost::statechart;
 using namespace stor;
@@ -56,10 +56,10 @@ int main()
 
   DiskWriter dw;
   EventDistributor ed;
-  FragmentProcessor fp;
   FragmentStore fs;
+  SharedResources sr;
 
-  StateMachine machine( &dw, &ed, &fp, &fs );
+  StateMachine machine( &dw, &ed, &fs, &sr );
 
   for( EventMap::const_iterator it = emap.begin(); it != emap.end(); ++it )
     {

@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.5 2009/02/19 19:52:51 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.6 2009/02/19 22:29:45 paterno Exp $
 
 #include <unistd.h>
 
@@ -8,11 +8,12 @@
 using namespace stor;
 
 
-FragmentProcessor::FragmentProcessor() :
-  _eventDistributor(),
-  _stateMachine(0, &_eventDistributor, this, &_fragmentStore),
-  _fragmentQueue(new FragmentQueue(100)), // this needs fixing!
+FragmentProcessor::FragmentProcessor( boost::shared_ptr<SharedResources> sr,
+                                      boost::shared_ptr<StateMachine> sm ) :
+  _sharedResources(sr),
+  _stateMachine(sm),
   _fragmentStore(),
+  _eventDistributor(),
   _timeout(100*1000),
   _actionIsActive(true)
 {
@@ -40,10 +41,11 @@ void FragmentProcessor::processOneFragmentIfPossible()
 void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
-  if (_fragmentQueue->deq_timed_wait(fragment, _timeout))
-    _stateMachine.getCurrentState().processI2OFragment(fragment);
+  boost::shared_ptr<FragmentQueue> fq = _sharedResources->_fragmentQueue;
+  if (fq->deq_timed_wait(fragment, _timeout))
+    _stateMachine->getCurrentState().processI2OFragment(fragment);
   else
-    _stateMachine.getCurrentState().noFragmentToProcess();  
+    _stateMachine->getCurrentState().noFragmentToProcess();  
 }
 
 // bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)

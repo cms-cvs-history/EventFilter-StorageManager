@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.4 2009/02/19 13:15:44 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.5 2009/02/19 22:29:44 paterno Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/Types.h"
 
@@ -25,16 +26,17 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/02/19 13:15:44 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/02/19 22:29:44 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor();
+    FragmentProcessor( boost::shared_ptr<SharedResources> sr,
+                       boost::shared_ptr<StateMachine> sm );
 
     ~FragmentProcessor();
     
@@ -77,13 +79,13 @@ namespace stor {
      */
     void processOneFragment();
 
-    EventDistributor                  _eventDistributor;
-    StateMachine                      _stateMachine;
-    boost::shared_ptr<FragmentQueue>  _fragmentQueue;
-    FragmentStore                     _fragmentStore;
+    boost::shared_ptr<SharedResources> _sharedResources;
+    boost::shared_ptr<StateMachine>    _stateMachine;
+    FragmentStore                      _fragmentStore;
+    EventDistributor                   _eventDistributor;
 
-    const unsigned int                _timeout; // Waiting time in microseconds.
-    bool                              _actionIsActive;
+    const unsigned int                 _timeout; // Waiting time in microseconds.
+    bool                               _actionIsActive;
   };
   
 } // namespace stor

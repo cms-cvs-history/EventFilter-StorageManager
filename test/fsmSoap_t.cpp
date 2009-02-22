@@ -1,8 +1,8 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
-#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -39,10 +39,10 @@ namespace stor {
 
             DiskWriter dw;
             EventDistributor ed;
-            FragmentProcessor fp;
             FragmentStore fs;
+            SharedResources sr;
             
-            stateMachine = new StateMachine( &dw, &ed, &fp, &fs );
+            stateMachine = new StateMachine( &dw, &ed, &fs, &sr );
             stateMachine->initiate();
             
 	    xoap::bind(
@@ -190,7 +190,6 @@ namespace stor {
         StateMachine *stateMachine;
         DiskWriter diskWriter;
         EventDistributor eventDistributor;
-        FragmentProcessor fragmentProcessor;
         
     };
     

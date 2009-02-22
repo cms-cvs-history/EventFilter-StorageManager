@@ -3,12 +3,12 @@
 #include <boost/statechart/event_base.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
-#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/CommandQueue.h"
 
 using namespace std;
 using namespace boost::statechart;
@@ -21,10 +21,10 @@ int main()
 
   DiskWriter dw;
   EventDistributor ed;
-  FragmentProcessor fp;
   FragmentStore fs;
+  SharedResources sr;
 
-  StateMachine m( &dw, &ed, &fp, &fs );
+  StateMachine m( &dw, &ed, &fs, &sr );
 
   CommandQueue q;
 
