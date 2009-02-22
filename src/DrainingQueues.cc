@@ -2,6 +2,7 @@
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -14,8 +15,6 @@ DrainingQueues::DrainingQueues( my_context c ): my_base(c)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
-
-  post_event( StopDone() );
 }
 
 DrainingQueues::~DrainingQueues()
@@ -34,11 +33,13 @@ DrainingQueues::do_noFragmentToProcess() const
 {
   if ( allQueuesAndWorkersAreEmpty() )
     {
-      //<queue collection> *qCollection = outermost_context.<getQueueCollection>
-      //boost::shared_ptr<CommandQueue> commandQueue =
-      //    <queue collection>.getCommandQueue();
-      //event_ptr stMachEvent( new StopDone() );
-      //commandQueue->enq(stMachEvent);
+      SharedResources* sharedRes = outermost_context().getSharedResources();
+      boost::shared_ptr<CommandQueue> commandQueue =
+        sharedRes->_commandQueue;
+      event_ptr stMachEvent( new StopDone() );
+      // do we really want enq_wait here?
+      // it could cause deadlock if the command queue is full...
+      commandQueue->enq_wait( stMachEvent );
     }
 }
 
