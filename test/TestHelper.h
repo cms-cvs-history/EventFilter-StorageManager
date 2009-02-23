@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.7 2009/02/16 17:37:42 paterno Exp $
+// $Id: TestHelper.h,v 1.1.2.1 2009/02/18 10:18:53 mommsen Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -80,7 +80,7 @@ namespace stor
         (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
       I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
         (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
-      pvtMsg->StdMessageFrame.MessageSize = bufferSize;
+      pvtMsg->StdMessageFrame.MessageSize = bufferSize / 4;
       pvtMsg->XFunctionCode = code;
       smMsg->numFrames = totalFrameCount;
       smMsg->frameCount = frameIndex;
@@ -114,7 +114,7 @@ namespace stor
         (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
       I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
         (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
-      pvtMsg->StdMessageFrame.MessageSize = bufferSize;
+      pvtMsg->StdMessageFrame.MessageSize = bufferSize / 4;
       pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
       smMsg->numFrames = totalFrameCount;
       smMsg->frameCount = frameIndex;
@@ -123,6 +123,7 @@ namespace stor
       smMsg->outModID = value2;
       smMsg->fuProcID = value3;
       smMsg->fuGUID = value4;
+      smMsg->dataSize = bufferSize - sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
       
       return temp;
     }
