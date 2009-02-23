@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.15 2009/02/17 14:59:56 mommsen Exp $
+# $Id: BuildFile,v 1.30.16.16 2009/02/18 11:47:28 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -65,19 +65,10 @@
    <use name=IOPool/Streamer>
   </bin>
 
-  <bin file=boostStateMachine.cpp>
-  </bin>
-
-  <bin file=state_machine.cpp>
-  </bin>
-
   <bin file=state_machine_t.cpp>
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>
-  </bin>
-
-   <bin file=sm_cq_t.cpp>
   </bin>
 
   <bin file=workloop_t.cpp>
