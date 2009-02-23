@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.18 2009/02/17 13:20:12 mommsen Exp $
+// $Id: I2OChain.cc,v 1.1.2.19 2009/02/18 14:59:52 mommsen Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -63,6 +63,9 @@ namespace stor
 
       std::string outputModuleLabel() const;
       uint32 outputModuleId() const;
+      void hltTriggerNames(Strings& nameList) const;
+      void hltTriggerSelections(Strings& nameList) const;
+      void l1TriggerNames(Strings& nameList) const;
 
     private:
       std::vector<QueueID> _streamTags;
@@ -88,6 +91,9 @@ namespace stor
 
       virtual std::string do_outputModuleLabel() const;
       virtual uint32 do_outputModuleId() const;
+      virtual void do_hltTriggerNames(Strings& nameList) const;
+      virtual void do_hltTriggerSelections(Strings& nameList) const;
+      virtual void do_l1TriggerNames(Strings& nameList) const;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -514,6 +520,21 @@ namespace stor
       return do_outputModuleId();
     }
 
+    void ChainData::hltTriggerNames(Strings& nameList) const
+    {
+      do_hltTriggerNames(nameList);
+    }
+
+    void ChainData::hltTriggerSelections(Strings& nameList) const
+    {
+      do_hltTriggerSelections(nameList);
+    }
+
+    void ChainData::l1TriggerNames(Strings& nameList) const
+    {
+      do_l1TriggerNames(nameList);
+    }
+
     inline unsigned char*
     ChainData::do_fragmentLocation(unsigned char* dataLoc) const
     {
@@ -586,6 +607,30 @@ namespace stor
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
+    inline void ChainData::do_hltTriggerNames(Strings& nameList) const
+    {
+      std::stringstream msg;
+      msg << "The HLT trigger names are only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline void ChainData::do_hltTriggerSelections(Strings& nameList) const
+    {
+      std::stringstream msg;
+      msg << "The HLT trigger selections are only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline void ChainData::do_l1TriggerNames(Strings& nameList) const
+    {
+      std::stringstream msg;
+      msg << "The L1 trigger names are only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
     class InitMsgData : public ChainData
     {
     public:
@@ -596,6 +641,9 @@ namespace stor
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       std::string do_outputModuleLabel() const;
       uint32 do_outputModuleId() const;
+      void do_hltTriggerNames(Strings& nameList) const;
+      void do_hltTriggerSelections(Strings& nameList) const;
+      void do_l1TriggerNames(Strings& nameList) const;
 
     private:
       void parseI2OHeader();
@@ -604,6 +652,9 @@ namespace stor
       mutable bool _headerFieldsCached;
       mutable std::string _outputModuleLabel;
       mutable uint32 _outputModuleId;
+      mutable Strings _hltTriggerNames;
+      mutable Strings _hltTriggerSelections;
+      mutable Strings _l1TriggerNames;
     };
 
     inline InitMsgData::InitMsgData(toolbox::mem::Reference* pRef) :
@@ -666,6 +717,48 @@ namespace stor
       return _outputModuleId;
     }
 
+    void InitMsgData::do_hltTriggerNames(Strings& nameList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The HLT trigger names can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      nameList = _hltTriggerNames;
+    }
+
+    void InitMsgData::do_hltTriggerSelections(Strings& nameList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The HLT trigger selections can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      nameList = _hltTriggerSelections;
+    }
+
+    void InitMsgData::do_l1TriggerNames(Strings& nameList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The L1 trigger names can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      nameList = _l1TriggerNames;
+    }
+
     void InitMsgData::cacheHeaderFields() const
     {
       unsigned char* firstFragLoc = dataLocation(0);
@@ -705,6 +798,9 @@ namespace stor
 
       _outputModuleId = msgView->outputModuleId();
       _outputModuleLabel = msgView->outputModuleLabel();
+      msgView->hltTriggerNames(_hltTriggerNames);
+      msgView->hltTriggerSelections(_hltTriggerSelections);
+      msgView->l1TriggerNames(_l1TriggerNames);
 
       _headerFieldsCached = true;
     }
@@ -1166,6 +1262,36 @@ namespace stor
           "The output module ID can not be determined from an empty I2OChain.");
       }
     return _data->outputModuleId();
+  }
+
+  void I2OChain::hltTriggerNames(Strings& nameList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "HLT trigger names can not be determined from an empty I2OChain.");
+      }
+    _data->hltTriggerNames(nameList);
+  }
+
+  void I2OChain::hltTriggerSelections(Strings& nameList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "HLT trigger selections can not be determined from an empty I2OChain.");
+      }
+    _data->hltTriggerSelections(nameList);
+  }
+
+  void I2OChain::l1TriggerNames(Strings& nameList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "L1 trigger names can not be determined from an empty I2OChain.");
+      }
+    _data->l1TriggerNames(nameList);
   }
 
 } // namespace stor

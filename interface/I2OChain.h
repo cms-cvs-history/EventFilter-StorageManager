@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.14 2009/02/15 22:02:04 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.15 2009/02/18 14:57:36 mommsen Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -28,9 +28,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/02/15 22:02:04 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/02/18 14:57:36 $
    */
 
 
@@ -250,9 +250,40 @@ namespace stor {
      */
     void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
-    // methods to access data in INIT messages
+    /**
+       Returns the output module label contained in the message, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
     std::string outputModuleLabel() const;
+
+    /**
+       Returns the output module ID contained in the message, if and
+       only if, the message is an INIT or an Event message.  Otherwise,
+       an exception is thrown.
+     */
     uint32 outputModuleId() const;
+
+    /**
+       Copies the HLT trigger names into the specified vector, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
+    void hltTriggerNames(Strings& nameList) const;
+
+    /**
+       Copies the HLT trigger names into the specified vector, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
+    void hltTriggerSelections(Strings& nameList) const;
+
+    /**
+       Copies the L1 trigger names into the specified vector, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
+    void l1TriggerNames(Strings& nameList) const;
 
   private:
 
