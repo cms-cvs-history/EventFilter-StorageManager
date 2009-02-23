@@ -3,11 +3,14 @@
 
 #include <assert.h>
 #include <vector>
+#include "zlib.h"
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
+
+#include "IOPool/Streamer/interface/InitMsgBuilder.h"
 
 using stor::testhelper::outstanding_bytes;
 using stor::testhelper::allocate_frame;
@@ -34,6 +37,7 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(swap_with_valid_header);
   CPPUNIT_TEST(release_with_valid_header);
   CPPUNIT_TEST(add_fragment);
+  CPPUNIT_TEST(init_msg_header);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -57,6 +61,7 @@ public:
   void swap_with_valid_header();
   void release_with_valid_header();
   void add_fragment();
+  void init_msg_header();
 
 private:
 
@@ -664,6 +669,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 2);
     stor::I2OChain frag2(ref);
     double lastFragmentTime2 = frag2.lastFragmentTime();
+    usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -689,6 +695,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 2);
     stor::I2OChain frag1(ref);
     double lastFragmentTime1 = frag1.lastFragmentTime();
+    usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -745,6 +752,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(2, 3);
     stor::I2OChain frag3(ref);
     double lastFragmentTime3 = frag3.lastFragmentTime();
+    usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -871,6 +879,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag2(ref);
     double lastFragmentTime2 = frag2.lastFragmentTime();
+    usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -888,6 +897,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(0, 3);
     stor::I2OChain frag3(ref);
     double lastFragmentTime3 = frag3.lastFragmentTime();
+    usleep((unsigned int) 50);
 
     frag1.addToChain(frag3);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -955,6 +965,99 @@ testI2OChain::add_fragment()
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 
+}
+
+void
+testI2OChain::init_msg_header()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    char psetid[] = "1234567890123456";
+    Strings hlt_names;
+    Strings hlt_selections;
+    Strings l1_names;
+
+    hlt_names.push_back("a");  hlt_names.push_back("b");
+    hlt_names.push_back("c");  hlt_names.push_back("d");
+    hlt_names.push_back("e");  hlt_names.push_back("f");
+    hlt_names.push_back("g");  hlt_names.push_back("h");
+    hlt_names.push_back("i");
+
+    hlt_selections.push_back("a");
+    hlt_selections.push_back("c");
+    hlt_selections.push_back("e");
+    hlt_selections.push_back("g");
+    hlt_selections.push_back("i");
+
+    l1_names.push_back("t10");  l1_names.push_back("t11");
+    l1_names.push_back("t12");  l1_names.push_back("t13");
+    l1_names.push_back("t14");  l1_names.push_back("t15");
+    l1_names.push_back("t16");  l1_names.push_back("t17");
+    l1_names.push_back("t18");  l1_names.push_back("t19");
+    l1_names.push_back("t20");
+
+    char reltag[]="CMSSW_3_0_0_pre7";
+    std::string processName = "HLT";
+    std::string outputModuleLabel = "HLTOutput";
+
+    uLong crc = crc32(0L, Z_NULL, 0);
+    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
+    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
+    i2oMsg->hltTid = value1;
+    i2oMsg->rbBufferID = 2;
+    i2oMsg->outModID = outputModuleId;
+    i2oMsg->fuProcID = value2;
+    i2oMsg->fuGUID = value3;
+
+    InitMsgBuilder
+      initBuilder(i2oMsg->dataPtr(), i2oMsg->dataSize, 100,
+                  Version(7,(const uint8*)psetid), (const char*) reltag,
+                  processName.c_str(), outputModuleLabel.c_str(),
+                  outputModuleId, hlt_names, hlt_selections, l1_names);
+
+    stor::I2OChain initMsgFrag(ref);
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
+
+    stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
+    CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
+    CPPUNIT_ASSERT(fragmentKey.run_ == 0);
+    CPPUNIT_ASSERT(fragmentKey.event_ == value1);
+    CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+
+    CPPUNIT_ASSERT(initMsgFrag.outputModuleLabel() == outputModuleLabel);
+    CPPUNIT_ASSERT(initMsgFrag.outputModuleId() == outputModuleId);
+
+    Strings outNames;
+    outNames.clear();
+    initMsgFrag.hltTriggerNames(outNames);
+    for (unsigned int idx = 0; idx < hlt_names.size(); ++idx)
+      {
+        CPPUNIT_ASSERT(outNames[idx] == hlt_names[idx]);
+      }
+    outNames.clear();
+    initMsgFrag.hltTriggerSelections(outNames);
+    for (unsigned int idx = 0; idx < hlt_selections.size(); ++idx)
+      {
+        CPPUNIT_ASSERT(outNames[idx] == hlt_selections[idx]);
+      }
+    outNames.clear();
+    initMsgFrag.l1TriggerNames(outNames);
+    for (unsigned int idx = 0; idx < l1_names.size(); ++idx)
+      {
+        CPPUNIT_ASSERT(outNames[idx] == l1_names[idx]);
+      }
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
 
