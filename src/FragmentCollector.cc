@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.2 2009/02/15 22:02:04 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.3 2009/02/24 15:29:00 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -312,7 +312,7 @@ namespace stor
                                           entry->hltLocalId_, entry->hltInstance_, entry->hltTid_,
                                           entry->segNumber_, entry->totalSegs_, msg.size(),
                                           msg.outputModuleLabel(), msg.outputModuleId(),
-                                          entry->rbBufferID_);
+                                          entry->originatorPid_);
 
       // make sure the buffer properly released
       (*buffer_deleter_)(entry);
@@ -457,7 +457,7 @@ namespace stor
                                           entry->hltLocalId_, entry->hltInstance_, entry->hltTid_,
                                           entry->segNumber_, entry->totalSegs_, msg.size(),
                                           msg.outputModuleLabel(), msg.outputModuleId(),
-                                          entry->rbBufferID_);
+                                          entry->originatorPid_);
 
       // remove the entry from the map
       fragment_area_.erase(rc.first);

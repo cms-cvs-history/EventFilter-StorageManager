@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.17 2009/02/16 16:13:04 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.18 2009/02/20 10:09:24 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -130,7 +130,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.17 2009/02/16 16:13:04 mommsen Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.18 2009/02/20 10:09:24 mommsen Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this)),
   _webPageHelper(this->getApplicationDescriptor())
 {  
@@ -1760,10 +1760,10 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
           *out << "<td >" << endl;
-          *out << "FU Sender id (shared memory id!)" << endl;
+          *out << "FU Sender process id" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << (*pos)->rbBufferID_ << endl;
+          *out << (*pos)->fuProcId_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
