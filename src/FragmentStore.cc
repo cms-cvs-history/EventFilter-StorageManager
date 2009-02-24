@@ -1,4 +1,4 @@
-// $Id: FragmentStore.cc,v 1.1.2.4 2009/02/18 11:46:27 mommsen Exp $
+// $Id: FragmentStore.cc,v 1.1.2.5 2009/02/19 10:23:35 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
@@ -50,7 +50,7 @@ const bool FragmentStore::getStaleEvent(I2OChain &chain, double timeout)
   fragmentMap::iterator pos = _store.begin();
   fragmentMap::iterator end = _store.end();
 
-  while ( (pos->second.lastFragmentTime() > cutOffTime ) && (pos != end) )
+  while ( (pos != end) && (pos->second.lastFragmentTime() > cutOffTime ) )
   {
     ++pos;
   }
