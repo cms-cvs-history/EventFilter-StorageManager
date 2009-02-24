@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.19 2009/02/18 14:59:52 mommsen Exp $
+// $Id: I2OChain.cc,v 1.1.2.20 2009/02/23 19:21:06 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -59,7 +59,7 @@ namespace stor
       unsigned long dataSize(int fragmentIndex) const;
       unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
-      void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
+      unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
       std::string outputModuleLabel() const;
       uint32 outputModuleId() const;
@@ -468,7 +468,7 @@ namespace stor
         }
     }
 
-    void ChainData::
+    unsigned int ChainData::
     copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
     {
       unsigned long fullSize = totalDataSize();
@@ -508,6 +508,8 @@ namespace stor
 
           curRef = curRef->getNextReference();
         }
+
+      return static_cast<unsigned int>(fullSize);
     }
 
     std::string ChainData::outputModuleLabel() const
@@ -1237,10 +1239,10 @@ namespace stor
     return _data->getFragmentID(fragmentIndex);
   }
 
-  void I2OChain::
+  unsigned int I2OChain::
   copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
   {
-    if (!_data) return;
+    if (!_data) return 0;
     return _data->copyFragmentsIntoBuffer(targetBuffer);
   }
 

@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.15 2009/02/18 14:57:36 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.16 2009/02/23 19:21:05 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -28,9 +28,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.15 $
-   * $Date: 2009/02/18 14:57:36 $
+   * $Author: biery $
+   * $Revision: 1.1.2.16 $
+   * $Date: 2009/02/23 19:21:05 $
    */
 
 
@@ -247,8 +247,9 @@ namespace stor {
        storage manager message or worse.  If the I2O fragments in the chain
        are corrupt, the data copied into the buffer could be the raw
        I2O messages, including headers.
+       Returns the number of bytes copied.
      */
-    void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
+    unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
     /**
        Returns the output module label contained in the message, if and
