@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.1 2008/12/22 19:18:00 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.2 2009/02/15 22:02:04 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -205,107 +205,28 @@ namespace stor
   void FragmentCollector::processEvent(FragEntry* entry)
   {
     ProgressMarker::instance()->processing(true);
-    if(entry->totalSegs_==1)
+
+    // add the fragment to the fragment store
+    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
+    bool complete = fragmentStore_.addFragment(i2oChain);
+
+    if(complete)
     {
-	FR_DEBUG << "FragColl: Got an Event with one segment" << endl;
-	FR_DEBUG << "FragColl: Event size " << entry->buffer_size_ << endl;
-	FR_DEBUG << "FragColl: Event ID " << entry->id_ << endl;
+      int assembledSize = i2oChain.copyFragmentsIntoBuffer(event_area_);
 
-	// send immediately
-        EventMsgView emsg(entry->buffer_address_);
-        FR_DEBUG << "FragColl: writing event size " << entry->buffer_size_ << endl;
-        writer_->manageEventMsg(emsg);
+      EventMsgView emsg(&event_area_[0]);
+      FR_DEBUG << "FragColl: writing event size " << assembledSize << endl;
+      writer_->manageEventMsg(emsg);
 
-        if (eventServer_.get() != NULL)
+      if (eventServer_.get() != NULL)
         {
           eventServer_->processEvent(emsg);
         }
 
-	// make sure the buffer properly released
-	(*buffer_deleter_)(entry);
-	return;
-    } // end of single segment test
-
-    // verify that the segment number of the fragment is valid
-    if (entry->segNumber_ < 1 || entry->segNumber_ > entry->totalSegs_)
-    {
-      LOG4CPLUS_ERROR(applicationLogger_,
-                      "Invalid fragment ID received for event " << entry->id_
-                      << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ", FU PID = "
-                      << entry->originatorPid_ << ", FU GUID = "
-                      << entry->originatorGuid_  << ".  Fragment id is "
-                      << entry->segNumber_ << ", total number of fragments is "
-                      << entry->totalSegs_ << ".");
-      (*buffer_deleter_)(entry);
-      return;
+      // check for stale fragments
+      removeStaleFragments2();
     }
 
-    // add a new entry to the fragment area (Collection) based on this
-    // fragment's key (or fetch the existing entry if a fragment with the
-    // same key has already been processed)
-    pair<Collection::iterator,bool> rc =
-      fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_,
-                                              entry->secondaryId_, entry->originatorPid_,
-                                              entry->originatorGuid_),
-                                      FragmentContainer()));
-
-    // add this fragment to the map of fragments for this event
-    // (fragment map has key/value of fragment/segment ID and FragEntry)
-    FragmentContainer& fragContainer = rc.first->second;
-    std::map<int, FragEntry>& eventFragmentMap = fragContainer.fragmentMap_;
-    pair<std::map<int, FragEntry>::iterator, bool> fragInsertResult =
-      eventFragmentMap.insert(make_pair(entry->segNumber_, *entry));
-    bool duplicateEntry = ! fragInsertResult.second;
-
-    // if the specified fragment/segment ID already existed in the
-    // map, complain and clean up
-    if (duplicateEntry)
-    {
-      LOG4CPLUS_ERROR(applicationLogger_,
-                      "Duplicate fragment ID received for event " << entry->id_
-                      << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ", FU PID = "
-                      << entry->originatorPid_ << ", FU GUID = "
-                      << entry->originatorGuid_  << ".  Fragment id is "
-                      << entry->segNumber_ << ", total number of fragments is "
-                      << entry->totalSegs_ << ".");
-      (*buffer_deleter_)(entry);
-      return;
-    }
-    // otherwise, we update the last fragment time for this event
-    else {
-      fragContainer.lastFragmentTime_ = time(0);
-    }
-
-    FR_DEBUG << "FragColl: added fragment with segment number "
-             << entry->segNumber_ << endl;
-
-    if((int)eventFragmentMap.size()==entry->totalSegs_)
-    {
-	FR_DEBUG << "FragColl: completed an event with "
-		 << entry->totalSegs_ << " segments" << endl;
-
-        // the assembleFragments method has several side-effects:
-        // - the event_area_ is filled, and it may be resized
-        // - the fragment entries are deleted using the buffer_deleter_
-        int assembledSize = assembleFragments(eventFragmentMap);
-
-        EventMsgView emsg(&event_area_[0]);
-        FR_DEBUG << "FragColl: writing event size " << assembledSize << endl;
-        writer_->manageEventMsg(emsg);
-
-        if (eventServer_.get() != NULL)
-        {
-          eventServer_->processEvent(emsg);
-        }
-
-	// remove the entry from the map
-	fragment_area_.erase(rc.first);
-
-        // check for stale fragments
-        removeStaleFragments();
-    }
     ProgressMarker::instance()->processing(false);
   }
 
@@ -550,189 +471,46 @@ namespace stor
   void FragmentCollector::processDQMEvent(FragEntry* entry)
   {
     ProgressMarker::instance()->processing(true);
-    if(entry->totalSegs_==1)
+
+    // add the fragment to the fragment store
+    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
+    bool complete = fragmentStore_.addFragment(i2oChain);
+
+    if(complete)
     {
-      FR_DEBUG << "FragColl: Got a DQM_Event with one segment" << endl;
-      FR_DEBUG << "FragColl: DQM_Event size " << entry->buffer_size_ << endl;
-      FR_DEBUG << "FragColl: DQM_Event ID " << entry->id_ << endl;
-      FR_DEBUG << "FragColl: DQM_Event folderID " << entry->secondaryId_ << endl;
-
-      DQMEventMsgView dqmEventView(entry->buffer_address_);
-      dqmServiceManager_->manageDQMEventMsg(dqmEventView);
-      (*buffer_deleter_)(entry);
-      return;
-    } // end of single segment test
-
-    // verify that the segment number of the fragment is valid
-    if (entry->segNumber_ < 1 || entry->segNumber_ > entry->totalSegs_)
-    {
-      LOG4CPLUS_ERROR(applicationLogger_,
-                      "Invalid fragment ID received for DQM event " << entry->id_
-                      << " in run " << entry->run_ << " with folder ID of "
-                      << entry->secondaryId_ << ", FU PID = "
-                      << entry->originatorPid_ << ", FU GUID = "
-                      << entry->originatorGuid_  << ".  Fragment id is "
-                      << entry->segNumber_ << ", total number of fragments is "
-                      << entry->totalSegs_ << ".");
-      (*buffer_deleter_)(entry);
-      return;
-    }
-
-    // add a new entry to the fragment area (Collection) based on this
-    // fragment's key (or fetch the existing entry if a fragment with the
-    // same key has already been processed)
-    pair<Collection::iterator,bool> rc =
-      fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_,
-                                              entry->secondaryId_, entry->originatorPid_,
-                                              entry->originatorGuid_),
-                                      FragmentContainer()));
-
-    // add this fragment to the map of fragments for this event
-    // (fragment map has key/value of fragment/segment ID and FragEntry)
-    FragmentContainer& fragContainer = rc.first->second;
-    std::map<int, FragEntry>& eventFragmentMap = fragContainer.fragmentMap_;
-    pair<std::map<int, FragEntry>::iterator, bool> fragInsertResult =
-      eventFragmentMap.insert(make_pair(entry->segNumber_, *entry));
-    bool duplicateEntry = ! fragInsertResult.second;
-
-    // if the specified fragment/segment ID already existed in the
-    // map, complain and clean up
-    if (duplicateEntry)
-    {
-      LOG4CPLUS_ERROR(applicationLogger_,
-                      "Duplicate fragment ID received for DQM event " << entry->id_
-                      << " in run " << entry->run_ << " with folder ID of "
-                      << entry->secondaryId_ << ", FU PID = "
-                      << entry->originatorPid_ << ", FU GUID = "
-                      << entry->originatorGuid_  << ".  Fragment id is "
-                      << entry->segNumber_ << ", total number of fragments is "
-                      << entry->totalSegs_ << ".");
-      (*buffer_deleter_)(entry);
-      return;
-    }
-    // otherwise, we update the last fragment time for this event
-    else {
-      fragContainer.lastFragmentTime_ = time(0);
-    }
-
-    FR_DEBUG << "FragColl: added DQM fragment" << endl;
-    
-    if((int)eventFragmentMap.size()==entry->totalSegs_)
-    {
-      FR_DEBUG << "FragColl: completed a DQM_event with "
-       << entry->totalSegs_ << " segments" << endl;
-
-      // the assembleFragments method has several side-effects:
-      // - the event_area_ is filled, and it may be resized
-      // - the fragment entries are deleted using the buffer_deleter_
-      assembleFragments(eventFragmentMap);
+      int assembledSize = i2oChain.copyFragmentsIntoBuffer(event_area_);
 
       // the reformed DQM data is now in event_area_ deal with it
       DQMEventMsgView dqmEventView(&event_area_[0]);
       dqmServiceManager_->manageDQMEventMsg(dqmEventView);
 
-      // remove the entry from the map
-      fragment_area_.erase(rc.first);
-
       // check for stale fragments
-      removeStaleFragments();
+      removeStaleFragments2();
     }
+
     ProgressMarker::instance()->processing(false);
   }
 
   void FragmentCollector::processErrorEvent(FragEntry* entry)
   {
     ProgressMarker::instance()->processing(true);
-    if(entry->totalSegs_==1)
+
+    // add the fragment to the fragment store
+    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
+    bool complete = fragmentStore_.addFragment(i2oChain);
+
+    if(complete)
     {
-	FR_DEBUG << "FragColl: Got an Error Event with one segment" << endl;
-	FR_DEBUG << "FragColl: Event size " << entry->buffer_size_ << endl;
-	FR_DEBUG << "FragColl: Event ID " << entry->id_ << endl;
+      int assembledSize = i2oChain.copyFragmentsIntoBuffer(event_area_);
 
-	// send immediately
-        FRDEventMsgView emsg(entry->buffer_address_);
-        FR_DEBUG << "FragColl: writing error event size " << entry->buffer_size_ << endl;
-        writer_->manageErrorEventMsg(catalog_, disks_, sourceId_, emsg);
+      FRDEventMsgView emsg(&event_area_[0]);
+      FR_DEBUG << "FragColl: writing error event size " << assembledSize << endl;
+      writer_->manageErrorEventMsg(catalog_, disks_, sourceId_, emsg);
 
-	// make sure the buffer properly released
-	(*buffer_deleter_)(entry);
-	return;
-    } // end of single segment test
-
-    // verify that the segment number of the fragment is valid
-    if (entry->segNumber_ < 1 || entry->segNumber_ > entry->totalSegs_)
-    {
-      LOG4CPLUS_ERROR(applicationLogger_,
-                      "Invalid fragment ID received for Error event " << entry->id_
-                      << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ", FU PID = "
-                      << entry->originatorPid_ << ", FU GUID = "
-                      << entry->originatorGuid_  << ".  Fragment id is "
-                      << entry->segNumber_ << ", total number of fragments is "
-                      << entry->totalSegs_ << ".");
-      (*buffer_deleter_)(entry);
-      return;
+      // check for stale fragments
+      removeStaleFragments2();
     }
 
-    // add a new entry to the fragment area (Collection) based on this
-    // fragment's key (or fetch the existing entry if a fragment with the
-    // same key has already been processed)
-    pair<Collection::iterator,bool> rc =
-      fragment_area_.insert(make_pair(FragKey(entry->code_, entry->run_, entry->id_,
-                                              entry->secondaryId_, entry->originatorPid_,
-                                              entry->originatorGuid_),
-                                      FragmentContainer()));
-
-    // add this fragment to the map of fragments for this event
-    // (fragment map has key/value of fragment/segment ID and FragEntry)
-    FragmentContainer& fragContainer = rc.first->second;
-    std::map<int, FragEntry>& eventFragmentMap = fragContainer.fragmentMap_;
-    pair<std::map<int, FragEntry>::iterator, bool> fragInsertResult =
-      eventFragmentMap.insert(make_pair(entry->segNumber_, *entry));
-    bool duplicateEntry = ! fragInsertResult.second;
-
-    // if the specified fragment/segment ID already existed in the
-    // map, complain and clean up
-    if (duplicateEntry)
-    {
-      LOG4CPLUS_ERROR(applicationLogger_,
-                      "Duplicate fragment ID received for Error event " << entry->id_
-                      << " in run " << entry->run_ << " with output module ID of "
-                      << entry->secondaryId_ << ", FU PID = "
-                      << entry->originatorPid_ << ", FU GUID = "
-                      << entry->originatorGuid_  << ".  Fragment id is "
-                      << entry->segNumber_ << ", total number of fragments is "
-                      << entry->totalSegs_ << ".");
-      (*buffer_deleter_)(entry);
-      return;
-    }
-    // otherwise, we update the last fragment time for this event
-    else {
-      fragContainer.lastFragmentTime_ = time(0);
-    }
-
-    FR_DEBUG << "FragColl: added Error event fragment" << endl;
-    
-    if((int)eventFragmentMap.size()==entry->totalSegs_)
-    {
-	FR_DEBUG << "FragColl: completed an error event with "
-		 << entry->totalSegs_ << " segments" << endl;
-
-        // the assembleFragments method has several side-effects:
-        // - the event_area_ is filled, and it may be resized
-        // - the fragment entries are deleted using the buffer_deleter_
-        int assembledSize = assembleFragments(eventFragmentMap);
-
-        FRDEventMsgView emsg(&event_area_[0]);
-        FR_DEBUG << "FragColl: writing error event size " << assembledSize << endl;
-        writer_->manageErrorEventMsg(catalog_, disks_, sourceId_, emsg);
-
-	// remove the entry from the map
-	fragment_area_.erase(rc.first);
-
-        // check for stale fragments
-        removeStaleFragments();
-    }
     ProgressMarker::instance()->processing(false);
   }
 
@@ -833,5 +611,31 @@ namespace stor
     }
 
     return staleList.size();
+  }
+
+  /**
+   * This method removes stale fragments from the fragmentStore.
+   *
+   * @return the number of events (fragmentContainers, actually) that
+   *         were removed from the fragment_area_.
+   */
+  int FragmentCollector::removeStaleFragments2()
+  {
+    I2OChain staleEvent;
+    bool gotStaleEvent = true;  
+    int loopCounter = 0;
+    int discardCount = 0;
+
+    while ( gotStaleEvent && loopCounter++ < 10 )
+      {
+        gotStaleEvent = fragmentStore_.getStaleEvent(staleEvent, staleFragmentTimeout_);
+        if ( gotStaleEvent )
+          {
+            LOG4CPLUS_WARN(applicationLogger_, "Deleting a stale I2OChain.");
+            ++discardCount;
+          }
+      }
+
+    return discardCount;
   }
 }

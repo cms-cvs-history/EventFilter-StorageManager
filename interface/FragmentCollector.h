@@ -28,6 +28,7 @@
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
@@ -93,6 +94,7 @@ namespace stor
 
     int assembleFragments(std::map<int, FragEntry>& fragmentMap);
     int removeStaleFragments();
+    int removeStaleFragments2();
 
     edm::EventBuffer* cmd_q_;
     edm::EventBuffer* evtbuf_q_;
@@ -165,6 +167,8 @@ namespace stor
     boost::shared_ptr<DQMEventServer> DQMeventServer_;
     boost::shared_ptr<InitMsgCollection> initMsgCollection_;
     SMFUSenderList* smRBSenderList_;
+
+    FragmentStore fragmentStore_;
   };
 }
 
