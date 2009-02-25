@@ -92,9 +92,7 @@ namespace stor
     void processDQMEvent(FragEntry* msg);
     void processErrorEvent(FragEntry* msg);
 
-    int assembleFragments(std::map<int, FragEntry>& fragmentMap);
     int removeStaleFragments();
-    int removeStaleFragments2();
 
     edm::EventBuffer* cmd_q_;
     edm::EventBuffer* evtbuf_q_;
