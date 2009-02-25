@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.20 2009/02/23 19:21:06 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.21 2009/02/24 14:07:34 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -111,6 +111,18 @@ namespace stor
       _creationTime(-1),
       _lastFragmentTime(-1)
     {
+      // Avoid the situation in which all severely faulty chains
+      // have the same fragment key.  We do this by providing a 
+      // variable default value for one of the fragKey fields.
+      if (pRef)
+        {
+          _fragKey.secondaryId_ = (uint32) pRef->getDataLocation();
+        }
+      else
+        {
+          _fragKey.secondaryId_ = (uint32) time(0);
+        }
+
       if (pRef)
         {
           _creationTime = utils::getCurrentTime();
@@ -1142,11 +1154,11 @@ namespace stor
         msg << "A fragment key mismatch was detected when trying to add "
             << "a chain link to an existing chain. "
             << "Existing key values = ("
-            << thisKey.code_ << "," << thisKey.run_ << ","
+            << ((int)thisKey.code_) << "," << thisKey.run_ << ","
             << thisKey.event_ << "," << thisKey.secondaryId_ << ","
             << thisKey.originatorPid_ << "," << thisKey.originatorGuid_
             << "), new key values = ("
-            << thatKey.code_ << "," << thatKey.run_ << ","
+            << ((int)thatKey.code_) << "," << thatKey.run_ << ","
             << thatKey.event_ << "," << thatKey.secondaryId_ << ","
             << thatKey.originatorPid_ << "," << thatKey.originatorGuid_
             << ").";
