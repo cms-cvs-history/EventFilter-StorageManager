@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.18 2009/02/20 10:09:24 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.19 2009/02/24 22:26:09 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -130,7 +130,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.18 2009/02/20 10:09:24 mommsen Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.19 2009/02/24 22:26:09 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this)),
   _webPageHelper(this->getApplicationDescriptor())
 {  
@@ -292,6 +292,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
+
+  sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
 
 }
 
@@ -1028,93 +1030,13 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   std::copy(from, from+msize, dest);
   localMsgCopy.dataSize = msize;
 
-  // If running with local transfers, a chain of I2O frames when posted only has the
-  // head frame sent. So a single frame can complete a chain for local transfers.
-  // We need to test for this. Must be head frame, more than one frame
-  // and next pointer must exist.
-  // -- we have to break chains due to the way the FragmentCollector frees memory
-  //    for each frame after processing each as the freeing a chain frees all memory
-  //    in the chain
-  int is_local_chain = 0;
-  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
-  {
-    // this looks like a chain of frames (local transfer)
-    toolbox::mem::Reference *head = ref;
-    toolbox::mem::Reference *next = 0;
-    // best to check the complete chain just in case!
-    unsigned int tested_frames = 1;
-    next = head;
-    while((next=next->getNextReference())!=0) ++tested_frames;
-    FDEBUG(10) << "StorageManager: DQM Head frame has " << tested_frames-1
-               << " linked frames out of " << msg->numFrames-1 << std::endl;
-    if(msg->numFrames == tested_frames)
-    {
-      // found a complete linked chain from the leading frame
-      is_local_chain = 1;
-      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
-                 << " - must be local transfer" << std::endl;
-      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
-      // break the chain and feed them to the fragment collector
-      next = head;
+  I2OChain i2oChain(ref);
+  sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
 
-      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
-      {
-         toolbox::mem::Reference *thisref=next;
-         next = thisref->getNextReference();
-         thisref->setNextReference(0);
-         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
-         I2O_SM_DQM_MESSAGE_FRAME *thismsg    = (I2O_SM_DQM_MESSAGE_FRAME*)thisstdMsg;
-         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-         int thislen = thismsg->dataSize;
-         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                                          thismsg->frameCount+1, thismsg->numFrames, Header::DQM_EVENT, 
-                                          thismsg->runID, thismsg->eventAtUpdateID, thismsg->folderID,
-                                          thismsg->fuProcID, thismsg->fuGUID);
-         b.commit(sizeof(stor::FragEntry));
-
-         // BE CAREFUL not to use thismsg after this point because it
-         // may have been released already by the FragmentCollector!
-         // If it needs to be used, make a copy.
-
-         // for bandwidth performance measurements
-         // Following is wrong for the last frame because frame sent is
-         // is actually larger than the size taken by actual data
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
-                                         +thislen;
-         fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
-
-         // no data sender list update yet for DQM data, should add it here
-      }
-
-    } else {
-      // should never get here!
-      FDEBUG(10) << "StorageManager: DQM Head frame has fewer linked frames "
-                 << "than expected: abnormal error! " << std::endl;
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"DQM Head frame has fewer linked frames" 
-                      << " than expected: abnormal error! ");
-    }
-  }
-
-  if (is_local_chain == 0) 
-  {
-    // put pointers into fragment collector queue
-    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                     msg->frameCount+1, msg->numFrames, Header::DQM_EVENT, 
-                                     msg->runID, msg->eventAtUpdateID, msg->folderID,
-                                     msg->fuProcID, msg->fuGUID);
-    b.commit(sizeof(stor::FragEntry));
-    // Frame release is done in the deleter.
-
-    // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
-                                    + len;
-    fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
-
-    // no data sender list update yet for DQM data, should add it here
-  }
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize =
+    (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME) + len;
+  fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
   if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
     {
@@ -4346,7 +4268,8 @@ void StorageManager::configureAction()
   if (DQMconsumerQueueSize_ < cutoff)
     DQMconsumerQueueSize_ = cutoff;
 
-  jc_.reset(new stor::JobController(my_config, getApplicationLogger(), &deleteSMBuffer));
+  jc_.reset(new stor::JobController(my_config, getApplicationLogger(),
+                                    sharedResourcesInstance_, &deleteSMBuffer));
 
   int disks(nLogicalDisk_);
 

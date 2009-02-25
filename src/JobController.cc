@@ -29,16 +29,18 @@ namespace stor
 
   JobController::JobController(const std::string& my_config,
 			       log4cplus::Logger& applicationLogger,
+                               SharedResources sharedResources,
 			       FragmentCollector::Deleter deleter) :
   applicationLogger_(applicationLogger)      
   {
     // change to phony input source
     //string new_config = changeToPhony(fu_config);
     //setRegistry(new_config);
-    init(my_config,deleter);
+    init(my_config,sharedResources,deleter);
   } 
 
   void JobController::init(const std::string& my_config,
+                           SharedResources sharedResources,
 			   FragmentCollector::Deleter deleter)
   {
     std::auto_ptr<HLTInfo> inf(new HLTInfo());
@@ -51,7 +53,7 @@ namespace stor
     //				 my_config));
     std::auto_ptr<FragmentCollector> 
 	coll(new FragmentCollector(inf,deleter,applicationLogger_,
-				   my_config));
+				   sharedResources,my_config));
 
     collector_.reset(coll.release());
     //ep_runner_.reset(ep.release());

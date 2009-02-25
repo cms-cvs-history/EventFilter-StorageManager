@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.4 2009/02/24 22:26:09 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.5 2009/02/25 04:13:35 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -48,9 +48,9 @@ namespace stor
 
   FragmentCollector::FragmentCollector(HLTInfo& h,Deleter d,
 				       log4cplus::Logger& applicationLogger,
+                                       SharedResources sharedResources,
                                        const string& config_str):
     cmd_q_(&(h.getCommandQueue())),
-    evtbuf_q_(&(h.getEventQueue())),
     frag_q_(&(h.getFragmentQueue())),
     buffer_deleter_(d),
     prods_(0),
@@ -59,6 +59,7 @@ namespace stor
     staleFragmentTimeout_(30),
     disks_(0),
     applicationLogger_(applicationLogger),
+    newFragmentQueue_(sharedResources._fragmentQueue),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -68,9 +69,9 @@ namespace stor
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,Deleter d,
 				       log4cplus::Logger& applicationLogger,
+                                       SharedResources sharedResources,
                                        const string& config_str):
     cmd_q_(&(info.get()->getCommandQueue())),
-    evtbuf_q_(&(info.get()->getEventQueue())),
     frag_q_(&(info.get()->getFragmentQueue())),
     buffer_deleter_(d),
     prods_(0),
@@ -79,6 +80,7 @@ namespace stor
     staleFragmentTimeout_(30),
     disks_(0),
     applicationLogger_(applicationLogger),
+    newFragmentQueue_(sharedResources._fragmentQueue),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -131,60 +133,96 @@ namespace stor
     // to the command queue, or process it for output to the 
     // event queue.
     bool done=false;
+    I2OChain i2oChain;
 
     while(!done)
       {
-	EventBuffer::ConsumerBuffer cb(*frag_q_);
-	if(cb.size()==0) break;
-	FragEntry* entry = (FragEntry*)cb.buffer();
-	FR_DEBUG << "FragColl: " << (void*)this << " Got a buffer size="
-		 << entry->buffer_size_ << endl;
-	switch(entry->code_)
-	  {
-	  case Header::EVENT:
-	    {
-	      FR_DEBUG << "FragColl: Got an Event" << endl;
-	      processEvent(entry);
-	      break;
-	    }
-	  case Header::DONE:
-	    {
-	      // make sure that this is actually sent by the controller! (JBK)
-              // this does nothing currently
-	      FR_DEBUG << "FragColl: Got a Done" << endl;
-	      done=true;
-	      break;
-	    }
-	  case Header::INIT:
-	    {
-	      FR_DEBUG << "FragColl: Got an Init" << endl;
-	      processHeader(entry);
-	      break;
-	    }
-	  case Header::DQM_EVENT:
-	    {
-	      FR_DEBUG << "FragColl: Got a DQM_Event" << endl;
-	      processDQMEvent(entry);
-	      break;
-	    }
-	  case Header::ERROR_EVENT:
-	    {
-	      FR_DEBUG << "FragColl: Got an Error_Event" << endl;
-	      processErrorEvent(entry);
-	      break;
-	    }
-	  case Header::FILE_CLOSE_REQUEST:
-	    {
-              FR_DEBUG << "FragColl: Got a File Close Request message" << endl;
-              writer_->closeFilesIfNeeded();
-	      break;
-	    }
-	  default:
-	    {
-	      FR_DEBUG << "FragColl: Got junk" << endl;
-	      break; // lets ignore other things for now
-	    }
-	  }
+        bool nothingHappening = true;
+
+        if(!(*frag_q_).empty())
+          {
+            nothingHappening = false;
+
+            EventBuffer::ConsumerBuffer cb(*frag_q_);
+            if(cb.size()==0) break;
+            FragEntry* entry = (FragEntry*)cb.buffer();
+            FR_DEBUG << "FragColl: " << (void*)this << " Got a buffer size="
+                     << entry->buffer_size_ << endl;
+            switch(entry->code_)
+              {
+              case Header::EVENT:
+                {
+                  FR_DEBUG << "FragColl: Got an Event" << endl;
+                  processEvent(entry);
+                  break;
+                }
+              case Header::DONE:
+                {
+                  // make sure that this is actually sent by the controller! (JBK)
+                  // this does nothing currently
+                  FR_DEBUG << "FragColl: Got a Done" << endl;
+                  done=true;
+                  break;
+                }
+              case Header::INIT:
+                {
+                  FR_DEBUG << "FragColl: Got an Init" << endl;
+                  processHeader(entry);
+                  break;
+                }
+              case Header::ERROR_EVENT:
+                {
+                  FR_DEBUG << "FragColl: Got an Error_Event" << endl;
+                  processErrorEvent(entry);
+                  break;
+                }
+              case Header::FILE_CLOSE_REQUEST:
+                {
+                  FR_DEBUG << "FragColl: Got a File Close Request message" << endl;
+                  writer_->closeFilesIfNeeded();
+                  break;
+                }
+              default:
+                {
+                  char codeString[32];
+                  sprintf(codeString, "%d", entry->code_);
+                  std::string logMsg = "Invalid message code (";
+                  logMsg.append(codeString);
+                  logMsg.append(") received on old fragment queue!");
+                  LOG4CPLUS_ERROR(applicationLogger_, logMsg);
+
+                  FR_DEBUG << "FragColl: Got junk" << endl;
+                  break; // lets ignore other things for now
+                }
+              }
+          }
+
+        if (newFragmentQueue_->deq_nowait(i2oChain))
+          {
+            nothingHappening = false;
+
+            switch(i2oChain.messageCode())
+              {
+              case Header::DQM_EVENT:
+                {
+                  FR_DEBUG << "FragColl: Got a DQM_Event" << endl;
+                  processDQMEvent(i2oChain);
+                  break;
+                }
+              default:
+                {
+                  char codeString[32];
+                  sprintf(codeString, "%d", i2oChain.messageCode());
+                  std::string logMsg = "Invalid message code (";
+                  logMsg.append(codeString);
+                  logMsg.append(") received on new fragment queue!");
+                  LOG4CPLUS_ERROR(applicationLogger_, logMsg);
+                  break;
+                }
+              }
+          }
+
+        if (nothingHappening) { ::usleep(100); }
       }
     
     FR_DEBUG << "FragColl: DONE!" << endl;
@@ -323,12 +361,11 @@ namespace stor
     ProgressMarker::instance()->processing(false);
   }
 
-  void FragmentCollector::processDQMEvent(FragEntry* entry)
+  void FragmentCollector::processDQMEvent(I2OChain i2oChain)
   {
     ProgressMarker::instance()->processing(true);
 
     // add the fragment to the fragment store
-    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
     bool complete = fragmentStore_.addFragment(i2oChain);
 
     if(complete)

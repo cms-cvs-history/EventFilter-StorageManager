@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.12.2.1 2008/12/22 19:12:52 biery Exp $
+// $Id: RunCollector_t.cpp,v 1.12.4.1 2008/12/22 19:18:01 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -17,6 +17,7 @@
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
@@ -153,6 +154,7 @@ class Main
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
+  stor::SharedResources sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -175,8 +177,10 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
+  sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
+
   coll_.reset(new stor::FragmentCollector(info_,&deleteBuffer,
-                                          logger_,conffile));
+                                          logger_,sharedResources_,conffile));
 
   boost::shared_ptr<stor::InitMsgCollection>
     initMsgCollection(new stor::InitMsgCollection());

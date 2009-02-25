@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.14 2009/02/13 14:18:43 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.15 2009/02/16 16:13:03 mommsen Exp $
 */
 
 #include <string>
@@ -29,6 +29,7 @@
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -149,6 +150,8 @@ namespace stor {
   
     boost::shared_ptr<stor::JobController> jc_;
     boost::mutex                           halt_lock_;
+
+    SharedResources sharedResourcesInstance_;
 
     xdata::Boolean pushmode2proxy_;
     xdata::Integer nLogicalDisk_;
