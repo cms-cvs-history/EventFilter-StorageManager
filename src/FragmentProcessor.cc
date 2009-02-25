@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.6 2009/02/19 22:29:45 paterno Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.7 2009/02/22 18:16:35 biery Exp $
 
 #include <unistd.h>
 
@@ -47,35 +47,6 @@ void FragmentProcessor::processOneFragment()
   else
     _stateMachine->getCurrentState().noFragmentToProcess();  
 }
-
-// bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
-// {
-//   processAllCommands();
-
-//   if ( _eventDistributor.full() )
-//   {
-//     // The event distributor cannot accept any new events.
-//     // Wait a bit then start over
-//     ::usleep(_timeout);
-//   }
-//   else
-//   {
-//     I2OChain fragment;
-//     bool foundFragment =  _fragmentQueue.deq_timed_wait(fragment, _timeout);
-
-//     const Operations& currentState = _stateMachine.getCurrentState();
-  
-//     if (foundFragment)
-//     {
-//       currentState.processI2OFragment( fragment );
-//     }
-//     else
-//     {
-//       currentState.noFragmentToProcess();
-//     }
-//   }
-//   return _actionIsActive;
-// }
 
 
 void FragmentProcessor::updateStatistics()
