@@ -37,6 +37,8 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(swap_with_valid_header);
   CPPUNIT_TEST(release_with_valid_header);
   CPPUNIT_TEST(add_fragment);
+  CPPUNIT_TEST(chained_references);
+  CPPUNIT_TEST(fragkey_mismatches);
   CPPUNIT_TEST(init_msg_header);
 
   CPPUNIT_TEST_SUITE_END();
@@ -61,6 +63,8 @@ public:
   void swap_with_valid_header();
   void release_with_valid_header();
   void add_fragment();
+  void chained_references();
+  void fragkey_mismatches();
   void init_msg_header();
 
 private:
@@ -657,7 +661,6 @@ testI2OChain::release_with_valid_header()
 void
 testI2OChain::add_fragment()
 {
-
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     // add two fragments together (normal order)
@@ -669,7 +672,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 2);
     stor::I2OChain frag2(ref);
     double lastFragmentTime2 = frag2.lastFragmentTime();
-    usleep((unsigned int) 50);
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -695,7 +698,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 2);
     stor::I2OChain frag1(ref);
     double lastFragmentTime1 = frag1.lastFragmentTime();
-    usleep((unsigned int) 50);
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -752,7 +755,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(2, 3);
     stor::I2OChain frag3(ref);
     double lastFragmentTime3 = frag3.lastFragmentTime();
-    usleep((unsigned int) 50);
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -797,6 +800,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(2, 3);
     stor::I2OChain frag1(ref);
     double lastFragmentTime1 = frag1.lastFragmentTime();
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -840,6 +844,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag3(ref);
     double lastFragmentTime3 = frag3.lastFragmentTime();
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -879,7 +884,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 3);
     stor::I2OChain frag2(ref);
     double lastFragmentTime2 = frag2.lastFragmentTime();
-    usleep((unsigned int) 50);
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag2);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -897,7 +902,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(0, 3);
     stor::I2OChain frag3(ref);
     double lastFragmentTime3 = frag3.lastFragmentTime();
-    usleep((unsigned int) 50);
+    ::usleep((unsigned int) 50);
 
     frag1.addToChain(frag3);
     CPPUNIT_ASSERT(!frag1.empty());
@@ -949,6 +954,7 @@ testI2OChain::add_fragment()
     ref = allocate_frame_with_sample_header(1, 2);
     stor::I2OChain frag2(ref);
     double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
     frag2.markFaulty();
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(frag2.faulty());
@@ -964,7 +970,472 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
 
+void
+testI2OChain::chained_references()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // chained references in correct order
+
+    Reference* ref1 = allocate_frame_with_sample_header(0, 2);
+    Reference* ref2 = allocate_frame_with_sample_header(1, 2);
+    ref1->setNextReference(ref2);
+
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+    double lastFragmentTime1 = frag1.lastFragmentTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() == lastFragmentTime1);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // chained references in incorrect order
+
+    Reference* ref1 = allocate_frame_with_sample_header(1, 2);
+    Reference* ref2 = allocate_frame_with_sample_header(0, 2);
+    ref1->setNextReference(ref2);
+
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+    double lastFragmentTime1 = frag1.lastFragmentTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 0);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() == lastFragmentTime1);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // chained references with invalid indexes
+
+    Reference* ref1 = allocate_frame_with_sample_header(1, 2);
+    Reference* ref2 = allocate_frame_with_sample_header(2, 2);
+    ref1->setNextReference(ref2);
+
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+    double lastFragmentTime1 = frag1.lastFragmentTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 0);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() == lastFragmentTime1);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add fragment to I2OChain created from reference chain
+
+    Reference* ref1 = allocate_frame_with_sample_header(0, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(1, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref = allocate_frame_with_sample_header(2, 3);
+    stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add reference chain to I2OChain
+
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref1 = allocate_frame_with_sample_header(1, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(2, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag2(ref1);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add fragment to I2OChain created from reference chain
+
+    Reference* ref1 = allocate_frame_with_sample_header(1, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(2, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add reference chain to I2OChain
+
+    Reference* ref = allocate_frame_with_sample_header(1, 3);
+    stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref1 = allocate_frame_with_sample_header(0, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(2, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag2(ref1);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add fragment to I2OChain created from faulty reference chain
+
+    Reference* ref1 = allocate_frame_with_sample_header(1, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(0, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+
+    Reference* ref = allocate_frame_with_sample_header(2, 3);
+    stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 1);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add faulty reference chain to I2OChain
+
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref1 = allocate_frame_with_sample_header(2, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(1, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag2(ref1);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 2);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 1);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add fragment to I2OChain created from faulty reference chain
+
+    Reference* ref1 = allocate_frame_with_sample_header(0, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(0, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag1(ref1);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+
+    Reference* ref = allocate_frame_with_sample_header(2, 3);
+    stor::I2OChain frag2(ref);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // add faulty reference chain to I2OChain
+
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag1(ref);
+    double creationTime1 = frag1.creationTime();
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref1 = allocate_frame_with_sample_header(2, 3);
+    Reference* ref2 = allocate_frame_with_sample_header(2, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag2(ref1);
+    double lastFragmentTime2 = frag2.lastFragmentTime();
+    ::usleep((unsigned int) 50);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag2.faulty());
+
+    frag1.addToChain(frag2);
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(frag2.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.faulty());
+
+    CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
+    CPPUNIT_ASSERT(frag1.getFragmentID(1) == 2);
+    CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
+
+    CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
+    CPPUNIT_ASSERT(frag1.lastFragmentTime() > lastFragmentTime2);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+
+void
+testI2OChain::fragkey_mismatches()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // verify that we can't add a severely faulty chain
+    // to a normal chain (because the severely faulty one has
+    // a different fragKey)
+
+    Reference* ref = allocate_frame_with_sample_header(0, 3);
+    stor::I2OChain frag1(ref);
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+
+    Reference* ref1 = allocate_frame_with_sample_header(100, 3);
+    Reference* ref2 = allocate_frame_with_sample_header( 99, 3);
+    ref1->setNextReference(ref2);
+    stor::I2OChain frag2(ref1);
+
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag2.faulty());
+
+    try
+      {
+        frag1.addToChain(frag2);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::I2OChain& excpt)
+      {
+      }
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(!frag1.faulty());
+    CPPUNIT_ASSERT(!frag2.empty());
+    CPPUNIT_ASSERT(!frag2.complete());
+    CPPUNIT_ASSERT(frag2.faulty());
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    // verify that we can't add severely faulty chains together
+    // forever (this could cause the chain to grow forever
+    // in the FragmentStore and never become stale)
+
+    Reference* ref = allocate_frame_with_sample_header(100, 3);
+    stor::I2OChain frag1(ref);
+
+    CPPUNIT_ASSERT(!frag1.empty());
+    CPPUNIT_ASSERT(!frag1.complete());
+    CPPUNIT_ASSERT(frag1.faulty());
+
+    // We test this by verifying that the addToChain method
+    // throws an exception when we try to add two chains with
+    // different fragKeys.  This should happen at some point
+    // over the course of several seconds worth of severely
+    // faulty chains.
+
+    try
+      {
+        for (int idx = 0; idx < 100; ++idx)
+          {
+            ref = allocate_frame_with_sample_header(100, 3);
+            stor::I2OChain frag2(ref);
+
+            CPPUNIT_ASSERT(!frag2.empty());
+            CPPUNIT_ASSERT(!frag2.complete());
+            CPPUNIT_ASSERT(frag2.faulty());
+
+            frag1.addToChain(frag2);
+
+            CPPUNIT_ASSERT(!frag1.empty());
+            CPPUNIT_ASSERT(!frag1.complete());
+            CPPUNIT_ASSERT(frag1.faulty());
+            CPPUNIT_ASSERT(frag2.empty());
+            CPPUNIT_ASSERT(!frag2.complete());
+            CPPUNIT_ASSERT(!frag2.faulty());
+
+            ::usleep(30000);
+          }
+
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::I2OChain& excpt)
+      {
+      }
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
 void
