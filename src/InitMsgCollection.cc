@@ -3,7 +3,7 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output disk files.
  *
- * $Id: InitMsgCollection.cc,v 1.5.12.2 2009/02/23 17:12:00 biery Exp $
+ * $Id: InitMsgCollection.cc,v 1.5.12.3 2009/02/24 22:49:02 biery Exp $
  */
 
 #include "DataFormats/Streamer/interface/StreamedProducts.h"
@@ -137,10 +137,16 @@ InitMsgCollection::getElementForOutputModule(std::string requestedOMLabel)
   // fetch the last element in the collection, then we would need to 
   // switch to recursive mutexes...)
   if (requestedOMLabel.empty()) {
-    std::string msg = "Invalid INIT message lookup: the requested ";
-    msg.append("HLT output module label is empty.");
-    throw cms::Exception("InitMsgCollection", "getElementForOutputModule:")
-      << msg << std::endl;
+    if (initMsgList_.size() == 1) {
+      serializedProds = initMsgList_.back();
+    }
+    else if (initMsgList_.size() > 1) {
+      std::string msg = "Invalid INIT message lookup: the requested ";
+      msg.append("HLT output module label is empty but there are multiple ");
+      msg.append("HLT output modules to choose from.");
+      throw cms::Exception("InitMsgCollection", "getElementForOutputModule:")
+        << msg << std::endl;
+    }
   }
 
   else {
