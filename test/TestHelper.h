@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.1 2009/02/18 10:18:53 mommsen Exp $
+// $Id: TestHelper.h,v 1.1.2.2 2009/02/23 19:17:48 biery Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -92,7 +92,8 @@ namespace stor
     allocate_frame_with_sample_header
     (
       unsigned int frameIndex,
-      unsigned int totalFrameCount
+      unsigned int totalFrameCount,
+      unsigned int rbBufferId
     )
     {
       unsigned int value1 = 0xa5a5d2d2;
@@ -119,7 +120,7 @@ namespace stor
       smMsg->numFrames = totalFrameCount;
       smMsg->frameCount = frameIndex;
       smMsg->hltTid = value1;
-      smMsg->rbBufferID = 2;
+      smMsg->rbBufferID = rbBufferId;
       smMsg->outModID = value2;
       smMsg->fuProcID = value3;
       smMsg->fuGUID = value4;
