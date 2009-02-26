@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.21 2009/02/24 14:07:34 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.22 2009/02/25 19:51:38 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -29,12 +29,14 @@ namespace stor
     ///////////////////////////////////////////////////////////////////
     class ChainData
     {
-      enum BitMasksForFaulty { INVALID_REFERENCE = 0x1,
-                               CORRUPT_HEADER = 0x2,
-                               TOTAL_COUNT_MISMATCH = 0x4,
-                               FRAGMENTS_OUT_OF_ORDER = 0x8,
-                               DUPLICATE_FRAGMENT = 0x10,
-                               INCOMPLETE_MESSAGE = 0x20,
+      enum BitMasksForFaulty { INVALID_INITIAL_REFERENCE = 0x1,
+                               CORRUPT_INITIAL_HEADER = 0x2,
+                               INVALID_SECONDARY_REFERENCE = 0x4,
+                               CORRUPT_SECONDARY_HEADER = 0x8,
+                               TOTAL_COUNT_MISMATCH = 0x10,
+                               FRAGMENTS_OUT_OF_ORDER = 0x20,
+                               DUPLICATE_FRAGMENT = 0x40,
+                               INCOMPLETE_MESSAGE = 0x80,
                                EXTERNALLY_REQUESTED = 0x10000 };
 
     public:
@@ -53,6 +55,7 @@ namespace stor
       unsigned int messageCode() const {return _messageCode;}
       FragKey const& fragmentKey() const {return _fragKey;}
       unsigned int fragmentCount() const {return _fragmentCount;}
+      unsigned int rbBufferId() const {return _rbBufferId;}
       double creationTime() const {return _creationTime;}
       double lastFragmentTime() const {return _lastFragmentTime;}
       unsigned long totalDataSize() const;
@@ -82,12 +85,25 @@ namespace stor
       FragKey _fragKey;
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
+      unsigned int _rbBufferId;
 
       double _creationTime;
       double _lastFragmentTime;
 
+      bool validateDataLocation(toolbox::mem::Reference* ref,
+                                BitMasksForFaulty maskToUse);
+      bool validateMessageSize(toolbox::mem::Reference* ref,
+                               BitMasksForFaulty maskToUse);
+      bool validateFragmentIndexAndCount(toolbox::mem::Reference* ref,
+                                         BitMasksForFaulty maskToUse);
+      bool validateExpectedFragmentCount(toolbox::mem::Reference* ref,
+                                         BitMasksForFaulty maskToUse);
+      bool validateFragmentOrder(toolbox::mem::Reference* ref,
+                                 int& indexValue);
+      bool validateMessageCode(toolbox::mem::Reference* ref,
+                               unsigned short expectedI2OMessageCode);
+
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
-      void validateI2OHeaders(unsigned short expectedI2OMessageCode);
 
       virtual std::string do_outputModuleLabel() const;
       virtual uint32 do_outputModuleId() const;
@@ -108,10 +124,11 @@ namespace stor
       _fragKey(Header::INVALID,0,0,0,0,0),
       _fragmentCount(0),
       _expectedNumberOfFragments(0),
+      _rbBufferId(0),
       _creationTime(-1),
       _lastFragmentTime(-1)
     {
-      // Avoid the situation in which all severely faulty chains
+      // Avoid the situation in which all unparsable chains
       // have the same fragment key.  We do this by providing a 
       // variable default value for one of the fragKey fields.
       if (pRef)
@@ -128,31 +145,33 @@ namespace stor
           _creationTime = utils::getCurrentTime();
           _lastFragmentTime = _creationTime;
 
-          toolbox::mem::Reference* curRef = pRef;
+          // first fragment in Reference chain
+          ++_fragmentCount;
+          int workingIndex = -1;
+
+          if (validateDataLocation(pRef, INVALID_INITIAL_REFERENCE) &&
+              validateMessageSize(pRef, CORRUPT_INITIAL_HEADER) &&
+              validateFragmentIndexAndCount(pRef, CORRUPT_INITIAL_HEADER))
+            {
+              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) pRef->getDataLocation();
+              _expectedNumberOfFragments = smMsg->numFrames;
+
+              validateFragmentOrder(pRef, workingIndex);
+            }
+
+          // subsequent fragments in Reference chain
+          toolbox::mem::Reference* curRef = pRef->getNextReference();
           while (curRef)
             {
               ++_fragmentCount;
 
-              I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-                (I2O_PRIVATE_MESSAGE_FRAME*) curRef->getDataLocation();
-              if (!pvtMsg)
+              if (validateDataLocation(curRef, INVALID_SECONDARY_REFERENCE) &&
+                  validateMessageSize(curRef, CORRUPT_SECONDARY_HEADER) &&
+                  validateFragmentIndexAndCount(curRef, CORRUPT_SECONDARY_HEADER))
                 {
-                  _faultyBits |= INVALID_REFERENCE;
-                }
-              else if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
-                       sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
-                {
-                  _faultyBits |= CORRUPT_HEADER;
-                }
-              else
-                {
-                  I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-                    (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
-                  _expectedNumberOfFragments = smMsg->numFrames;
-                  if (_expectedNumberOfFragments < 1 ||
-                      smMsg->frameCount >= _expectedNumberOfFragments) {
-                    _faultyBits |= CORRUPT_HEADER;
-                  }
+                  validateExpectedFragmentCount(curRef, TOTAL_COUNT_MISMATCH);
+                  validateFragmentOrder(curRef, workingIndex);
                 }
 
               curRef = curRef->getNextReference();
@@ -196,8 +215,8 @@ namespace stor
 
     inline bool ChainData::parsable() const
     {
-      return (_ref) && ((_faultyBits & INVALID_REFERENCE) == 0) &&
-        ((_faultyBits & CORRUPT_HEADER) == 0);
+      return (_ref) && ((_faultyBits & INVALID_INITIAL_REFERENCE) == 0) &&
+        ((_faultyBits & CORRUPT_INITIAL_HEADER) == 0);
     }
 
     // this method currently does NOT support operation on empty chains
@@ -368,7 +387,7 @@ namespace stor
 
     inline void ChainData::markCorrupt()
     {
-      _faultyBits |= CORRUPT_HEADER;
+      _faultyBits |= CORRUPT_INITIAL_HEADER;
     }
 
     inline unsigned long* ChainData::getBufferData()
@@ -549,60 +568,103 @@ namespace stor
       do_l1TriggerNames(nameList);
     }
 
+    inline bool
+    ChainData::validateDataLocation(toolbox::mem::Reference* ref,
+                                    BitMasksForFaulty maskToUse)
+    {
+      I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+        (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+      if (!pvtMsg)
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateMessageSize(toolbox::mem::Reference* ref,
+                                   BitMasksForFaulty maskToUse)
+    {
+      I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+        (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+      if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
+          sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateFragmentIndexAndCount(toolbox::mem::Reference* ref,
+                                             BitMasksForFaulty maskToUse)
+    {
+      I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) ref->getDataLocation();
+      if (smMsg->numFrames < 1 || smMsg->frameCount >= smMsg->numFrames)
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateExpectedFragmentCount(toolbox::mem::Reference* ref,
+                                             BitMasksForFaulty maskToUse)
+    {
+      I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) ref->getDataLocation();
+      if (smMsg->numFrames != _expectedNumberOfFragments)
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateFragmentOrder(toolbox::mem::Reference* ref,
+                                     int& indexValue)
+    {
+      int problemCount = 0;
+      I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) ref->getDataLocation();
+      int thisIndex = static_cast<int>(smMsg->frameCount);
+      if (thisIndex == indexValue)
+        {
+          _faultyBits |= DUPLICATE_FRAGMENT;
+          ++problemCount;
+        }
+      else if (thisIndex < indexValue)
+        {
+          _faultyBits |= FRAGMENTS_OUT_OF_ORDER;
+          ++problemCount;
+        }
+      indexValue = thisIndex;
+      return (problemCount == 0);
+    }
+
+    inline bool
+    ChainData::validateMessageCode(toolbox::mem::Reference* ref,
+                                   unsigned short expectedI2OMessageCode)
+    {
+      I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+        (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+      if (pvtMsg->XFunctionCode != expectedI2OMessageCode)
+        {
+          _faultyBits |= CORRUPT_SECONDARY_HEADER;
+          return false;
+        }
+      return true;
+    }
+
     inline unsigned char*
     ChainData::do_fragmentLocation(unsigned char* dataLoc) const
     {
       return dataLoc;
-    }
-
-    void ChainData::validateI2OHeaders(unsigned short expectedI2OMessageCode)
-    {
-      int previousIndex = -1;
-      toolbox::mem::Reference* curRef = _ref;
-      while (curRef)
-        {
-          I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-            (I2O_PRIVATE_MESSAGE_FRAME*) curRef->getDataLocation();
-          if (!pvtMsg)
-            {
-              _faultyBits |= INVALID_REFERENCE;
-            }
-          else if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
-                   sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
-            {
-              _faultyBits |= CORRUPT_HEADER;
-            }
-          else
-            {
-              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-                (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
-              if (pvtMsg->XFunctionCode != expectedI2OMessageCode)
-                {
-                  _faultyBits |= CORRUPT_HEADER;
-                }
-              if (smMsg->numFrames != _expectedNumberOfFragments)
-                {
-                  _faultyBits |= TOTAL_COUNT_MISMATCH;
-                }
-
-              int thisIndex = static_cast<int>(smMsg->frameCount);
-              if (thisIndex == previousIndex)
-                {
-                  _faultyBits |= DUPLICATE_FRAGMENT;
-                }
-              if (thisIndex < previousIndex)
-                {
-                  _faultyBits |= FRAGMENTS_OUT_OF_ORDER;
-                }
-              previousIndex = thisIndex;
-
-              // we could also check the fields that we use for the
-              // fragment key, but that would need intelligence from
-              // the ChainData child classes...
-            }
-
-          curRef = curRef->getNextReference();
-        }
     }
 
     inline std::string ChainData::do_outputModuleLabel() const
@@ -679,7 +741,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_PREAMBLE);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_PREAMBLE);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -693,9 +760,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
             (I2O_SM_PREAMBLE_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -824,14 +891,15 @@ namespace stor
       if (parsable())
         {
           _messageCode = Header::INIT;
-          I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
             (I2O_SM_PREAMBLE_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
           _fragKey.run_ = 0;
-          _fragKey.event_ = i2oMsg->hltTid;
-          _fragKey.secondaryId_ = i2oMsg->outModID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.event_ = smMsg->hltTid;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
         }
     }
 
@@ -855,7 +923,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_DATA);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_DATA);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -869,9 +942,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -884,14 +957,15 @@ namespace stor
       if (parsable())
         {
           _messageCode = Header::EVENT;
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
-          _fragKey.run_ = i2oMsg->runID;
-          _fragKey.event_ = i2oMsg->eventID;
-          _fragKey.secondaryId_ = i2oMsg->outModID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.run_ = smMsg->runID;
+          _fragKey.event_ = smMsg->eventID;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
         }
     }
 
@@ -915,7 +989,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_DQM);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_DQM);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -929,9 +1008,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DQM_MESSAGE_FRAME *smMsg =
             (I2O_SM_DQM_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -944,14 +1023,15 @@ namespace stor
       if (parsable())
         {
           _messageCode = Header::DQM_EVENT;
-          I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DQM_MESSAGE_FRAME *smMsg =
             (I2O_SM_DQM_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
-          _fragKey.run_ = i2oMsg->runID;
-          _fragKey.event_ = i2oMsg->eventAtUpdateID;
-          _fragKey.secondaryId_ = i2oMsg->folderID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.run_ = smMsg->runID;
+          _fragKey.event_ = smMsg->eventAtUpdateID;
+          _fragKey.secondaryId_ = smMsg->folderID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
         }
     }
 
@@ -975,7 +1055,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_ERROR);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_ERROR);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -989,9 +1074,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -1004,14 +1089,15 @@ namespace stor
       if (parsable())
         {
           _messageCode = Header::ERROR_EVENT;
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
-          _fragKey.run_ = i2oMsg->runID;
-          _fragKey.event_ = i2oMsg->eventID;
-          _fragKey.secondaryId_ = i2oMsg->outModID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.run_ = smMsg->runID;
+          _fragKey.event_ = smMsg->eventID;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
         }
     }
   } // namespace detail
@@ -1201,6 +1287,18 @@ namespace stor
   {
     if (!_data) return Header::INVALID;
     return _data->messageCode();
+  }
+
+  bool I2OChain::hasValidRBBufferId() const
+  {
+    if (!_data) return false;
+    return _data->parsable();
+  }
+
+  unsigned int I2OChain::rbBufferId() const
+  {
+    if (!_data) return 0;
+    return _data->rbBufferId();
   }
 
   FragKey I2OChain::fragmentKey() const

@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.16 2009/02/23 19:21:05 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.17 2009/02/24 14:07:33 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/02/23 19:21:05 $
+   * $Revision: 1.1.2.17 $
+   * $Date: 2009/02/24 14:07:33 $
    */
 
 
@@ -176,6 +176,20 @@ namespace stor {
        and Header::ERROR_EVENT from IOPool/Streamer/interface/MsgHeader.h.
      */
     unsigned int messageCode() const;
+
+    /**
+       Returns true if a valid resource broker buffer ID can be
+       determined from the message;
+     */
+    bool hasValidRBBufferId() const;
+
+    /**
+       Returns the resource broker buffer ID from the contained message.
+       If no valid buffer ID can be determined, zero is returned.  NOTE
+       that you must use the hasValidRBBufferId method to determine if
+       a zero value is valid or not.
+     */
+    unsigned int rbBufferId() const;
 
     /**
        Returns the fragment key for the chain.  The fragment key
