@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.22 2009/02/25 19:51:38 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.23 2009/02/26 21:56:28 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -56,6 +56,7 @@ namespace stor
       FragKey const& fragmentKey() const {return _fragKey;}
       unsigned int fragmentCount() const {return _fragmentCount;}
       unsigned int rbBufferId() const {return _rbBufferId;}
+      unsigned int hltInstance() const {return _hltInstance;}
       double creationTime() const {return _creationTime;}
       double lastFragmentTime() const {return _lastFragmentTime;}
       unsigned long totalDataSize() const;
@@ -63,6 +64,8 @@ namespace stor
       unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
       unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
+
+      std::string hltClassName() const;
 
       std::string outputModuleLabel() const;
       uint32 outputModuleId() const;
@@ -86,6 +89,7 @@ namespace stor
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
       unsigned int _rbBufferId;
+      unsigned int _hltInstance;
 
       double _creationTime;
       double _lastFragmentTime;
@@ -125,6 +129,7 @@ namespace stor
       _fragmentCount(0),
       _expectedNumberOfFragments(0),
       _rbBufferId(0),
+      _hltInstance(0),
       _creationTime(-1),
       _lastFragmentTime(-1)
     {
@@ -543,27 +548,45 @@ namespace stor
       return static_cast<unsigned int>(fullSize);
     }
 
-    std::string ChainData::outputModuleLabel() const
+    inline std::string ChainData::hltClassName() const
+    {
+      if (parsable())
+        {
+          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) _ref->getDataLocation();
+          size_t size = std::min(strlen(smMsg->hltClassName),
+                                 (size_t) MAX_I2O_SM_URLCHARS);
+          std::string className(smMsg->hltClassName, size);
+          return className;
+        }
+      else
+        {
+          return "";
+        }
+    }
+
+
+    inline std::string ChainData::outputModuleLabel() const
     {
       return do_outputModuleLabel();
     }
 
-    uint32 ChainData::outputModuleId() const
+    inline uint32 ChainData::outputModuleId() const
     {
       return do_outputModuleId();
     }
 
-    void ChainData::hltTriggerNames(Strings& nameList) const
+    inline void ChainData::hltTriggerNames(Strings& nameList) const
     {
       do_hltTriggerNames(nameList);
     }
 
-    void ChainData::hltTriggerSelections(Strings& nameList) const
+    inline void ChainData::hltTriggerSelections(Strings& nameList) const
     {
       do_hltTriggerSelections(nameList);
     }
 
-    void ChainData::l1TriggerNames(Strings& nameList) const
+    inline void ChainData::l1TriggerNames(Strings& nameList) const
     {
       do_l1TriggerNames(nameList);
     }
@@ -900,6 +923,7 @@ namespace stor
           _fragKey.originatorPid_ = smMsg->fuProcID;
           _fragKey.originatorGuid_ = smMsg->fuGUID;
           _rbBufferId = smMsg->rbBufferID;
+          _hltInstance = smMsg->hltInstance;
         }
     }
 
@@ -966,6 +990,7 @@ namespace stor
           _fragKey.originatorPid_ = smMsg->fuProcID;
           _fragKey.originatorGuid_ = smMsg->fuGUID;
           _rbBufferId = smMsg->rbBufferID;
+          _hltInstance = smMsg->hltInstance;
         }
     }
 
@@ -1032,6 +1057,7 @@ namespace stor
           _fragKey.originatorPid_ = smMsg->fuProcID;
           _fragKey.originatorGuid_ = smMsg->fuGUID;
           _rbBufferId = smMsg->rbBufferID;
+          _hltInstance = smMsg->hltInstance;
         }
     }
 
@@ -1098,6 +1124,7 @@ namespace stor
           _fragKey.originatorPid_ = smMsg->fuProcID;
           _fragKey.originatorGuid_ = smMsg->fuGUID;
           _rbBufferId = smMsg->rbBufferID;
+          _hltInstance = smMsg->hltInstance;
         }
     }
   } // namespace detail
@@ -1289,16 +1316,22 @@ namespace stor
     return _data->messageCode();
   }
 
-  bool I2OChain::hasValidRBBufferId() const
-  {
-    if (!_data) return false;
-    return _data->parsable();
-  }
-
   unsigned int I2OChain::rbBufferId() const
   {
     if (!_data) return 0;
     return _data->rbBufferId();
+  }
+
+  unsigned int I2OChain::hltInstance() const
+  {
+    if (!_data) return 0;
+    return _data->hltInstance();
+  }
+
+  std::string I2OChain::hltClassName() const
+  {
+    if (!_data) return "";
+    return _data->hltClassName();
   }
 
   FragKey I2OChain::fragmentKey() const

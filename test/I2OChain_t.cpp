@@ -39,6 +39,7 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(add_fragment);
   CPPUNIT_TEST(chained_references);
   CPPUNIT_TEST(fragkey_mismatches);
+  CPPUNIT_TEST(multipart_msg_header);
   CPPUNIT_TEST(init_msg_header);
 
   CPPUNIT_TEST_SUITE_END();
@@ -65,6 +66,7 @@ public:
   void add_fragment();
   void chained_references();
   void fragkey_mismatches();
+  void multipart_msg_header();
   void init_msg_header();
 
 private:
@@ -93,7 +95,6 @@ testI2OChain::default_chain()
   CPPUNIT_ASSERT(!frag.faulty());
   CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
   CPPUNIT_ASSERT(frag.fragmentCount() == 0);
-  CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
   CPPUNIT_ASSERT(frag.rbBufferId() == 0);
   CPPUNIT_ASSERT(frag.creationTime() == -1);
   CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
@@ -111,7 +112,6 @@ testI2OChain::null_reference()
   CPPUNIT_ASSERT(!frag.faulty());
   CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
   CPPUNIT_ASSERT(frag.fragmentCount() == 0);
-  CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
   CPPUNIT_ASSERT(frag.rbBufferId() == 0);
   CPPUNIT_ASSERT(frag.creationTime() == -1);
   CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
@@ -136,7 +136,6 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -318,7 +317,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -331,7 +329,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -344,7 +341,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -356,7 +352,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -369,7 +364,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(!frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -382,7 +376,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::ERROR_EVENT);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -395,7 +388,6 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(!frag.faulty());
     CPPUNIT_ASSERT(frag.messageCode() == Header::ERROR_EVENT);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
-    CPPUNIT_ASSERT(frag.hasValidRBBufferId());
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
@@ -413,13 +405,13 @@ testI2OChain::populate_i2o_header()
     unsigned int value4 = 0x12345678;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
-    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
       (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->hltTid = value1;
-    i2oMsg->rbBufferID = 2;
-    i2oMsg->outModID = value2;
-    i2oMsg->fuProcID = value3;
-    i2oMsg->fuGUID = value4;
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 2;
+    smMsg->outModID = value2;
+    smMsg->fuProcID = value3;
+    smMsg->fuGUID = value4;
 
     stor::I2OChain initMsgFrag(ref);
     CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
@@ -446,14 +438,14 @@ testI2OChain::copy_with_valid_header()
     unsigned int value5 = 0x89abcdef;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
-    I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
       (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->rbBufferID = 2;
-    i2oMsg->runID = value1;
-    i2oMsg->eventID = value2;
-    i2oMsg->outModID = value3;
-    i2oMsg->fuProcID = value4;
-    i2oMsg->fuGUID = value5;
+    smMsg->rbBufferID = 2;
+    smMsg->runID = value1;
+    smMsg->eventID = value2;
+    smMsg->outModID = value3;
+    smMsg->fuProcID = value4;
+    smMsg->fuGUID = value5;
 
     stor::I2OChain eventMsgFrag(ref);
     stor::I2OChain copy(eventMsgFrag);
@@ -500,14 +492,14 @@ testI2OChain::assign_with_valid_header()
     unsigned int value5 = 0x89abcdef;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_ERROR, 0, 1);
-    I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
       (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->rbBufferID = 2;
-    i2oMsg->runID = value1;
-    i2oMsg->eventID = value2;
-    i2oMsg->outModID = value3;
-    i2oMsg->fuProcID = value4;
-    i2oMsg->fuGUID = value5;
+    smMsg->rbBufferID = 2;
+    smMsg->runID = value1;
+    smMsg->eventID = value2;
+    smMsg->outModID = value3;
+    smMsg->fuProcID = value4;
+    smMsg->fuGUID = value5;
 
     stor::I2OChain eventMsgFrag(ref);
     stor::I2OChain copy = eventMsgFrag;
@@ -554,26 +546,26 @@ testI2OChain::swap_with_valid_header()
     unsigned int value5 = 0x89abcdef;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_DQM, 0, 1);
-    I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+    I2O_SM_DQM_MESSAGE_FRAME *smMsg =
       (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->rbBufferID = 2;
-    i2oMsg->runID = value1;
-    i2oMsg->eventAtUpdateID = value2;
-    i2oMsg->folderID = value3;
-    i2oMsg->fuProcID = value4;
-    i2oMsg->fuGUID = value5;
+    smMsg->rbBufferID = 2;
+    smMsg->runID = value1;
+    smMsg->eventAtUpdateID = value2;
+    smMsg->folderID = value3;
+    smMsg->fuProcID = value4;
+    smMsg->fuGUID = value5;
     stor::I2OChain frag1(ref);
     double creationTime1 = frag1.creationTime();
     double lastFragmentTime1 = frag1.lastFragmentTime();
  
     ref = allocate_frame_with_basic_header(I2O_SM_DQM, 0, 1);
-    i2oMsg = (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->rbBufferID = 3;
-    i2oMsg->runID = value5;
-    i2oMsg->eventAtUpdateID = value4;
-    i2oMsg->folderID = value3;
-    i2oMsg->fuProcID = value2;
-    i2oMsg->fuGUID = value1;
+    smMsg = (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
+    smMsg->rbBufferID = 3;
+    smMsg->runID = value5;
+    smMsg->eventAtUpdateID = value4;
+    smMsg->folderID = value3;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value1;
     stor::I2OChain frag2(ref);
     double creationTime2 = frag2.creationTime();
     double lastFragmentTime2 = frag2.lastFragmentTime();
@@ -645,13 +637,13 @@ testI2OChain::release_with_valid_header()
     unsigned int value4 = 0x12345678;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
-    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
       (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->hltTid = value1;
-    i2oMsg->rbBufferID = 2;
-    i2oMsg->outModID = value2;
-    i2oMsg->fuProcID = value3;
-    i2oMsg->fuGUID = value4;
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 2;
+    smMsg->outModID = value2;
+    smMsg->fuProcID = value3;
+    smMsg->fuGUID = value4;
 
     stor::I2OChain initMsgFrag(ref);
     CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
@@ -704,7 +696,7 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.fragmentCount() == 2);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
@@ -733,7 +725,7 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.fragmentCount() == 2);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime2);
@@ -761,7 +753,7 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
     CPPUNIT_ASSERT(frag1.fragmentCount() == 2);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime2);
@@ -810,7 +802,7 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 1);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 1);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
@@ -1307,7 +1299,7 @@ testI2OChain::chained_references()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 2);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 1);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
@@ -1348,7 +1340,7 @@ testI2OChain::chained_references()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
@@ -1389,7 +1381,7 @@ testI2OChain::chained_references()
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 0);
     CPPUNIT_ASSERT(frag1.getFragmentID(1) == 2);
     CPPUNIT_ASSERT(frag1.getFragmentID(2) == 2);
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
 
     CPPUNIT_ASSERT(frag1.creationTime() == creationTime1);
@@ -1414,7 +1406,7 @@ testI2OChain::fragkey_mismatches()
     CPPUNIT_ASSERT(!frag1.empty());
     CPPUNIT_ASSERT(!frag1.complete());
     CPPUNIT_ASSERT(!frag1.faulty());
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 0);
 
     Reference* ref1 = allocate_frame_with_sample_header(100, 3, 0);
@@ -1425,7 +1417,7 @@ testI2OChain::fragkey_mismatches()
     CPPUNIT_ASSERT(!frag2.empty());
     CPPUNIT_ASSERT(!frag2.complete());
     CPPUNIT_ASSERT(frag2.faulty());
-    CPPUNIT_ASSERT(!frag2.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag2.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag2.rbBufferId() == 0);
 
     try
@@ -1443,7 +1435,7 @@ testI2OChain::fragkey_mismatches()
     CPPUNIT_ASSERT(!frag2.empty());
     CPPUNIT_ASSERT(!frag2.complete());
     CPPUNIT_ASSERT(frag2.faulty());
-    CPPUNIT_ASSERT(frag1.hasValidRBBufferId());
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
     CPPUNIT_ASSERT(frag1.rbBufferId() == 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -1497,6 +1489,94 @@ testI2OChain::fragkey_mismatches()
 }
 
 void
+testI2OChain::multipart_msg_header()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    std::string outputModuleLabel = "HLTOutput";
+    std::string hltClass = "evf::FUResourceBroker";
+
+    uLong crc = crc32(0L, Z_NULL, 0);
+    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
+    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+    unsigned int value4 = 0xdeadbeef;
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 2;
+    smMsg->outModID = outputModuleId;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value3;
+
+    std::strcpy(smMsg->hltClassName, hltClass.c_str());
+    smMsg->hltInstance = value4;
+
+    stor::I2OChain initMsgFrag(ref);
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
+
+    stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
+    CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
+    CPPUNIT_ASSERT(fragmentKey.run_ == 0);
+    CPPUNIT_ASSERT(fragmentKey.event_ == value1);
+    CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+
+    CPPUNIT_ASSERT(initMsgFrag.hltInstance() == value4);
+    CPPUNIT_ASSERT(initMsgFrag.hltClassName() == hltClass);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    std::string outputModuleLabel = "HLTOutput";
+    std::string hltClass =
+      "evf::FUResourceBroker012345678901234567890123456789012345678901234567";
+
+    uLong crc = crc32(0L, Z_NULL, 0);
+    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
+    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+    unsigned int value4 = 0xdeadbeef;
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 2;
+    smMsg->outModID = outputModuleId;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value3;
+
+    std::strncpy(smMsg->hltClassName, hltClass.c_str(), MAX_I2O_SM_URLCHARS);
+    smMsg->hltInstance = value4;
+
+    stor::I2OChain initMsgFrag(ref);
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
+
+    stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
+    CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
+    CPPUNIT_ASSERT(fragmentKey.run_ == 0);
+    CPPUNIT_ASSERT(fragmentKey.event_ == value1);
+    CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+
+    CPPUNIT_ASSERT(initMsgFrag.hltInstance() == value4);
+    CPPUNIT_ASSERT(initMsgFrag.hltClassName() ==
+                   hltClass.substr(0, MAX_I2O_SM_URLCHARS));
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+void
 testI2OChain::init_msg_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -1538,16 +1618,16 @@ testI2OChain::init_msg_header()
     unsigned int value3 = 0xc3c3f0f0;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
-    I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
       (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
-    i2oMsg->hltTid = value1;
-    i2oMsg->rbBufferID = 2;
-    i2oMsg->outModID = outputModuleId;
-    i2oMsg->fuProcID = value2;
-    i2oMsg->fuGUID = value3;
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 2;
+    smMsg->outModID = outputModuleId;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value3;
 
     InitMsgBuilder
-      initBuilder(i2oMsg->dataPtr(), i2oMsg->dataSize, 100,
+      initBuilder(smMsg->dataPtr(), smMsg->dataSize, 100,
                   Version(7,(const uint8*)psetid), (const char*) reltag,
                   processName.c_str(), outputModuleLabel.c_str(),
                   outputModuleId, hlt_names, hlt_selections, l1_names);

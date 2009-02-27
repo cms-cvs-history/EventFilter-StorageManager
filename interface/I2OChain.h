@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.17 2009/02/24 14:07:33 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.18 2009/02/26 21:56:24 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.17 $
-   * $Date: 2009/02/24 14:07:33 $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/02/26 21:56:24 $
    */
 
 
@@ -178,18 +178,28 @@ namespace stor {
     unsigned int messageCode() const;
 
     /**
-       Returns true if a valid resource broker buffer ID can be
-       determined from the message;
-     */
-    bool hasValidRBBufferId() const;
-
-    /**
        Returns the resource broker buffer ID from the contained message.
-       If no valid buffer ID can be determined, zero is returned.  NOTE
-       that you must use the hasValidRBBufferId method to determine if
-       a zero value is valid or not.
+       If no valid buffer ID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
      */
     unsigned int rbBufferId() const;
+
+    /**
+       Returns the HLT instance number from the contained message.
+       If no valid instance number can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int hltInstance() const;
+
+    /**
+       Returns the HLT class name from the contained message.  If no
+       valid class name can be determined, an empty string is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    std::string hltClassName() const;
 
     /**
        Returns the fragment key for the chain.  The fragment key
