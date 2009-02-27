@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.18 2009/02/25 12:38:16 dshpakov Exp $
+# $Id: BuildFile,v 1.30.16.19 2009/02/27 13:25:00 dshpakov Exp $
 
 <environment>
   <use name=boost>
@@ -75,6 +75,9 @@
   </bin>
 
   <bin file=EventConsumerRegistrationInfo_t.cpp>
+  </bin>
+
+  <bin file=DQMEventConsumerRegistrationInfo_t.cpp>
   </bin>
 
   <bin file=workloop_t.cpp>
