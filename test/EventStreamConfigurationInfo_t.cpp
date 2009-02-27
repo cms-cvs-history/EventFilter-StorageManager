@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: EventStreamConfigurationInfo_t.cpp,v 1.1.2.1 2009/02/25 12:38:16 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 
@@ -17,7 +17,10 @@ int main()
   EventStreamConfigurationInfo esci( "A",
 				     100,
 				     fl,
-				     "PhysicsOModule" );
+				     "PhysicsOModule",
+				     true,
+				     7,
+				     7000000 );
 
   cout << esci << endl;
 
