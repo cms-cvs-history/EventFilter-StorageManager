@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.3 2009/01/30 10:49:57 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.4 2009/02/19 13:16:33 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -38,7 +38,8 @@ const QueueID EventDistributor::registerEventConsumer
 }
 
 
-void EventDistributor::registerEventStreams()
+void EventDistributor::
+registerEventStreams(std::vector<EventStreamConfigurationInfo>& cfgList)
 {
 
 }

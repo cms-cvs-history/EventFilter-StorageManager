@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: EventDistributor.h,v 1.1.2.4 2009/02/19 13:16:17 mommsen Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -6,6 +6,7 @@
 #include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
 #include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
@@ -23,8 +24,8 @@ namespace stor {
    * header.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/02/19 13:16:17 $
    */
   
   class EventDistributor
@@ -57,7 +58,7 @@ namespace stor {
     /**
      * Registers new event streams ???
      */
-    void registerEventStreams();
+    void registerEventStreams(std::vector<EventStreamConfigurationInfo>& cfgList);
 
 
   private:
