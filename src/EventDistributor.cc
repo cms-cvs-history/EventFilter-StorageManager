@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.4 2009/02/19 13:16:33 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.5 2009/03/01 22:57:43 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -34,7 +34,7 @@ const QueueID EventDistributor::registerEventConsumer
   boost::shared_ptr<EventConsumerRegistrationInfo> registrationInfo
 )
 {
-  return _eventConsumerQueueCollection.registerEventConsumer(registrationInfo);
+  return _eventConsumerQueueCollection.registerConsumer(*registrationInfo);
 }
 
 
