@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.14 2009/02/18 08:26:54 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.15 2009/03/02 18:08:22 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -91,7 +91,8 @@ void FragmentMonitorCollection::do_updateInfoSpace()
     _receivedVolume = static_cast<xdata::Double>(allFragmentSizes.getValueSum());
 
     _receivedPeriod4Stats  = static_cast<xdata::UnsignedInteger32>
-      (allFragmentSizes.getDuration(MonitoredQuantity::RECENT));
+      (static_cast<unsigned int>
+       (allFragmentSizes.getDuration(MonitoredQuantity::RECENT)));
     _receivedSamples4Stats = static_cast<xdata::UnsignedInteger32>
       (allFragmentSizes.getSampleCount(MonitoredQuantity::RECENT));
 
@@ -107,7 +108,8 @@ void FragmentMonitorCollection::do_updateInfoSpace()
       (allFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
 
     _receivedDQMPeriod4Stats  = static_cast<xdata::UnsignedInteger32>
-      (dqmEventFragmentSizes.getDuration(MonitoredQuantity::RECENT));
+      (static_cast<unsigned int>
+       (dqmEventFragmentSizes.getDuration(MonitoredQuantity::RECENT)));
     _receivedDQMSamples4Stats = static_cast<xdata::UnsignedInteger32>
       (dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT));
 
