@@ -1,19 +1,30 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.2 2009/02/27 13:24:59 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
 
+
+#include <iosfwd>
 #include <string>
 #include <vector>
-#include <iostream>
+
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 
 namespace stor
 {
+  /**
+   * This struct holds the registration information from a event
+   * consumer
+   *
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/01/30 10:49:40 $
+   */
 
   class EventConsumerRegistrationInfo
-  {
 
+  {
   public:
 
     typedef std::vector<std::string> FilterList;
@@ -26,7 +37,9 @@ namespace stor
                                    unsigned int headerRetryInterval, // seconds
                                    double maxEventRequestRate, // Hz
                                    const FilterList& selEvents,
-                                   const std::string& selHLTOut ):
+                                   const std::string& selHLTOut,
+				   unsigned int secondsToStale,
+				   enquing_policy::PolicyTag policy) :
       _sourceURL( sourceURL ),
       _maxConnectRetries( maxConnectRetries ),
       _connectRetryInterval( connectRetryInterval ),
@@ -34,11 +47,13 @@ namespace stor
       _headerRetryInterval( headerRetryInterval ),
       _maxEventRequestRate( maxEventRequestRate ),
       _selEvents( selEvents ),
-      _selHLTOut( selHLTOut )
+      _selHLTOut( selHLTOut ),
+      _secondsToStale( secondsToStale ),
+      _policy( policy )
     {}
 
-    // Destructor:
-    ~EventConsumerRegistrationInfo() {}
+    // Compiler-generated copy constructor, copy assignment, and
+    // destructor do the right thing.
 
     // Accessors:
     const std::string& sourceURL() const { return _sourceURL; }
@@ -49,23 +64,36 @@ namespace stor
     double maxEventRequestRate() const { return _maxEventRequestRate; }
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
+    unsigned int secondsToStale() const { return _secondsToStale; }
+    enquing_policy::PolicyTag policy() const { return _policy; }
 
     // Output:
-    friend std::ostream& operator <<
-      ( std::ostream&, const EventConsumerRegistrationInfo& );
+    std::ostream& write(std::ostream& os) const;
 
   private:
 
-    std::string _sourceURL;
-    unsigned int _maxConnectRetries;
-    unsigned int _connectRetryInterval;
-    std::string _consumerName;
-    unsigned int _headerRetryInterval;
-    double _maxEventRequestRate;
-    FilterList _selEvents;
-    std::string _selHLTOut;
-
+    std::string      _sourceURL;
+    unsigned int     _maxConnectRetries;
+    unsigned int     _connectRetryInterval;
+    std::string      _consumerName;
+    unsigned int     _headerRetryInterval;
+    double           _maxEventRequestRate;
+    FilterList       _selEvents;
+    std::string      _selHLTOut;
+    unsigned long    _secondsToStale;
+    enquing_policy::PolicyTag _policy;
   };
+
+  /**
+     Print the given EventConsumerRegistrationInfo to the given
+     stream.
+   */
+  inline
+  std::ostream& operator<<(std::ostream& os, 
+                           EventConsumerRegistrationInfo const& ri)
+  {
+    return ri.write(os);
+  }
   
 } // namespace stor
 
