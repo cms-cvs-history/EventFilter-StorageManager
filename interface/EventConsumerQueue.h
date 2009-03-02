@@ -1,10 +1,10 @@
-// $Id: EventConsumerQueue.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
+// $Id: EventConsumerQueue.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_EventConsumerQueue_h
 #define StorageManager_EventConsumerQueue_h
 
-#include "EventFilter/StorageManager/interface/Queue.h"
-
+#include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 namespace stor {
 
@@ -12,23 +12,13 @@ namespace stor {
    * Queue holding I2OChains of complete events waiting to be served
    * over HTTP to an event consumer
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
    */
+
+  typedef ConcurrentQueue<I2OChain> EventConsumerQueue;
   
-  class EventConsumerQueue : public Queue
-  {
-  public:
-    
-    EventConsumerQueue();
-    
-    ~EventConsumerQueue();
-    
-    
-  private:
-    
-  };
   
 } // namespace stor
 
