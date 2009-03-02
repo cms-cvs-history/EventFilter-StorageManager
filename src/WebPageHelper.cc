@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.6 2009/02/18 08:26:54 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.7 2009/02/18 11:12:35 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -6,17 +6,14 @@
 #include <stdio.h>
 #include <sys/statfs.h>
 
-#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
 
 using namespace stor;
 
 
-WebPageHelper::WebPageHelper(xdaq::ApplicationDescriptor *appDescriptor) :
-_appDescriptor(appDescriptor)
-{}
+boost::mutex WebPageHelper::_xhtmlMakerMutex;
 
 
 void WebPageHelper::defaultWebPage
@@ -26,27 +23,30 @@ void WebPageHelper::defaultWebPage
   const boost::shared_ptr<StatisticsReporter>& statReporter,
   toolbox::mem::Pool *pool,
   const int nLogicalDisk,
-  const std::string filePath
+  const std::string filePath,
+  xdaq::ApplicationDescriptor* appDesc
 )
 {
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
   XHTMLMonitor theMonitor;
   XHTMLMaker maker;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = createWebPageBody(maker, stateName);
+  XHTMLMaker::Node* body = createWebPageBody(maker, stateName, appDesc);
 
   //TODO: Failed printout
 
   // Run and event summary
-  statReporter->getRunMonitorCollection().addDOMElement(maker, body);
+  addDOMforRunMonitor(maker, body, statReporter->getRunMonitorCollection());
   
   // Resource usage
   addDOMforResourceUsage(maker, body, pool, nLogicalDisk, filePath);
   
   // Add the received data statistics table
-  statReporter->getFragmentMonitorCollection().addDOMElement(maker, body);
+  addDOMforFragmentMonitor(maker, body,
+                           statReporter->getFragmentMonitorCollection());
 
-  addDOMforSMLinks(maker, body);
+  addDOMforSMLinks(maker, body, appDesc);
   
   // Dump the webpage to the output stream
   maker.out(*out);
@@ -57,16 +57,17 @@ void WebPageHelper::defaultWebPage
 XHTMLMaker::Node* WebPageHelper::createWebPageBody
 (
   XHTMLMaker& maker,
-  const std::string stateName
+  const std::string stateName,
+  xdaq::ApplicationDescriptor* appDescriptor
 )
 {
   std::ostringstream title;
-  title << _appDescriptor->getClassName()
-    << " instance " << _appDescriptor->getInstance();
+  title << appDescriptor->getClassName()
+    << " instance " << appDescriptor->getInstance();
   XHTMLMaker::Node* body = maker.start(title.str());
   
   std::ostringstream stylesheetLink;
-  stylesheetLink << "/" << _appDescriptor->getURN()
+  stylesheetLink << "/" << appDescriptor->getURN()
     << "/styles.css";
   XHTMLMaker::AttrMap stylesheetAttr;
   stylesheetAttr[ "rel" ] = "stylesheet";
@@ -88,8 +89,8 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, tableDivAttr);
 
   XHTMLMaker::AttrMap smLinkAttr;
-  smLinkAttr[ "href" ] = _appDescriptor->getContextDescriptor()->getURL()
-    + "/" + _appDescriptor->getURN();
+  smLinkAttr[ "href" ] = appDescriptor->getContextDescriptor()->getURL()
+    + "/" + appDescriptor->getURN();
   XHTMLMaker::Node* smLink = maker.addNode("a", tableDiv, smLinkAttr);
   
   XHTMLMaker::AttrMap smImgAttr;
@@ -137,11 +138,12 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
 void WebPageHelper::addDOMforSMLinks
 (
   XHTMLMaker& maker,
-  XHTMLMaker::Node *parent
+  XHTMLMaker::Node *parent,
+  xdaq::ApplicationDescriptor* appDescriptor
 )
 {
-  std::string url = _appDescriptor->getContextDescriptor()->getURL()
-    + "/" + _appDescriptor->getURN();
+  std::string url = appDescriptor->getContextDescriptor()->getURL()
+    + "/" + appDescriptor->getURN();
 
   XHTMLMaker::AttrMap linkAttr;
   XHTMLMaker::Node *link;
@@ -299,7 +301,312 @@ void WebPageHelper::addDOMforResourceUsage
 }
 
 
-int WebPageHelper::getProcessCount(std::string processName) const
+void WebPageHelper::
+addDOMforFragmentMonitor(XHTMLMaker& maker,
+                         XHTMLMaker::Node *parent,
+                         FragmentMonitorCollection const& fmc)
+{
+  MonitoredQuantity const& allFragmentSizes =
+    fmc.getAllFragmentSizeMQ();
+  MonitoredQuantity const& eventFragmentSizes =
+    fmc.getEventFragmentSizeMQ();
+  MonitoredQuantity const& dqmEventFragmentSizes =
+    fmc.getDQMEventFragmentSizeMQ();
+
+  MonitoredQuantity const& allFragmentBandwidth =
+    fmc.getAllFragmentBandwidthMQ();
+  MonitoredQuantity const& eventFragmentBandwidth =
+    fmc.getEventFragmentBandwidthMQ();
+  MonitoredQuantity const& dqmEventFragmentBandwidth =
+    fmc.getDQMEventFragmentBandwidthMQ();
+
+  XHTMLMaker::AttrMap tableAttr;
+  tableAttr[ "frame" ] = "void";
+  tableAttr[ "rules" ] = "group";
+  tableAttr[ "class" ] = "states";
+  tableAttr[ "cellpadding" ] = "2";
+  tableAttr[ "width" ] = "100%";
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "4";
+
+  XHTMLMaker::AttrMap tableValueAttr;
+  tableValueAttr[ "align" ] = "right";
+  tableValueAttr[ "width" ] = "23%";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
+
+  // Received Data Statistics header
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Received I2O Frames");
+
+  // Parameter/Value header
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Parameter");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Total");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Events");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "DQM histos");
+
+
+  // Mean performance header
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Mean performance for");
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(1) <<
+      allFragmentSizes.getDuration(MonitoredQuantity::FULL) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(1) <<
+      eventFragmentSizes.getDuration(MonitoredQuantity::FULL) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(1) <<
+      dqmEventFragmentSizes.getDuration(MonitoredQuantity::FULL) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+
+  // Frames received entry
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Frames Received");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getSampleCount(MonitoredQuantity::FULL), 0);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getSampleCount(MonitoredQuantity::FULL), 0);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::FULL), 0);
+
+  // Bandwidth
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+
+  // Rate
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Rate (frames/s)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+
+  // Latency
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Latency (us/frame)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+
+  // Total volume received
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Total volume received (MB)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
+
+
+  // Recent statistics header
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Recent performance for last");
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(1) <<
+      allFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(1) <<
+      eventFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << std::fixed << std::setprecision(1) <<
+      dqmEventFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+
+  // Frames received entry
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Frames Received");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getSampleCount(MonitoredQuantity::RECENT), 0);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT), 0);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT), 0);
+
+  // Bandwidth
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
+
+  // Rate
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Rate (frames/s)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+
+  // Latency
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Latency (us/frame)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+
+  // Maximum Bandwidth
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Maximum Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+
+  // Minimum Bandwidth
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Minimum Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, dqmEventFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+
+}
+
+
+void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
+                                        XHTMLMaker::Node *parent,
+                                        RunMonitorCollection const& rmc)
+{
+  MonitoredQuantity const& eventIDsReceived =
+    rmc.getEventIDsReceivedMQ();
+  MonitoredQuantity const& errorEventIDsReceived =
+    rmc.getErrorEventIDsReceivedMQ();
+  MonitoredQuantity const& runNumbersSeen =
+      rmc.getRunNumbersSeenMQ();
+  MonitoredQuantity const& lumiSectionsSeen =
+      rmc.getLumiSectionsSeenMQ();
+
+  XHTMLMaker::AttrMap tableAttr;
+  tableAttr[ "frame" ] = "void";
+  tableAttr[ "rules" ] = "group";
+  tableAttr[ "class" ] = "states";
+  tableAttr[ "cellpadding" ] = "2";
+  tableAttr[ "width" ] = "100%";
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "4";
+  
+  XHTMLMaker::AttrMap specialRowAttr;
+  specialRowAttr[ "class" ] = "special";
+
+  XHTMLMaker::AttrMap tableLabelAttr;
+  tableLabelAttr[ "align" ] = "left";
+  tableLabelAttr[ "width" ] = "27%";
+
+  XHTMLMaker::AttrMap tableValueAttr;
+  tableValueAttr[ "align" ] = "right";
+  tableValueAttr[ "width" ] = "23%";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Storage Manager Statistics");
+
+  // Run number and lumi section
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Run number");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, runNumbersSeen.getLastSampleValue(), 0);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Lumi section");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, lumiSectionsSeen.getLastSampleValue(), 0);
+
+  // Total events received
+  tableRow = maker.addNode("tr", table, specialRowAttr);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Events received (non-unique)");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventIDsReceived.getSampleCount(), 0);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Error events received");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, errorEventIDsReceived.getSampleCount(), 0);
+
+  // Last event IDs
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last event ID");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, eventIDsReceived.getLastSampleValue(), 0);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last error event ID");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, errorEventIDsReceived.getLastSampleValue(), 0);
+
+}
+
+
+int WebPageHelper::getProcessCount(std::string processName)
 {
 
   int count = -1;

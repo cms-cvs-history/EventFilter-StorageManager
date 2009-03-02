@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.5 2009/02/17 14:58:55 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.6 2009/02/18 08:26:29 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -6,12 +6,15 @@
 #include <string>
 
 #include "boost/shared_ptr.hpp"
+#include "boost/thread/mutex.hpp"
 
 #include "toolbox/mem/Pool.h"
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
 
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 namespace stor {
@@ -20,33 +23,32 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/02/17 14:58:55 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/02/18 08:26:29 $
    */
   
   class WebPageHelper
   {
   public:
-    
-    explicit WebPageHelper(xdaq::ApplicationDescriptor*);
 
     /**
      * Generates the default monitoring webpage for the SM
      */
-    void defaultWebPage
+    static void defaultWebPage
     (
       xgi::Output*, 
       const std::string stateName,
       const boost::shared_ptr<StatisticsReporter>&,
       toolbox::mem::Pool*,
       const int nLogicalDisk,
-      const std::string filePath
+      const std::string filePath,
+      xdaq::ApplicationDescriptor*
     );
 
     /**
      * Returns the number of instances for the given process name
      */
-    int getProcessCount(std::string processName) const;
+    static int getProcessCount(std::string processName);
 
 
   private:
@@ -54,17 +56,20 @@ namespace stor {
     /**
      * Returns the webpage body with the standard header as XHTML node
      */
-    XHTMLMaker::Node* createWebPageBody(XHTMLMaker&, const std::string stateName);
+    static XHTMLMaker::Node* createWebPageBody(XHTMLMaker&,
+                                               const std::string stateName,
+                                               xdaq::ApplicationDescriptor*);
 
     /**
      * Adds the links for the other SM webpages
      */
-    void addDOMforSMLinks(XHTMLMaker&, XHTMLMaker::Node *parent);
-    
+    static void addDOMforSMLinks(XHTMLMaker&, XHTMLMaker::Node *parent,
+                                 xdaq::ApplicationDescriptor*);
+
     /**
      * Adds the resource table to the parent DOM element
      */
-    void addDOMforResourceUsage
+    static void addDOMforResourceUsage
     (
       XHTMLMaker&,
       XHTMLMaker::Node *parent,
@@ -73,13 +78,26 @@ namespace stor {
       const std::string filePath
     );
 
-  
+    /**
+     * Adds fragment monitoring statistics to the parent DOM element
+     */
+    static void addDOMforFragmentMonitor(XHTMLMaker& maker,
+                                         XHTMLMaker::Node *parent,
+                                         FragmentMonitorCollection const& fmc);
+
+    /**
+     * Adds run monitoring statistics to the parent DOM element
+     */
+    static void addDOMforRunMonitor(XHTMLMaker& maker,
+                                    XHTMLMaker::Node *parent,
+                                    RunMonitorCollection const& rmc);
+
   private:
 
-    xdaq::ApplicationDescriptor *_appDescriptor;
-    
+    static boost::mutex _xhtmlMakerMutex;
+
   };
-  
+
 } // namespace stor
 
 #endif // StorageManager_WebPageHelper_h 

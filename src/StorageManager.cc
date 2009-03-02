@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.19 2009/02/24 22:26:09 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.20 2009/02/25 20:49:15 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -13,6 +13,7 @@
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/WebPageHelper.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -130,9 +131,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.19 2009/02/24 22:26:09 biery Exp $ $Name:  $"),
-  _statReporter(new StatisticsReporter(this)),
-  _webPageHelper(this->getApplicationDescriptor())
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.20 2009/02/25 20:49:15 biery Exp $ $Name: refdev01_scratch_branch $"),
+  _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -1056,13 +1056,14 @@ throw (xgi::exception::Exception)
   
   try
   {
-    _webPageHelper.defaultWebPage(
+    WebPageHelper::defaultWebPage(
       out,
       fsm_.stateName()->toString(),
       _statReporter,
       pool_,
       nLogicalDisk_,
-      filePath_
+      filePath_,
+      this->getApplicationDescriptor()
     );
   }
   catch(std::exception &e)

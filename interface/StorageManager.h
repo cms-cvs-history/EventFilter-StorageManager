@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.15 2009/02/16 16:13:03 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.16 2009/02/25 20:49:15 biery Exp $
 */
 
 #include <string>
@@ -28,7 +28,6 @@
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
-#include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "xdaq/Application.h"
@@ -286,7 +285,6 @@ namespace stor {
     };
 
     boost::shared_ptr<StatisticsReporter> _statReporter;
-    WebPageHelper _webPageHelper;
 
   }; 
 } 
