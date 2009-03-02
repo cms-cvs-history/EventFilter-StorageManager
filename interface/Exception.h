@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.2 2009/02/16 13:37:52 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.3 2009/02/17 13:20:12 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -66,6 +66,11 @@ XCEPT_DEFINE_EXCEPTION(stor, WrongI2OMessageType)
  * Exception raised in case of requesting information from a faulty or incomplete init message
  */
 XCEPT_DEFINE_EXCEPTION(stor, IncompleteInitMessage)
+
+/**
+ * Exception raised in case of requesting information from a faulty or incomplete event message
+ */
+XCEPT_DEFINE_EXCEPTION(stor, IncompleteEventMessage)
 
 
 #endif // _storagemanager_Exception_h_
