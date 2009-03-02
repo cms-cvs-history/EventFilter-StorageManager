@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.18 2009/02/26 21:56:24 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.19 2009/02/27 21:41:29 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -29,8 +29,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.18 $
-   * $Date: 2009/02/26 21:56:24 $
+   * $Revision: 1.1.2.19 $
+   * $Date: 2009/02/27 21:41:29 $
    */
 
 
@@ -309,6 +309,22 @@ namespace stor {
        an exception is thrown.
      */
     void l1TriggerNames(Strings& nameList) const;
+
+    /**
+       Returns the number HLT trigger bits contained in the message, if
+       and only if, the message is an Event message.  Otherwise,
+       an exception is thrown.
+     */
+    uint32 hltTriggerCount() const;
+
+    /**
+       Copies the HLT trigger bits into the specified vector, if and
+       only if, the message is an Event message.  Otherwise,
+       an exception is thrown.  The vector will be resized so that
+       it contains the full number of HLT bits (given by the
+       hltCount() method) with two bits per HLT trigger.
+     */
+    void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
   private:
 

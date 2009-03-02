@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.23 2009/02/26 21:56:28 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.24 2009/02/27 21:41:29 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -8,6 +8,7 @@
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
+#include "IOPool/Streamer/interface/EventMessage.h"
 
 namespace stor
 {
@@ -66,12 +67,15 @@ namespace stor
       unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
       std::string hltClassName() const;
+      uint32 outputModuleId() const;
 
       std::string outputModuleLabel() const;
-      uint32 outputModuleId() const;
       void hltTriggerNames(Strings& nameList) const;
       void hltTriggerSelections(Strings& nameList) const;
       void l1TriggerNames(Strings& nameList) const;
+
+      uint32 hltTriggerCount() const;
+      void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
     private:
       std::vector<QueueID> _streamTags;
@@ -108,12 +112,15 @@ namespace stor
                                unsigned short expectedI2OMessageCode);
 
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      virtual uint32 do_outputModuleId() const;
 
       virtual std::string do_outputModuleLabel() const;
-      virtual uint32 do_outputModuleId() const;
       virtual void do_hltTriggerNames(Strings& nameList) const;
       virtual void do_hltTriggerSelections(Strings& nameList) const;
       virtual void do_l1TriggerNames(Strings& nameList) const;
+
+      virtual uint32 do_hltTriggerCount() const;
+      virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -565,15 +572,15 @@ namespace stor
         }
     }
 
+    inline uint32 ChainData::outputModuleId() const
+    {
+      return do_outputModuleId();
+    }
+
 
     inline std::string ChainData::outputModuleLabel() const
     {
       return do_outputModuleLabel();
-    }
-
-    inline uint32 ChainData::outputModuleId() const
-    {
-      return do_outputModuleId();
     }
 
     inline void ChainData::hltTriggerNames(Strings& nameList) const
@@ -589,6 +596,17 @@ namespace stor
     inline void ChainData::l1TriggerNames(Strings& nameList) const
     {
       do_l1TriggerNames(nameList);
+    }
+
+    inline uint32 ChainData::hltTriggerCount() const
+    {
+      return do_hltTriggerCount();
+    }
+
+    inline void
+    ChainData::hltTriggerBits(std::vector<unsigned char>& bitList) const
+    {
+      do_hltTriggerBits(bitList);
     }
 
     inline bool
@@ -690,18 +708,18 @@ namespace stor
       return dataLoc;
     }
 
-    inline std::string ChainData::do_outputModuleLabel() const
-    {
-      std::stringstream msg;
-      msg << "An output module label is only available from a valid, ";
-      msg << "complete INIT message.";
-      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
-    }
-
     inline uint32 ChainData::do_outputModuleId() const
     {
       std::stringstream msg;
       msg << "An output module ID is only available from a valid, ";
+      msg << "complete INIT or Event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline std::string ChainData::do_outputModuleLabel() const
+    {
+      std::stringstream msg;
+      msg << "An output module label is only available from a valid, ";
       msg << "complete INIT message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
@@ -730,6 +748,23 @@ namespace stor
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
+    inline uint32 ChainData::do_hltTriggerCount() const
+    {
+      std::stringstream msg;
+      msg << "An HLT trigger count is only available from a valid, ";
+      msg << "complete Event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline void 
+    ChainData::do_hltTriggerBits(std::vector<unsigned char>& bitList) const
+    {
+      std::stringstream msg;
+      msg << "The HLT trigger bits are only available from a valid, ";
+      msg << "complete Event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
     class InitMsgData : public ChainData
     {
     public:
@@ -738,8 +773,8 @@ namespace stor
 
     protected:
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
-      std::string do_outputModuleLabel() const;
       uint32 do_outputModuleId() const;
+      std::string do_outputModuleLabel() const;
       void do_hltTriggerNames(Strings& nameList) const;
       void do_hltTriggerSelections(Strings& nameList) const;
       void do_l1TriggerNames(Strings& nameList) const;
@@ -749,8 +784,8 @@ namespace stor
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
-      mutable std::string _outputModuleLabel;
       mutable uint32 _outputModuleId;
+      mutable std::string _outputModuleLabel;
       mutable Strings _hltTriggerNames;
       mutable Strings _hltTriggerSelections;
       mutable Strings _l1TriggerNames;
@@ -793,20 +828,6 @@ namespace stor
         }
     }
 
-    std::string InitMsgData::do_outputModuleLabel() const
-    {
-      if (faulty() || !complete())
-        {
-          std::stringstream msg;
-          msg << "An output module label can not be determined from a ";
-          msg << "faulty or incomplete INIT message.";
-          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
-        }
-
-      if (! _headerFieldsCached) {cacheHeaderFields();}
-      return _outputModuleLabel;
-    }
-
     uint32 InitMsgData::do_outputModuleId() const
     {
       if (faulty() || !complete())
@@ -819,6 +840,20 @@ namespace stor
 
       if (! _headerFieldsCached) {cacheHeaderFields();}
       return _outputModuleId;
+    }
+
+    std::string InitMsgData::do_outputModuleLabel() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An output module label can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _outputModuleLabel;
     }
 
     void InitMsgData::do_hltTriggerNames(Strings& nameList) const
@@ -861,6 +896,24 @@ namespace stor
 
       if (! _headerFieldsCached) {cacheHeaderFields();}
       nameList = _l1TriggerNames;
+    }
+
+    inline void InitMsgData::parseI2OHeader()
+    {
+      if (parsable())
+        {
+          _messageCode = Header::INIT;
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
+            (I2O_SM_PREAMBLE_MESSAGE_FRAME*) _ref->getDataLocation();
+          _fragKey.code_ = _messageCode;
+          _fragKey.run_ = 0;
+          _fragKey.event_ = smMsg->hltTid;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
+          _hltInstance = smMsg->hltInstance;
+        }
     }
 
     void InitMsgData::cacheHeaderFields() const
@@ -909,24 +962,6 @@ namespace stor
       _headerFieldsCached = true;
     }
 
-    inline void InitMsgData::parseI2OHeader()
-    {
-      if (parsable())
-        {
-          _messageCode = Header::INIT;
-          I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
-            (I2O_SM_PREAMBLE_MESSAGE_FRAME*) _ref->getDataLocation();
-          _fragKey.code_ = _messageCode;
-          _fragKey.run_ = 0;
-          _fragKey.event_ = smMsg->hltTid;
-          _fragKey.secondaryId_ = smMsg->outModID;
-          _fragKey.originatorPid_ = smMsg->fuProcID;
-          _fragKey.originatorGuid_ = smMsg->fuGUID;
-          _rbBufferId = smMsg->rbBufferID;
-          _hltInstance = smMsg->hltInstance;
-        }
-    }
-
     class EventMsgData : public ChainData
     {
     public:
@@ -935,13 +970,23 @@ namespace stor
 
     protected:
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      uint32 do_outputModuleId() const;
+      uint32 do_hltTriggerCount() const;
+      void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
     private:
       void parseI2OHeader();
+      void cacheHeaderFields() const;
+
+      mutable bool _headerFieldsCached;
+      mutable uint32 _outputModuleId;
+      mutable uint32 _hltTriggerCount;
+      mutable std::vector<unsigned char> _hltTriggerBits;
     };
 
     inline EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef)
+      ChainData(pRef),
+      _headerFieldsCached(false)
     {
       parseI2OHeader();
 
@@ -976,6 +1021,49 @@ namespace stor
         }
     }
 
+    uint32 EventMsgData::do_outputModuleId() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An output module ID can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _outputModuleId;
+    }
+
+    uint32 EventMsgData::do_hltTriggerCount() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The number of HLT trigger bits can not be determined ";
+          msg << "from a faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _hltTriggerCount;
+    }
+
+    void
+    EventMsgData::do_hltTriggerBits(std::vector<unsigned char>& bitList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The HLT trigger bits can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      bitList = _hltTriggerBits;
+    }
+
     inline void EventMsgData::parseI2OHeader()
     {
       if (parsable())
@@ -992,6 +1080,54 @@ namespace stor
           _rbBufferId = smMsg->rbBufferID;
           _hltInstance = smMsg->hltInstance;
         }
+    }
+
+    void EventMsgData::cacheHeaderFields() const
+    {
+      unsigned char* firstFragLoc = dataLocation(0);
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
+
+      // if there is only one fragment, use it
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      // otherwise, check if the first fragment is large enough to hold
+      // the full Event message header  (we require some minimal fixed
+      // size in the hope that we don't parse garbage when we overlay
+      // the EventMsgView on the buffer)
+      else if (firstFragSize > 4096)
+        {
+          EventMsgView view(firstFragLoc);
+          if (view.headerSize() <= firstFragSize)
+            {
+              useFirstFrag = true;
+            }
+        }
+
+      boost::shared_ptr<EventMsgView> msgView;
+      boost::shared_ptr< std::vector<unsigned char> >
+        tempBuffer(new std::vector<unsigned char>());
+      if (useFirstFrag)
+        {
+          msgView.reset(new EventMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(*tempBuffer);
+          msgView.reset(new EventMsgView(&(*tempBuffer)[0]));
+        }
+
+      _outputModuleId = msgView->outModId();
+      _hltTriggerCount = msgView->hltCount();
+      if (_hltTriggerCount > 0)
+        {
+          _hltTriggerBits.resize(1 + (_hltTriggerCount-1)/4);
+        }
+      msgView->hltTriggerBits(&_hltTriggerBits[0]);
+
+      _headerFieldsCached = true;
     }
 
     class DQMEventMsgData : public ChainData
@@ -1437,6 +1573,26 @@ namespace stor
           "L1 trigger names can not be determined from an empty I2OChain.");
       }
     _data->l1TriggerNames(nameList);
+  }
+
+  uint32 I2OChain::hltTriggerCount() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The number of HLT trigger bits can not be determined from an empty I2OChain.");
+      }
+    return _data->hltTriggerCount();
+  }
+
+  void I2OChain::hltTriggerBits(std::vector<unsigned char>& bitList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "HLT trigger bits can not be determined from an empty I2OChain.");
+      }
+    _data->hltTriggerBits(bitList);
   }
 
 } // namespace stor
