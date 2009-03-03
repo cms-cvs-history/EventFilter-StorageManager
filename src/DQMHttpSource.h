@@ -5,7 +5,7 @@
  *  An input source for DQM consumers using cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.h,v 1.7 2008/03/04 17:12:38 hcheung Exp $
+ *  $Id: DQMHttpSource.h,v 1.8 2008/06/03 17:04:44 biery Exp $
  */
 #include "IOPool/Streamer/interface/MsgTools.h"
 #include "IOPool/Streamer/interface/EventBuffer.h"
@@ -65,3 +65,9 @@ namespace edm
 }
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

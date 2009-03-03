@@ -1,7 +1,7 @@
 #ifndef _smfusenderstats_h_
 #define _smfusenderstats_h_
 
-// $Id: SMFUSenderStats.h,v 1.5 2008/10/14 13:34:29 biery Exp $ 
+// $Id: SMFUSenderStats.h,v 1.5.4.1 2009/02/24 22:26:09 biery Exp $ 
 
 #include <vector>
 
@@ -57,3 +57,9 @@ struct SMFUSenderStats // for data sender statistics (from SMFUSenderEntry)
 
 }
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.16 2009/02/25 20:49:15 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.17 2009/03/02 18:08:21 biery Exp $
 */
 
 #include <string>
@@ -290,3 +290,9 @@ namespace stor {
 } 
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

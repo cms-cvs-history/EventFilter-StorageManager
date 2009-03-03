@@ -1,4 +1,4 @@
-// $Id: SyncQueue.h,v 1.1 2007/03/08 15:04:05 lorsini Exp $
+// $Id: SyncQueue.h,v 1.1.2.1 2009/01/30 20:35:14 paterno Exp $
 
 /*************************************************************************
  * XDAQ Components for Distributed Data Acquisition                      *
@@ -194,3 +194,9 @@ namespace stor {
 
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

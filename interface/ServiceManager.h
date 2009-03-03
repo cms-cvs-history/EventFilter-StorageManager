@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.12 2008/10/08 19:49:51 biery Exp $
+// $Id: ServiceManager.h,v 1.13 2008/10/13 13:05:36 hcheung Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
@@ -77,3 +77,9 @@ namespace edm
 }//edm-namespace
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

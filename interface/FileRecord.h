@@ -1,7 +1,7 @@
 #ifndef FILERECORD_H
 #define FILERECORD_H
 
-// $Id: FileRecord.h,v 1.8 2008/08/20 13:20:46 loizides Exp $
+// $Id: FileRecord.h,v 1.9 2008/10/24 17:41:55 loizides Exp $
 #include <EventFilter/StorageManager/interface/Parameter.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -82,3 +82,9 @@ namespace edm {
  
 } // edm namespace
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
