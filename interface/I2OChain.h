@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.19 2009/02/27 21:41:29 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.20 2009/03/02 23:14:53 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -10,6 +10,8 @@
 #include "toolbox/mem/Reference.h"
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
+#include "EventFilter/StorageManager/interface/StreamID.h"
+#include "EventFilter/StorageManager/interface/Types.h"
 
 namespace toolbox
 {
@@ -29,8 +31,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.19 $
-   * $Date: 2009/02/27 21:41:29 $
+   * $Revision: 1.1.2.20 $
+   * $Date: 2009/03/02 23:14:53 $
    */
 
 
@@ -169,6 +171,66 @@ namespace stor {
        the time from the operating system.
      */
     double lastFragmentTime() const;
+
+    /**
+       Tags the chain with the specified event stream ID.  This means
+       that the data in the chain should be sent to the specified
+       event stream.
+     */
+    void tagForEventStream(StreamID);
+
+    /**
+       Tags the chain with the specified event consumer queue ID.  This
+       means that the data in the chain should be sent to the specified
+       event consumer queue.
+     */
+    void tagForEventConsumer(QueueID);
+
+    /**
+       Tags the chain with the specified DQM event consumer queue ID.  This
+       means that the data in the chain should be sent to the specified
+       DQM event consumer queue.
+     */
+    void tagForDQMEventConsumer(QueueID);
+
+    /**
+       Returns true if the chain has been tagged for any event stream
+       and false otherwise.
+    */
+    bool isTaggedForAnyEventStream();
+
+    /**
+       Returns true if the chain has been tagged for any event consumer
+       and false otherwise.
+    */
+    bool isTaggedForAnyEventConsumer();
+
+    /**
+       Returns true if the chain has been tagged for any DQM event consumer
+       and false otherwise.
+    */
+    bool isTaggedForAnyDQMEventConsumer();
+
+    /**
+       Returns the list of event streams (stream IDs) that
+       this chain has been tagged for.
+       An empty list is returned if the chain is empty.
+    */
+    std::vector<StreamID> getEventStreamTags();
+
+    /**
+       Returns the list of event consumers (queue IDs) that
+       this chain has been tagged for.
+       An empty list is returned if the chain is empty.
+    */
+    std::vector<QueueID> getEventConsumerTags();
+
+    /**
+       Returns the list of DQM event consumers (queue IDs) that
+       this chain has been tagged for.
+       An empty list is returned if the chain is empty.
+    */
+    std::vector<QueueID> getDQMEventConsumerTags();
 
     /**
        Returns the message code for the chain.  Valid values

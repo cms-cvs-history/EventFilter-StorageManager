@@ -1,9 +1,8 @@
-// $Id: I2OChain.cc,v 1.1.2.24 2009/02/27 21:41:29 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.25 2009/03/02 23:14:54 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/Types.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
@@ -77,10 +76,20 @@ namespace stor
       uint32 hltTriggerCount() const;
       void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
+      void tagForEventStream(StreamID);
+      void tagForEventConsumer(QueueID);
+      void tagForDQMEventConsumer(QueueID);
+      bool isTaggedForAnyEventStream() {return !_streamTags.empty();}
+      bool isTaggedForAnyEventConsumer() {return !_eventConsumerTags.empty();}
+      bool isTaggedForAnyDQMEventConsumer() {return !_dqmEventConsumerTags.empty();}
+      std::vector<StreamID> const& getEventStreamTags() const;
+      std::vector<QueueID> const& getEventConsumerTags() const;
+      std::vector<QueueID> const& getDQMEventConsumerTags() const;
+
     private:
-      std::vector<QueueID> _streamTags;
-      std::vector<QueueID> _dqmEventConsumerTags;
+      std::vector<StreamID> _streamTags;
       std::vector<QueueID> _eventConsumerTags;
+      std::vector<QueueID> _dqmEventConsumerTags;
 
     protected:
       toolbox::mem::Reference* _ref;
@@ -126,8 +135,8 @@ namespace stor
     // A ChainData object may or may not contain a Reference.
     inline ChainData::ChainData(toolbox::mem::Reference* pRef) :
       _streamTags(),
-      _dqmEventConsumerTags(),
       _eventConsumerTags(),
+      _dqmEventConsumerTags(),
       _ref(pRef),
       _complete(false),
       _faultyBits(0),
@@ -412,8 +421,8 @@ namespace stor
     inline void ChainData::swap(ChainData& other)
     {
       _streamTags.swap(other._streamTags);
-      _dqmEventConsumerTags.swap(other._dqmEventConsumerTags);
       _eventConsumerTags.swap(other._eventConsumerTags);
+      _dqmEventConsumerTags.swap(other._dqmEventConsumerTags);
       std::swap(_ref, other._ref);
       std::swap(_complete, other._complete);
       std::swap(_faultyBits, other._faultyBits);
@@ -608,6 +617,37 @@ namespace stor
     {
       do_hltTriggerBits(bitList);
     }
+
+    inline void ChainData::tagForEventStream(StreamID streamId)
+    {
+      _streamTags.push_back(streamId);
+    }
+
+    inline void ChainData::tagForEventConsumer(QueueID queueId)
+    {
+      _eventConsumerTags.push_back(queueId);
+    }
+
+    inline void ChainData::tagForDQMEventConsumer(QueueID queueId)
+    {
+      _dqmEventConsumerTags.push_back(queueId);
+    }
+
+    inline std::vector<StreamID> const& ChainData::getEventStreamTags() const
+    {
+      return _streamTags;
+    }
+
+    inline std::vector<QueueID> const& ChainData::getEventConsumerTags() const
+    {
+      return _eventConsumerTags;
+    }
+
+    inline std::vector<QueueID> const& ChainData::getDQMEventConsumerTags() const
+    {
+      return _dqmEventConsumerTags;
+    }
+
 
     inline bool
     ChainData::validateDataLocation(toolbox::mem::Reference* ref,
@@ -1492,6 +1532,90 @@ namespace stor
   {
     if (!_data) return -1;
     return _data->lastFragmentTime();
+  }
+
+  void I2OChain::tagForEventStream(StreamID streamId)
+  {
+    if (!_data)
+      {
+        std::stringstream msg;
+        msg << "An empty chain can not be tagged for a specific ";
+        msg << "event stream.";
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
+      }
+    _data->tagForEventStream(streamId);
+  }
+
+  void I2OChain::tagForEventConsumer(QueueID queueId)
+  {
+    if (!_data)
+      {
+        std::stringstream msg;
+        msg << "An empty chain can not be tagged for a specific ";
+        msg << "event consumer.";
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
+      }
+    _data->tagForEventConsumer(queueId);
+  }
+
+  void I2OChain::tagForDQMEventConsumer(QueueID queueId)
+  {
+    if (!_data)
+      {
+        std::stringstream msg;
+        msg << "An empty chain can not be tagged for a specific ";
+        msg << "DQM event consumer.";
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
+      }
+    _data->tagForDQMEventConsumer(queueId);
+  }
+
+  bool I2OChain::isTaggedForAnyEventStream()
+  {
+    if (!_data) return false;
+    return _data->isTaggedForAnyEventStream();
+  }
+
+  bool I2OChain::isTaggedForAnyEventConsumer()
+  {
+    if (!_data) return false;
+    return _data->isTaggedForAnyEventConsumer();
+  }
+
+  bool I2OChain::isTaggedForAnyDQMEventConsumer()
+  {
+    if (!_data) return false;
+    return _data->isTaggedForAnyDQMEventConsumer();
+  }
+
+  std::vector<StreamID> I2OChain::getEventStreamTags()
+  {
+    if (!_data)
+      {
+        std::vector<StreamID> tmpList;
+        return tmpList;
+      }
+    return _data->getEventStreamTags();
+  }
+
+  std::vector<QueueID> I2OChain::getEventConsumerTags()
+  {
+    if (!_data)
+      {
+        std::vector<QueueID> tmpList;
+        return tmpList;
+      }
+    return _data->getEventConsumerTags();
+  }
+
+  std::vector<QueueID> I2OChain::getDQMEventConsumerTags()
+  {
+    if (!_data)
+      {
+        std::vector<QueueID> tmpList;
+        return tmpList;
+      }
+    return _data->getDQMEventConsumerTags();
   }
 
   unsigned long I2OChain::totalDataSize() const

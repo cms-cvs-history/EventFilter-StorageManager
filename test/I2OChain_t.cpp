@@ -7,6 +7,8 @@
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/StreamID.h"
+#include "EventFilter/StorageManager/interface/Types.h"
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
@@ -43,6 +45,7 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(multipart_msg_header);
   CPPUNIT_TEST(init_msg_header);
   CPPUNIT_TEST(event_msg_header);
+  CPPUNIT_TEST(stream_and_queue_tags);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -71,6 +74,7 @@ public:
   void multipart_msg_header();
   void init_msg_header();
   void event_msg_header();
+  void stream_and_queue_tags();
 
 private:
 
@@ -1780,6 +1784,95 @@ testI2OChain::event_msg_header()
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
+void
+testI2OChain::stream_and_queue_tags()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    stor::StreamID streamA =  2;
+    stor::StreamID streamB =  5;
+    stor::StreamID streamC = 17;
+
+    stor::QueueID evtQueueA = 101;
+    stor::QueueID evtQueueB = 102;
+    stor::QueueID evtQueueC = 104;
+    stor::QueueID evtQueueD = 103;
+
+    stor::QueueID dqmQueueA = 0xdeadbeef;
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
+    stor::I2OChain eventMsgFrag(ref);
+
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventStream());
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+    eventMsgFrag.tagForEventStream(streamA);
+    eventMsgFrag.tagForEventStream(streamB);
+    eventMsgFrag.tagForEventStream(streamC);
+
+    eventMsgFrag.tagForEventConsumer(evtQueueA);
+    eventMsgFrag.tagForEventConsumer(evtQueueB);
+    eventMsgFrag.tagForEventConsumer(evtQueueC);
+    eventMsgFrag.tagForEventConsumer(evtQueueD);
+
+    eventMsgFrag.tagForDQMEventConsumer(dqmQueueA);
+
+    CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventStream());
+    CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
+    CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+    CPPUNIT_ASSERT(eventMsgFrag.getEventStreamTags().size() == 3);
+    CPPUNIT_ASSERT(eventMsgFrag.getEventConsumerTags().size() == 4);
+    CPPUNIT_ASSERT(eventMsgFrag.getDQMEventConsumerTags().size() == 1);
+
+    std::vector<stor::StreamID> streamTags = eventMsgFrag.getEventStreamTags();
+    CPPUNIT_ASSERT(streamTags[0] == streamA);
+    CPPUNIT_ASSERT(streamTags[1] == streamB);
+    CPPUNIT_ASSERT(streamTags[2] == streamC);
+
+    streamTags.push_back(999);
+    CPPUNIT_ASSERT(eventMsgFrag.getEventStreamTags().size() == 3);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    stor::I2OChain eventMsgFrag;
+
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventStream());
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+    CPPUNIT_ASSERT(eventMsgFrag.getEventStreamTags().size() == 0);
+    CPPUNIT_ASSERT(eventMsgFrag.getEventConsumerTags().size() == 0);
+    CPPUNIT_ASSERT(eventMsgFrag.getDQMEventConsumerTags().size() == 0);
+
+    try
+      {
+        eventMsgFrag.tagForEventStream(100);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::I2OChain& excpt)
+      {
+      }
+    try
+      {
+        eventMsgFrag.tagForEventConsumer(100);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::I2OChain& excpt)
+      {
+      }
+    try
+      {
+        eventMsgFrag.tagForDQMEventConsumer(100);
+        CPPUNIT_ASSERT(false);
+      }
+    catch (stor::exception::I2OChain& excpt)
+      {
+      }
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
 
 // This macro writes the 'main' for this test.
 CPPUNIT_TEST_SUITE_REGISTRATION(testI2OChain);
