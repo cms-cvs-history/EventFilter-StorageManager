@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.1 2008/12/22 19:17:59 biery Exp $
+// $Id: JobController.h,v 1.22.6.2 2009/02/25 20:49:15 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -9,6 +9,7 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
@@ -30,6 +31,7 @@ namespace stor
     JobController(const std::string& my_config,
 		  log4cplus::Logger& applicationLogger,
                   SharedResources sharedResources,
+                  boost::shared_ptr<DiscardManager> discardMgr,
 		  FragmentCollector::Deleter);
 
     ~JobController();
@@ -94,6 +96,7 @@ namespace stor
 
   private:
     void init(const std::string& my_config, SharedResources sharedResources,
+              boost::shared_ptr<DiscardManager> discardMgr,
               FragmentCollector::Deleter);
     void processCommands();
     static void run(JobController*);

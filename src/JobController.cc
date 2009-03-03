@@ -30,17 +30,19 @@ namespace stor
   JobController::JobController(const std::string& my_config,
 			       log4cplus::Logger& applicationLogger,
                                SharedResources sharedResources,
+                               boost::shared_ptr<DiscardManager> discardMgr,
 			       FragmentCollector::Deleter deleter) :
   applicationLogger_(applicationLogger)      
   {
     // change to phony input source
     //string new_config = changeToPhony(fu_config);
     //setRegistry(new_config);
-    init(my_config,sharedResources,deleter);
+    init(my_config,sharedResources,discardMgr,deleter);
   } 
 
   void JobController::init(const std::string& my_config,
                            SharedResources sharedResources,
+                           boost::shared_ptr<DiscardManager> discardMgr,
 			   FragmentCollector::Deleter deleter)
   {
     std::auto_ptr<HLTInfo> inf(new HLTInfo());
@@ -53,7 +55,7 @@ namespace stor
     //				 my_config));
     std::auto_ptr<FragmentCollector> 
 	coll(new FragmentCollector(inf,deleter,applicationLogger_,
-				   sharedResources,my_config));
+				   sharedResources,discardMgr,my_config));
 
     collector_.reset(coll.release());
     //ep_runner_.reset(ep.release());
@@ -128,7 +130,7 @@ namespace stor
             // to check if files need closed.  If it is time for a check,
             // we send a special message to the FragmentCollector that tells
             // it to run the check.
-            sleep(1);
+            ::sleep(1);
             time_t now = time(0);
             if ((now - fileCheckIntervalStart) >= fileClosingTestInterval_) {
               fileCheckIntervalStart = now;
