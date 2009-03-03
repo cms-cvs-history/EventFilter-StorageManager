@@ -1693,7 +1693,8 @@ testI2OChain::event_msg_header()
     std::vector<unsigned char> hltBits;
     hltBits.resize(1 + (hltBitCount-1)/4);
     for (uint32 idx = 0; idx < hltBits.size(); ++idx) {
-      hltBits[idx] = 0xa5;
+      hltBits[idx] = 0x3 << idx;
+      // should mask off bits for trig num GT hltBitCount...
     }
 
     std::string outputModuleLabel = "HLTOutput";
@@ -1747,8 +1748,33 @@ testI2OChain::event_msg_header()
     eventMsgFrag.hltTriggerBits(hltBits2);
     CPPUNIT_ASSERT(hltBits2.size() == hltBits.size());
 
-    for (uint32 idx = 0; idx < -1+hltBits.size(); ++idx) {
-      CPPUNIT_ASSERT(hltBits2[idx] == hltBits[idx]);
+    uint32 trigIndex = 0;
+    for (uint32 idx = 0; idx < hltBits.size(); ++idx) {
+      for (uint32 jdx = 0; jdx < 4; ++jdx) {
+        uint32 indexMod = (trigIndex % 4);
+        uint32 trigMask = 0;
+        switch (indexMod) {
+        case 0:
+          {
+            trigMask = 0x3;
+          }
+        case 1:
+          {
+            trigMask = 0xc;
+          }
+        case 2:
+          {
+            trigMask = 0x30;
+          }
+        case 3:
+          {
+            trigMask = 0xc0;
+          }
+        }
+        CPPUNIT_ASSERT((hltBits2[idx] & trigMask) ==
+                       (hltBits[idx] & trigMask));
+        ++trigIndex;
+      }
     }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
