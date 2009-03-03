@@ -30,6 +30,7 @@
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
@@ -64,10 +65,12 @@ namespace stor
     FragmentCollector(HLTInfo& h, Deleter d,
 		      log4cplus::Logger& applicationLogger,
                       SharedResources sharedResources,
+                      boost::shared_ptr<DiscardManager> discardMgr,
                       const std::string& config_str="");
     FragmentCollector(std::auto_ptr<HLTInfo>, Deleter d,
 		      log4cplus::Logger& applicationLogger,
                       SharedResources sharedResources,
+                      boost::shared_ptr<DiscardManager> discardMgr,
                       const std::string& config_str="");
     ~FragmentCollector();
 
@@ -160,6 +163,7 @@ namespace stor
     std::string sourceId_;
     log4cplus::Logger& applicationLogger_;
     boost::shared_ptr<FragmentQueue> newFragmentQueue_;
+    boost::shared_ptr<DiscardManager> discardManager_;
 
     std::auto_ptr<edm::ServiceManager> writer_;
     std::auto_ptr<stor::DQMServiceManager> dqmServiceManager_;

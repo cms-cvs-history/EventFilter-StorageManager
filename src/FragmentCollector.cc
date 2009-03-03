@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.5 2009/02/25 04:13:35 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.6 2009/02/25 20:49:15 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -49,6 +49,7 @@ namespace stor
   FragmentCollector::FragmentCollector(HLTInfo& h,Deleter d,
 				       log4cplus::Logger& applicationLogger,
                                        SharedResources sharedResources,
+                                       boost::shared_ptr<DiscardManager> discardMgr,
                                        const string& config_str):
     cmd_q_(&(h.getCommandQueue())),
     frag_q_(&(h.getFragmentQueue())),
@@ -60,6 +61,7 @@ namespace stor
     disks_(0),
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
+    discardManager_(discardMgr),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -70,6 +72,7 @@ namespace stor
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,Deleter d,
 				       log4cplus::Logger& applicationLogger,
                                        SharedResources sharedResources,
+                                       boost::shared_ptr<DiscardManager> discardMgr,
                                        const string& config_str):
     cmd_q_(&(info.get()->getCommandQueue())),
     frag_q_(&(info.get()->getFragmentQueue())),
@@ -81,6 +84,7 @@ namespace stor
     disks_(0),
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
+    discardManager_(discardMgr),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -372,9 +376,13 @@ namespace stor
     {
       i2oChain.copyFragmentsIntoBuffer(event_area_);
 
-      // the reformed DQM data is now in event_area_ deal with it
+      // the DQM data is now in event_area_ deal with it
       DQMEventMsgView dqmEventView(&event_area_[0]);
       dqmServiceManager_->manageDQMEventMsg(dqmEventView);
+
+      // tell the resource broker that sent us this event
+      // that we are done with it and it can forget about it
+      discardManager_->sendDiscardMessage(i2oChain);
 
       // check for stale fragments
       removeStaleFragments();
