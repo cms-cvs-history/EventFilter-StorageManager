@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.20 2009/02/25 20:49:15 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.21 2009/03/02 18:08:22 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -43,6 +43,7 @@
 
 #include "toolbox/mem/Pool.h"
 #include "toolbox/mem/Reference.h"
+#include "toolbox/mem/MemoryPoolFactory.h"
 
 #include "xcept/tools.h"
 
@@ -131,7 +132,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.20 2009/02/25 20:49:15 biery Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.21 2009/03/02 18:08:22 biery Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -1019,17 +1020,6 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
-  // that we can use that information even after the Reference is released.
-  // Do *NOT* use the dataPtr() method of the localMsgCopy because this
-  // copy operation doesn't include the data, only the header!
-  I2O_SM_DQM_MESSAGE_FRAME localMsgCopy;
-  const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_DQM_MESSAGE_FRAME);
-  char* dest = (char*) &localMsgCopy;
-  std::copy(from, from+msize, dest);
-  localMsgCopy.dataSize = msize;
-
   I2OChain i2oChain(ref);
   sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
 
@@ -1037,15 +1027,6 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   unsigned long actualFrameSize =
     (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME) + len;
   fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
-
-  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
-    {
-      string hltClassName(localMsgCopy.hltClassName);
-      sendDiscardMessage(localMsgCopy.rbBufferID, 
-			 localMsgCopy.hltInstance, 
-			 I2O_FU_DQM_DISCARD,
-			 hltClassName);
-    }
 }
 
 //////////// *** Refactored default web page ///////////////////////////////////////////////
@@ -4269,8 +4250,21 @@ void StorageManager::configureAction()
   if (DQMconsumerQueueSize_ < cutoff)
     DQMconsumerQueueSize_ = cutoff;
 
+  boost::shared_ptr<DiscardManager> discardMgr;
+  Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
+  for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
+    if (idx == 0 || nameList[idx].find("TCP") != std::string::npos) {
+      toolbox::net::URN poolURN(nameList[idx]);
+      toolbox::mem::Pool* thePool =
+        toolbox::mem::getMemoryPoolFactory()->findPool(poolURN);
+      discardMgr.reset(new DiscardManager(getApplicationContext(),
+                                          getApplicationDescriptor(),
+                                          thePool));
+    }
+  }
   jc_.reset(new stor::JobController(my_config, getApplicationLogger(),
-                                    sharedResourcesInstance_, &deleteSMBuffer));
+                                    sharedResourcesInstance_,
+                                    discardMgr, &deleteSMBuffer));
 
   int disks(nLogicalDisk_);
 
