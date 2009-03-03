@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.21 2009/03/02 18:08:22 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.22 2009/03/03 22:10:34 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -132,7 +132,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.21 2009/03/02 18:08:22 biery Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.22 2009/03/03 22:10:34 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -790,194 +790,19 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
-  // that we can use that information even after the Reference is released.
-  // Do *NOT* use the dataPtr() method of the localMsgCopy because this
-  // copy operation doesn't include the data, only the header!
-  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
-  const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-  char* dest = (char*) &localMsgCopy;
-  std::copy(from, from+msize, dest);
-  localMsgCopy.dataSize = msize;
+  // all access to the I2O message must happen before sending the fragment
+  // to the fragment queue to avoid a race condition in which the buffer
+  // is release before we finish here
+  runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
+  runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
-  // If running with local transfers, a chain of I2O frames when posted only has the
-  // head frame sent. So a single frame can complete a chain for local transfers.
-  // We need to test for this. Must be head frame, more than one frame
-  // and next pointer must exist.
-  int is_local_chain = 0;
-  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
-  {
-    // this looks like a chain of frames (local transfer)
-    toolbox::mem::Reference *head = ref;
-    toolbox::mem::Reference *next = 0;
-    // best to check the complete chain just in case!
-    unsigned int tested_frames = 1;
-    next = head;
-    while((next=next->getNextReference())!=0) ++tested_frames;
-    FDEBUG(10) << "StorageManager: Head frame has " << tested_frames-1
-               << " linked frames out of " << msg->numFrames-1 << std::endl;
-    if(msg->numFrames == tested_frames)
-    {
-      // found a complete linked chain from the leading frame
-      is_local_chain = 1;
-      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
-                 << " - must be local transfer" << std::endl;
-      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
-      // break the chain and feed them to the fragment collector
-      next = head;
+  I2OChain i2oChain(ref);
+  sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
 
-      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
-      {
-         toolbox::mem::Reference *thisref=next;
-         next = thisref->getNextReference();
-         thisref->setNextReference(0);
-         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
-         I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
-
-         // 04-Nov-2008, need to make a local copy of I2O header information.
-         // Do *NOT* use the dataPtr() method of the thisMsgCopy because this
-         // copy operation doesn't include the data, only the header!
-         I2O_SM_DATA_MESSAGE_FRAME thisMsgCopy;
-         from = static_cast<const char*>(thisref->getDataLocation());
-         msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-         dest = (char*) &thisMsgCopy;
-         std::copy(from, from+msize, dest);
-         thisMsgCopy.dataSize = msize;
-
-         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-         int thislen = thismsg->dataSize;
-         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                                          thismsg->frameCount+1, thismsg->numFrames, Header::ERROR_EVENT, 
-                                          thismsg->runID, thismsg->eventID, thismsg->outModID,
-                                          thismsg->fuProcID, thismsg->fuGUID);
-         b.commit(sizeof(stor::FragEntry));
-
-         // for bandwidth performance measurements
-         // Following is wrong for the last frame because frame sent is
-         // is actually larger than the size taken by actual data
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
-                                         +thislen;
-         fragMonCollection.addEventFragmentSample(actualFrameSize);
-
-         // should only do this test if the first data frame from each FU?
-         // check if run number is the same as that in Run configuration, complain otherwise !!!
-         // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-         if(thisMsgCopy.runID != runNumber_)
-         {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = "
-			   << thisMsgCopy.runID << " From " << thisMsgCopy.hltURL
-                           << " Different from Run Number from configuration = " << runNumber_);
-         }
-         // for data sender list update
-         // thisMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
-         //bool isLocal = true;
-
-         //update last error event seen
-         runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
-         // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
-         // independent of the result of the updateFUSender4data() call since we
-         // know that the result is unlikely to be "success"
-         //if(status == 1) {
-         runMonCollection.getErrorEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
-         //}
-
-         // TODO need to fix this as the outModId is not valid for error events
-         /*
-         int status = 
-	   smrbsenders_.updateSender4data(&thisMsgCopy.hltURL[0], &thisMsgCopy.hltClassName[0],
-	   thisMsgCopy.hltLocalId, thisMsgCopy.hltInstance, thisMsgCopy.hltTid,
-	   thisMsgCopy.runID, thisMsgCopy.eventID, thisMsgCopy.frameCount+1, thisMsgCopy.numFrames,
-	   thisMsgCopy.originalSize, isLocal, thisMsgCopy.outModID);
-         */
-
-         /*
-         if(status == -1) {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                    "updateSender4data: Cannot find RB in Data Sender list!"
-                    << " For Error Event With URL "
-                    << thisMsgCopy.hltURL << " class " << thisMsgCopy.hltClassName  << " instance "
-                    << thisMsgCopy.hltInstance << " Tid " << thisMsgCopy.hltTid);
-         }
-         */
-      }
-
-    } else {
-      // should never get here!
-      FDEBUG(10) << "StorageManager: Head frame has fewer linked frames "
-                 << "than expected: abnormal error! " << std::endl;
-    }
-  }
-
-  if (is_local_chain == 0) 
-  {
-    // put pointers into fragment collector queue
-    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                     msg->frameCount+1, msg->numFrames, Header::ERROR_EVENT, 
-                                     msg->runID, msg->eventID, msg->outModID,
-                                     msg->fuProcID, msg->fuGUID);
-    b.commit(sizeof(stor::FragEntry));
-    // Frame release is done in the deleter.
-
-    // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
-                                    + len;
-    fragMonCollection.addEventFragmentSample(actualFrameSize);
-
-    // should only do this test if the first data frame from each FU?
-    // check if run number is the same as that in Run configuration, complain otherwise !!!
-    // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-    if(localMsgCopy.runID != runNumber_)
-    {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = "
-		      << localMsgCopy.runID << " From " << localMsgCopy.hltURL
-                      << " Different from Run Number from configuration = " << runNumber_);
-    }
-
-    //update last error event seen
-    runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
-
-    // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
-    // independent of the result of the updateFUSender4data() call since we
-    // know that the result is unlikely to be "success"
-    //if(status == 1) {
-    runMonCollection.getErrorEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
-    //}
-
-    // for data sender list update
-    // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
-    //bool isLocal = false;
-    // TODO need to fix this as the outModId is not valid for error events
-    /*
-    int status = 
-      smrbsenders_.updateSender4data(&localMsgCopy.hltURL[0], &localMsgCopy.hltClassName[0],
-      localMsgCopy.hltLocalId, localMsgCopy.hltInstance, localMsgCopy.hltTid,
-      localMsgCopy.runID, localMsgCopy.eventID, localMsgCopy.frameCount+1, localMsgCopy.numFrames,
-      localMsgCopy.originalSize, isLocal, localMsgCopy.outModID);
-    */
-    
-    /*
-    if(status == -1) {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-		      "updateSender4data: Cannot find RB in Data Sender list!"
-		      << " For Error Event With URL "
-		      << localMsgCopy.hltURL << " class " << localMsgCopy.hltClassName  << " instance "
-		      << localMsgCopy.hltInstance << " Tid " << localMsgCopy.hltTid);
-    }
-    */
-  }
-
-  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
-    {
-      string hltClassName(localMsgCopy.hltClassName);
-      sendDiscardMessage(localMsgCopy.rbBufferID, 
-			 localMsgCopy.hltInstance, 
-			 I2O_FU_DATA_DISCARD,
-			 hltClassName);
-    }
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize =
+    (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME) + len;
+  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)

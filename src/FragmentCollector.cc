@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.6 2009/02/25 20:49:15 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.7 2009/03/03 22:06:38 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -174,12 +174,6 @@ namespace stor
                   processHeader(entry);
                   break;
                 }
-              case Header::ERROR_EVENT:
-                {
-                  FR_DEBUG << "FragColl: Got an Error_Event" << endl;
-                  processErrorEvent(entry);
-                  break;
-                }
               case Header::FILE_CLOSE_REQUEST:
                 {
                   FR_DEBUG << "FragColl: Got a File Close Request message" << endl;
@@ -211,6 +205,12 @@ namespace stor
                 {
                   FR_DEBUG << "FragColl: Got a DQM_Event" << endl;
                   processDQMEvent(i2oChain);
+                  break;
+                }
+              case Header::ERROR_EVENT:
+                {
+                  FR_DEBUG << "FragColl: Got an Error_Event" << endl;
+                  processErrorEvent(i2oChain);
                   break;
                 }
               default:
@@ -391,12 +391,11 @@ namespace stor
     ProgressMarker::instance()->processing(false);
   }
 
-  void FragmentCollector::processErrorEvent(FragEntry* entry)
+  void FragmentCollector::processErrorEvent(I2OChain i2oChain)
   {
     ProgressMarker::instance()->processing(true);
 
     // add the fragment to the fragment store
-    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
     bool complete = fragmentStore_.addFragment(i2oChain);
 
     if(complete)
@@ -406,6 +405,10 @@ namespace stor
       FRDEventMsgView emsg(&event_area_[0]);
       FR_DEBUG << "FragColl: writing error event size " << assembledSize << endl;
       writer_->manageErrorEventMsg(catalog_, disks_, sourceId_, emsg);
+
+      // tell the resource broker that sent us this event
+      // that we are done with it and it can forget about it
+      discardManager_->sendDiscardMessage(i2oChain);
 
       // check for stale fragments
       removeStaleFragments();

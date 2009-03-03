@@ -96,7 +96,7 @@ namespace stor
     void processEvent(FragEntry* msg);
     void processHeader(FragEntry* msg);
     void processDQMEvent(I2OChain i2oChain);
-    void processErrorEvent(FragEntry* msg);
+    void processErrorEvent(I2OChain i2oChain);
 
     int removeStaleFragments();
 
