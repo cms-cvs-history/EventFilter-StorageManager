@@ -27,6 +27,7 @@ this can run.
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -118,9 +119,11 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   logger_ = log4cplus::Logger::getInstance("main");
 
   sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
+  boost::shared_ptr<stor::DiscardManager> discardMgr;
 
   coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),deleteBuffer,
-                                          logger_,sharedResources_,conffile));
+                                          logger_,sharedResources_,
+                                          discardMgr,conffile));
 
   boost::shared_ptr<stor::InitMsgCollection>
     initMsgCollection(new stor::InitMsgCollection());
