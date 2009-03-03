@@ -1,4 +1,4 @@
-// $Id: Utils.h,v 1.1.2.2 2009/01/30 20:34:34 paterno Exp $
+// $Id: Utils.h,v 1.1.2.1 2009/02/18 14:58:47 mommsen Exp $
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
@@ -12,30 +12,34 @@ namespace stor {
     /**
      * Collection of utility functions used in the storage manager
      *
-     * $Author: paterno $
-     * $Revision: 1.1.2.2 $
-     * $Date: 2009/01/30 20:34:34 $
+     * $Author: mommsen $
+     * $Revision: 1.1.2.1 $
+     * $Date: 2009/02/18 14:58:47 $
      */
-    
-    
-    /**
-     * Returns the current time as a double.  The value corresponds to the
-     * number of seconds since the epoch (including a fractional part good to
-     * the microsecond level).  A negative value indicates that an error
-     * occurred when fetching the time from the operating system.
-     */
-    static double getCurrentTime()
-    {
-      double now = -1.0;
-      struct timeval timeStruct;
-      int status = gettimeofday(&timeStruct, 0);
-      if (status == 0) {
-        now = static_cast<double>(timeStruct.tv_sec) +
-          (static_cast<double>(timeStruct.tv_usec) / 1000000.0);
-      }
-      return now;
-    }
 
+    /**
+       time_point_t is used to represent a specific point in time,
+       measured by some specific clock. We rely on the "system
+       clock". The value is represented by the number of seconds
+       (including a fractional part that depends on the resolution of
+       the system clock) since the beginning of the "epoch" (as defined
+       by the system clock).
+    */
+    typedef double time_point_t;
+
+    /**
+       durtion_t is used to represent a duration (the "distance" between
+       two points in time). The value is represented as a number of
+       seconds (including a fractional part).
+    */
+    typedef double duration_t;
+
+    /**
+       Returns the current point in time. A negative value indicates
+       that an error occurred when fetching the time from the operating
+       system.
+    */
+    time_point_t getCurrentTime();
 
   } // namespace utils
   
