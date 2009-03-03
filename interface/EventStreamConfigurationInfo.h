@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.1 2009/02/25 12:38:15 dshpakov Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.1.2.2 2009/02/27 12:31:39 dshpakov Exp $
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
@@ -32,7 +32,8 @@ namespace stor
       _selHLTOut( selHLTOut ),
       _useCompression( useCompression ),
       _compressionLevel( compressionLevel ),
-      _maxEventSize( maxEventSize )
+      _maxEventSize( maxEventSize ),
+      _streamId(0)
     {}
 
     // Destructor:
@@ -46,6 +47,10 @@ namespace stor
     bool useCompression() const { return _useCompression; }
     unsigned int compressionLevel() const { return _compressionLevel; }
     unsigned int maxEventSize() const { return _maxEventSize; }
+    unsigned int streamId() const { return _streamId; }
+
+    // Set stream Id:
+    void setStreamId( unsigned int sid ) { _streamId = sid; }
 
     // Output:
     friend std::ostream& operator <<
@@ -60,6 +65,7 @@ namespace stor
     bool _useCompression;
     unsigned int _compressionLevel;
     unsigned int _maxEventSize;
+    unsigned int _streamId;
 
   };
 
