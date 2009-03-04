@@ -1501,28 +1501,33 @@ testI2OChain::multipart_msg_header()
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     std::string outputModuleLabel = "HLTOutput";
+    std::string hltURL = "http://cmswn1340.fnal.gov:51985";
     std::string hltClass = "evf::FUResourceBroker";
 
     uLong crc = crc32(0L, Z_NULL, 0);
     Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
     unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
 
-    unsigned int value1 = 0xa5a5d2d2;
     unsigned int value2 = 0xb4b4e1e1;
     unsigned int value3 = 0xc3c3f0f0;
     unsigned int value4 = 0xdeadbeef;
+    unsigned int value5 = 0x01234567;
+    unsigned int value6 = 0x89abcdef;
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
     I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
       (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
-    smMsg->hltTid = value1;
     smMsg->rbBufferID = 2;
     smMsg->outModID = outputModuleId;
     smMsg->fuProcID = value2;
     smMsg->fuGUID = value3;
 
+    std::strcpy(smMsg->hltURL, hltURL.c_str());
     std::strcpy(smMsg->hltClassName, hltClass.c_str());
-    smMsg->hltInstance = value4;
+    smMsg->hltLocalId = value4;
+    smMsg->hltInstance = value5;
+    smMsg->hltTid = value6;
+
 
     stor::I2OChain initMsgFrag(ref);
     CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
@@ -1530,13 +1535,42 @@ testI2OChain::multipart_msg_header()
     stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
     CPPUNIT_ASSERT(fragmentKey.run_ == 0);
-    CPPUNIT_ASSERT(fragmentKey.event_ == value1);
+    CPPUNIT_ASSERT(fragmentKey.event_ == value6);
     CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
     CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
     CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
 
-    CPPUNIT_ASSERT(initMsgFrag.hltInstance() == value4);
+    CPPUNIT_ASSERT(initMsgFrag.hltLocalId() == value4);
+    CPPUNIT_ASSERT(initMsgFrag.hltInstance() == value5);
+    CPPUNIT_ASSERT(initMsgFrag.hltTid() == value6);
+    CPPUNIT_ASSERT(initMsgFrag.hltURL() == hltURL);
     CPPUNIT_ASSERT(initMsgFrag.hltClassName() == hltClass);
+
+
+    stor::I2OChain initMsgFrag2;
+    CPPUNIT_ASSERT(initMsgFrag2.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(initMsgFrag2.hltLocalId() == 0);
+    CPPUNIT_ASSERT(initMsgFrag2.hltInstance() == 0);
+    CPPUNIT_ASSERT(initMsgFrag2.hltTid() == 0);
+    CPPUNIT_ASSERT(initMsgFrag2.hltURL() == "");
+    CPPUNIT_ASSERT(initMsgFrag2.hltClassName() == "");
+
+
+    std::swap(initMsgFrag, initMsgFrag2);
+
+    CPPUNIT_ASSERT(initMsgFrag2.messageCode() == Header::INIT);
+    CPPUNIT_ASSERT(initMsgFrag2.hltLocalId() == value4);
+    CPPUNIT_ASSERT(initMsgFrag2.hltInstance() == value5);
+    CPPUNIT_ASSERT(initMsgFrag2.hltTid() == value6);
+    CPPUNIT_ASSERT(initMsgFrag2.hltURL() == hltURL);
+    CPPUNIT_ASSERT(initMsgFrag2.hltClassName() == hltClass);
+
+    CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INVALID);
+    CPPUNIT_ASSERT(initMsgFrag.hltLocalId() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.hltInstance() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.hltTid() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.hltURL() == "");
+    CPPUNIT_ASSERT(initMsgFrag.hltClassName() == "");
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {

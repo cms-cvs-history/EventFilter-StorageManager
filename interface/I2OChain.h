@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.20 2009/03/02 23:14:53 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.21 2009/03/03 19:42:00 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -31,8 +31,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.20 $
-   * $Date: 2009/03/02 23:14:53 $
+   * $Revision: 1.1.2.21 $
+   * $Date: 2009/03/03 19:42:00 $
    */
 
 
@@ -248,12 +248,36 @@ namespace stor {
     unsigned int rbBufferId() const;
 
     /**
+       Returns the HLT local ID from the contained message.
+       If no valid local ID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int hltLocalId() const;
+
+    /**
        Returns the HLT instance number from the contained message.
        If no valid instance number can be determined, zero is returned.
        NOTE that you must test if messageCode() != Header::INVALID to
        determine that the returned value is valid.
      */
     unsigned int hltInstance() const;
+
+    /**
+       Returns the HLT TID from the contained message.
+       If no valid TID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int hltTid() const;
+
+    /**
+       Returns the HLT URL from the contained message.  If no
+       valid URL can be determined, an empty string is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    std::string hltURL() const;
 
     /**
        Returns the HLT class name from the contained message.  If no
