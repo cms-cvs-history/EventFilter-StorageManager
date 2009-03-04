@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.7 2009/03/03 22:06:38 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.8 2009/03/03 22:45:29 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -154,24 +154,12 @@ namespace stor
                      << entry->buffer_size_ << endl;
             switch(entry->code_)
               {
-              case Header::EVENT:
-                {
-                  FR_DEBUG << "FragColl: Got an Event" << endl;
-                  processEvent(entry);
-                  break;
-                }
               case Header::DONE:
                 {
                   // make sure that this is actually sent by the controller! (JBK)
                   // this does nothing currently
                   FR_DEBUG << "FragColl: Got a Done" << endl;
                   done=true;
-                  break;
-                }
-              case Header::INIT:
-                {
-                  FR_DEBUG << "FragColl: Got an Init" << endl;
-                  processHeader(entry);
                   break;
                 }
               case Header::FILE_CLOSE_REQUEST:
@@ -201,6 +189,18 @@ namespace stor
 
             switch(i2oChain.messageCode())
               {
+              case Header::INIT:
+                {
+                  FR_DEBUG << "FragColl: Got an Init" << endl;
+                  processHeader(i2oChain);
+                  break;
+                }
+              case Header::EVENT:
+                {
+                  FR_DEBUG << "FragColl: Got an Event" << endl;
+                  processEvent(i2oChain);
+                  break;
+                }
               case Header::DQM_EVENT:
                 {
                   FR_DEBUG << "FragColl: Got a DQM_Event" << endl;
@@ -244,12 +244,11 @@ namespace stor
     cb.commit();
   }
 
-  void FragmentCollector::processEvent(FragEntry* entry)
+  void FragmentCollector::processEvent(I2OChain i2oChain)
   {
     ProgressMarker::instance()->processing(true);
 
     // add the fragment to the fragment store
-    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
     bool complete = fragmentStore_.addFragment(i2oChain);
 
     if(complete)
@@ -265,6 +264,10 @@ namespace stor
           eventServer_->processEvent(emsg);
         }
 
+      // tell the resource broker that sent us this event
+      // that we are done with it and it can forget about it
+      discardManager_->sendDiscardMessage(i2oChain);
+
       // check for stale fragments
       removeStaleFragments();
     }
@@ -272,12 +275,11 @@ namespace stor
     ProgressMarker::instance()->processing(false);
   }
 
-  void FragmentCollector::processHeader(FragEntry* entry)
+  void FragmentCollector::processHeader(I2OChain i2oChain)
   {
     ProgressMarker::instance()->processing(true);
 
     // add the fragment to the fragment store
-    I2OChain i2oChain((toolbox::mem::Reference*)entry->buffer_object_);
     bool complete = fragmentStore_.addFragment(i2oChain);
 
     if(complete)
@@ -337,10 +339,10 @@ namespace stor
       catch(cms::Exception& excpt)
       {
         char tidString[32];
-        sprintf(tidString, "%d", entry->hltTid_);
+        sprintf(tidString, "%d", i2oChain.hltTid());
         std::string logMsg = "receiveRegistryMessage: Error processing a ";
         logMsg.append("registry message from URL ");
-        logMsg.append(entry->hltURL_);
+        logMsg.append(i2oChain.hltURL());
         logMsg.append(" and Tid ");
         logMsg.append(tidString);
         logMsg.append(":\n");
@@ -353,11 +355,16 @@ namespace stor
         throw excpt;
       }
 
-      smRBSenderList_->registerDataSender(&entry->hltURL_[0], &entry->hltClassName_[0],
-                                          entry->hltLocalId_, entry->hltInstance_, entry->hltTid_,
-                                          entry->segNumber_, entry->totalSegs_, msg.size(),
+      FragKey fragKey = i2oChain.fragmentKey();
+      smRBSenderList_->registerDataSender(i2oChain.hltURL().c_str(), i2oChain.hltClassName().c_str(),
+                                          i2oChain.hltLocalId(), i2oChain.hltInstance(), i2oChain.hltTid(),
+                                          i2oChain.fragmentCount()-1, i2oChain.fragmentCount(), msg.size(),
                                           msg.outputModuleLabel(), msg.outputModuleId(),
-                                          entry->originatorPid_);
+                                          fragKey.originatorPid_);
+
+      // tell the resource broker that sent us this event
+      // that we are done with it and it can forget about it
+      discardManager_->sendDiscardMessage(i2oChain);
 
       // check for stale fragments
       removeStaleFragments();

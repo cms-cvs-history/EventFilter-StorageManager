@@ -93,8 +93,8 @@ namespace stor
   private:
     static void run(FragmentCollector*);
     void processFragments();
-    void processEvent(FragEntry* msg);
-    void processHeader(FragEntry* msg);
+    void processEvent(I2OChain i2oChain);
+    void processHeader(I2OChain i2oChain);
     void processDQMEvent(I2OChain i2oChain);
     void processErrorEvent(I2OChain i2oChain);
 
