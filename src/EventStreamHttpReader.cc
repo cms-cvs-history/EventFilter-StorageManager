@@ -17,7 +17,7 @@
                 Manager or specify a maximum number of events for
                 the client to read through a maxEvents parameter.
 
-  $Id: EventStreamHttpReader.cc,v 1.32 2009/01/26 20:54:38 biery Exp $
+  $Id: EventStreamHttpReader.cc,v 1.31.10.1 2009/01/27 18:24:54 biery Exp $
 */
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
@@ -58,6 +58,8 @@ namespace edm
 					       DEFAULT_MAX_CONNECT_TRIES);
     connectTrySleepTime_ = ps.getUntrackedParameter<int>("connectTrySleepTime",
 					       DEFAULT_CONNECT_TRY_SLEEP_TIME);
+    inputFileTransitionsEachEvent_ =
+      ps.getUntrackedParameter<bool>("inputFileTransitionsEachEvent", true);
 
     std::string evturl = sourceurl_ + "/geteventdata";
     int stlen = evturl.length();
