@@ -1,7 +1,7 @@
 #ifndef _DQMSERVICEMANAGER_H_
 #define _DQMSERVICEMANAGER_H_
 
-// $Id: DQMServiceManager.h,v 1.5 2008/12/19 22:28:22 biery Exp $
+// $Id: DQMServiceManager.h,v 1.4.12.1 2008/12/22 19:17:59 biery Exp $
 
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/EventMessage.h"

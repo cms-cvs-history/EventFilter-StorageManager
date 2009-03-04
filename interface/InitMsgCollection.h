@@ -6,7 +6,7 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output streams.
  *
- * $Id: InitMsgCollection.h,v 1.5 2008/12/19 22:30:11 biery Exp $
+ * $Id: InitMsgCollection.h,v 1.4.12.1 2008/12/22 19:17:59 biery Exp $
  */
 
 #include "IOPool/Streamer/interface/InitMessage.h"

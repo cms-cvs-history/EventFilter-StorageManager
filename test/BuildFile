@@ -1,15 +1,15 @@
-# $Id: BuildFile,v 1.30.14.1 2008/12/18 21:55:02 biery Exp $
+# $Id: BuildFile,v 1.30.16.16 2009/02/18 11:47:28 mommsen Exp $
 
 <environment>
   <use name=boost>
   <use name=xdaq>
+   <use name=EventFilter/StorageManager>
 
   <library file=StorageManagerRun.cpp>
    <use name=FWCore/Framework>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=FWCore/PluginManager>
-   <use name=EventFilter/StorageManager>
    <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
@@ -45,11 +45,13 @@
    <use name=IOPool/Streamer>
   </library>
 
+  <library file=fsmSoap_t.cpp>
+  </library>
+
   <bin file=RunnerTest_t.cpp>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/MessageService>
    <use name=FWCore/PluginManager>
-   <use name=EventFilter/StorageManager>
    <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
@@ -58,13 +60,61 @@
   <bin file=RunCollector_t.cpp>
    <use name=FWCore/MessageLogger>
    <use name=FWCore/PluginManager>
-   <use name=EventFilter/StorageManager>
    <use name=DataFormats/Provenance>
    <use name=DataFormats/Streamer>
    <use name=IOPool/Streamer>
   </bin>
 
   <bin file=boostStateMachine.cpp>
+  </bin>
+
+  <bin file=state_machine.cpp>
+  </bin>
+
+  <bin file=state_machine_t.cpp>
+  </bin>
+
+  <bin file=xhtmlmaker_t.cpp>
+  </bin>
+
+   <bin file=sm_cq_t.cpp>
+  </bin>
+
+  <bin file=workloop_t.cpp>
+  </bin>
+
+  <bin file=I2OChain_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=MemoryChainDuplicate_t.cpp>
+  </bin>
+
+
+  <bin file=SyncQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=CommandQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=MonitoredQuantity_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=test_condition.cpp>
+  </bin>
+
+  <bin file=ConcurrentQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=processCount_t.cpp>
+  </bin>
+
+  <bin file=FragmentStore_t.cpp>
+    <use name=cppunit>
   </bin>
 
 </environment>

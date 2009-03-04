@@ -1,10 +1,9 @@
-// $Id: StorageManager.cc,v 1.92.2.2 2008/12/30 15:54:36 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.18 2009/02/20 10:09:24 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
-#include <sys/stat.h>
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
@@ -12,6 +11,9 @@
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
+#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/WebPageHelper.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -40,14 +42,9 @@
 #include "i2o/utils/AddressMap.h"
 
 #include "toolbox/mem/Pool.h"
+#include "toolbox/mem/Reference.h"
 
 #include "xcept/tools.h"
-
-#include "xgi/Method.h"
-
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
 
 #include "xdata/InfoSpaceFactory.h"
 
@@ -68,6 +65,38 @@ using namespace std;
 using namespace stor;
 
 
+namespace 
+{
+  void
+  parseFileEntry(const std::string &in, 
+		 std::string &out, unsigned int &nev, unsigned long long &sz)
+  {
+    unsigned int no;
+    stringstream pippo;
+    pippo << in;
+    pippo >> no >> out >> nev >> sz;
+  }
+
+  void
+  checkDirectoryOK(xdata::String const& p)
+  {
+    struct stat64 buf;
+    // The const-cast is needed because xdata::String::toString() is
+    // not declared const.
+    string path(const_cast<xdata::String&>(p).toString());
+    
+    int retVal = stat64(path.c_str(), &buf);
+    if(retVal !=0 )
+      {
+	edm::LogError("StorageManager") << "Directory or file " << path
+					<< " does not exist. Error=" << errno ;
+	throw cms::Exception("StorageManager","checkDirectoryOK")
+	  << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
+      }
+  }
+}
+
+
 static void deleteSMBuffer(void* Ref)
 {
   // release the memory pool buffer
@@ -76,14 +105,6 @@ static void deleteSMBuffer(void* Ref)
   toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
   ref->release();
 }
-
-std::string smutil_itos(int i)	// convert int to string
-{
-  std::stringstream s;
-  s << i;
-  return s.str();
-}
-
 
 StorageManager::StorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
@@ -107,17 +128,11 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fairShareES_(false),
   connectedRBs_(0), 
   storedEvents_(0), 
-  receivedEvents_(0), 
-  receivedErrorEvents_(0), 
-  dqmRecords_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  receivedVolume_(0.),
-  storedVolume_(0.),
   progressMarker_(ProgressMarker::instance()->idle()),
-  lastEventSeen_(0),
-  lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.2.2 2008/12/30 15:54:36 biery Exp $ $Name: refdev01_intg_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.18 2009/02/20 10:09:24 mommsen Exp $ $Name: kb_20090221 $"),
+  _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -134,9 +149,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("stateName",     fsm_.stateName());
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
-  ispace->fireItemAvailable("receivedEvents",&receivedEvents_);
-  ispace->fireItemAvailable("receivedErrorEvents",&receivedErrorEvents_);
-  ispace->fireItemAvailable("dqmRecords",    &dqmRecords_);
   ispace->fireItemAvailable("closedFiles",   &closedFiles_);
   ispace->fireItemAvailable("openFiles",     &openFiles_);
   ispace->fireItemAvailable("fileList",      &fileList_);
@@ -182,6 +194,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
+  xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
   xgi::bind(this,&StorageManager::streamerOutputWebPage,"streameroutput");
@@ -192,7 +205,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
   xgi::bind(this,&StorageManager::DQMconsumerWebPage,   "registerDQMConsumer");
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
-  receivedFrames_ = 0;
   pool_is_set_    = 0;
   pool_           = 0;
   nLogicalDisk_   = 0;
@@ -254,66 +266,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("esSelectedHLTOutputModule",&esSelectedHLTOutputModule_);
 
   // for performance measurements
-  ispace->fireItemAvailable("receivedSamples4Stats",&samples_);
-  ispace->fireItemAvailable("receivedPeriod4Stats",&period4samples_);
-  samples_          = 1000; // measurements every 60MB (about) is the default
-  period4samples_   = 5;
-  instantBandwidth_ = 0.;
-  instantRate_      = 0.;
-  instantLatency_   = 0.;
-  totalSamples_     = 0;
-  duration_         = 0.;
-  meanBandwidth_    = 0.;
-  meanRate_         = 0.;
-  meanLatency_      = 0.;
-
-  instantBandwidth2_= 0.;
-  instantRate2_     = 0.;
-  instantLatency2_  = 0.;
-  totalSamples2_    = 0;
-  duration2_        = 0.;
-  meanBandwidth2_   = 0.;
-  meanRate2_        = 0.;
-  meanLatency2_     = 0.;
-
-  maxBandwidth_     = 0.;
-  minBandwidth_     = 999999.;
-
-  maxBandwidth2_    = 0.;
-  minBandwidth2_    = 999999.; 
-
-  ispace->fireItemAvailable("receivedDQMSamples4Stats",&DQMsamples_);
-  ispace->fireItemAvailable("receivedDQMPeriod4Stats",&DQMperiod4samples_);
-  DQMsamples_          = 20;
-  DQMperiod4samples_   = 300;
-  DQMinstantBandwidth_ = 0.;
-  DQMinstantRate_      = 0.;
-  DQMinstantLatency_   = 0.;
-  DQMtotalSamples_     = 0;
-  DQMduration_         = 0.;
-  DQMmeanBandwidth_    = 0.;
-  DQMmeanRate_         = 0.;
-  DQMmeanLatency_      = 0.;
-
-  DQMinstantBandwidth2_= 0.;
-  DQMinstantRate2_     = 0.;
-  DQMinstantLatency2_  = 0.;
-  DQMtotalSamples2_    = 0;
-  DQMduration2_        = 0.;
-  DQMmeanBandwidth2_   = 0.;
-  DQMmeanRate2_        = 0.;
-  DQMmeanLatency2_     = 0.;
-
-  DQMmaxBandwidth_     = 0.;
-  DQMminBandwidth_     = 999999.;
-
-  DQMmaxBandwidth2_    = 0.;
-  DQMminBandwidth2_    = 999999.; 
-
-  pmeter_ = new stor::SMPerformanceMeter();
-  pmeter_->init(samples_, period4samples_);
-  DQMpmeter_ = new stor::SMPerformanceMeter();
-  DQMpmeter_->init(DQMsamples_, DQMperiod4samples_);
 
   string        xmlClass = getApplicationDescriptor()->getClassName();
   unsigned long instance = getApplicationDescriptor()->getInstance();
@@ -340,13 +292,12 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
+
 }
 
 StorageManager::~StorageManager()
 {
   delete ah_;
-  delete pmeter_;
-  delete DQMpmeter_;
 }
 
 xoap::MessageReference
@@ -367,6 +318,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
@@ -465,18 +418,17 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
          static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = thismsg->rbBufferID;
          b.commit(sizeof(stor::FragEntry));
 
-         ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                          +thislen;
-         addMeasurement(actualFrameSize);
+         fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // add this output module to the monitoring
          bool alreadyStoredOutMod = false;
          uint32 moduleId = thisMsgCopy.outModID;
-         std::string dmoduleLabel("ID_" + smutil_itos(thisMsgCopy.outModID));
+         std::string dmoduleLabel("ID_" + boost::lexical_cast<std::string>(thisMsgCopy.outModID));
          if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
          if(!alreadyStoredOutMod) {
            modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
@@ -516,16 +468,16 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = msg->rbBufferID;
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
-    ++receivedFrames_;
+
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
                                     + len;
-    addMeasurement(actualFrameSize);
+    fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // add this output module to the monitoring
     bool alreadyStoredOutMod = false;
     uint32 moduleId = localMsgCopy.outModID;
-    std::string dmoduleLabel("ID_" + smutil_itos(localMsgCopy.outModID));
+    std::string dmoduleLabel("ID_" + boost::lexical_cast<std::string>(localMsgCopy.outModID));
     if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
     if(!alreadyStoredOutMod) {
       modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
@@ -555,6 +507,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  RunMonitorCollection& runMonCollection = _statReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -649,13 +604,12 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                                           thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
-         ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
-         addMeasurement(actualFrameSize);
+         fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -670,9 +624,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
          // thisMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
          bool isLocal = true;
 
-         //update last event seen
-         lastEventSeen_ = thisMsgCopy.eventID;
-
          int status = 
 	   smrbsenders_.updateSender4data(&thisMsgCopy.hltURL[0], &thisMsgCopy.hltClassName[0],
 					  thisMsgCopy.hltLocalId, thisMsgCopy.hltInstance, thisMsgCopy.hltTid,
@@ -681,7 +632,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
          //if(status == 1) ++(storedEvents_.value_);
          if(status == 1) {
-           ++(receivedEvents_.value_);
+           runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
+           runMonCollection.getEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
+
            uint32 moduleId = thisMsgCopy.outModID;
            if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
              std::string moduleLabel = modId2ModOutMap_[moduleId];
@@ -728,11 +681,11 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                                      msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
-    ++receivedFrames_;
+
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
-    addMeasurement(actualFrameSize);
+    fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -743,9 +696,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 		      << localMsgCopy.runID << " From " << localMsgCopy.hltURL
                       << " Different from Run Number from configuration = " << runNumber_);
     }
-
-    //update last event seen
-    lastEventSeen_ = localMsgCopy.eventID;
 
     // for data sender list update
     // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
@@ -758,7 +708,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
     //if(status == 1) ++(storedEvents_.value_);
     if(status == 1) {
-      ++(receivedEvents_.value_);
+      runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
+      runMonCollection.getEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
+
       uint32 moduleId = localMsgCopy.outModID;
       if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
         std::string moduleLabel = modId2ModOutMap_[moduleId];
@@ -802,6 +754,9 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  RunMonitorCollection& runMonCollection = _statReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -896,13 +851,12 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
                                           thismsg->fuProcID, thismsg->fuGUID);
          b.commit(sizeof(stor::FragEntry));
 
-         ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                          +thislen;
-         addMeasurement(actualFrameSize);
+         fragMonCollection.addEventFragmentSample(actualFrameSize);
 
          // should only do this test if the first data frame from each FU?
          // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -918,7 +872,13 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
          //bool isLocal = true;
 
          //update last error event seen
-         lastErrorEventSeen_ = thisMsgCopy.eventID;
+         runMonCollection.getRunNumbersSeenMQ().addSample(thisMsgCopy.runID);
+         // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
+         // independent of the result of the updateFUSender4data() call since we
+         // know that the result is unlikely to be "success"
+         //if(status == 1) {
+         runMonCollection.getErrorEventIDsReceivedMQ().addSample(thisMsgCopy.eventID);
+         //}
 
          // TODO need to fix this as the outModId is not valid for error events
          /*
@@ -928,13 +888,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
 	   thisMsgCopy.runID, thisMsgCopy.eventID, thisMsgCopy.frameCount+1, thisMsgCopy.numFrames,
 	   thisMsgCopy.originalSize, isLocal, thisMsgCopy.outModID);
          */
-
-         // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
-         // independent of the result of the updateFUSender4data() call since we
-         // know that the result is unlikely to be "success"
-         //if(status == 1) {
-           ++(receivedErrorEvents_.value_);
-         //}
 
          /*
          if(status == -1) {
@@ -965,11 +918,11 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
                                      msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
-    ++receivedFrames_;
+
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
                                     + len;
-    addMeasurement(actualFrameSize);
+    fragMonCollection.addEventFragmentSample(actualFrameSize);
 
     // should only do this test if the first data frame from each FU?
     // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -982,7 +935,14 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     }
 
     //update last error event seen
-    lastErrorEventSeen_ = localMsgCopy.eventID;
+    runMonCollection.getRunNumbersSeenMQ().addSample(localMsgCopy.runID);
+
+    // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
+    // independent of the result of the updateFUSender4data() call since we
+    // know that the result is unlikely to be "success"
+    //if(status == 1) {
+    runMonCollection.getErrorEventIDsReceivedMQ().addSample(localMsgCopy.eventID);
+    //}
 
     // for data sender list update
     // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
@@ -996,12 +956,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
       localMsgCopy.originalSize, isLocal, localMsgCopy.outModID);
     */
     
-    // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
-    // independent of the result of the updateFUSender4data() call since we
-    // know that the result is unlikely to be "success"
-    //if(status == 1) {
-      ++(receivedErrorEvents_.value_);
-    //}
     /*
     if(status == -1) {
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -1032,6 +986,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
+  FragmentMonitorCollection& fragMonCollection = _statReporter->getFragmentMonitorCollection();
+
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_DQM_MESSAGE_FRAME *msg    =
@@ -1060,7 +1016,6 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-  ++(dqmRecords_.value_);
 
   // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
   // that we can use that information even after the Reference is released.
@@ -1122,14 +1077,12 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
          // may have been released already by the FragmentCollector!
          // If it needs to be used, make a copy.
 
-         ++receivedFrames_;
          // for bandwidth performance measurements
          // Following is wrong for the last frame because frame sent is
          // is actually larger than the size taken by actual data
          unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
                                          +thislen;
-         addMeasurement(actualFrameSize);
-         addDQMMeasurement(actualFrameSize);
+         fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
          // no data sender list update yet for DQM data, should add it here
       }
@@ -1154,12 +1107,11 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
                                      msg->fuProcID, msg->fuGUID);
     b.commit(sizeof(stor::FragEntry));
     // Frame release is done in the deleter.
-    ++receivedFrames_;
+
     // for bandwidth performance measurements
     unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
                                     + len;
-    addMeasurement(actualFrameSize);
-    addDQMMeasurement(actualFrameSize);
+    fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 
     // no data sender list update yet for DQM data, should add it here
   }
@@ -1174,116 +1126,44 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     }
 }
 
-//////////// ***  Performance //////////////////////////////////////////////////////////
-void StorageManager::addMeasurement(unsigned long size)
-{
-  // for bandwidth performance measurements, first sample based
-  if ( pmeter_->addSample(size) )
-  {
-    // Copy measurements for our record
-    stor::SMPerfStats stats = pmeter_->getStats();
-
-    instantBandwidth_= stats.shortTermCounter_->getValueRate();
-    instantRate_     = stats.shortTermCounter_->getSampleRate();
-    instantLatency_  = 1000000.0 / instantRate_;
-
-    double now = ForeverCounter::getCurrentTime();
-    totalSamples_    = stats.longTermCounter_->getSampleCount();
-    duration_        = stats.longTermCounter_->getDuration(now);
-    meanBandwidth_   = stats.longTermCounter_->getValueRate(now);
-    meanRate_        = stats.longTermCounter_->getSampleRate(now);
-    meanLatency_     = 1000000.0 / meanRate_;
-
-    maxBandwidth_    = stats.maxBandwidth_;
-    minBandwidth_    = stats.minBandwidth_;
-  }
-
-  // for time period bandwidth performance measurements
-  if ( pmeter_->getStats().shortPeriodCounter_->hasValidResult() )
-  {
-    // Copy measurements for our record
-    stor::SMPerfStats stats = pmeter_->getStats();
-
-    instantBandwidth2_= stats.shortPeriodCounter_->getValueRate();
-    instantRate2_     = stats.shortPeriodCounter_->getSampleRate();
-    instantLatency2_  = 1000000.0 / instantRate2_;
-
-    double now = ForeverCounter::getCurrentTime();
-    totalSamples2_    = stats.longTermCounter_->getSampleCount();
-    duration2_        = stats.longTermCounter_->getDuration(now);
-    meanBandwidth2_   = stats.longTermCounter_->getValueRate(now);
-    meanRate2_        = stats.longTermCounter_->getSampleRate(now);
-    meanLatency2_     = 1000000.0 / meanRate2_;
-
-    maxBandwidth2_    = stats.maxBandwidth2_;
-    minBandwidth2_    = stats.minBandwidth2_;
-  }
-  receivedVolume_ = pmeter_->totalvolumemb();
-
-  // TODO fixme: Find a better place to put this testing of the Fragment Collector thread status!
-  // leave this for now until we have the transition available and have clean up code
-  if(stor::getSMFC_exceptionStatus()) {
-    // there was a fatal exception in the Fragmentation Collector and
-    // we want to go to a fail state
-    //reasonForFailedState_  = stor::getSMFC_reason4Exception();
-    //fsm_.fireFailed(reasonForFailedState_,this);
-    edm::LogError("StorageManager") << "Fatal problem in FragmentCollector thread detected! \n"
-       << stor::getSMFC_reason4Exception();
-    //@@EM added state transition to failed
-    reasonForFailedState_ = stor::getSMFC_reason4Exception();
-    fsm_.fireFailed(reasonForFailedState_,this);
-
-  }
-}
-
-void StorageManager::addDQMMeasurement(unsigned long size)
-{
-  // for bandwidth performance measurements, first sample based
-  if ( DQMpmeter_->addSample(size) )
-  {
-    // Copy measurements for our record
-    stor::SMPerfStats stats = DQMpmeter_->getStats();
-
-    DQMinstantBandwidth_= stats.shortTermCounter_->getValueRate();
-    DQMinstantRate_     = stats.shortTermCounter_->getSampleRate();
-    DQMinstantLatency_  = 1000000.0 / DQMinstantRate_;
-
-    double now = ForeverCounter::getCurrentTime();
-    DQMtotalSamples_    = stats.longTermCounter_->getSampleCount();
-    DQMduration_        = stats.longTermCounter_->getDuration(now);
-    DQMmeanBandwidth_   = stats.longTermCounter_->getValueRate(now);
-    DQMmeanRate_        = stats.longTermCounter_->getSampleRate(now);
-    DQMmeanLatency_     = 1000000.0 / DQMmeanRate_;
-
-    DQMmaxBandwidth_    = stats.maxBandwidth_;
-    DQMminBandwidth_    = stats.minBandwidth_;
-  }
-
-  // for time period bandwidth performance measurements
-  if ( DQMpmeter_->getStats().shortPeriodCounter_->hasValidResult() )
-  {
-    // Copy measurements for our record
-    stor::SMPerfStats stats = DQMpmeter_->getStats();
-
-    DQMinstantBandwidth2_= stats.shortPeriodCounter_->getValueRate();
-    DQMinstantRate2_     = stats.shortPeriodCounter_->getSampleRate();
-    DQMinstantLatency2_  = 1000000.0 / DQMinstantRate2_;
-
-    double now = ForeverCounter::getCurrentTime();
-    DQMtotalSamples2_    = stats.longTermCounter_->getSampleCount();
-    DQMduration2_        = stats.longTermCounter_->getDuration(now);
-    DQMmeanBandwidth2_   = stats.longTermCounter_->getValueRate(now);
-    DQMmeanRate2_        = stats.longTermCounter_->getSampleRate(now);
-    DQMmeanLatency2_     = 1000000.0 / DQMmeanRate2_;
-
-    DQMmaxBandwidth2_    = stats.maxBandwidth2_;
-    DQMminBandwidth2_    = stats.minBandwidth2_;
-  }
-  DQMreceivedVolume_ = DQMpmeter_->totalvolumemb();
-}
-
-//////////// *** Default web page //////////////////////////////////////////////////////////
+//////////// *** Refactored default web page ///////////////////////////////////////////////
 void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
+throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the default webpage";
+  
+  try
+  {
+    WebPageHelper::defaultWebPage(
+      out,
+      fsm_.stateName()->toString(),
+      _statReporter,
+      pool_,
+      nLogicalDisk_,
+      filePath_,
+      this->getApplicationDescriptor()
+    );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+}
+
+
+//////////// *** Store data web page //////////////////////////////////////////////////////////
+void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   *out << "<html>"                                                   << endl;
@@ -1324,20 +1204,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
     *out << "  </td>"                                                  << endl;
-    /* @@EM commented out till there is something to link to
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "    <a href=\"/" << getApplicationDescriptor()->getURN()
-         << "/debug\">"                   << endl;
-    *out << "      <img"                                               << endl;
-    *out << "       align=\"middle\""                                  << endl;
-    *out << "       src=\"/evf/images/bugicon.jpg\""		       << endl;
-    *out << "       alt=\"debug\""                                     << endl;
-    *out << "       width=\"32\""                                      << endl;
-    *out << "       height=\"32\""                                     << endl;
-    *out << "       border=\"\"/>"                                     << endl;
-    *out << "    </a>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    */
     *out << "</tr>"                                                    << endl;
     if(fsm_.stateName()->value_ == "Failed")
     {
@@ -1352,11 +1218,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     }
     *out << "</table>"                                                 << endl;
 
-  *out << "<hr/>"                                                    << endl;
-  *out << "<table>"                                                  << endl;
-  *out << "<tr valign=\"top\">"                                      << endl;
-  *out << "  <td>"                                                   << endl;
-
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\""	 << endl;
   *out << " readonly title=\"Note: parts of this info updates every 10 sec !!!\">"<< endl;
   *out << "<colgroup> <colgroup align=\"right\">"			 << endl;
@@ -1365,26 +1226,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "      " << "Storage Manager Statistics"			 << endl;
     *out << "    </th>"							 << endl;
     *out << "  </tr>"							 << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Run Number" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << runNumber_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Total (Non-unique) Events Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedEvents_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
         *out << "<tr class=\"special\">" << endl;
           *out << "<td >" << endl;
           *out << "Output Module" << endl;
@@ -1472,94 +1313,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
             ++ni;
           *out << "</tr>" << endl;
         }
-        *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Last Event ID" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << lastEventSeen_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Error Events Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedErrorEvents_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Last Error Event ID" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << lastErrorEventSeen_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
-        int nD = nLogicalDisk_;
-        if (nD == 0) nD=1;
-        for(int i=0;i<nD;++i) {
-           string path(filePath_);
-           if(nLogicalDisk_>0) {
-              std::ostringstream oss;
-              oss << "/" << setfill('0') << std::setw(2) << i; 
-              path += oss.str();
-           }
-           struct statfs64 buf;
-           int retVal = statfs64(path.c_str(), &buf);
-           double btotal = 0;
-           double bfree = 0;
-           unsigned int used = 0;
-           if(retVal==0) {
-              unsigned int blksize = buf.f_bsize;
-              btotal = buf.f_blocks * blksize / 1024 / 1024 /1024;
-              bfree  = buf.f_bavail  * blksize / 1024 / 1024 /1024;
-              used   = (int)(100 * (1. - bfree / btotal)); 
-           }
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Disk " << i << " usage " << endl;
-          *out << "</td>" << endl;
-          if(used>89)
-             *out << "<td align=right bgcolor=\"#EF5A10\">" << endl;
-          else 
-             *out << "<td align=right>" << endl;
-          *out << used << "% (" << btotal-bfree << " of " << btotal << " GB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        }
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "# CopyWorker" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
-          *out << ps1 << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "# InjectWorker" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
-          *out << ps2 << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=7>"                                       << endl;
     *out << "      " << "Output Streams (updated only every 10 sec)"          << endl;
@@ -1602,143 +1355,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
         *out << "  </tr>" << endl;
       }
     *out << "</table>" << endl;
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Received Data Statistics "                    << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-
-        *out << "<tr>" << endl;
-        *out << "<th >" << endl;
-        *out << "Parameter" << endl;
-        *out << "</th>" << endl;
-        *out << "<th>" << endl;
-        *out << "Value" << endl;
-        *out << "</th>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Frames Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedFrames_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "DQM Records Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << dqmRecords_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        if(pool_is_set_ == 1) 
-        {
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Memory Used (Bytes)" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pool_->getMemoryUsage().getUsed() << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-        } else {
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Memory Pool pointer not yet available" << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-        }
-// performance statistics
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Statistics for last " << samples_ << " frames" << " (and last " << period4samples_ << " sec)" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << instantBandwidth_ << " (" << instantBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Frames/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << instantRate_ << " (" << instantRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/frame)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << instantLatency_ << " (" << instantLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Maximum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << maxBandwidth_ << " (" << maxBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Minimum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << minBandwidth_ << " (" << minBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-// mean performance statistics for whole run
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Mean Performance for " << totalSamples_ << " (" << totalSamples2_ << ")" << " frames, duration "
-         << duration_ << " (" << duration2_ << ")" << " seconds" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << meanBandwidth_ << " (" << meanBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Frames/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << meanRate_ << " (" << meanRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/frame)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << meanLatency_ << " (" << meanLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Total Volume Received (MB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedVolume_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-
-  *out << "</table>" << endl;
 
 // statistics for stored data
 
@@ -1854,122 +1470,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "</table>" << endl;
 
-// statistics for received DQM data only
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Received DQM Data Statistics "                    << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-
-        *out << "<tr>" << endl;
-        *out << "<th >" << endl;
-        *out << "Parameter" << endl;
-        *out << "</th>" << endl;
-        *out << "<th>" << endl;
-        *out << "Value" << endl;
-        *out << "</th>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "DQM Folder Updates Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMtotalSamples_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-// performance statistics
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Statistics for last " << DQMsamples_ << " folder updates" << " (and last " << DQMperiod4samples_ << " sec)" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMinstantBandwidth_ << " (" << DQMinstantBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Updates/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMinstantRate_ << " (" << DQMinstantRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/update)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMinstantLatency_ << " (" << DQMinstantLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Maximum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMmaxBandwidth_ << " (" << DQMmaxBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Minimum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMminBandwidth_ << " (" << DQMminBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-// mean performance statistics for whole run
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Mean Performance for " << DQMtotalSamples_ << " (" << DQMtotalSamples2_ << ")" << " events, duration "
-         << DQMduration_ << " (" << DQMduration2_ << ")" << " seconds" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMmeanBandwidth_ << " (" << DQMmeanBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Updates/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMmeanRate_ << " (" << DQMmeanRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/update)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMmeanLatency_ << " (" << DQMmeanLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Total DQM Data Volume Stored (MB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << DQMreceivedVolume_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-
-  *out << "</table>" << endl;
-
-  *out << "  </td>"                                                  << endl;
-  *out << "</table>"                                                 << endl;
 // now for RB sender list statistics
   *out << "<hr/>"                                                    << endl;
   *out << "<table>"                                                  << endl;
@@ -2065,6 +1565,9 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<hr/>"                                                 << endl;
   std::string url = getApplicationDescriptor()->getContextDescriptor()->getURL();
   std::string urn = getApplicationDescriptor()->getURN();
+  *out << "<a href=\"" << url << "/" << urn << "\">" 
+       << "New default web page" << "</a>" << endl;
+  *out << "<hr/>"                                                 << endl;
   *out << "<a href=\"" << url << "/" << urn << "/rbsenderlist" << "\">" 
        << "RB Sender list web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
@@ -4470,28 +3973,13 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("runNumber",            &runNumber_);
   is->fireItemAvailable("url",                  &url_);
   // Body
-  is->fireItemAvailable("receivedFrames",       &receivedFrames_);
   // should this be here also??
   is->fireItemAvailable("storedEvents",         &storedEvents_);
   is->fireItemAvailable("closedFiles",          &closedFiles_);
-  is->fireItemAvailable("receivedEvents",       &receivedEvents_);
-  is->fireItemAvailable("receivedErrorEvents",  &receivedErrorEvents_);
   is->fireItemAvailable("namesOfStream",      &namesOfStream_);
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
-  is->fireItemAvailable("dqmRecords",           &dqmRecords_);
-  is->fireItemAvailable("receivedVolume",       &receivedVolume_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
-  is->fireItemAvailable("instantBandwidth",     &instantBandwidth_);
-  is->fireItemAvailable("instantRate",          &instantRate_);
-  is->fireItemAvailable("instantLatency",       &instantLatency_);
-  is->fireItemAvailable("maxBandwidth",         &maxBandwidth_);
-  is->fireItemAvailable("minBandwidth",         &minBandwidth_);
-  is->fireItemAvailable("duration",             &duration_);
-  is->fireItemAvailable("totalSamples",         &totalSamples_);
-  is->fireItemAvailable("meanBandwidth",        &meanBandwidth_);
-  is->fireItemAvailable("meanRate",             &meanRate_);
-  is->fireItemAvailable("meanLatency",          &meanLatency_);
   is->fireItemAvailable("STparameterSet",       &offConfig_);
   is->fireItemAvailable("stateName",            fsm_.stateName());
   is->fireItemAvailable("progressMarker",       &progressMarker_);
@@ -4530,26 +4018,12 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("runNumber",            this);
   is->addItemRetrieveListener("url",                  this);
   // Body
-  is->addItemRetrieveListener("receivedFrames",       this);
   // should this be here also??
   //is->addItemRetrieveListener("storedEvents",         this);
-  is->addItemRetrieveListener("receivedEvents",       this);
   is->addItemRetrieveListener("namesOfStream", this);
   is->addItemRetrieveListener("namesOfOutMod", this);
-  is->addItemRetrieveListener("dqmRecords",           this);
-  is->addItemRetrieveListener("receivedVolume",       this);
   is->addItemRetrieveListener("storedVolume",         this);
   is->addItemRetrieveListener("memoryUsed",           this);
-  is->addItemRetrieveListener("instantBandwidth",     this);
-  is->addItemRetrieveListener("instantRate",          this);
-  is->addItemRetrieveListener("instantLatency",       this);
-  is->addItemRetrieveListener("maxBandwidth",         this);
-  is->addItemRetrieveListener("minBandwidth",         this);
-  is->addItemRetrieveListener("duration",             this);
-  is->addItemRetrieveListener("totalSamples",         this);
-  is->addItemRetrieveListener("meanBandwidth",        this);
-  is->addItemRetrieveListener("meanRate",             this);
-  is->addItemRetrieveListener("meanLatency",          this);
   is->addItemRetrieveListener("STparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
   is->addItemRetrieveListener("progressMarker",       this);
@@ -4606,10 +4080,7 @@ void StorageManager::actionPerformed(xdata::Event& e)
       connectedRBs_   = smrbsenders_.size();
     else if (item == "memoryUsed")
       memoryUsed_     = pool_->getMemoryUsage().getUsed();
-    else if (item == "receivedVolume")
-      receivedVolume_   = pmeter_->totalvolumemb();
     else if (item == "storedVolume")
-      //storedVolume_   = pmeter_->totalvolumemb();
       storedVolume_   = store_receivedVolume_;
     else if (item == "closedFiles") {
         std::list<std::string>& files = jc_->get_filelist();
@@ -4671,14 +4142,6 @@ void StorageManager::actionPerformed(xdata::Event& e)
   }
 }
 
-void StorageManager::parseFileEntry(const std::string &in, std::string &out, 
-                                    unsigned int &nev, unsigned long long &sz) const
-{
-  unsigned int no;
-  stringstream pippo;
-  pippo << in;
-  pippo >> no >> out >> nev >> sz;
-}
 
 std::string StorageManager::findStreamName(const std::string &in) const
 {
@@ -4772,7 +4235,7 @@ void StorageManager::configureAction()
   smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
 
   // check output locations and scripts before we continue
-  checkDirectoryOK(filePath_.toString());
+  checkDirectoryOK(filePath_);
   if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
 
   // check whether the maxSize parameter in an SM output stream
@@ -4884,10 +4347,6 @@ void StorageManager::configureAction()
   if (DQMconsumerQueueSize_ < cutoff)
     DQMconsumerQueueSize_ = cutoff;
 
-  // if samples_ is given in the XML config we need to set it
-  pmeter_->init(samples_, period4samples_);
-  DQMpmeter_->init(DQMsamples_, DQMperiod4samples_);
-
   jc_.reset(new stor::JobController(my_config, getApplicationLogger(), &deleteSMBuffer));
 
   int disks(nLogicalDisk_);
@@ -4962,11 +4421,7 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     storedEventsInStream_.clear();
     fileSize_.clear();
     storedEvents_ = 0;
-    receivedEvents_ = 0;
-    receivedErrorEvents_ = 0;
     storedVolume_ = 0;
-    receivedVolume_ = 0;
-    DQMreceivedVolume_ = 0;
     receivedEventsFromOutMod_.clear();
     namesOfStream_.clear();
     namesOfOutMod_.clear();
@@ -4975,13 +4430,8 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     avCompressRatioMap_.clear();
     modId2ModOutMap_.clear();
     storedEventsMap_.clear();
-    dqmRecords_   = 0;
     closedFiles_  = 0;
     openFiles_  = 0;
-    lastEventSeen_ = 0;
-    lastErrorEventSeen_ = 0;
-    pmeter_->init(samples_, period4samples_);
-    DQMpmeter_->init(DQMsamples_, DQMperiod4samples_);
     jc_->start();
 
     boost::shared_ptr<InitMsgCollection> initMsgCollection = jc_->getInitMsgCollection();
@@ -5144,19 +4594,6 @@ void StorageManager::haltAction()
   }
 }
 
-void StorageManager::checkDirectoryOK(const std::string path) const
-{
-  struct stat64 buf;
-
-  int retVal = stat64(path.c_str(), &buf);
-  if(retVal !=0 )
-  {
-    edm::LogError("StorageManager") << "Directory or file " << path
-                                    << " does not exist. Error=" << errno ;
-    throw cms::Exception("StorageManager","checkDirectoryOK")
-            << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
-  }
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -5347,13 +4784,22 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   return true;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// *** Provides factory method for the instantiation of SM applications
-// should probably use the MACRO? Could a XDAQ version change cause problems?
-extern "C" xdaq::Application
-*instantiate_StorageManager(xdaq::ApplicationStub * stub)
-{
-  std::cout << "Going to construct a StorageManager instance "
-	    << std::endl;
-  return new stor::StorageManager(stub);
-}
+//////////////////////////////////////////////////////////////////////////
+// *** Provides factory method for the instantiation of SM applications //
+//////////////////////////////////////////////////////////////////////////
+// This macro is depreciated:
+XDAQ_INSTANTIATE(StorageManager)
+
+// One should use the XDAQ_INSTANTIATOR() in the header file
+// and this one here. But this breaks the backward compatibility,
+// as all xml configuration files would have to be changed to use
+// 'stor::StorageManager' instead of 'StorageManager'.
+// XDAQ_INSTANTIATOR_IMPL(stor::StorageManager)
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

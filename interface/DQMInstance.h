@@ -8,7 +8,7 @@
      Container class for one snapshot instance of a collection of 
      collated DQM objects
 
-   $Id: DQMInstance.h,v 1.8 2008/12/19 22:28:22 biery Exp $
+   $Id: DQMInstance.h,v 1.7.12.1 2008/12/22 19:17:59 biery Exp $
 */
 
 #include <string>

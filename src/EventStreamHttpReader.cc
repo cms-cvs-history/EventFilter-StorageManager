@@ -17,7 +17,7 @@
                 Manager or specify a maximum number of events for
                 the client to read through a maxEvents parameter.
 
-  $Id: EventStreamHttpReader.cc,v 1.31.10.1 2009/01/27 18:24:54 biery Exp $
+  $Id: EventStreamHttpReader.cc,v 1.31.12.1 2009/01/27 18:29:10 biery Exp $
 */
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"

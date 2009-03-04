@@ -1,7 +1,7 @@
 /*
         For saving the FU sender list
 
- $Id: SMFUSenderEntry.cc,v 1.15 2008/12/19 23:25:27 biery Exp $
+ $Id: SMFUSenderEntry.cc,v 1.14.4.1 2008/12/22 19:18:00 biery Exp $
 */
 
 #include "EventFilter/StorageManager/interface/SMFUSenderEntry.h"

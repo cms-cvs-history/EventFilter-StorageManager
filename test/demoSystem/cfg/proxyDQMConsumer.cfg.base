@@ -1,0 +1,24 @@
+process PROD  =
+{
+  untracked PSet maxEvents = {untracked int32 input = -1}
+
+  # DQM back-end interface service
+  #service = DaqMonitorROOTBackEnd{}
+  service = DQMStore{}
+
+  # DQM client example
+  module tester = SMDQMClientExample{}
+  path pDQM ={tester}
+
+  source = DQMHttpSource
+  {
+    untracked string sourceURL = "http://STMGR_DEV_SMPROXY_HOST:STMGR_DEV_SMPROXY_PORT/urn:xdaq-application:lid=30"
+
+    untracked string DQMconsumerName = "Test Consumer"
+    untracked string DQMconsumerPriority = "normal"
+    untracked int32 headerRetryInterval = 5  // seconds
+    untracked double maxDQMEventRequestRate = 1.0  // hertz
+    //untracked string topLevelFolderName = "C1"
+    untracked string topLevelFolderName = "*"
+  }
+}
