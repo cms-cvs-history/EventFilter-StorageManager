@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.6 2009/03/02 17:44:46 paterno Exp $
+// $Id: EventDistributor.cc,v 1.1.2.7 2009/03/03 17:50:37 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -47,10 +47,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
          {
            if( it->acceptEvent( ioc ) )
              {
-               // get the stream ID from the selector
-               //            unsigned int sid = it->streamId();
-               // add the stream ID to the list of stream IDs in the i2oChain
-               // ????
+               ioc.getEventStreamTags().push_back( it->configInfo().streamId() );
              }
          }
      }
@@ -62,9 +59,10 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
     }
 
-  // if the list of stream IDs in the i2oChain has more than zero entries,
-  // push the chain onto the StreamQueue
-  //  ????
+  if( ioc.isTaggedForAnyEventStream() )
+    {
+      _streamQueue.addEvent( ioc );
+    }
 
 }
 
