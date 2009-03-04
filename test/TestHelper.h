@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.1 2009/02/18 10:18:53 mommsen Exp $
+// $Id: TestHelper.h,v 1.1.2.3 2009/02/26 21:57:18 biery Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -80,7 +80,7 @@ namespace stor
         (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
       I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
         (I2O_SM_MULTIPART_MESSAGE_FRAME*) pvtMsg;
-      pvtMsg->StdMessageFrame.MessageSize = bufferSize;
+      pvtMsg->StdMessageFrame.MessageSize = bufferSize / 4;
       pvtMsg->XFunctionCode = code;
       smMsg->numFrames = totalFrameCount;
       smMsg->frameCount = frameIndex;
@@ -92,7 +92,8 @@ namespace stor
     allocate_frame_with_sample_header
     (
       unsigned int frameIndex,
-      unsigned int totalFrameCount
+      unsigned int totalFrameCount,
+      unsigned int rbBufferId
     )
     {
       unsigned int value1 = 0xa5a5d2d2;
@@ -114,15 +115,16 @@ namespace stor
         (I2O_PRIVATE_MESSAGE_FRAME*) temp->getDataLocation();
       I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
         (I2O_SM_PREAMBLE_MESSAGE_FRAME*) pvtMsg;
-      pvtMsg->StdMessageFrame.MessageSize = bufferSize;
+      pvtMsg->StdMessageFrame.MessageSize = bufferSize / 4;
       pvtMsg->XFunctionCode = I2O_SM_PREAMBLE;
       smMsg->numFrames = totalFrameCount;
       smMsg->frameCount = frameIndex;
       smMsg->hltTid = value1;
-      smMsg->rbBufferID = 2;
+      smMsg->rbBufferID = rbBufferId;
       smMsg->outModID = value2;
       smMsg->fuProcID = value3;
       smMsg->fuGUID = value4;
+      smMsg->dataSize = bufferSize - sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
       
       return temp;
     }

@@ -6,7 +6,7 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output streams.
  *
- * $Id: InitMsgCollection.h,v 1.4.12.1 2008/12/22 19:17:59 biery Exp $
+ * $Id: InitMsgCollection.h,v 1.4.12.2 2009/02/23 17:12:00 biery Exp $
  */
 
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -28,17 +28,6 @@ namespace stor
     InitMsgCollection();
     ~InitMsgCollection();
 
-#if 0
-    // 29-Apr-2008 KAB - replaced the following methods as part of the switch
-    // to the newer HLT output module selection scheme (in which the HLT
-    // output module needs to be explicitly specified)
-    //
-    // testAndAddIfUnique() replaced by addIfUnique()
-    // getElementForSelection() replaced by getElementForOutputModule()
-    //
-    bool testAndAddIfUnique(InitMsgView const& initMsgView);
-    InitMsgSharedPtr getElementForSelection(Strings const& triggerSelection);
-#endif
     bool addIfUnique(InitMsgView const& initMsgView);
     InitMsgSharedPtr getElementForOutputModule(std::string requestedOMLabel);
     InitMsgSharedPtr getLastElement();

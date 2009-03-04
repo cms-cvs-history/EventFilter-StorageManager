@@ -1,26 +1,24 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.1 2009/01/30 10:49:56 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.2 2009/02/27 13:59:43 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 
-using namespace stor;
+using stor::DQMEventConsumerRegistrationInfo;
+using namespace std;
 
-
-DQMEventConsumerRegistrationInfo::DQMEventConsumerRegistrationInfo()
+ostream&
+stor::operator << ( ostream& os,
+                    const DQMEventConsumerRegistrationInfo& ri )
 {
 
+  os << "DQMEventConsumerRegistrationInfo:" << endl
+     << " Source URL: " << ri.sourceURL() << endl
+     << " Consumer name: " << ri.consumerName() << endl
+     << " Header retry interval, seconds: "
+     << ri.headerRetryInterval() << endl
+     << " Maximum event request rate, Hz: "
+     << ri.maxEventRequestRate() << endl
+     << " Top level folder name: " << ri.topLevelFolderName();
+
+  return os;
+
 }
-
-
-DQMEventConsumerRegistrationInfo::~DQMEventConsumerRegistrationInfo()
-{
-
-}
-
-
-
-/// emacs configuration
-/// Local Variables: -
-/// mode: c++ -
-/// c-basic-offset: 2 -
-/// indent-tabs-mode: nil -
-/// End: -

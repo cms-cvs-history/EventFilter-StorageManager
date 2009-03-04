@@ -28,6 +28,9 @@
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
@@ -61,9 +64,13 @@ namespace stor
 
     FragmentCollector(HLTInfo& h, Deleter d,
 		      log4cplus::Logger& applicationLogger,
+                      SharedResources sharedResources,
+                      boost::shared_ptr<DiscardManager> discardMgr,
                       const std::string& config_str="");
     FragmentCollector(std::auto_ptr<HLTInfo>, Deleter d,
 		      log4cplus::Logger& applicationLogger,
+                      SharedResources sharedResources,
+                      boost::shared_ptr<DiscardManager> discardMgr,
                       const std::string& config_str="");
     ~FragmentCollector();
 
@@ -86,16 +93,14 @@ namespace stor
   private:
     static void run(FragmentCollector*);
     void processFragments();
-    void processEvent(FragEntry* msg);
-    void processHeader(FragEntry* msg);
-    void processDQMEvent(FragEntry* msg);
-    void processErrorEvent(FragEntry* msg);
+    void processEvent(I2OChain i2oChain);
+    void processHeader(I2OChain i2oChain);
+    void processDQMEvent(I2OChain i2oChain);
+    void processErrorEvent(I2OChain i2oChain);
 
-    int assembleFragments(std::map<int, FragEntry>& fragmentMap);
     int removeStaleFragments();
 
     edm::EventBuffer* cmd_q_;
-    edm::EventBuffer* evtbuf_q_;
     edm::EventBuffer* frag_q_;
 
     Deleter buffer_deleter_;
@@ -157,6 +162,8 @@ namespace stor
     std::string catalog_;
     std::string sourceId_;
     log4cplus::Logger& applicationLogger_;
+    boost::shared_ptr<FragmentQueue> newFragmentQueue_;
+    boost::shared_ptr<DiscardManager> discardManager_;
 
     std::auto_ptr<edm::ServiceManager> writer_;
     std::auto_ptr<stor::DQMServiceManager> dqmServiceManager_;
@@ -165,7 +172,15 @@ namespace stor
     boost::shared_ptr<DQMEventServer> DQMeventServer_;
     boost::shared_ptr<InitMsgCollection> initMsgCollection_;
     SMFUSenderList* smRBSenderList_;
+
+    FragmentStore fragmentStore_;
   };
 }
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

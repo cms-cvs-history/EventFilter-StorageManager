@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.16 2009/02/18 11:47:28 mommsen Exp $
+# $Id: BuildFile,v 1.30.16.22 2009/03/03 16:59:26 dshpakov Exp $
 
 <environment>
   <use name=boost>
@@ -65,19 +65,22 @@
    <use name=IOPool/Streamer>
   </bin>
 
-  <bin file=boostStateMachine.cpp>
-  </bin>
-
-  <bin file=state_machine.cpp>
-  </bin>
-
   <bin file=state_machine_t.cpp>
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>
   </bin>
 
-   <bin file=sm_cq_t.cpp>
+  <bin file=EventSelector_t.cpp>
+  </bin>
+
+  <bin file=EventStreamConfigurationInfo_t.cpp>
+  </bin>
+
+  <bin file=EventConsumerRegistrationInfo_t.cpp>
+  </bin>
+
+  <bin file=DQMEventConsumerRegistrationInfo_t.cpp>
   </bin>
 
   <bin file=workloop_t.cpp>
@@ -116,5 +119,11 @@
   <bin file=FragmentStore_t.cpp>
     <use name=cppunit>
   </bin>
+
+  <bin file=QueueID_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+
 
 </environment>

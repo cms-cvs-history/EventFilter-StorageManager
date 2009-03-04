@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.3 2009/02/17 13:20:12 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.5 2009/03/03 22:01:39 biery Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -66,6 +66,17 @@ XCEPT_DEFINE_EXCEPTION(stor, WrongI2OMessageType)
  * Exception raised in case of requesting information from a faulty or incomplete init message
  */
 XCEPT_DEFINE_EXCEPTION(stor, IncompleteInitMessage)
+
+/**
+ * Exception raised in case of requesting information from a faulty or incomplete event message
+ */
+XCEPT_DEFINE_EXCEPTION(stor, IncompleteEventMessage)
+
+/**
+ * Exception raised when the SM is unable to determine which resource
+ * broker should received a discard message for a particular I2O message.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, RBLookupFailed)
 
 
 #endif // _storagemanager_Exception_h_

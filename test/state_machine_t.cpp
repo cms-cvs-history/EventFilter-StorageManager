@@ -6,10 +6,11 @@
 #include <boost/statechart/event_base.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
-#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 using namespace std;
@@ -22,6 +23,29 @@ using boost::shared_ptr;
 typedef map< string, shared_ptr<event_base> > EventMap;
 typedef list<string> EventList;
 typedef vector<TransitionRecord> TransitionList;
+
+/////////////////////////////////////////////////////////////////////
+//// Simulate the processing of events by the fragment processor ////
+/////////////////////////////////////////////////////////////////////
+void processEvent(  StateMachine& machine,
+                    stor::event_ptr requestedEvent )
+{
+  boost::shared_ptr<CommandQueue> cmdQueue;
+  cmdQueue = machine.getSharedResources()->_commandQueue;
+
+  cmdQueue->enq_wait( requestedEvent );
+
+  stor::event_ptr nextEvent;
+  while ( !cmdQueue->empty() )
+    {
+      bool gotEvent = cmdQueue->deq_nowait( nextEvent );
+      if ( gotEvent )
+        {
+          machine.process_event( *nextEvent );
+          machine.getCurrentState().noFragmentToProcess();
+        }
+    }
+}
 
 //////////////////////////////////////////////////////
 //// Exit with non-zero code if unexpected state: ////
@@ -65,7 +89,7 @@ void checkSignals( StateMachine& m,
 	  cerr << "Cannot find event " << *i << " in event map" << endl;
 	  exit(2);
 	}
-      m.process_event( *(j->second) );
+      processEvent( m, j->second );
       checkState( m, expected );
     }
 
@@ -133,12 +157,17 @@ int main()
 
   DiskWriter dw;
   EventDistributor ed;
-  FragmentProcessor fp;
   FragmentStore fs;
+  SharedResources sr;
 
-  StateMachine m( &dw, &ed, &fp, &fs );
+  boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
+  sr._commandQueue = cmdQueue;
+
+  StateMachine m( &dw, &ed, &fs, &sr );
 
   EventList elist;
+
+  stor::event_ptr stMachEvent;
 
   //
   //// Halted: ////
@@ -161,7 +190,8 @@ int main()
   //// Stopped: ////
   //
 
-  m.process_event( Configure() );
+  stMachEvent.reset( new Configure() );
+  processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
 
   cout << "**** Testing illegal signals in Stopped state ****" << endl;
@@ -177,7 +207,8 @@ int main()
   //// Processing: ////
   //
 
-  m.process_event( Enable() );
+  stMachEvent.reset( new Enable() );
+  processEvent( m, stMachEvent );
   checkState( m, "Processing" );
 
   cout << "**** Testing illegal signals in Processing state ****" << endl;
@@ -195,7 +226,8 @@ int main()
   //
 
   m.clearHistory();
-  m.process_event( Stop() );
+  stMachEvent.reset( new Stop() );
+  processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
 
   cout << "**** Testing if DrainingQueues is entered and exited on Stop ****" << endl;
@@ -213,7 +245,8 @@ int main()
   //
 
   m.clearHistory();
-  m.process_event( Reconfigure() );
+  stMachEvent.reset( new Reconfigure() );
+  processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
 
   cout << "**** Testing if Reconfigure triggers the right sequence ****" << endl;
@@ -229,7 +262,8 @@ int main()
   //// Failed: ////
   //
 
-  m.process_event( Fail() );
+  stMachEvent.reset( new Fail() );
+  processEvent( m, stMachEvent );
   checkState( m, "Failed" );
 
   cout << "**** Making sure no signal changes Failed state ****" << endl;
@@ -257,7 +291,8 @@ int main()
   // Halted:
   m.initiate();
   checkState( m, "Halted" );
-  m.process_event( Fail() );
+  stMachEvent.reset( new Fail() );
+  processEvent( m, stMachEvent );
   checkState( m, "Failed" );
   m.terminate();
 
@@ -266,9 +301,11 @@ int main()
   // Stopped:
   m.initiate();
   checkState( m, "Halted" );
-  m.process_event( Configure() );
+  stMachEvent.reset( new Configure() );
+  processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
-  m.process_event( Fail() );
+  stMachEvent.reset( new Fail() );
+  processEvent( m, stMachEvent );
   checkState( m, "Failed" );
   m.terminate();
  
@@ -277,11 +314,14 @@ int main()
   // Processing:
   m.initiate();
   checkState( m, "Halted" );
-  m.process_event( Configure() );
+  stMachEvent.reset( new Configure() );
+  processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
-  m.process_event( Enable() );
+  stMachEvent.reset( new Enable() );
+  processEvent( m, stMachEvent );
   checkState( m, "Processing" );
-  m.process_event( Fail() );
+  stMachEvent.reset( new Fail() );
+  processEvent( m, stMachEvent );
   checkState( m, "Failed" );
   m.terminate();
 

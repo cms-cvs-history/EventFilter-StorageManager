@@ -14,7 +14,7 @@
  * Initial Implementation based on Kurt's EventServer
  * we can think about a common class later...
  *
- * $Id: DQMEventServer.h,v 1.2 2007/05/16 22:53:44 hcheung Exp $
+ * $Id: DQMEventServer.h,v 1.3.18.1 2009/03/03 18:28:55 paterno Exp $
  */
 
 #include <sys/time.h>
@@ -60,3 +60,9 @@ namespace stor
 }
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

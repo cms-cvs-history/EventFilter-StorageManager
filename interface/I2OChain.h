@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.15 2009/02/18 14:57:36 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.22 2009/03/04 15:18:31 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -10,6 +10,8 @@
 #include "toolbox/mem/Reference.h"
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
+#include "EventFilter/StorageManager/interface/StreamID.h"
+#include "EventFilter/StorageManager/interface/Types.h"
 
 namespace toolbox
 {
@@ -28,9 +30,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.15 $
-   * $Date: 2009/02/18 14:57:36 $
+   * $Author: biery $
+   * $Revision: 1.1.2.22 $
+   * $Date: 2009/03/04 15:18:31 $
    */
 
 
@@ -171,11 +173,119 @@ namespace stor {
     double lastFragmentTime() const;
 
     /**
+       Tags the chain with the specified event stream ID.  This means
+       that the data in the chain should be sent to the specified
+       event stream.
+     */
+    void tagForEventStream(StreamID);
+
+    /**
+       Tags the chain with the specified event consumer queue ID.  This
+       means that the data in the chain should be sent to the specified
+       event consumer queue.
+     */
+    void tagForEventConsumer(QueueID);
+
+    /**
+       Tags the chain with the specified DQM event consumer queue ID.  This
+       means that the data in the chain should be sent to the specified
+       DQM event consumer queue.
+     */
+    void tagForDQMEventConsumer(QueueID);
+
+    /**
+       Returns true if the chain has been tagged for any event stream
+       and false otherwise.
+    */
+    bool isTaggedForAnyEventStream();
+
+    /**
+       Returns true if the chain has been tagged for any event consumer
+       and false otherwise.
+    */
+    bool isTaggedForAnyEventConsumer();
+
+    /**
+       Returns true if the chain has been tagged for any DQM event consumer
+       and false otherwise.
+    */
+    bool isTaggedForAnyDQMEventConsumer();
+
+    /**
+       Returns the list of event streams (stream IDs) that
+       this chain has been tagged for.
+       An empty list is returned if the chain is empty.
+    */
+    std::vector<StreamID> getEventStreamTags();
+
+    /**
+       Returns the list of event consumers (queue IDs) that
+       this chain has been tagged for.
+       An empty list is returned if the chain is empty.
+    */
+    std::vector<QueueID> getEventConsumerTags();
+
+    /**
+       Returns the list of DQM event consumers (queue IDs) that
+       this chain has been tagged for.
+       An empty list is returned if the chain is empty.
+    */
+    std::vector<QueueID> getDQMEventConsumerTags();
+
+    /**
        Returns the message code for the chain.  Valid values
        are Header::INVALID, Header::INIT, Header::EVENT, Header::DQM_EVENT,
        and Header::ERROR_EVENT from IOPool/Streamer/interface/MsgHeader.h.
      */
     unsigned int messageCode() const;
+
+    /**
+       Returns the resource broker buffer ID from the contained message.
+       If no valid buffer ID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int rbBufferId() const;
+
+    /**
+       Returns the HLT local ID from the contained message.
+       If no valid local ID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int hltLocalId() const;
+
+    /**
+       Returns the HLT instance number from the contained message.
+       If no valid instance number can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int hltInstance() const;
+
+    /**
+       Returns the HLT TID from the contained message.
+       If no valid TID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int hltTid() const;
+
+    /**
+       Returns the HLT URL from the contained message.  If no
+       valid URL can be determined, an empty string is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    std::string hltURL() const;
+
+    /**
+       Returns the HLT class name from the contained message.  If no
+       valid class name can be determined, an empty string is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    std::string hltClassName() const;
 
     /**
        Returns the fragment key for the chain.  The fragment key
@@ -247,12 +357,60 @@ namespace stor {
        storage manager message or worse.  If the I2O fragments in the chain
        are corrupt, the data copied into the buffer could be the raw
        I2O messages, including headers.
+       Returns the number of bytes copied.
      */
-    void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
+    unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
-    // methods to access data in INIT messages
+    /**
+       Returns the output module label contained in the message, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
     std::string outputModuleLabel() const;
+
+    /**
+       Returns the output module ID contained in the message, if and
+       only if, the message is an INIT or an Event message.  Otherwise,
+       an exception is thrown.
+     */
     uint32 outputModuleId() const;
+
+    /**
+       Copies the HLT trigger names into the specified vector, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
+    void hltTriggerNames(Strings& nameList) const;
+
+    /**
+       Copies the HLT trigger names into the specified vector, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
+    void hltTriggerSelections(Strings& nameList) const;
+
+    /**
+       Copies the L1 trigger names into the specified vector, if and
+       only if, the message is an INIT message.  Otherwise,
+       an exception is thrown.
+     */
+    void l1TriggerNames(Strings& nameList) const;
+
+    /**
+       Returns the number HLT trigger bits contained in the message, if
+       and only if, the message is an Event message.  Otherwise,
+       an exception is thrown.
+     */
+    uint32 hltTriggerCount() const;
+
+    /**
+       Copies the HLT trigger bits into the specified vector, if and
+       only if, the message is an Event message.  Otherwise,
+       an exception is thrown.  The vector will be resized so that
+       it contains the full number of HLT bits (given by the
+       hltCount() method) with two bits per HLT trigger.
+     */
+    void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
   private:
 

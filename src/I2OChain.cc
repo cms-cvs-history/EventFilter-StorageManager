@@ -1,13 +1,13 @@
-// $Id: I2OChain.cc,v 1.1.2.19 2009/02/18 14:59:52 mommsen Exp $
+// $Id: I2OChain.cc,v 1.1.2.27 2009/03/04 15:18:31 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/Types.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
+#include "IOPool/Streamer/interface/EventMessage.h"
 
 namespace stor
 {
@@ -29,12 +29,14 @@ namespace stor
     ///////////////////////////////////////////////////////////////////
     class ChainData
     {
-      enum BitMasksForFaulty { INVALID_REFERENCE = 0x1,
-                               CORRUPT_HEADER = 0x2,
-                               TOTAL_COUNT_MISMATCH = 0x4,
-                               FRAGMENTS_OUT_OF_ORDER = 0x8,
-                               DUPLICATE_FRAGMENT = 0x10,
-                               INCOMPLETE_MESSAGE = 0x20,
+      enum BitMasksForFaulty { INVALID_INITIAL_REFERENCE = 0x1,
+                               CORRUPT_INITIAL_HEADER = 0x2,
+                               INVALID_SECONDARY_REFERENCE = 0x4,
+                               CORRUPT_SECONDARY_HEADER = 0x8,
+                               TOTAL_COUNT_MISMATCH = 0x10,
+                               FRAGMENTS_OUT_OF_ORDER = 0x20,
+                               DUPLICATE_FRAGMENT = 0x40,
+                               INCOMPLETE_MESSAGE = 0x80,
                                EXTERNALLY_REQUESTED = 0x10000 };
 
     public:
@@ -53,21 +55,44 @@ namespace stor
       unsigned int messageCode() const {return _messageCode;}
       FragKey const& fragmentKey() const {return _fragKey;}
       unsigned int fragmentCount() const {return _fragmentCount;}
+      unsigned int rbBufferId() const {return _rbBufferId;}
+      unsigned int hltLocalId() const {return _hltLocalId;}
+      unsigned int hltInstance() const {return _hltInstance;}
+      unsigned int hltTid() const {return _hltTid;}
       double creationTime() const {return _creationTime;}
       double lastFragmentTime() const {return _lastFragmentTime;}
       unsigned long totalDataSize() const;
       unsigned long dataSize(int fragmentIndex) const;
       unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
-      void copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
+      unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
-      std::string outputModuleLabel() const;
+      std::string hltURL() const;
+      std::string hltClassName() const;
       uint32 outputModuleId() const;
 
+      std::string outputModuleLabel() const;
+      void hltTriggerNames(Strings& nameList) const;
+      void hltTriggerSelections(Strings& nameList) const;
+      void l1TriggerNames(Strings& nameList) const;
+
+      uint32 hltTriggerCount() const;
+      void hltTriggerBits(std::vector<unsigned char>& bitList) const;
+
+      void tagForEventStream(StreamID);
+      void tagForEventConsumer(QueueID);
+      void tagForDQMEventConsumer(QueueID);
+      bool isTaggedForAnyEventStream() {return !_streamTags.empty();}
+      bool isTaggedForAnyEventConsumer() {return !_eventConsumerTags.empty();}
+      bool isTaggedForAnyDQMEventConsumer() {return !_dqmEventConsumerTags.empty();}
+      std::vector<StreamID> const& getEventStreamTags() const;
+      std::vector<QueueID> const& getEventConsumerTags() const;
+      std::vector<QueueID> const& getDQMEventConsumerTags() const;
+
     private:
-      std::vector<QueueID> _streamTags;
-      std::vector<QueueID> _dqmEventConsumerTags;
+      std::vector<StreamID> _streamTags;
       std::vector<QueueID> _eventConsumerTags;
+      std::vector<QueueID> _dqmEventConsumerTags;
 
     protected:
       toolbox::mem::Reference* _ref;
@@ -79,22 +104,44 @@ namespace stor
       FragKey _fragKey;
       unsigned int _fragmentCount;
       unsigned int _expectedNumberOfFragments;
+      unsigned int _rbBufferId;
+      unsigned int _hltLocalId;
+      unsigned int _hltInstance;
+      unsigned int _hltTid;
 
       double _creationTime;
       double _lastFragmentTime;
 
+      bool validateDataLocation(toolbox::mem::Reference* ref,
+                                BitMasksForFaulty maskToUse);
+      bool validateMessageSize(toolbox::mem::Reference* ref,
+                               BitMasksForFaulty maskToUse);
+      bool validateFragmentIndexAndCount(toolbox::mem::Reference* ref,
+                                         BitMasksForFaulty maskToUse);
+      bool validateExpectedFragmentCount(toolbox::mem::Reference* ref,
+                                         BitMasksForFaulty maskToUse);
+      bool validateFragmentOrder(toolbox::mem::Reference* ref,
+                                 int& indexValue);
+      bool validateMessageCode(toolbox::mem::Reference* ref,
+                               unsigned short expectedI2OMessageCode);
+
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
-      void validateI2OHeaders(unsigned short expectedI2OMessageCode);
+      virtual uint32 do_outputModuleId() const;
 
       virtual std::string do_outputModuleLabel() const;
-      virtual uint32 do_outputModuleId() const;
+      virtual void do_hltTriggerNames(Strings& nameList) const;
+      virtual void do_hltTriggerSelections(Strings& nameList) const;
+      virtual void do_l1TriggerNames(Strings& nameList) const;
+
+      virtual uint32 do_hltTriggerCount() const;
+      virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
     };
 
     // A ChainData object may or may not contain a Reference.
     inline ChainData::ChainData(toolbox::mem::Reference* pRef) :
       _streamTags(),
-      _dqmEventConsumerTags(),
       _eventConsumerTags(),
+      _dqmEventConsumerTags(),
       _ref(pRef),
       _complete(false),
       _faultyBits(0),
@@ -102,39 +149,57 @@ namespace stor
       _fragKey(Header::INVALID,0,0,0,0,0),
       _fragmentCount(0),
       _expectedNumberOfFragments(0),
+      _rbBufferId(0),
+      _hltLocalId(0),
+      _hltInstance(0),
+      _hltTid(0),
       _creationTime(-1),
       _lastFragmentTime(-1)
     {
+      // Avoid the situation in which all unparsable chains
+      // have the same fragment key.  We do this by providing a 
+      // variable default value for one of the fragKey fields.
+      if (pRef)
+        {
+          _fragKey.secondaryId_ = (uint32) pRef->getDataLocation();
+        }
+      else
+        {
+          _fragKey.secondaryId_ = (uint32) time(0);
+        }
+
       if (pRef)
         {
           _creationTime = utils::getCurrentTime();
           _lastFragmentTime = _creationTime;
 
-          toolbox::mem::Reference* curRef = pRef;
+          // first fragment in Reference chain
+          ++_fragmentCount;
+          int workingIndex = -1;
+
+          if (validateDataLocation(pRef, INVALID_INITIAL_REFERENCE) &&
+              validateMessageSize(pRef, CORRUPT_INITIAL_HEADER) &&
+              validateFragmentIndexAndCount(pRef, CORRUPT_INITIAL_HEADER))
+            {
+              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+                (I2O_SM_MULTIPART_MESSAGE_FRAME*) pRef->getDataLocation();
+              _expectedNumberOfFragments = smMsg->numFrames;
+
+              validateFragmentOrder(pRef, workingIndex);
+            }
+
+          // subsequent fragments in Reference chain
+          toolbox::mem::Reference* curRef = pRef->getNextReference();
           while (curRef)
             {
               ++_fragmentCount;
 
-              I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-                (I2O_PRIVATE_MESSAGE_FRAME*) curRef->getDataLocation();
-              if (!pvtMsg)
+              if (validateDataLocation(curRef, INVALID_SECONDARY_REFERENCE) &&
+                  validateMessageSize(curRef, CORRUPT_SECONDARY_HEADER) &&
+                  validateFragmentIndexAndCount(curRef, CORRUPT_SECONDARY_HEADER))
                 {
-                  _faultyBits |= INVALID_REFERENCE;
-                }
-              else if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
-                       sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
-                {
-                  _faultyBits |= CORRUPT_HEADER;
-                }
-              else
-                {
-                  I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-                    (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
-                  _expectedNumberOfFragments = smMsg->numFrames;
-                  if (_expectedNumberOfFragments < 1 ||
-                      smMsg->frameCount >= _expectedNumberOfFragments) {
-                    _faultyBits |= CORRUPT_HEADER;
-                  }
+                  validateExpectedFragmentCount(curRef, TOTAL_COUNT_MISMATCH);
+                  validateFragmentOrder(curRef, workingIndex);
                 }
 
               curRef = curRef->getNextReference();
@@ -178,8 +243,8 @@ namespace stor
 
     inline bool ChainData::parsable() const
     {
-      return (_ref) && ((_faultyBits & INVALID_REFERENCE) == 0) &&
-        ((_faultyBits & CORRUPT_HEADER) == 0);
+      return (_ref) && ((_faultyBits & INVALID_INITIAL_REFERENCE) == 0) &&
+        ((_faultyBits & CORRUPT_INITIAL_HEADER) == 0);
     }
 
     // this method currently does NOT support operation on empty chains
@@ -350,7 +415,7 @@ namespace stor
 
     inline void ChainData::markCorrupt()
     {
-      _faultyBits |= CORRUPT_HEADER;
+      _faultyBits |= CORRUPT_INITIAL_HEADER;
     }
 
     inline unsigned long* ChainData::getBufferData()
@@ -363,8 +428,8 @@ namespace stor
     inline void ChainData::swap(ChainData& other)
     {
       _streamTags.swap(other._streamTags);
-      _dqmEventConsumerTags.swap(other._dqmEventConsumerTags);
       _eventConsumerTags.swap(other._eventConsumerTags);
+      _dqmEventConsumerTags.swap(other._dqmEventConsumerTags);
       std::swap(_ref, other._ref);
       std::swap(_complete, other._complete);
       std::swap(_faultyBits, other._faultyBits);
@@ -462,7 +527,7 @@ namespace stor
         }
     }
 
-    void ChainData::
+    unsigned int ChainData::
     copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
     {
       unsigned long fullSize = totalDataSize();
@@ -502,16 +567,203 @@ namespace stor
 
           curRef = curRef->getNextReference();
         }
+
+      return static_cast<unsigned int>(fullSize);
     }
 
-    std::string ChainData::outputModuleLabel() const
+    inline std::string ChainData::hltURL() const
+    {
+      if (parsable())
+        {
+          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) _ref->getDataLocation();
+          size_t size = std::min(strlen(smMsg->hltURL),
+                                 (size_t) MAX_I2O_SM_URLCHARS);
+          std::string URL(smMsg->hltURL, size);
+          return URL;
+        }
+      else
+        {
+          return "";
+        }
+    }
+
+    inline std::string ChainData::hltClassName() const
+    {
+      if (parsable())
+        {
+          I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+            (I2O_SM_MULTIPART_MESSAGE_FRAME*) _ref->getDataLocation();
+          size_t size = std::min(strlen(smMsg->hltClassName),
+                                 (size_t) MAX_I2O_SM_URLCHARS);
+          std::string className(smMsg->hltClassName, size);
+          return className;
+        }
+      else
+        {
+          return "";
+        }
+    }
+
+    inline uint32 ChainData::outputModuleId() const
+    {
+      return do_outputModuleId();
+    }
+
+
+    inline std::string ChainData::outputModuleLabel() const
     {
       return do_outputModuleLabel();
     }
 
-    uint32 ChainData::outputModuleId() const
+    inline void ChainData::hltTriggerNames(Strings& nameList) const
     {
-      return do_outputModuleId();
+      do_hltTriggerNames(nameList);
+    }
+
+    inline void ChainData::hltTriggerSelections(Strings& nameList) const
+    {
+      do_hltTriggerSelections(nameList);
+    }
+
+    inline void ChainData::l1TriggerNames(Strings& nameList) const
+    {
+      do_l1TriggerNames(nameList);
+    }
+
+    inline uint32 ChainData::hltTriggerCount() const
+    {
+      return do_hltTriggerCount();
+    }
+
+    inline void
+    ChainData::hltTriggerBits(std::vector<unsigned char>& bitList) const
+    {
+      do_hltTriggerBits(bitList);
+    }
+
+    inline void ChainData::tagForEventStream(StreamID streamId)
+    {
+      _streamTags.push_back(streamId);
+    }
+
+    inline void ChainData::tagForEventConsumer(QueueID queueId)
+    {
+      _eventConsumerTags.push_back(queueId);
+    }
+
+    inline void ChainData::tagForDQMEventConsumer(QueueID queueId)
+    {
+      _dqmEventConsumerTags.push_back(queueId);
+    }
+
+    inline std::vector<StreamID> const& ChainData::getEventStreamTags() const
+    {
+      return _streamTags;
+    }
+
+    inline std::vector<QueueID> const& ChainData::getEventConsumerTags() const
+    {
+      return _eventConsumerTags;
+    }
+
+    inline std::vector<QueueID> const& ChainData::getDQMEventConsumerTags() const
+    {
+      return _dqmEventConsumerTags;
+    }
+
+
+    inline bool
+    ChainData::validateDataLocation(toolbox::mem::Reference* ref,
+                                    BitMasksForFaulty maskToUse)
+    {
+      I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+        (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+      if (!pvtMsg)
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateMessageSize(toolbox::mem::Reference* ref,
+                                   BitMasksForFaulty maskToUse)
+    {
+      I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+        (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+      if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
+          sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateFragmentIndexAndCount(toolbox::mem::Reference* ref,
+                                             BitMasksForFaulty maskToUse)
+    {
+      I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) ref->getDataLocation();
+      if (smMsg->numFrames < 1 || smMsg->frameCount >= smMsg->numFrames)
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateExpectedFragmentCount(toolbox::mem::Reference* ref,
+                                             BitMasksForFaulty maskToUse)
+    {
+      I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) ref->getDataLocation();
+      if (smMsg->numFrames != _expectedNumberOfFragments)
+        {
+          _faultyBits |= maskToUse;
+          return false;
+        }
+      return true;
+    }
+
+    inline bool
+    ChainData::validateFragmentOrder(toolbox::mem::Reference* ref,
+                                     int& indexValue)
+    {
+      int problemCount = 0;
+      I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
+        (I2O_SM_MULTIPART_MESSAGE_FRAME*) ref->getDataLocation();
+      int thisIndex = static_cast<int>(smMsg->frameCount);
+      if (thisIndex == indexValue)
+        {
+          _faultyBits |= DUPLICATE_FRAGMENT;
+          ++problemCount;
+        }
+      else if (thisIndex < indexValue)
+        {
+          _faultyBits |= FRAGMENTS_OUT_OF_ORDER;
+          ++problemCount;
+        }
+      indexValue = thisIndex;
+      return (problemCount == 0);
+    }
+
+    inline bool
+    ChainData::validateMessageCode(toolbox::mem::Reference* ref,
+                                   unsigned short expectedI2OMessageCode)
+    {
+      I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
+        (I2O_PRIVATE_MESSAGE_FRAME*) ref->getDataLocation();
+      if (pvtMsg->XFunctionCode != expectedI2OMessageCode)
+        {
+          _faultyBits |= CORRUPT_SECONDARY_HEADER;
+          return false;
+        }
+      return true;
     }
 
     inline unsigned char*
@@ -520,54 +772,12 @@ namespace stor
       return dataLoc;
     }
 
-    void ChainData::validateI2OHeaders(unsigned short expectedI2OMessageCode)
+    inline uint32 ChainData::do_outputModuleId() const
     {
-      int previousIndex = -1;
-      toolbox::mem::Reference* curRef = _ref;
-      while (curRef)
-        {
-          I2O_PRIVATE_MESSAGE_FRAME *pvtMsg =
-            (I2O_PRIVATE_MESSAGE_FRAME*) curRef->getDataLocation();
-          if (!pvtMsg)
-            {
-              _faultyBits |= INVALID_REFERENCE;
-            }
-          else if ((size_t)(pvtMsg->StdMessageFrame.MessageSize*4) <
-                   sizeof(I2O_SM_MULTIPART_MESSAGE_FRAME))
-            {
-              _faultyBits |= CORRUPT_HEADER;
-            }
-          else
-            {
-              I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-                (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
-              if (pvtMsg->XFunctionCode != expectedI2OMessageCode)
-                {
-                  _faultyBits |= CORRUPT_HEADER;
-                }
-              if (smMsg->numFrames != _expectedNumberOfFragments)
-                {
-                  _faultyBits |= TOTAL_COUNT_MISMATCH;
-                }
-
-              int thisIndex = static_cast<int>(smMsg->frameCount);
-              if (thisIndex == previousIndex)
-                {
-                  _faultyBits |= DUPLICATE_FRAGMENT;
-                }
-              if (thisIndex < previousIndex)
-                {
-                  _faultyBits |= FRAGMENTS_OUT_OF_ORDER;
-                }
-              previousIndex = thisIndex;
-
-              // we could also check the fields that we use for the
-              // fragment key, but that would need intelligence from
-              // the ChainData child classes...
-            }
-
-          curRef = curRef->getNextReference();
-        }
+      std::stringstream msg;
+      msg << "An output module ID is only available from a valid, ";
+      msg << "complete INIT or Event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
     inline std::string ChainData::do_outputModuleLabel() const
@@ -578,11 +788,44 @@ namespace stor
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
-    inline uint32 ChainData::do_outputModuleId() const
+    inline void ChainData::do_hltTriggerNames(Strings& nameList) const
     {
       std::stringstream msg;
-      msg << "An output module ID is only available from a valid, ";
+      msg << "The HLT trigger names are only available from a valid, ";
       msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline void ChainData::do_hltTriggerSelections(Strings& nameList) const
+    {
+      std::stringstream msg;
+      msg << "The HLT trigger selections are only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline void ChainData::do_l1TriggerNames(Strings& nameList) const
+    {
+      std::stringstream msg;
+      msg << "The L1 trigger names are only available from a valid, ";
+      msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline uint32 ChainData::do_hltTriggerCount() const
+    {
+      std::stringstream msg;
+      msg << "An HLT trigger count is only available from a valid, ";
+      msg << "complete Event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline void 
+    ChainData::do_hltTriggerBits(std::vector<unsigned char>& bitList) const
+    {
+      std::stringstream msg;
+      msg << "The HLT trigger bits are only available from a valid, ";
+      msg << "complete Event message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
@@ -594,16 +837,22 @@ namespace stor
 
     protected:
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
-      std::string do_outputModuleLabel() const;
       uint32 do_outputModuleId() const;
+      std::string do_outputModuleLabel() const;
+      void do_hltTriggerNames(Strings& nameList) const;
+      void do_hltTriggerSelections(Strings& nameList) const;
+      void do_l1TriggerNames(Strings& nameList) const;
 
     private:
       void parseI2OHeader();
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
-      mutable std::string _outputModuleLabel;
       mutable uint32 _outputModuleId;
+      mutable std::string _outputModuleLabel;
+      mutable Strings _hltTriggerNames;
+      mutable Strings _hltTriggerSelections;
+      mutable Strings _l1TriggerNames;
     };
 
     inline InitMsgData::InitMsgData(toolbox::mem::Reference* pRef) :
@@ -614,7 +863,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_PREAMBLE);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_PREAMBLE);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -628,14 +882,28 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
             (I2O_SM_PREAMBLE_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
           return dataLoc;
         }
+    }
+
+    uint32 InitMsgData::do_outputModuleId() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An output module ID can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _outputModuleId;
     }
 
     std::string InitMsgData::do_outputModuleLabel() const
@@ -652,18 +920,66 @@ namespace stor
       return _outputModuleLabel;
     }
 
-    uint32 InitMsgData::do_outputModuleId() const
+    void InitMsgData::do_hltTriggerNames(Strings& nameList) const
     {
       if (faulty() || !complete())
         {
           std::stringstream msg;
-          msg << "An output module ID can not be determined from a ";
+          msg << "The HLT trigger names can not be determined from a ";
           msg << "faulty or incomplete INIT message.";
           XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
         }
 
       if (! _headerFieldsCached) {cacheHeaderFields();}
-      return _outputModuleId;
+      nameList = _hltTriggerNames;
+    }
+
+    void InitMsgData::do_hltTriggerSelections(Strings& nameList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The HLT trigger selections can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      nameList = _hltTriggerSelections;
+    }
+
+    void InitMsgData::do_l1TriggerNames(Strings& nameList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The L1 trigger names can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      nameList = _l1TriggerNames;
+    }
+
+    inline void InitMsgData::parseI2OHeader()
+    {
+      if (parsable())
+        {
+          _messageCode = Header::INIT;
+          I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
+            (I2O_SM_PREAMBLE_MESSAGE_FRAME*) _ref->getDataLocation();
+          _fragKey.code_ = _messageCode;
+          _fragKey.run_ = 0;
+          _fragKey.event_ = smMsg->hltTid;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
+          _hltLocalId = smMsg->hltLocalId;
+          _hltInstance = smMsg->hltInstance;
+          _hltTid = smMsg->hltTid;
+        }
     }
 
     void InitMsgData::cacheHeaderFields() const
@@ -705,24 +1021,11 @@ namespace stor
 
       _outputModuleId = msgView->outputModuleId();
       _outputModuleLabel = msgView->outputModuleLabel();
+      msgView->hltTriggerNames(_hltTriggerNames);
+      msgView->hltTriggerSelections(_hltTriggerSelections);
+      msgView->l1TriggerNames(_l1TriggerNames);
 
       _headerFieldsCached = true;
-    }
-
-    inline void InitMsgData::parseI2OHeader()
-    {
-      if (parsable())
-        {
-          _messageCode = Header::INIT;
-          I2O_SM_PREAMBLE_MESSAGE_FRAME *i2oMsg =
-            (I2O_SM_PREAMBLE_MESSAGE_FRAME*) _ref->getDataLocation();
-          _fragKey.code_ = _messageCode;
-          _fragKey.run_ = 0;
-          _fragKey.event_ = i2oMsg->hltTid;
-          _fragKey.secondaryId_ = i2oMsg->outModID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
-        }
     }
 
     class EventMsgData : public ChainData
@@ -733,19 +1036,34 @@ namespace stor
 
     protected:
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      uint32 do_outputModuleId() const;
+      uint32 do_hltTriggerCount() const;
+      void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
     private:
       void parseI2OHeader();
+      void cacheHeaderFields() const;
+
+      mutable bool _headerFieldsCached;
+      mutable uint32 _outputModuleId;
+      mutable uint32 _hltTriggerCount;
+      mutable std::vector<unsigned char> _hltTriggerBits;
     };
 
     inline EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef)
+      ChainData(pRef),
+      _headerFieldsCached(false)
     {
       parseI2OHeader();
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_DATA);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_DATA);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -759,9 +1077,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -769,20 +1087,115 @@ namespace stor
         }
     }
 
+    uint32 EventMsgData::do_outputModuleId() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An output module ID can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _outputModuleId;
+    }
+
+    uint32 EventMsgData::do_hltTriggerCount() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The number of HLT trigger bits can not be determined ";
+          msg << "from a faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _hltTriggerCount;
+    }
+
+    void
+    EventMsgData::do_hltTriggerBits(std::vector<unsigned char>& bitList) const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "The HLT trigger bits can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      bitList = _hltTriggerBits;
+    }
+
     inline void EventMsgData::parseI2OHeader()
     {
       if (parsable())
         {
           _messageCode = Header::EVENT;
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
-          _fragKey.run_ = i2oMsg->runID;
-          _fragKey.event_ = i2oMsg->eventID;
-          _fragKey.secondaryId_ = i2oMsg->outModID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.run_ = smMsg->runID;
+          _fragKey.event_ = smMsg->eventID;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
+          _hltLocalId = smMsg->hltLocalId;
+          _hltInstance = smMsg->hltInstance;
+          _hltTid = smMsg->hltTid;
         }
+    }
+
+    void EventMsgData::cacheHeaderFields() const
+    {
+      unsigned char* firstFragLoc = dataLocation(0);
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
+
+      // if there is only one fragment, use it
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      // otherwise, check if the first fragment is large enough to hold
+      // the full Event message header  (we require some minimal fixed
+      // size in the hope that we don't parse garbage when we overlay
+      // the EventMsgView on the buffer)
+      else if (firstFragSize > 4096)
+        {
+          EventMsgView view(firstFragLoc);
+          if (view.headerSize() <= firstFragSize)
+            {
+              useFirstFrag = true;
+            }
+        }
+
+      boost::shared_ptr<EventMsgView> msgView;
+      boost::shared_ptr< std::vector<unsigned char> >
+        tempBuffer(new std::vector<unsigned char>());
+      if (useFirstFrag)
+        {
+          msgView.reset(new EventMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(*tempBuffer);
+          msgView.reset(new EventMsgView(&(*tempBuffer)[0]));
+        }
+
+      _outputModuleId = msgView->outModId();
+      _hltTriggerCount = msgView->hltCount();
+      if (_hltTriggerCount > 0)
+        {
+          _hltTriggerBits.resize(1 + (_hltTriggerCount-1)/4);
+        }
+      msgView->hltTriggerBits(&_hltTriggerBits[0]);
+
+      _headerFieldsCached = true;
     }
 
     class DQMEventMsgData : public ChainData
@@ -805,7 +1218,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_DQM);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_DQM);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -819,9 +1237,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DQM_MESSAGE_FRAME *smMsg =
             (I2O_SM_DQM_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -834,14 +1252,18 @@ namespace stor
       if (parsable())
         {
           _messageCode = Header::DQM_EVENT;
-          I2O_SM_DQM_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DQM_MESSAGE_FRAME *smMsg =
             (I2O_SM_DQM_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
-          _fragKey.run_ = i2oMsg->runID;
-          _fragKey.event_ = i2oMsg->eventAtUpdateID;
-          _fragKey.secondaryId_ = i2oMsg->folderID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.run_ = smMsg->runID;
+          _fragKey.event_ = smMsg->eventAtUpdateID;
+          _fragKey.secondaryId_ = smMsg->folderID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
+          _hltLocalId = smMsg->hltLocalId;
+          _hltInstance = smMsg->hltInstance;
+          _hltTid = smMsg->hltTid;
         }
     }
 
@@ -865,7 +1287,12 @@ namespace stor
 
       if (_fragmentCount > 1)
         {
-          validateI2OHeaders(I2O_SM_ERROR);
+          toolbox::mem::Reference* curRef = _ref->getNextReference();
+          while (curRef)
+            {
+              validateMessageCode(curRef, I2O_SM_ERROR);
+              curRef = curRef->getNextReference();
+            }
         }
 
       if (!faulty() && _fragmentCount == _expectedNumberOfFragments)
@@ -879,9 +1306,9 @@ namespace stor
     {
       if (parsable())
         {
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) dataLoc;
-          return (unsigned char*) i2oMsg->dataPtr();
+          return (unsigned char*) smMsg->dataPtr();
         }
       else
         {
@@ -894,14 +1321,18 @@ namespace stor
       if (parsable())
         {
           _messageCode = Header::ERROR_EVENT;
-          I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
             (I2O_SM_DATA_MESSAGE_FRAME*) _ref->getDataLocation();
           _fragKey.code_ = _messageCode;
-          _fragKey.run_ = i2oMsg->runID;
-          _fragKey.event_ = i2oMsg->eventID;
-          _fragKey.secondaryId_ = i2oMsg->outModID;
-          _fragKey.originatorPid_ = i2oMsg->fuProcID;
-          _fragKey.originatorGuid_ = i2oMsg->fuGUID;
+          _fragKey.run_ = smMsg->runID;
+          _fragKey.event_ = smMsg->eventID;
+          _fragKey.secondaryId_ = smMsg->outModID;
+          _fragKey.originatorPid_ = smMsg->fuProcID;
+          _fragKey.originatorGuid_ = smMsg->fuGUID;
+          _rbBufferId = smMsg->rbBufferID;
+          _hltLocalId = smMsg->hltLocalId;
+          _hltInstance = smMsg->hltInstance;
+          _hltTid = smMsg->hltTid;
         }
     }
   } // namespace detail
@@ -1044,11 +1475,11 @@ namespace stor
         msg << "A fragment key mismatch was detected when trying to add "
             << "a chain link to an existing chain. "
             << "Existing key values = ("
-            << thisKey.code_ << "," << thisKey.run_ << ","
+            << ((int)thisKey.code_) << "," << thisKey.run_ << ","
             << thisKey.event_ << "," << thisKey.secondaryId_ << ","
             << thisKey.originatorPid_ << "," << thisKey.originatorGuid_
             << "), new key values = ("
-            << thatKey.code_ << "," << thatKey.run_ << ","
+            << ((int)thatKey.code_) << "," << thatKey.run_ << ","
             << thatKey.event_ << "," << thatKey.secondaryId_ << ","
             << thatKey.originatorPid_ << "," << thatKey.originatorGuid_
             << ").";
@@ -1093,6 +1524,42 @@ namespace stor
     return _data->messageCode();
   }
 
+  unsigned int I2OChain::rbBufferId() const
+  {
+    if (!_data) return 0;
+    return _data->rbBufferId();
+  }
+
+  unsigned int I2OChain::hltLocalId() const
+  {
+    if (!_data) return 0;
+    return _data->hltLocalId();
+  }
+
+  unsigned int I2OChain::hltInstance() const
+  {
+    if (!_data) return 0;
+    return _data->hltInstance();
+  }
+
+  unsigned int I2OChain::hltTid() const
+  {
+    if (!_data) return 0;
+    return _data->hltTid();
+  }
+
+  std::string I2OChain::hltURL() const
+  {
+    if (!_data) return "";
+    return _data->hltURL();
+  }
+
+  std::string I2OChain::hltClassName() const
+  {
+    if (!_data) return "";
+    return _data->hltClassName();
+  }
+
   FragKey I2OChain::fragmentKey() const
   {
     if (!_data) return FragKey(Header::INVALID,0,0,0,0,0);
@@ -1115,6 +1582,90 @@ namespace stor
   {
     if (!_data) return -1;
     return _data->lastFragmentTime();
+  }
+
+  void I2OChain::tagForEventStream(StreamID streamId)
+  {
+    if (!_data)
+      {
+        std::stringstream msg;
+        msg << "An empty chain can not be tagged for a specific ";
+        msg << "event stream.";
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
+      }
+    _data->tagForEventStream(streamId);
+  }
+
+  void I2OChain::tagForEventConsumer(QueueID queueId)
+  {
+    if (!_data)
+      {
+        std::stringstream msg;
+        msg << "An empty chain can not be tagged for a specific ";
+        msg << "event consumer.";
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
+      }
+    _data->tagForEventConsumer(queueId);
+  }
+
+  void I2OChain::tagForDQMEventConsumer(QueueID queueId)
+  {
+    if (!_data)
+      {
+        std::stringstream msg;
+        msg << "An empty chain can not be tagged for a specific ";
+        msg << "DQM event consumer.";
+        XCEPT_RAISE(stor::exception::I2OChain, msg.str());
+      }
+    _data->tagForDQMEventConsumer(queueId);
+  }
+
+  bool I2OChain::isTaggedForAnyEventStream()
+  {
+    if (!_data) return false;
+    return _data->isTaggedForAnyEventStream();
+  }
+
+  bool I2OChain::isTaggedForAnyEventConsumer()
+  {
+    if (!_data) return false;
+    return _data->isTaggedForAnyEventConsumer();
+  }
+
+  bool I2OChain::isTaggedForAnyDQMEventConsumer()
+  {
+    if (!_data) return false;
+    return _data->isTaggedForAnyDQMEventConsumer();
+  }
+
+  std::vector<StreamID> I2OChain::getEventStreamTags()
+  {
+    if (!_data)
+      {
+        std::vector<StreamID> tmpList;
+        return tmpList;
+      }
+    return _data->getEventStreamTags();
+  }
+
+  std::vector<QueueID> I2OChain::getEventConsumerTags()
+  {
+    if (!_data)
+      {
+        std::vector<QueueID> tmpList;
+        return tmpList;
+      }
+    return _data->getEventConsumerTags();
+  }
+
+  std::vector<QueueID> I2OChain::getDQMEventConsumerTags()
+  {
+    if (!_data)
+      {
+        std::vector<QueueID> tmpList;
+        return tmpList;
+      }
+    return _data->getDQMEventConsumerTags();
   }
 
   unsigned long I2OChain::totalDataSize() const
@@ -1141,10 +1692,10 @@ namespace stor
     return _data->getFragmentID(fragmentIndex);
   }
 
-  void I2OChain::
+  unsigned int I2OChain::
   copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
   {
-    if (!_data) return;
+    if (!_data) return 0;
     return _data->copyFragmentsIntoBuffer(targetBuffer);
   }
 
@@ -1166,6 +1717,56 @@ namespace stor
           "The output module ID can not be determined from an empty I2OChain.");
       }
     return _data->outputModuleId();
+  }
+
+  void I2OChain::hltTriggerNames(Strings& nameList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "HLT trigger names can not be determined from an empty I2OChain.");
+      }
+    _data->hltTriggerNames(nameList);
+  }
+
+  void I2OChain::hltTriggerSelections(Strings& nameList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "HLT trigger selections can not be determined from an empty I2OChain.");
+      }
+    _data->hltTriggerSelections(nameList);
+  }
+
+  void I2OChain::l1TriggerNames(Strings& nameList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "L1 trigger names can not be determined from an empty I2OChain.");
+      }
+    _data->l1TriggerNames(nameList);
+  }
+
+  uint32 I2OChain::hltTriggerCount() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The number of HLT trigger bits can not be determined from an empty I2OChain.");
+      }
+    return _data->hltTriggerCount();
+  }
+
+  void I2OChain::hltTriggerBits(std::vector<unsigned char>& bitList) const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "HLT trigger bits can not be determined from an empty I2OChain.");
+      }
+    _data->hltTriggerBits(bitList);
   }
 
 } // namespace stor

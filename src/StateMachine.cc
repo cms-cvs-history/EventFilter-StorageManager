@@ -15,13 +15,13 @@ StateMachine::StateMachine
 ( 
   DiskWriter* dw,
   EventDistributor* ed,
-  FragmentProcessor* fp,
-  FragmentStore* fs
+  FragmentStore* fs,
+  SharedResources* sr
 ):
 _diskWriter(dw),
 _eventDistributor(ed),
-_fragmentProcessor(fp),
-_fragmentStore(fs)
+_fragmentStore(fs),
+_sharedResources(sr)
 {
 }
 

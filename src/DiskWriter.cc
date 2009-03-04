@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.3 2009/02/20 20:54:53 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.4 2009/03/01 20:36:29 biery Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 
@@ -22,19 +22,13 @@ void DiskWriter::writeNextEvent()
 }
 
 
-void DiskWriter::configureStreams(std::string configString)
+void DiskWriter::configureStreams(std::vector<EventStreamConfigurationInfo>& cfgList)
 {
 
 }
 
 
 void DiskWriter::makeEventStreams()
-{
-
-}
-
-
-void DiskWriter::parseEventStreamConfig()
 {
 
 }

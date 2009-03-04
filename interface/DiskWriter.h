@@ -1,8 +1,9 @@
-// $Id: DiskWriter.h,v 1.1.2.4 2009/02/20 20:54:52 biery Exp $
+// $Id: DiskWriter.h,v 1.1.2.5 2009/03/01 20:36:29 biery Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
 
+#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
 
 
@@ -15,8 +16,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: biery $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/02/20 20:54:52 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/01 20:36:29 $
    */
   
   class DiskWriter
@@ -35,17 +36,12 @@ namespace stor {
     /**
      * Configures the streams to be written to disk
      */    
-    void configureStreams(std::string configString);
+    void configureStreams(std::vector<EventStreamConfigurationInfo>& cfgList);
 
     /**
      * ???
      */    
     void makeEventStreams();
-
-    /**
-     * ???
-     */    
-    void parseEventStreamConfig();
 
     /**
      * ???

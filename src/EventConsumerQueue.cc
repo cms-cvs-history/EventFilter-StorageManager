@@ -1,21 +1,7 @@
-// $Id: EventConsumerQueue.cc,v 1.1.2.2 2009/01/30 10:49:57 mommsen Exp $
+// $Id: EventConsumerQueue.cc,v 1.1.2.3 2009/03/02 17:39:31 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
 
-using namespace stor;
-
-
-EventConsumerQueue::EventConsumerQueue() :
-Queue()
-{
-
-}
-
-
-EventConsumerQueue::~EventConsumerQueue()
-{
-
-}
 
 
 

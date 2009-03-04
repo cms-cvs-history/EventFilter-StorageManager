@@ -1,7 +1,7 @@
 #ifndef FRDSTREAMSERVICE_H
 #define FRDSTREAMSERVICE_H
 
-// $Id: FRDStreamService.h,v 1.1 2008/08/13 22:48:11 biery Exp $
+// $Id: FRDStreamService.h,v 1.2.10.1 2009/03/03 18:28:55 paterno Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -44,3 +44,9 @@ namespace edm {
 
 } // edm namespace
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

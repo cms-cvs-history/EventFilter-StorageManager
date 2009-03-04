@@ -12,3 +12,15 @@ then we should be able to remove the scoped_locks from the public methods
 in WebPageHelper. This would have the advantage of putting both the 
 locking and the management of the Initialize/Terminate calls in one
 location.
+
+
+03-Mar-2009, additional suggestion from Marc:
+
+As a step toward making the code enforce the rule that all uses of XHTMLMaker
+in the SM must go through WebPageHelper, we could make
+the constructors and destructor for XHTMLMaker private, and make 
+WebPageHelper a friend. Then only code within WebPageHelper could create 
+an XHTMLMaker.
+
+This makes the testing of XHTMLMaker harder, which could be alleviated 
+by also making the class that runs the tests be a friend.

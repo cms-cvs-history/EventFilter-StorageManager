@@ -1,49 +1,47 @@
-// $Id: EventConsumerQueueCollection.cc,v 1.1.2.1 2009/01/30 10:49:57 mommsen Exp $
+// $Id: EventConsumerQueueCollection.cc,v 1.1.2.2 2009/03/02 17:44:46 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
 
-using namespace stor;
-
-
-EventConsumerQueueCollection::EventConsumerQueueCollection()
+namespace stor
 {
 
+  QueueID 
+  EventConsumerQueueCollection::registerConsumer(EventConsumerRegistrationInfo const& ri) 
+  {
+    // This implementation is wrong.
+    return 0;
+  }
+
+
+  void 
+  EventConsumerQueueCollection::addEvent(I2OChain const& event)
+  {
+    
+  }
+
+
+  I2OChain 
+  EventConsumerQueueCollection::popEvent(QueueID id)
+  {
+    // This implementation is wrong.
+    read_lock_t lock(_protect_keep_new_queues);
+    I2OChain result;
+    _keep_new_queues[id].deq_nowait(result);
+    return result;
+  }
+
+  void
+  EventConsumerQueueCollection::clearQueue(QueueID id)
+  {
+  } 
+
+  void 
+  EventConsumerQueueCollection::expireStaleQueues()
+  {
+  }
+
+
 }
-
-
-EventConsumerQueueCollection::~EventConsumerQueueCollection()
-{
-
-}
-
-
-const QueueID EventConsumerQueueCollection::registerEventConsumer
-(
-  boost::shared_ptr<EventConsumerRegistrationInfo>
-)
-{
-  return 0;
-}
-
-
-void EventConsumerQueueCollection::addEvent(I2OChain &chain)
-{
-
-}
-
-
-I2OChain EventConsumerQueueCollection::popEvent(const QueueID id)
-{
-  return _collection[id]->popEvent();
-}
-
-
-void EventConsumerQueueCollection::disposeOfStaleStuff()
-{
-
-}
-
-
 
 /// emacs configuration
 /// Local Variables: -

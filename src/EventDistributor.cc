@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.4 2009/02/19 13:16:33 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.8 2009/03/04 12:56:47 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -17,11 +17,54 @@ EventDistributor::~EventDistributor()
 }
 
 
-void EventDistributor::addEventToRelevantQueues(I2OChain&)
+void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 {
 
-}
+  switch( ioc.messageCode() )
+    {
 
+    case Header::INIT:
+      {
+        std::vector<unsigned char> b;
+        ioc.copyFragmentsIntoBuffer(b);
+        InitMsgView imv( &b[0] );
+        if( _initMsgCollection.addIfUnique( imv ) )
+          {
+            for( ESList::iterator it = _eventSelectors.begin();
+                 it != _eventSelectors.end();
+                 ++it )
+              {
+                it->initialize( imv );
+              }
+          }
+      }
+
+   case Header::EVENT:
+     {
+       for( ESList::iterator it = _eventSelectors.begin();
+            it != _eventSelectors.end();
+            ++it )
+         {
+           if( it->acceptEvent( ioc ) )
+             {
+               ioc.getEventStreamTags().push_back( it->configInfo().streamId() );
+             }
+         }
+     }
+
+    default:
+      {
+        // Log error and/or go to failed state
+      }
+
+    }
+
+  if( ioc.isTaggedForAnyEventStream() )
+    {
+      _streamQueue.addEvent( ioc );
+    }
+
+}
 
 const bool EventDistributor::full() const
 {
@@ -34,13 +77,16 @@ const QueueID EventDistributor::registerEventConsumer
   boost::shared_ptr<EventConsumerRegistrationInfo> registrationInfo
 )
 {
-  return _eventConsumerQueueCollection.registerEventConsumer(registrationInfo);
+  return _eventConsumerQueueCollection.registerConsumer(*registrationInfo);
 }
 
 
-void EventDistributor::registerEventStreams()
+void EventDistributor::registerEventStreams( const StreamConfList& cl )
 {
-
+  for( StreamConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
+    {
+      _eventSelectors.push_back( EventSelector( *it ) );
+    }
 }
 
 

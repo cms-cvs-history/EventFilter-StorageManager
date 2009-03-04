@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.14.12.1 2008/12/22 19:18:01 biery Exp $
+ $Id: StorageManagerRun.cpp,v 1.14.12.3 2009/03/03 22:07:16 biery Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -20,6 +20,8 @@
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "IOPool/Streamer/interface/StreamerInputFile.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -111,6 +113,7 @@ class Main // : public xdaq::Application
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
+  stor::SharedResources sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -150,9 +153,13 @@ Main::Main(const string& my_config_file,
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
+  sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
+  boost::shared_ptr<stor::DiscardManager> discardMgr;
+
   //jc_ = new stor::JobController(pr,
   jc_ = new stor::JobController(getFileContents(my_config_file),
-                                logger_,&deleteBuffer);
+                                logger_,sharedResources_,
+                                discardMgr,&deleteBuffer);
 
   vector<string>::iterator it(names_.begin()),en(names_.end());
   for(;it!=en;++it)

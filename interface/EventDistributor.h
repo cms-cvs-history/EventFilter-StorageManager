@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.4 2009/02/19 13:16:17 mommsen Exp $
+// $Id: EventDistributor.h,v 1.1.2.6 2009/03/03 17:50:36 dshpakov Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -6,10 +6,13 @@
 #include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
 #include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
 #include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/EventSelector.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
 
 namespace stor {
@@ -22,9 +25,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/02/19 13:16:17 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/03 17:50:36 $
    */
   
   class EventDistributor
@@ -57,8 +60,8 @@ namespace stor {
     /**
      * Registers new event streams ???
      */
-    void registerEventStreams();
-
+    typedef std::vector<EventStreamConfigurationInfo> StreamConfList;
+    void registerEventStreams( const StreamConfList& );
 
   private:
     
@@ -76,6 +79,10 @@ namespace stor {
     DQMEventQueue _dqmEventQueue;
     StreamQueue _streamQueue;
 
+    InitMsgCollection _initMsgCollection;
+
+    typedef std::vector<EventSelector> ESList;
+    ESList _eventSelectors;
 
   };
   
