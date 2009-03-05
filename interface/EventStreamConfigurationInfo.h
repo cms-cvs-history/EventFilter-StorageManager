@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.2 2009/02/27 12:31:39 dshpakov Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.1.2.3 2009/03/03 16:59:26 dshpakov Exp $
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
@@ -20,7 +20,7 @@ namespace stor
 
     // Constructor:
     EventStreamConfigurationInfo( const std::string& streamLabel,
-				  unsigned int maxFileSize,
+				  long long maxFileSize,
 				  const FilterList& selEvents,
 				  const std::string& selHLTOut,
 				  bool useCompression,
@@ -41,7 +41,7 @@ namespace stor
 
     // Accessors:
     const std::string& streamLabel() const { return _streamLabel; }
-    unsigned int maxFileSize() const { return _maxFileSize; }
+    long long maxFileSize() const { return _maxFileSize; }
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
     bool useCompression() const { return _useCompression; }
@@ -59,7 +59,7 @@ namespace stor
   private:
 
     std::string _streamLabel;
-    unsigned int _maxFileSize;
+    long long _maxFileSize;
     FilterList _selEvents;
     std::string _selHLTOut;
     bool _useCompression;
