@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventSelector.h,v 1.1.2.2 2009/03/03 16:59:26 dshpakov Exp $
+// $Id: EventSelector.h,v 1.1.2.3 2009/03/04 12:56:47 dshpakov Exp $
 
 #ifndef EVENTSELECTOR_H
 #define EVENTSELECTOR_H
@@ -40,6 +40,7 @@ namespace stor {
     // Accessors:
     unsigned int outputModuleId() const { return _outputModuleId; }
     const EventStreamConfigurationInfo& configInfo() const { return _configInfo; }
+    bool isInitialized() const { return _initialized; }
 
   private:
 
