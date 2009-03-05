@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.2 2009/02/23 19:17:48 biery Exp $
+// $Id: TestHelper.h,v 1.1.2.3 2009/02/26 21:57:18 biery Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -84,6 +84,7 @@ namespace stor
       pvtMsg->XFunctionCode = code;
       smMsg->numFrames = totalFrameCount;
       smMsg->frameCount = frameIndex;
+      smMsg->dataSize = bufferSize - sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
       
       return temp;
     }
