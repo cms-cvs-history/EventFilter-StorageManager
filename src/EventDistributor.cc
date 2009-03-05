@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.7 2009/03/03 17:50:37 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.8 2009/03/04 12:56:47 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -37,6 +37,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
                 it->initialize( imv );
               }
           }
+        break;
       }
 
    case Header::EVENT:
@@ -50,11 +51,13 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
                ioc.getEventStreamTags().push_back( it->configInfo().streamId() );
              }
          }
+       break;
      }
 
     default:
       {
         // Log error and/or go to failed state
+        break;
       }
 
     }
@@ -87,6 +90,33 @@ void EventDistributor::registerEventStreams( const StreamConfList& cl )
     {
       _eventSelectors.push_back( EventSelector( *it ) );
     }
+}
+
+
+void EventDistributor::clearEventStreams()
+{
+  _eventSelectors.clear();
+}
+
+
+unsigned int EventDistributor::configuredStreamCount() const
+{
+  return _eventSelectors.size();
+}
+
+
+unsigned int EventDistributor::initializedStreamCount() const
+{
+  unsigned int counter = 0;
+  unsigned int listSize = _eventSelectors.size();
+  for (unsigned int idx = 0; idx < listSize; ++idx)
+    {
+      if (_eventSelectors[idx].isInitialized())
+        {
+          ++counter;
+        }
+    }
+  return counter;
 }
 
 

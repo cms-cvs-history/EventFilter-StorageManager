@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.5 2009/03/01 22:57:42 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.6 2009/03/03 17:50:36 dshpakov Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -25,9 +25,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/01 22:57:42 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/03 17:50:36 $
    */
   
   class EventDistributor
@@ -62,6 +62,21 @@ namespace stor {
      */
     typedef std::vector<EventStreamConfigurationInfo> StreamConfList;
     void registerEventStreams( const StreamConfList& );
+
+    /**
+     * Clears out all existing event streams.
+     */
+    void clearEventStreams();
+
+    /**
+     * Returns the number of streams that have been configured.
+     */
+    unsigned int configuredStreamCount() const;
+
+    /**
+     * Returns the number of streams that have been configured and initialized.
+     */
+    unsigned int initializedStreamCount() const;
 
   private:
     
