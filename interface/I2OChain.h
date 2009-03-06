@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.21 2009/03/03 19:42:00 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.22 2009/03/04 15:18:31 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -31,8 +31,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.21 $
-   * $Date: 2009/03/03 19:42:00 $
+   * $Revision: 1.1.2.22 $
+   * $Date: 2009/03/04 15:18:31 $
    */
 
 
@@ -215,6 +215,9 @@ namespace stor {
        Returns the list of event streams (stream IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
+       NOTE that this method returns a copy of the list, so it
+       should only be used for testing which streams have been tagged,
+       *not* for for modifying the list of tags.
     */
     std::vector<StreamID> getEventStreamTags();
 
@@ -222,6 +225,9 @@ namespace stor {
        Returns the list of event consumers (queue IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
+       NOTE that this method returns a copy of the list, so it
+       should only be used for testing which consumers have been tagged,
+       *not* for for modifying the list of tags.
     */
     std::vector<QueueID> getEventConsumerTags();
 
@@ -229,6 +235,9 @@ namespace stor {
        Returns the list of DQM event consumers (queue IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
+       NOTE that this method returns a copy of the list, so it
+       should only be used for testing which consumers have been tagged,
+       *not* for for modifying the list of tags.
     */
     std::vector<QueueID> getDQMEventConsumerTags();
 
