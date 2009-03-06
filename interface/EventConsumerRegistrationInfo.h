@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.2 2009/02/27 13:24:59 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.3 2009/03/02 17:41:43 paterno Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
+#include "EventFilter/StorageManager/interface/Types.h"
 
 namespace stor
 {
@@ -17,9 +18,9 @@ namespace stor
    * This struct holds the registration information from a event
    * consumer
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/02 17:41:43 $
    */
 
   class EventConsumerRegistrationInfo
@@ -49,7 +50,8 @@ namespace stor
       _selEvents( selEvents ),
       _selHLTOut( selHLTOut ),
       _secondsToStale( secondsToStale ),
-      _policy( policy )
+      _policy( policy ),
+      _queueId( 0 )
     {}
 
     // Compiler-generated copy constructor, copy assignment, and
@@ -66,6 +68,10 @@ namespace stor
     const std::string& selHLTOut() const { return _selHLTOut; }
     unsigned int secondsToStale() const { return _secondsToStale; }
     enquing_policy::PolicyTag policy() const { return _policy; }
+    QueueID queueId() const { return _queueId; }
+
+    // Set queue Id:
+    void setQueueId( QueueID qid ) { _queueId = qid; }
 
     // Output:
     std::ostream& write(std::ostream& os) const;
@@ -82,6 +88,7 @@ namespace stor
     std::string      _selHLTOut;
     unsigned long    _secondsToStale;
     enquing_policy::PolicyTag _policy;
+    QueueID          _queueId;
   };
 
   /**
