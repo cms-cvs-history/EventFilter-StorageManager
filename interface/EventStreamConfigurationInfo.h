@@ -1,8 +1,10 @@
 // -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.3 2009/03/03 16:59:26 dshpakov Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.1.2.4 2009/03/05 22:32:29 biery Exp $
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
+
+#include "EventFilter/StorageManager/interface/StreamID.h"
 
 #include <string>
 #include <vector>
@@ -47,10 +49,10 @@ namespace stor
     bool useCompression() const { return _useCompression; }
     unsigned int compressionLevel() const { return _compressionLevel; }
     unsigned int maxEventSize() const { return _maxEventSize; }
-    unsigned int streamId() const { return _streamId; }
+    StreamID streamId() const { return _streamId; }
 
     // Set stream Id:
-    void setStreamId( unsigned int sid ) { _streamId = sid; }
+    void setStreamId( StreamID sid ) { _streamId = sid; }
 
     // Output:
     friend std::ostream& operator <<
@@ -65,7 +67,7 @@ namespace stor
     bool _useCompression;
     unsigned int _compressionLevel;
     unsigned int _maxEventSize;
-    unsigned int _streamId;
+    StreamID _streamId;
 
   };
 
