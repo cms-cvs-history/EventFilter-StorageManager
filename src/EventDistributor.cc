@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.10 2009/03/06 14:58:12 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.11 2009/03/06 16:36:41 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -50,7 +50,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
          {
            if( it->acceptEvent( ioc ) )
              {
-               ioc.getEventStreamTags().push_back( it->configInfo().streamId() );
+               ioc.tagForEventStream( it->configInfo().streamId() );
              }
          }
        break;
