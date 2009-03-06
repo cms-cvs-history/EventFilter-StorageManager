@@ -42,20 +42,33 @@ private:
   EventDistributor::StreamConfList parseStreamConfig(std::string cfgString);
   std::string getSampleStreamConfig();
 
-  EventDistributor _eventDistributor;
+  boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+  boost::shared_ptr<EventDistributor> _eventDistributor;
 };
 
 void testEventDistributor::testInitMessages()
 {
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 0);
+  if (_eventDistributor.get() == 0)
+    {
+      _initMsgCollection.reset(new InitMsgCollection());
+      _eventDistributor.reset(new EventDistributor(_initMsgCollection));
+    }
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+
+  // *** specify configuration ***
 
   EventDistributor::StreamConfList cfgList =
     parseStreamConfig(getSampleStreamConfig());
-  _eventDistributor.registerEventStreams(cfgList);
+  _eventDistributor->registerEventStreams(cfgList);
 
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+
+  // *** first INIT message ***
 
   char psetid[] = "1234567890123456";
   Strings hlt_names;
@@ -106,33 +119,78 @@ void testEventDistributor::testInitMessages()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor.addEventToRelevantQueues(initMsgFrag);
+  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
 
-  _eventDistributor.clearEventStreams();
+  // *** second INIT message ***
 
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 0);
+  hlt_selections.clear();
+  hlt_selections.push_back("b");
+  hlt_selections.push_back("d");
+  hlt_selections.push_back("f");
+  hlt_selections.push_back("h");
+
+  outputModuleLabel = "HLTDEBUG";
+  crc = crc32(0L, Z_NULL, 0);
+  crcbuf = (Bytef*) outputModuleLabel.data();
+  outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+
+  ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0, 1);
+  smMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
+  smMsg->hltTid = value1;
+  smMsg->rbBufferID = 2;
+  smMsg->outModID = outputModuleId;
+  smMsg->fuProcID = value2;
+  smMsg->fuGUID = value3;
+
+  InitMsgBuilder
+    initBuilder2(smMsg->dataPtr(), smMsg->dataSize, 100,
+                 Version(7,(const uint8*)psetid), (const char*) reltag,
+                 processName.c_str(), outputModuleLabel.c_str(),
+                 outputModuleId, hlt_names, hlt_selections, l1_names);
+
+  stor::I2OChain initMsgFrag2(ref);
+  CPPUNIT_ASSERT(initMsgFrag2.messageCode() == Header::INIT);
+
+  _eventDistributor->addEventToRelevantQueues(initMsgFrag2);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 2);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 2);
+
+  // *** cleanup ***
+
+  _eventDistributor->clearEventStreams();
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 }
 
 void testEventDistributor::testEventSelection()
 {
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 0);
+  if (_eventDistributor.get() == 0)
+    {
+      _initMsgCollection.reset(new InitMsgCollection());
+      _eventDistributor.reset(new EventDistributor(_initMsgCollection));
+    }
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
   EventDistributor::StreamConfList cfgList =
     parseStreamConfig(getSampleStreamConfig());
-  _eventDistributor.registerEventStreams(cfgList);
+  _eventDistributor->registerEventStreams(cfgList);
 
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
-  _eventDistributor.clearEventStreams();
+  _eventDistributor->clearEventStreams();
 
-  CPPUNIT_ASSERT(_eventDistributor.configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor.initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 }
 
 
