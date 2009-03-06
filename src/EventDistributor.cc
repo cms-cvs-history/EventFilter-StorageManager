@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.11 2009/03/06 16:36:41 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.12 2009/03/06 18:56:31 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -32,8 +32,8 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         assert( _initMsgCollection.get() != 0 );
         if( _initMsgCollection->addIfUnique( imv ) )
           {
-            for( ESList::iterator it = _eventSelectors.begin();
-                 it != _eventSelectors.end();
+            for( EvtSelList::iterator it = _eventStreamSelectors.begin();
+                 it != _eventStreamSelectors.end();
                  ++it )
               {
                 it->initialize( imv );
@@ -44,13 +44,13 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
    case Header::EVENT:
      {
-       for( ESList::iterator it = _eventSelectors.begin();
-            it != _eventSelectors.end();
+       for( EvtSelList::iterator it = _eventStreamSelectors.begin();
+            it != _eventStreamSelectors.end();
             ++it )
          {
            if( it->acceptEvent( ioc ) )
              {
-               ioc.tagForEventStream( it->configInfo().streamId() );
+               ioc.tagForStream( it->configInfo().streamId() );
              }
          }
        break;
@@ -62,6 +62,20 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         break;
       }
 
+   case Header::ERROR_EVENT:
+     {
+       for( ErrSelList::iterator it = _errorStreamSelectors.begin();
+            it != _errorStreamSelectors.end();
+            ++it )
+         {
+           if( it->acceptEvent( ioc ) )
+             {
+               ioc.tagForStream( it->configInfo().streamId() );
+             }
+         }
+       break;
+     }
+
     default:
       {
         // Log error and/or go to failed state
@@ -70,7 +84,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
     }
 
-  if( ioc.isTaggedForAnyEventStream() )
+  if( ioc.isTaggedForAnyStream() )
     {
       _streamQueue.addEvent( ioc );
     }
@@ -92,34 +106,44 @@ const QueueID EventDistributor::registerEventConsumer
 }
 
 
-void EventDistributor::registerEventStreams( const StreamConfList& cl )
+void EventDistributor::registerEventStreams( const EvtStrConfList& cl )
 {
-  for( StreamConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
+  for( EvtStrConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
     {
-      _eventSelectors.push_back( EventSelector( *it ) );
+      _eventStreamSelectors.push_back( EventSelector( *it ) );
     }
 }
 
 
-void EventDistributor::clearEventStreams()
+void EventDistributor::registerErrorStreams( const ErrStrConfList& cl )
 {
-  _eventSelectors.clear();
+  for( ErrStrConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
+    {
+      _errorStreamSelectors.push_back( ErrorEventSelector( *it ) );
+    }
+}
+
+
+void EventDistributor::clearStreams()
+{
+  _eventStreamSelectors.clear();
+  _errorStreamSelectors.clear();
 }
 
 
 unsigned int EventDistributor::configuredStreamCount() const
 {
-  return _eventSelectors.size();
+  return _eventStreamSelectors.size() + _errorStreamSelectors.size();
 }
 
 
 unsigned int EventDistributor::initializedStreamCount() const
 {
   unsigned int counter = 0;
-  unsigned int listSize = _eventSelectors.size();
+  unsigned int listSize = _eventStreamSelectors.size();
   for (unsigned int idx = 0; idx < listSize; ++idx)
     {
-      if (_eventSelectors[idx].isInitialized())
+      if (_eventStreamSelectors[idx].isInitialized())
         {
           ++counter;
         }

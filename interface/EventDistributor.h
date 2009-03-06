@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.7 2009/03/05 22:31:35 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.8 2009/03/06 14:58:12 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -7,11 +7,13 @@
 #include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
 #include "EventFilter/StorageManager/interface/Types.h"
 #include "EventFilter/StorageManager/interface/EventSelector.h"
+#include "EventFilter/StorageManager/interface/ErrorEventSelector.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
 #include "boost/shared_ptr.hpp"
@@ -28,8 +30,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/05 22:31:35 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/03/06 14:58:12 $
    */
 
   class EventDistributor
@@ -65,15 +67,21 @@ namespace stor {
     );
 
     /**
-     * Registers new event streams ???
+     * Registers the full set of event streams.
      */
-    typedef std::vector<EventStreamConfigurationInfo> StreamConfList;
-    void registerEventStreams( const StreamConfList& );
+    typedef std::vector<EventStreamConfigurationInfo> EvtStrConfList;
+    void registerEventStreams( const EvtStrConfList& );
 
     /**
-     * Clears out all existing event streams.
+     * Registers the full set of error event streams.
      */
-    void clearEventStreams();
+    typedef std::vector<ErrorStreamConfigurationInfo> ErrStrConfList;
+    void registerErrorStreams( const ErrStrConfList& );
+
+    /**
+     * Clears out all existing event and error streams.
+     */
+    void clearStreams();
 
     /**
      * Returns the number of streams that have been configured.
@@ -103,8 +111,11 @@ namespace stor {
 
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
 
-    typedef std::vector<EventSelector> ESList;
-    ESList _eventSelectors;
+    typedef std::vector<EventSelector> EvtSelList;
+    EvtSelList _eventStreamSelectors;
+
+    typedef std::vector<ErrorEventSelector> ErrSelList;
+    ErrSelList _errorStreamSelectors;
 
   };
   

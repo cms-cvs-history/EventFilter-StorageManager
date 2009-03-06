@@ -22,6 +22,7 @@ using namespace stor;
 using stor::testhelper::allocate_frame_with_basic_header;
 using stor::testhelper::allocate_frame_with_init_msg;
 using stor::testhelper::allocate_frame_with_event_msg;
+using stor::testhelper::allocate_frame_with_error_msg;
 using stor::testhelper::set_trigger_bit;
 using stor::testhelper::clear_trigger_bits;
 
@@ -38,7 +39,9 @@ public:
   void testEventSelection();
 
 private:
-  EventDistributor::StreamConfList parseStreamConfig(std::string cfgString);
+  void parseStreamConfigs(std::string cfgString,
+                          EventDistributor::EvtStrConfList& eventConfigs,
+                          EventDistributor::ErrStrConfList& errorConfigs);
   std::string getSampleStreamConfig();
 
   boost::shared_ptr<InitMsgCollection> _initMsgCollection;
@@ -60,9 +63,11 @@ void testEventDistributor::testInitMessages()
 
   // *** specify configuration ***
 
-  EventDistributor::StreamConfList cfgList =
-    parseStreamConfig(getSampleStreamConfig());
-  _eventDistributor->registerEventStreams(cfgList);
+  EventDistributor::EvtStrConfList evtCfgList;
+  EventDistributor::ErrStrConfList errCfgList;
+  parseStreamConfigs(getSampleStreamConfig(), evtCfgList, errCfgList);
+  _eventDistributor->registerEventStreams(evtCfgList);
+  _eventDistributor->registerErrorStreams(errCfgList);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
@@ -131,7 +136,7 @@ void testEventDistributor::testInitMessages()
   // *** cleanup ***
 
   _initMsgCollection->clear();
-  _eventDistributor->clearEventStreams();
+  _eventDistributor->clearStreams();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
@@ -153,9 +158,11 @@ void testEventDistributor::testEventSelection()
 
   // *** specify configuration ***
 
-  EventDistributor::StreamConfList cfgList =
-    parseStreamConfig(getSampleStreamConfig());
-  _eventDistributor->registerEventStreams(cfgList);
+  EventDistributor::EvtStrConfList evtCfgList;
+  EventDistributor::ErrStrConfList errCfgList;
+  parseStreamConfigs(getSampleStreamConfig(), evtCfgList, errCfgList);
+  _eventDistributor->registerEventStreams(evtCfgList);
+  _eventDistributor->registerErrorStreams(errCfgList);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
@@ -198,7 +205,7 @@ void testEventDistributor::testEventSelection()
   stor::I2OChain eventMsgFrag(ref);
   CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
 
-  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventStream());
+  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
@@ -208,11 +215,11 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
 
-  CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventStream());
+  CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  std::vector<StreamID> streamIdList = eventMsgFrag.getEventStreamTags();
+  std::vector<StreamID> streamIdList = eventMsgFrag.getStreamTags();
   CPPUNIT_ASSERT(streamIdList.size() == 1);
   CPPUNIT_ASSERT(streamIdList[0] == 2);
 
@@ -229,7 +236,7 @@ void testEventDistributor::testEventSelection()
   stor::I2OChain eventMsgFrag2(ref);
   CPPUNIT_ASSERT(eventMsgFrag2.messageCode() == Header::EVENT);
 
-  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventStream());
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyDQMEventConsumer());
 
@@ -239,7 +246,7 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
 
-  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventStream());
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyDQMEventConsumer());
 
@@ -254,7 +261,7 @@ void testEventDistributor::testEventSelection()
   stor::I2OChain eventMsgFrag3(ref);
   CPPUNIT_ASSERT(eventMsgFrag3.messageCode() == Header::EVENT);
 
-  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventStream());
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyDQMEventConsumer());
 
@@ -264,14 +271,39 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
 
-  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventStream());
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyDQMEventConsumer());
+
+  // *** first error message (should pass) ***
+
+  ++eventNumber;
+  ref = allocate_frame_with_error_msg(eventNumber);
+  stor::I2OChain errorMsgFrag(ref);
+  CPPUNIT_ASSERT(errorMsgFrag.messageCode() == Header::ERROR_EVENT);
+
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+  _eventDistributor->addEventToRelevantQueues(errorMsgFrag);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+
+  CPPUNIT_ASSERT(errorMsgFrag.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+  streamIdList = errorMsgFrag.getStreamTags();
+  CPPUNIT_ASSERT(streamIdList.size() == 1);
+  CPPUNIT_ASSERT(streamIdList[0] == 4);
 
   // *** cleanup ***
 
   _initMsgCollection->clear();
-  _eventDistributor->clearEventStreams();
+  _eventDistributor->clearStreams();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
@@ -280,9 +312,11 @@ void testEventDistributor::testEventSelection()
 
 
 
-EventDistributor::StreamConfList testEventDistributor::parseStreamConfig(std::string cfgString)
+void testEventDistributor::
+parseStreamConfigs(std::string cfgString,
+                   EventDistributor::EvtStrConfList& evtCfgList,
+                   EventDistributor::ErrStrConfList& errCfgList)
 {
-  EventDistributor::StreamConfList streamCfgList;
   PythonProcessDesc py_pdesc(cfgString.c_str());
   boost::shared_ptr<edm::ProcessDesc> pdesc = py_pdesc.processDesc();
   boost::shared_ptr<edm::ParameterSet> smPSet = pdesc->getProcessPSet();
@@ -306,9 +340,7 @@ EventDistributor::StreamConfList testEventDistributor::parseStreamConfig(std::st
       if (! endPathPSet.empty()) {
         std::string mod_type =
           endPathPSet.getParameter<std::string> ("@module_type");
-        if (mod_type == "EventStreamFileWriter" ||
-            mod_type == "ErrorStreamFileWriter" ||
-            mod_type == "FRDStreamFileWriter") {
+        if (mod_type == "EventStreamFileWriter") {
 
           std::string streamLabel =
             endPathPSet.getParameter<std::string> ("streamLabel");
@@ -334,13 +366,24 @@ EventDistributor::StreamConfList testEventDistributor::parseStreamConfig(std::st
                                                compressionLevel,
                                                maxEventSize);
           cfgInfo.setStreamId(++streamId);
-          streamCfgList.push_back(cfgInfo);
+          evtCfgList.push_back(cfgInfo);
+        }
+        else if (mod_type == "ErrorStreamFileWriter" ||
+                 mod_type == "FRDStreamFileWriter") {
+
+          std::string streamLabel =
+            endPathPSet.getParameter<std::string> ("streamLabel");
+          long long maxFileSize =
+            1048576 * (long long) endPathPSet.getParameter<int> ("maxSize");
+
+          ErrorStreamConfigurationInfo cfgInfo(streamLabel,
+                                               maxFileSize);
+          cfgInfo.setStreamId(++streamId);
+          errCfgList.push_back(cfgInfo);
         }
       }
     }
   }
-
-  return streamCfgList;
 }
 
 std::string testEventDistributor::getSampleStreamConfig()

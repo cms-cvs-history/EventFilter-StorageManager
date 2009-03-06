@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.26 2009/03/03 19:42:00 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.27 2009/03/04 15:18:31 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -79,13 +79,13 @@ namespace stor
       uint32 hltTriggerCount() const;
       void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
-      void tagForEventStream(StreamID);
+      void tagForStream(StreamID);
       void tagForEventConsumer(QueueID);
       void tagForDQMEventConsumer(QueueID);
-      bool isTaggedForAnyEventStream() {return !_streamTags.empty();}
+      bool isTaggedForAnyStream() {return !_streamTags.empty();}
       bool isTaggedForAnyEventConsumer() {return !_eventConsumerTags.empty();}
       bool isTaggedForAnyDQMEventConsumer() {return !_dqmEventConsumerTags.empty();}
-      std::vector<StreamID> const& getEventStreamTags() const;
+      std::vector<StreamID> const& getStreamTags() const;
       std::vector<QueueID> const& getEventConsumerTags() const;
       std::vector<QueueID> const& getDQMEventConsumerTags() const;
 
@@ -642,7 +642,7 @@ namespace stor
       do_hltTriggerBits(bitList);
     }
 
-    inline void ChainData::tagForEventStream(StreamID streamId)
+    inline void ChainData::tagForStream(StreamID streamId)
     {
       _streamTags.push_back(streamId);
     }
@@ -657,7 +657,7 @@ namespace stor
       _dqmEventConsumerTags.push_back(queueId);
     }
 
-    inline std::vector<StreamID> const& ChainData::getEventStreamTags() const
+    inline std::vector<StreamID> const& ChainData::getStreamTags() const
     {
       return _streamTags;
     }
@@ -1584,7 +1584,7 @@ namespace stor
     return _data->lastFragmentTime();
   }
 
-  void I2OChain::tagForEventStream(StreamID streamId)
+  void I2OChain::tagForStream(StreamID streamId)
   {
     if (!_data)
       {
@@ -1593,7 +1593,7 @@ namespace stor
         msg << "event stream.";
         XCEPT_RAISE(stor::exception::I2OChain, msg.str());
       }
-    _data->tagForEventStream(streamId);
+    _data->tagForStream(streamId);
   }
 
   void I2OChain::tagForEventConsumer(QueueID queueId)
@@ -1620,10 +1620,10 @@ namespace stor
     _data->tagForDQMEventConsumer(queueId);
   }
 
-  bool I2OChain::isTaggedForAnyEventStream()
+  bool I2OChain::isTaggedForAnyStream()
   {
     if (!_data) return false;
-    return _data->isTaggedForAnyEventStream();
+    return _data->isTaggedForAnyStream();
   }
 
   bool I2OChain::isTaggedForAnyEventConsumer()
@@ -1638,14 +1638,14 @@ namespace stor
     return _data->isTaggedForAnyDQMEventConsumer();
   }
 
-  std::vector<StreamID> I2OChain::getEventStreamTags()
+  std::vector<StreamID> I2OChain::getStreamTags()
   {
     if (!_data)
       {
         std::vector<StreamID> tmpList;
         return tmpList;
       }
-    return _data->getEventStreamTags();
+    return _data->getStreamTags();
   }
 
   std::vector<QueueID> I2OChain::getEventConsumerTags()

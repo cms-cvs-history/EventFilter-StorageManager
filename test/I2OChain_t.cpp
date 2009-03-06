@@ -1837,13 +1837,13 @@ testI2OChain::stream_and_queue_tags()
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
     stor::I2OChain eventMsgFrag(ref);
 
-    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventStream());
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-    eventMsgFrag.tagForEventStream(streamA);
-    eventMsgFrag.tagForEventStream(streamB);
-    eventMsgFrag.tagForEventStream(streamC);
+    eventMsgFrag.tagForStream(streamA);
+    eventMsgFrag.tagForStream(streamB);
+    eventMsgFrag.tagForStream(streamC);
 
     eventMsgFrag.tagForEventConsumer(evtQueueA);
     eventMsgFrag.tagForEventConsumer(evtQueueB);
@@ -1852,37 +1852,37 @@ testI2OChain::stream_and_queue_tags()
 
     eventMsgFrag.tagForDQMEventConsumer(dqmQueueA);
 
-    CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventStream());
+    CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-    CPPUNIT_ASSERT(eventMsgFrag.getEventStreamTags().size() == 3);
+    CPPUNIT_ASSERT(eventMsgFrag.getStreamTags().size() == 3);
     CPPUNIT_ASSERT(eventMsgFrag.getEventConsumerTags().size() == 4);
     CPPUNIT_ASSERT(eventMsgFrag.getDQMEventConsumerTags().size() == 1);
 
-    std::vector<stor::StreamID> streamTags = eventMsgFrag.getEventStreamTags();
+    std::vector<stor::StreamID> streamTags = eventMsgFrag.getStreamTags();
     CPPUNIT_ASSERT(streamTags[0] == streamA);
     CPPUNIT_ASSERT(streamTags[1] == streamB);
     CPPUNIT_ASSERT(streamTags[2] == streamC);
 
     streamTags.push_back(999);
-    CPPUNIT_ASSERT(eventMsgFrag.getEventStreamTags().size() == 3);
+    CPPUNIT_ASSERT(eventMsgFrag.getStreamTags().size() == 3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
     stor::I2OChain eventMsgFrag;
 
-    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventStream());
+    CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-    CPPUNIT_ASSERT(eventMsgFrag.getEventStreamTags().size() == 0);
+    CPPUNIT_ASSERT(eventMsgFrag.getStreamTags().size() == 0);
     CPPUNIT_ASSERT(eventMsgFrag.getEventConsumerTags().size() == 0);
     CPPUNIT_ASSERT(eventMsgFrag.getDQMEventConsumerTags().size() == 0);
 
     try
       {
-        eventMsgFrag.tagForEventStream(100);
+        eventMsgFrag.tagForStream(100);
         CPPUNIT_ASSERT(false);
       }
     catch (stor::exception::I2OChain& excpt)

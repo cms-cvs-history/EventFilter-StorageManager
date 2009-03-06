@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.4 2009/03/05 22:34:51 biery Exp $
+// $Id: TestHelper.h,v 1.1.2.5 2009/03/06 18:55:35 biery Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -237,6 +237,34 @@ namespace stor
 
       return ref;
     }
+
+
+    Reference*
+    allocate_frame_with_error_msg
+    (
+      unsigned int eventNumber
+    )
+    {
+      unsigned int runNumber = 100;
+
+      unsigned int value1 = 0xa5a5d2d2;
+      unsigned int value2 = 0xb4b4e1e1;
+      unsigned int value3 = 0xc3c3f0f0;
+
+      Reference* ref = allocate_frame_with_basic_header(I2O_SM_ERROR, 0, 1);
+      I2O_SM_DATA_MESSAGE_FRAME *smEventMsg =
+        (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
+      smEventMsg->hltTid = value1;
+      smEventMsg->rbBufferID = 3;
+      smEventMsg->runID = runNumber;
+      smEventMsg->eventID = eventNumber;
+      smEventMsg->outModID = 0xffffffff;
+      smEventMsg->fuProcID = value2;
+      smEventMsg->fuGUID = value3;
+
+      return ref;
+    }
+
 
     void
     set_trigger_bit

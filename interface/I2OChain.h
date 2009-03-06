@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.22 2009/03/04 15:18:31 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.23 2009/03/06 18:52:49 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -31,8 +31,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.22 $
-   * $Date: 2009/03/04 15:18:31 $
+   * $Revision: 1.1.2.23 $
+   * $Date: 2009/03/06 18:52:49 $
    */
 
 
@@ -173,11 +173,11 @@ namespace stor {
     double lastFragmentTime() const;
 
     /**
-       Tags the chain with the specified event stream ID.  This means
-       that the data in the chain should be sent to the specified
-       event stream.
+       Tags the chain with the specified disk writing stream ID.  This
+       means that the data in the chain should be sent to the specified
+       disk stream.
      */
-    void tagForEventStream(StreamID);
+    void tagForStream(StreamID);
 
     /**
        Tags the chain with the specified event consumer queue ID.  This
@@ -194,10 +194,10 @@ namespace stor {
     void tagForDQMEventConsumer(QueueID);
 
     /**
-       Returns true if the chain has been tagged for any event stream
+       Returns true if the chain has been tagged for any disk stream
        and false otherwise.
     */
-    bool isTaggedForAnyEventStream();
+    bool isTaggedForAnyStream();
 
     /**
        Returns true if the chain has been tagged for any event consumer
@@ -212,14 +212,14 @@ namespace stor {
     bool isTaggedForAnyDQMEventConsumer();
 
     /**
-       Returns the list of event streams (stream IDs) that
+       Returns the list of disk streams (stream IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
        NOTE that this method returns a copy of the list, so it
        should only be used for testing which streams have been tagged,
        *not* for for modifying the list of tags.
     */
-    std::vector<StreamID> getEventStreamTags();
+    std::vector<StreamID> getStreamTags();
 
     /**
        Returns the list of event consumers (queue IDs) that
