@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.6 2009/03/03 17:50:36 dshpakov Exp $
+// $Id: EventDistributor.h,v 1.1.2.7 2009/03/05 22:31:35 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -14,6 +14,8 @@
 #include "EventFilter/StorageManager/interface/EventSelector.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
+#include "boost/shared_ptr.hpp"
+
 
 namespace stor {
 
@@ -25,19 +27,24 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/03 17:50:36 $
+   * $Author: biery $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/05 22:31:35 $
    */
-  
+
   class EventDistributor
   {
   public:
-    
-    EventDistributor();
-    
+
+    /**
+     * @deprecated
+     */
+    EventDistributor() {}
+
+    EventDistributor(boost::shared_ptr<InitMsgCollection>);
+
     ~EventDistributor();
-    
+
     /**
      * Add the event given as I2OChain to the appropriate queues
      */
@@ -94,7 +101,7 @@ namespace stor {
     DQMEventQueue _dqmEventQueue;
     StreamQueue _streamQueue;
 
-    InitMsgCollection _initMsgCollection;
+    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
 
     typedef std::vector<EventSelector> ESList;
     ESList _eventSelectors;

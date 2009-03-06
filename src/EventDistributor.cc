@@ -1,11 +1,12 @@
-// $Id: EventDistributor.cc,v 1.1.2.8 2009/03/04 12:56:47 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.9 2009/03/05 22:31:36 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
 using namespace stor;
 
 
-EventDistributor::EventDistributor()
+EventDistributor::EventDistributor(boost::shared_ptr<InitMsgCollection> coll):
+  _initMsgCollection(coll)
 {
 
 }
@@ -28,7 +29,8 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         std::vector<unsigned char> b;
         ioc.copyFragmentsIntoBuffer(b);
         InitMsgView imv( &b[0] );
-        if( _initMsgCollection.addIfUnique( imv ) )
+        assert( _initMsgCollection.get() != 0 );
+        if( _initMsgCollection->addIfUnique( imv ) )
           {
             for( ESList::iterator it = _eventSelectors.begin();
                  it != _eventSelectors.end();
