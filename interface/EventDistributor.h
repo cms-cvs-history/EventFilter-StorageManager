@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.8 2009/03/06 14:58:12 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.9 2009/03/06 20:47:11 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -30,8 +30,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/03/06 14:58:12 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/03/06 20:47:11 $
    */
 
   class EventDistributor
@@ -111,11 +111,14 @@ namespace stor {
 
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
 
-    typedef std::vector<EventSelector> EvtSelList;
+    typedef std::vector<EventSelector<EventStreamConfigurationInfo> > EvtSelList;
     EvtSelList _eventStreamSelectors;
 
     typedef std::vector<ErrorEventSelector> ErrSelList;
     ErrSelList _errorStreamSelectors;
+
+    typedef std::vector<EventSelector<EventConsumerRegistrationInfo> > ConsSelList;
+    ConsSelList _eventConsumerSelectors;
 
   };
   

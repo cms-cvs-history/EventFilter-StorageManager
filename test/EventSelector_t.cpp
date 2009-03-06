@@ -21,7 +21,7 @@ int main()
                                      7,
                                      7000000 );
 
-  EventSelector es( esci );
+  EventSelector<EventStreamConfigurationInfo> es( esci );
 
   return 0;
 

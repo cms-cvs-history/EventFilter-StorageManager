@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.12 2009/03/06 18:56:31 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.13 2009/03/06 20:47:11 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -51,6 +51,15 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
            if( it->acceptEvent( ioc ) )
              {
                ioc.tagForStream( it->configInfo().streamId() );
+             }
+         }
+       for( ConsSelList::iterator it = _eventConsumerSelectors.begin();
+            it != _eventConsumerSelectors.end();
+            ++it )
+         {
+           if( it->acceptEvent( ioc ) )
+             {
+               ioc.tagForEventConsumer( it->configInfo().queueId() );
              }
          }
        break;
@@ -110,7 +119,7 @@ void EventDistributor::registerEventStreams( const EvtStrConfList& cl )
 {
   for( EvtStrConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
     {
-      _eventStreamSelectors.push_back( EventSelector( *it ) );
+      _eventStreamSelectors.push_back( EventSelector<EventStreamConfigurationInfo>( *it ) );
     }
 }
 
