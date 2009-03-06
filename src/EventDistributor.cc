@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.9 2009/03/05 22:31:36 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.10 2009/03/06 14:58:12 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -55,6 +55,12 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
          }
        break;
      }
+
+    case Header::DQM_EVENT:
+      {
+
+        break;
+      }
 
     default:
       {
