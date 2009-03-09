@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.13 2009/03/06 20:47:11 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.14 2009/03/06 22:09:48 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -34,6 +34,12 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
           {
             for( EvtSelList::iterator it = _eventStreamSelectors.begin();
                  it != _eventStreamSelectors.end();
+                 ++it )
+              {
+                it->initialize( imv );
+              }
+            for( ConsSelList::iterator it = _eventConsumerSelectors.begin();
+                 it != _eventConsumerSelectors.end();
                  ++it )
               {
                 it->initialize( imv );
@@ -111,7 +117,23 @@ const QueueID EventDistributor::registerEventConsumer
   boost::shared_ptr<EventConsumerRegistrationInfo> registrationInfo
 )
 {
-  return _eventConsumerQueueCollection.registerConsumer(*registrationInfo);
+  QueueID queueId =
+    _eventConsumerQueueCollection.registerConsumer( *registrationInfo );
+
+  // store the queue ID in the regInfo here or does the queueCollection do that?
+
+  EventSelector<EventConsumerRegistrationInfo> evtSel( *registrationInfo );
+  InitMsgSharedPtr initMsgPtr =
+    _initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
+  if ( initMsgPtr.get() != 0 )
+    {
+      uint8* regPtr = &(*initMsgPtr)[0];
+      InitMsgView initView(regPtr);
+      evtSel.initialize( initView );
+    }
+  _eventConsumerSelectors.push_back( evtSel );
+
+  return queueId;
 }
 
 
@@ -153,6 +175,33 @@ unsigned int EventDistributor::initializedStreamCount() const
   for (unsigned int idx = 0; idx < listSize; ++idx)
     {
       if (_eventStreamSelectors[idx].isInitialized())
+        {
+          ++counter;
+        }
+    }
+  return counter;
+}
+
+
+void EventDistributor::clearConsumers()
+{
+  _eventConsumerSelectors.clear();
+}
+
+
+unsigned int EventDistributor::configuredConsumerCount() const
+{
+  return _eventConsumerSelectors.size();
+}
+
+
+unsigned int EventDistributor::initializedConsumerCount() const
+{
+  unsigned int counter = 0;
+  unsigned int listSize = _eventConsumerSelectors.size();
+  for (unsigned int idx = 0; idx < listSize; ++idx)
+    {
+      if (_eventConsumerSelectors[idx].isInitialized())
         {
           ++counter;
         }

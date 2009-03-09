@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.9 2009/03/06 20:47:11 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.10 2009/03/06 22:09:47 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -30,8 +30,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/03/06 20:47:11 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/03/06 22:09:47 $
    */
 
   class EventDistributor
@@ -92,6 +92,21 @@ namespace stor {
      * Returns the number of streams that have been configured and initialized.
      */
     unsigned int initializedStreamCount() const;
+
+    /**
+     * Clears out all existing consumer registrations.
+     */
+    void clearConsumers();
+
+    /**
+     * Returns the number of consumers that have been configured.
+     */
+    unsigned int configuredConsumerCount() const;
+
+    /**
+     * Returns the number of consumers that have been configured and initialized.
+     */
+    unsigned int initializedConsumerCount() const;
 
   private:
     

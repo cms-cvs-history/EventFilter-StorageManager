@@ -30,13 +30,15 @@ class testEventDistributor : public CppUnit::TestFixture
 {
   CPPUNIT_TEST_SUITE(testEventDistributor);
   CPPUNIT_TEST(testInitMessages);
-  CPPUNIT_TEST(testEventSelection);
+  CPPUNIT_TEST(testStreamSelection);
+  CPPUNIT_TEST(testConsumerSelection);
 
   CPPUNIT_TEST_SUITE_END();
 
 public:
   void testInitMessages();
-  void testEventSelection();
+  void testStreamSelection();
+  void testConsumerSelection();
 
 private:
   void parseStreamConfigs(std::string cfgString,
@@ -60,6 +62,8 @@ void testEventDistributor::testInitMessages()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
   // *** specify configuration ***
 
@@ -132,6 +136,8 @@ void testEventDistributor::testInitMessages()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
   // *** cleanup ***
 
@@ -141,10 +147,12 @@ void testEventDistributor::testInitMessages()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 }
 
 
-void testEventDistributor::testEventSelection()
+void testEventDistributor::testStreamSelection()
 {
   if (_eventDistributor.get() == 0)
     {
@@ -155,6 +163,8 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
   // *** specify configuration ***
 
@@ -168,17 +178,13 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
 
-  // *** first INIT message ***
+  // *** INIT message ***
 
   Reference* ref = allocate_frame_with_init_msg("HLTDEBUG");
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
   _eventDistributor->addEventToRelevantQueues(initMsgFrag);
-
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
@@ -192,6 +198,13 @@ void testEventDistributor::testEventSelection()
 
   CPPUNIT_ASSERT(hltBits.size() == 3);
   CPPUNIT_ASSERT(hltBits[2] == 0);
+
+  set_trigger_bit(hltBits, 3, edm::hlt::Fail);
+  set_trigger_bit(hltBits, 5, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 8, edm::hlt::Exception);
+  CPPUNIT_ASSERT(hltBits[0] == 0x80);
+  CPPUNIT_ASSERT(hltBits[1] == 0x4);
+  CPPUNIT_ASSERT(hltBits[2] == 0x3);
 
   // *** first event message (should pass) ***
 
@@ -300,6 +313,9 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(streamIdList.size() == 1);
   CPPUNIT_ASSERT(streamIdList[0] == 4);
 
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+
   // *** cleanup ***
 
   _initMsgCollection->clear();
@@ -308,8 +324,255 @@ void testEventDistributor::testEventSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 }
 
+
+void testEventDistributor::testConsumerSelection()
+{
+  if (_eventDistributor.get() == 0)
+    {
+      _initMsgCollection.reset(new InitMsgCollection());
+      _eventDistributor.reset(new EventDistributor(_initMsgCollection));
+    }
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+
+  // *** first consumer ***
+
+  uint32 queueId = 0;
+  Strings selections;
+  boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
+
+  ++queueId;
+  selections.clear();
+  selections.push_back("a");
+  selections.push_back("b");
+  consInfo.reset(new EventConsumerRegistrationInfo(
+          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+          stor::enquing_policy::DiscardOld));
+  consInfo->setQueueId(queueId);
+  _eventDistributor->registerEventConsumer(consInfo);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+
+  // *** INIT message ***
+
+  Reference* ref = allocate_frame_with_init_msg("out4DQM");
+  stor::I2OChain initMsgFrag(ref);
+  CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
+
+  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+
+  // *** second consumer ***
+
+  ++queueId;
+  selections.clear();
+  selections.push_back("c");
+  selections.push_back("d");
+  consInfo.reset(new EventConsumerRegistrationInfo(
+          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+          stor::enquing_policy::DiscardOld));
+  consInfo->setQueueId(queueId);
+  _eventDistributor->registerEventConsumer(consInfo);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+
+  // *** first event message (should pass both consumers) ***
+
+  std::vector<unsigned char> hltBits;
+  set_trigger_bit(hltBits, 8, edm::hlt::Ready);
+
+  uint32 eventNumber = 1;
+  uint32 hltBitCount = 9;
+  clear_trigger_bits(hltBits);
+  set_trigger_bit(hltBits, 0, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 2, edm::hlt::Pass);
+
+  ref = allocate_frame_with_event_msg("out4DQM", hltBits, hltBitCount,
+                                      eventNumber);
+  stor::I2OChain eventMsgFrag(ref);
+  CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
+
+  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+  _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+
+  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+  std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+  CPPUNIT_ASSERT(queueIdList.size() == 2);
+  CPPUNIT_ASSERT(queueIdList[0] == 1);
+  CPPUNIT_ASSERT(queueIdList[1] == 2);
+
+  // *** third consumer ***
+
+  ++queueId;
+  selections.clear();
+  selections.push_back("c");
+  selections.push_back("a");
+  consInfo.reset(new EventConsumerRegistrationInfo(
+          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+          stor::enquing_policy::DiscardOld));
+  consInfo->setQueueId(queueId);
+  _eventDistributor->registerEventConsumer(consInfo);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 3);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+
+  // *** fourth consumer ***
+
+  ++queueId;
+  selections.clear();
+  selections.push_back("b");
+  selections.push_back("d");
+  consInfo.reset(new EventConsumerRegistrationInfo(
+          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+          stor::enquing_policy::DiscardOld));
+  consInfo->setQueueId(queueId);
+  _eventDistributor->registerEventConsumer(consInfo);
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+
+  // *** second event message (should not pass) ***
+
+  clear_trigger_bits(hltBits);
+  set_trigger_bit(hltBits, 0, edm::hlt::Fail);
+  set_trigger_bit(hltBits, 2, edm::hlt::Exception);
+  set_trigger_bit(hltBits, 4, edm::hlt::Pass);
+
+  ++eventNumber;
+  ref = allocate_frame_with_event_msg("out4DQM", hltBits, hltBitCount,
+                                      eventNumber);
+  stor::I2OChain eventMsgFrag2(ref);
+  CPPUNIT_ASSERT(eventMsgFrag2.messageCode() == Header::EVENT);
+
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyDQMEventConsumer());
+
+  _eventDistributor->addEventToRelevantQueues(eventMsgFrag2);
+
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyDQMEventConsumer());
+
+  // *** third event message (should pass) ***
+
+  clear_trigger_bits(hltBits);
+  set_trigger_bit(hltBits, 0, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 3, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 4, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 5, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 6, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 7, edm::hlt::Pass);
+
+  ++eventNumber;
+  ref = allocate_frame_with_event_msg("out4DQM", hltBits, hltBitCount,
+                                      eventNumber);
+  stor::I2OChain eventMsgFrag3(ref);
+  CPPUNIT_ASSERT(eventMsgFrag3.messageCode() == Header::EVENT);
+
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyDQMEventConsumer());
+
+  _eventDistributor->addEventToRelevantQueues(eventMsgFrag3);
+
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(eventMsgFrag3.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyDQMEventConsumer());
+
+  queueIdList = eventMsgFrag3.getEventConsumerTags();
+  CPPUNIT_ASSERT(queueIdList.size() == 4);
+  CPPUNIT_ASSERT(queueIdList[0] == 1);
+  CPPUNIT_ASSERT(queueIdList[1] == 2);
+  CPPUNIT_ASSERT(queueIdList[2] == 3);
+  CPPUNIT_ASSERT(queueIdList[3] == 4);
+
+  // *** fourth event message (should not pass) ***
+
+  clear_trigger_bits(hltBits);
+  set_trigger_bit(hltBits, 0, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 1, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 2, edm::hlt::Pass);
+  set_trigger_bit(hltBits, 3, edm::hlt::Pass);
+
+  ++eventNumber;
+  ref = allocate_frame_with_event_msg("BOGUS", hltBits, hltBitCount,
+                                      eventNumber);
+  stor::I2OChain eventMsgFrag4(ref);
+  CPPUNIT_ASSERT(eventMsgFrag4.messageCode() == Header::EVENT);
+
+  CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyDQMEventConsumer());
+
+  _eventDistributor->addEventToRelevantQueues(eventMsgFrag4);
+
+  CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyDQMEventConsumer());
+
+  // *** first error message (should not pass) ***
+
+  ++eventNumber;
+  ref = allocate_frame_with_error_msg(eventNumber);
+  stor::I2OChain errorMsgFrag(ref);
+  CPPUNIT_ASSERT(errorMsgFrag.messageCode() == Header::ERROR_EVENT);
+
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+  _eventDistributor->addEventToRelevantQueues(errorMsgFrag);
+
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyStream());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
+  CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
+
+  // *** cleanup ***
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+
+  _initMsgCollection->clear();
+  _eventDistributor->clearStreams();
+  _eventDistributor->clearConsumers();
+
+  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+}
 
 
 void testEventDistributor::
