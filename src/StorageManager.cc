@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.23 2009/03/03 22:45:29 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.24 2009/03/04 15:21:33 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -14,6 +14,7 @@
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -48,6 +49,10 @@
 #include "xcept/tools.h"
 
 #include "xdata/InfoSpaceFactory.h"
+
+#include "xoap/SOAPEnvelope.h"
+#include "xoap/SOAPBody.h"
+#include "xoap/domutils.h"
 
 #include "boost/lexical_cast.hpp"
 #include "boost/algorithm/string/case_conv.hpp"
@@ -98,15 +103,6 @@ namespace
 }
 
 
-static void deleteSMBuffer(void* Ref)
-{
-  // release the memory pool buffer
-  // once the fragment collector is done with it
-  stor::FragEntry* entry = (stor::FragEntry*)Ref;
-  toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
-  ref->release();
-}
-
 StorageManager::StorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
@@ -132,7 +128,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.23 2009/03/03 22:45:29 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.24 2009/03/04 15:21:33 biery Exp $ $Name: refdev01_s07 $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -294,6 +290,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
+  sharedResourcesInstance_._commandQueue.reset(new CommandQueue(1024));
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
 
 }
@@ -3809,7 +3806,7 @@ void StorageManager::configureAction()
   }
   jc_.reset(new stor::JobController(my_config, getApplicationLogger(),
                                     sharedResourcesInstance_,
-                                    discardMgr, &deleteSMBuffer));
+                                    discardMgr, 0));
 
   int disks(nLogicalDisk_);
 
@@ -4062,6 +4059,40 @@ void StorageManager::haltAction()
 xoap::MessageReference StorageManager::fsmCallback(xoap::MessageReference msg)
   throw (xoap::exception::Exception)
 {
+#if TEST_CMD_QUEUE
+  xoap::SOAPPart     part    =msg->getSOAPPart();
+  xoap::SOAPEnvelope env     =part.getEnvelope();
+  xoap::SOAPBody     body    =env.getBody();
+  DOMNode           *node    =body.getDOMNode();
+  DOMNodeList       *bodyList=node->getChildNodes();
+  DOMNode           *command =0;
+  string             commandName;
+  
+  for (unsigned int i=0;i<bodyList->getLength();i++) {
+    command = bodyList->item(i);
+    if(command->getNodeType() == DOMNode::ELEMENT_NODE) {
+      commandName = xoap::XMLCh2String(command->getLocalName());
+      break;
+    }
+  }
+  std::cout << std::endl << "commandName = " << commandName << std::endl;
+
+  stor::event_ptr stMachEvent;
+  if (commandName == "Configure") {
+    stMachEvent.reset(new stor::Configure());
+  }
+  else if (commandName == "Enable") {
+    stMachEvent.reset(new stor::Enable());
+  }
+  else if (commandName == "Stop") {
+    stMachEvent.reset(new stor::Stop());
+  }
+  else if (commandName == "Halt") {
+    stMachEvent.reset(new stor::Halt());
+  }
+  sharedResourcesInstance_._commandQueue->enq_wait(stMachEvent);
+#endif
+
   return fsm_.commandCallback(msg);
 }
 
