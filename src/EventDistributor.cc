@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.14 2009/03/06 22:09:48 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.15 2009/03/09 15:03:09 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -122,7 +122,7 @@ const QueueID EventDistributor::registerEventConsumer
 
   // store the queue ID in the regInfo here or does the queueCollection do that?
 
-  EventSelector<EventConsumerRegistrationInfo> evtSel( *registrationInfo );
+  EventConsumerSelector evtSel( *registrationInfo );
   InitMsgSharedPtr initMsgPtr =
     _initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
   if ( initMsgPtr.get() != 0 )
@@ -141,7 +141,7 @@ void EventDistributor::registerEventStreams( const EvtStrConfList& cl )
 {
   for( EvtStrConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
     {
-      _eventStreamSelectors.push_back( EventSelector<EventStreamConfigurationInfo>( *it ) );
+      _eventStreamSelectors.push_back( EventStreamSelector( *it ) );
     }
 }
 
@@ -150,7 +150,7 @@ void EventDistributor::registerErrorStreams( const ErrStrConfList& cl )
 {
   for( ErrStrConfList::const_iterator it = cl.begin(); it != cl.end(); ++it )
     {
-      _errorStreamSelectors.push_back( ErrorEventSelector( *it ) );
+      _errorStreamSelectors.push_back( ErrorStreamSelector( *it ) );
     }
 }
 

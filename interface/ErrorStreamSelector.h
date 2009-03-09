@@ -1,8 +1,8 @@
 // -*- c++ -*-
-// $Id: ErrorEventSelector.h,v 1.1.2.4 2009/03/05 22:29:48 biery Exp $
+// $Id: ErrorStreamSelector.h,v 1.1.2.1 2009/03/06 19:17:21 biery Exp $
 
-#ifndef ERROREVENTSELECTOR_H
-#define ERROREVENTSELECTOR_H
+#ifndef ERRORSTREAMSELECTOR_H
+#define ERRORSTREAMSELECTOR_H
 
 #include <boost/shared_ptr.hpp>
 
@@ -11,18 +11,18 @@
 
 namespace stor {
 
-  class ErrorEventSelector
+  class ErrorStreamSelector
   {
 
   public:
 
     // Constructor:
-    ErrorEventSelector( const ErrorStreamConfigurationInfo& configInfo ):
+    ErrorStreamSelector( const ErrorStreamConfigurationInfo& configInfo ):
       _configInfo( configInfo )
     {}
 
     // Destructor:
-    ~ErrorEventSelector() {}
+    ~ErrorStreamSelector() {}
 
     // Accept event:
     bool acceptEvent( const I2OChain& );

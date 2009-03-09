@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.10 2009/03/06 22:09:47 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.11 2009/03/09 15:03:09 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -12,8 +12,9 @@
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
 #include "EventFilter/StorageManager/interface/Types.h"
-#include "EventFilter/StorageManager/interface/EventSelector.h"
-#include "EventFilter/StorageManager/interface/ErrorEventSelector.h"
+#include "EventFilter/StorageManager/interface/EventStreamSelector.h"
+#include "EventFilter/StorageManager/interface/ErrorStreamSelector.h"
+#include "EventFilter/StorageManager/interface/EventConsumerSelector.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
 #include "boost/shared_ptr.hpp"
@@ -30,8 +31,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/03/06 22:09:47 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/03/09 15:03:09 $
    */
 
   class EventDistributor
@@ -111,28 +112,19 @@ namespace stor {
   private:
     
 
-    /**
-     * Create a new event selector ???
-     */
-    void makeEventSelector
-    (
-      const QueueID, 
-      boost::shared_ptr<EventConsumerRegistrationInfo>
-    );
-
     EventConsumerQueueCollection _eventConsumerQueueCollection;
     DQMEventQueue _dqmEventQueue;
     StreamQueue _streamQueue;
 
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
 
-    typedef std::vector<EventSelector<EventStreamConfigurationInfo> > EvtSelList;
+    typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;
 
-    typedef std::vector<ErrorEventSelector> ErrSelList;
+    typedef std::vector<ErrorStreamSelector> ErrSelList;
     ErrSelList _errorStreamSelectors;
 
-    typedef std::vector<EventSelector<EventConsumerRegistrationInfo> > ConsSelList;
+    typedef std::vector<EventConsumerSelector> ConsSelList;
     ConsSelList _eventConsumerSelectors;
 
   };
