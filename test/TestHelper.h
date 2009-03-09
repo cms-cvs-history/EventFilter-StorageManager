@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.5 2009/03/06 18:55:35 biery Exp $
+// $Id: TestHelper.h,v 1.1.2.6 2009/03/06 20:47:12 biery Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -280,7 +280,7 @@ namespace stor
       if (hltBits.size() < minSize) hltBits.resize(minSize);
 
       uint32 vectorIndex = (uint32) (bitIndex / 4);
-      uint32 shiftCount = bitIndex % 4;
+      uint32 shiftCount = 2 * (bitIndex % 4);
 
       uint32 clearMask = 0xff;
       clearMask ^= 0x3 << shiftCount;
