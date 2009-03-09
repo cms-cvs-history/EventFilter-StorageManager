@@ -1,4 +1,4 @@
-// $Id: EventConsumerQueueCollection.h,v 1.1.2.1 2009/01/30 10:49:40 mommsen Exp $
+// $Id: EventConsumerQueueCollection.h,v 1.1.2.2 2009/03/02 17:44:45 paterno Exp $
 
 #ifndef StorageManager_EventConsumerQueueCollection_h
 #define StorageManager_EventConsumerQueueCollection_h
@@ -19,20 +19,17 @@ namespace stor {
   /**
    * A collection of Event consumer queues
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/02 17:44:45 $
    */
   
   class EventConsumerQueueCollection
   {
   public:
 
-    /**
-       The compiler-generated default constructor, copy constructor,
-       copy assignment, and destructor all do the right thing.
-     */    
-
+    // The compiler-generated default constructor, copy constructor,
+    // copy assignment, and destructor all do the right thing.
 
     /**
       Registers a new Event consumer connected by HTTP.  It takes the

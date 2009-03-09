@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.2 2009/02/27 13:59:43 dshpakov Exp $
 
 #ifndef DQMEVENTCONSUMERREGISTRATIONINFO_H
 #define DQMEVENTCONSUMERREGISTRATIONINFO_H
@@ -9,6 +9,13 @@
 
 namespace stor
 {
+  /**
+   * Holds the registration information for a DQM event consumer.
+   *
+   * $Author: biery $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/01 20:36:29 $
+   */
 
   class DQMEventConsumerRegistrationInfo
   {

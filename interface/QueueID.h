@@ -1,4 +1,4 @@
-// $Id: Types.h,v 1.1.2.2 2009/01/30 20:34:34 paterno Exp $
+// $Id: QueueID.h,v 1.1.2.1 2009/03/02 17:44:45 paterno Exp $
 
 #ifndef StorageManager_QueueID_h
 #define StorageManager_QueueID_h
@@ -7,6 +7,14 @@
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 
 namespace stor {
+
+  /**
+   * Uniquely identifies the consumer queues 
+   *
+   * $Author: biery $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/01 20:36:29 $
+   */
 
   class QueueID
     {
