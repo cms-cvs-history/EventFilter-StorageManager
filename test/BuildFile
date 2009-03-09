@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.22 2009/03/03 16:59:26 dshpakov Exp $
+# $Id: BuildFile,v 1.30.16.23 2009/03/05 22:34:50 biery Exp $
 
 <environment>
   <use name=boost>
@@ -69,9 +69,6 @@
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>
-  </bin>
-
-  <bin file=EventSelector_t.cpp>
   </bin>
 
   <bin file=EventStreamConfigurationInfo_t.cpp>
