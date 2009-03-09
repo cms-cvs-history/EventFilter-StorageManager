@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.11 2009/03/09 15:03:09 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.12 2009/03/09 20:30:58 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -18,6 +18,7 @@
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
 #include "boost/shared_ptr.hpp"
+#include "boost/thread/mutex.hpp"
 
 
 namespace stor {
@@ -31,8 +32,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/03/09 15:03:09 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/03/09 20:30:58 $
    */
 
   class EventDistributor
@@ -117,6 +118,7 @@ namespace stor {
     StreamQueue _streamQueue;
 
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+    boost::mutex _initCollectionMutex;
 
     typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;

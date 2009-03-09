@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.15 2009/03/09 15:03:09 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.16 2009/03/09 20:30:59 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -30,6 +30,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         ioc.copyFragmentsIntoBuffer(b);
         InitMsgView imv( &b[0] );
         assert( _initMsgCollection.get() != 0 );
+        boost::mutex::scoped_lock sl(_initCollectionMutex);
         if( _initMsgCollection->addIfUnique( imv ) )
           {
             for( EvtSelList::iterator it = _eventStreamSelectors.begin();
@@ -123,6 +124,8 @@ const QueueID EventDistributor::registerEventConsumer
   // store the queue ID in the regInfo here or does the queueCollection do that?
 
   EventConsumerSelector evtSel( *registrationInfo );
+
+  boost::mutex::scoped_lock sl(_initCollectionMutex);
   InitMsgSharedPtr initMsgPtr =
     _initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
   if ( initMsgPtr.get() != 0 )
