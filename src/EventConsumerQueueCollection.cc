@@ -1,5 +1,6 @@
-// $Id: EventConsumerQueueCollection.cc,v 1.1.2.1 2009/01/30 10:49:57 mommsen Exp $
+// $Id: EventConsumerQueueCollection.cc,v 1.1.2.2 2009/03/02 17:44:46 paterno Exp $
 
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
 
 namespace stor
@@ -9,7 +10,8 @@ namespace stor
   EventConsumerQueueCollection::registerConsumer(EventConsumerRegistrationInfo const& ri) 
   {
     // This implementation is wrong.
-    return 0;
+    QueueID queue;
+    return queue;
   }
 
 
@@ -23,10 +25,21 @@ namespace stor
   I2OChain 
   EventConsumerQueueCollection::popEvent(QueueID id)
   {
-    // This implementation is wrong.
-    read_lock_t lock(_protect_keep_new_queues);
     I2OChain result;
-    _keep_new_queues[id].deq_nowait(result);
+    if ( id.policy() == enquing_policy::DiscardNew )
+    {
+      read_lock_t lock(_protect_reject_new_queues);
+      _reject_new_queues[id.index()].deq_nowait(result);
+    }
+    else if ( id.policy() == enquing_policy::DiscardOld )
+    {
+      read_lock_t lock(_protect_keep_new_queues);
+      _keep_new_queues[id.index()].deq_nowait(result);
+    }
+    else
+    {
+      // do what?
+    }
     return result;
   }
 
