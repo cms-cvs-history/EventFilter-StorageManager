@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.4 2009/03/06 22:05:11 biery Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.5 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -9,8 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
-#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 
 namespace stor
 {
@@ -18,19 +17,21 @@ namespace stor
    * This struct holds the registration information from a event
    * consumer
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/06 22:05:11 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/10 15:32:59 $
    */
 
-  class EventConsumerRegistrationInfo
+  class EventConsumerRegistrationInfo : public RegistrationInfoBase
 
   {
   public:
 
     typedef std::vector<std::string> FilterList;
 
-    // Constructor:
+    /**
+     * Constructs an instance with the specified registration information.
+     */
     EventConsumerRegistrationInfo( const std::string& sourceURL,
                                    unsigned int maxConnectRetries,
                                    unsigned int connectRetryInterval, // seconds
@@ -66,11 +67,17 @@ namespace stor
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
     unsigned int secondsToStale() const { return _secondsToStale; }
-    enquing_policy::PolicyTag policy() const { return _policy; }
+    enquing_policy::PolicyTag queuePolicy() const { return _policy; }
     QueueID queueId() const { return _queueId; }
 
     // Set queue Id:
     void setQueueId( QueueID qid ) { _queueId = qid; }
+
+    /**
+     * Registers the consumer represented by this registration with
+     * the specified EventDistributor.
+     */
+    void registerMe(EventDistributor*);
 
     // Output:
     std::ostream& write(std::ostream& os) const;

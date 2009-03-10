@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.cc,v 1.1.2.2 2009/03/03 16:59:26 dshpakov Exp $
+// $Id: EventConsumerSelector.cc,v 1.1.2.1 2009/03/09 20:30:59 biery Exp $
 
 #include <vector>
 
@@ -11,12 +11,12 @@ void EventConsumerSelector::initialize( const InitMsgView& imv )
 
   if( _initialized ) return;
 
-  if( _configInfo.selHLTOut() != imv.outputModuleLabel() ) return; 
+  if( _outputModuleLabel != imv.outputModuleLabel() ) return; 
 
   _outputModuleId = imv.outputModuleId();
 
   edm::ParameterSet pset;
-  pset.addParameter<Strings>( "SelectEvents", _configInfo.selEvents() );
+  pset.addParameter<Strings>( "SelectEvents", _eventSelectionStrings );
 
   Strings tnames;
   imv.hltTriggerNames( tnames );

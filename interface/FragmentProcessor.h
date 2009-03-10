@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.6 2009/02/22 18:16:34 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.7 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -26,9 +26,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/02/22 18:16:34 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/10 15:32:59 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -51,14 +51,6 @@ namespace stor {
      * Updates the statistics of processed fragments
      */
     void updateStatistics();
-
-    /**
-     * Registers a new event consumer with the EventDistributor
-     */
-    const QueueID registerEventConsumer
-    (
-      boost::shared_ptr<EventConsumerRegistrationInfo>
-    );
 
 
   private:

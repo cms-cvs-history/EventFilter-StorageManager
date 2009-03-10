@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.15 2009/03/10 14:16:00 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.16 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -32,9 +32,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.15 $
-   * $Date: 2009/03/10 14:16:00 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.16 $
+   * $Date: 2009/03/10 15:32:59 $
    */
 
   class EventDistributor
@@ -64,10 +64,7 @@ namespace stor {
     /**
      * Registers a new consumer
      */
-    const QueueID registerEventConsumer
-    (
-      boost::shared_ptr<EventConsumerRegistrationInfo>
-    );
+    void registerEventConsumer( EventConsumerRegistrationInfo* );
 
     /**
      * Registers a new DQM consumer

@@ -360,7 +360,7 @@ void testEventDistributor::testConsumerSelection()
         stor::enquing_policy::DiscardOld));
     QueueID queueId(enquing_policy::DiscardOld, 1);
     consInfo->setQueueId(queueId);
-    _eventDistributor->registerEventConsumer(consInfo);
+    _eventDistributor->registerEventConsumer(&(*consInfo));
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -390,7 +390,7 @@ void testEventDistributor::testConsumerSelection()
         stor::enquing_policy::DiscardOld));
     QueueID queueId(enquing_policy::DiscardNew, 2);
     consInfo->setQueueId(queueId);
-    _eventDistributor->registerEventConsumer(consInfo);
+    _eventDistributor->registerEventConsumer(&(*consInfo));
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
@@ -441,7 +441,7 @@ void testEventDistributor::testConsumerSelection()
         stor::enquing_policy::DiscardOld));
     QueueID queueId(enquing_policy::DiscardOld, 3);
     consInfo->setQueueId(queueId);
-    _eventDistributor->registerEventConsumer(consInfo);
+    consInfo->registerMe(&(*_eventDistributor));
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 3);
@@ -458,7 +458,7 @@ void testEventDistributor::testConsumerSelection()
         stor::enquing_policy::DiscardOld));
     QueueID queueId(enquing_policy::DiscardNew, 4);
     consInfo->setQueueId(queueId);
-    _eventDistributor->registerEventConsumer(consInfo);
+    consInfo->registerMe(&(*_eventDistributor));
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);

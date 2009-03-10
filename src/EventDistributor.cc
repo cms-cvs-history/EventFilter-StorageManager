@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.18 2009/03/10 12:37:50 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.19 2009/03/10 14:16:00 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -65,7 +65,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
          {
            if( it->acceptEvent( ioc ) )
              {
-               ioc.tagForEventConsumer( it->configInfo().queueId() );
+               ioc.tagForEventConsumer( it->queueId() );
              }
          }
        break;
@@ -119,22 +119,12 @@ const bool EventDistributor::full() const
 }
 
 
-const QueueID EventDistributor::registerEventConsumer
+void EventDistributor::registerEventConsumer
 (
-  boost::shared_ptr<EventConsumerRegistrationInfo> registrationInfo
+  EventConsumerRegistrationInfo* registrationInfo
 )
 {
-  QueueID queueId =
-    _eventConsumerQueueCollection.registerConsumer( *registrationInfo );
-
-  // store the queue ID in the regInfo here or does the queueCollection do that?
-
   EventConsumerSelector evtSel( *registrationInfo );
-
-  // we need to add the new consumer event selector to the list *before*
-  // we try to initialize it from the InitMsgCollection to avoid race
-  // conditions with the initialization code when INIT messages are received.
-  _eventConsumerSelectors.push_back( evtSel );
 
   InitMsgSharedPtr initMsgPtr =
     _initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
@@ -145,7 +135,7 @@ const QueueID EventDistributor::registerEventConsumer
       evtSel.initialize( initView );
     }
 
-  return queueId;
+  _eventConsumerSelectors.push_back( evtSel );
 }
 
 ////////////////////////////////

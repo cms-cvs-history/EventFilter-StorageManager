@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerSelector.h,v 1.1.2.5 2009/03/06 22:09:47 biery Exp $
+// $Id: EventConsumerSelector.h,v 1.1.2.1 2009/03/09 20:30:58 biery Exp $
 
 #ifndef EVENTCONSUMERSELECTOR_H
 #define EVENTCONSUMERSELECTOR_H
@@ -13,37 +13,67 @@
 
 namespace stor {
 
+  /**
+   * Defines the common interface for event and DQM consumer
+   * registration info objects.
+   *
+   * $Author: mommsen $
+   * $Revision: 1.1.2.26 $
+   * $Date: 2009/03/10 15:32:59 $
+   */
+
   class EventConsumerSelector
   {
 
   public:
 
-    // Constructor:
+    /**
+     * Constructs an EventConsumerSelector instance based on the
+     * specified registration information.
+     */
     EventConsumerSelector( const EventConsumerRegistrationInfo& configInfo ):
       _initialized( false ),
-      _outputModuleId(0),
-      _configInfo( configInfo )
+      _outputModuleId( 0 ),
+      _outputModuleLabel( configInfo.selHLTOut() ),
+      _eventSelectionStrings( configInfo.selEvents() ),
+      _queueId( configInfo.queueId() )
     {}
 
-    // Destructor:
+    /**
+     * Destructs the EventConsumerSelector instance.
+     */
     ~EventConsumerSelector() {}
 
-    // Initialize:
+    /**
+     * Initializes the selector instance from the specified
+     * INIT message.  EventConsumerSelector instances need to be
+     * initialized before they will accept any events.
+     */
     void initialize( const InitMsgView& );
 
-    // Accept event:
+    /**
+     * Tests whether the specified event is accepted by this selector -
+     * returns true if the event is accepted, false otherwise.
+     */
     bool acceptEvent( const I2OChain& );
 
-    // Accessors:
-    unsigned int outputModuleId() const { return _outputModuleId; }
-    const EventConsumerRegistrationInfo& configInfo() const { return _configInfo; }
+    /**
+     * Returns the ID of the queue corresponding to this selector.
+     */
+    QueueID queueId() const { return _queueId; }
+
+    /**
+     * Tests whether this selector has been initialized.
+     */
     bool isInitialized() const { return _initialized; }
 
   private:
 
     bool _initialized;
     unsigned int _outputModuleId;
-    EventConsumerRegistrationInfo _configInfo;
+    std::string _outputModuleLabel;
+    Strings _eventSelectionStrings;
+    QueueID _queueId;
 
     boost::shared_ptr<edm::EventSelector> _eventSelector;
 

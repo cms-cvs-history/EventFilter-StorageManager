@@ -1,6 +1,7 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.2 2009/02/27 13:25:00 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.3 2009/03/02 17:41:43 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
 
 #include <algorithm>
 #include <iterator>
@@ -11,6 +12,11 @@ using namespace std;
 
 namespace stor
 {
+  void EventConsumerRegistrationInfo::registerMe(EventDistributor* evtDist)
+  {
+    evtDist->registerEventConsumer(this);
+  }
+
   ostream& 
   EventConsumerRegistrationInfo::write(ostream& os) const
   {

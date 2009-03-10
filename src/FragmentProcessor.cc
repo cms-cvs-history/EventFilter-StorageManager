@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.7 2009/02/22 18:16:35 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.8 2009/02/25 10:59:04 mommsen Exp $
 
 #include <unistd.h>
 
@@ -52,15 +52,6 @@ void FragmentProcessor::processOneFragment()
 void FragmentProcessor::updateStatistics()
 {
 
-}
-
-
-const QueueID FragmentProcessor::registerEventConsumer
-(
-  boost::shared_ptr<EventConsumerRegistrationInfo> registrationInfo
-)
-{
-  return _eventDistributor.registerEventConsumer(registrationInfo);
 }
 
 
