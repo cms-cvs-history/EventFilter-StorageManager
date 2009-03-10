@@ -1,4 +1,4 @@
-// $Id$
+// $Id: DQMEventConsumerQueueCollection.h,v 1.1.2.1 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_DQMEventConsumerQueueCollection_h
 #define StorageManager_DQMEventConsumerQueueCollection_h
@@ -10,7 +10,7 @@
 #include "EventFilter/StorageManager/interface/DQMEventConsumerQueue.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 
 namespace stor {
@@ -18,9 +18,9 @@ namespace stor {
   /**
    * A collection of DQMEvent consumer queues
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/01/30 10:49:40 $
    */
   
   class DQMEventConsumerQueueCollection

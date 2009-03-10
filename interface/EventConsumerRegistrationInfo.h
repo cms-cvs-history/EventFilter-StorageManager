@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.3 2009/03/02 17:41:43 paterno Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.4 2009/03/06 22:05:11 biery Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 namespace stor
 {
@@ -18,9 +18,9 @@ namespace stor
    * This struct holds the registration information from a event
    * consumer
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/02 17:41:43 $
+   * $Author: biery $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/06 22:05:11 $
    */
 
   class EventConsumerRegistrationInfo
@@ -50,8 +50,7 @@ namespace stor
       _selEvents( selEvents ),
       _selHLTOut( selHLTOut ),
       _secondsToStale( secondsToStale ),
-      _policy( policy ),
-      _queueId( 0 )
+      _policy( policy )
     {}
 
     // Compiler-generated copy constructor, copy assignment, and

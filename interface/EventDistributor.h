@@ -1,23 +1,23 @@
-// $Id: EventDistributor.h,v 1.1.2.14 2009/03/10 12:37:50 dshpakov Exp $
+// $Id: EventDistributor.h,v 1.1.2.15 2009/03/10 14:16:00 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
 
+#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/ErrorStreamSelector.h"
 #include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
 #include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
-#include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
-#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
-#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
-#include "EventFilter/StorageManager/interface/DQMEventQueue.h"
-#include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/StreamQueue.h"
-#include "EventFilter/StorageManager/interface/Types.h"
-#include "EventFilter/StorageManager/interface/EventStreamSelector.h"
-#include "EventFilter/StorageManager/interface/DQMEventSelector.h"
-#include "EventFilter/StorageManager/interface/ErrorStreamSelector.h"
 #include "EventFilter/StorageManager/interface/EventConsumerSelector.h"
+#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/EventStreamSelector.h"
+#include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
+#include "EventFilter/StorageManager/interface/DQMEventQueue.h"
+#include "EventFilter/StorageManager/interface/DQMEventSelector.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/StreamQueue.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -32,9 +32,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/03/10 12:37:50 $
+   * $Author: biery $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/03/10 14:16:00 $
    */
 
   class EventDistributor

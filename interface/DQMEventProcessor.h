@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -9,7 +9,7 @@
 #include "EventFilter/StorageManager/interface/DQMEventConsumerQueue.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 
 namespace stor {
@@ -23,9 +23,9 @@ namespace stor {
    * Depending on the configuration, it also writes the histograms
    * to disk every N lumi-sections.
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/01/30 10:49:40 $
    */
   
   class DQMEventProcessor

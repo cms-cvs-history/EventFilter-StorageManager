@@ -5,10 +5,11 @@
 #include <vector>
 #include "zlib.h"
 
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
-#include "EventFilter/StorageManager/interface/Types.h"
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
@@ -1827,12 +1828,12 @@ testI2OChain::stream_and_queue_tags()
     stor::StreamID streamB =  5;
     stor::StreamID streamC = 17;
 
-    stor::QueueID evtQueueA = 101;
-    stor::QueueID evtQueueB = 102;
-    stor::QueueID evtQueueC = 104;
-    stor::QueueID evtQueueD = 103;
+    stor::QueueID evtQueueA(stor::enquing_policy::DiscardOld, 101);
+    stor::QueueID evtQueueB(stor::enquing_policy::DiscardOld, 102);
+    stor::QueueID evtQueueC(stor::enquing_policy::DiscardOld, 104);
+    stor::QueueID evtQueueD(stor::enquing_policy::DiscardOld, 103);
 
-    stor::QueueID dqmQueueA = 0xdeadbeef;
+    stor::QueueID dqmQueueA(stor::enquing_policy::DiscardNew, 0xdeadbeef);
 
     Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
     stor::I2OChain eventMsgFrag(ref);
@@ -1888,9 +1889,11 @@ testI2OChain::stream_and_queue_tags()
     catch (stor::exception::I2OChain& excpt)
       {
       }
+
+    stor::QueueID nonExistingQueueId(stor::enquing_policy::DiscardOld, 100);
     try
       {
-        eventMsgFrag.tagForEventConsumer(100);
+        eventMsgFrag.tagForEventConsumer(nonExistingQueueId);
         CPPUNIT_ASSERT(false);
       }
     catch (stor::exception::I2OChain& excpt)
@@ -1898,7 +1901,7 @@ testI2OChain::stream_and_queue_tags()
       }
     try
       {
-        eventMsgFrag.tagForDQMEventConsumer(100);
+        eventMsgFrag.tagForDQMEventConsumer(nonExistingQueueId);
         CPPUNIT_ASSERT(false);
       }
     catch (stor::exception::I2OChain& excpt)

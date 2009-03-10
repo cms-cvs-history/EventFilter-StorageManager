@@ -1,4 +1,4 @@
-// $Id: EventConsumerQueueCollection.h,v 1.1.2.2 2009/03/02 17:44:45 paterno Exp $
+// $Id: EventConsumerQueueCollection.h,v 1.1.2.3 2009/03/09 14:26:49 mommsen Exp $
 
 #ifndef StorageManager_EventConsumerQueueCollection_h
 #define StorageManager_EventConsumerQueueCollection_h
@@ -11,7 +11,7 @@
 #include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 
 namespace stor {
@@ -19,9 +19,9 @@ namespace stor {
   /**
    * A collection of Event consumer queues
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/02 17:44:45 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/09 14:26:49 $
    */
   
   class EventConsumerQueueCollection

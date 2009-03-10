@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.24 2009/03/06 20:47:11 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.25 2009/03/10 11:29:32 dshpakov Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -10,8 +10,8 @@
 #include "toolbox/mem/Reference.h"
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
-#include "EventFilter/StorageManager/interface/Types.h"
 
 namespace toolbox
 {
@@ -30,9 +30,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.24 $
-   * $Date: 2009/03/06 20:47:11 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.25 $
+   * $Date: 2009/03/10 11:29:32 $
    */
 
 

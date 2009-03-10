@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.5 2009/02/19 22:29:44 paterno Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.6 2009/02/22 18:16:34 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -12,9 +12,9 @@
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Types.h"
 
 
 namespace stor {
@@ -26,9 +26,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/02/19 22:29:44 $
+   * $Author: biery $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/02/22 18:16:34 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class

@@ -1,9 +1,11 @@
 #include "Utilities/Testing/interface/CppUnit_testdriver.icpp"
 #include "cppunit/extensions/HelperMacros.h"
 
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
@@ -345,24 +347,25 @@ void testEventDistributor::testConsumerSelection()
 
   // *** first consumer ***
 
-  uint32 queueId = 0;
   Strings selections;
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
 
-  ++queueId;
-  selections.clear();
-  selections.push_back("a");
-  selections.push_back("b");
-  consInfo.reset(new EventConsumerRegistrationInfo(
-          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-          stor::enquing_policy::DiscardOld));
-  consInfo->setQueueId(queueId);
-  _eventDistributor->registerEventConsumer(consInfo);
-
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  {
+    selections.clear();
+    selections.push_back("a");
+    selections.push_back("b");
+    consInfo.reset(new EventConsumerRegistrationInfo(
+        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+        stor::enquing_policy::DiscardOld));
+    QueueID queueId(enquing_policy::DiscardOld, 1);
+    consInfo->setQueueId(queueId);
+    _eventDistributor->registerEventConsumer(consInfo);
+    
+    CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
+    CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+    CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
+  }
 
   // *** INIT message ***
 
@@ -377,21 +380,22 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
 
   // *** second consumer ***
-
-  ++queueId;
-  selections.clear();
-  selections.push_back("c");
-  selections.push_back("d");
-  consInfo.reset(new EventConsumerRegistrationInfo(
-          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-          stor::enquing_policy::DiscardOld));
-  consInfo->setQueueId(queueId);
-  _eventDistributor->registerEventConsumer(consInfo);
-
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+  {
+    selections.clear();
+    selections.push_back("c");
+    selections.push_back("d");
+    consInfo.reset(new EventConsumerRegistrationInfo(
+        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+        stor::enquing_policy::DiscardOld));
+    QueueID queueId(enquing_policy::DiscardNew, 2);
+    consInfo->setQueueId(queueId);
+    _eventDistributor->registerEventConsumer(consInfo);
+    
+    CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
+    CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
+    CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+  }
 
   // *** first event message (should pass both consumers) ***
 
@@ -421,45 +425,48 @@ void testEventDistributor::testConsumerSelection()
 
   std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
   CPPUNIT_ASSERT(queueIdList.size() == 2);
-  CPPUNIT_ASSERT(queueIdList[0] == 1);
-  CPPUNIT_ASSERT(queueIdList[1] == 2);
+  CPPUNIT_ASSERT(queueIdList[0].index()  == 1);
+  CPPUNIT_ASSERT(queueIdList[0].policy() == enquing_policy::DiscardOld);
+  CPPUNIT_ASSERT(queueIdList[1].index() == 2);
+  CPPUNIT_ASSERT(queueIdList[1].policy() == enquing_policy::DiscardNew);
 
   // *** third consumer ***
-
-  ++queueId;
-  selections.clear();
-  selections.push_back("c");
-  selections.push_back("a");
-  consInfo.reset(new EventConsumerRegistrationInfo(
-          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-          stor::enquing_policy::DiscardOld));
-  consInfo->setQueueId(queueId);
-  _eventDistributor->registerEventConsumer(consInfo);
-
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 3);
-  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
-
+  {
+    selections.clear();
+    selections.push_back("c");
+    selections.push_back("a");
+    consInfo.reset(new EventConsumerRegistrationInfo(
+        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+        stor::enquing_policy::DiscardOld));
+    QueueID queueId(enquing_policy::DiscardOld, 3);
+    consInfo->setQueueId(queueId);
+    _eventDistributor->registerEventConsumer(consInfo);
+    
+    CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
+    CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 3);
+    CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+  }
   // *** fourth consumer ***
-
-  ++queueId;
-  selections.clear();
-  selections.push_back("b");
-  selections.push_back("d");
-  consInfo.reset(new EventConsumerRegistrationInfo(
-          "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-          5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-          stor::enquing_policy::DiscardOld));
-  consInfo->setQueueId(queueId);
-  _eventDistributor->registerEventConsumer(consInfo);
-
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
-  CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
-
+  {
+    selections.clear();
+    selections.push_back("b");
+    selections.push_back("d");
+    consInfo.reset(new EventConsumerRegistrationInfo(
+        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
+        stor::enquing_policy::DiscardOld));
+    QueueID queueId(enquing_policy::DiscardNew, 4);
+    consInfo->setQueueId(queueId);
+    _eventDistributor->registerEventConsumer(consInfo);
+    
+    CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
+    CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
+    CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
+  }
+  
   // *** second event message (should not pass) ***
-
+  
   clear_trigger_bits(hltBits);
   set_trigger_bit(hltBits, 0, edm::hlt::Fail);
   set_trigger_bit(hltBits, 2, edm::hlt::Exception);
@@ -509,10 +516,14 @@ void testEventDistributor::testConsumerSelection()
 
   queueIdList = eventMsgFrag3.getEventConsumerTags();
   CPPUNIT_ASSERT(queueIdList.size() == 4);
-  CPPUNIT_ASSERT(queueIdList[0] == 1);
-  CPPUNIT_ASSERT(queueIdList[1] == 2);
-  CPPUNIT_ASSERT(queueIdList[2] == 3);
-  CPPUNIT_ASSERT(queueIdList[3] == 4);
+  CPPUNIT_ASSERT(queueIdList[0].index() == 1);
+  CPPUNIT_ASSERT(queueIdList[0].policy() == enquing_policy::DiscardOld);
+  CPPUNIT_ASSERT(queueIdList[1].index() == 2);
+  CPPUNIT_ASSERT(queueIdList[1].policy() == enquing_policy::DiscardNew);
+  CPPUNIT_ASSERT(queueIdList[2].index() == 3);
+  CPPUNIT_ASSERT(queueIdList[2].policy() == enquing_policy::DiscardOld);
+  CPPUNIT_ASSERT(queueIdList[3].index() == 4);
+  CPPUNIT_ASSERT(queueIdList[3].policy() == enquing_policy::DiscardNew);
 
   // *** fourth event message (should not pass) ***
 

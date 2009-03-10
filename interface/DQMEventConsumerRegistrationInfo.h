@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.4 2009/03/10 12:37:50 dshpakov Exp $
 
 #ifndef DQMEVENTCONSUMERREGISTRATIONINFO_H
 #define DQMEVENTCONSUMERREGISTRATIONINFO_H
@@ -8,16 +8,16 @@
 #include <iostream>
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 namespace stor
 {
   /**
    * Holds the registration information for a DQM event consumer.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/09 14:26:49 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/10 12:37:50 $
    */
 
   class DQMEventConsumerRegistrationInfo
@@ -37,7 +37,6 @@ namespace stor
       _headerRetryInterval( headerRetryInterval ),
       _maxEventRequestRate( maxEventRequestRate ),
       _topLevelFolderName( topLevelFolderName ),
-      _queueId(0),
       _policy( policy )
     {}
 
