@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.28 2009/03/06 20:47:11 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.29 2009/03/10 11:29:32 dshpakov Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -8,6 +8,7 @@
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
+#include "IOPool/Streamer/interface/DQMEventMessage.h"
 
 namespace stor
 {
@@ -1228,7 +1229,9 @@ namespace stor
     private:
 
       void parseI2OHeader();
+      void cacheHeaderFields() const;
 
+      mutable bool _headerFieldsCached;
       mutable std::string _topFolderName;
 
     };
@@ -1236,8 +1239,6 @@ namespace stor
     inline DQMEventMsgData::DQMEventMsgData(toolbox::mem::Reference* pRef) :
       ChainData(pRef)
     {
-
-      _topFolderName = std::string( "" ); // FIXME!
 
       parseI2OHeader();
 
@@ -1259,6 +1260,11 @@ namespace stor
 
     inline std::string DQMEventMsgData::do_topFolderName() const
     {
+
+      if( !_headerFieldsCached )
+        {
+          cacheHeaderFields();
+        }
 
       if( faulty() || !complete() )
         {
@@ -1305,6 +1311,46 @@ namespace stor
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
         }
+    }
+
+    // Adapted from InitMsgData::cacheHeaderFields
+    void DQMEventMsgData::cacheHeaderFields() const
+    {
+
+      unsigned char* firstFragLoc = dataLocation(0);
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
+
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      else if( firstFragSize > 4096 )
+        {
+          DQMEventMsgView view( firstFragLoc );
+          if( view.headerSize() <= firstFragSize )
+            {
+              useFirstFrag = true;
+            }
+        }
+
+      boost::shared_ptr<DQMEventMsgView> msgView;
+      boost::shared_ptr< std::vector<unsigned char> >
+        tempBuffer(new std::vector<unsigned char>());
+      if (useFirstFrag)
+        {
+          msgView.reset(new DQMEventMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(*tempBuffer);
+          msgView.reset(new DQMEventMsgView(&(*tempBuffer)[0]));
+        }
+
+      _topFolderName = msgView->topFolderName();
+
+      _headerFieldsCached = true;
+
     }
 
     class ErrorEventMsgData : public ChainData
