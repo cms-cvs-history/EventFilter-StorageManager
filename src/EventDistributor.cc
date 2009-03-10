@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.17 2009/03/09 21:25:26 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.18 2009/03/10 12:37:50 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -30,7 +30,6 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         ioc.copyFragmentsIntoBuffer(b);
         InitMsgView imv( &b[0] );
         assert( _initMsgCollection.get() != 0 );
-        boost::mutex::scoped_lock sl(_initCollectionMutex);
         if( _initMsgCollection->addIfUnique( imv ) )
           {
             for( EvtSelList::iterator it = _eventStreamSelectors.begin();
@@ -132,7 +131,11 @@ const QueueID EventDistributor::registerEventConsumer
 
   EventConsumerSelector evtSel( *registrationInfo );
 
-  boost::mutex::scoped_lock sl(_initCollectionMutex);
+  // we need to add the new consumer event selector to the list *before*
+  // we try to initialize it from the InitMsgCollection to avoid race
+  // conditions with the initialization code when INIT messages are received.
+  _eventConsumerSelectors.push_back( evtSel );
+
   InitMsgSharedPtr initMsgPtr =
     _initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
   if ( initMsgPtr.get() != 0 )
@@ -141,7 +144,6 @@ const QueueID EventDistributor::registerEventConsumer
       InitMsgView initView(regPtr);
       evtSel.initialize( initView );
     }
-  _eventConsumerSelectors.push_back( evtSel );
 
   return queueId;
 }

@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.13 2009/03/09 21:25:26 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.14 2009/03/10 12:37:50 dshpakov Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -20,7 +20,6 @@
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
 #include "boost/shared_ptr.hpp"
-#include "boost/thread/mutex.hpp"
 
 
 namespace stor {
@@ -33,9 +32,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/03/09 21:25:26 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/03/10 12:37:50 $
    */
 
   class EventDistributor
@@ -135,7 +134,6 @@ namespace stor {
     StreamQueue _streamQueue;
 
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
-    boost::mutex _initCollectionMutex;
 
     typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;
