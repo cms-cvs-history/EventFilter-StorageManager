@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.16 2009/03/09 20:30:59 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.17 2009/03/09 21:25:26 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -74,7 +74,14 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
     case Header::DQM_EVENT:
       {
-
+        for( DQMSelList::iterator it = _DQMSelectors.begin();
+             it != _DQMSelectors.end(); ++it )
+          {
+            if( it->acceptEvent( ioc ) )
+              {
+                ioc.tagForDQMEventConsumer( it->regInfo().queueId() );
+              }
+          }
         break;
       }
 
@@ -139,6 +146,14 @@ const QueueID EventDistributor::registerEventConsumer
   return queueId;
 }
 
+////////////////////////////////
+//// Register DQM consumer: ////
+////////////////////////////////
+const QueueID
+EventDistributor::registerDQMEventConsumer( DQMRegPtr ptr )
+{
+  return _DQMQueueCollection.registerDQMEventConsumer( ptr );
+}
 
 void EventDistributor::registerEventStreams( const EvtStrConfList& cl )
 {
@@ -148,6 +163,14 @@ void EventDistributor::registerEventStreams( const EvtStrConfList& cl )
     }
 }
 
+
+void EventDistributor::registerDQMStreams( const DQMRegList& l )
+{
+  for( DQMRegList::const_iterator i = l.begin(); i != l.end(); ++i )
+    {
+      _DQMSelectors.push_back( DQMEventSelector( *i ) );
+    }
+}
 
 void EventDistributor::registerErrorStreams( const ErrStrConfList& cl )
 {
@@ -161,13 +184,16 @@ void EventDistributor::registerErrorStreams( const ErrStrConfList& cl )
 void EventDistributor::clearStreams()
 {
   _eventStreamSelectors.clear();
+  _DQMSelectors.clear();
   _errorStreamSelectors.clear();
 }
 
 
 unsigned int EventDistributor::configuredStreamCount() const
 {
-  return _eventStreamSelectors.size() + _errorStreamSelectors.size();
+  return _eventStreamSelectors.size() +
+    _errorStreamSelectors.size() +
+    _DQMSelectors.size();
 }
 
 
