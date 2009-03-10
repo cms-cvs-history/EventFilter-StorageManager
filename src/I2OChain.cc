@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.27 2009/03/04 15:18:31 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.28 2009/03/06 20:47:11 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -76,6 +76,8 @@ namespace stor
       void hltTriggerSelections(Strings& nameList) const;
       void l1TriggerNames(Strings& nameList) const;
 
+      std::string topFolderName() const;
+
       uint32 hltTriggerCount() const;
       void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
@@ -132,6 +134,8 @@ namespace stor
       virtual void do_hltTriggerNames(Strings& nameList) const;
       virtual void do_hltTriggerSelections(Strings& nameList) const;
       virtual void do_l1TriggerNames(Strings& nameList) const;
+
+      virtual std::string do_topFolderName() const;
 
       virtual uint32 do_hltTriggerCount() const;
       virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
@@ -616,6 +620,11 @@ namespace stor
       return do_outputModuleLabel();
     }
 
+    inline std::string ChainData::topFolderName() const
+    {
+      return do_topFolderName();
+    }
+
     inline void ChainData::hltTriggerNames(Strings& nameList) const
     {
       do_hltTriggerNames(nameList);
@@ -785,6 +794,14 @@ namespace stor
       std::stringstream msg;
       msg << "An output module label is only available from a valid, ";
       msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline std::string ChainData::do_topFolderName() const
+    {
+      std::stringstream msg;
+      msg << "A top folder name is only available from a valid, ";
+      msg << "complete DQM event message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
@@ -1206,14 +1223,22 @@ namespace stor
 
     protected:
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      std::string do_topFolderName() const;
 
     private:
+
       void parseI2OHeader();
+
+      mutable std::string _topFolderName;
+
     };
 
     inline DQMEventMsgData::DQMEventMsgData(toolbox::mem::Reference* pRef) :
       ChainData(pRef)
     {
+
+      _topFolderName = std::string( "" ); // FIXME!
+
       parseI2OHeader();
 
       if (_fragmentCount > 1)
@@ -1230,6 +1255,21 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    inline std::string DQMEventMsgData::do_topFolderName() const
+    {
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "A top folder name can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      return _topFolderName;
+
     }
 
     inline unsigned char*
@@ -1707,6 +1747,16 @@ namespace stor
           "The output module label can not be determined from an empty I2OChain.");
       }
     return _data->outputModuleLabel();
+  }
+
+  std::string I2OChain::topFolderName() const
+  {
+    if( !_data )
+      {
+        XCEPT_RAISE( stor::exception::I2OChain,
+                     "The top folder name can not be determined from an empty I2OChain." );
+      }
+    return _data->topFolderName();
   }
 
   uint32 I2OChain::outputModuleId() const

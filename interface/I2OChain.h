@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.23 2009/03/06 18:52:49 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.24 2009/03/06 20:47:11 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -31,8 +31,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.23 $
-   * $Date: 2009/03/06 18:52:49 $
+   * $Revision: 1.1.2.24 $
+   * $Date: 2009/03/06 20:47:11 $
    */
 
 
@@ -383,6 +383,13 @@ namespace stor {
        an exception is thrown.
      */
     uint32 outputModuleId() const;
+
+    /**
+       Returns the top folder contained in the message, if and
+       only if, the message is a DQM event message.  Otherwise,
+       an exception is thrown.
+     */
+    std::string topFolderName() const;
 
     /**
        Copies the HLT trigger names into the specified vector, if and
