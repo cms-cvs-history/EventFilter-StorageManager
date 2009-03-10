@@ -1,9 +1,11 @@
-// $Id: QueueID.h,v 1.1.2.1 2009/03/02 17:44:45 paterno Exp $
+// $Id: QueueID.h,v 1.1.2.2 2009/03/09 14:26:50 mommsen Exp $
 
 #ifndef StorageManager_QueueID_h
 #define StorageManager_QueueID_h
 
 #include <cstddef>
+#include <iostream>
+
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 
 namespace stor {
@@ -11,9 +13,9 @@ namespace stor {
   /**
    * Uniquely identifies the consumer queues 
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/01 20:36:29 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/09 14:26:50 $
    */
 
   class QueueID
@@ -126,6 +128,15 @@ namespace stor {
   QueueID::operator!= (QueueID const& other) const
   {
     return !( operator==(other));
+  }
+
+  inline
+  std::ostream&
+  operator<< ( std::ostream& os, const QueueID& queueID )
+  {
+    os << "policy: " << queueID.policy() << 
+      "   index: " << queueID.index() << std::endl;
+    return os;
   }
 
 } // namespace stor
