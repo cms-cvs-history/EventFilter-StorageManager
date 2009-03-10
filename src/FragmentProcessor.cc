@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.8 2009/02/25 10:59:04 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.9 2009/03/10 20:39:44 biery Exp $
 
 #include <unistd.h>
 
@@ -26,6 +26,7 @@ FragmentProcessor::~FragmentProcessor()
 bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
 {
   processAllCommands();
+  processAllRegistrations();
   processOneFragmentIfPossible();
   return _actionIsActive;
 }
@@ -58,6 +59,18 @@ void FragmentProcessor::updateStatistics()
 void FragmentProcessor::processAllCommands()
 {
 
+}
+
+
+void FragmentProcessor::processAllRegistrations()
+{
+  RegInfoBasePtr regInfo;
+  boost::shared_ptr<RegistrationQueue> regQueue =
+    _sharedResources->_registrationQueue;
+  while ( regQueue->deq_nowait( regInfo ) )
+    {
+      regInfo->registerMe( &_eventDistributor );
+    }
 }
 
 

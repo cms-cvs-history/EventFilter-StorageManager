@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.7 2009/03/10 15:32:59 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.8 2009/03/10 20:39:44 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -26,9 +26,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/10 15:32:59 $
+   * $Author: biery $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/03/10 20:39:44 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -59,6 +59,11 @@ namespace stor {
      * Processes all state machine events in the command queue
      */
     void processAllCommands();
+
+    /**
+     * Processes all consumer registrations in the registration queue
+     */
+    void processAllRegistrations();
 
     /**
        Process a single fragment, if there is  place to put it.
