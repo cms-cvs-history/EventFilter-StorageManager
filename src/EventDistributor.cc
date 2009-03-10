@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.19 2009/03/10 14:16:00 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.20 2009/03/10 20:39:44 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -78,7 +78,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
           {
             if( it->acceptEvent( ioc ) )
               {
-                ioc.tagForDQMEventConsumer( it->regInfo().queueId() );
+                ioc.tagForDQMEventConsumer( it->queueId() );
               }
           }
         break;
@@ -141,10 +141,8 @@ void EventDistributor::registerEventConsumer
 ////////////////////////////////
 //// Register DQM consumer: ////
 ////////////////////////////////
-const QueueID
-EventDistributor::registerDQMEventConsumer( DQMRegPtr ptr )
+void EventDistributor::registerDQMEventConsumer( DQMRegPtr ptr )
 {
-  return _DQMQueueCollection.registerDQMEventConsumer( ptr );
 }
 
 void EventDistributor::registerEventStreams( const EvtStrConfList& cl )

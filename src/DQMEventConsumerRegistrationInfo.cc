@@ -1,9 +1,16 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.2 2009/02/27 13:59:43 dshpakov Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.3 2009/03/10 12:37:50 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
 
 using stor::DQMEventConsumerRegistrationInfo;
 using namespace std;
+
+void stor::DQMEventConsumerRegistrationInfo::
+registerMe( stor::EventDistributor* evtDist )
+{
+  evtDist->registerDQMEventConsumer( this );
+}
 
 ostream&
 stor::operator << ( ostream& os,

@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.5 2009/03/10 15:32:59 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.6 2009/03/10 20:39:43 biery Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -17,9 +17,9 @@ namespace stor
    * This struct holds the registration information from a event
    * consumer
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/10 15:32:59 $
+   * $Author: biery $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/10 20:39:43 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -67,8 +67,8 @@ namespace stor
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
     unsigned int secondsToStale() const { return _secondsToStale; }
-    enquing_policy::PolicyTag queuePolicy() const { return _policy; }
-    QueueID queueId() const { return _queueId; }
+    const enquing_policy::PolicyTag& queuePolicy() const { return _policy; }
+    const QueueID& queueId() const { return _queueId; }
 
     // Set queue Id:
     void setQueueId( QueueID qid ) { _queueId = qid; }

@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: DQMEventSelector.h,v 1.1.2.3 2009/03/10 11:29:32 dshpakov Exp $
+// $Id: DQMEventSelector.h,v 1.1.2.4 2009/03/10 12:37:50 dshpakov Exp $
 
 #ifndef DQMEVENTSELECTOR_H
 #define DQMEVENTSELECTOR_H
@@ -16,8 +16,8 @@ namespace stor
    * DQM event selector
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/10 11:29:32 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/10 12:37:50 $
    */
 
   class DQMEventSelector
@@ -27,7 +27,8 @@ namespace stor
 
     // Constructor:
     DQMEventSelector( const DQMEventConsumerRegistrationInfo& ri ):
-      _regInfo( ri )
+      _topLevelFolderName( ri.topLevelFolderName() ),
+      _queueId( ri.queueId() )
     {}
 
     // Destructor:
@@ -36,12 +37,15 @@ namespace stor
     // Accept event:
     bool acceptEvent( const I2OChain& );
 
-    // Accessors:
-    const DQMEventConsumerRegistrationInfo& regInfo() const { return _regInfo; }
+    /**
+     * Returns the ID of the queue corresponding to this selector.
+     */
+    const QueueID& queueId() const { return _queueId; }
 
   private:
 
-    DQMEventConsumerRegistrationInfo _regInfo;
+    std::string _topLevelFolderName;
+    QueueID _queueId;
 
     boost::shared_ptr<edm::EventSelector> _eventSelector;
 

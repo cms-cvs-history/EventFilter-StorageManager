@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: RegistrationInfoBase.h,v 1.1.2.1 2009/03/09 20:30:58 biery Exp $
+// $Id: RegistrationInfoBase.h,v 1.1.2.1 2009/03/10 20:39:44 biery Exp $
 
 #ifndef REGISTRATIONINFOBASE_H
 #define REGISTRATIONINFOBASE_H
@@ -15,9 +15,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.26 $
-   * $Date: 2009/03/10 15:32:59 $
+   * $Author: biery $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/10 20:39:44 $
    */
 
   class RegistrationInfoBase
@@ -31,12 +31,12 @@ namespace stor {
      * Returns the ID of the queue corresponding to this consumer
      * registration.
      */
-    virtual QueueID queueId() const = 0;
+    virtual const QueueID& queueId() const = 0;
 
     /**
      * Returns the enquing policy requested by the consumer registration.
      */
-    virtual enquing_policy::PolicyTag queuePolicy() const = 0;
+    virtual const enquing_policy::PolicyTag& queuePolicy() const = 0;
 
     /**
      * Registers this registration with the event distributor.

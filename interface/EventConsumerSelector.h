@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerSelector.h,v 1.1.2.1 2009/03/09 20:30:58 biery Exp $
+// $Id: EventConsumerSelector.h,v 1.1.2.2 2009/03/10 20:39:43 biery Exp $
 
 #ifndef EVENTCONSUMERSELECTOR_H
 #define EVENTCONSUMERSELECTOR_H
@@ -17,9 +17,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.26 $
-   * $Date: 2009/03/10 15:32:59 $
+   * $Author: biery $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/10 20:39:43 $
    */
 
   class EventConsumerSelector
@@ -60,7 +60,7 @@ namespace stor {
     /**
      * Returns the ID of the queue corresponding to this selector.
      */
-    QueueID queueId() const { return _queueId; }
+    QueueID const& queueId() const { return _queueId; }
 
     /**
      * Tests whether this selector has been initialized.

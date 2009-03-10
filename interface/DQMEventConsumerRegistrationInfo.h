@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.4 2009/03/10 12:37:50 dshpakov Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.5 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef DQMEVENTCONSUMERREGISTRATIONINFO_H
 #define DQMEVENTCONSUMERREGISTRATIONINFO_H
@@ -7,25 +7,26 @@
 #include <string>
 #include <iostream>
 
-#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
-#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 
 namespace stor
 {
   /**
    * Holds the registration information for a DQM event consumer.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/10 12:37:50 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/10 15:32:59 $
    */
 
-  class DQMEventConsumerRegistrationInfo
+  class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
   {
 
   public:
 
-    // Constructor:
+    /**
+     * Constructs an instance from the specified registration information.
+     */
     DQMEventConsumerRegistrationInfo( const std::string& sourceURL,
 				      const std::string& consumerName,
 				      unsigned int headerRetryInterval, // seconds
@@ -50,10 +51,16 @@ namespace stor
     double maxEventRequestRate() const { return _maxEventRequestRate; }
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
     const QueueID& queueId() const { return _queueId; }
-    const enquing_policy::PolicyTag& policy() const { return _policy; }
+    const enquing_policy::PolicyTag& queuePolicy() const { return _policy; }
 
     // Set queue Id:
     void setQueueId( QueueID qid ) { _queueId = qid; }
+
+    /**
+     * Registers the consumer represented by this registration with
+     * the specified EventDistributor.
+     */
+    void registerMe(EventDistributor*);
 
     // Output:
     friend std::ostream& operator <<
