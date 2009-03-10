@@ -19,7 +19,7 @@ set selectedProject = ""
 set cmsswVersion = `pwd | sed -nre 's:.*/(CMSSW.*)/src/EventFilter/StorageManager/test.*:\1:p'`
 
 if ($cmsswVersion != "") then
-    set selectedProject = "../../../../../$cmsswVersion"
+    set selectedProject = `pwd | sed -nre "s:(.*/${cmsswVersion}).*:\1:p"`
 
 else
     # check for existing project areas.  Prompt the user to choose one.
@@ -30,7 +30,7 @@ else
     endif
     set projectList = `ls -dt CMSSW*`
     if ($projectCount == 1) then
-        set selectedProject = $projectList
+        set selectedProject = `pwd`/$projectList
     else
         echo " "
         echo "Select a project:"
@@ -39,7 +39,7 @@ else
             set response = $<
             set response = `echo ${response}y | tr "[A-Z]" "[a-z]" | cut -c1`
             if ($response == "y") then
-                set selectedProject = $project
+                set selectedProject = `pwd`/$project
                 break
             endif
         end
@@ -54,6 +54,9 @@ endif
 cd ${selectedProject}/src
 source $demoSystemDir/bin/scram_setup.csh
 cd -
+
+set scramArch = `scramv1 arch`
+setenv PATH ${selectedProject}/test/${scramArch}:${PATH}
 
 # define useful aliases
 

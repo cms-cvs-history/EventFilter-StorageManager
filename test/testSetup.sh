@@ -15,11 +15,11 @@ source $demoSystemDir/bin/cvs_setup.sh
 
 # check if this script is being run from inside a CMSSW project area
 selectedProject=""
-cmsswVersion=`pwd | sed -nre 's:.*/(CMSSW.*)/src/EventFilter/StorageManager/test.*:\1:p'`
+cmsswVersion=`pwd -P | sed -nre 's:.*/(CMSSW.*)/src/EventFilter/StorageManager/test.*:\1:p'`
 
 if [[ "$cmsswVersion" != "" ]]
 then
-    selectedProject="../../../../../$cmsswVersion"
+    selectedProject=`pwd -P | sed -nre "s:(.*/${cmsswVersion}).*:\1:p"`
 
 else
     # check for existing project areas.  Prompt the user to choose one.
@@ -32,7 +32,7 @@ else
     projectList=`ls -dt CMSSW*`
     if [ $projectCount -eq 1 ]
     then
-        selectedProject=$projectList
+        selectedProject=`pwd -P`/$projectList
     else
         echo " "
         echo "Select a project:"
@@ -43,7 +43,7 @@ else
             response=`echo ${response}y | tr "[A-Z]" "[a-z]" | cut -c1`
             if [ "$response" == "y" ]
             then
-                selectedProject=$project
+                selectedProject=`pwd -P`/$project
                 break
             fi
         done
@@ -59,6 +59,9 @@ fi
 cd ${selectedProject}/src
 source $demoSystemDir/bin/scram_setup.sh
 cd - > /dev/null
+
+scramArch=`scramv1 arch`
+export PATH=${selectedProject}/test/${scramArch}:${PATH}
 
 # define useful aliases
 
