@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.20 2009/03/10 20:39:44 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.21 2009/03/10 21:19:39 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -174,7 +174,6 @@ void EventDistributor::registerErrorStreams( const ErrStrConfList& cl )
 void EventDistributor::clearStreams()
 {
   _eventStreamSelectors.clear();
-  _DQMSelectors.clear();
   _errorStreamSelectors.clear();
 }
 
@@ -182,8 +181,7 @@ void EventDistributor::clearStreams()
 unsigned int EventDistributor::configuredStreamCount() const
 {
   return _eventStreamSelectors.size() +
-    _errorStreamSelectors.size() +
-    _DQMSelectors.size();
+    _errorStreamSelectors.size();
 }
 
 
