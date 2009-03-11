@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.2 2009/02/25 20:49:15 biery Exp $
+// $Id: JobController.h,v 1.22.6.3 2009/03/03 22:03:28 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/EventServer.h"
@@ -9,7 +9,6 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
@@ -30,17 +29,13 @@ namespace stor
   public:
     JobController(const std::string& my_config,
 		  log4cplus::Logger& applicationLogger,
-                  SharedResources sharedResources,
-                  boost::shared_ptr<DiscardManager> discardMgr,
-		  FragmentCollector::Deleter);
+                  SharedResources sharedResources);
 
     ~JobController();
 
     void start();
     void stop();
     void join();
-
-    void receiveMessage(FragEntry& entry);
 
     edm::EventBuffer& getFragmentQueue()
     { return collector_->getFragmentQueue(); }
@@ -95,9 +90,7 @@ namespace stor
     boost::shared_ptr<stor::SMOnlyStats> get_stats() { return collector_->get_stats(); }
 
   private:
-    void init(const std::string& my_config, SharedResources sharedResources,
-              boost::shared_ptr<DiscardManager> discardMgr,
-              FragmentCollector::Deleter);
+    void init(const std::string& my_config, SharedResources sharedResources);
     void processCommands();
     static void run(JobController*);
 

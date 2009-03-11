@@ -29,21 +29,17 @@ namespace stor
 
   JobController::JobController(const std::string& my_config,
 			       log4cplus::Logger& applicationLogger,
-                               SharedResources sharedResources,
-                               boost::shared_ptr<DiscardManager> discardMgr,
-			       FragmentCollector::Deleter deleter) :
+                               SharedResources sharedResources) :
   applicationLogger_(applicationLogger)      
   {
     // change to phony input source
     //string new_config = changeToPhony(fu_config);
     //setRegistry(new_config);
-    init(my_config,sharedResources,discardMgr,deleter);
+    init(my_config,sharedResources);
   } 
 
   void JobController::init(const std::string& my_config,
-                           SharedResources sharedResources,
-                           boost::shared_ptr<DiscardManager> discardMgr,
-			   FragmentCollector::Deleter deleter)
+                           SharedResources sharedResources)
   {
     std::auto_ptr<HLTInfo> inf(new HLTInfo());
 
@@ -54,8 +50,8 @@ namespace stor
     //  coll(new FragmentCollector(*(ep->getInfo()),deleter,
     //				 my_config));
     std::auto_ptr<FragmentCollector> 
-	coll(new FragmentCollector(inf,deleter,applicationLogger_,
-				   sharedResources,discardMgr,my_config));
+	coll(new FragmentCollector(inf,applicationLogger_,
+				   sharedResources,my_config));
 
     collector_.reset(coll.release());
     //ep_runner_.reset(ep.release());

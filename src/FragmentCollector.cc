@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.8 2009/03/03 22:45:29 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.9 2009/03/04 15:21:08 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -46,14 +46,12 @@ namespace stor
   std::string getSMFC_reason4Exception() { return SMFragCollThread.reason_for_exception; }
 
 
-  FragmentCollector::FragmentCollector(HLTInfo& h,Deleter d,
+  FragmentCollector::FragmentCollector(HLTInfo& h,
 				       log4cplus::Logger& applicationLogger,
                                        SharedResources sharedResources,
-                                       boost::shared_ptr<DiscardManager> discardMgr,
                                        const string& config_str):
     cmd_q_(&(h.getCommandQueue())),
     frag_q_(&(h.getFragmentQueue())),
-    buffer_deleter_(d),
     prods_(0),
     info_(&h), 
     lastStaleCheckTime_(time(0)),
@@ -61,7 +59,7 @@ namespace stor
     disks_(0),
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
-    discardManager_(discardMgr),
+    discardManager_(sharedResources._discardManager),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {
@@ -69,14 +67,12 @@ namespace stor
     // at ctor
     event_area_.reserve(7000000);
   }
-  FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,Deleter d,
+  FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,
 				       log4cplus::Logger& applicationLogger,
                                        SharedResources sharedResources,
-                                       boost::shared_ptr<DiscardManager> discardMgr,
                                        const string& config_str):
     cmd_q_(&(info.get()->getCommandQueue())),
     frag_q_(&(info.get()->getFragmentQueue())),
-    buffer_deleter_(d),
     prods_(0),
     info_(info.get()), 
     lastStaleCheckTime_(time(0)),
@@ -84,7 +80,7 @@ namespace stor
     disks_(0),
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
-    discardManager_(discardMgr),
+    discardManager_(sharedResources._discardManager),
     writer_(new edm::ServiceManager(config_str)),
     dqmServiceManager_(new stor::DQMServiceManager())
   {

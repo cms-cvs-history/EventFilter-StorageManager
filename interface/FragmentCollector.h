@@ -54,7 +54,6 @@ namespace stor
   class FragmentCollector
   {
   public:
-    typedef void (*Deleter)(void*);
     typedef std::vector<unsigned char> Buffer;
 
     // This is not the most efficient way to store and manipulate this
@@ -62,15 +61,13 @@ namespace stor
     // available to create the prototype.
     typedef std::map<stor::FragKey, FragmentContainer> Collection;
 
-    FragmentCollector(HLTInfo& h, Deleter d,
+    FragmentCollector(HLTInfo& h,
 		      log4cplus::Logger& applicationLogger,
                       SharedResources sharedResources,
-                      boost::shared_ptr<DiscardManager> discardMgr,
                       const std::string& config_str="");
-    FragmentCollector(std::auto_ptr<HLTInfo>, Deleter d,
+    FragmentCollector(std::auto_ptr<HLTInfo>,
 		      log4cplus::Logger& applicationLogger,
                       SharedResources sharedResources,
-                      boost::shared_ptr<DiscardManager> discardMgr,
                       const std::string& config_str="");
     ~FragmentCollector();
 
@@ -103,7 +100,6 @@ namespace stor
     edm::EventBuffer* cmd_q_;
     edm::EventBuffer* frag_q_;
 
-    Deleter buffer_deleter_;
     Buffer event_area_;
     Collection fragment_area_;
     boost::shared_ptr<boost::thread> me_;

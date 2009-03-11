@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.24 2009/03/04 15:21:33 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.25 2009/03/09 19:54:15 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -128,7 +128,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.24 2009/03/04 15:21:33 biery Exp $ $Name: refdev01_s07 $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.25 2009/03/09 19:54:15 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -290,8 +290,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
-  sharedResourcesInstance_._commandQueue.reset(new CommandQueue(1024));
+  sharedResourcesInstance_._commandQueue.reset(new CommandQueue(128));
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
+  sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
 
 }
 
@@ -3795,6 +3796,7 @@ void StorageManager::configureAction()
   boost::shared_ptr<DiscardManager> discardMgr;
   Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
   for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
+    //std::cout << "POOL NAME = " << nameList[idx] << std::endl;
     if (idx == 0 || nameList[idx].find("TCP") != std::string::npos) {
       toolbox::net::URN poolURN(nameList[idx]);
       toolbox::mem::Pool* thePool =
@@ -3804,9 +3806,9 @@ void StorageManager::configureAction()
                                           thePool));
     }
   }
+  sharedResourcesInstance_._discardManager = discardMgr;
   jc_.reset(new stor::JobController(my_config, getApplicationLogger(),
-                                    sharedResourcesInstance_,
-                                    discardMgr, 0));
+                                    sharedResourcesInstance_));
 
   int disks(nLogicalDisk_);
 

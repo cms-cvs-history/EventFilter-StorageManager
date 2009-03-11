@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.12.4.2 2009/02/25 20:49:18 biery Exp $
+// $Id: RunCollector_t.cpp,v 1.12.4.3 2009/03/03 22:07:16 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -18,7 +18,6 @@
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
@@ -123,14 +122,6 @@ void Drain::readData()
 
 // -----------------------------------------------
 
-static void deleteBuffer(void* v)
-{
-	stor::FragEntry* fe = (stor::FragEntry*)v;
-	delete [] (char*)fe->buffer_address_;
-}
-
-// -----------------------------------------------
-
 class Main
 {
  public:
@@ -168,7 +159,6 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   info_(prods_),
-  //coll2_(info_,deleteBuffer,prods_),
   drain_(info_),
   logger_(log4cplus::Logger::getRoot())  // placeholder, overwritten below
 {
@@ -179,11 +169,10 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   logger_ = log4cplus::Logger::getInstance("main");
 
   sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
-  boost::shared_ptr<stor::DiscardManager> discardMgr;
 
-  coll_.reset(new stor::FragmentCollector(info_,&deleteBuffer,
+  coll_.reset(new stor::FragmentCollector(info_,
                                           logger_,sharedResources_,
-                                          discardMgr,conffile));
+                                          conffile));
 
   boost::shared_ptr<stor::InitMsgCollection>
     initMsgCollection(new stor::InitMsgCollection());

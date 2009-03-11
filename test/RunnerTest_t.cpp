@@ -27,7 +27,6 @@ this can run.
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -65,12 +64,6 @@ namespace {
     ist.getline(&rc[0],b.st_size,fstream::traits_type::eof());
     return rc;
   }
-}
-
-static void deleteBuffer(void* v)
-{
-	stor::FragEntry* fe = (stor::FragEntry*)v;
-	delete [] (char*)fe->buffer_address_;
 }
 
 // -----------------------------------------------
@@ -119,11 +112,10 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   logger_ = log4cplus::Logger::getInstance("main");
 
   sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
-  boost::shared_ptr<stor::DiscardManager> discardMgr;
 
-  coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),deleteBuffer,
+  coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),
                                           logger_,sharedResources_,
-                                          discardMgr,conffile));
+                                          conffile));
 
   boost::shared_ptr<stor::InitMsgCollection>
     initMsgCollection(new stor::InitMsgCollection());
