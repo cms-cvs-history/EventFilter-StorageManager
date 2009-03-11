@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.6 2009/03/06 20:47:12 biery Exp $
+// $Id: TestHelper.h,v 1.1.2.7 2009/03/09 15:00:35 biery Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -13,6 +13,9 @@
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMsgBuilder.h"
 #include "IOPool/Streamer/interface/EventMsgBuilder.h"
+
+#include "IOPool/Streamer/interface/DQMEventMsgBuilder.h"
+#include "DataFormats/Provenance/interface/Timestamp.h"
 
 #include "toolbox/mem/HeapAllocator.h"
 #include "toolbox/mem/Reference.h"
@@ -263,6 +266,33 @@ namespace stor
       smEventMsg->fuGUID = value3;
 
       return ref;
+    }
+
+
+    Reference* allocate_frame_with_dqm_msg( unsigned int eventNumber )
+    {
+
+      unsigned int run = 1111;
+      edm::Timestamp ts;
+      unsigned int lumi_section = 1;
+      unsigned int update_number = 1;
+      std::string release_tag( "v00" );
+      std::string top_folder( "/" );
+      DQMEvent::TObjectTable mon_elts;
+
+      Reference* ref = allocate_frame_with_basic_header( I2O_SM_DQM, 0, 1 );
+
+      I2O_SM_DQM_MESSAGE_FRAME* msg = (I2O_SM_DQM_MESSAGE_FRAME*)ref->getDataLocation();
+
+      DQMEventMsgBuilder b( (void*)(msg->dataPtr()), msg->dataSize, run, eventNumber,
+                            ts,
+                            lumi_section, update_number,
+                            release_tag,
+                            top_folder,
+                            mon_elts );
+
+      return ref;
+
     }
 
 
