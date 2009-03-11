@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.12.4.3 2009/03/03 22:07:16 biery Exp $
+// $Id: RunCollector_t.cpp,v 1.12.4.4 2009/03/11 17:30:57 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -15,7 +15,6 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
@@ -173,10 +172,6 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   coll_.reset(new stor::FragmentCollector(info_,
                                           logger_,sharedResources_,
                                           conffile));
-
-  boost::shared_ptr<stor::InitMsgCollection>
-    initMsgCollection(new stor::InitMsgCollection());
-  coll_->setInitMsgCollection(initMsgCollection);
 
   boost::shared_ptr<stor::Parameter> smParameter =
     stor::Configurator::instance()->getParameter();

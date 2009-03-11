@@ -24,7 +24,6 @@ this can run.
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/EPRunner.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
@@ -116,10 +115,6 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),
                                           logger_,sharedResources_,
                                           conffile));
-
-  boost::shared_ptr<stor::InitMsgCollection>
-    initMsgCollection(new stor::InitMsgCollection());
-  coll_->setInitMsgCollection(initMsgCollection);
 
   boost::shared_ptr<stor::Parameter> smParameter =
     stor::Configurator::instance()->getParameter();

@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.9 2009/03/04 15:21:08 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.10 2009/03/11 17:30:56 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/ProgressMarker.h"
@@ -61,11 +61,19 @@ namespace stor
     newFragmentQueue_(sharedResources._fragmentQueue),
     discardManager_(sharedResources._discardManager),
     writer_(new edm::ServiceManager(config_str)),
-    dqmServiceManager_(new stor::DQMServiceManager())
+    dqmServiceManager_(new stor::DQMServiceManager()),
+    eventServer_(sharedResources._oldEventServer),
+    DQMeventServer_(sharedResources._oldDQMEventServer),
+    initMsgCollection_(sharedResources._initMsgCollection)
   {
     // supposed to have given parameterSet smConfigString to writer_
     // at ctor
     event_area_.reserve(7000000);
+
+    if (eventServer_.get() != NULL) {
+      eventServer_->setStreamSelectionTable(writer_->getStreamSelectionTable());
+    }
+    dqmServiceManager_->setDQMEventServer(DQMeventServer_);
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,
 				       log4cplus::Logger& applicationLogger,
@@ -82,11 +90,19 @@ namespace stor
     newFragmentQueue_(sharedResources._fragmentQueue),
     discardManager_(sharedResources._discardManager),
     writer_(new edm::ServiceManager(config_str)),
-    dqmServiceManager_(new stor::DQMServiceManager())
+    dqmServiceManager_(new stor::DQMServiceManager()),
+    eventServer_(sharedResources._oldEventServer),
+    DQMeventServer_(sharedResources._oldDQMEventServer),
+    initMsgCollection_(sharedResources._initMsgCollection)
   {
     // supposed to have given parameterSet smConfigString to writer_
     // at ctor
     event_area_.reserve(7000000);
+
+    if (eventServer_.get() != NULL) {
+      eventServer_->setStreamSelectionTable(writer_->getStreamSelectionTable());
+    }
+    dqmServiceManager_->setDQMEventServer(DQMeventServer_);
   }
 
   FragmentCollector::~FragmentCollector()

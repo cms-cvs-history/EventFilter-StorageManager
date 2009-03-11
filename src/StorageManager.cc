@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.25 2009/03/09 19:54:15 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.26 2009/03/11 17:30:56 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -128,7 +128,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.25 2009/03/09 19:54:15 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.26 2009/03/11 17:30:56 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -293,6 +293,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesInstance_._commandQueue.reset(new CommandQueue(128));
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
   sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
+
+  sharedResourcesInstance_._initMsgCollection.reset(new InitMsgCollection());
 
 }
 
@@ -695,10 +697,8 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Max (KB)" << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
-        boost::shared_ptr<InitMsgCollection> initMsgCollection;
-        if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
-          initMsgCollection = jc_->getInitMsgCollection();
-        }
+        boost::shared_ptr<InitMsgCollection> initMsgCollection =
+          sharedResourcesInstance_._initMsgCollection;
         idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
         for( ; oi != oe; ++oi) {
           std::string outputModuleLabel = oi->second;
@@ -1491,8 +1491,8 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "<hr/>"                                                    << endl;
 
     // should first test if jc_ is valid
-    if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL &&
-       jc_->getInitMsgCollection()->size() > 0) {
+    if(sharedResourcesInstance_._initMsgCollection.get() != NULL &&
+       sharedResourcesInstance_._initMsgCollection->size() > 0) {
       boost::mutex::scoped_lock sl(halt_lock_);
       if(jc_.use_count() != 0) {
         std::list<std::string>& files = jc_->get_filelist();
@@ -1551,10 +1551,11 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
-     jc_->getInitMsgCollection().get() != NULL &&
-     jc_->getInitMsgCollection()->size() > 0)
+     sharedResourcesInstance_._initMsgCollection.get() != NULL &&
+     sharedResourcesInstance_._initMsgCollection->size() > 0)
   {
-    boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+    boost::shared_ptr<EventServer> eventServer =
+      sharedResourcesInstance_._oldEventServer;
     if (eventServer.get() != NULL)
     {
       // if we've stored a "registry warning" in the consumer pipe, send
@@ -1579,7 +1580,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
       // that new INIT message(s) are available
       else if (consPtr.get() != NULL && consPtr->isProxyServer() &&
                consumerInitMsgCount >= 0 &&
-               jc_->getInitMsgCollection()->size() > consumerInitMsgCount)
+               sharedResourcesInstance_._initMsgCollection->size() > consumerInitMsgCount)
       {
         OtherMessageBuilder othermsg(&mybuffer_[0],
                                      Header::NEW_INIT_AVAILABLE);
@@ -1657,13 +1658,14 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
-     jc_->getInitMsgCollection().get() != NULL &&
-     jc_->getInitMsgCollection()->size() > 0)
+  if(fsm_.stateName()->toString() == "Enabled" &&
+     sharedResourcesInstance_._initMsgCollection.get() != NULL &&
+     sharedResourcesInstance_._initMsgCollection->size() > 0)
     {
       std::string errorString;
       InitMsgSharedPtr serializedProds;
-      boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+      boost::shared_ptr<EventServer> eventServer =
+        sharedResourcesInstance_._oldEventServer;
       if (eventServer.get() != NULL)
       {
         boost::shared_ptr<ConsumerPipe> consPtr =
@@ -1675,8 +1677,7 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
           // picture to consumers
           boost::mutex::scoped_lock sl(consumerInitMsgLock_);
           boost::shared_ptr<InitMsgCollection> initMsgCollection =
-            jc_->getInitMsgCollection();
-
+            sharedResourcesInstance_._initMsgCollection;
           try
           {
             if (consPtr->isProxyServer())
@@ -1799,11 +1800,8 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
     sprintf(buffer, "<ConsumerList>\n");
     out->write(buffer,strlen(buffer));
 
-    boost::shared_ptr<EventServer> eventServer;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getEventServer();
-    }
+    boost::shared_ptr<EventServer> eventServer =
+      sharedResourcesInstance_._oldEventServer;
     if (eventServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
@@ -1859,11 +1857,8 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 	out->write(buffer,strlen(buffer));
       }
     }
-    boost::shared_ptr<DQMEventServer> dqmServer;
-    if (jc_.get() != NULL)
-    {
-      dqmServer = jc_->getDQMEventServer();
-    }
+    boost::shared_ptr<DQMEventServer> dqmServer =
+      sharedResourcesInstance_._oldDQMEventServer;
     if (dqmServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
@@ -2015,13 +2010,10 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
 
   if(fsm_.stateName()->toString() == "Enabled")
   {
-    boost::shared_ptr<EventServer> eventServer;
-    boost::shared_ptr<InitMsgCollection> initMsgCollection;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getEventServer();
-      initMsgCollection = jc_->getInitMsgCollection();
-    }
+    boost::shared_ptr<EventServer> eventServer =
+      sharedResourcesInstance_._oldEventServer;
+    boost::shared_ptr<InitMsgCollection> initMsgCollection =
+      sharedResourcesInstance_._initMsgCollection;
     if (eventServer.get() != NULL && initMsgCollection.get() != NULL)
     {
       if (initMsgCollection->size() > 0)
@@ -2999,11 +2991,11 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
            << std::endl;
     }
 
-    if(jc_->getInitMsgCollection().get() != NULL &&
-       jc_->getInitMsgCollection()->size() > 0)
+    if(sharedResourcesInstance_._initMsgCollection.get() != NULL &&
+       sharedResourcesInstance_._initMsgCollection->size() > 0)
     {
       boost::shared_ptr<InitMsgCollection> initMsgCollection =
-        jc_->getInitMsgCollection();
+        sharedResourcesInstance_._initMsgCollection;
       *out << "<h3>HLT Trigger Paths:</h3>" << std::endl;
       *out << "<table border=\"1\" width=\"100%\">" << std::endl;
 
@@ -3088,11 +3080,8 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 
   // fetch the event server
   // (it and/or the job controller may not have been created yet)
-  boost::shared_ptr<EventServer> eventServer;
-  if (jc_.get() != NULL)
-  {
-    eventServer = jc_->getEventServer();
-  }
+  boost::shared_ptr<EventServer> eventServer =
+    sharedResourcesInstance_._oldEventServer;
 
   // if no event server, tell the consumer that we're not ready
   if (eventServer.get() == NULL)
@@ -3244,11 +3233,8 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   // there must also be DQM data available
   if(fsm_.stateName()->toString() == "Enabled" && consumerId != 0)
   {
-    boost::shared_ptr<DQMEventServer> eventServer;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getDQMEventServer();
-    }
+    boost::shared_ptr<DQMEventServer> eventServer =
+      sharedResourcesInstance_._oldDQMEventServer;
     if (eventServer.get() != NULL)
     {
       boost::shared_ptr< std::vector<char> > bufPtr =
@@ -3322,11 +3308,8 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     // fetch the DQMevent server
     // (it and/or the job controller may not have been created yet
     //  if not in the enabled state)
-    boost::shared_ptr<DQMEventServer> eventServer;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getDQMEventServer();
-    }
+    boost::shared_ptr<DQMEventServer> eventServer =
+      sharedResourcesInstance_._oldDQMEventServer;
 
     // if no event server, tell the consumer that we're not ready
     if (eventServer.get() == NULL)
@@ -3539,10 +3522,8 @@ void StorageManager::actionPerformed(xdata::Event& e)
       receivedEventsFromOutMod_.clear();
       namesOfOutMod_.clear();
 
-      boost::shared_ptr<InitMsgCollection> initMsgCollection;
-      if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
-        initMsgCollection = jc_->getInitMsgCollection();
-      }
+      boost::shared_ptr<InitMsgCollection> initMsgCollection =
+        sharedResourcesInstance_._initMsgCollection;
       idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
       for( ; oi != oe; ++oi) {
         std::string outputModuleLabel = oi->second;
@@ -3793,6 +3774,13 @@ void StorageManager::configureAction()
   if (DQMconsumerQueueSize_ < cutoff)
     DQMconsumerQueueSize_ = cutoff;
 
+  sharedResourcesInstance_._oldEventServer.
+    reset(new EventServer(maxESEventRate_, maxESDataRate_,
+                          esSelectedHLTOutputModule_,
+                          fairShareES_));
+  sharedResourcesInstance_._oldDQMEventServer.
+    reset(new DQMEventServer(DQMmaxESEventRate_));
+
   boost::shared_ptr<DiscardManager> discardMgr;
   Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
   for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
@@ -3826,15 +3814,6 @@ void StorageManager::configureAction()
   jc_->setCompressionLevelDQM(compressionLevelDQM_);
   jc_->setFileClosingTestInterval(fileClosingTestInterval_);
 
-  boost::shared_ptr<EventServer>
-    eventServer(new EventServer(maxESEventRate_, maxESDataRate_,
-                                esSelectedHLTOutputModule_,
-                                fairShareES_));
-  jc_->setEventServer(eventServer);
-  boost::shared_ptr<DQMEventServer> DQMeventServer(new DQMEventServer(DQMmaxESEventRate_));
-  jc_->setDQMEventServer(DQMeventServer);
-  boost::shared_ptr<InitMsgCollection> initMsgCollection(new InitMsgCollection());
-  jc_->setInitMsgCollection(initMsgCollection);
   jc_->setSMRBSenderList(&smrbsenders_);
 }
 
@@ -3895,7 +3874,8 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     openFiles_  = 0;
     jc_->start();
 
-    boost::shared_ptr<InitMsgCollection> initMsgCollection = jc_->getInitMsgCollection();
+    boost::shared_ptr<InitMsgCollection> initMsgCollection =
+      sharedResourcesInstance_._initMsgCollection;
     if (initMsgCollection.get() != 0) {
       initMsgCollection->clear();
     }
@@ -4005,10 +3985,8 @@ void StorageManager::stopAction()
   receivedEventsFromOutMod_.clear();
   namesOfOutMod_.clear();
 
-  boost::shared_ptr<InitMsgCollection> initMsgCollection;
-  if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
-    initMsgCollection = jc_->getInitMsgCollection();
-  }
+  boost::shared_ptr<InitMsgCollection> initMsgCollection =
+    sharedResourcesInstance_._initMsgCollection;
   idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
   for( ; oi != oe; ++oi) {
       std::string outputModuleLabel = oi->second;
@@ -4030,15 +4008,14 @@ void StorageManager::stopAction()
   }
   
   // should clear the event server(s) last event/queue
-  boost::shared_ptr<EventServer> eventServer;
-  boost::shared_ptr<DQMEventServer> dqmeventServer;
-  if (jc_.get() != NULL)
+  if (sharedResourcesInstance_._oldEventServer.get() != NULL)
   {
-    eventServer = jc_->getEventServer();
-    dqmeventServer = jc_->getDQMEventServer();
+    sharedResourcesInstance_._oldEventServer->clearQueue();
   }
-  if (eventServer.get() != NULL) eventServer->clearQueue();
-  if (dqmeventServer.get() != NULL) dqmeventServer->clearQueue();
+  if (sharedResourcesInstance_._oldDQMEventServer.get() != NULL)
+  {
+    sharedResourcesInstance_._oldDQMEventServer->clearQueue();
+  }
 }
 
 void StorageManager::haltAction()
@@ -4171,8 +4148,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   }
 
   ::sleep(10);
-  if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL &&
-     jc_->getInitMsgCollection()->size() > 0) {
+  if(sharedResourcesInstance_._initMsgCollection.get() != NULL &&
+     sharedResourcesInstance_._initMsgCollection->size() > 0) {
     boost::mutex::scoped_lock sl(halt_lock_);
     if(jc_.use_count() != 0) {
       // this is needed only if using flashlist infospace (not for the moment)

@@ -1,11 +1,8 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.3 2009/03/03 22:03:28 biery Exp $
+// $Id: JobController.h,v 1.22.6.4 2009/03/11 17:30:56 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/EventServer.h"
-#include "EventFilter/StorageManager/interface/DQMEventServer.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -39,27 +36,6 @@ namespace stor
 
     edm::EventBuffer& getFragmentQueue()
     { return collector_->getFragmentQueue(); }
-
-    void setEventServer(boost::shared_ptr<EventServer>& es)
-    {
-      if (collector_.get() != NULL) collector_->setEventServer(es);
-      eventServer_ = es;
-    }
-    boost::shared_ptr<EventServer>& getEventServer() { return eventServer_; }
-
-    void setDQMEventServer(boost::shared_ptr<DQMEventServer>& es)
-    {
-      if (collector_.get() != NULL) collector_->setDQMEventServer(es);
-      DQMeventServer_ = es;
-    }
-    boost::shared_ptr<DQMEventServer>& getDQMEventServer() { return DQMeventServer_; }
-
-    void setInitMsgCollection(boost::shared_ptr<InitMsgCollection>& imColl)
-    {
-      if (collector_.get() != NULL) collector_->setInitMsgCollection(imColl);
-      initMsgCollection_ = imColl;
-    }
-    boost::shared_ptr<InitMsgCollection>& getInitMsgCollection() { return initMsgCollection_; }
 
     void setSMRBSenderList(SMFUSenderList* senderList) {
       if (collector_.get() != NULL) collector_->setSMRBSenderList(senderList);
@@ -95,9 +71,6 @@ namespace stor
     static void run(JobController*);
 
     boost::shared_ptr<FragmentCollector> collector_;
-    boost::shared_ptr<EventServer> eventServer_;
-    boost::shared_ptr<DQMEventServer> DQMeventServer_;
-    boost::shared_ptr<InitMsgCollection> initMsgCollection_;
     SMFUSenderList* smRBSenderList_;
 
     int fileClosingTestInterval_;
