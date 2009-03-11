@@ -25,6 +25,7 @@ using stor::testhelper::allocate_frame_with_basic_header;
 using stor::testhelper::allocate_frame_with_init_msg;
 using stor::testhelper::allocate_frame_with_event_msg;
 using stor::testhelper::allocate_frame_with_error_msg;
+using stor::testhelper::allocate_frame_with_dqm_msg;
 using stor::testhelper::set_trigger_bit;
 using stor::testhelper::clear_trigger_bits;
 
@@ -34,6 +35,7 @@ class testEventDistributor : public CppUnit::TestFixture
   CPPUNIT_TEST(testInitMessages);
   CPPUNIT_TEST(testStreamSelection);
   CPPUNIT_TEST(testConsumerSelection);
+  CPPUNIT_TEST( testDQMMessages );
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -41,6 +43,7 @@ public:
   void testInitMessages();
   void testStreamSelection();
   void testConsumerSelection();
+  void testDQMMessages();
 
 private:
   void parseStreamConfigs(std::string cfgString,
@@ -705,6 +708,37 @@ std::string testEventDistributor::getSampleStreamConfig()
   return msg.str();
 }
 
+
+void testEventDistributor::testDQMMessages()
+{
+
+  //
+  //// Copied and pasted from methods for other message types: ////
+  //
+
+  if (_eventDistributor.get() == 0)
+    {
+      _initMsgCollection.reset(new InitMsgCollection());
+      _eventDistributor.reset(new EventDistributor(_initMsgCollection));
+    }
+
+  EventDistributor::EvtStrConfList evtCfgList;
+  EventDistributor::ErrStrConfList errCfgList;
+  parseStreamConfigs(getSampleStreamConfig(), evtCfgList, errCfgList);
+  _eventDistributor->registerEventStreams(evtCfgList);
+  _eventDistributor->registerErrorStreams(errCfgList);
+
+  //
+  //// DQM-specific stuff: ////
+  //
+
+  Reference* ref = allocate_frame_with_dqm_msg( 1234 );
+  stor::I2OChain frag( ref );
+  CPPUNIT_ASSERT( frag.messageCode() == Header::DQM_EVENT );
+
+  _eventDistributor->addEventToRelevantQueues( frag );
+
+}
 
 // This macro writes the 'main' for this test.
 CPPUNIT_TEST_SUITE_REGISTRATION(testEventDistributor);
