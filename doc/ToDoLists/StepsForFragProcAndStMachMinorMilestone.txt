@@ -10,6 +10,11 @@ one of our minor milestones with a target completion date of 20-Mar-2009.)
     bundled and passed to the FragmentProcessor (some of them only 
     temporarily).  InitMsgCollection, EventServer, DQMEventServer,
     SMFUSenderList.
+ -> we need to group the SM configuration parameters in some sort of
+    container or wrapper.  Are these params all infospace entries?
+    Do we have a model for wrapping infospace entries already?  (The
+    monitoring infospace params may be different than the configuration
+    ones [read vs write?].)
 
 2) the work done in the FragmentCollector processXYZ methods needs to
    temporarily be included in EventDistributor::addEventToRelevantQueues.
@@ -18,6 +23,6 @@ one of our minor milestones with a target completion date of 20-Mar-2009.)
 3) add code to StorageManager::fsmCallback to put state machine events
    on the command queue.
 
-4) decide upon, document, and implement the creation of worker classes
+4) decide upon, document, and implement the creation of the worker classes
    that we need.
 
