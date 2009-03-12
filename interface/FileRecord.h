@@ -1,55 +1,222 @@
-#ifndef FILERECORD_H
-#define FILERECORD_H
+// $Id: FileRecord.h,v 1.9.4.1 2009/03/03 18:28:55 paterno Exp $
 
-// $Id: FileRecord.h,v 1.9 2008/10/24 17:41:55 loizides Exp $
+#ifndef StorageManager_FileRecord_h
+#define StorageManager_FileRecord_h
+
 #include <EventFilter/StorageManager/interface/Parameter.h>
+#include <EventFilter/StorageManager/interface/Utils.h>
+
 #include <boost/shared_ptr.hpp>
+
 #include <string>
 
-namespace edm {
 
+namespace stor {
+
+  /**
+   * Holds the information for a physical file
+   *
+   * $Author: biery $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/01 20:36:29 $
+   */
 
   class FileRecord
     {
     public:
-      FileRecord(int lumi, const std::string &file, const std::string &path);
-      ~FileRecord() {}
 
-      void   report(std::ostream &os, int indentation) const;
-      void   setFileCounter(int i)         { fileCounter_ = i; }
-      void   fileSystem(int);
-      void   writeToSummaryCatalog();
-      void   updateDatabase();
-      void   insertFileInDatabase();
-      void   moveFileToClosed();
-      void   moveErrorFileToClosed();
-      void   firstEntry(double d)          { firstEntry_ = d; }
-      void   lastEntry(double d)           { lastEntry_  = d; }
-      void   increaseFileSize(int i)       { fileSize_   += (long long) i; }
-      void   increaseEventCount()          { events_++; }
-      void   checkDirectories()      const;
-      void   setRunNumber(int i)                      { runNumber_ = i; }
-      void   setStreamLabel(const std::string &s)     { streamLabel_ = s;}
-      void   setSetupLabel(const std::string &s)      { setupLabel_ = s;}
-      void   setWhyClosed(int w)                      { whyClosed_  = w; }
-      void   setadler(unsigned int s, unsigned int i) { adlerstream_ = s; adlerindex_ = i; }
-      const std::string& fileName()  const { return fileName_; }
-      const std::string& basePath()  const { return basePath_; }
-      std::string fileSystem()       const { return basePath_ + fileSystem_; }
-      std::string workingDir()       const { return basePath_ + fileSystem_ + workingDir_; }
-      std::string fileCounterStr()   const;
-      std::string filePath()         const;
-      std::string completeFileName() const;
-      std::string timeStamp(double)  const;
-      std::string logFile()          const;
-      std::string notFile()          const;
-     
-      int         lumiSection()      const { return lumiSection_; }
-      int         fileCounter()      const { return fileCounter_; }
-      long long   fileSize()         const { return fileSize_; }
-      int         events()           const { return events_; } 
-      double      lastEntry()        const { return lastEntry_; }
-      double      firstEntry()       const { return firstEntry_; }
+      /**
+       * Enumaration why the given file was closed
+       */
+      enum ClosingReason
+      {
+        notClosed = 0,
+        stop,
+        Nminus2lumi,
+        timeout,
+        size
+      };
+
+      FileRecord(const uint32_t lumiSection, const std::string &file, const std::string &path);
+
+
+      //////////////////////
+      // File bookkeeping //
+      //////////////////////
+
+      /**
+       * Write summary information in file catalog
+       */
+      void writeToSummaryCatalog() const;
+
+      /**
+       * Write command to update the file information in the CMS_STOMGR.TIER0_INJECTION table
+       * into the logFile_.
+       */
+      void updateDatabase() const;
+
+      /**
+       * Write command to insert a new file into the CMS_STOMGR.TIER0_INJECTION table
+       * into the logFile_.
+       */
+      void insertFileInDatabase() const;
+
+
+
+      ////////////////////////////
+      // File parameter setters //
+      ////////////////////////////
+
+      /**
+       * Sets the run number
+       */
+      void setRunNumber(const uint32_t i)
+      { runNumber_ = i; }
+
+      /**
+       * Sets the current file system
+       */
+      void setFileSystem(const unsigned int i);
+
+      /**
+       * Sets the file counter
+       */
+      void setFileCounter(const unsigned int i)
+      { fileCounter_ = i; }
+
+      /**
+       * Set the setup label
+       */
+      void setSetupLabel(const std::string &s)
+      { setupLabel_ = s;}
+
+      /**
+       * Set the stream label
+       */
+      void setStreamLabel(const std::string &s)
+      { streamLabel_ = s;}
+
+      /**
+       * Set the reason why the file was closed
+       */
+      void setWhyClosed(ClosingReason w)
+      { whyClosed_  = w; }
+
+      /**
+       * Set the adler checksum for the file
+       */
+      void setadler(unsigned int s, unsigned int i)
+      { adlerstream_ = s; adlerindex_ = i; }
+
+      /**
+       * Add number of bytes to file size
+       */
+      void increaseFileSize(const long long size)
+      { fileSize_ += size; }
+
+      /**
+       * Increment number of events stored in the file
+       */
+      void increaseEventCount()
+      { events_++; }
+
+      /**
+       * Time when first event was added
+       */
+      void firstEntry(utils::time_point_t d)
+      { firstEntry_ = d; }
+
+      /**
+       * Time when latest event was added
+       */
+      void lastEntry(utils::time_point_t d)
+      { lastEntry_ = d; }
+
+
+
+      ////////////////////////////
+      // File parameter getters //
+      ////////////////////////////
+
+      /**
+       * Returns the number of events in the file
+       */
+      const int events() const
+      { return events_; } 
+
+      /**
+       * Returns the luminosity section the file belongs to
+       */
+      const uint32_t lumiSection() const
+      { return lumiSection_; }
+
+      /**
+       * Returns the size of the file in bytes
+       */
+      const long long fileSize() const
+      { return fileSize_; }
+
+      /**
+       * Returns the full path where the file resides
+       */
+      const std::string filePath() const;
+
+      /**
+       * Returns the complete file name and path w/o file ending
+       */
+      const std::string completeFileName() const;
+
+      /**
+       * Returns the time when first event was added
+       */
+      const utils::time_point_t firstEntry() const
+      { return firstEntry_; }
+
+      /**
+       * Returns the time when latest event was added
+       */
+      const utils::time_point_t lastEntry() const
+      { return lastEntry_; }
+
+
+
+      /////////////////////////////
+      // File system interaction //
+      /////////////////////////////
+
+      /**
+       * Move index and streamer file to "closed" directory
+       */
+      void moveFileToClosed();
+
+      /**
+       * Move error event file to "closed" directory
+       */
+      void moveErrorFileToClosed();
+
+      /**
+       * Checks if all directories needed for the file output are available.
+       * Throws a cms::Exception when a directory does not exist.
+       */
+      void checkDirectories() const;
+
+
+
+      /////////////////////////////
+      // File information dumper //
+      /////////////////////////////
+
+      /**
+       * Adds file summary information to ostream
+       */
+      void info(std::ostream &os) const;
+
+      /**
+       * Dump status information to ostream
+       */
+      void report(std::ostream &os, int indentation) const;
+
+
 
     private:
       boost::shared_ptr<stor::Parameter> smParameter_; 
@@ -63,25 +230,45 @@ namespace edm {
       std::string  setupLabel_;                       // setup label
       std::string  streamLabel_;                      // datastream label
       std::string  cmsver_;                           // CMSSW version string
-      int          lumiSection_;                      // luminosity section  
-      int          runNumber_;                        // runNumber
-      int          fileCounter_;                      // number of files with fileName_ as name
-      long long    fileSize_;                         // current file size
-      int          events_;                           // total number of events
-      double       firstEntry_;                       // time when last event was writen
-      double       lastEntry_;                        // time when last event was writen
+      uint32_t     lumiSection_;                      // luminosity section  
+      uint32_t     runNumber_;                        // runNumber
+      unsigned int fileCounter_;                      // number of files with fileName_ as name
+      long long    fileSize_;                         // current file size in ??? bytes
+      uint32_t     events_;                           // total number of events
+      utils::time_point_t firstEntry_;                // time when first event was writen
+      utils::time_point_t lastEntry_;                 // time when latest event was writen
 
-      int          whyClosed_;                        // record why file was closed 
-                                                      // (0=open,1=stop,2=N-2lumi,3=timeout,4=size)
+      ClosingReason whyClosed_;                       // record why file was closed 
+
       unsigned int adlerstream_;                      // adler32 checksum for streamer file
       unsigned int adlerindex_;                       // adler32 checksum for index file
 
-      void   checkDirectory(const std::string &) const;
-      double calcPctDiff(long long, long long) const;
+      /**
+       * Returns the fileName_ and fileCounter_
+       */
+      const std::string qualifiedFileName() const;
+
+      /**
+       * Returns the name of the log file
+       */
+      const std::string logFile() const;
+
+      /**
+       * Throws a cms::Exception when the directory does not exist
+       */
+      void checkDirectory(const std::string &) const;
+
+      /**
+       * Returns the relative difference btw to file sizes
+       */
+      const double calcPctDiff(long long, long long) const;
    };
  
-} // edm namespace
-#endif
+} // stor namespace
+
+#endif // StorageManager_FileRecord_h
+
+
 /// emacs configuration
 /// Local Variables: -
 /// mode: c++ -
