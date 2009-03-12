@@ -1,4 +1,4 @@
-// $Id: FRDOutputService.cc,v 1.5 2008/05/13 18:06:46 loizides Exp $
+// $Id: FRDOutputService.cc,v 1.1 2008/08/13 22:48:12 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FRDOutputService.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -6,6 +6,7 @@
 #include <iostream>
  
 using namespace edm;
+using namespace stor;
 using namespace std;
 using boost::shared_ptr;
 
@@ -17,7 +18,7 @@ FRDOutputService::FRDOutputService(boost::shared_ptr<FileRecord> file)
 {
   file_ = file;
 
-  string fileName = file_ -> filePath() + file_ -> fileName() + file_ -> fileCounterStr() + ".dat";
+  string fileName = file_->completeFileName() + ".dat";
 
   writer_ = shared_ptr<FRDEventFileWriter> (new FRDEventFileWriter(fileName));
 

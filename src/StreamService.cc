@@ -1,4 +1,4 @@
-// $Id: StreamService.cc,v 1.14 2008/08/21 09:00:39 loizides Exp $
+// $Id: StreamService.cc,v 1.15 2008/09/04 17:44:18 biery Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
 #include <EventFilter/StorageManager/interface/ProgressMarker.h>
@@ -12,6 +12,7 @@
 #include <sys/statfs.h>
 
 using namespace edm;
+using namespace stor;
 using namespace std;
 using boost::shared_ptr;
 using stor::ProgressMarker;
@@ -98,10 +99,7 @@ std::list<std::string> StreamService::getFileList()
   std::list<std::string> files_=outputSummaryClosed_;
   for (OutputMapIterator it = outputMap_.begin() ; it != outputMap_.end(); ++it) {
     std::ostringstream entry;
-    entry << it->first->fileCounter() << " " 
-          << it->first->completeFileName() << " " 
-          << it->first->events() << " "
-          << it->first->fileSize();
+    it->first->info(entry);
     files_.push_back(entry.str());
   }
 
@@ -116,10 +114,7 @@ void StreamService::fillOutputSummaryClosed(const boost::shared_ptr<FileRecord> 
   boost::mutex::scoped_lock sl(list_lock_);
 
   std::ostringstream entry;
-  entry << file->fileCounter() << " " 
-        << file->completeFileName() << " " 
-        << file->events() << " "
-        << file->fileSize();
+  file->info(entry);
   outputSummaryClosed_.push_back(entry.str());
 }
 

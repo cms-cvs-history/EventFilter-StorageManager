@@ -1,4 +1,4 @@
-// $Id: EventOutputService.cc,v 1.2 2008/08/20 13:20:47 loizides Exp $
+// $Id: EventOutputService.cc,v 1.3 2008/10/24 17:41:55 loizides Exp $
 
 #include <EventFilter/StorageManager/interface/EventOutputService.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -6,6 +6,7 @@
 #include <iostream>
  
 using namespace edm;
+using namespace stor;
 using namespace std;
 using boost::shared_ptr;
 
@@ -18,8 +19,8 @@ EventOutputService::EventOutputService(boost::shared_ptr<FileRecord> file,
 {
   file_ = file;
 
-  string streamerFileName = file_ -> filePath() + file_ -> fileName() + file_ -> fileCounterStr() + ".dat";
-  string indexFileName    = file_ -> filePath() + file_ -> fileName() + file_ -> fileCounterStr() + ".ind";
+  string streamerFileName = file_->completeFileName() + ".dat";
+  string indexFileName    = file_->completeFileName() + ".ind";
 
   writer_ = shared_ptr<StreamerFileWriter> (new StreamerFileWriter(streamerFileName, indexFileName));
   writeHeader(view);
