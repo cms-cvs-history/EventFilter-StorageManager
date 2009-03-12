@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerQueueCollection.h,v 1.1.2.1 2009/01/30 10:49:40 mommsen Exp $
+// $Id: DQMEventConsumerQueueCollection.h,v 1.1.2.2 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef StorageManager_DQMEventConsumerQueueCollection_h
 #define StorageManager_DQMEventConsumerQueueCollection_h
@@ -19,8 +19,8 @@ namespace stor {
    * A collection of DQMEvent consumer queues
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/10 15:32:59 $
    */
   
   class DQMEventConsumerQueueCollection
@@ -38,10 +38,8 @@ namespace stor {
      * It returns a unique identifier to later identify
      * requests originating from this consumer.
      */
-    const QueueID registerDQMEventConsumer
-    (
-      boost::shared_ptr<DQMEventConsumerRegistrationInfo>
-    );
+    QueueID 
+    registerDQMEventConsumer(boost::shared_ptr<DQMEventConsumerRegistrationInfo>);
     
     /**
      * Add an event to all queues matching the specifications.

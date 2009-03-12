@@ -1,17 +1,15 @@
-// $Id: EventDistributor.h,v 1.1.2.17 2009/03/10 20:39:44 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.18 2009/03/10 21:19:38 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/ErrorStreamSelector.h"
-#include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
-#include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
+#include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventConsumerSelector.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventStreamSelector.h"
-#include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/DQMEventSelector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -33,8 +31,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.17 $
-   * $Date: 2009/03/10 20:39:44 $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/03/10 21:19:38 $
    */
 
   class EventDistributor
@@ -122,8 +120,8 @@ namespace stor {
 
   private:
 
-    EventConsumerQueueCollection _eventConsumerQueueCollection;
-    DQMEventConsumerQueueCollection _DQMQueueCollection;
+    EventQueueCollection _eventConsumerQueueCollection;
+    EventQueueCollection _DQMQueueCollection;
 
     DQMEventQueue _dqmEventQueue;
     StreamQueue _streamQueue;

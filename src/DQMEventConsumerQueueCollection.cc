@@ -1,49 +1,6 @@
-// $Id: DQMEventConsumerQueueCollection.cc,v 1.1.2.1 2009/01/30 10:49:56 mommsen Exp $
+// $Id: DQMEventConsumerQueueCollection.cc,v 1.1.2.2 2009/03/10 15:33:33 mommsen Exp $
 
-#include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
-
-using namespace stor;
-
-
-DQMEventConsumerQueueCollection::DQMEventConsumerQueueCollection()
-{
-
-}
-
-
-DQMEventConsumerQueueCollection::~DQMEventConsumerQueueCollection()
-{
-
-}
-
-
-const QueueID DQMEventConsumerQueueCollection::registerDQMEventConsumer
-(
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo>
-)
-{
-  QueueID queueID;
-  return queueID;
-}
-
-
-void DQMEventConsumerQueueCollection::addEvent(I2OChain &chain)
-{
-
-}
-
-
-I2OChain DQMEventConsumerQueueCollection::popEvent(const QueueID id)
-{
-  return _collection[id]->popEvent();
-}
-
-
-void DQMEventConsumerQueueCollection::disposeOfStaleStuff()
-{
-
-}
-
+// This file is obsolete.
 
 
 /// emacs configuration

@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.1.2.4 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -7,7 +7,7 @@
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerQueue.h"
-#include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
+#include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 
@@ -24,8 +24,8 @@ namespace stor {
    * to disk every N lumi-sections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/10 15:32:59 $
    */
   
   class DQMEventProcessor
@@ -46,9 +46,9 @@ namespace stor {
     /**
      * Register a new DQM event consumer
      */
-    const QueueID registerDQMEventConsumer
+    QueueID registerDQMEventConsumer
     (
-      boost::shared_ptr<DQMEventConsumerRegistrationInfo>
+     DQMEventConsumerRegistrationInfo const&
     );
 
     /**
@@ -56,13 +56,13 @@ namespace stor {
      */
     void makeDQMEventSelector
     (
-      const QueueID,
-      boost::shared_ptr<DQMEventConsumerRegistrationInfo>
+      QueueID,
+      DQMEventConsumerRegistrationInfo const&
     );
     
   private:
 
-    DQMEventConsumerQueueCollection _dqmEventConsumerQueueCollection;
+    EventQueueCollection _dqmEventConsumerQueueCollection;
     DQMEventQueue _dqmEventQueue;
 
     

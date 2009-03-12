@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.1 2009/01/19 18:14:06 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.2 2009/01/30 10:49:56 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventProcessor.h"
 
@@ -23,12 +23,13 @@ void DQMEventProcessor::processNextDQMEvent()
 }
 
 
-const QueueID DQMEventProcessor::registerDQMEventConsumer
+QueueID DQMEventProcessor::registerDQMEventConsumer
 (
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> registrationInfo
+  DQMEventConsumerRegistrationInfo const& ri
 )
 {
-  return _dqmEventConsumerQueueCollection.registerDQMEventConsumer(registrationInfo);
+  return _dqmEventConsumerQueueCollection.createQueue(ri.queuePolicy(),
+                                                      ri.maxQueueSize());
 }
 
 
