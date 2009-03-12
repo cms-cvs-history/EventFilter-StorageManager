@@ -1,7 +1,7 @@
 #ifndef FRDSTREAMSERVICE_H
 #define FRDSTREAMSERVICE_H
 
-// $Id: FRDStreamService.h,v 1.2 2008/09/04 17:44:15 biery Exp $
+// $Id: FRDStreamService.h,v 1.2.10.1 2009/03/03 18:28:55 paterno Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -30,15 +30,14 @@ namespace edm {
       void   stop();
       void   report(std::ostream &os, int indentation) const;
 
-      void   closeTimedOutFiles(int lumi, double timeoutstart);
       void   closeTimedOutFiles();
  
     private:
       boost::shared_ptr<OutputService>  newOutputService();
       boost::shared_ptr<OutputService>  getOutputService(FRDEventMsgView const&);
-      boost::shared_ptr<FileRecord>     generateFileRecord();  
+      boost::shared_ptr<stor::FileRecord>     generateFileRecord();  
 
-      bool   checkEvent(boost::shared_ptr<FileRecord>, FRDEventMsgView const&) const;
+      bool   checkEvent(boost::shared_ptr<stor::FileRecord>, FRDEventMsgView const&) const;
 
   };
 

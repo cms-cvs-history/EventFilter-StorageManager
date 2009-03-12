@@ -1,4 +1,4 @@
-// $Id: FRDStreamService.cc,v 1.3 2008/09/04 17:44:18 biery Exp $
+// $Id: FRDStreamService.cc,v 1.4 2008/09/05 00:57:13 loizides Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include <EventFilter/StorageManager/interface/ProgressMarker.h>
@@ -12,9 +12,9 @@
 #include <sys/statfs.h>
 
 using namespace edm;
+using namespace stor;
 using namespace std;
 using boost::shared_ptr;
-using stor::ProgressMarker;
 
 //
 // *** construct stream service from parameter set
@@ -73,20 +73,6 @@ void FRDStreamService::stop()
   }
 }
 
-
-// 
-// *** close all output service of the previous lumi-section 
-// *** when lumiSectionTimeOut seconds have passed since the
-// *** appearance of the new lumi section and make a record of the file
-// !!! Deprecated - use closeTimedOutFiles() instead !!!
-// 
-void FRDStreamService::closeTimedOutFiles(int lumi, double timeoutdiff)
-{
-  // since we are currently storing all events in a single file,
-  // we never close files at lumi section boundaries
-
-  return;
-}
 
 // 
 // *** close all output service when lumiSectionTimeOut seconds have passed
@@ -187,7 +173,7 @@ boost::shared_ptr<FileRecord> FRDStreamService::generateFileRecord()
   }
 
   if (numberOfFileSystems_ > 0)
-    fd->fileSystem((runNumber_ + atoi(sourceId_.c_str()) + ntotal_) % numberOfFileSystems_); 
+    fd->setFileSystem((runNumber_ + atoi(sourceId_.c_str()) + ntotal_) % numberOfFileSystems_); 
   
   fd->checkDirectories();
   fd->setRunNumber(runNumber_);

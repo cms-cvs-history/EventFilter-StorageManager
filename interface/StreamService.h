@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.11 2008/08/13 22:48:11 biery Exp $
+// $Id: StreamService.h,v 1.12 2008/09/04 17:44:16 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/OutputService.h>
@@ -18,8 +18,8 @@
 
 namespace edm {
 
-  typedef std::map <boost::shared_ptr<FileRecord>, boost::shared_ptr<OutputService> >           OutputMap;
-  typedef std::map <boost::shared_ptr<FileRecord>, boost::shared_ptr<OutputService> >::iterator OutputMapIterator;
+  typedef std::map <boost::shared_ptr<stor::FileRecord>, boost::shared_ptr<OutputService> >           OutputMap;
+  typedef std::map <boost::shared_ptr<stor::FileRecord>, boost::shared_ptr<OutputService> >::iterator OutputMapIterator;
 
   class StreamService
   {
@@ -40,7 +40,6 @@ namespace edm {
       void   setSetupLabel(std::string s)           { setupLabel_ = s; }
       void   setHighWaterMark(double d)             { highWaterMark_ = d; }
       void   setLumiSectionTimeOut(double d)        { lumiSectionTimeOut_ = d; }
-      virtual void closeTimedOutFiles(int lumi, double timeoutstart) = 0;
       virtual void closeTimedOutFiles() = 0;
  
       double getCurrentTime() const;
@@ -52,7 +51,7 @@ namespace edm {
     protected:
       void   setStreamParameter();
       bool   checkFileSystem() const;
-      void   fillOutputSummaryClosed(const boost::shared_ptr<FileRecord> &file);
+      void   fillOutputSummaryClosed(const boost::shared_ptr<stor::FileRecord> &file);
 
       // variables
       ParameterSet                           parameterSet_;
@@ -61,8 +60,8 @@ namespace edm {
       std::list<std::string>                 outputSummaryClosed_;
 
       // set from event message
-      int    runNumber_;
-      int    lumiSection_;
+      uint32_t runNumber_;
+      uint32_t lumiSection_;
 
       // should be output module parameter
       int    numberOfFileSystems_;
