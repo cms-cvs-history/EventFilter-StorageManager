@@ -732,11 +732,37 @@ void testEventDistributor::testDQMMessages()
   //// DQM-specific stuff: ////
   //
 
+  std::string url = "http://localhost:43210/urn:xdaq-application:lid=77";
+  enquing_policy::PolicyTag policy = stor::enquing_policy::DiscardOld;
+
+  // First consumer:
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1;
+  ri1.reset( new DQMEventConsumerRegistrationInfo( url,
+                                                   "DQM Consumer 1",
+                                                   10, 10, "HCAL",
+                                                   policy, 10 ) );
+  QueueID qid1( enquing_policy::DiscardOld, 1 );
+  ri1->setQueueId( qid1 );
+  _eventDistributor->registerDQMEventConsumer( &( *ri1 ) );
+
+  // Second consumer:
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2;
+  ri2.reset( new DQMEventConsumerRegistrationInfo( url,
+                                                   "DQM Consumer 2",
+                                                   10, 10, "ECAL",
+                                                   policy, 10 ) );
+  QueueID qid2( enquing_policy::DiscardOld, 2 );
+  ri2->setQueueId( qid2 );
+  _eventDistributor->registerDQMEventConsumer( &( *ri2 ) );
+
+  // Fragment:
   Reference* ref = allocate_frame_with_dqm_msg( 1234 );
   stor::I2OChain frag( ref );
   CPPUNIT_ASSERT( frag.messageCode() == Header::DQM_EVENT );
-
   _eventDistributor->addEventToRelevantQueues( frag );
+
+  // FIXME -- this fails:
+  //CPPUNIT_ASSERT( frag.isTaggedForAnyDQMEventConsumer() );
 
 }
 
