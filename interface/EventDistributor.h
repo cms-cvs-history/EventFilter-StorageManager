@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.18 2009/03/10 21:19:38 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.19 2009/03/12 03:46:17 paterno Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -30,9 +30,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.18 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.19 $
+   * $Date: 2009/03/12 03:46:17 $
    */
 
   class EventDistributor
@@ -75,12 +75,6 @@ namespace stor {
      */
     typedef std::vector<EventStreamConfigurationInfo> EvtStrConfList;
     void registerEventStreams( const EvtStrConfList& );
-
-    /**
-     * Registers DQM streams.
-     */
-    typedef std::vector<DQMEventConsumerRegistrationInfo> DQMRegList;
-    void registerDQMStreams( const DQMRegList& );
 
     /**
      * Registers the full set of error event streams.
