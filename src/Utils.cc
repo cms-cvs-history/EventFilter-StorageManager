@@ -1,8 +1,11 @@
 /**
- * $Id: BaseCounter.cc,v 1.1 2008/04/14 15:42:28 biery Exp $
+ * $Id: Utils.cc,v 1.1.2.1 2009/03/03 18:32:41 paterno Exp $
  */
 
 #include "EventFilter/StorageManager/interface/Utils.h"
+
+#include <iomanip>
+#include <sstream>
 #include <sys/time.h>
 
 
@@ -36,6 +39,30 @@ namespace stor
       return result;
     }
 
+
+    std::string timeStamp(time_point_t)
+    {
+      time_t rawtime = (time_t)time;
+      tm * ptm;
+      ptm = localtime(&rawtime);
+      std::ostringstream timeStampStr;
+      std::string colon(":");
+      std::string slash("/");
+      timeStampStr << std::setfill('0') << std::setw(2) << ptm->tm_mday      << slash 
+                   << std::setfill('0') << std::setw(2) << ptm->tm_mon+1     << slash
+                   << std::setfill('0') << std::setw(4) << ptm->tm_year+1900 << colon
+                   << std::setfill('0') << std::setw(2) << ptm->tm_hour      << slash
+                   << std::setfill('0') << std::setw(2) << ptm->tm_min       << slash
+                   << std::setfill('0') << std::setw(2) << ptm->tm_sec;
+      return timeStampStr.str();
+    }
+
   } // namespace utils
 
 } // namespace stor
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -

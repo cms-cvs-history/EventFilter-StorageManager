@@ -1,8 +1,9 @@
-// $Id: Utils.h,v 1.1.2.1 2009/02/18 14:58:47 mommsen Exp $
+// $Id: Utils.h,v 1.1.2.2 2009/03/03 18:32:08 paterno Exp $
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
 
+#include <string>
 #include <sys/time.h>
 
 namespace stor {
@@ -12,9 +13,9 @@ namespace stor {
     /**
      * Collection of utility functions used in the storage manager
      *
-     * $Author: mommsen $
-     * $Revision: 1.1.2.1 $
-     * $Date: 2009/02/18 14:58:47 $
+     * $Author: paterno $
+     * $Revision: 1.1.2.2 $
+     * $Date: 2009/03/03 18:32:08 $
      */
 
     /**
@@ -40,6 +41,14 @@ namespace stor {
        system.
     */
     time_point_t getCurrentTime();
+
+    /**
+       Converts a time_point_t into a string.
+       Note: the string formatting is used by the file summary catalog and
+       may or may not depend on the actual formatting
+    */
+    std::string timeStamp(time_point_t);
+
 
   } // namespace utils
   
