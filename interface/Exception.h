@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.4 2009/03/02 23:13:55 biery Exp $
+// $Id: Exception.h,v 1.1.2.5 2009/03/03 22:01:39 biery Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -77,6 +77,11 @@ XCEPT_DEFINE_EXCEPTION(stor, IncompleteEventMessage)
  * broker should received a discard message for a particular I2O message.
  */
 XCEPT_DEFINE_EXCEPTION(stor, RBLookupFailed)
+
+/**
+ * Exception raised when the SM when a non-existant queue is requested.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, UnknownQueueId)
 
 
 #endif // _storagemanager_Exception_h_
