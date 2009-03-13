@@ -1,7 +1,6 @@
-// $Id: FragmentCollector.cc,v 1.43.4.10 2009/03/11 17:30:56 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.11 2009/03/11 18:47:45 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/ProgressMarker.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
 #include "IOPool/Streamer/interface/MsgHeader.h"
@@ -258,8 +257,6 @@ namespace stor
 
   void FragmentCollector::processEvent(I2OChain i2oChain)
   {
-    ProgressMarker::instance()->processing(true);
-
     // add the fragment to the fragment store
     bool complete = fragmentStore_.addFragment(i2oChain);
 
@@ -283,14 +280,10 @@ namespace stor
       // check for stale fragments
       removeStaleFragments();
     }
-
-    ProgressMarker::instance()->processing(false);
   }
 
   void FragmentCollector::processHeader(I2OChain i2oChain)
   {
-    ProgressMarker::instance()->processing(true);
-
     // add the fragment to the fragment store
     bool complete = fragmentStore_.addFragment(i2oChain);
 
@@ -381,13 +374,10 @@ namespace stor
       // check for stale fragments
       removeStaleFragments();
     }
-    ProgressMarker::instance()->processing(false);
   }
 
   void FragmentCollector::processDQMEvent(I2OChain i2oChain)
   {
-    ProgressMarker::instance()->processing(true);
-
     // add the fragment to the fragment store
     bool complete = fragmentStore_.addFragment(i2oChain);
 
@@ -406,14 +396,10 @@ namespace stor
       // check for stale fragments
       removeStaleFragments();
     }
-
-    ProgressMarker::instance()->processing(false);
   }
 
   void FragmentCollector::processErrorEvent(I2OChain i2oChain)
   {
-    ProgressMarker::instance()->processing(true);
-
     // add the fragment to the fragment store
     bool complete = fragmentStore_.addFragment(i2oChain);
 
@@ -432,8 +418,6 @@ namespace stor
       // check for stale fragments
       removeStaleFragments();
     }
-
-    ProgressMarker::instance()->processing(false);
   }
 
   /**

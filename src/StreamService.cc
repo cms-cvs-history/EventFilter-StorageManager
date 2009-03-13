@@ -1,7 +1,6 @@
-// $Id: StreamService.cc,v 1.15 2008/09/04 17:44:18 biery Exp $
+// $Id: StreamService.cc,v 1.15.10.1 2009/03/12 14:35:01 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
-#include <EventFilter/StorageManager/interface/ProgressMarker.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
 
@@ -15,7 +14,6 @@ using namespace edm;
 using namespace stor;
 using namespace std;
 using boost::shared_ptr;
-using stor::ProgressMarker;
 
 //
 // *** destructor

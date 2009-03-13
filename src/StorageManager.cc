@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.26 2009/03/11 17:30:56 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.27 2009/03/11 18:47:45 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -7,7 +7,6 @@
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
-#include "EventFilter/StorageManager/interface/ProgressMarker.h"
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
@@ -127,8 +126,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  progressMarker_(ProgressMarker::instance()->idle()),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.26 2009/03/11 17:30:56 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.27 2009/03/11 18:47:45 biery Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -3411,7 +3409,7 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
   is->fireItemAvailable("STparameterSet",       &offConfig_);
   is->fireItemAvailable("stateName",            fsm_.stateName());
-  is->fireItemAvailable("progressMarker",       &progressMarker_);
+  //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
   is->fireItemAvailable("pushMode2Proxy",       &pushmode2proxy_);
   is->fireItemAvailable("collateDQM",           &collateDQM_);
@@ -3455,7 +3453,7 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("memoryUsed",           this);
   is->addItemRetrieveListener("STparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
-  is->addItemRetrieveListener("progressMarker",       this);
+  //  is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedRBs",         this);
   is->addItemRetrieveListener("pushMode2Proxy",       this);
   is->addItemRetrieveListener("collateDQM",           this);
@@ -3556,8 +3554,7 @@ void StorageManager::actionPerformed(xdata::Event& e)
         }
       }
 */
-    } else if (item == "progressMarker")
-      progressMarker_ = ProgressMarker::instance()->status();
+    }
     is->unlock();
   }
 

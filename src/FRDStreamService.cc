@@ -1,7 +1,6 @@
-// $Id: FRDStreamService.cc,v 1.4 2008/09/05 00:57:13 loizides Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.1 2009/03/12 14:37:12 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
-#include <EventFilter/StorageManager/interface/ProgressMarker.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/FRDOutputService.h"  
@@ -40,7 +39,6 @@ FRDStreamService::FRDStreamService(ParameterSet const& pset)
 //
 bool FRDStreamService::nextEvent(const uint8 * const bufPtr)
 {
-  ProgressMarker::instance()->processing(true);
   FRDEventMsgView view((void *) bufPtr);
 
   // accept all Error events, so no call to any sort of acceptEvents() method...
@@ -52,11 +50,9 @@ bool FRDStreamService::nextEvent(const uint8 * const bufPtr)
 
 
   shared_ptr<OutputService> outputService = getOutputService(view);
-  ProgressMarker::instance()->processing(false);
-  
-  ProgressMarker::instance()->writing(true);
+
   outputService->writeEvent(bufPtr);
-  ProgressMarker::instance()->writing(false);
+
   return true;
 }
 

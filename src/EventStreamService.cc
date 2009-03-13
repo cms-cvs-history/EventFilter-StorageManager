@@ -1,7 +1,6 @@
-// $Id: EventStreamService.cc,v 1.9 2008/09/05 00:57:13 loizides Exp $
+// $Id: EventStreamService.cc,v 1.9.10.1 2009/03/12 14:37:12 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
-#include <EventFilter/StorageManager/interface/ProgressMarker.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/EventOutputService.h"  
@@ -43,22 +42,17 @@ EventStreamService::EventStreamService(ParameterSet const& pset, InitMsgView con
 //
 bool EventStreamService::nextEvent(const uint8 * const bufPtr)
 {
-  ProgressMarker::instance()->processing(true);
   EventMsgView view((void *) bufPtr);
   if (!acceptEvent(view))
     {
-      ProgressMarker::instance()->processing(false);
       return false;
     }
   runNumber_   = view.run();
   lumiSection_ = view.lumi();
 
   shared_ptr<OutputService> outputService = getOutputService(view);
-  ProgressMarker::instance()->processing(false);
   
-  ProgressMarker::instance()->writing(true);
   outputService->writeEvent(bufPtr);
-  ProgressMarker::instance()->writing(false);
   return true;
 }
 
