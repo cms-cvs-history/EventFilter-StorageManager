@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.29 2009/03/10 11:29:32 dshpakov Exp $
+// $Id: I2OChain.cc,v 1.1.2.30 2009/03/10 15:58:20 dshpakov Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -85,9 +85,9 @@ namespace stor
       void tagForStream(StreamID);
       void tagForEventConsumer(QueueID);
       void tagForDQMEventConsumer(QueueID);
-      bool isTaggedForAnyStream() {return !_streamTags.empty();}
-      bool isTaggedForAnyEventConsumer() {return !_eventConsumerTags.empty();}
-      bool isTaggedForAnyDQMEventConsumer() {return !_dqmEventConsumerTags.empty();}
+      bool isTaggedForAnyStream() const {return !_streamTags.empty();}
+      bool isTaggedForAnyEventConsumer() const {return !_eventConsumerTags.empty();}
+      bool isTaggedForAnyDQMEventConsumer() const {return !_dqmEventConsumerTags.empty();}
       std::vector<StreamID> const& getStreamTags() const;
       std::vector<QueueID> const& getEventConsumerTags() const;
       std::vector<QueueID> const& getDQMEventConsumerTags() const;
@@ -1706,25 +1706,25 @@ namespace stor
     _data->tagForDQMEventConsumer(queueId);
   }
 
-  bool I2OChain::isTaggedForAnyStream()
+  bool I2OChain::isTaggedForAnyStream() const
   {
     if (!_data) return false;
     return _data->isTaggedForAnyStream();
   }
 
-  bool I2OChain::isTaggedForAnyEventConsumer()
+  bool I2OChain::isTaggedForAnyEventConsumer() const
   {
     if (!_data) return false;
     return _data->isTaggedForAnyEventConsumer();
   }
 
-  bool I2OChain::isTaggedForAnyDQMEventConsumer()
+  bool I2OChain::isTaggedForAnyDQMEventConsumer() const
   {
     if (!_data) return false;
     return _data->isTaggedForAnyDQMEventConsumer();
   }
 
-  std::vector<StreamID> I2OChain::getStreamTags()
+  std::vector<StreamID> I2OChain::getStreamTags() const
   {
     if (!_data)
       {
@@ -1734,7 +1734,7 @@ namespace stor
     return _data->getStreamTags();
   }
 
-  std::vector<QueueID> I2OChain::getEventConsumerTags()
+  std::vector<QueueID> I2OChain::getEventConsumerTags() const
   {
     if (!_data)
       {
@@ -1744,7 +1744,7 @@ namespace stor
     return _data->getEventConsumerTags();
   }
 
-  std::vector<QueueID> I2OChain::getDQMEventConsumerTags()
+  std::vector<QueueID> I2OChain::getDQMEventConsumerTags() const
   {
     if (!_data)
       {
