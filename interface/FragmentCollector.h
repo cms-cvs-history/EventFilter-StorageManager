@@ -21,8 +21,6 @@
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 
 #include "EventFilter/StorageManager/interface/EvtMsgRingBuffer.h"
-#include "EventFilter/StorageManager/interface/ServiceManager.h"
-#include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -60,12 +58,10 @@ namespace stor
 
     FragmentCollector(HLTInfo& h,
 		      log4cplus::Logger& applicationLogger,
-                      SharedResources sharedResources,
-                      const std::string& config_str="");
+                      SharedResources sharedResources);
     FragmentCollector(std::auto_ptr<HLTInfo>,
 		      log4cplus::Logger& applicationLogger,
-                      SharedResources sharedResources,
-                      const std::string& config_str="");
+                      SharedResources sharedResources);
     ~FragmentCollector();
 
     void start();
@@ -143,8 +139,8 @@ namespace stor
     boost::shared_ptr<FragmentQueue> newFragmentQueue_;
     boost::shared_ptr<DiscardManager> discardManager_;
 
-    std::auto_ptr<edm::ServiceManager> writer_;
-    std::auto_ptr<stor::DQMServiceManager> dqmServiceManager_;
+    boost::shared_ptr<edm::ServiceManager> writer_;
+    boost::shared_ptr<stor::DQMServiceManager> dqmServiceManager_;
 
     boost::shared_ptr<EventServer> eventServer_;
     boost::shared_ptr<DQMEventServer> DQMeventServer_;

@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.12.4.4 2009/03/11 17:30:57 biery Exp $
+// $Id: RunCollector_t.cpp,v 1.12.4.5 2009/03/11 18:47:46 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -170,8 +170,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
 
   coll_.reset(new stor::FragmentCollector(info_,
-                                          logger_,sharedResources_,
-                                          conffile));
+                                          logger_,sharedResources_));
 
   boost::shared_ptr<stor::Parameter> smParameter =
     stor::Configurator::instance()->getParameter();

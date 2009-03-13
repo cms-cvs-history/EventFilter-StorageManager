@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.11 2009/03/11 18:47:45 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.12 2009/03/13 10:36:32 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -47,8 +47,7 @@ namespace stor
 
   FragmentCollector::FragmentCollector(HLTInfo& h,
 				       log4cplus::Logger& applicationLogger,
-                                       SharedResources sharedResources,
-                                       const string& config_str):
+                                       SharedResources sharedResources):
     cmd_q_(&(h.getCommandQueue())),
     frag_q_(&(h.getFragmentQueue())),
     prods_(0),
@@ -59,8 +58,8 @@ namespace stor
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
     discardManager_(sharedResources._discardManager),
-    writer_(new edm::ServiceManager(config_str)),
-    dqmServiceManager_(new stor::DQMServiceManager()),
+    writer_(sharedResources._serviceManager),
+    dqmServiceManager_(sharedResources._dqmServiceManager),
     eventServer_(sharedResources._oldEventServer),
     DQMeventServer_(sharedResources._oldDQMEventServer),
     initMsgCollection_(sharedResources._initMsgCollection)
@@ -76,8 +75,7 @@ namespace stor
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,
 				       log4cplus::Logger& applicationLogger,
-                                       SharedResources sharedResources,
-                                       const string& config_str):
+                                       SharedResources sharedResources):
     cmd_q_(&(info.get()->getCommandQueue())),
     frag_q_(&(info.get()->getFragmentQueue())),
     prods_(0),
@@ -88,8 +86,8 @@ namespace stor
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
     discardManager_(sharedResources._discardManager),
-    writer_(new edm::ServiceManager(config_str)),
-    dqmServiceManager_(new stor::DQMServiceManager()),
+    writer_(sharedResources._serviceManager),
+    dqmServiceManager_(sharedResources._dqmServiceManager),
     eventServer_(sharedResources._oldEventServer),
     DQMeventServer_(sharedResources._oldDQMEventServer),
     initMsgCollection_(sharedResources._initMsgCollection)

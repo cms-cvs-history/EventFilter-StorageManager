@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.3 2009/03/11 17:30:56 biery Exp $
+// $Id: SharedResources.h,v 1.1.2.4 2009/03/13 13:41:28 biery Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -15,6 +15,8 @@
 #include "EventFilter/StorageManager/interface/EventServer.h"
 #include "EventFilter/StorageManager/interface/DQMEventServer.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
+#include "EventFilter/StorageManager/interface/ServiceManager.h"
+#include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 
 namespace stor {
 
@@ -22,8 +24,8 @@ namespace stor {
    * Container for shared resources.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/11 17:30:56 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/13 13:41:28 $
    */
 
   struct SharedResources
@@ -46,6 +48,8 @@ namespace stor {
     boost::shared_ptr<EventServer> _oldEventServer;
     boost::shared_ptr<DQMEventServer> _oldDQMEventServer;
     SMFUSenderList* _smRBSenderList;
+    boost::shared_ptr<edm::ServiceManager> _serviceManager;
+    boost::shared_ptr<stor::DQMServiceManager> _dqmServiceManager;
 
   };
   

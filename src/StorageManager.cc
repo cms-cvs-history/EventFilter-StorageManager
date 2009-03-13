@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.27 2009/03/11 18:47:45 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.28 2009/03/13 10:36:32 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -126,7 +126,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.27 2009/03/11 18:47:45 biery Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.28 2009/03/13 10:36:32 mommsen Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -3778,6 +3778,9 @@ void StorageManager::configureAction()
   sharedResourcesInstance_._oldDQMEventServer.
     reset(new DQMEventServer(DQMmaxESEventRate_));
 
+  sharedResourcesInstance_._serviceManager.reset(new ServiceManager(my_config));
+  sharedResourcesInstance_._dqmServiceManager.reset(new DQMServiceManager());
+
   boost::shared_ptr<DiscardManager> discardMgr;
   Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
   for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
@@ -3792,7 +3795,7 @@ void StorageManager::configureAction()
     }
   }
   sharedResourcesInstance_._discardManager = discardMgr;
-  jc_.reset(new stor::JobController(my_config, getApplicationLogger(),
+  jc_.reset(new stor::JobController(getApplicationLogger(),
                                     sharedResourcesInstance_));
 
   int disks(nLogicalDisk_);

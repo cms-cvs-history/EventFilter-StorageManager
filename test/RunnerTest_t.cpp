@@ -113,8 +113,7 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
 
   coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),
-                                          logger_,sharedResources_,
-                                          conffile));
+                                          logger_,sharedResources_));
 
   boost::shared_ptr<stor::Parameter> smParameter =
     stor::Configurator::instance()->getParameter();

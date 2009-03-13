@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.14.12.3 2009/03/03 22:07:16 biery Exp $
+ $Id: StorageManagerRun.cpp,v 1.14.12.4 2009/03/11 17:30:57 biery Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -148,8 +148,7 @@ Main::Main(const string& my_config_file,
   sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
 
   //jc_ = new stor::JobController(pr,
-  jc_ = new stor::JobController(getFileContents(my_config_file),
-                                logger_,sharedResources_);
+  jc_ = new stor::JobController(logger_,sharedResources_);
 
   vector<string>::iterator it(names_.begin()),en(names_.end());
   for(;it!=en;++it)

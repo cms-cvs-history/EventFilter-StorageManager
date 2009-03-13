@@ -15,43 +15,24 @@ using boost::bind;
 
 namespace stor
 {
-  namespace 
-  {
-    string changeToPhony(const string& config)
-    {
-      return config;
-    }
-  }
-
   JobController::~JobController()
   {
   }
 
-  JobController::JobController(const std::string& my_config,
-			       log4cplus::Logger& applicationLogger,
+  JobController::JobController(log4cplus::Logger& applicationLogger,
                                SharedResources sharedResources) :
   applicationLogger_(applicationLogger)      
   {
-    // change to phony input source
-    //string new_config = changeToPhony(fu_config);
-    //setRegistry(new_config);
-    init(my_config,sharedResources);
+    init(sharedResources);
   } 
 
-  void JobController::init(const std::string& my_config,
-                           SharedResources sharedResources)
+  void JobController::init(SharedResources sharedResources)
   {
     std::auto_ptr<HLTInfo> inf(new HLTInfo());
 
-    // ep takes ownership of inf!
-    // what happens to ownership of inf with no EP_Runner??
-    //std::auto_ptr<EPRunner> ep(new EPRunner(my_config,inf));
-    //std::auto_ptr<FragmentCollector> 
-    //  coll(new FragmentCollector(*(ep->getInfo()),deleter,
-    //				 my_config));
     std::auto_ptr<FragmentCollector> 
 	coll(new FragmentCollector(inf,applicationLogger_,
-				   sharedResources,my_config));
+				   sharedResources));
 
     collector_.reset(coll.release());
     //ep_runner_.reset(ep.release());
