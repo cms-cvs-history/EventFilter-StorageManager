@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.13 2008/10/24 17:41:55 loizides Exp $
+// $Id: FileRecord.cc,v 1.13.4.1 2009/03/12 14:33:37 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -16,14 +16,14 @@ using namespace stor;
 using namespace std;
 
 
-FileRecord::FileRecord(const uint32_t lumiSection, const string &file, const string &path):
+FileRecord::FileRecord(const uint32_t lumiSection, const string &file, const string &path, DiskWritingParams dwParams):
   smParameter_(stor::Configurator::instance()->getParameter()),
   fileName_(file),
   basePath_(path),
   fileSystem_(""),
   workingDir_("/open/"),
   logPath_(path+"/log"),
-  logFile_(logFile()),
+  logFile_(logFile(dwParams)),
   setupLabel_(""),
   streamLabel_(""),
   cmsver_(edm::getReleaseVersion()),
@@ -34,7 +34,8 @@ FileRecord::FileRecord(const uint32_t lumiSection, const string &file, const str
   events_(0), 
   firstEntry_(0.0), 
   lastEntry_(0.0),
-  whyClosed_(notClosed)
+  whyClosed_(notClosed),
+  diskWritingParams_(dwParams)
 {
    // stripp quotes if present
    if(cmsver_[0]=='"') cmsver_=cmsver_.substr(1,cmsver_.size()-2);
@@ -77,11 +78,11 @@ void FileRecord::updateDatabase() const
       << " --RUNNUMBER "    << runNumber_                         
       << " --LUMISECTION "  << lumiSection_                      
       << " --PATHNAME "     << filePath()
-      << " --HOSTNAME "     << smParameter_->host()
+      << " --HOSTNAME "     << diskWritingParams_._hostName
       << " --SETUPLABEL "   << setupLabel_ 
       << " --STREAM "       << streamLabel_                      
-      << " --INSTANCE "     << smParameter_->smInstance()        
-      << " --SAFETY "       << smParameter_->initialSafetyLevel()
+      << " --INSTANCE "     << diskWritingParams_._smInstanceString
+      << " --SAFETY "       << diskWritingParams_._initialSafetyLevel
       << " --APPVERSION "   << cmsver_
       << " --APPNAME CMSSW"
       << " --TYPE streamer"               
@@ -110,11 +111,11 @@ void FileRecord::insertFileInDatabase() const
       << " --RUNNUMBER "    << runNumber_                         
       << " --LUMISECTION "  << lumiSection_                      
       << " --PATHNAME "     << filePath()
-      << " --HOSTNAME "     << smParameter_->host()
+      << " --HOSTNAME "     << diskWritingParams_._hostName
       << " --SETUPLABEL "   << setupLabel_ 
       << " --STREAM "       << streamLabel_                      
-      << " --INSTANCE "     << smParameter_->smInstance()        
-      << " --SAFETY "       << smParameter_->initialSafetyLevel()
+      << " --INSTANCE "     << diskWritingParams_._smInstanceString
+      << " --SAFETY "       << diskWritingParams_._initialSafetyLevel
       << " --APPVERSION "  << cmsver_
       << " --APPNAME CMSSW"
       << " --TYPE streamer"               
@@ -335,7 +336,7 @@ void FileRecord::moveErrorFileToClosed()
 }
 
 
-const string FileRecord::logFile() const
+const string FileRecord::logFile(stor::DiskWritingParams const& dwp) const
 {
   time_t rawtime = time(0);
   tm * ptm;
@@ -346,8 +347,8 @@ const string FileRecord::logFile() const
               << setfill('0') << std::setw(4) << ptm->tm_year+1900
               << setfill('0') << std::setw(2) << ptm->tm_mon+1
               << setfill('0') << std::setw(2) << ptm->tm_mday
-              << "-" << smParameter_->host()
-              << "-" << smParameter_->smInstance()
+              << "-" << dwp._hostName
+              << "-" << dwp._smInstanceString
               << ".log";
   return logfilename.str();
 }
@@ -418,7 +419,7 @@ void FileRecord::report(ostream &os, int indentation) const
   os << prefix << "logFile_            " << logFile_                    << "\n";
   os << prefix << "setupLabel_         " << setupLabel_                 << "\n";
   os << prefix << "streamLabel_        " << streamLabel_                << "\n";
-  os << prefix << "hostName_           " << smParameter_->host()        << "\n";
+  os << prefix << "hostName_           " << diskWritingParams_._hostName<< "\n";
   os << prefix << "fileCatalog()       " << smParameter_->fileCatalog() << "\n"; 
   os << prefix << "lumiSection_        " << lumiSection_                << "\n";
   os << prefix << "runNumber_          " << runNumber_                  << "\n";

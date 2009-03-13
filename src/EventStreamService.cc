@@ -1,4 +1,4 @@
-// $Id: EventStreamService.cc,v 1.9.10.1 2009/03/12 14:37:12 mommsen Exp $
+// $Id: EventStreamService.cc,v 1.9.10.2 2009/03/13 10:36:32 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -19,7 +19,9 @@ using boost::shared_ptr;
 // *** construct stream service from 
 // *** parameter set and init message
 //
-EventStreamService::EventStreamService(ParameterSet const& pset, InitMsgView const& view)
+EventStreamService::EventStreamService(ParameterSet const& pset,
+                                       InitMsgView const& view,
+                                       stor::DiskWritingParams dwParams)
 {
   parameterSet_ = pset;
   runNumber_ = 0;
@@ -30,6 +32,8 @@ EventStreamService::EventStreamService(ParameterSet const& pset, InitMsgView con
   highWaterMark_ = 0;
   lumiSectionTimeOut_ = 0;
   ntotal_ = 0;
+
+  diskWritingParams_ = dwParams;
 
   saveInitMessage(view);
   initializeSelection(view);
@@ -203,7 +207,7 @@ boost::shared_ptr<FileRecord> EventStreamService::generateFileRecord()
 	 << "." << setfill('0') << std::setw(2) << sourceId_;
   string fileName = oss.str();
 
-  shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, filePath_));    
+  shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, filePath_, diskWritingParams_));    
   ++ntotal_;
 
   boost::mutex::scoped_lock sl(list_lock_);

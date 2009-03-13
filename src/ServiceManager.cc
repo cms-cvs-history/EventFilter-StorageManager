@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.4.1 2008/12/22 19:12:51 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.1 2008/12/22 19:18:00 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
@@ -14,7 +14,8 @@ using namespace edm;
 using boost::shared_ptr;
 
 
-ServiceManager::ServiceManager(const std::string& config):
+ServiceManager::ServiceManager(const std::string& config,
+                               stor::DiskWritingParams dwParams):
   outModPSets_(0),
   managedOutputs_(0),
   psetHLTOutputLabels_(0),
@@ -26,7 +27,8 @@ ServiceManager::ServiceManager(const std::string& config):
   errorStreamPSetIndex_(-1),
   errorStreamCreated_(false),
   samples_(1000),
-  period4samples_(10)
+  period4samples_(10),
+  diskWritingParams_(dwParams)
 {
   storedNames_.clear();
   collectStreamerPSets(config);
@@ -160,7 +162,7 @@ void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::strin
     }
 
     if (createStreamNow) {
-      shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view));
+      shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view,diskWritingParams_));
       stream->setCatalog(catalog);
       stream->setNumberOfFileSystems(disks);
       stream->setSourceId(sourceId);
@@ -213,7 +215,7 @@ void ServiceManager::manageErrorEventMsg(std::string catalog, uint32 disks, std:
     boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
 
     shared_ptr<StreamService> stream =
-      shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet));
+      shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));
     stream->setCatalog(catalog);
     stream->setNumberOfFileSystems(disks);
     stream->setSourceId(sourceId);

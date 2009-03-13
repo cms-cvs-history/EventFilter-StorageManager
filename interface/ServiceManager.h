@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.13 2008/10/13 13:05:36 hcheung Exp $
+// $Id: ServiceManager.h,v 1.13.6.1 2009/03/03 18:28:55 paterno Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
@@ -12,6 +12,7 @@
 #include <EventFilter/StorageManager/interface/StreamService.h>
 #include <EventFilter/StorageManager/interface/InitMsgCollection.h>
 #include <EventFilter/StorageManager/interface/SMPerformanceMeter.h>
+#include <EventFilter/StorageManager/interface/Configuration.h>
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -30,7 +31,7 @@ namespace edm
     
   public:  
     
-    explicit ServiceManager(const std::string& config);
+    explicit ServiceManager(const std::string& config, stor::DiskWritingParams dwParams);
     ~ServiceManager(); 
     
     void start(); 
@@ -72,6 +73,8 @@ namespace edm
     unsigned long samples_;
     unsigned long period4samples_;
     stor::SMPerformanceMeter *pmeter_;
+
+    stor::DiskWritingParams diskWritingParams_;
   };
   
 }//edm-namespace

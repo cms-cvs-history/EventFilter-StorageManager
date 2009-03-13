@@ -1,10 +1,11 @@
-// $Id: FileRecord.h,v 1.9.4.1 2009/03/03 18:28:55 paterno Exp $
+// $Id: FileRecord.h,v 1.9.4.2 2009/03/12 14:33:22 mommsen Exp $
 
 #ifndef StorageManager_FileRecord_h
 #define StorageManager_FileRecord_h
 
 #include <EventFilter/StorageManager/interface/Parameter.h>
 #include <EventFilter/StorageManager/interface/Utils.h>
+#include <EventFilter/StorageManager/interface/Configuration.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -16,9 +17,9 @@ namespace stor {
   /**
    * Holds the information for a physical file
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/01 20:36:29 $
+   * $Author: mommsen $
+   * $Revision: 1.9.4.2 $
+   * $Date: 2009/03/12 14:33:22 $
    */
 
   class FileRecord
@@ -37,7 +38,7 @@ namespace stor {
         size
       };
 
-      FileRecord(const uint32_t lumiSection, const std::string &file, const std::string &path);
+      FileRecord(const uint32_t lumiSection, const std::string &file, const std::string &path, DiskWritingParams dwParams);
 
 
       //////////////////////
@@ -251,7 +252,7 @@ namespace stor {
       /**
        * Returns the name of the log file
        */
-      const std::string logFile() const;
+      const std::string logFile(stor::DiskWritingParams const&) const;
 
       /**
        * Throws a cms::Exception when the directory does not exist
@@ -262,6 +263,8 @@ namespace stor {
        * Returns the relative difference btw to file sizes
        */
       const double calcPctDiff(long long, long long) const;
+
+      stor::DiskWritingParams diskWritingParams_;
    };
  
 } // stor namespace

@@ -1,4 +1,4 @@
-// $Id: FRDStreamService.cc,v 1.4.10.1 2009/03/12 14:37:12 mommsen Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.2 2009/03/13 10:36:32 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -18,7 +18,8 @@ using boost::shared_ptr;
 //
 // *** construct stream service from parameter set
 //
-FRDStreamService::FRDStreamService(ParameterSet const& pset)
+FRDStreamService::FRDStreamService(ParameterSet const& pset,
+                                   stor::DiskWritingParams dwParams)
 {
   parameterSet_ = pset;
   runNumber_ = 0;
@@ -29,6 +30,8 @@ FRDStreamService::FRDStreamService(ParameterSet const& pset)
   highWaterMark_ = 0;
   lumiSectionTimeOut_ = 0;
   ntotal_ = 0;
+
+  diskWritingParams_ = dwParams;
 
   setStreamParameter();
 }
@@ -156,7 +159,7 @@ boost::shared_ptr<FileRecord> FRDStreamService::generateFileRecord()
 	 << "." << setfill('0') << std::setw(2) << sourceId_;
   string fileName = oss.str();
 
-  shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, filePath_));    
+  shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, filePath_, diskWritingParams_));    
   ++ntotal_;
 
   boost::mutex::scoped_lock sl(list_lock_);

@@ -1,7 +1,7 @@
 #ifndef FRDSTREAMSERVICE_H
 #define FRDSTREAMSERVICE_H
 
-// $Id: FRDStreamService.h,v 1.2.10.1 2009/03/03 18:28:55 paterno Exp $
+// $Id: FRDStreamService.h,v 1.2.10.2 2009/03/12 14:37:59 mommsen Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -17,13 +17,14 @@
 #include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 #include "EventFilter/StorageManager/interface/StreamService.h"  
+#include <EventFilter/StorageManager/interface/Configuration.h>
 
 namespace edm {
 
   class FRDStreamService : public StreamService
   {
     public:
-      FRDStreamService(ParameterSet const&);
+    FRDStreamService(ParameterSet const&, stor::DiskWritingParams dwParams);
       ~FRDStreamService() { stop(); }
       
       bool   nextEvent(const uint8 * const);
@@ -39,6 +40,7 @@ namespace edm {
 
       bool   checkEvent(boost::shared_ptr<stor::FileRecord>, FRDEventMsgView const&) const;
 
+      stor::DiskWritingParams diskWritingParams_;
   };
 
 } // edm namespace

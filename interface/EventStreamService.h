@@ -1,7 +1,7 @@
 #ifndef EVENTSTREAMSERVICE_H
 #define EVENTSTREAMSERVICE_H
 
-// $Id: EventStreamService.h,v 1.2.10.1 2009/03/03 18:28:55 paterno Exp $
+// $Id: EventStreamService.h,v 1.2.10.2 2009/03/12 14:37:59 mommsen Exp $
 
 // - handling output files per stream make the problem 1-dimensional 
 // - allows to use different file handling rules per stream
@@ -23,13 +23,15 @@
 #include <IOPool/Streamer/interface/EventMessage.h>
 
 #include <EventFilter/StorageManager/interface/StreamService.h>  
+#include <EventFilter/StorageManager/interface/Configuration.h>
 
 namespace edm {
 
   class EventStreamService : public StreamService
   {
     public:
-      EventStreamService(ParameterSet const&, InitMsgView const&);
+      EventStreamService(ParameterSet const&, InitMsgView const&,
+                         stor::DiskWritingParams dwParams);
       ~EventStreamService() { stop(); }
       
       bool   nextEvent(const uint8 * const);
@@ -54,6 +56,7 @@ namespace edm {
       // set from init message ( is init message )
       std::vector<unsigned char> saved_initmsg_;
 
+      stor::DiskWritingParams diskWritingParams_;
   };
 
 } // edm namespace

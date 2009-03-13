@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.30 2009/03/10 15:58:20 dshpakov Exp $
+// $Id: Configuration.cc,v 1.1.2.1 2009/03/13 13:41:28 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 
@@ -144,7 +144,7 @@ namespace stor
     //infoSpace->fireItemAvailable("filePath", &_filePath);
     //infoSpace->fireItemAvailable("fileCatalog", &_fileCatalog);
     //infoSpace->fireItemAvailable("setupLabel", &_setupLabel);
-    infoSpace->fireItemAvailable("nLogicalDisk", &_nLogicalDisk);
+    //infoSpace->fireItemAvailable("nLogicalDisk", &_nLogicalDisk);
     //infoSpace->fireItemAvailable("maxFileSize", &_maxFileSize);
     //infoSpace->fireItemAvailable("highWaterMark", &_highWaterMark);
     //infoSpace->fireItemAvailable("lumiSectionTimeOut", &_lumiSectionTimeOut);
@@ -175,7 +175,7 @@ namespace stor
     //_diskWriteParamCopy._filePath = _filePath;
     //_diskWriteParamCopy._fileCatalog = _fileCatalog;
     //_diskWriteParamCopy._setupLabel = _setupLabel;
-    _diskWriteParamCopy._nLogicalDisk = _nLogicalDisk;
+    //_diskWriteParamCopy._nLogicalDisk = _nLogicalDisk;
     //_diskWriteParamCopy._maxFileSize = _maxFileSize;
     //_diskWriteParamCopy._highWaterMark = _highWaterMark;
     //_diskWriteParamCopy._lumiSectionTimeOut = _lumiSectionTimeOut;

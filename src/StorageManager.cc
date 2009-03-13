@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.28 2009/03/13 10:36:32 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.29 2009/03/13 17:37:02 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -126,7 +126,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.28 2009/03/13 10:36:32 mommsen Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.29 2009/03/13 17:37:02 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -292,6 +292,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
   sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
 
+  sharedResourcesInstance_._configuration.reset(new Configuration(ispace,
+                                                                  instance));
   sharedResourcesInstance_._initMsgCollection.reset(new InitMsgCollection());
 
 }
@@ -3632,6 +3634,8 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
 
 void StorageManager::configureAction()
 {
+  sharedResourcesInstance_._configuration->updateAllParams();
+
   if(!edmplugin::PluginManager::isAvailable()) {
     edmplugin::PluginManager::configure(edmplugin::standard::config());
   }
@@ -3778,7 +3782,11 @@ void StorageManager::configureAction()
   sharedResourcesInstance_._oldDQMEventServer.
     reset(new DQMEventServer(DQMmaxESEventRate_));
 
-  sharedResourcesInstance_._serviceManager.reset(new ServiceManager(my_config));
+  DiskWritingParams dwParams =
+    sharedResourcesInstance_._configuration->getDiskWritingParams();
+
+  sharedResourcesInstance_._serviceManager.reset(new ServiceManager(my_config,
+                                                                    dwParams));
   sharedResourcesInstance_._dqmServiceManager.reset(new DQMServiceManager());
 
   boost::shared_ptr<DiscardManager> discardMgr;
@@ -3795,6 +3803,7 @@ void StorageManager::configureAction()
     }
   }
   sharedResourcesInstance_._discardManager = discardMgr;
+
   jc_.reset(new stor::JobController(getApplicationLogger(),
                                     sharedResourcesInstance_));
 
