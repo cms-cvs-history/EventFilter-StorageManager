@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.2 2009/03/13 03:15:05 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.3 2009/03/13 15:30:17 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -10,6 +10,7 @@
 #include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 namespace stor {
 
@@ -17,8 +18,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/13 03:15:05 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/13 15:30:17 $
    */
   
   class EventQueueCollection
@@ -26,9 +27,16 @@ namespace stor {
   public:
 
     /**
-       A default-constructed EventQueueCollection contains no queues.
+       A default-constructed EventQueueCollection contains no queues
      */
     EventQueueCollection();
+
+    /**
+       Set or get the time in seconds until an unused queue becomes
+       stale.
+     */
+    void setExpirationInterval(utils::duration_t interval);
+    utils::duration_t getExpirationInterval() const;
 
     /**
        Create a new contained queue, with the given policy and given
@@ -100,6 +108,8 @@ namespace stor {
 
     std::vector<discard_new_queue_ptr> _discard_new_queues;
     std::vector<discard_old_queue_ptr> _discard_old_queues;
+
+    utils::duration_t _staleness_interval;
 
     /*
       These functions are declared private and not implemented to

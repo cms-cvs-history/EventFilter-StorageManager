@@ -1,4 +1,4 @@
-// $Id: QueueID.h,v 1.1.2.2 2009/03/09 14:26:50 mommsen Exp $
+// $Id: QueueID.h,v 1.1.2.3 2009/03/10 15:31:54 mommsen Exp $
 
 #ifndef StorageManager_QueueID_h
 #define StorageManager_QueueID_h
@@ -14,8 +14,8 @@ namespace stor {
    * Uniquely identifies the consumer queues 
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/09 14:26:50 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/10 15:31:54 $
    */
 
   class QueueID
@@ -135,7 +135,7 @@ namespace stor {
   operator<< ( std::ostream& os, const QueueID& queueID )
   {
     os << "policy: " << queueID.policy() << 
-      "   index: " << queueID.index() << std::endl;
+      "   index: " << queueID.index();
     return os;
   }
 

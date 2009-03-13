@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.7 2009/02/16 17:37:42 paterno Exp $
+// $Id: ConcurrentQueue.h,v 1.1.2.8 2009/03/09 14:26:49 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -38,9 +38,9 @@ namespace stor
         RejectNewest: the function returns void; the new item is
         not put onto the FIFO.
    
-     $Author: biery $
-     $Revision: 1.1.2.5 $
-     $Date: 2009/03/01 20:36:29 $
+     $Author: mommsen $
+     $Revision: 1.1.2.8 $
+     $Date: 2009/03/09 14:26:49 $
    */
 
   template <class T>
@@ -60,11 +60,12 @@ namespace stor
     {
       bool have_room = size < capacity;
       if (have_room)
-        {
-          elements.push_back(item);
-          ++size;
-          nonempty.notify_one();
-        }
+         {
+           elements.push_back(item);
+           ++size;
+           nonempty.notify_one();
+           return true;
+         }
       return have_room;
     }                       
   };
