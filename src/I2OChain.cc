@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.30 2009/03/10 15:58:20 dshpakov Exp $
+// $Id: I2OChain.cc,v 1.1.2.31 2009/03/13 03:14:46 paterno Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -1239,6 +1239,8 @@ namespace stor
     inline DQMEventMsgData::DQMEventMsgData(toolbox::mem::Reference* pRef) :
       ChainData(pRef)
     {
+
+      _headerFieldsCached = false;
 
       parseI2OHeader();
 

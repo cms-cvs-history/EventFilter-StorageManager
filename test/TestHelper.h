@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.1.2.7 2009/03/09 15:00:35 biery Exp $
+// $Id: TestHelper.h,v 1.1.2.8 2009/03/11 12:37:47 dshpakov Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -269,7 +269,8 @@ namespace stor
     }
 
 
-    Reference* allocate_frame_with_dqm_msg( unsigned int eventNumber )
+    Reference* allocate_frame_with_dqm_msg( unsigned int eventNumber,
+                                            const std::string& topFolder )
     {
 
       unsigned int run = 1111;
@@ -277,7 +278,6 @@ namespace stor
       unsigned int lumi_section = 1;
       unsigned int update_number = 1;
       std::string release_tag( "v00" );
-      std::string top_folder( "/" );
       DQMEvent::TObjectTable mon_elts;
 
       Reference* ref = allocate_frame_with_basic_header( I2O_SM_DQM, 0, 1 );
@@ -288,7 +288,7 @@ namespace stor
                             ts,
                             lumi_section, update_number,
                             release_tag,
-                            top_folder,
+                            topFolder,
                             mon_elts );
 
       return ref;
