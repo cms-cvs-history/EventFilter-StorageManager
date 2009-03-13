@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.31 2009/03/13 03:14:46 paterno Exp $
+// $Id: I2OChain.cc,v 1.1.2.32 2009/03/13 15:52:32 dshpakov Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -51,7 +51,7 @@ namespace stor
       void markComplete();
       void markFaulty();
       void markCorrupt();
-      unsigned long* getBufferData();
+      unsigned long* getBufferData() const;
       void swap(ChainData& other);
       unsigned int messageCode() const {return _messageCode;}
       FragKey const& fragmentKey() const {return _fragKey;}
@@ -423,7 +423,7 @@ namespace stor
       _faultyBits |= CORRUPT_INITIAL_HEADER;
     }
 
-    inline unsigned long* ChainData::getBufferData()
+    inline unsigned long* ChainData::getBufferData() const
     {
       return _ref 
         ?  static_cast<unsigned long*>(_ref->getDataLocation()) 
@@ -1593,7 +1593,7 @@ namespace stor
     if (_data) _data->markFaulty();
   }
 
-  unsigned long* I2OChain::getBufferData()
+  unsigned long* I2OChain::getBufferData() const
   {
     return _data ?  _data->getBufferData() : 0UL;
   }

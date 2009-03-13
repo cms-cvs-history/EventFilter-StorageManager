@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.26 2009/03/10 15:32:59 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.27 2009/03/13 03:15:05 paterno Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -30,9 +30,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.26 $
-   * $Date: 2009/03/10 15:32:59 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.27 $
+   * $Date: 2009/03/13 03:15:05 $
    */
 
 
@@ -141,7 +141,7 @@ namespace stor {
        Reference begins. If the chain is empty, a null pointer is
        returned.
     */
-    unsigned long* getBufferData();
+    unsigned long* getBufferData() const;
 
 
     /**
