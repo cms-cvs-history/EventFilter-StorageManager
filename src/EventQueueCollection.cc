@@ -1,15 +1,30 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.2 2009/03/13 03:15:06 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.3 2009/03/13 10:23:25 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
-#include <algorithm>
+#include "FWCore/Utilities/interface/Algorithms.h"
 #include "boost/bind.hpp"
 
 namespace stor
 {
+
+  // Local helper functions
+  namespace
+  {
+
+    void throw_unknown_queueid(QueueID id)
+    {
+      std::ostringstream msg;
+      msg << "Unable to retrieve queue with signature: ";
+      msg << id;
+      XCEPT_RAISE(exception::UnknownQueueId, msg.str());
+    }
+  } // anonymous namespace
+
+
   EventQueueCollection::EventQueueCollection() :
     _protect_discard_new_queues(),
     _protect_discard_old_queues(),
@@ -58,11 +73,10 @@ namespace stor
     read_lock_t lock_discard_old(_protect_discard_new_queues);
     read_lock_t lock_discard_new(_protect_discard_old_queues);
     std::vector<QueueID> routes = event.getEventConsumerTags();
-//     std::for_each(routes.begin(), routes.end(),
-//                   boost::bind(EventQueueCollection::add_event_helper,
-//                               boost::bind::_1));
+    edm::for_all(routes,
+                 boost::bind(&EventQueueCollection::_enqueue_event, 
+                             this, _1, event));
   }
-
 
   I2OChain 
   EventQueueCollection::popEvent(QueueID id)
@@ -84,10 +98,7 @@ namespace stor
         }
       default:
         {
-          std::ostringstream msg;
-          msg << "Unable to retrieve queue with signature: ";
-          msg << id;
-          XCEPT_RAISE(exception::UnknownQueueId, msg.str());
+          throw_unknown_queueid(id);
         }
       }
     return result;
@@ -103,6 +114,25 @@ namespace stor
   {
   }
 
+  void
+  EventQueueCollection::_enqueue_event(QueueID const& id, I2OChain const& event)
+  {
+    switch (id.policy())
+      {
+      case enquing_policy::DiscardNew:
+        {
+          _discard_new_queues[id.index()]->enq_nowait(event);
+        }
+      case enquing_policy::DiscardOld:
+        {
+          _discard_old_queues[id.index()]->enq_nowait(event);
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+        }
+      }
+  }
 
 }
 

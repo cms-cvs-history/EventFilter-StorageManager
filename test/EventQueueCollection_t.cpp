@@ -68,35 +68,16 @@ testEventQueueCollection::create_queues()
 void 
 testEventQueueCollection::pop_event_from_non_existing_queue()
 {
-  // Default collection should have no queues.
+  // Attemping to pop and event from a non-existent queue should
+  // result in an exception.
   EventQueueCollection c;
   CPPUNIT_ASSERT(c.size() == 0);
-
-  // Add one queue
-  QueueID id1 = c.createQueue(stor::enquing_policy::DiscardNew, 10);
-  CPPUNIT_ASSERT(id1.policy() == stor::enquing_policy::DiscardNew);
-  CPPUNIT_ASSERT(c.size() == 1);
-
-  // Add another queue
-  QueueID id2 = c.createQueue(stor::enquing_policy::DiscardOld, 20);
-  CPPUNIT_ASSERT(id2.policy() == stor::enquing_policy::DiscardOld);
-  CPPUNIT_ASSERT(c.size() == 2);
-
-  // A non-existent queue
-  QueueID id3 = c.createQueue(stor::enquing_policy::FailIfFull, 1);
-  CPPUNIT_ASSERT(!id3.isValid());
-  CPPUNIT_ASSERT(c.size() == 2);
+  QueueID invalid_id;
+  CPPUNIT_ASSERT(!invalid_id.isValid());
 
   I2OChain chain;
-
-  try
-  {
-    chain = c.popEvent(id3);
-    CPPUNIT_ASSERT(false);
-  }
-  catch (stor::exception::UnknownQueueId)
-  {
-  }
+  CPPUNIT_ASSERT(chain.empty());
+  CPPUNIT_ASSERT_THROW(chain = c.popEvent(invalid_id), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT(chain.empty());
 }
 

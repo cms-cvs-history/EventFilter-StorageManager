@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.1 2009/03/12 03:46:17 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.2 2009/03/13 03:15:05 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -17,8 +17,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/12 03:46:17 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/13 03:15:05 $
    */
   
   class EventQueueCollection
@@ -77,6 +77,7 @@ namespace stor {
     void expireStaleQueues();
 
   private:
+
     typedef ConcurrentQueue<I2OChain, RejectNewest<I2OChain> > discard_new_queue_t;
     typedef ConcurrentQueue<I2OChain, KeepNewest<I2OChain> >   discard_old_queue_t;
     
@@ -96,7 +97,7 @@ namespace stor {
 
     mutable read_write_mutex  _protect_discard_new_queues;
     mutable read_write_mutex  _protect_discard_old_queues;
-    
+
     std::vector<discard_new_queue_ptr> _discard_new_queues;
     std::vector<discard_old_queue_ptr> _discard_old_queues;
 
@@ -106,6 +107,12 @@ namespace stor {
     */
     EventQueueCollection(EventQueueCollection const&);
     EventQueueCollection& operator=(EventQueueCollection const&);
+
+    /*
+      These are helper functions used in the implementation.
+    */
+    
+    void _enqueue_event(QueueID const& id, I2OChain const& event);
   };
   
 } // namespace stor
