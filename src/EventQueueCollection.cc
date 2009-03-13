@@ -1,7 +1,11 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.3 2009/03/10 15:34:56 mommsen Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.1 2009/03/12 03:46:18 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
+
+#include <algorithm>
+#include "boost/bind.hpp"
 
 namespace stor
 {
@@ -37,13 +41,25 @@ namespace stor
     return result;
   }
 
-
-
+  size_t
+  EventQueueCollection::size() const
+  {
+    // We obtain locks not because it is unsafe to read the sizes
+    // without locking, but because we want consistent values.
+    read_lock_t lock_discard_old(_protect_discard_new_queues);
+    read_lock_t lock_discard_new(_protect_discard_old_queues);
+    return _discard_new_queues.size() + _discard_old_queues.size();
+  }
 
   void 
   EventQueueCollection::addEvent(I2OChain const& event)
   {
-    
+    read_lock_t lock_discard_old(_protect_discard_new_queues);
+    read_lock_t lock_discard_new(_protect_discard_old_queues);
+    std::vector<QueueID> routes = event.getEventConsumerTags();
+//     std::for_each(routes.begin(), routes.end(),
+//                   boost::bind(EventQueueCollection::add_event_helper,
+//                               boost::bind::_1));
   }
 
 
@@ -51,20 +67,23 @@ namespace stor
   EventQueueCollection::popEvent(QueueID id)
   {
     I2OChain result;
-    if ( id.policy() == enquing_policy::DiscardNew )
-    {
-      read_lock_t lock(_protect_discard_new_queues);
-      _discard_new_queues[id.index()]->deq_nowait(result);
-    }
-    else if ( id.policy() == enquing_policy::DiscardOld )
-    {
-      read_lock_t lock(_protect_discard_old_queues);
-      _discard_old_queues[id.index()]->deq_nowait(result);
-    }
-    else
-    {
-      // do what?
-    }
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          _discard_new_queues[id.index()]->deq_nowait(result);
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          _discard_old_queues[id.index()]->deq_nowait(result);
+        }
+      default:
+        {
+          // Do what? Should we throw an exception?
+        }
+      }
     return result;
   }
 

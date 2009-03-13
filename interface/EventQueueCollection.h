@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.4 2009/03/10 15:32:59 mommsen Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.1 2009/03/12 03:46:17 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -16,9 +16,9 @@ namespace stor {
   /**
    * A collection of ConcurrentQueue<I2OChain>.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/10 15:32:59 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/12 03:46:17 $
    */
   
   class EventQueueCollection
@@ -38,6 +38,10 @@ namespace stor {
     QueueID createQueue(enquing_policy::PolicyTag policy,
 			size_t max);
 
+    /**
+       Return the number of queues in the collection.
+      */
+    size_t size() const;
     
     /**
        Add an event to all queues matching the specifications.

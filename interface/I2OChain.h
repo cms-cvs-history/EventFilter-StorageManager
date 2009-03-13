@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.25 2009/03/10 11:29:32 dshpakov Exp $
+// $Id: I2OChain.h,v 1.1.2.26 2009/03/10 15:32:59 mommsen Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -30,9 +30,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.25 $
-   * $Date: 2009/03/10 11:29:32 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.26 $
+   * $Date: 2009/03/10 15:32:59 $
    */
 
 
@@ -197,19 +197,19 @@ namespace stor {
        Returns true if the chain has been tagged for any disk stream
        and false otherwise.
     */
-    bool isTaggedForAnyStream();
+    bool isTaggedForAnyStream() const;
 
     /**
        Returns true if the chain has been tagged for any event consumer
        and false otherwise.
     */
-    bool isTaggedForAnyEventConsumer();
+    bool isTaggedForAnyEventConsumer() const;
 
     /**
        Returns true if the chain has been tagged for any DQM event consumer
        and false otherwise.
     */
-    bool isTaggedForAnyDQMEventConsumer();
+    bool isTaggedForAnyDQMEventConsumer() const;
 
     /**
        Returns the list of disk streams (stream IDs) that
@@ -219,7 +219,7 @@ namespace stor {
        should only be used for testing which streams have been tagged,
        *not* for for modifying the list of tags.
     */
-    std::vector<StreamID> getStreamTags();
+    std::vector<StreamID> getStreamTags() const;
 
     /**
        Returns the list of event consumers (queue IDs) that
@@ -229,7 +229,7 @@ namespace stor {
        should only be used for testing which consumers have been tagged,
        *not* for for modifying the list of tags.
     */
-    std::vector<QueueID> getEventConsumerTags();
+    std::vector<QueueID> getEventConsumerTags() const;
 
     /**
        Returns the list of DQM event consumers (queue IDs) that
@@ -239,7 +239,7 @@ namespace stor {
        should only be used for testing which consumers have been tagged,
        *not* for for modifying the list of tags.
     */
-    std::vector<QueueID> getDQMEventConsumerTags();
+    std::vector<QueueID> getDQMEventConsumerTags() const;
 
     /**
        Returns the message code for the chain.  Valid values
