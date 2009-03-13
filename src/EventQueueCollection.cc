@@ -1,7 +1,8 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.1 2009/03/12 03:46:18 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.2 2009/03/13 03:15:06 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
+#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
 #include <algorithm>
@@ -73,15 +74,20 @@ namespace stor
         {
           read_lock_t lock(_protect_discard_new_queues);
           _discard_new_queues[id.index()]->deq_nowait(result);
+          break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
           _discard_old_queues[id.index()]->deq_nowait(result);
+          break;
         }
       default:
         {
-          // Do what? Should we throw an exception?
+          std::ostringstream msg;
+          msg << "Unable to retrieve queue with signature: ";
+          msg << id;
+          XCEPT_RAISE(exception::UnknownQueueId, msg.str());
         }
       }
     return result;
