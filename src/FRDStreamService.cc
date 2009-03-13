@@ -1,4 +1,4 @@
-// $Id: FRDStreamService.cc,v 1.4.10.2 2009/03/13 10:36:32 mommsen Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.3 2009/03/13 20:11:11 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -155,11 +155,11 @@ boost::shared_ptr<FileRecord> FRDStreamService::generateFileRecord()
 	 << "." << setfill('0') << std::setw(8) << runNumber_ 
 	 << "." << setfill('0') << std::setw(4) << lumiSection_
 	 << "." << streamLabel_ 
-	 << "." << fileName_
+	 << "." << diskWritingParams_._fileName
 	 << "." << setfill('0') << std::setw(2) << sourceId_;
   string fileName = oss.str();
 
-  shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, filePath_, diskWritingParams_));    
+  shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, diskWritingParams_));    
   ++ntotal_;
 
   boost::mutex::scoped_lock sl(list_lock_);
@@ -191,8 +191,8 @@ void FRDStreamService::report(ostream &os, int indentation) const
   string prefix(indentation, ' ');
   os << "\n";
   os << prefix << "------------- FRDStreamService -------------\n";
-  os << prefix << "fileName            " << fileName_              << "\n";
-  os << prefix << "filePath            " << filePath_              << "\n";
+  os << prefix << "fileName            " << diskWritingParams_._fileName<< "\n";
+  os << prefix << "filePath            " << diskWritingParams_._filePath<< "\n";
   os << prefix << "sourceId            " << sourceId_              << "\n";
   os << prefix << "setupLabel          " << setupLabel_            << "\n";
   os << prefix << "streamLabel         " << streamLabel_           << "\n";
@@ -202,4 +202,5 @@ void FRDStreamService::report(ostream &os, int indentation) const
   os << prefix << "no. active files    " << outputMap_.size()      << "\n";
   os << prefix << "no. files           " << outputSummary_.size()  << "\n";
   os << prefix << "-----------------------------------------\n";
+  os.flush();
 }

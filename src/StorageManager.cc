@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.29 2009/03/13 17:37:02 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.30 2009/03/13 20:11:11 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -126,7 +126,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.29 2009/03/13 17:37:02 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.30 2009/03/13 20:11:11 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -218,18 +218,12 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  fileCatalog_        = smParameter_ -> fileCatalog(); 
-  fileName_           = smParameter_ -> fileName();
-  filePath_           = smParameter_ -> filePath();
   maxFileSize_        = smParameter_ -> maxFileSize();
   setupLabel_         = smParameter_ -> setupLabel();
   highWaterMark_      = smParameter_ -> highWaterMark();
   lumiSectionTimeOut_ = smParameter_ -> lumiSectionTimeOut();
   exactFileSizeTest_  = smParameter_ -> exactFileSizeTest();
 
-  ispace->fireItemAvailable("fileCatalog",        &fileCatalog_);
-  ispace->fireItemAvailable("fileName",           &fileName_);
-  ispace->fireItemAvailable("filePath",           &filePath_);
   ispace->fireItemAvailable("maxFileSize",        &maxFileSize_);
   ispace->fireItemAvailable("setupLabel",         &setupLabel_);
   ispace->fireItemAvailable("highWaterMark",      &highWaterMark_);
@@ -582,13 +576,16 @@ throw (xgi::exception::Exception)
   
   try
   {
+    DiskWritingParams dwParams =
+      sharedResourcesInstance_._configuration->getDiskWritingParams();
+
     WebPageHelper::defaultWebPage(
       out,
       fsm_.stateName()->toString(),
       _statReporter,
       pool_,
       nLogicalDisk_,
-      filePath_,
+      dwParams._filePath,
       this->getApplicationDescriptor()
     );
   }
@@ -3423,9 +3420,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
   is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
-  is->fireItemAvailable("fileCatalog",          &fileCatalog_);
-  is->fireItemAvailable("fileName",             &fileName_);
-  is->fireItemAvailable("filePath",             &filePath_);
   is->fireItemAvailable("setupLabel",           &setupLabel_);
   is->fireItemAvailable("highWaterMark",        &highWaterMark_);
   is->fireItemAvailable("lumiSectionTimeOut",   &lumiSectionTimeOut_);
@@ -3467,9 +3461,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("useCompressionDQM",    this);
   is->addItemRetrieveListener("compressionLevelDQM",  this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
-  is->addItemRetrieveListener("fileCatalog",          this);
-  is->addItemRetrieveListener("fileName",             this);
-  is->addItemRetrieveListener("filePath",             this);
   is->addItemRetrieveListener("setupLabel",           this);
   is->addItemRetrieveListener("highWaterMark",        this);
   is->addItemRetrieveListener("lumiSectionTimeOut",   this);
@@ -3635,6 +3626,8 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
 void StorageManager::configureAction()
 {
   sharedResourcesInstance_._configuration->updateAllParams();
+  DiskWritingParams dwParams =
+    sharedResourcesInstance_._configuration->getDiskWritingParams();
 
   if(!edmplugin::PluginManager::isAvailable()) {
     edmplugin::PluginManager::configure(edmplugin::standard::config());
@@ -3650,12 +3643,8 @@ void StorageManager::configureAction()
 
   pushMode_ = (bool) pushmode2proxy_;
   smConfigString_    = my_config;
-  smFileCatalog_     = fileCatalog_.toString();
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  smParameter_ -> setFileCatalog(fileCatalog_.toString());
-  smParameter_ -> setfileName(fileName_.toString());
-  smParameter_ -> setfilePath(filePath_.toString());
   smParameter_ -> setmaxFileSize(maxFileSize_.value_);
   smParameter_ -> setsetupLabel(setupLabel_.toString());
   smParameter_ -> sethighWaterMark(highWaterMark_.value_);
@@ -3663,7 +3652,7 @@ void StorageManager::configureAction()
   smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
 
   // check output locations and scripts before we continue
-  checkDirectoryOK(filePath_);
+  checkDirectoryOK(dwParams._filePath);
   if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
 
   // check whether the maxSize parameter in an SM output stream
@@ -3782,9 +3771,6 @@ void StorageManager::configureAction()
   sharedResourcesInstance_._oldDQMEventServer.
     reset(new DQMEventServer(DQMmaxESEventRate_));
 
-  DiskWritingParams dwParams =
-    sharedResourcesInstance_._configuration->getDiskWritingParams();
-
   sharedResourcesInstance_._serviceManager.reset(new ServiceManager(my_config,
                                                                     dwParams));
   sharedResourcesInstance_._dqmServiceManager.reset(new DQMServiceManager());
@@ -3810,7 +3796,6 @@ void StorageManager::configureAction()
   int disks(nLogicalDisk_);
 
   jc_->setNumberOfFileSystems(disks);
-  jc_->setFileCatalog(smFileCatalog_);
   jc_->setSourceId(sourceId_);
 
   jc_->setCollateDQM(collateDQM_);

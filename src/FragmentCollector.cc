@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.12 2009/03/13 10:36:32 mommsen Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.13 2009/03/13 17:37:02 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -291,7 +291,7 @@ namespace stor
 
       InitMsgView msg(&event_area_[0]);
       FR_DEBUG << "FragColl: writing INIT size " << assembledSize << endl;
-      writer_->manageInitMsg(catalog_, disks_, sourceId_, msg, *initMsgCollection_);
+      writer_->manageInitMsg(disks_, sourceId_, msg, *initMsgCollection_);
 
       try
       {
@@ -407,7 +407,7 @@ namespace stor
 
       FRDEventMsgView emsg(&event_area_[0]);
       FR_DEBUG << "FragColl: writing error event size " << assembledSize << endl;
-      writer_->manageErrorEventMsg(catalog_, disks_, sourceId_, emsg);
+      writer_->manageErrorEventMsg(disks_, sourceId_, emsg);
 
       // tell the resource broker that sent us this event
       // that we are done with it and it can forget about it

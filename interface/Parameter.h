@@ -2,7 +2,7 @@
 #define STOR_PARAMETER_H
 
 // Created by Markus Klute on 2007 Jan 29.
-// $Id: Parameter.h,v 1.8 2008/09/03 15:23:10 biery Exp $
+// $Id: Parameter.h,v 1.8.10.1 2009/03/13 20:11:10 biery Exp $
 //
 // holds configuration parameter for StorageManager
 //
@@ -36,11 +36,11 @@ namespace stor
          }
       }
 
-      const std::string& fileCatalog()        const {return fileCatalog_;}
+        //const std::string& fileCatalog()        const {return fileCatalog_;}
       //const std::string& smInstance()         const {return smInstance_;}
       //const std::string& host()               const {return hostName_;}
-      const std::string& fileName()           const {return fileName_;}
-      const std::string& filePath()           const {return filePath_;}
+      //const std::string& fileName()           const {return fileName_;}
+      //const std::string& filePath()           const {return filePath_;}
       const std::string& setupLabel()         const {return setupLabel_;}
       int    maxFileSize()             const {return maxFileSize_;} 
       double highWaterMark()           const {return highWaterMark_;}

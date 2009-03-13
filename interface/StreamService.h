@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.12 2008/09/04 17:44:16 biery Exp $
+// $Id: StreamService.h,v 1.12.10.1 2009/03/12 14:37:59 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/OutputService.h>
@@ -32,10 +32,7 @@ namespace edm {
       int    lumiSection() const { return lumiSection_; }
 
       void   setNumberOfFileSystems(int i)          { numberOfFileSystems_ = i; } 
-      void   setCatalog(const std::string &s)       { catalog_  = s; }
       void   setSourceId(const std::string &s)      { sourceId_ = s; }
-      void   setFileName(const std::string &s)      { fileName_ = s; }
-      void   setFilePath(const std::string &s)      { filePath_ = s; }
       void   setMaxFileSize(int x); 
       void   setSetupLabel(std::string s)           { setupLabel_ = s; }
       void   setHighWaterMark(double d)             { highWaterMark_ = d; }
@@ -50,7 +47,6 @@ namespace edm {
 
     protected:
       void   setStreamParameter();
-      bool   checkFileSystem() const;
       void   fillOutputSummaryClosed(const boost::shared_ptr<stor::FileRecord> &file);
 
       // variables
@@ -65,12 +61,9 @@ namespace edm {
 
       // should be output module parameter
       int    numberOfFileSystems_;
-      std::string catalog_;
       std::string sourceId_;
 
       // output module parameter
-      std::string fileName_;
-      std::string filePath_;
       int    maxFileSizeInMB_;
       std::string setupLabel_;
       std::string streamLabel_;

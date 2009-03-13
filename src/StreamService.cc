@@ -1,4 +1,4 @@
-// $Id: StreamService.cc,v 1.15.10.1 2009/03/12 14:35:01 mommsen Exp $
+// $Id: StreamService.cc,v 1.15.10.2 2009/03/13 10:36:33 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -24,44 +24,6 @@ StreamService::~StreamService()
 
 
 //
-// *** check that the file system exists and that there
-// *** is enough disk space
-//
-bool StreamService::checkFileSystem() const
-{
-  struct statfs64 buf;
-  int retVal = statfs64(filePath_.c_str(), &buf);
-  if(retVal!=0)
-    {
-      std::cout << "StreamService: " << "Could not stat output filesystem for path " 
-		<< filePath_ << std::endl;
-      return false;
-    }
-  
-  unsigned int btotal = 0;
-  unsigned int bfree = 0;
-  unsigned int blksize = 0;
-  if(retVal==0)
-    {
-      blksize = buf.f_bsize;
-      btotal = buf.f_blocks;
-      bfree  = buf.f_bfree;
-    }
-  double dfree = double(bfree)/double(btotal);
-  double dusage = 1. - dfree;
-
-  if(dusage>highWaterMark_)
-    {
-      cout << "StreamService: " << "Output filesystem for path " << filePath_ 
-	   << " is more than " << highWaterMark_*100 << "% full " << endl;
-      return false;
-    }
-
-  return true;
-}
-
-
-//
 // *** file private data member from parameter set
 //
 void StreamService::setStreamParameter()
@@ -76,8 +38,6 @@ void StreamService::setStreamParameter()
 
   streamLabel_        = parameterSet_.getParameter<string> ("streamLabel");
   maxSize_ = 1048576 * (long long) parameterSet_.getParameter<int> ("maxSize");
-  fileName_           = ""; // set by setFileName
-  filePath_           = ""; // set by setFilePath
   setupLabel_         = ""; // set by setSetupLabel
   highWaterMark_      = 0.9;// set by setHighWaterMark
   lumiSectionTimeOut_ = 45; // set by setLumiSectionTimeOut

@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.13.4.1 2009/03/12 14:33:37 mommsen Exp $
+// $Id: FileRecord.cc,v 1.13.4.2 2009/03/13 20:11:11 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -16,13 +16,13 @@ using namespace stor;
 using namespace std;
 
 
-FileRecord::FileRecord(const uint32_t lumiSection, const string &file, const string &path, DiskWritingParams dwParams):
+FileRecord::FileRecord(const uint32_t lumiSection, const string &file, DiskWritingParams dwParams):
   smParameter_(stor::Configurator::instance()->getParameter()),
   fileName_(file),
-  basePath_(path),
+  basePath_(dwParams._filePath),
   fileSystem_(""),
   workingDir_("/open/"),
-  logPath_(path+"/log"),
+  logPath_(dwParams._filePath+"/log"),
   logFile_(logFile(dwParams)),
   setupLabel_(""),
   streamLabel_(""),
@@ -58,7 +58,7 @@ void FileRecord::writeToSummaryCatalog() const
 	      << (int) (lastEntry()-firstEntry())      << ind
 	      << whyClosed_ << endl;
   string currentStatString (currentStat.str());
-  ofstream of(smParameter_->fileCatalog().c_str(), ios_base::ate | ios_base::out | ios_base::app );
+  ofstream of(diskWritingParams_._fileCatalog.c_str(), ios_base::ate | ios_base::out | ios_base::app );
   of << currentStatString;
   of.close();
 }
@@ -420,7 +420,7 @@ void FileRecord::report(ostream &os, int indentation) const
   os << prefix << "setupLabel_         " << setupLabel_                 << "\n";
   os << prefix << "streamLabel_        " << streamLabel_                << "\n";
   os << prefix << "hostName_           " << diskWritingParams_._hostName<< "\n";
-  os << prefix << "fileCatalog()       " << smParameter_->fileCatalog() << "\n"; 
+  os << prefix << "fileCatalog()       " << diskWritingParams_._fileCatalog<<"\n"; 
   os << prefix << "lumiSection_        " << lumiSection_                << "\n";
   os << prefix << "runNumber_          " << runNumber_                  << "\n";
   os << prefix << "fileCounter_        " << fileCounter_                << "\n";

@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.6.1 2008/12/22 19:18:00 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.2 2009/03/13 20:11:11 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
@@ -76,7 +76,7 @@ void ServiceManager::stop()
 }
 
 
-void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::string sourceId, InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
+void ServiceManager::manageInitMsg(uint32 disks, std::string sourceId, InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
 {
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
   std::string inputOMLabel = view.outputModuleLabel();
@@ -163,11 +163,8 @@ void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::strin
 
     if (createStreamNow) {
       shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view,diskWritingParams_));
-      stream->setCatalog(catalog);
       stream->setNumberOfFileSystems(disks);
       stream->setSourceId(sourceId);
-      stream->setFileName(smParameter_ -> fileName());
-      stream->setFilePath(smParameter_ -> filePath());
       stream->setMaxFileSize(smParameter_ -> maxFileSize());
       stream->setSetupLabel(smParameter_ -> setupLabel());
       stream->setHighWaterMark(smParameter_ -> highWaterMark());
@@ -204,7 +201,7 @@ void ServiceManager::manageEventMsg(EventMsgView& msg)
   }
 }
 
-void ServiceManager::manageErrorEventMsg(std::string catalog, uint32 disks, std::string sourceId, FRDEventMsgView& msg)
+void ServiceManager::manageErrorEventMsg(uint32 disks, std::string sourceId, FRDEventMsgView& msg)
 {
   // if no error stream was configured, we can exit early
   if (errorStreamPSetIndex_ < 0) return;
@@ -216,11 +213,8 @@ void ServiceManager::manageErrorEventMsg(std::string catalog, uint32 disks, std:
 
     shared_ptr<StreamService> stream =
       shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));
-    stream->setCatalog(catalog);
     stream->setNumberOfFileSystems(disks);
     stream->setSourceId(sourceId);
-    stream->setFileName(smParameter_ -> fileName());
-    stream->setFilePath(smParameter_ -> filePath());
     stream->setMaxFileSize(smParameter_ -> maxFileSize());
     stream->setSetupLabel(smParameter_ -> setupLabel());
     stream->setHighWaterMark(smParameter_ -> highWaterMark());

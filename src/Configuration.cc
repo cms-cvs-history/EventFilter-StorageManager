@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.1 2009/03/13 13:41:28 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.2 2009/03/13 20:11:11 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 
@@ -140,9 +140,9 @@ namespace stor
 
     // bind the local xdata variables to the infospace
     //infoSpace->fireItemAvailable("STparameterSet", &_streamConfiguration);
-    //infoSpace->fireItemAvailable("fileName", &_fileName);
-    //infoSpace->fireItemAvailable("filePath", &_filePath);
-    //infoSpace->fireItemAvailable("fileCatalog", &_fileCatalog);
+    infoSpace->fireItemAvailable("fileName", &_fileName);
+    infoSpace->fireItemAvailable("filePath", &_filePath);
+    infoSpace->fireItemAvailable("fileCatalog", &_fileCatalog);
     //infoSpace->fireItemAvailable("setupLabel", &_setupLabel);
     //infoSpace->fireItemAvailable("nLogicalDisk", &_nLogicalDisk);
     //infoSpace->fireItemAvailable("maxFileSize", &_maxFileSize);
@@ -171,9 +171,9 @@ namespace stor
   void Configuration::updateLocalDiskWritingData()
   {
     //_diskWriteParamCopy._streamConfiguration = _streamConfiguration;
-    //_diskWriteParamCopy._fileName = _fileName;
-    //_diskWriteParamCopy._filePath = _filePath;
-    //_diskWriteParamCopy._fileCatalog = _fileCatalog;
+    _diskWriteParamCopy._fileName = _fileName;
+    _diskWriteParamCopy._filePath = _filePath;
+    _diskWriteParamCopy._fileCatalog = _fileCatalog;
     //_diskWriteParamCopy._setupLabel = _setupLabel;
     //_diskWriteParamCopy._nLogicalDisk = _nLogicalDisk;
     //_diskWriteParamCopy._maxFileSize = _maxFileSize;

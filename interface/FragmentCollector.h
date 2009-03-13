@@ -98,7 +98,6 @@ namespace stor
   public:
 
     void setNumberOfFileSystems(int disks)   { disks_        = disks; }
-    void setFileCatalog(std::string catalog) { catalog_      = catalog; }
     void setSourceId(std::string sourceId)   { sourceId_     = sourceId; }
 
     void setCollateDQM(bool collateDQM)
@@ -133,7 +132,6 @@ namespace stor
   private:
     uint32 runNumber_;
     uint32 disks_;
-    std::string catalog_;
     std::string sourceId_;
     log4cplus::Logger& applicationLogger_;
     boost::shared_ptr<FragmentQueue> newFragmentQueue_;

@@ -1,4 +1,4 @@
-// $Id: FileRecord.h,v 1.9.4.2 2009/03/12 14:33:22 mommsen Exp $
+// $Id: FileRecord.h,v 1.9.4.3 2009/03/13 20:11:10 biery Exp $
 
 #ifndef StorageManager_FileRecord_h
 #define StorageManager_FileRecord_h
@@ -17,9 +17,9 @@ namespace stor {
   /**
    * Holds the information for a physical file
    *
-   * $Author: mommsen $
-   * $Revision: 1.9.4.2 $
-   * $Date: 2009/03/12 14:33:22 $
+   * $Author: biery $
+   * $Revision: 1.9.4.3 $
+   * $Date: 2009/03/13 20:11:10 $
    */
 
   class FileRecord
@@ -38,7 +38,7 @@ namespace stor {
         size
       };
 
-      FileRecord(const uint32_t lumiSection, const std::string &file, const std::string &path, DiskWritingParams dwParams);
+      FileRecord(const uint32_t lumiSection, const std::string &file, DiskWritingParams dwParams);
 
 
       //////////////////////
