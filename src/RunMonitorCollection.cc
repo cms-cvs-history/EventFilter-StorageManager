@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.4 2009/02/18 08:26:54 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.5 2009/03/02 18:08:22 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -38,7 +38,7 @@ void RunMonitorCollection::do_updateInfoSpace()
   try
   {
     _infoSpace->lock();
-    _runNumber = static_cast<xdata::UnsignedInteger32>(runNumbersSeen.getLastSampleValue());
+    _runNumber = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(runNumbersSeen.getLastSampleValue()));
     _receivedEvents = static_cast<xdata::UnsignedInteger32>(eventIDsReceived.getSampleCount());
     _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(errorEventIDsReceived.getSampleCount());
     _infoSpace->unlock();
