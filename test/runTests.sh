@@ -10,6 +10,7 @@ tests="\
  DQMEventConsumerRegistrationInfo_t\
  EventConsumerRegistrationInfo_t\
  EventDistributor_t\
+ EventQueueCollection_t\
  EventStreamConfigurationInfo_t\
  FragmentStore_t\
  I2OChain_t\
