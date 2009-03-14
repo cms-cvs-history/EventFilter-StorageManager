@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.30 2009/03/13 20:11:11 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.31 2009/03/13 21:23:53 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -126,7 +126,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.30 2009/03/13 20:11:11 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.31 2009/03/13 21:23:53 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -218,14 +218,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  maxFileSize_        = smParameter_ -> maxFileSize();
-  setupLabel_         = smParameter_ -> setupLabel();
   highWaterMark_      = smParameter_ -> highWaterMark();
   lumiSectionTimeOut_ = smParameter_ -> lumiSectionTimeOut();
   exactFileSizeTest_  = smParameter_ -> exactFileSizeTest();
 
-  ispace->fireItemAvailable("maxFileSize",        &maxFileSize_);
-  ispace->fireItemAvailable("setupLabel",         &setupLabel_);
   ispace->fireItemAvailable("highWaterMark",      &highWaterMark_);
   ispace->fireItemAvailable("lumiSectionTimeOut", &lumiSectionTimeOut_);
   ispace->fireItemAvailable("exactFileSizeTest",  &exactFileSizeTest_);
@@ -3420,7 +3416,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
   is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
-  is->fireItemAvailable("setupLabel",           &setupLabel_);
   is->fireItemAvailable("highWaterMark",        &highWaterMark_);
   is->fireItemAvailable("lumiSectionTimeOut",   &lumiSectionTimeOut_);
   is->fireItemAvailable("exactFileSizeTest",    &exactFileSizeTest_);
@@ -3461,7 +3456,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("useCompressionDQM",    this);
   is->addItemRetrieveListener("compressionLevelDQM",  this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
-  is->addItemRetrieveListener("setupLabel",           this);
   is->addItemRetrieveListener("highWaterMark",        this);
   is->addItemRetrieveListener("lumiSectionTimeOut",   this);
   is->addItemRetrieveListener("exactFileSizeTest",    this);
@@ -3645,8 +3639,6 @@ void StorageManager::configureAction()
   smConfigString_    = my_config;
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  smParameter_ -> setmaxFileSize(maxFileSize_.value_);
-  smParameter_ -> setsetupLabel(setupLabel_.toString());
   smParameter_ -> sethighWaterMark(highWaterMark_.value_);
   smParameter_ -> setlumiSectionTimeOut(lumiSectionTimeOut_.value_);
   smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
@@ -3654,102 +3646,6 @@ void StorageManager::configureAction()
   // check output locations and scripts before we continue
   checkDirectoryOK(dwParams._filePath);
   if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
-
-  // check whether the maxSize parameter in an SM output stream
-  // is still specified in bytes (rather than MBytes).  (All we really
-  // check is if the maxSize is unreasonably large after converting
-  // it to bytes.)
-  //@@EM this is done on the xdaq parameter if it is set (i.e. if >0),
-  // otherwise on the cfg params
-  if(smParameter_ ->maxFileSize()>0) {
-    long long maxSize = 1048576 * (long long) smParameter_ -> maxFileSize();
-    if (maxSize > 2E+13) {
-      std::string errorString =  "The maxSize parameter (file size) ";
-      errorString.append("from xdaq configuration is too large(");
-      try {
-        errorString.append(boost::lexical_cast<std::string>(maxSize));
-      }
-      catch (boost::bad_lexical_cast& blcExcpt) {
-        errorString.append("???");
-      }
-      errorString.append(" bytes). ");
-      errorString.append("Please check that this parameter is ");
-      errorString.append("specified as the number of MBytes, not bytes. ");
-      errorString.append("(The units for maxSize was changed from ");
-      errorString.append("bytes to MBytes, and it is possible that ");
-      errorString.append("your storage manager configuration ");
-      errorString.append("needs to be updated to reflect this.)");
-
-      throw cms::Exception("StorageManager","configureAction")
-        << errorString;
-    }
-  } else {
-    try {
-      // create a parameter set from the configuration string
-      PythonProcessDesc py_pdesc(smConfigString_);
-      boost::shared_ptr<ProcessDesc> pdesc = py_pdesc.processDesc();
-      boost::shared_ptr<edm::ParameterSet> smPSet = pdesc->getProcessPSet();
-
-      // loop over each end path
-      std::vector<std::string> allEndPaths = 
-        smPSet->getParameter<std::vector<std::string> >("@end_paths");
-      for(std::vector<std::string>::iterator endPathIter = allEndPaths.begin();
-          endPathIter != allEndPaths.end(); ++endPathIter) {
-
-        // loop over each element in the end path list (not sure why...)
-        std::vector<std::string> anEndPath =
-          smPSet->getParameter<std::vector<std::string> >((*endPathIter));
-        for(std::vector<std::string>::iterator ep2Iter = anEndPath.begin();
-            ep2Iter != anEndPath.end(); ++ep2Iter) {
-
-          // fetch the end path parameter set
-          edm::ParameterSet endPathPSet =
-            smPSet->getParameter<edm::ParameterSet>((*ep2Iter));
-          if (! endPathPSet.empty()) {
-            std::string mod_type =
-              endPathPSet.getParameter<std::string> ("@module_type");
-            if (mod_type == "EventStreamFileWriter") {
-              // convert the maxSize parameter value from MB to bytes
-              long long maxSize = 1048576 *
-                (long long) endPathPSet.getParameter<int> ("maxSize");
-
-              // test the maxSize value.  2E13 is somewhat arbitrary,
-              // but ~18 TeraBytes seems larger than we would realistically
-              // want, and it will catch stale (byte-based) values greater
-              // than ~18 MBytes.)
-              if (maxSize > 2E+13) {
-                std::string streamLabel =  endPathPSet.getParameter<std::string> ("streamLabel");
-                std::string errorString =  "The maxSize parameter (file size) ";
-                errorString.append("for stream ");
-                errorString.append(streamLabel);
-                errorString.append(" is too large (");
-                try {
-                  errorString.append(boost::lexical_cast<std::string>(maxSize));
-                }
-                catch (boost::bad_lexical_cast& blcExcpt) {
-                  errorString.append("???");
-                }
-                errorString.append(" bytes). ");
-                errorString.append("Please check that this parameter is ");
-                errorString.append("specified as the number of MBytes, not bytes. ");
-                errorString.append("(The units for maxSize was changed from ");
-                errorString.append("bytes to MBytes, and it is possible that ");
-                errorString.append("your storage manager configuration file ");
-                errorString.append("needs to be updated to reflect this.)");
-                
-                throw cms::Exception("StorageManager","configureAction")
-                  << errorString;
-              }
-            }
-          }
-        }
-      }
-    }
-    catch (...) {
-      // since the maxSize test is just a convenience, we'll ignore
-      // exceptions and continue normally, for now.
-    }
-  }
 
   if (maxESEventRate_ < 0.0)
     maxESEventRate_ = 0.0;

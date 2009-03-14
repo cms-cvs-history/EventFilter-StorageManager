@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.2 2009/03/13 20:11:11 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.3 2009/03/13 21:23:53 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 
@@ -143,9 +143,9 @@ namespace stor
     infoSpace->fireItemAvailable("fileName", &_fileName);
     infoSpace->fireItemAvailable("filePath", &_filePath);
     infoSpace->fireItemAvailable("fileCatalog", &_fileCatalog);
-    //infoSpace->fireItemAvailable("setupLabel", &_setupLabel);
+    infoSpace->fireItemAvailable("setupLabel", &_setupLabel);
     //infoSpace->fireItemAvailable("nLogicalDisk", &_nLogicalDisk);
-    //infoSpace->fireItemAvailable("maxFileSize", &_maxFileSize);
+    infoSpace->fireItemAvailable("maxFileSize", &_maxFileSize);
     //infoSpace->fireItemAvailable("highWaterMark", &_highWaterMark);
     //infoSpace->fireItemAvailable("lumiSectionTimeOut", &_lumiSectionTimeOut);
     //infoSpace->fireItemAvailable("fileClosingTestInterval",
@@ -174,9 +174,9 @@ namespace stor
     _diskWriteParamCopy._fileName = _fileName;
     _diskWriteParamCopy._filePath = _filePath;
     _diskWriteParamCopy._fileCatalog = _fileCatalog;
-    //_diskWriteParamCopy._setupLabel = _setupLabel;
+    _diskWriteParamCopy._setupLabel = _setupLabel;
     //_diskWriteParamCopy._nLogicalDisk = _nLogicalDisk;
-    //_diskWriteParamCopy._maxFileSize = _maxFileSize;
+    _diskWriteParamCopy._maxFileSize = _maxFileSize;
     //_diskWriteParamCopy._highWaterMark = _highWaterMark;
     //_diskWriteParamCopy._lumiSectionTimeOut = _lumiSectionTimeOut;
     //_diskWriteParamCopy._fileClosingTestInterval = _fileClosingTestInterval;

@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.13.4.2 2009/03/13 20:11:11 biery Exp $
+// $Id: FileRecord.cc,v 1.13.4.3 2009/03/13 21:23:53 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -24,7 +24,6 @@ FileRecord::FileRecord(const uint32_t lumiSection, const string &file, DiskWriti
   workingDir_("/open/"),
   logPath_(dwParams._filePath+"/log"),
   logFile_(logFile(dwParams)),
-  setupLabel_(""),
   streamLabel_(""),
   cmsver_(edm::getReleaseVersion()),
   lumiSection_(lumiSection),
@@ -79,7 +78,7 @@ void FileRecord::updateDatabase() const
       << " --LUMISECTION "  << lumiSection_                      
       << " --PATHNAME "     << filePath()
       << " --HOSTNAME "     << diskWritingParams_._hostName
-      << " --SETUPLABEL "   << setupLabel_ 
+      << " --SETUPLABEL "   << diskWritingParams_._setupLabel
       << " --STREAM "       << streamLabel_                      
       << " --INSTANCE "     << diskWritingParams_._smInstanceString
       << " --SAFETY "       << diskWritingParams_._initialSafetyLevel
@@ -112,7 +111,7 @@ void FileRecord::insertFileInDatabase() const
       << " --LUMISECTION "  << lumiSection_                      
       << " --PATHNAME "     << filePath()
       << " --HOSTNAME "     << diskWritingParams_._hostName
-      << " --SETUPLABEL "   << setupLabel_ 
+      << " --SETUPLABEL "   << diskWritingParams_._setupLabel
       << " --STREAM "       << streamLabel_                      
       << " --INSTANCE "     << diskWritingParams_._smInstanceString
       << " --SAFETY "       << diskWritingParams_._initialSafetyLevel
@@ -417,7 +416,7 @@ void FileRecord::report(ostream &os, int indentation) const
   os << prefix << "workingDir_         " << workingDir_                 << "\n";
   os << prefix << "logPath_            " << logPath_                    << "\n";
   os << prefix << "logFile_            " << logFile_                    << "\n";
-  os << prefix << "setupLabel_         " << setupLabel_                 << "\n";
+  os << prefix << "setupLabel_         " << diskWritingParams_._setupLabel<< "\n";
   os << prefix << "streamLabel_        " << streamLabel_                << "\n";
   os << prefix << "hostName_           " << diskWritingParams_._hostName<< "\n";
   os << prefix << "fileCatalog()       " << diskWritingParams_._fileCatalog<<"\n"; 

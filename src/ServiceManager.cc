@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.6.2 2009/03/13 20:11:11 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.3 2009/03/13 21:23:53 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "EventFilter/StorageManager/interface/Configurator.h"
@@ -165,8 +165,6 @@ void ServiceManager::manageInitMsg(uint32 disks, std::string sourceId, InitMsgVi
       shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view,diskWritingParams_));
       stream->setNumberOfFileSystems(disks);
       stream->setSourceId(sourceId);
-      stream->setMaxFileSize(smParameter_ -> maxFileSize());
-      stream->setSetupLabel(smParameter_ -> setupLabel());
       stream->setHighWaterMark(smParameter_ -> highWaterMark());
       stream->setLumiSectionTimeOut(smParameter_ -> lumiSectionTimeOut());
       managedOutputs_.push_back(stream);
@@ -215,8 +213,6 @@ void ServiceManager::manageErrorEventMsg(uint32 disks, std::string sourceId, FRD
       shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));
     stream->setNumberOfFileSystems(disks);
     stream->setSourceId(sourceId);
-    stream->setMaxFileSize(smParameter_ -> maxFileSize());
-    stream->setSetupLabel(smParameter_ -> setupLabel());
     stream->setHighWaterMark(smParameter_ -> highWaterMark());
     stream->setLumiSectionTimeOut(smParameter_ -> lumiSectionTimeOut());
     managedOutputs_.push_back(stream);

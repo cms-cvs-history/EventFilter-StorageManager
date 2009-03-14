@@ -1,4 +1,4 @@
-// $Id: EventStreamService.cc,v 1.9.10.3 2009/03/13 20:11:11 biery Exp $
+// $Id: EventStreamService.cc,v 1.9.10.4 2009/03/13 21:23:53 biery Exp $
 
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -27,7 +27,6 @@ EventStreamService::EventStreamService(ParameterSet const& pset,
   runNumber_ = 0;
   lumiSection_ = 0;
   numberOfFileSystems_ = 0;
-  maxFileSizeInMB_ = 0;
   maxSize_ = 0;
   highWaterMark_ = 0;
   lumiSectionTimeOut_ = 0;
@@ -38,6 +37,13 @@ EventStreamService::EventStreamService(ParameterSet const& pset,
   saveInitMessage(view);
   initializeSelection(view);
   setStreamParameter();
+
+  // over-ride the stream-based max size, if needed
+  // (this must happen after setStreamParameter()
+  if (dwParams._maxFileSize > 0)
+    {
+      maxSize_ = 1048576 * ((long long) dwParams._maxFileSize);
+    }
 }
 
 
@@ -199,7 +205,7 @@ void EventStreamService::saveInitMessage(InitMsgView const& view)
 boost::shared_ptr<FileRecord> EventStreamService::generateFileRecord()
 {
   std::ostringstream oss;   
-  oss    << setupLabel_ 
+  oss    << diskWritingParams_._setupLabel
 	 << "." << setfill('0') << std::setw(8) << runNumber_ 
 	 << "." << setfill('0') << std::setw(4) << lumiSection_
 	 << "." << streamLabel_ 
@@ -225,7 +231,6 @@ boost::shared_ptr<FileRecord> EventStreamService::generateFileRecord()
   fd->checkDirectories();
   fd->setRunNumber(runNumber_);
   fd->setStreamLabel(streamLabel_);
-  fd->setSetupLabel(setupLabel_);
 
   // fd->report(cout, 12);
   return fd;
@@ -240,10 +245,10 @@ void EventStreamService::report(ostream &os, int indentation) const
   string prefix(indentation, ' ');
   os << "\n";
   os << prefix << "------------- EventStreamService -------------\n";
-  os << prefix << "fileName            " << diskWritingParams_._fileName<< "\n";
-  os << prefix << "filePath            " << diskWritingParams_._filePath<< "\n";
+  os << prefix << "fileName            " << diskWritingParams_._fileName << "\n";
+  os << prefix << "filePath            " << diskWritingParams_._filePath << "\n";
   os << prefix << "sourceId            " << sourceId_              << "\n";
-  os << prefix << "setupLabel          " << setupLabel_            << "\n";
+  os << prefix << "setupLabel          " << diskWritingParams_._setupLabel << "\n";
   os << prefix << "streamLabel         " << streamLabel_           << "\n";
   os << prefix << "maxSize             " << maxSize_               << "\n";
   os << prefix << "highWaterMark       " << highWaterMark_         << "\n";

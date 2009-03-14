@@ -1,4 +1,4 @@
-// $Id: FileRecord.h,v 1.9.4.3 2009/03/13 20:11:10 biery Exp $
+// $Id: FileRecord.h,v 1.9.4.4 2009/03/13 21:23:52 biery Exp $
 
 #ifndef StorageManager_FileRecord_h
 #define StorageManager_FileRecord_h
@@ -18,8 +18,8 @@ namespace stor {
    * Holds the information for a physical file
    *
    * $Author: biery $
-   * $Revision: 1.9.4.3 $
-   * $Date: 2009/03/13 20:11:10 $
+   * $Revision: 1.9.4.4 $
+   * $Date: 2009/03/13 21:23:52 $
    */
 
   class FileRecord
@@ -84,12 +84,6 @@ namespace stor {
        */
       void setFileCounter(const unsigned int i)
       { fileCounter_ = i; }
-
-      /**
-       * Set the setup label
-       */
-      void setSetupLabel(const std::string &s)
-      { setupLabel_ = s;}
 
       /**
        * Set the stream label
@@ -228,7 +222,6 @@ namespace stor {
       std::string  workingDir_;                       // current working directory
       std::string  logPath_;                          // log path
       std::string  logFile_;                          // log file including path
-      std::string  setupLabel_;                       // setup label
       std::string  streamLabel_;                      // datastream label
       std::string  cmsver_;                           // CMSSW version string
       uint32_t     lumiSection_;                      // luminosity section  

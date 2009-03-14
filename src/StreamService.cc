@@ -1,4 +1,4 @@
-// $Id: StreamService.cc,v 1.15.10.2 2009/03/13 10:36:33 mommsen Exp $
+// $Id: StreamService.cc,v 1.15.10.3 2009/03/13 21:23:53 biery Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -38,7 +38,6 @@ void StreamService::setStreamParameter()
 
   streamLabel_        = parameterSet_.getParameter<string> ("streamLabel");
   maxSize_ = 1048576 * (long long) parameterSet_.getParameter<int> ("maxSize");
-  setupLabel_         = ""; // set by setSetupLabel
   highWaterMark_      = 0.9;// set by setHighWaterMark
   lumiSectionTimeOut_ = 45; // set by setLumiSectionTimeOut
   sourceId_           = ""; // set by setSourceId
@@ -87,16 +86,6 @@ std::list<std::string> StreamService::getCurrentFileList()
     files_.push_back(it->first->completeFileName());
   }
   return files_;
-}
-
-//
-// *** override maxSize from cfg if xdaq parameter was set 
-//
-void StreamService::setMaxFileSize(int x)
-{
-  maxFileSizeInMB_ = x;
-  if(maxFileSizeInMB_ > 0)
-    maxSize_ = 1048576 * (long long) maxFileSizeInMB_;
 }
 
 //
