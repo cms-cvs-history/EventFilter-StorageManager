@@ -739,7 +739,7 @@ void testEventDistributor::testDQMMessages()
   boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1;
   ri1.reset( new DQMEventConsumerRegistrationInfo( url,
                                                    "DQM Consumer 1",
-                                                   10, 10, "*",
+                                                   10, 10, "HCAL",
                                                    policy, 10 ) );
   QueueID qid1( enquing_policy::DiscardOld, 1 );
   ri1->setQueueId( qid1 );
@@ -770,8 +770,7 @@ void testEventDistributor::testDQMMessages()
   _eventDistributor->addEventToRelevantQueues( frag2 );
   CPPUNIT_ASSERT( frag2.isTaggedForAnyDQMEventConsumer() );
   
-  // Fixme -- this fails:
-  //CPPUNIT_ASSERT( frag2.getDQMEventConsumerTags().size() == 1 );
+  CPPUNIT_ASSERT( frag2.getDQMEventConsumerTags().size() == 1 );
 
   // Unknown event:
   Reference* ref3 = allocate_frame_with_dqm_msg( 3333, "idontbelonghere" );
@@ -779,9 +778,8 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag3.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag3 );
 
-  // Fixme -- these fail:
-  //CPPUNIT_ASSERT( !frag3.isTaggedForAnyDQMEventConsumer() );
-  //CPPUNIT_ASSERT( frag3.getDQMEventConsumerTags().size() == 0 );
+  CPPUNIT_ASSERT( !frag3.isTaggedForAnyDQMEventConsumer() );
+  CPPUNIT_ASSERT( frag3.getDQMEventConsumerTags().size() == 0 );
 
 }
 
