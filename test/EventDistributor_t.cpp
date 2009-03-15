@@ -735,23 +735,23 @@ void testEventDistributor::testDQMMessages()
   std::string url = "http://localhost:43210/urn:xdaq-application:lid=77";
   enquing_policy::PolicyTag policy = stor::enquing_policy::DiscardOld;
 
-  // Consumer 1:
+  // Consumer for HCAL:
   boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1;
   ri1.reset( new DQMEventConsumerRegistrationInfo( url,
                                                    "DQM Consumer 1",
                                                    10, 10, "HCAL",
                                                    policy, 10 ) );
-  QueueID qid1( enquing_policy::DiscardOld, 1 );
+  QueueID qid1( policy, 1 );
   ri1->setQueueId( qid1 );
   _eventDistributor->registerDQMEventConsumer( &( *ri1 ) );
 
-  // Consumer 2:
+  // Consumer for ECAL:
   boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2;
   ri2.reset( new DQMEventConsumerRegistrationInfo( url,
                                                    "DQM Consumer 2",
                                                    10, 10, "ECAL",
                                                    policy, 10 ) );
-  QueueID qid2( enquing_policy::DiscardOld, 2 );
+  QueueID qid2( policy, 2 );
   ri2->setQueueId( qid2 );
   _eventDistributor->registerDQMEventConsumer( &( *ri2 ) );
 
@@ -769,17 +769,49 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag2.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag2 );
   CPPUNIT_ASSERT( frag2.isTaggedForAnyDQMEventConsumer() );
-  
   CPPUNIT_ASSERT( frag2.getDQMEventConsumerTags().size() == 1 );
 
-  // Unknown event:
-  Reference* ref3 = allocate_frame_with_dqm_msg( 3333, "idontbelonghere" );
+  // GT event:
+  Reference* ref3 = allocate_frame_with_dqm_msg( 3333, "GT" );
   stor::I2OChain frag3( ref3 );
   CPPUNIT_ASSERT( frag3.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag3 );
-
   CPPUNIT_ASSERT( !frag3.isTaggedForAnyDQMEventConsumer() );
   CPPUNIT_ASSERT( frag3.getDQMEventConsumerTags().size() == 0 );
+
+  // Wildcard consumer:
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri3;
+  ri3.reset( new DQMEventConsumerRegistrationInfo( url,
+                                                   "DQM Consumer 3",
+                                                   10, 10, "*",
+                                                   policy, 10 ) );
+  QueueID qid3( policy, 3 );
+  ri3->setQueueId( qid3 );
+  _eventDistributor->registerDQMEventConsumer( &( *ri3 ) );
+
+  // Another HCAL event:
+  Reference* ref4 = allocate_frame_with_dqm_msg( 4444, "HCAL" );
+  stor::I2OChain frag4( ref4 );
+  CPPUNIT_ASSERT( frag4.messageCode() == Header::DQM_EVENT );
+  _eventDistributor->addEventToRelevantQueues( frag4 );
+  CPPUNIT_ASSERT( frag1.isTaggedForAnyDQMEventConsumer() );
+  CPPUNIT_ASSERT( frag4.getDQMEventConsumerTags().size() == 2 );
+
+  // Another ECAL event:
+  Reference* ref5 = allocate_frame_with_dqm_msg( 5555, "ECAL" );
+  stor::I2OChain frag5( ref5 );
+  CPPUNIT_ASSERT( frag5.messageCode() == Header::DQM_EVENT );
+  _eventDistributor->addEventToRelevantQueues( frag5 );
+  CPPUNIT_ASSERT( frag5.isTaggedForAnyDQMEventConsumer() );
+  CPPUNIT_ASSERT( frag5.getDQMEventConsumerTags().size() == 2 );
+
+  // Another GT event:
+  Reference* ref6 = allocate_frame_with_dqm_msg( 6666, "GT" );
+  stor::I2OChain frag6( ref6 );
+  CPPUNIT_ASSERT( frag6.messageCode() == Header::DQM_EVENT );
+  _eventDistributor->addEventToRelevantQueues( frag6 );
+  CPPUNIT_ASSERT( frag6.isTaggedForAnyDQMEventConsumer() );
+  CPPUNIT_ASSERT( frag6.getDQMEventConsumerTags().size() == 1 );
 
 }
 
