@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.8 2009/03/10 20:39:44 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.9 2009/03/10 21:18:54 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -27,8 +27,8 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/03/10 20:39:44 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/03/10 21:18:54 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -83,6 +83,11 @@ namespace stor {
 
     const unsigned int                 _timeout; // Waiting time in microseconds.
     bool                               _actionIsActive;
+
+    // temporary!
+    void closeDiskFilesIfNeeded();
+    size_t _fileCheckIntervalStart;
+    unsigned int _fileCheckEventCounter;
   };
   
 } // namespace stor

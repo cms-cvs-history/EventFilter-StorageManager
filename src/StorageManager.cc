@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.33 2009/03/16 19:05:35 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.34 2009/03/16 19:21:40 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -106,7 +106,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_(this), 
   reasonForFailedState_(),
   ah_(0), 
-  fileClosingTestInterval_(5),
   pushMode_(false), 
   reconfigurationRequested_(false),
   collateDQM_(false),
@@ -123,7 +122,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.33 2009/03/16 19:05:35 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.34 2009/03/16 19:21:40 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -213,8 +212,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("useCompressionDQM",   &useCompressionDQM_);
   ispace->fireItemAvailable("compressionLevelDQM", &compressionLevelDQM_);
   ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
-
-  ispace->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
 
   // added for Event Server
   maxESEventRate_ = 100.0;  // hertz
@@ -3399,7 +3396,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
   is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
-  is->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
   is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
   is->fireItemAvailable("maxESDataRate",        &maxESDataRate_);
   is->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
@@ -3436,7 +3432,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("useCompressionDQM",    this);
   is->addItemRetrieveListener("compressionLevelDQM",  this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
-  is->addItemRetrieveListener("fileClosingTestInterval",this);
   is->addItemRetrieveListener("maxESEventRate",       this);
   is->addItemRetrieveListener("maxESDataRate",        this);
   is->addItemRetrieveListener("activeConsumerTimeout",this);
@@ -3674,7 +3669,6 @@ void StorageManager::configureAction()
   jc_->setFilePrefixDQM(filePrefixDQM_);
   jc_->setUseCompressionDQM(useCompressionDQM_);
   jc_->setCompressionLevelDQM(compressionLevelDQM_);
-  jc_->setFileClosingTestInterval(fileClosingTestInterval_);
 
   jc_->setSMRBSenderList(&smrbsenders_);
 }

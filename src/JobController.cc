@@ -36,8 +36,6 @@ namespace stor
 
     collector_.reset(coll.release());
     //ep_runner_.reset(ep.release());
-
-    fileClosingTestInterval_ = 5;  // usually overwritten by SM
   }
 
   void JobController::run(JobController* t)
@@ -78,7 +76,6 @@ namespace stor
 
   void JobController::processCommands()
   {
-    time_t fileCheckIntervalStart = time(0);
     // called with this jobcontrollers own thread.
     // wait for command messages, and periodically send "file check"
     // messages to the FragmentCollector
@@ -103,20 +100,7 @@ namespace stor
           }
         else
           {
-            // sleep for a small amount of time, and then check if it is time
-            // to check if files need closed.  If it is time for a check,
-            // we send a special message to the FragmentCollector that tells
-            // it to run the check.
             ::sleep(1);
-            time_t now = time(0);
-            if ((now - fileCheckIntervalStart) >= fileClosingTestInterval_) {
-              fileCheckIntervalStart = now;
-              EventBuffer::ProducerBuffer fragQBuff(getFragmentQueue());
-              new (fragQBuff.buffer()) stor::FragEntry(0, 0, 0, 1, 1,
-                                                       Header::FILE_CLOSE_REQUEST,
-                                                       0, 0, 0, 0, 0);
-              fragQBuff.commit(sizeof(stor::FragEntry));
-            }
           }
       }    
 

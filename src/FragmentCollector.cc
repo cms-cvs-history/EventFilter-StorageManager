@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.13 2009/03/13 17:37:02 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.14 2009/03/13 21:23:53 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -169,12 +169,6 @@ namespace stor
                   // this does nothing currently
                   FR_DEBUG << "FragColl: Got a Done" << endl;
                   done=true;
-                  break;
-                }
-              case Header::FILE_CLOSE_REQUEST:
-                {
-                  FR_DEBUG << "FragColl: Got a File Close Request message" << endl;
-                  writer_->closeFilesIfNeeded();
                   break;
                 }
               default:

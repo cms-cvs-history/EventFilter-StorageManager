@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.4 2009/03/14 01:32:36 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.5 2009/03/16 19:05:34 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 
@@ -148,8 +148,8 @@ namespace stor
     infoSpace->fireItemAvailable("maxFileSize", &_maxFileSize);
     infoSpace->fireItemAvailable("highWaterMark", &_highWaterMark);
     infoSpace->fireItemAvailable("lumiSectionTimeOut", &_lumiSectionTimeOut);
-    //infoSpace->fireItemAvailable("fileClosingTestInterval",
-    //                             &_fileClosingTestInterval);
+    infoSpace->fireItemAvailable("fileClosingTestInterval",
+                                 &_fileClosingTestInterval);
     infoSpace->fireItemAvailable("exactFileSizeTest", &_exactFileSizeTest);
 
     // special handling for the stream configuration string (we
@@ -179,7 +179,7 @@ namespace stor
     _diskWriteParamCopy._maxFileSize = _maxFileSize;
     _diskWriteParamCopy._highWaterMark = _highWaterMark;
     _diskWriteParamCopy._lumiSectionTimeOut = _lumiSectionTimeOut;
-    //_diskWriteParamCopy._fileClosingTestInterval = _fileClosingTestInterval;
+    _diskWriteParamCopy._fileClosingTestInterval = _fileClosingTestInterval;
     _diskWriteParamCopy._exactFileSizeTest = _exactFileSizeTest;
 
     _streamConfigurationChanged = false;

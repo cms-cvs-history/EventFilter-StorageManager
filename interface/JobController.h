@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.6 2009/03/13 17:37:02 biery Exp $
+// $Id: JobController.h,v 1.22.6.7 2009/03/13 21:23:52 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
@@ -55,7 +55,6 @@ namespace stor
     { collector_->setUseCompressionDQM(useCompressionDQM);}
     void setCompressionLevelDQM(bool compressionLevelDQM)
     { collector_->setCompressionLevelDQM(compressionLevelDQM);}
-    void setFileClosingTestInterval(int value) { fileClosingTestInterval_ = value; }
 
     std::list<std::string>& get_filelist() { return collector_->get_filelist(); }
     std::list<std::string>& get_currfiles() { return collector_->get_currfiles(); }
@@ -71,7 +70,6 @@ namespace stor
     boost::shared_ptr<FragmentCollector> collector_;
     SMFUSenderList* smRBSenderList_;
 
-    int fileClosingTestInterval_;
     log4cplus::Logger& applicationLogger_;
 
     boost::shared_ptr<boost::thread> me_;
