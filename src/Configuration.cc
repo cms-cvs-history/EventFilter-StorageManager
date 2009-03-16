@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.3 2009/03/13 21:23:53 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.4 2009/03/14 01:32:36 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 
@@ -146,11 +146,11 @@ namespace stor
     infoSpace->fireItemAvailable("setupLabel", &_setupLabel);
     //infoSpace->fireItemAvailable("nLogicalDisk", &_nLogicalDisk);
     infoSpace->fireItemAvailable("maxFileSize", &_maxFileSize);
-    //infoSpace->fireItemAvailable("highWaterMark", &_highWaterMark);
-    //infoSpace->fireItemAvailable("lumiSectionTimeOut", &_lumiSectionTimeOut);
+    infoSpace->fireItemAvailable("highWaterMark", &_highWaterMark);
+    infoSpace->fireItemAvailable("lumiSectionTimeOut", &_lumiSectionTimeOut);
     //infoSpace->fireItemAvailable("fileClosingTestInterval",
     //                             &_fileClosingTestInterval);
-    //infoSpace->fireItemAvailable("exactFileSizeTest", &_exactFileSizeTest);
+    infoSpace->fireItemAvailable("exactFileSizeTest", &_exactFileSizeTest);
 
     // special handling for the stream configuration string (we
     // want to note when it changes to see if we need to reconfigure
@@ -177,10 +177,10 @@ namespace stor
     _diskWriteParamCopy._setupLabel = _setupLabel;
     //_diskWriteParamCopy._nLogicalDisk = _nLogicalDisk;
     _diskWriteParamCopy._maxFileSize = _maxFileSize;
-    //_diskWriteParamCopy._highWaterMark = _highWaterMark;
-    //_diskWriteParamCopy._lumiSectionTimeOut = _lumiSectionTimeOut;
+    _diskWriteParamCopy._highWaterMark = _highWaterMark;
+    _diskWriteParamCopy._lumiSectionTimeOut = _lumiSectionTimeOut;
     //_diskWriteParamCopy._fileClosingTestInterval = _fileClosingTestInterval;
-    //_diskWriteParamCopy._exactFileSizeTest = _exactFileSizeTest;
+    _diskWriteParamCopy._exactFileSizeTest = _exactFileSizeTest;
 
     _streamConfigurationChanged = false;
   }

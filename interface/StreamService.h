@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.12.10.2 2009/03/13 21:23:52 biery Exp $
+// $Id: StreamService.h,v 1.12.10.3 2009/03/14 01:32:36 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/OutputService.h>
@@ -33,8 +33,6 @@ namespace edm {
 
       void   setNumberOfFileSystems(int i)          { numberOfFileSystems_ = i; } 
       void   setSourceId(const std::string &s)      { sourceId_ = s; }
-      void   setHighWaterMark(double d)             { highWaterMark_ = d; }
-      void   setLumiSectionTimeOut(double d)        { lumiSectionTimeOut_ = d; }
       virtual void closeTimedOutFiles() = 0;
  
       double getCurrentTime() const;
@@ -64,8 +62,6 @@ namespace edm {
       // output module parameter
       std::string streamLabel_;
       long long maxSize_;
-      double highWaterMark_;
-      double lumiSectionTimeOut_;
 
       int ntotal_; //total number of files
 

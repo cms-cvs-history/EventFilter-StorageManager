@@ -1,4 +1,4 @@
-// $Id: FileRecord.cc,v 1.13.4.3 2009/03/13 21:23:53 biery Exp $
+// $Id: FileRecord.cc,v 1.13.4.4 2009/03/14 01:32:37 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -188,7 +188,7 @@ void FileRecord::moveFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (fileSize_ != initialStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -235,7 +235,7 @@ void FileRecord::moveFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (initialStatBuff.st_size != finalStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -271,7 +271,7 @@ void FileRecord::moveErrorFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (fileSize_ != initialStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -315,7 +315,7 @@ void FileRecord::moveErrorFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (initialStatBuff.st_size != finalStatBuff.st_size) {
       sizeMismatch = true;
     }

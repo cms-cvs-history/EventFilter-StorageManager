@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.31 2009/03/13 21:23:53 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.32 2009/03/14 01:32:37 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -108,7 +108,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_(this), 
   reasonForFailedState_(),
   ah_(0), 
-  exactFileSizeTest_(false),
   fileClosingTestInterval_(5),
   pushMode_(false), 
   reconfigurationRequested_(false),
@@ -126,7 +125,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.31 2009/03/13 21:23:53 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.32 2009/03/14 01:32:37 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -218,13 +217,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  highWaterMark_      = smParameter_ -> highWaterMark();
-  lumiSectionTimeOut_ = smParameter_ -> lumiSectionTimeOut();
-  exactFileSizeTest_  = smParameter_ -> exactFileSizeTest();
 
-  ispace->fireItemAvailable("highWaterMark",      &highWaterMark_);
-  ispace->fireItemAvailable("lumiSectionTimeOut", &lumiSectionTimeOut_);
-  ispace->fireItemAvailable("exactFileSizeTest",  &exactFileSizeTest_);
   ispace->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
 
   // added for Event Server
@@ -3416,9 +3409,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
   is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
   is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
-  is->fireItemAvailable("highWaterMark",        &highWaterMark_);
-  is->fireItemAvailable("lumiSectionTimeOut",   &lumiSectionTimeOut_);
-  is->fireItemAvailable("exactFileSizeTest",    &exactFileSizeTest_);
   is->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
   is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
   is->fireItemAvailable("maxESDataRate",        &maxESDataRate_);
@@ -3456,9 +3446,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("useCompressionDQM",    this);
   is->addItemRetrieveListener("compressionLevelDQM",  this);
   is->addItemRetrieveListener("nLogicalDisk",         this);
-  is->addItemRetrieveListener("highWaterMark",        this);
-  is->addItemRetrieveListener("lumiSectionTimeOut",   this);
-  is->addItemRetrieveListener("exactFileSizeTest",    this);
   is->addItemRetrieveListener("fileClosingTestInterval",this);
   is->addItemRetrieveListener("maxESEventRate",       this);
   is->addItemRetrieveListener("maxESDataRate",        this);
@@ -3639,9 +3626,6 @@ void StorageManager::configureAction()
   smConfigString_    = my_config;
 
   boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  smParameter_ -> sethighWaterMark(highWaterMark_.value_);
-  smParameter_ -> setlumiSectionTimeOut(lumiSectionTimeOut_.value_);
-  smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
 
   // check output locations and scripts before we continue
   checkDirectoryOK(dwParams._filePath);

@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.13.4.4 2009/03/14 01:32:37 biery Exp $
+// $Id: FileHandler.cc,v 1.1.2.1 2009/03/16 10:46:50 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 #include <EventFilter/StorageManager/interface/Configurator.h>
@@ -188,7 +188,7 @@ void FileHandler::moveFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (_smParameter->exactFileSizeTest()) {
+  if (_diskWritingParams._exactFileSizeTest) {
     if (_fileSize != initialStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -235,7 +235,7 @@ void FileHandler::moveFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (_smParameter->exactFileSizeTest()) {
+  if (_diskWritingParams._exactFileSizeTest) {
     if (initialStatBuff.st_size != finalStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -271,7 +271,7 @@ void FileHandler::moveErrorFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (_smParameter->exactFileSizeTest()) {
+  if (_diskWritingParams._exactFileSizeTest) {
     if (_fileSize != initialStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -315,7 +315,7 @@ void FileHandler::moveErrorFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (_smParameter->exactFileSizeTest()) {
+  if (_diskWritingParams._exactFileSizeTest) {
     if (initialStatBuff.st_size != finalStatBuff.st_size) {
       sizeMismatch = true;
     }

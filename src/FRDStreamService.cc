@@ -1,4 +1,4 @@
-// $Id: FRDStreamService.cc,v 1.4.10.4 2009/03/13 21:23:53 biery Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.5 2009/03/14 01:32:36 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -26,8 +26,6 @@ FRDStreamService::FRDStreamService(ParameterSet const& pset,
   lumiSection_ = 0;
   numberOfFileSystems_ = 0;
   maxSize_ = 0;
-  highWaterMark_ = 0;
-  lumiSectionTimeOut_ = 0;
   ntotal_ = 0;
 
   diskWritingParams_ = dwParams;
@@ -202,8 +200,8 @@ void FRDStreamService::report(ostream &os, int indentation) const
   os << prefix << "setupLabel          " << diskWritingParams_._setupLabel << "\n";
   os << prefix << "streamLabel         " << streamLabel_           << "\n";
   os << prefix << "maxSize             " << maxSize_               << "\n";
-  os << prefix << "highWaterMark       " << highWaterMark_         << "\n";
-  os << prefix << "lumiSectionTimeOut  " << lumiSectionTimeOut_    << "\n";
+  os << prefix << "highWaterMark       " << diskWritingParams_._highWaterMark << "\n";
+  os << prefix << "lumiSectionTimeOut  " << diskWritingParams_._lumiSectionTimeOut << "\n";
   os << prefix << "no. active files    " << outputMap_.size()      << "\n";
   os << prefix << "no. files           " << outputSummary_.size()  << "\n";
   os << prefix << "-----------------------------------------\n";

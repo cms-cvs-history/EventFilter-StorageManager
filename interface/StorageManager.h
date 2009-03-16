@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.19 2009/03/13 21:23:52 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.20 2009/03/14 01:32:36 biery Exp $
 */
 
 #include <string>
@@ -154,9 +154,6 @@ namespace stor {
 
     xdata::Boolean pushmode2proxy_;
     xdata::Integer nLogicalDisk_;
-    xdata::Double  highWaterMark_;
-    xdata::Double  lumiSectionTimeOut_;
-    xdata::Boolean exactFileSizeTest_;
     xdata::Integer fileClosingTestInterval_;
 
     bool pushMode_;

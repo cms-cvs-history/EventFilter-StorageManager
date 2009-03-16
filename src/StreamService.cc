@@ -1,4 +1,4 @@
-// $Id: StreamService.cc,v 1.15.10.3 2009/03/13 21:23:53 biery Exp $
+// $Id: StreamService.cc,v 1.15.10.4 2009/03/14 01:32:37 biery Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
 #include <EventFilter/StorageManager/interface/Parameter.h>
@@ -38,8 +38,6 @@ void StreamService::setStreamParameter()
 
   streamLabel_        = parameterSet_.getParameter<string> ("streamLabel");
   maxSize_ = 1048576 * (long long) parameterSet_.getParameter<int> ("maxSize");
-  highWaterMark_      = 0.9;// set by setHighWaterMark
-  lumiSectionTimeOut_ = 45; // set by setLumiSectionTimeOut
   sourceId_           = ""; // set by setSourceId
   // report(cout, 4);
 }
