@@ -1,9 +1,8 @@
-// $Id: FileRecord.h,v 1.9.4.4 2009/03/13 21:23:52 biery Exp $
+// $Id: FileRecord.h,v 1.9.4.5 2009/03/14 01:32:36 biery Exp $
 
 #ifndef StorageManager_FileRecord_h
 #define StorageManager_FileRecord_h
 
-#include <EventFilter/StorageManager/interface/Parameter.h>
 #include <EventFilter/StorageManager/interface/Utils.h>
 #include <EventFilter/StorageManager/interface/Configuration.h>
 
@@ -18,8 +17,8 @@ namespace stor {
    * Holds the information for a physical file
    *
    * $Author: biery $
-   * $Revision: 1.9.4.4 $
-   * $Date: 2009/03/13 21:23:52 $
+   * $Revision: 1.9.4.5 $
+   * $Date: 2009/03/14 01:32:36 $
    */
 
   class FileRecord
@@ -214,8 +213,6 @@ namespace stor {
 
 
     private:
-      boost::shared_ptr<stor::Parameter> smParameter_; 
-
       std::string  fileName_;                         // file name (w/o ending)
       std::string  basePath_;                         // base path name
       std::string  fileSystem_;                       // file system directory

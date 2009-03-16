@@ -1,10 +1,9 @@
-// $Id: FileHandler.h,v 1.9.4.2 2009/03/12 14:33:22 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.1 2009/03/16 10:47:12 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
 
 #include <EventFilter/StorageManager/interface/Configuration.h>
-#include <EventFilter/StorageManager/interface/Parameter.h>
 #include <EventFilter/StorageManager/interface/I2OChain.h>
 #include <EventFilter/StorageManager/interface/Utils.h>
 #include <IOPool/Streamer/interface/MsgHeader.h>
@@ -20,8 +19,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.9.4.2 $
-   * $Date: 2009/03/12 14:33:22 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/16 10:47:12 $
    */
 
   class FileHandler
@@ -260,7 +259,6 @@ namespace stor {
     
     
   private:
-    boost::shared_ptr<stor::Parameter> _smParameter; 
     DiskWritingParams _diskWritingParams;
     
     std::string  _fileName;                         // file name (w/o ending)

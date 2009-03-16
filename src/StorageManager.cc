@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.32 2009/03/14 01:32:37 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.33 2009/03/16 19:05:35 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -7,8 +7,6 @@
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
-#include "EventFilter/StorageManager/interface/Configurator.h"
-#include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
@@ -125,7 +123,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.32 2009/03/14 01:32:37 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.33 2009/03/16 19:05:35 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -216,8 +214,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("compressionLevelDQM", &compressionLevelDQM_);
   ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
 
-  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-
   ispace->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
 
   // added for Event Server
@@ -245,14 +241,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // for performance measurements
 
-  string        xmlClass = getApplicationDescriptor()->getClassName();
-  unsigned long instance = getApplicationDescriptor()->getInstance();
-  ostringstream sourcename;
-  // sourcename << xmlClass << "_" << instance;
-  sourcename << instance;
-  sourceId_ = sourcename.str();
-  smParameter_ -> setSmInstance(sourceId_);
-
   storedEventsInStream_.reserve(20);
   storedEventsInStream_.clear();
   receivedEventsFromOutMod_.reserve(10);
@@ -274,6 +262,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesInstance_._commandQueue.reset(new CommandQueue(128));
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
   sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
+
+  unsigned long instance = getApplicationDescriptor()->getInstance();
 
   sharedResourcesInstance_._configuration.reset(new Configuration(ispace,
                                                                   instance));
@@ -3624,8 +3614,6 @@ void StorageManager::configureAction()
 
   pushMode_ = (bool) pushmode2proxy_;
   smConfigString_    = my_config;
-
-  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
 
   // check output locations and scripts before we continue
   checkDirectoryOK(dwParams._filePath);

@@ -1,7 +1,6 @@
-// $Id: ServiceManager.cc,v 1.18.6.4 2009/03/14 01:32:37 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.5 2009/03/16 19:05:35 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
-#include "EventFilter/StorageManager/interface/Configurator.h"
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include "FWCore/Framework/interface/EventSelector.h"
@@ -78,7 +77,6 @@ void ServiceManager::stop()
 
 void ServiceManager::manageInitMsg(uint32 disks, std::string sourceId, InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
 {
-  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
   std::string inputOMLabel = view.outputModuleLabel();
   int psetIdx = -1;
   for(std::vector<ParameterSet>::iterator it = outModPSets_.begin(), itEnd = outModPSets_.end();
@@ -205,7 +203,6 @@ void ServiceManager::manageErrorEventMsg(uint32 disks, std::string sourceId, FRD
   // create the error stream, if needed
   if (! errorStreamCreated_) {
     ParameterSet errorStreamPSet = outModPSets_.at(errorStreamPSetIndex_);
-    boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
 
     shared_ptr<StreamService> stream =
       shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));

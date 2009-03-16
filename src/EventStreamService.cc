@@ -1,8 +1,6 @@
-// $Id: EventStreamService.cc,v 1.9.10.5 2009/03/14 01:32:36 biery Exp $
+// $Id: EventStreamService.cc,v 1.9.10.6 2009/03/16 19:05:34 biery Exp $
 
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
-#include <EventFilter/StorageManager/interface/Parameter.h>
-#include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/EventOutputService.h"  
 
 #include <iostream>

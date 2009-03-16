@@ -1,8 +1,6 @@
-// $Id: FRDStreamService.cc,v 1.4.10.5 2009/03/14 01:32:36 biery Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.6 2009/03/16 19:05:35 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
-#include <EventFilter/StorageManager/interface/Parameter.h>
-#include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/FRDOutputService.h"  
 
 #include <iostream>

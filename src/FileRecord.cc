@@ -1,7 +1,6 @@
-// $Id: FileRecord.cc,v 1.13.4.4 2009/03/14 01:32:37 biery Exp $
+// $Id: FileRecord.cc,v 1.13.4.5 2009/03/16 19:05:35 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
-#include <EventFilter/StorageManager/interface/Configurator.h>
 #include <FWCore/MessageLogger/interface/MessageLogger.h>
 #include <FWCore/Utilities/interface/GetReleaseVersion.h>
 
@@ -17,7 +16,6 @@ using namespace std;
 
 
 FileRecord::FileRecord(const uint32_t lumiSection, const string &file, DiskWritingParams dwParams):
-  smParameter_(stor::Configurator::instance()->getParameter()),
   fileName_(file),
   basePath_(dwParams._filePath),
   fileSystem_(""),

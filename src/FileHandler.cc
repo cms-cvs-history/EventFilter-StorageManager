@@ -1,7 +1,6 @@
-// $Id: FileHandler.cc,v 1.1.2.1 2009/03/16 10:46:50 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.2 2009/03/16 19:05:35 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
-#include <EventFilter/StorageManager/interface/Configurator.h>
 #include <FWCore/MessageLogger/interface/MessageLogger.h>
 #include <FWCore/Utilities/interface/GetReleaseVersion.h>
 
@@ -17,7 +16,6 @@ using namespace std;
 
 
 FileHandler::FileHandler(const uint32_t lumiSection, const string &file, DiskWritingParams dwParams):
-_smParameter(stor::Configurator::instance()->getParameter()),
 _diskWritingParams(dwParams),
 _fileName(file),
 _basePath(dwParams._filePath),

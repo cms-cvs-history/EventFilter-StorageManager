@@ -1,8 +1,6 @@
-// $Id: StreamService.cc,v 1.15.10.4 2009/03/14 01:32:37 biery Exp $
+// $Id: StreamService.cc,v 1.15.10.5 2009/03/16 19:05:35 biery Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
-#include <EventFilter/StorageManager/interface/Parameter.h>
-#include "EventFilter/StorageManager/interface/Configurator.h"
 
 #include <iostream>
 #include <iomanip>

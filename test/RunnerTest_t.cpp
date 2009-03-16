@@ -24,7 +24,6 @@ this can run.
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/EPRunner.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "boost/shared_ptr.hpp"
@@ -114,12 +113,6 @@ Main::Main(const string& conffile, const vector<string>& file_names):
 
   coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),
                                           logger_,sharedResources_));
-
-  boost::shared_ptr<stor::Parameter> smParameter =
-    stor::Configurator::instance()->getParameter();
-  // the following directory path must have "open", "closed", and
-  // "log" subdirectories!
-  smParameter->setfilePath("/tmp/biery");
 
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);
