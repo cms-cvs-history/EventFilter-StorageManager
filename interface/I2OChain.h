@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.27 2009/03/13 03:15:05 paterno Exp $
+// $Id: I2OChain.h,v 1.1.2.28 2009/03/13 15:55:24 mommsen Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -30,9 +30,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.27 $
-   * $Date: 2009/03/13 03:15:05 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.28 $
+   * $Date: 2009/03/13 15:55:24 $
    */
 
 
@@ -331,10 +331,10 @@ namespace stor {
        (indexed from 0 to N-1, where N is the total number of fragments).
        For complete chains, this method returns the sizes of the actual
        INIT, EVENT, ERROR_EVENT, or DQM_EVENT message fragments.
-       (If the chain has been marked as "faulty", this method will still
+       If the chain has been marked as "faulty", this method will still
        return a valid data size for all fragment indices.  However,
        in that case, the sizes may not correspond to the underlying
-       INIT, EVENT, etc. message.)
+       INIT, EVENT, etc. message.
      */
     unsigned long dataSize(int fragmentIndex) const;
 
@@ -357,6 +357,24 @@ namespace stor {
        so this method is probably only useful for testing.
      */
     unsigned int getFragmentID(int fragmentIndex) const;
+
+    /**
+       Returns the size of the header part of the message that is contained
+       in the chain.  For complete chains of type INIT, EVENT, and
+       DQM_EVENT, this method returns the true size of the message header.
+       For other types of chains, and for chains that have been marked
+       "faulty", this method will return a size of zero.
+     */
+    unsigned long headerSize() const;
+
+    /**
+       Returns the start address of the header part of the message that is
+       contained in the chain.  For complete chains of type INIT, EVENT, and
+       DQM_EVENT, this method returns the true pointer to the message header.
+       For other types of chains, and for chains that have been marked
+       "faulty", this method will return a NULL pointer.
+     */
+    unsigned char* headerLocation() const;
 
     /**
        Copies the internally managed fragments to the specified

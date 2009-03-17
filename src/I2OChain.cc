@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.32 2009/03/13 15:52:32 dshpakov Exp $
+// $Id: I2OChain.cc,v 1.1.2.33 2009/03/13 15:55:24 mommsen Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -68,6 +68,9 @@ namespace stor
       unsigned int getFragmentID(int fragmentIndex) const;
       unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
 
+      unsigned long headerSize() const;
+      unsigned char* headerLocation() const;
+
       std::string hltURL() const;
       std::string hltClassName() const;
       uint32 outputModuleId() const;
@@ -127,6 +130,9 @@ namespace stor
                                  int& indexValue);
       bool validateMessageCode(toolbox::mem::Reference* ref,
                                unsigned short expectedI2OMessageCode);
+
+      virtual unsigned long do_headerSize() const;
+      virtual unsigned char* do_headerLocation() const;
 
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       virtual uint32 do_outputModuleId() const;
@@ -504,7 +510,7 @@ namespace stor
       if (!faulty())
         {
           return do_fragmentLocation(static_cast<unsigned char*>
-                                       (curRef->getDataLocation()));
+                                     (curRef->getDataLocation()));
         }
       else
         {
@@ -574,6 +580,16 @@ namespace stor
         }
 
       return static_cast<unsigned int>(fullSize);
+    }
+
+    inline unsigned long ChainData::headerSize() const
+    {
+      return do_headerSize();
+    }
+
+    inline unsigned char* ChainData::headerLocation() const
+    {
+      return do_headerLocation();
     }
 
     inline std::string ChainData::hltURL() const
@@ -776,6 +792,16 @@ namespace stor
       return true;
     }
 
+    inline unsigned long ChainData::do_headerSize() const
+    {
+      return 0;
+    }
+
+    inline unsigned char* ChainData::do_headerLocation() const
+    {
+      return 0;
+    }
+
     inline unsigned char*
     ChainData::do_fragmentLocation(unsigned char* dataLoc) const
     {
@@ -854,6 +880,8 @@ namespace stor
       ~InitMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_outputModuleId() const;
       std::string do_outputModuleLabel() const;
@@ -866,6 +894,9 @@ namespace stor
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
+      mutable std::vector<unsigned char> _headerCopy;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
       mutable uint32 _outputModuleId;
       mutable std::string _outputModuleLabel;
       mutable Strings _hltTriggerNames;
@@ -893,6 +924,28 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    unsigned long InitMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* InitMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
     }
 
     inline unsigned char*
@@ -1015,7 +1068,7 @@ namespace stor
       // the full INIT message header  (we require some minimal fixed
       // size in the hope that we don't parse garbage when we overlay
       // the InitMsgView on the buffer)
-      else if (firstFragSize > 4096)
+      else if (firstFragSize > (sizeof(InitHeader) + 16384))
         {
           InitMsgView view(firstFragLoc);
           if (view.headerSize() <= firstFragSize)
@@ -1025,18 +1078,18 @@ namespace stor
         }
 
       boost::shared_ptr<InitMsgView> msgView;
-      boost::shared_ptr< std::vector<unsigned char> >
-        tempBuffer(new std::vector<unsigned char>());
       if (useFirstFrag)
         {
           msgView.reset(new InitMsgView(firstFragLoc));
         }
       else
         {
-          copyFragmentsIntoBuffer(*tempBuffer);
-          msgView.reset(new InitMsgView(&(*tempBuffer)[0]));
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new InitMsgView(&_headerCopy[0]));
         }
 
+      _headerSize = msgView->headerSize();
+      _headerLocation = msgView->startAddress();
       _outputModuleId = msgView->outputModuleId();
       _outputModuleLabel = msgView->outputModuleLabel();
       msgView->hltTriggerNames(_hltTriggerNames);
@@ -1053,6 +1106,8 @@ namespace stor
       ~EventMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_outputModuleId() const;
       uint32 do_hltTriggerCount() const;
@@ -1063,6 +1118,9 @@ namespace stor
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
+      mutable std::vector<unsigned char> _headerCopy;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
       mutable uint32 _outputModuleId;
       mutable uint32 _hltTriggerCount;
       mutable std::vector<unsigned char> _hltTriggerBits;
@@ -1088,6 +1146,28 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    unsigned long EventMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* EventMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
     }
 
     inline unsigned char*
@@ -1183,7 +1263,7 @@ namespace stor
       // the full Event message header  (we require some minimal fixed
       // size in the hope that we don't parse garbage when we overlay
       // the EventMsgView on the buffer)
-      else if (firstFragSize > 4096)
+      else if (firstFragSize > (sizeof(EventHeader) + 4096))
         {
           EventMsgView view(firstFragLoc);
           if (view.headerSize() <= firstFragSize)
@@ -1193,18 +1273,18 @@ namespace stor
         }
 
       boost::shared_ptr<EventMsgView> msgView;
-      boost::shared_ptr< std::vector<unsigned char> >
-        tempBuffer(new std::vector<unsigned char>());
       if (useFirstFrag)
         {
           msgView.reset(new EventMsgView(firstFragLoc));
         }
       else
         {
-          copyFragmentsIntoBuffer(*tempBuffer);
-          msgView.reset(new EventMsgView(&(*tempBuffer)[0]));
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new EventMsgView(&_headerCopy[0]));
         }
 
+      _headerSize = msgView->headerSize();
+      _headerLocation = msgView->startAddress();
       _outputModuleId = msgView->outModId();
       _hltTriggerCount = msgView->hltCount();
       if (_hltTriggerCount > 0)
@@ -1223,6 +1303,8 @@ namespace stor
       ~DQMEventMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       std::string do_topFolderName() const;
 
@@ -1232,6 +1314,9 @@ namespace stor
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
+      mutable std::vector<unsigned char> _headerCopy;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
       mutable std::string _topFolderName;
 
     };
@@ -1278,6 +1363,28 @@ namespace stor
 
       return _topFolderName;
 
+    }
+
+    unsigned long DQMEventMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* DQMEventMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
     }
 
     inline unsigned char*
@@ -1327,7 +1434,7 @@ namespace stor
         {
           useFirstFrag = true;
         }
-      else if( firstFragSize > 4096 )
+      else if( firstFragSize > (sizeof(DQMEventHeader) + 8192) )
         {
           DQMEventMsgView view( firstFragLoc );
           if( view.headerSize() <= firstFragSize )
@@ -1337,18 +1444,18 @@ namespace stor
         }
 
       boost::shared_ptr<DQMEventMsgView> msgView;
-      boost::shared_ptr< std::vector<unsigned char> >
-        tempBuffer(new std::vector<unsigned char>());
       if (useFirstFrag)
         {
           msgView.reset(new DQMEventMsgView(firstFragLoc));
         }
       else
         {
-          copyFragmentsIntoBuffer(*tempBuffer);
-          msgView.reset(new DQMEventMsgView(&(*tempBuffer)[0]));
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new DQMEventMsgView(&_headerCopy[0]));
         }
 
+      _headerSize = msgView->headerSize();
+      _headerLocation = msgView->startAddress();
       _topFolderName = msgView->topFolderName();
 
       _headerFieldsCached = true;
@@ -1778,6 +1885,18 @@ namespace stor
   {
     if (!_data) return 0;
     return _data->getFragmentID(fragmentIndex);
+  }
+
+  unsigned long I2OChain::headerSize() const
+  {
+    if (!_data) return 0UL;
+    return _data->headerSize();
+  }
+
+  unsigned char* I2OChain::headerLocation() const
+  {
+    if (!_data) return 0UL;
+    return _data->headerLocation();
   }
 
   unsigned int I2OChain::

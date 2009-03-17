@@ -1711,6 +1711,10 @@ testI2OChain::init_msg_header()
       {
         CPPUNIT_ASSERT(outNames[idx] == l1_names[idx]);
       }
+
+    CPPUNIT_ASSERT(initMsgFrag.headerSize() == initBuilder.headerSize());
+    CPPUNIT_ASSERT(initMsgFrag.headerLocation() ==
+                   initMsgFrag.dataLocation(0));
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -1819,6 +1823,10 @@ testI2OChain::event_msg_header()
         ++trigIndex;
       }
     }
+
+    CPPUNIT_ASSERT(eventMsgFrag.headerSize() == eventBuilder.headerSize());
+    CPPUNIT_ASSERT(eventMsgFrag.headerLocation() ==
+                   eventMsgFrag.dataLocation(0));
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -2078,6 +2086,16 @@ testI2OChain::split_init_header()
       {
         CPPUNIT_ASSERT(outNames[idx] == l1_names[idx]);
       }
+
+    CPPUNIT_ASSERT(initMsgChain.headerSize() == initBuilder.headerSize());
+    CPPUNIT_ASSERT(initMsgChain.headerLocation() !=
+                   initMsgChain.dataLocation(0));
+
+    unsigned char* headerLoc = initMsgChain.headerLocation();
+    for (uint32 idx = 0; idx < initMsgChain.headerSize(); ++idx)
+      {
+        CPPUNIT_ASSERT(headerLoc[idx] == tmpBuffer[idx]);
+      }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -2259,6 +2277,16 @@ testI2OChain::split_event_header()
                            (hltBits[idx] & trigMask));
             ++trigIndex;
           }
+      }
+
+    CPPUNIT_ASSERT(eventMsgChain.headerSize() == eventBuilder.headerSize());
+    CPPUNIT_ASSERT(eventMsgChain.headerLocation() !=
+                   eventMsgChain.dataLocation(0));
+
+    unsigned char* headerLoc = eventMsgChain.headerLocation();
+    for (uint32 idx = 0; idx < eventMsgChain.headerSize(); ++idx)
+      {
+        CPPUNIT_ASSERT(headerLoc[idx] == tmpBuffer[idx]);
       }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
