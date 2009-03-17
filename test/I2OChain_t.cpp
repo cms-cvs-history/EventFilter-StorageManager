@@ -47,6 +47,8 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(init_msg_header);
   CPPUNIT_TEST(event_msg_header);
   CPPUNIT_TEST(stream_and_queue_tags);
+  CPPUNIT_TEST(split_init_header);
+  CPPUNIT_TEST(split_event_header);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -76,6 +78,8 @@ public:
   void init_msg_header();
   void event_msg_header();
   void stream_and_queue_tags();
+  void split_init_header();
+  void split_event_header();
 
 private:
 
@@ -1691,19 +1695,19 @@ testI2OChain::init_msg_header()
     Strings outNames;
     outNames.clear();
     initMsgFrag.hltTriggerNames(outNames);
-    for (unsigned int idx = 0; idx < hlt_names.size(); ++idx)
+    for (uint32 idx = 0; idx < hlt_names.size(); ++idx)
       {
         CPPUNIT_ASSERT(outNames[idx] == hlt_names[idx]);
       }
     outNames.clear();
     initMsgFrag.hltTriggerSelections(outNames);
-    for (unsigned int idx = 0; idx < hlt_selections.size(); ++idx)
+    for (uint32 idx = 0; idx < hlt_selections.size(); ++idx)
       {
         CPPUNIT_ASSERT(outNames[idx] == hlt_selections[idx]);
       }
     outNames.clear();
     initMsgFrag.l1TriggerNames(outNames);
-    for (unsigned int idx = 0; idx < l1_names.size(); ++idx)
+    for (uint32 idx = 0; idx < l1_names.size(); ++idx)
       {
         CPPUNIT_ASSERT(outNames[idx] == l1_names[idx]);
       }
@@ -1906,6 +1910,355 @@ testI2OChain::stream_and_queue_tags()
       }
     catch (stor::exception::I2OChain& excpt)
       {
+      }
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+void
+testI2OChain::split_init_header()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    char psetid[] = "1234567890123456";
+    Strings hlt_names;
+    Strings hlt_selections;
+    Strings l1_names;
+
+    hlt_names.push_back("a");  hlt_names.push_back("b");
+    hlt_names.push_back("c");  hlt_names.push_back("d");
+    hlt_names.push_back("e");  hlt_names.push_back("f");
+    hlt_names.push_back("g");  hlt_names.push_back("h");
+    hlt_names.push_back("i");
+
+    hlt_selections.push_back("a");
+    hlt_selections.push_back("c");
+    hlt_selections.push_back("e");
+    hlt_selections.push_back("g");
+    hlt_selections.push_back("i");
+
+    l1_names.push_back("t10");  l1_names.push_back("t11");
+    l1_names.push_back("t12");  l1_names.push_back("t13");
+    l1_names.push_back("t14");  l1_names.push_back("t15");
+    l1_names.push_back("t16");  l1_names.push_back("t17");
+    l1_names.push_back("t18");  l1_names.push_back("t19");
+    l1_names.push_back("t20");
+
+    char reltag[]="CMSSW_3_0_0_pre7";
+    std::string processName = "HLT";
+    std::string outputModuleLabel = "HLTOutput";
+
+    uLong crc = crc32(0L, Z_NULL, 0);
+    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
+    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+
+    int bufferSize = 2000;
+    std::vector<unsigned char> tmpBuffer;
+    tmpBuffer.resize(bufferSize);
+
+    InitMsgBuilder
+      initBuilder(&tmpBuffer[0], bufferSize, 100,
+                  Version(7,(const uint8*)psetid), (const char*) reltag,
+                  processName.c_str(), outputModuleLabel.c_str(),
+                  outputModuleId, hlt_names, hlt_selections, l1_names);
+    //std::cout << "Size = " << initBuilder.size() << std::endl;
+
+    uint32 fragmentSize = 50;
+    uint32 msgSize = initBuilder.size();
+    uint32 fragmentCount = 1 + ((uint32) (msgSize - 1) / fragmentSize);
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, 0,
+                                                      fragmentCount);
+    I2O_SM_PREAMBLE_MESSAGE_FRAME *smMsg =
+      (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 2;
+    smMsg->outModID = outputModuleId;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value3;
+
+    unsigned char* sourceLoc = &tmpBuffer[0];
+    unsigned long sourceSize = fragmentSize;
+    if (msgSize < fragmentSize) sourceSize = msgSize;
+    unsigned char* targetLoc = (unsigned char*) smMsg->dataPtr();;
+    std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
+    smMsg->dataSize = sourceSize;
+    smMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
+      (sourceSize + 3 + sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)) / 4;
+
+    stor::I2OChain initMsgChain(ref);
+
+    CPPUNIT_ASSERT(!initMsgChain.empty());
+    CPPUNIT_ASSERT(!initMsgChain.complete());
+    CPPUNIT_ASSERT(!initMsgChain.faulty());
+
+    for (uint32 idx = 1; idx < fragmentCount; ++idx)
+      {
+        ref = allocate_frame_with_basic_header(I2O_SM_PREAMBLE, idx,
+                                               fragmentCount);
+        smMsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) ref->getDataLocation();
+        smMsg->hltTid = value1;
+        smMsg->rbBufferID = 2;
+        smMsg->outModID = outputModuleId;
+        smMsg->fuProcID = value2;
+        smMsg->fuGUID = value3;
+
+        sourceLoc = &tmpBuffer[idx*fragmentSize];
+        sourceSize = fragmentSize;
+        if ((msgSize - idx*fragmentSize) < fragmentSize)
+          {
+            sourceSize = msgSize - idx*fragmentSize;
+          }
+        targetLoc = (unsigned char*) smMsg->dataPtr();;
+        std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
+        smMsg->dataSize = sourceSize;
+        smMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
+          (sourceSize + 3 + sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)) / 4;
+
+        stor::I2OChain initMsgFrag(ref);
+
+        CPPUNIT_ASSERT(!initMsgFrag.empty());
+        CPPUNIT_ASSERT(!initMsgFrag.complete());
+        CPPUNIT_ASSERT(!initMsgFrag.faulty());
+
+        initMsgChain.addToChain(initMsgFrag);
+
+        CPPUNIT_ASSERT(!initMsgChain.empty());
+        if (idx == (fragmentCount-1))
+          {
+            CPPUNIT_ASSERT(initMsgChain.complete());
+          }
+        else
+          {
+            CPPUNIT_ASSERT(!initMsgChain.complete());
+          }
+        CPPUNIT_ASSERT(!initMsgChain.faulty());
+      }
+
+    std::vector<unsigned char> bufferCopy;
+    initMsgChain.copyFragmentsIntoBuffer(bufferCopy);
+    for (uint32 idx = 0; idx < msgSize; ++idx)
+      {
+        CPPUNIT_ASSERT(bufferCopy[idx] == tmpBuffer[idx]);
+      }
+
+    CPPUNIT_ASSERT(initMsgChain.messageCode() == Header::INIT);
+
+    stor::FragKey fragmentKey = initMsgChain.fragmentKey();
+    CPPUNIT_ASSERT(fragmentKey.code_ == Header::INIT);
+    CPPUNIT_ASSERT(fragmentKey.run_ == 0);
+    CPPUNIT_ASSERT(fragmentKey.event_ == value1);
+    CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+
+    CPPUNIT_ASSERT(initMsgChain.outputModuleLabel() == outputModuleLabel);
+    CPPUNIT_ASSERT(initMsgChain.outputModuleId() == outputModuleId);
+
+    Strings outNames;
+    outNames.clear();
+    initMsgChain.hltTriggerNames(outNames);
+    for (uint32 idx = 0; idx < hlt_names.size(); ++idx)
+      {
+        CPPUNIT_ASSERT(outNames[idx] == hlt_names[idx]);
+      }
+    outNames.clear();
+    initMsgChain.hltTriggerSelections(outNames);
+    for (uint32 idx = 0; idx < hlt_selections.size(); ++idx)
+      {
+        CPPUNIT_ASSERT(outNames[idx] == hlt_selections[idx]);
+      }
+    outNames.clear();
+    initMsgChain.l1TriggerNames(outNames);
+    for (uint32 idx = 0; idx < l1_names.size(); ++idx)
+      {
+        CPPUNIT_ASSERT(outNames[idx] == l1_names[idx]);
+      }
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+void
+testI2OChain::split_event_header()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    std::vector<bool> l1Bits;
+    l1Bits.push_back(true);
+    l1Bits.push_back(true);
+    l1Bits.push_back(false);
+    l1Bits.push_back(true);
+    l1Bits.push_back(true);
+    l1Bits.push_back(false);
+    l1Bits.push_back(false);
+    l1Bits.push_back(true);
+    l1Bits.push_back(false);
+    l1Bits.push_back(true);
+
+    uint32 hltBitCount = 21;
+    std::vector<unsigned char> hltBits;
+    hltBits.resize(1 + (hltBitCount-1)/4);
+    for (uint32 idx = 0; idx < hltBits.size(); ++idx) {
+      hltBits[idx] = 0x3 << idx;
+      // should mask off bits for trig num GT hltBitCount...
+    }
+
+    std::string outputModuleLabel = "HLTOutput";
+    uLong crc = crc32(0L, Z_NULL, 0);
+    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
+    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+    unsigned int runNumber = 100;
+    unsigned int eventNumber = 42;
+    unsigned int lumiNumber = 777;
+
+    int bufferSize = 2000;
+    std::vector<unsigned char> tmpBuffer;
+    tmpBuffer.resize(bufferSize);
+
+    EventMsgBuilder
+      eventBuilder(&tmpBuffer[0], bufferSize, runNumber,
+                   eventNumber, lumiNumber, outputModuleId,
+                   l1Bits, &hltBits[0], hltBitCount);
+    //std::cout << "Size = " << eventBuilder.size() << std::endl;
+
+    uint32 fragmentSize = 10;
+    uint32 msgSize = eventBuilder.size();
+    uint32 fragmentCount = 1 + ((uint32) (msgSize - 1) / fragmentSize);
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0,
+                                                      fragmentCount);
+    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
+      (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 3;
+    smMsg->runID = runNumber;
+    smMsg->eventID = eventNumber;
+    smMsg->outModID = outputModuleId;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value3;
+
+    unsigned char* sourceLoc = &tmpBuffer[0];
+    unsigned long sourceSize = fragmentSize;
+    if (msgSize < fragmentSize) sourceSize = msgSize;
+    unsigned char* targetLoc = (unsigned char*) smMsg->dataPtr();;
+    std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
+    smMsg->dataSize = sourceSize;
+    smMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
+      (sourceSize + 3 + sizeof(I2O_SM_DATA_MESSAGE_FRAME)) / 4;
+
+    stor::I2OChain eventMsgChain(ref);
+
+    CPPUNIT_ASSERT(!eventMsgChain.empty());
+    CPPUNIT_ASSERT(!eventMsgChain.complete());
+    CPPUNIT_ASSERT(!eventMsgChain.faulty());
+
+    for (uint32 idx = 1; idx < fragmentCount; ++idx)
+      {
+        ref = allocate_frame_with_basic_header(I2O_SM_DATA, idx,
+                                               fragmentCount);
+        smMsg = (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
+        smMsg->hltTid = value1;
+        smMsg->rbBufferID = 3;
+        smMsg->runID = runNumber;
+        smMsg->eventID = eventNumber;
+        smMsg->outModID = outputModuleId;
+        smMsg->fuProcID = value2;
+        smMsg->fuGUID = value3;
+
+        sourceLoc = &tmpBuffer[idx*fragmentSize];
+        sourceSize = fragmentSize;
+        if ((msgSize - idx*fragmentSize) < fragmentSize)
+          {
+            sourceSize = msgSize - idx*fragmentSize;
+          }
+        targetLoc = (unsigned char*) smMsg->dataPtr();;
+        std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
+        smMsg->dataSize = sourceSize;
+        smMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
+          (sourceSize + 3 + sizeof(I2O_SM_DATA_MESSAGE_FRAME)) / 4;
+
+        stor::I2OChain eventMsgFrag(ref);
+
+        CPPUNIT_ASSERT(!eventMsgFrag.empty());
+        CPPUNIT_ASSERT(!eventMsgFrag.complete());
+        CPPUNIT_ASSERT(!eventMsgFrag.faulty());
+
+        eventMsgChain.addToChain(eventMsgFrag);
+
+        CPPUNIT_ASSERT(!eventMsgChain.empty());
+        if (idx == (fragmentCount-1))
+          {
+            CPPUNIT_ASSERT(eventMsgChain.complete());
+          }
+        else
+          {
+            CPPUNIT_ASSERT(!eventMsgChain.complete());
+          }
+        CPPUNIT_ASSERT(!eventMsgChain.faulty());
+      }
+
+    std::vector<unsigned char> bufferCopy;
+    eventMsgChain.copyFragmentsIntoBuffer(bufferCopy);
+    for (uint32 idx = 0; idx < msgSize; ++idx)
+      {
+        CPPUNIT_ASSERT(bufferCopy[idx] == tmpBuffer[idx]);
+      }
+
+    CPPUNIT_ASSERT(eventMsgChain.messageCode() == Header::EVENT);
+
+    stor::FragKey fragmentKey = eventMsgChain.fragmentKey();
+    CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
+    CPPUNIT_ASSERT(fragmentKey.run_ == runNumber);
+    CPPUNIT_ASSERT(fragmentKey.event_ == eventNumber);
+    CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+
+    CPPUNIT_ASSERT(eventMsgChain.outputModuleId() == outputModuleId);
+    CPPUNIT_ASSERT(eventMsgChain.hltTriggerCount() == hltBitCount);
+
+    std::vector<unsigned char> hltBits2;
+    eventMsgChain.hltTriggerBits(hltBits2);
+    CPPUNIT_ASSERT(hltBits2.size() == hltBits.size());
+
+    uint32 trigIndex = 0;
+    for (uint32 idx = 0; idx < hltBits.size(); ++idx)
+      {
+        for (uint32 jdx = 0; jdx < 4; ++jdx)
+          {
+            uint32 indexMod = (trigIndex % 4);
+            uint32 trigMask = 0;
+            switch (indexMod)
+              {
+              case 0:
+                {
+                  trigMask = 0x3;
+                }
+              case 1:
+                {
+                  trigMask = 0xc;
+                }
+              case 2:
+                {
+                  trigMask = 0x30;
+                }
+              case 3:
+                {
+                  trigMask = 0xc0;
+                }
+              }
+            CPPUNIT_ASSERT((hltBits2[idx] & trigMask) ==
+                           (hltBits[idx] & trigMask));
+            ++trigIndex;
+          }
       }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
