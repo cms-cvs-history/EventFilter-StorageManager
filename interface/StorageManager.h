@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.21 2009/03/16 19:05:34 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.22 2009/03/16 20:28:22 biery Exp $
 */
 
 #include <string>
@@ -153,7 +153,6 @@ namespace stor {
     SharedResources sharedResourcesInstance_;
 
     xdata::Boolean pushmode2proxy_;
-    xdata::Integer nLogicalDisk_;
 
     bool pushMode_;
     std::string smConfigString_;

@@ -1,4 +1,4 @@
-// $Id: FRDStreamService.cc,v 1.4.10.6 2009/03/16 19:05:35 biery Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.7 2009/03/16 19:21:39 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include "EventFilter/StorageManager/interface/FRDOutputService.h"  
@@ -22,7 +22,6 @@ FRDStreamService::FRDStreamService(ParameterSet const& pset,
   parameterSet_ = pset;
   runNumber_ = 0;
   lumiSection_ = 0;
-  numberOfFileSystems_ = 0;
   maxSize_ = 0;
   ntotal_ = 0;
 
@@ -158,7 +157,7 @@ boost::shared_ptr<FileRecord> FRDStreamService::generateFileRecord()
 	 << "." << setfill('0') << std::setw(4) << lumiSection_
 	 << "." << streamLabel_ 
 	 << "." << diskWritingParams_._fileName
-	 << "." << setfill('0') << std::setw(2) << sourceId_;
+	 << "." << setfill('0') << std::setw(2) << diskWritingParams_._smInstanceString;
   string fileName = oss.str();
 
   shared_ptr<FileRecord> fd = shared_ptr<FileRecord>(new FileRecord(lumiSection_, fileName, diskWritingParams_));    
@@ -173,8 +172,8 @@ boost::shared_ptr<FileRecord> FRDStreamService::generateFileRecord()
      fd->setFileCounter(it->second);
   }
 
-  if (numberOfFileSystems_ > 0)
-    fd->setFileSystem((runNumber_ + atoi(sourceId_.c_str()) + ntotal_) % numberOfFileSystems_); 
+  if (diskWritingParams_._nLogicalDisk > 0)
+    fd->setFileSystem((runNumber_ + atoi(diskWritingParams_._smInstanceString.c_str()) + ntotal_) % diskWritingParams_._nLogicalDisk); 
   
   fd->checkDirectories();
   fd->setRunNumber(runNumber_);
@@ -194,7 +193,7 @@ void FRDStreamService::report(ostream &os, int indentation) const
   os << prefix << "------------- FRDStreamService -------------\n";
   os << prefix << "fileName            " << diskWritingParams_._fileName << "\n";
   os << prefix << "filePath            " << diskWritingParams_._filePath << "\n";
-  os << prefix << "sourceId            " << sourceId_              << "\n";
+  os << prefix << "sourceId            " << diskWritingParams_._smInstanceString << "\n";
   os << prefix << "setupLabel          " << diskWritingParams_._setupLabel << "\n";
   os << prefix << "streamLabel         " << streamLabel_           << "\n";
   os << prefix << "maxSize             " << maxSize_               << "\n";

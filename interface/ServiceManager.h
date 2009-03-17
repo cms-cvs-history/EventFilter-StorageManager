@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.13.6.2 2009/03/13 20:11:10 biery Exp $
+// $Id: ServiceManager.h,v 1.13.6.3 2009/03/13 21:23:52 biery Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
@@ -37,12 +37,11 @@ namespace edm
     void start(); 
     void stop(); 
     
-    void manageInitMsg(uint32 disks, std::string sourceId, 
-                       InitMsgView& init_message, stor::InitMsgCollection& initMsgCollection);
+    void manageInitMsg(InitMsgView& init_message, stor::InitMsgCollection& initMsgCollection);
 
     void manageEventMsg(EventMsgView& msg);
 
-    void manageErrorEventMsg(uint32 disks, std::string sourceId, FRDEventMsgView& msg);
+    void manageErrorEventMsg(FRDEventMsgView& msg);
     
     void closeFilesIfNeeded();
 

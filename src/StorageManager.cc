@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.34 2009/03/16 19:21:40 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.35 2009/03/16 20:28:23 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -122,7 +122,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.34 2009/03/16 19:21:40 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.35 2009/03/16 20:28:23 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -198,7 +198,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
   pool_is_set_    = 0;
   pool_           = 0;
-  nLogicalDisk_   = 0;
   pushmode2proxy_ = false;
 
   // Variables needed for streamer file writing
@@ -211,7 +210,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("filePrefixDQM",       &filePrefixDQM_);
   ispace->fireItemAvailable("useCompressionDQM",   &useCompressionDQM_);
   ispace->fireItemAvailable("compressionLevelDQM", &compressionLevelDQM_);
-  ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
 
   // added for Event Server
   maxESEventRate_ = 100.0;  // hertz
@@ -560,7 +558,7 @@ throw (xgi::exception::Exception)
       fsm_.stateName()->toString(),
       _statReporter,
       pool_,
-      nLogicalDisk_,
+      dwParams._nLogicalDisk,
       dwParams._filePath,
       this->getApplicationDescriptor()
     );
@@ -3395,7 +3393,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("filePrefixDQM",        &filePrefixDQM_);
   is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
   is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
-  is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
   is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
   is->fireItemAvailable("maxESDataRate",        &maxESDataRate_);
   is->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
@@ -3431,7 +3428,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("filePrefixDQM",        this);
   is->addItemRetrieveListener("useCompressionDQM",    this);
   is->addItemRetrieveListener("compressionLevelDQM",  this);
-  is->addItemRetrieveListener("nLogicalDisk",         this);
   is->addItemRetrieveListener("maxESEventRate",       this);
   is->addItemRetrieveListener("maxESDataRate",        this);
   is->addItemRetrieveListener("activeConsumerTimeout",this);
@@ -3655,11 +3651,6 @@ void StorageManager::configureAction()
 
   jc_.reset(new stor::JobController(getApplicationLogger(),
                                     sharedResourcesInstance_));
-
-  int disks(nLogicalDisk_);
-
-  jc_->setNumberOfFileSystems(disks);
-  jc_->setSourceId(sourceId_);
 
   jc_->setCollateDQM(collateDQM_);
   jc_->setArchiveDQM(archiveDQM_);
@@ -3972,13 +3963,15 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)
 {
+  DiskWritingParams dwParams =
+    sharedResourcesInstance_._configuration->getDiskWritingParams();
   try {
     wlMonitoring_=
-      toolbox::task::getWorkLoopFactory()->getWorkLoop(sourceId_+"Monitoring",
-						       "waiting");
+      toolbox::task::getWorkLoopFactory()->
+      getWorkLoop(dwParams._smInstanceString+"Monitoring", "waiting");
     if (!wlMonitoring_->isActive()) wlMonitoring_->activate();
     asMonitoring_ = toolbox::task::bind(this,&StorageManager::monitoring,
-				      sourceId_+"Monitoring");
+                                        dwParams._smInstanceString+"Monitoring");
     wlMonitoring_->submit(asMonitoring_);
   }
   catch (xcept::Exception& e) {

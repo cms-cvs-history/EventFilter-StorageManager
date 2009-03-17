@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.14 2009/03/13 21:23:53 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.15 2009/03/16 20:28:23 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -54,7 +54,6 @@ namespace stor
     info_(&h), 
     lastStaleCheckTime_(time(0)),
     staleFragmentTimeout_(30),
-    disks_(0),
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
     discardManager_(sharedResources._discardManager),
@@ -82,7 +81,6 @@ namespace stor
     info_(info.get()), 
     lastStaleCheckTime_(time(0)),
     staleFragmentTimeout_(30),
-    disks_(0),
     applicationLogger_(applicationLogger),
     newFragmentQueue_(sharedResources._fragmentQueue),
     discardManager_(sharedResources._discardManager),
@@ -285,7 +283,7 @@ namespace stor
 
       InitMsgView msg(&event_area_[0]);
       FR_DEBUG << "FragColl: writing INIT size " << assembledSize << endl;
-      writer_->manageInitMsg(disks_, sourceId_, msg, *initMsgCollection_);
+      writer_->manageInitMsg(msg, *initMsgCollection_);
 
       try
       {
@@ -401,7 +399,7 @@ namespace stor
 
       FRDEventMsgView emsg(&event_area_[0]);
       FR_DEBUG << "FragColl: writing error event size " << assembledSize << endl;
-      writer_->manageErrorEventMsg(disks_, sourceId_, emsg);
+      writer_->manageErrorEventMsg(emsg);
 
       // tell the resource broker that sent us this event
       // that we are done with it and it can forget about it

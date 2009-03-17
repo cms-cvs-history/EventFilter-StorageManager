@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.7 2009/03/13 21:23:52 biery Exp $
+// $Id: JobController.h,v 1.22.6.8 2009/03/16 20:28:22 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
@@ -41,8 +41,6 @@ namespace stor
       smRBSenderList_ = senderList;
     }
 
-    void setNumberOfFileSystems(int disks)    { collector_->setNumberOfFileSystems(disks); }
-    void setSourceId(std::string sourceId)    { collector_->setSourceId(sourceId); }
     void setCollateDQM(bool collateDQM)       { collector_->setCollateDQM(collateDQM);}
     void setArchiveDQM(bool archiveDQM)       { collector_->setArchiveDQM(archiveDQM);}
     void setArchiveIntervalDQM(int archiveInterval) {

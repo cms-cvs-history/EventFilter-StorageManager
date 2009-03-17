@@ -1,4 +1,4 @@
-// $Id: StreamService.cc,v 1.15.10.5 2009/03/16 19:05:35 biery Exp $
+// $Id: StreamService.cc,v 1.15.10.6 2009/03/16 19:21:40 biery Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
 
@@ -36,7 +36,6 @@ void StreamService::setStreamParameter()
 
   streamLabel_        = parameterSet_.getParameter<string> ("streamLabel");
   maxSize_ = 1048576 * (long long) parameterSet_.getParameter<int> ("maxSize");
-  sourceId_           = ""; // set by setSourceId
   // report(cout, 4);
 }
 

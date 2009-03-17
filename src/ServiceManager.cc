@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.6.5 2009/03/16 19:05:35 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.6 2009/03/16 19:21:39 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
@@ -75,7 +75,7 @@ void ServiceManager::stop()
 }
 
 
-void ServiceManager::manageInitMsg(uint32 disks, std::string sourceId, InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
+void ServiceManager::manageInitMsg(InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
 {
   std::string inputOMLabel = view.outputModuleLabel();
   int psetIdx = -1;
@@ -161,8 +161,6 @@ void ServiceManager::manageInitMsg(uint32 disks, std::string sourceId, InitMsgVi
 
     if (createStreamNow) {
       shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view,diskWritingParams_));
-      stream->setNumberOfFileSystems(disks);
-      stream->setSourceId(sourceId);
       managedOutputs_.push_back(stream);
       outputModuleIds_.push_back(view.outputModuleId());
       storedEvents_.push_back(0);
@@ -195,7 +193,7 @@ void ServiceManager::manageEventMsg(EventMsgView& msg)
   }
 }
 
-void ServiceManager::manageErrorEventMsg(uint32 disks, std::string sourceId, FRDEventMsgView& msg)
+void ServiceManager::manageErrorEventMsg(FRDEventMsgView& msg)
 {
   // if no error stream was configured, we can exit early
   if (errorStreamPSetIndex_ < 0) return;
@@ -206,8 +204,6 @@ void ServiceManager::manageErrorEventMsg(uint32 disks, std::string sourceId, FRD
 
     shared_ptr<StreamService> stream =
       shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));
-    stream->setNumberOfFileSystems(disks);
-    stream->setSourceId(sourceId);
     managedOutputs_.push_back(stream);
     outputModuleIds_.push_back(0xffffffff);
     storedEvents_.push_back(0);

@@ -1,7 +1,7 @@
 #ifndef STREAMSERVICE_H
 #define STREAMSERVICE_H
 
-// $Id: StreamService.h,v 1.12.10.3 2009/03/14 01:32:36 biery Exp $
+// $Id: StreamService.h,v 1.12.10.4 2009/03/16 19:05:34 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <EventFilter/StorageManager/interface/OutputService.h>
@@ -31,8 +31,6 @@ namespace edm {
       virtual void report(std::ostream &os, int indentation) const = 0;
       int    lumiSection() const { return lumiSection_; }
 
-      void   setNumberOfFileSystems(int i)          { numberOfFileSystems_ = i; } 
-      void   setSourceId(const std::string &s)      { sourceId_ = s; }
       virtual void closeTimedOutFiles() = 0;
  
       double getCurrentTime() const;
@@ -54,10 +52,6 @@ namespace edm {
       // set from event message
       uint32_t runNumber_;
       uint32_t lumiSection_;
-
-      // should be output module parameter
-      int    numberOfFileSystems_;
-      std::string sourceId_;
 
       // output module parameter
       std::string streamLabel_;
