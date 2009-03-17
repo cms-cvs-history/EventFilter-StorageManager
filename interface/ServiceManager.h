@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.13.6.3 2009/03/13 21:23:52 biery Exp $
+// $Id: ServiceManager.h,v 1.13.6.4 2009/03/17 02:05:05 biery Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
@@ -31,7 +31,7 @@ namespace edm
     
   public:  
     
-    explicit ServiceManager(const std::string& config, stor::DiskWritingParams dwParams);
+    explicit ServiceManager(stor::DiskWritingParams dwParams);
     ~ServiceManager(); 
     
     void start(); 

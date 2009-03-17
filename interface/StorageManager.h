@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.22 2009/03/16 20:28:22 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.23 2009/03/17 02:05:05 biery Exp $
 */
 
 #include <string>
@@ -145,7 +145,6 @@ namespace stor {
 
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
-    xdata::String offConfig_;
   
     boost::shared_ptr<stor::JobController> jc_;
     boost::mutex                           halt_lock_;
@@ -155,8 +154,6 @@ namespace stor {
     xdata::Boolean pushmode2proxy_;
 
     bool pushMode_;
-    std::string smConfigString_;
-    bool reconfigurationRequested_;
 
     xdata::Boolean collateDQM_;
     xdata::Boolean archiveDQM_;

@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.1 2009/03/13 13:41:28 biery Exp $
+// $Id: Configuration.h,v 1.1.2.2 2009/03/16 19:05:34 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -22,8 +22,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/13 13:41:28 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/16 19:05:34 $
    */
 
   struct DiskWritingParams
@@ -160,7 +160,7 @@ namespace stor
 
     mutable boost::mutex _generalMutex;
 
-    xdata::String _previousStreamCfg;
+    std::string _previousStreamCfg;
     bool _streamConfigurationChanged;
 
     xdata::String _streamConfiguration;

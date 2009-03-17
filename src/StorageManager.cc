@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.35 2009/03/16 20:28:23 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.36 2009/03/17 02:05:08 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -16,7 +16,6 @@
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
-#include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/ServiceRegistry/interface/ServiceToken.h"
@@ -107,7 +106,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   reasonForFailedState_(),
   ah_(0), 
   pushMode_(false), 
-  reconfigurationRequested_(false),
   collateDQM_(false),
   archiveDQM_(false),
   archiveIntervalDQM_(0),
@@ -122,7 +120,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.35 2009/03/16 20:28:23 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.36 2009/03/17 02:05:08 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -135,7 +133,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
-  ispace->fireItemAvailable("STparameterSet",&offConfig_);
   ispace->fireItemAvailable("runNumber",     &runNumber_);
   ispace->fireItemAvailable("stateName",     fsm_.stateName());
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
@@ -157,7 +154,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_.findRcmsStateListener();
 
   ispace->addItemRetrieveListener("closedFiles", this);
-  ispace->addItemChangedListener("STparameterSet", this);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -936,6 +932,9 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "</table>" << endl;
 
+  DiskWritingParams dwParams =
+    sharedResourcesInstance_._configuration->getDiskWritingParams();
+
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
   *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
     *out << "  <tr>"                                                   << endl;
@@ -966,11 +965,11 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
       *out << "</td>" << endl;
     *out << "  </tr>" << endl;
     *out << "<tr>"					     << endl;
-      *out << " <td colspan=2>"					     << endl;
+      *out << " <td colspan=2>"				     << endl;
       *out << "<textarea rows=" << 10 << " cols=100 scroll=yes";
       *out << " readonly title=\"SM config\">"		     << endl;
-      *out << smConfigString_                                  << endl;
-      *out << "</textarea>"                                          << endl;
+      *out << dwParams._streamConfiguration                  << endl;
+      *out << "</textarea>"                                  << endl;
       *out << " </td>"					     << endl;
     *out << "</tr>"					     << endl;
 
@@ -3380,7 +3379,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
-  is->fireItemAvailable("STparameterSet",       &offConfig_);
   is->fireItemAvailable("stateName",            fsm_.stateName());
   //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
@@ -3415,7 +3413,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("namesOfOutMod", this);
   is->addItemRetrieveListener("storedVolume",         this);
   is->addItemRetrieveListener("memoryUsed",           this);
-  is->addItemRetrieveListener("STparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
   //  is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedRBs",         this);
@@ -3512,13 +3509,6 @@ void StorageManager::actionPerformed(xdata::Event& e)
     }
     is->unlock();
   }
-
-  if (e.type()=="ItemChangedEvent" && !(fsm_.stateName()->toString()=="Halted")) {
-    string item = dynamic_cast<xdata::ItemChangedEvent&>(e).itemName();
-    if ( item == "STparameterSet") {
-      reconfigurationRequested_ = true;
-    }
-  }
 }
 
 
@@ -3580,7 +3570,6 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
     return false;
   }
 
-  reconfigurationRequested_ = false;
   return false;
 }
 
@@ -3595,16 +3584,7 @@ void StorageManager::configureAction()
     edmplugin::PluginManager::configure(edmplugin::standard::config());
   }
     
-  // give the JobController a configuration string and
-  // get the registry data coming over the network (the first one)
-  // Note that there is currently no run number check for the INIT
-  // message, just the first one received once in Enabled state is used
-  evf::ParameterSetRetriever smpset(offConfig_.value_);
-
-  string my_config = smpset.getAsString();
-
   pushMode_ = (bool) pushmode2proxy_;
-  smConfigString_    = my_config;
 
   // check output locations and scripts before we continue
   checkDirectoryOK(dwParams._filePath);
@@ -3630,8 +3610,7 @@ void StorageManager::configureAction()
   sharedResourcesInstance_._oldDQMEventServer.
     reset(new DQMEventServer(DQMmaxESEventRate_));
 
-  sharedResourcesInstance_._serviceManager.reset(new ServiceManager(my_config,
-                                                                    dwParams));
+  sharedResourcesInstance_._serviceManager.reset(new ServiceManager(dwParams));
   sharedResourcesInstance_._dqmServiceManager.reset(new DQMServiceManager());
 
   boost::shared_ptr<DiscardManager> discardMgr;
@@ -3667,9 +3646,7 @@ void StorageManager::configureAction()
 
 bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
 {
-  if (reconfigurationRequested_) {
-    reconfigurationRequested_ = false;
-
+  if (sharedResourcesInstance_._configuration->streamConfigurationHasChanged()) {
     try {
       LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
       this->haltAction();

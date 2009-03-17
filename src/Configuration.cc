@@ -1,6 +1,7 @@
-// $Id: Configuration.cc,v 1.1.2.6 2009/03/16 20:28:23 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.7 2009/03/17 02:05:08 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
+#include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 
 #include <toolbox/net/Utils.h>
 
@@ -62,20 +63,23 @@ namespace stor
     return _streamConfigurationChanged;
   }
 
-  void Configuration::actionPerformed(xdata::Event& isEvt)
+  void Configuration::actionPerformed(xdata::Event& ispaceEvent)
   {
     boost::mutex::scoped_lock sl(_generalMutex);
 
-    if (isEvt.type() == "ItemChangedEvent")
+    if (ispaceEvent.type() == "ItemChangedEvent")
       {
         std::string item =
-          dynamic_cast<xdata::ItemChangedEvent&>(isEvt).itemName();
+          dynamic_cast<xdata::ItemChangedEvent&>(ispaceEvent).itemName();
         if (item == "STparameterSet")
           {
-            if (_streamConfiguration != _previousStreamCfg)
+            evf::ParameterSetRetriever smpset(_streamConfiguration);
+            std::string tmpStreamConfiguration = smpset.getAsString();
+
+            if (tmpStreamConfiguration != _previousStreamCfg)
               {
                 _streamConfigurationChanged = true;
-                _previousStreamCfg = _streamConfiguration;
+                _previousStreamCfg = tmpStreamConfiguration;
               }
           }
       }
@@ -94,6 +98,8 @@ namespace stor
     _diskWriteParamCopy._lumiSectionTimeOut = 45.0;
     _diskWriteParamCopy._fileClosingTestInterval = 5.0;
     _diskWriteParamCopy._exactFileSizeTest = false;
+
+    _previousStreamCfg = _diskWriteParamCopy._streamConfiguration;
 
     std::ostringstream oss;
     oss << instanceNumber;
@@ -136,10 +142,8 @@ namespace stor
       static_cast<int>(_diskWriteParamCopy._fileClosingTestInterval);
     _exactFileSizeTest = _diskWriteParamCopy._exactFileSizeTest;
 
-    _previousStreamCfg = _streamConfiguration;
-
     // bind the local xdata variables to the infospace
-    //infoSpace->fireItemAvailable("STparameterSet", &_streamConfiguration);
+    infoSpace->fireItemAvailable("STparameterSet", &_streamConfiguration);
     infoSpace->fireItemAvailable("fileName", &_fileName);
     infoSpace->fireItemAvailable("filePath", &_filePath);
     infoSpace->fireItemAvailable("fileCatalog", &_fileCatalog);
@@ -155,7 +159,7 @@ namespace stor
     // special handling for the stream configuration string (we
     // want to note when it changes to see if we need to reconfigure
     // between runs)
-    //infoSpace->addItemChangedListener("STparameterSet", this);
+    infoSpace->addItemChangedListener("STparameterSet", this);
   }
 
   void Configuration::
@@ -170,7 +174,9 @@ namespace stor
 
   void Configuration::updateLocalDiskWritingData()
   {
-    //_diskWriteParamCopy._streamConfiguration = _streamConfiguration;
+    evf::ParameterSetRetriever smpset(_streamConfiguration);
+    _diskWriteParamCopy._streamConfiguration = smpset.getAsString();
+
     _diskWriteParamCopy._fileName = _fileName;
     _diskWriteParamCopy._filePath = _filePath;
     _diskWriteParamCopy._fileCatalog = _fileCatalog;

@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.6.6 2009/03/16 19:21:39 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.7 2009/03/17 02:05:08 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
@@ -13,8 +13,7 @@ using namespace edm;
 using boost::shared_ptr;
 
 
-ServiceManager::ServiceManager(const std::string& config,
-                               stor::DiskWritingParams dwParams):
+ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
   outModPSets_(0),
   managedOutputs_(0),
   psetHLTOutputLabels_(0),
@@ -30,7 +29,7 @@ ServiceManager::ServiceManager(const std::string& config,
   diskWritingParams_(dwParams)
 {
   storedNames_.clear();
-  collectStreamerPSets(config);
+  collectStreamerPSets(dwParams._streamConfiguration);
   pmeter_ = new stor::SMPerformanceMeter();
   pmeter_->init(samples_, period4samples_);
 } 
