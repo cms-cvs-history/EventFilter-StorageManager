@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.h,v 1.1.12.1 2009/03/12 14:38:19 mommsen Exp $
+// $Id: FRDFileHandler.h,v 1.1.2.1 2009/03/16 10:47:13 mommsen Exp $
 
 #ifndef StorageManager_FRDFileHandler_h
 #define StorageManager_FRDFileHandler_h
@@ -13,8 +13,8 @@ namespace stor {
    * FED Raw Data (FRD) format.
    *
    * $Author: mommsen $
-   * $Revision: 1.9.4.2 $
-   * $Date: 2009/03/12 14:33:22 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/16 10:47:13 $
    */
   
   class FRDFileHandler : public FileHandler
@@ -28,12 +28,6 @@ namespace stor {
     );
     
     virtual ~FRDFileHandler();
-    
-    /**
-     * Write the event contained in a buffer
-     * This is the old, obsolete API.
-     */
-    virtual void writeEvent(const uint8 * const bufPtr);
         
     /**
      * Write the event contained in the I2OChain

@@ -1,4 +1,4 @@
-// $Id: EventOutputService.h,v 1.1.12.1 2009/03/12 14:38:19 mommsen Exp $
+// $Id: EventFileHandler.h,v 1.1.2.1 2009/03/16 10:47:12 mommsen Exp $
 
 #ifndef StorageManager_EventFileHandler_h
 #define StorageManager_EventFileHandler_h
@@ -13,8 +13,8 @@ namespace stor {
    * Represents a file holding event data
    *
    * $Author: mommsen $
-   * $Revision: 1.9.4.2 $
-   * $Date: 2009/03/12 14:33:22 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/16 10:47:12 $
    */
   
   class EventFileHandler : public FileHandler
@@ -29,12 +29,6 @@ namespace stor {
     );
 
     virtual ~EventFileHandler();
-    
-    /**
-     * Write the event contained in a buffer
-     * This is the old, obsolete API.
-     */
-    virtual void writeEvent(const uint8 * const bufPtr);
         
     /**
      * Write the event contained in the I2OChain

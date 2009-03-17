@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.3.4.1 2009/03/12 14:35:01 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.1 2009/03/16 10:46:50 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -35,17 +35,6 @@ void EventFileHandler::writeHeader(InitMsgView const& view)
 {
   _writer.doOutputHeader(view);
   increaseFileSize(view.size());
-}
-
-
-// obsolete API
-void EventFileHandler::writeEvent(const uint8 * const bufPtr)
-{
-  EventMsgView view((void *) bufPtr);
-  _writer.doOutputEvent(view);
-  increaseFileSize(view.size());
-  lastEntry(utils::getCurrentTime());
-  increaseEventCount();
 }
 
 

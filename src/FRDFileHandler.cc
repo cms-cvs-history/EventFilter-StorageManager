@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.cc,v 1.1.12.1 2009/03/12 14:35:18 mommsen Exp $
+// $Id: FRDFileHandler.cc,v 1.1.2.1 2009/03/16 10:46:50 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -25,17 +25,6 @@ _writer(completeFileName()+".dat")
 FRDFileHandler::~FRDFileHandler()
 {
   closeFile();
-}
-
-
-// obsolete API
-void FRDFileHandler::writeEvent(const uint8 * const bufPtr)
-{
-  FRDEventMsgView view((void *) bufPtr);
-  _writer.doOutputEvent(view);
-  increaseFileSize(view.size());
-  lastEntry(utils::getCurrentTime());
-  increaseEventCount();
 }
 
 

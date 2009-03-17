@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.1 2009/03/16 10:47:12 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.2 2009/03/16 19:21:39 biery Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -18,9 +18,9 @@ namespace stor {
   /**
    * Abstract representation of a physical file
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/16 10:47:12 $
+   * $Author: biery $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/16 19:21:39 $
    */
 
   class FileHandler
@@ -47,12 +47,6 @@ namespace stor {
     );
     
     virtual ~FileHandler() {};
-    
-    /**
-     * Write the event contained in a buffer
-     * This is the old, obsolete API.
-     */
-    virtual void writeEvent(const uint8 * const bufPtr) = 0;
  
     /**
      * Write the event contained in the I2OChain
