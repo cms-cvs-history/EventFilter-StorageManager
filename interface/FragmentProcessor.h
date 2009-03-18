@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.9 2009/03/10 21:18:54 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.10 2009/03/16 20:28:22 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -8,6 +8,7 @@
 
 #include "boost/shared_ptr.hpp"
 
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -27,16 +28,15 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/03/10 21:18:54 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/03/16 20:28:22 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor( boost::shared_ptr<SharedResources> sr,
-                       boost::shared_ptr<StateMachine> sm );
+    FragmentProcessor( SharedResources sr );
 
     ~FragmentProcessor();
     
@@ -76,10 +76,11 @@ namespace stor {
      */
     void processOneFragment();
 
-    boost::shared_ptr<SharedResources> _sharedResources;
+    SharedResources                    _sharedResources;
     boost::shared_ptr<StateMachine>    _stateMachine;
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;
+    DiskWriter                         _diskWriter;
 
     const unsigned int                 _timeout; // Waiting time in microseconds.
     bool                               _actionIsActive;
