@@ -43,15 +43,18 @@ void
 Operations::do_processI2OFragment( I2OChain& /* unused */ ) const
 {
   // What should we really do here? 
-  std::cerr << "Error: "
-	    << stateName()
-	    << " state cannot handle I2O messages\n";
+  //std::cerr << "Error: "
+  //	    << stateName()
+  //	    << " state cannot handle I2O messages\n";
+  std::cout << stateName() << "::processI2OFragment()" << std::endl;
 }
 
 
 void 
 Operations::do_noFragmentToProcess() const
-{}
+{
+  std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
+}
 
 
 
