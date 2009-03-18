@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.15 2009/03/02 18:08:22 biery Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.16 2009/03/02 18:51:41 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -12,12 +12,12 @@ using namespace stor;
 FragmentMonitorCollection::FragmentMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app, "Fragment")
 {
-  allFragmentSizes.setNewTimeWindowForRecentResults(5);
-  allFragmentBandwidth.setNewTimeWindowForRecentResults(5);
-  eventFragmentSizes.setNewTimeWindowForRecentResults(5);
-  eventFragmentBandwidth.setNewTimeWindowForRecentResults(5);
-  dqmEventFragmentSizes.setNewTimeWindowForRecentResults(300);
-  dqmEventFragmentBandwidth.setNewTimeWindowForRecentResults(300);
+  _allFragmentSizes.setNewTimeWindowForRecentResults(5);
+  _allFragmentBandwidth.setNewTimeWindowForRecentResults(5);
+  _eventFragmentSizes.setNewTimeWindowForRecentResults(5);
+  _eventFragmentBandwidth.setNewTimeWindowForRecentResults(5);
+  _dqmEventFragmentSizes.setNewTimeWindowForRecentResults(300);
+  _dqmEventFragmentBandwidth.setNewTimeWindowForRecentResults(300);
 
 
   // There infospace items were defined in the old SM
@@ -44,30 +44,30 @@ MonitorCollection(app, "Fragment")
 
 void FragmentMonitorCollection::addEventFragmentSample(const double bytecount) {
   double mbytes = bytecount / 0x100000;
-  allFragmentSizes.addSample(mbytes);
-  eventFragmentSizes.addSample(mbytes);
+  _allFragmentSizes.addSample(mbytes);
+  _eventFragmentSizes.addSample(mbytes);
 }
 
 
 void FragmentMonitorCollection::addDQMEventFragmentSample(const double bytecount) {
   double mbytes = bytecount / 0x100000;
-  allFragmentSizes.addSample(mbytes);
-  dqmEventFragmentSizes.addSample(mbytes);
+  _allFragmentSizes.addSample(mbytes);
+  _dqmEventFragmentSizes.addSample(mbytes);
 }
 
 
 void FragmentMonitorCollection::do_calculateStatistics()
 {
-  allFragmentSizes.calculateStatistics();
-  eventFragmentSizes.calculateStatistics();
-  dqmEventFragmentSizes.calculateStatistics();
+  _allFragmentSizes.calculateStatistics();
+  _eventFragmentSizes.calculateStatistics();
+  _dqmEventFragmentSizes.calculateStatistics();
 
-  allFragmentBandwidth.addSample(allFragmentSizes.getValueRate());
-  allFragmentBandwidth.calculateStatistics();
-  eventFragmentBandwidth.addSample(eventFragmentSizes.getValueRate());
-  eventFragmentBandwidth.calculateStatistics();
-  dqmEventFragmentBandwidth.addSample(dqmEventFragmentSizes.getValueRate());
-  dqmEventFragmentBandwidth.calculateStatistics();
+  _allFragmentBandwidth.addSample(_allFragmentSizes.getValueRate());
+  _allFragmentBandwidth.calculateStatistics();
+  _eventFragmentBandwidth.addSample(_eventFragmentSizes.getValueRate());
+  _eventFragmentBandwidth.calculateStatistics();
+  _dqmEventFragmentBandwidth.addSample(_dqmEventFragmentSizes.getValueRate());
+  _dqmEventFragmentBandwidth.calculateStatistics();
 }
 
 
@@ -80,38 +80,38 @@ void FragmentMonitorCollection::do_updateInfoSpace()
   try
   {
     _infoSpace->lock();
-    _duration       = static_cast<xdata::Double>(allFragmentSizes.getDuration());
-    _receivedFrames = static_cast<xdata::UnsignedInteger32>(allFragmentSizes.getSampleCount());
+    _duration       = static_cast<xdata::Double>(_allFragmentSizes.getDuration());
+    _receivedFrames = static_cast<xdata::UnsignedInteger32>(_allFragmentSizes.getSampleCount());
     _totalSamples   = _receivedFrames;
-    _dqmRecords     = static_cast<xdata::UnsignedInteger32>(dqmEventFragmentSizes.getSampleCount());
+    _dqmRecords     = static_cast<xdata::UnsignedInteger32>(_dqmEventFragmentSizes.getSampleCount());
     
-    _meanBandwidth  = static_cast<xdata::Double>(allFragmentBandwidth.getValueRate());
-    _meanRate       = static_cast<xdata::Double>(allFragmentSizes.getSampleRate());
-    _meanLatency    = static_cast<xdata::Double>(allFragmentSizes.getSampleLatency());
-    _receivedVolume = static_cast<xdata::Double>(allFragmentSizes.getValueSum());
+    _meanBandwidth  = static_cast<xdata::Double>(_allFragmentBandwidth.getValueRate());
+    _meanRate       = static_cast<xdata::Double>(_allFragmentSizes.getSampleRate());
+    _meanLatency    = static_cast<xdata::Double>(_allFragmentSizes.getSampleLatency());
+    _receivedVolume = static_cast<xdata::Double>(_allFragmentSizes.getValueSum());
 
     _receivedPeriod4Stats  = static_cast<xdata::UnsignedInteger32>
       (static_cast<unsigned int>
-       (allFragmentSizes.getDuration(MonitoredQuantity::RECENT)));
+       (_allFragmentSizes.getDuration(MonitoredQuantity::RECENT)));
     _receivedSamples4Stats = static_cast<xdata::UnsignedInteger32>
-      (allFragmentSizes.getSampleCount(MonitoredQuantity::RECENT));
+      (_allFragmentSizes.getSampleCount(MonitoredQuantity::RECENT));
 
     _instantBandwidth      = static_cast<xdata::Double>
-      (allFragmentBandwidth.getValueRate(MonitoredQuantity::RECENT));
+      (_allFragmentBandwidth.getValueRate(MonitoredQuantity::RECENT));
     _instantRate           = static_cast<xdata::Double>
-      (allFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+      (_allFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
     _instantLatency        = static_cast<xdata::Double>
-      (allFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+      (_allFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
     _maxBandwidth       = static_cast<xdata::Double>
-      (allFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+      (_allFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
     _minBandwidth       = static_cast<xdata::Double>
-      (allFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+      (_allFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
 
     _receivedDQMPeriod4Stats  = static_cast<xdata::UnsignedInteger32>
       (static_cast<unsigned int>
-       (dqmEventFragmentSizes.getDuration(MonitoredQuantity::RECENT)));
+       (_dqmEventFragmentSizes.getDuration(MonitoredQuantity::RECENT)));
     _receivedDQMSamples4Stats = static_cast<xdata::UnsignedInteger32>
-      (dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT));
+      (_dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT));
 
     _infoSpace->unlock();
   }

@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.11 2009/02/18 08:26:29 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.12 2009/03/02 18:08:21 biery Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -14,22 +14,22 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities related to fragments
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/02/18 08:26:29 $
+   * $Author: biery $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/03/02 18:08:21 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
   {
   private:
 
-    MonitoredQuantity allFragmentSizes;
-    MonitoredQuantity eventFragmentSizes;
-    MonitoredQuantity dqmEventFragmentSizes;
+    MonitoredQuantity _allFragmentSizes;
+    MonitoredQuantity _eventFragmentSizes;
+    MonitoredQuantity _dqmEventFragmentSizes;
 
-    MonitoredQuantity allFragmentBandwidth;
-    MonitoredQuantity eventFragmentBandwidth;
-    MonitoredQuantity dqmEventFragmentBandwidth;
+    MonitoredQuantity _allFragmentBandwidth;
+    MonitoredQuantity _eventFragmentBandwidth;
+    MonitoredQuantity _dqmEventFragmentBandwidth;
 
 
   public:
@@ -41,45 +41,45 @@ namespace stor {
     void addDQMEventFragmentSample(const double bytecount);
 
     const MonitoredQuantity& getAllFragmentSizeMQ() const {
-      return allFragmentSizes;
+      return _allFragmentSizes;
     }
     MonitoredQuantity& getAllFragmentSizeMQ() {
-      return allFragmentSizes;
+      return _allFragmentSizes;
     }
 
     const MonitoredQuantity& getEventFragmentSizeMQ() const {
-      return eventFragmentSizes;
+      return _eventFragmentSizes;
     }
     MonitoredQuantity& getEventFragmentSizeMQ() {
-      return eventFragmentSizes;
+      return _eventFragmentSizes;
     }
 
     const MonitoredQuantity& getDQMEventFragmentSizeMQ() const {
-      return dqmEventFragmentSizes;
+      return _dqmEventFragmentSizes;
     }
     MonitoredQuantity& getDQMEventFragmentSizeMQ() {
-      return dqmEventFragmentSizes;
+      return _dqmEventFragmentSizes;
     }
 
     const MonitoredQuantity& getAllFragmentBandwidthMQ() const {
-      return allFragmentBandwidth;
+      return _allFragmentBandwidth;
     }
     MonitoredQuantity& getAllFragmentBandwidthMQ() {
-      return allFragmentBandwidth;
+      return _allFragmentBandwidth;
     }
 
     const MonitoredQuantity& getEventFragmentBandwidthMQ() const {
-      return eventFragmentBandwidth;
+      return _eventFragmentBandwidth;
     }
     MonitoredQuantity& getEventFragmentBandwidthMQ() {
-      return eventFragmentBandwidth;
+      return _eventFragmentBandwidth;
     }
 
     const MonitoredQuantity& getDQMEventFragmentBandwidthMQ() const {
-      return dqmEventFragmentBandwidth;
+      return _dqmEventFragmentBandwidth;
     }
     MonitoredQuantity& getDQMEventFragmentBandwidthMQ() {
-      return dqmEventFragmentBandwidth;
+      return _dqmEventFragmentBandwidth;
     }
 
 

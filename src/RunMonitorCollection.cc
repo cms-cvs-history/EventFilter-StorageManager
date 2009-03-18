@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.5 2009/03/02 18:08:22 biery Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.6 2009/03/13 17:13:53 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -22,10 +22,10 @@ MonitorCollection(app, "Run")
 
 void RunMonitorCollection::do_calculateStatistics()
 {
-  eventIDsReceived.calculateStatistics();
-  errorEventIDsReceived.calculateStatistics();
-  runNumbersSeen.calculateStatistics();
-  lumiSectionsSeen.calculateStatistics();
+  _eventIDsReceived.calculateStatistics();
+  _errorEventIDsReceived.calculateStatistics();
+  _runNumbersSeen.calculateStatistics();
+  _lumiSectionsSeen.calculateStatistics();
 }
 
 
@@ -38,9 +38,9 @@ void RunMonitorCollection::do_updateInfoSpace()
   try
   {
     _infoSpace->lock();
-    _runNumber = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(runNumbersSeen.getLastSampleValue()));
-    _receivedEvents = static_cast<xdata::UnsignedInteger32>(eventIDsReceived.getSampleCount());
-    _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(errorEventIDsReceived.getSampleCount());
+    _runNumber = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(_runNumbersSeen.getLastSampleValue()));
+    _receivedEvents = static_cast<xdata::UnsignedInteger32>(_eventIDsReceived.getSampleCount());
+    _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(_errorEventIDsReceived.getSampleCount());
     _infoSpace->unlock();
   }
   catch(std::exception &e)
