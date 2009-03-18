@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.37 2009/03/17 14:39:16 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.38 2009/03/18 17:33:45 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.37 2009/03/17 14:39:16 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.38 2009/03/18 17:33:45 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -207,6 +207,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   sharedResourcesInstance_._commandQueue.reset(new CommandQueue(128));
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
+  sharedResourcesInstance_._fragmentQueue2.reset(new FragmentQueue(1024));
   sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
 
   unsigned long instance = getApplicationDescriptor()->getInstance();
@@ -215,11 +216,15 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                                                                   instance));
   sharedResourcesInstance_._initMsgCollection.reset(new InitMsgCollection());
 
+  fragmentProcessor_ = new FragmentProcessor(sharedResourcesInstance_);
+
+  startFragmentProcessorWorkLoop();
 }
 
 StorageManager::~StorageManager()
 {
   delete ah_;
+  delete fragmentProcessor_;
 }
 
 xoap::MessageReference
@@ -484,8 +489,11 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  I2OChain i2oChain(ref);
+  I2OChain i2oChain(ref->duplicate());
   sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
+
+  I2OChain i2oChain2(ref);
+  sharedResourcesInstance_._fragmentQueue2->enq_wait(i2oChain2);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -3843,6 +3851,26 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 	  delete proxy;
 	}
     }
+}
+
+void StorageManager::startFragmentProcessorWorkLoop() throw (evf::Exception)
+{
+  DiskWritingParams dwParams =
+    sharedResourcesInstance_._configuration->getDiskWritingParams();
+  try {
+    wlFragProc_=
+      toolbox::task::getWorkLoopFactory()->
+      getWorkLoop(dwParams._smInstanceString+"FragProc", "waiting");
+    if (!wlFragProc_->isActive()) wlFragProc_->activate();
+    asFragProc_ = toolbox::task::bind(fragmentProcessor_,
+                                      &FragmentProcessor::processMessages,
+                                      dwParams._smInstanceString+"FragProc");
+    wlFragProc_->submit(asFragProc_);
+  }
+  catch (xcept::Exception& e) {
+    string msg = "Failed to start workloop 'FragProc'.";
+    XCEPT_RETHROW(evf::Exception,msg,e);
+  }
 }
 
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)

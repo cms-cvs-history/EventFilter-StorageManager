@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.24 2009/03/17 14:39:15 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.25 2009/03/18 17:33:44 biery Exp $
 */
 
 #include <string>
@@ -29,6 +29,7 @@
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -91,6 +92,8 @@ namespace stor {
     // tests of new Monitor classes
     void startNewMonitorWorkloop() throw (evf::Exception);
     bool newMonitorAction(toolbox::task::WorkLoop* wl);
+
+    void startFragmentProcessorWorkLoop() throw (evf::Exception);
 
 ////////////////////////////////////////////////////////////////////////////////
    private:  
@@ -224,6 +227,10 @@ namespace stor {
     // @@EM workloop / action signature for monitoring
     toolbox::task::WorkLoop         *wlMonitoring_;      
     toolbox::task::ActionSignature  *asMonitoring_;
+
+    FragmentProcessor *fragmentProcessor_;
+    toolbox::task::WorkLoop         *wlFragProc_;      
+    toolbox::task::ActionSignature  *asFragProc_;
 
     // @@EM parameters monitored by workloop (not in flashlist just yet) 
     struct streammon{
