@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.8 2009/03/09 14:26:49 mommsen Exp $
+// $Id: ConcurrentQueue.h,v 1.1.2.9 2009/03/13 21:16:32 paterno Exp $
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -38,9 +38,9 @@ namespace stor
         RejectNewest: the function returns void; the new item is
         not put onto the FIFO.
    
-     $Author: mommsen $
-     $Revision: 1.1.2.8 $
-     $Date: 2009/03/09 14:26:49 $
+     $Author: paterno $
+     $Revision: 1.1.2.9 $
+     $Date: 2009/03/13 21:16:32 $
    */
 
   template <class T>
@@ -342,14 +342,14 @@ namespace stor
   template <class T, class EnqPolicy>
   bool
   ConcurrentQueue<T,EnqPolicy>::enq_timed_wait(value_type const& item, 
-                                     unsigned long wait_sec)
+                                               unsigned long wait_sec)
   {
     lock_t lock(_protect_elements);
     if (! (_size < _capacity) )
       {
         boost::xtime now;
         if (boost::xtime_get(&now, CLOCK_MONOTONIC) != CLOCK_MONOTONIC) 
-          return false;
+          return false; // failed to get the time.
         now.sec += wait_sec;
         _queue_not_full.timed_wait(lock, now);
       }
@@ -376,11 +376,18 @@ namespace stor
   template <class T, class EnqPolicy>
   bool
   ConcurrentQueue<T,EnqPolicy>::deq_timed_wait(value_type& item,
-                                     unsigned long wait_usec)
+                                               unsigned long wait_sec)
   {
     lock_t lock(_protect_elements);
-    // THis is not yet implemented
-    return false;
+    if (! (_size == 0) )
+      {
+        boost::xtime now;
+        if (boost::xtime_get(&now, CLOCK_MONOTONIC) != CLOCK_MONOTONIC)
+          return false; // failed to get the time.
+        now.sec += wait_sec;
+        _queue_not_empty.timed_wait(lock, now);
+      }
+    return _remove_head_if_possible(item);
   }
 
   template <class T, class EnqPolicy>

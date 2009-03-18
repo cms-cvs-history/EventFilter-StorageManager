@@ -82,6 +82,46 @@ unsigned int DrainQueue::count() const
   return _counter;
 }
 
+
+/*
+  DrainTimedQueue is used for testing the timed-wait version of the
+  dequeue functionality.
+ */
+
+class DrainTimedQueue
+{
+public:
+  DrainTimedQueue(boost::shared_ptr<queue_t>& p, unsigned int delay) :
+    _sharedQueue(p),
+    _delay(delay),
+    _counter(0)
+  { }  
+
+  void operator()();
+  unsigned int count() const;
+
+private:
+  boost::shared_ptr<queue_t> _sharedQueue;
+  unsigned int               _delay;
+  unsigned int               _counter;
+};
+
+void DrainTimedQueue::operator()()
+{
+  queue_t::value_type val;
+  while(true)
+    {
+      sleep(_delay);
+      if (_sharedQueue->deq_nowait(val)) ++_counter;
+      else return;
+    }
+}
+
+unsigned int DrainTimedQueue::count() const
+{
+  return _counter;
+}
+
 class testConcurrentQueue : public CppUnit::TestFixture
 {
   CPPUNIT_TEST_SUITE(testConcurrentQueue);
