@@ -45,14 +45,17 @@ void Processing::logStopDoneRequest( const StopDone& request )
 void
 Processing::do_processI2OFragment( I2OChain& frag ) const
 {
-  cout << "Processing a fragment\n";
+  std::cout << stateName() << "::processI2OFragment()" << std::endl;
+  //cout << "Processing a fragment\n";
 
   static unsigned int noFragmentCount;
 
   bool completed = outermost_context().getFragmentStore()->addFragment(frag);
   if ( completed )
   {
-    outermost_context().getEventDistributor()->addEventToRelevantQueues(frag);
+    //outermost_context().getEventDistributor()->addEventToRelevantQueues(frag);
+    std::cout << "(Temporarily) Dropping a complete event of type "
+              << frag.messageCode() << " on the floor." << std::endl;
   }
   else
   {
@@ -70,6 +73,7 @@ Processing::do_processI2OFragment( I2OChain& frag ) const
 void
 Processing::do_noFragmentToProcess() const
 {
+  std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
   I2OChain staleEvent;
   bool gotStaleEvent = 
     outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 5);
