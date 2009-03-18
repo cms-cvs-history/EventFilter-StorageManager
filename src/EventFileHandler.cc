@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.1 2009/03/16 10:46:50 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.2 2009/03/17 15:57:36 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -11,17 +11,13 @@ using namespace stor;
 EventFileHandler::EventFileHandler
 (
   InitMsgView const& view,
-  const uint32_t lumiSection,
-  const std::string &file,
-  DiskWritingParams dwParams
+  FilesMonitorCollection::FileRecord& fileRecord,
+  const DiskWritingParams& dwParams
 ) :
-FileHandler(lumiSection, file, dwParams),
+FileHandler(fileRecord, dwParams),
 _writer(completeFileName()+".dat", completeFileName()+".ind")
 {
   writeHeader(view);
-
-  firstEntry(utils::getCurrentTime());
-  insertFileInDatabase();
 }
 
 
@@ -34,7 +30,8 @@ EventFileHandler::~EventFileHandler()
 void EventFileHandler::writeHeader(InitMsgView const& view)
 {
   _writer.doOutputHeader(view);
-  increaseFileSize(view.size());
+  _fileRecord.fileSize.addSample(view.size());
+  // Fix me: the header increments the event count
 }
 
 
@@ -42,18 +39,17 @@ void EventFileHandler::writeEvent(const I2OChain& chain)
 {
   EventMsgView view( (void *) chain.getBufferData() );
   _writer.doOutputEvent(view);
-  increaseFileSize(view.size());
-  lastEntry(utils::getCurrentTime());
-  increaseEventCount();
+  _fileRecord.fileSize.addSample(view.size());
+  _lastEntry = utils::getCurrentTime();
 }
 
 
 void EventFileHandler::closeFile()
 {
   _writer.stop();
-  increaseFileSize(_writer.getStreamEOFSize());
+  _fileRecord.fileSize.addSample(_writer.getStreamEOFSize());
   setadler(_writer.get_adler32_stream(), _writer.get_adler32_index());
-  moveFileToClosed();
+  moveFileToClosed(true);
   writeToSummaryCatalog();
   updateDatabase();
 }

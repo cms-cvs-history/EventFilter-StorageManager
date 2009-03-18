@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.h,v 1.1.2.1 2009/03/16 10:47:13 mommsen Exp $
+// $Id: FRDFileHandler.h,v 1.1.2.2 2009/03/17 15:57:26 mommsen Exp $
 
 #ifndef StorageManager_FRDFileHandler_h
 #define StorageManager_FRDFileHandler_h
@@ -13,8 +13,8 @@ namespace stor {
    * FED Raw Data (FRD) format.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/16 10:47:13 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/17 15:57:26 $
    */
   
   class FRDFileHandler : public FileHandler
@@ -22,9 +22,8 @@ namespace stor {
   public:
     FRDFileHandler
     (
-      const uint32_t lumiSection,
-      const std::string &file,
-      DiskWritingParams dwParams
+      FilesMonitorCollection::FileRecord& fileRecord,
+      const DiskWritingParams& dwParams
     );
     
     virtual ~FRDFileHandler();

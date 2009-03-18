@@ -1,6 +1,7 @@
-// $Id: FileHandler.cc,v 1.1.2.2 2009/03/16 19:05:35 biery Exp $
+// $Id: FileHandler.cc,v 1.1.2.3 2009/03/16 19:21:39 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
+
 #include <FWCore/MessageLogger/interface/MessageLogger.h>
 #include <FWCore/Utilities/interface/GetReleaseVersion.h>
 
@@ -15,24 +16,18 @@ using namespace stor;
 using namespace std;
 
 
-FileHandler::FileHandler(const uint32_t lumiSection, const string &file, DiskWritingParams dwParams):
+FileHandler::FileHandler
+(
+  FilesMonitorCollection::FileRecord& fileRecord,
+  const DiskWritingParams& dwParams
+):
+_fileRecord(fileRecord),
+_firstEntry(utils::getCurrentTime()),
 _diskWritingParams(dwParams),
-_fileName(file),
-_basePath(dwParams._filePath),
-_fileSystem(""),
 _workingDir("/open/"),
 _logPath(dwParams._filePath+"/log"),
 _logFile(logFile(dwParams)),
-_streamLabel(""),
-_cmsver(edm::getReleaseVersion()),
-_lumiSection(lumiSection),
-_runNumber(0),
-_fileCounter(0),
-_fileSize(0), 
-_events(0), 
-_firstEntry(0.0), 
-_lastEntry(0.0),
-_whyClosed(notClosed)
+_cmsver(edm::getReleaseVersion())
 {
   // stripp quotes if present
   if(_cmsver[0]=='"') _cmsver=_cmsver.substr(1,_cmsver.size()-2);
@@ -47,13 +42,13 @@ void FileHandler::writeToSummaryCatalog() const
 {
   ostringstream currentStat;
   string ind(":");
-  currentStat << _basePath + _fileSystem + _workingDir << ind
+  currentStat << _fileRecord.filePath                  << ind
               << qualifiedFileName()                   << ind
 	      << fileSize()                            << ind 
 	      << events()                              << ind
-              << utils::timeStamp(lastEntry())         << ind
-	      << (int) (lastEntry()-firstEntry())      << ind
-	      << _whyClosed << endl;
+              << utils::timeStamp(_lastEntry)          << ind
+	      << (int) (_lastEntry - _firstEntry)      << ind
+	      << _fileRecord.whyClosed << endl;
   string currentStatString (currentStat.str());
   ofstream of(_diskWritingParams._fileCatalog.c_str(), ios_base::ate | ios_base::out | ios_base::app );
   of << currentStatString;
@@ -67,23 +62,23 @@ void FileHandler::updateDatabase() const
   oss << "./closeFile.pl "
       << " --FILENAME "     << qualifiedFileName() <<  ".dat"
       << " --FILECOUNTER "  << _fileCounter                       
-      << " --NEVENTS "      << _events                            
-      << " --FILESIZE "     << _fileSize                          
-      << " --STARTTIME "    << (int) firstEntry()
-      << " --STOPTIME "     << (int) lastEntry()
+      << " --NEVENTS "      << events()
+      << " --FILESIZE "     << fileSize()                          
+      << " --STARTTIME "    << (int) _firstEntry
+      << " --STOPTIME "     << (int) _lastEntry
       << " --STATUS "       << "closed"
-      << " --RUNNUMBER "    << _runNumber                         
-      << " --LUMISECTION "  << _lumiSection                      
-      << " --PATHNAME "     << filePath()
+      << " --RUNNUMBER "    << _fileRecord.runNumber
+      << " --LUMISECTION "  << _fileRecord.lumiSection
+      << " --PATHNAME "     << _fileRecord.filePath
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
-      << " --STREAM "       << _streamLabel                      
+      << " --STREAM "       << _fileRecord.streamLabel                      
       << " --INSTANCE "     << _diskWritingParams._smInstanceString
       << " --SAFETY "       << _diskWritingParams._initialSafetyLevel
       << " --APPVERSION "   << _cmsver
       << " --APPNAME CMSSW"
       << " --TYPE streamer"               
-      << " --DEBUGCLOSE "   << _whyClosed
+      << " --DEBUGCLOSE "   << _fileRecord.whyClosed
       << " --CHECKSUM "     << hex << _adlerstream
       << " --CHECKSUMIND "  << hex << _adlerindex
       << "\n";
@@ -99,18 +94,18 @@ void FileHandler::insertFileInDatabase() const
   std::ostringstream oss;
   oss << "./insertFile.pl "
       << " --FILENAME "     << qualifiedFileName() <<  ".dat"
-      << " --FILECOUNTER "  << _fileCounter                       
-      << " --NEVENTS "      << _events                            
-      << " --FILESIZE "     << _fileSize                          
-      << " --STARTTIME "    << (int) firstEntry()
-      << " --STOPTIME "     << (int) lastEntry()
+      << " --FILECOUNTER "  << _fileCounter
+      << " --NEVENTS "      << events()
+      << " --FILESIZE "     << fileSize()
+      << " --STARTTIME "    << (int) _firstEntry
+      << " --STOPTIME "     << (int) _lastEntry
       << " --STATUS "       << "open"
-      << " --RUNNUMBER "    << _runNumber                         
-      << " --LUMISECTION "  << _lumiSection                      
-      << " --PATHNAME "     << filePath()
+      << " --RUNNUMBER "    << _fileRecord.runNumber
+      << " --LUMISECTION "  << _fileRecord.lumiSection
+      << " --PATHNAME "     << _fileRecord.filePath
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
-      << " --STREAM "       << _streamLabel                      
+      << " --STREAM "       << _fileRecord.streamLabel
       << " --INSTANCE "     << _diskWritingParams._smInstanceString
       << " --SAFETY "       << _diskWritingParams._initialSafetyLevel
       << " --APPVERSION "   << _cmsver
@@ -131,7 +126,7 @@ void FileHandler::insertFileInDatabase() const
 // File parameter setters //
 ////////////////////////////
 
-void FileHandler::setFileSystem(const unsigned int i)
+void FileHandler::setFileSystem(const unsigned int& i)
 {
   std::ostringstream oss;
   oss << "/" << setfill('0') << std::setw(2) << i; 
@@ -139,26 +134,10 @@ void FileHandler::setFileSystem(const unsigned int i)
 }
 
 
-////////////////////////////
-// File parameter getters //
-////////////////////////////
-
-const string FileHandler::filePath() const
-{
-  return ( _basePath + _fileSystem + _workingDir);
-}
-
-
-const string FileHandler::completeFileName() const
-{
-  return ( filePath() + qualifiedFileName() );
-}
-
-
 const string FileHandler::qualifiedFileName() const
 {
   std::ostringstream oss;
-  oss << _fileName;
+  oss << _fileRecord.fileName;
   oss << "." << setfill('0') << std::setw(4) << _fileCounter;
   return oss.str();
 }
@@ -169,171 +148,88 @@ const string FileHandler::qualifiedFileName() const
 // File system interaction //
 /////////////////////////////
 
-void FileHandler::moveFileToClosed()
+
+void FileHandler::moveFileToClosed(const bool& useIndexFile)
 {
-  struct stat64 initialStatBuff, finalStatBuff;
-  int statStatus;
-  double pctDiff;
-  bool sizeMismatch;
-  
   string openIndexFileName      = completeFileName() + ".ind";
   string openStreamerFileName   = completeFileName() + ".dat";
-  statStatus = stat64(openStreamerFileName.c_str(), &initialStatBuff);
-  if (statStatus != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Error checking the status of open file "
-      << openStreamerFileName << ".  Has the file moved unexpectedly?"
-      << std::endl;
-  }
-  sizeMismatch = false;
-  if (_diskWritingParams._exactFileSizeTest) {
-    if (_fileSize != initialStatBuff.st_size) {
-      sizeMismatch = true;
-    }
-  }
-  else {
-    pctDiff = calcPctDiff(_fileSize, initialStatBuff.st_size);
-    if (pctDiff > 0.1) {sizeMismatch = true;}
-  }
-  if (sizeMismatch) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Found an unexpected open file size when trying to move "
-      << "the file to the closed state.  File " << openStreamerFileName
-      << " has an actual size of " << initialStatBuff.st_size
-      << " instead of the expected size of " << _fileSize << std::endl;
-  }
 
-  int ronly  = chmod(openStreamerFileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
-  ronly     += chmod(openIndexFileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
-  if (ronly != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Unable to change permissions of " << openStreamerFileName << " and "
-      << openIndexFileName << " to read only." << std::endl;
-  }
+  size_t openStreamerFileSize = checkFileSizeMatch(openStreamerFileName, fileSize());
 
-  _workingDir = "/closed/";
+  makeFileReadOnly(openStreamerFileName);
+  if (useIndexFile) makeFileReadOnly(openIndexFileName);
+
+  _workingDir = "/closed/"; // Fix me!
   string closedIndexFileName    = completeFileName() + ".ind";
   string closedStreamerFileName = completeFileName() + ".dat";
 
-  int result = rename( openIndexFileName.c_str()    , closedIndexFileName.c_str() );
-  result    += rename( openStreamerFileName.c_str() , closedStreamerFileName.c_str() );
-  if (result != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Unable to move " << openStreamerFileName << " to "
-      << closedStreamerFileName << ".  Possibly the storage manager "
-      << "disk areas are full." << std::endl;
-  }
+  if (useIndexFile) renameFile(openIndexFileName, closedIndexFileName);
+  renameFile(openStreamerFileName, closedStreamerFileName);
 
-  statStatus = stat64(closedStreamerFileName.c_str(), &finalStatBuff);
-  if (statStatus != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Error checking the status of closed file "
-      << closedStreamerFileName << ".  This file was copied from "
-      << openStreamerFileName << ", and the copy seems to have failed."
-      << std::endl;
-  }
-  sizeMismatch = false;
-  if (_diskWritingParams._exactFileSizeTest) {
-    if (initialStatBuff.st_size != finalStatBuff.st_size) {
-      sizeMismatch = true;
-    }
-  }
-  else {
-    pctDiff = calcPctDiff(initialStatBuff.st_size, finalStatBuff.st_size);
-    if (pctDiff > 0.1) {sizeMismatch = true;}
-  }
-  if (sizeMismatch) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Error moving " << openStreamerFileName << " to "
-      << closedStreamerFileName << ".  The closed file size ("
-      << finalStatBuff.st_size << ") is different than the open file size ("
-      << initialStatBuff.st_size << ").  Possibly the storage manager "
-      << "disk areas are full." << std::endl;
-  }
+  checkFileSizeMatch(closedStreamerFileName, openStreamerFileSize);
 }
 
 
-void FileHandler::moveErrorFileToClosed()
+size_t FileHandler::checkFileSizeMatch(const string& fileName, const size_t& size)
 {
-  struct stat64 initialStatBuff, finalStatBuff;
-  int statStatus;
-  double pctDiff;
-  bool sizeMismatch;
-
-  string openErrorFileName   = completeFileName() + ".dat";
-  statStatus = stat64(openErrorFileName.c_str(), &initialStatBuff);
+  struct stat64 statBuff;
+  int statStatus = stat64(fileName.c_str(), &statBuff);
   if (statStatus != 0) {
-    throw cms::Exception("FileHandler", "moveErrorFileToClosed")
-      << "Error checking the status of open error file "
-      << openErrorFileName << ".  Has the file moved unexpectedly?"
-      << std::endl;
+    throw cms::Exception("FileHandler", "moveFileToClosed")
+      << "Error checking the status of open file "
+      << fileName << std::endl;
   }
-  sizeMismatch = false;
+  
+  if ( sizeMismatch(size, statBuff.st_size) )
+    throw cms::Exception("FileHandler", "moveFileToClosed")
+      << "Found an unexpected file size when trying to move "
+      << "the file to the closed state.  File " << fileName
+      << " has an actual size of " << statBuff.st_size
+      << " instead of the expected size of " << size << std::endl;
+
+  return statBuff.st_size;
+}
+
+
+bool FileHandler::sizeMismatch(const double& initialSize, const double& finalSize)
+{
   if (_diskWritingParams._exactFileSizeTest) {
-    if (_fileSize != initialStatBuff.st_size) {
-      sizeMismatch = true;
+    if (initialSize != finalSize) {
+      return true;
     }
   }
   else {
-    pctDiff = calcPctDiff(_fileSize, initialStatBuff.st_size);
-    if (pctDiff > 0.1) {sizeMismatch = true;}
+    double pctDiff = calcPctDiff(initialSize, finalSize);
+    if (pctDiff > 0.1) {return true;}
   }
-  if (sizeMismatch) {
-    throw cms::Exception("FileHandler", "moveErrorFileToClosed")
-      << "Found an unexpected open file size when trying to move "
-      << "the file to the closed state.  File " << openErrorFileName
-      << " has an actual size of " << initialStatBuff.st_size
-      << " instead of the expected size of " << _fileSize << std::endl;
-  }
+  return false;
+}
 
-  int ronly  = chmod(openErrorFileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
+
+void FileHandler::makeFileReadOnly(const string& fileName)
+{
+  int ronly  = chmod(fileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
   if (ronly != 0) {
-    throw cms::Exception("FileHandler", "moveErrorFileToClosed")
-      << "Unable to change permissions of " << openErrorFileName
+    throw cms::Exception("FileHandler", "moveFileToClosed")
+      << "Unable to change permissions of " << fileName
       << " to read only." << std::endl;
   }
+}
 
-  _workingDir = "/closed/";
-  string closedErrorFileName = completeFileName() + ".dat";
 
-  int result = rename( openErrorFileName.c_str() , closedErrorFileName.c_str() );
+void FileHandler::renameFile(const string& openFileName, const string& closedFileName)
+{
+  int result = rename( openFileName.c_str(), closedFileName.c_str() );
   if (result != 0) {
-    throw cms::Exception("FileHandler", "moveErrorFileToClosed")
-      << "Unable to move " << openErrorFileName << " to "
-      << closedErrorFileName << ".  Possibly the storage manager "
-      << "disk areas are full." << std::endl;
-  }
-
-  statStatus = stat64(closedErrorFileName.c_str(), &finalStatBuff);
-  if (statStatus != 0) {
-    throw cms::Exception("FileHandler", "moveErrorFileToClosed")
-      << "Error checking the status of closed file "
-      << closedErrorFileName << ".  This file was copied from "
-      << openErrorFileName << ", and the copy seems to have failed."
-      << std::endl;
-  }
-  sizeMismatch = false;
-  if (_diskWritingParams._exactFileSizeTest) {
-    if (initialStatBuff.st_size != finalStatBuff.st_size) {
-      sizeMismatch = true;
-    }
-  }
-  else {
-    pctDiff = calcPctDiff(initialStatBuff.st_size, finalStatBuff.st_size);
-    if (pctDiff > 0.1) {sizeMismatch = true;}
-  }
-  if (sizeMismatch) {
-    throw cms::Exception("FileHandler", "moveErrorFileToClosed")
-      << "Error moving " << openErrorFileName << " to "
-      << closedErrorFileName << ".  The closed file size ("
-      << finalStatBuff.st_size << ") is different than the open file size ("
-      << initialStatBuff.st_size << ").  Possibly the storage manager "
+    throw cms::Exception("FileHandler", "moveFileToClosed")
+      << "Unable to move " << openFileName << " to "
+      << closedFileName << ".  Possibly the storage manager "
       << "disk areas are full." << std::endl;
   }
 }
 
 
-const string FileHandler::logFile(stor::DiskWritingParams const& dwp) const
+const string FileHandler::logFile(const DiskWritingParams& dwp) const
 {
   time_t rawtime = time(0);
   tm * ptm;
@@ -353,15 +249,15 @@ const string FileHandler::logFile(stor::DiskWritingParams const& dwp) const
 
 void FileHandler::checkDirectories() const
 {
-  checkDirectory(_basePath);
-  checkDirectory(_basePath + _fileSystem);
-  checkDirectory(_basePath + _fileSystem + "/open");
-  checkDirectory(_basePath + _fileSystem + "/closed");
+  checkDirectory(_diskWritingParams._filePath);
+  checkDirectory(_diskWritingParams._filePath + _fileSystem);
+  checkDirectory(_diskWritingParams._filePath + _fileSystem + "/open");
+  checkDirectory(_diskWritingParams._filePath + _fileSystem + "/closed");
   checkDirectory(_logPath);
 }
 
 
-void FileHandler::checkDirectory(const string &path) const
+void FileHandler::checkDirectory(const string& path) const
 {
   struct stat64 buf;
 
@@ -376,16 +272,16 @@ void FileHandler::checkDirectory(const string &path) const
 }
 
 
-const double FileHandler::calcPctDiff(long long value1, long long value2) const
+const double FileHandler::calcPctDiff(const double& value1, const double& value2) const
 {
   if (value1 == value2) {return 0.0;}
-  long long largerValue = value1;
-  long long smallerValue = value2;
+  double largerValue = value1;
+  double smallerValue = value2;
   if (value1 < value2) {
     largerValue = value2;
     smallerValue = value1;
   }
-  return ((double) largerValue - (double) smallerValue) / (double) largerValue;
+  return (largerValue - smallerValue) / largerValue;
 }
 
 
@@ -394,12 +290,12 @@ const double FileHandler::calcPctDiff(long long value1, long long value2) const
 // File information dumper //
 /////////////////////////////
 
-void FileHandler::info(ostream &os) const
+void FileHandler::info(ostream& os) const
 {
   os << _fileCounter << " " 
      << completeFileName() << " " 
-     << _events << " "
-     << _fileSize;
+     << events() << " "
+     << fileSize();
 }
 
 
@@ -409,14 +305,14 @@ void FileHandler::info(ostream &os) const
 //   os << "\n";
 //   os << prefix << "------------- FileHandler -------------\n";
 //   os << prefix << "fileName            " << _fileName                   << "\n";
-//   os << prefix << "_basePath           " << _basePath                   << "\n";  
+//   os << prefix << "filePath            " << _diskWritingParams._filePath<< "\n";  
 //   os << prefix << "_fileSystem         " << _fileSystem                 << "\n";
 //   os << prefix << "_workingDir         " << _workingDir                 << "\n";
 //   os << prefix << "_logPath            " << _logPath                    << "\n";
 //   os << prefix << "_logFile            " << _logFile                    << "\n";
 //   os << prefix << "_setupLabel         " << _diskWritingParams._setupLabel<< "\n";
 //   os << prefix << "_streamLabel        " << _streamLabel                << "\n";
-//   os << prefix << "_hostName           " << _diskWritingParams._hostName<< "\n";
+//   os << prefix << "hostName            " << _diskWritingParams._hostName<< "\n";
 //   os << prefix << "fileCatalog()       " << _diskWritingParams._fileCatalog<< "\n"; 
 //   os << prefix << "_lumiSection        " << _lumiSection                << "\n";
 //   os << prefix << "_runNumber          " << _runNumber                  << "\n";

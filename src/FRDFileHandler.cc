@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.cc,v 1.1.2.1 2009/03/16 10:46:50 mommsen Exp $
+// $Id: FRDFileHandler.cc,v 1.1.2.2 2009/03/17 15:57:37 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -10,16 +10,12 @@ using namespace stor;
 
 FRDFileHandler::FRDFileHandler
 (
-  const uint32_t lumiSection,
-  const std::string &file,
-  DiskWritingParams dwParams
+  FilesMonitorCollection::FileRecord& fileRecord,
+  const DiskWritingParams& dwParams
 ) :
-FileHandler(lumiSection, file, dwParams),
+FileHandler(fileRecord, dwParams),
 _writer(completeFileName()+".dat")
-{
-  firstEntry(utils::getCurrentTime());
-  insertFileInDatabase();
-}
+{}
 
 
 FRDFileHandler::~FRDFileHandler()
@@ -32,16 +28,15 @@ void FRDFileHandler::writeEvent(const I2OChain& chain)
 {
   FRDEventMsgView view( (void *) chain.getBufferData() );
   _writer.doOutputEvent(view);
-  increaseFileSize(view.size());
-  lastEntry(utils::getCurrentTime());
-  increaseEventCount();
+  _fileRecord.fileSize.addSample(view.size());
+  _lastEntry = utils::getCurrentTime();
 }
 
 
 void FRDFileHandler::closeFile()
 {
   _writer.stop();
-  moveErrorFileToClosed();
+  moveFileToClosed(false);
   writeToSummaryCatalog();
   updateDatabase();
 }
