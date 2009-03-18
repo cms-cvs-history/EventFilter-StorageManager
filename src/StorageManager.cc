@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.36 2009/03/17 02:05:08 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.37 2009/03/17 14:39:16 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -105,22 +105,12 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_(this), 
   reasonForFailedState_(),
   ah_(0), 
-  pushMode_(false), 
-  collateDQM_(false),
-  archiveDQM_(false),
-  archiveIntervalDQM_(0),
-  filePrefixDQM_("/tmp/DQM"),
-  purgeTimeDQM_(DEFAULT_PURGE_TIME),
-  readyTimeDQM_(DEFAULT_READY_TIME),
-  useCompressionDQM_(true),
-  compressionLevelDQM_(1),
   mybuffer_(7000000),
-  fairShareES_(false),
   connectedRBs_(0), 
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.36 2009/03/17 02:05:08 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.37 2009/03/17 14:39:16 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -194,41 +184,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
   pool_is_set_    = 0;
   pool_           = 0;
-  pushmode2proxy_ = false;
-
-  // Variables needed for streamer file writing
-  ispace->fireItemAvailable("pushMode2Proxy", &pushmode2proxy_);
-  ispace->fireItemAvailable("collateDQM",     &collateDQM_);
-  ispace->fireItemAvailable("archiveDQM",     &archiveDQM_);
-  ispace->fireItemAvailable("archiveIntervalDQM",  &archiveIntervalDQM_);
-  ispace->fireItemAvailable("purgeTimeDQM",   &purgeTimeDQM_);
-  ispace->fireItemAvailable("readyTimeDQM",   &readyTimeDQM_);
-  ispace->fireItemAvailable("filePrefixDQM",       &filePrefixDQM_);
-  ispace->fireItemAvailable("useCompressionDQM",   &useCompressionDQM_);
-  ispace->fireItemAvailable("compressionLevelDQM", &compressionLevelDQM_);
-
-  // added for Event Server
-  maxESEventRate_ = 100.0;  // hertz
-  ispace->fireItemAvailable("maxESEventRate",&maxESEventRate_);
-  maxESDataRate_ = 1024.0;  // MB/sec
-  ispace->fireItemAvailable("maxESDataRate",&maxESDataRate_);
-  activeConsumerTimeout_ = 60;  // seconds
-  ispace->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
-  idleConsumerTimeout_ = 120;  // seconds
-  ispace->fireItemAvailable("idleConsumerTimeout",&idleConsumerTimeout_);
-  consumerQueueSize_ = 5;
-  ispace->fireItemAvailable("consumerQueueSize",&consumerQueueSize_);
-  //ispace->fireItemAvailable("fairShareES",&fairShareES_);
-  DQMmaxESEventRate_ = 1.0;  // hertz
-  ispace->fireItemAvailable("DQMmaxESEventRate",&DQMmaxESEventRate_);
-  DQMactiveConsumerTimeout_ = 60;  // seconds
-  ispace->fireItemAvailable("DQMactiveConsumerTimeout",&DQMactiveConsumerTimeout_);
-  DQMidleConsumerTimeout_ = 120;  // seconds
-  ispace->fireItemAvailable("DQMidleConsumerTimeout",&DQMidleConsumerTimeout_);
-  DQMconsumerQueueSize_ = 15;
-  ispace->fireItemAvailable("DQMconsumerQueueSize",&DQMconsumerQueueSize_);
-  esSelectedHLTOutputModule_ = "out4DQM";
-  ispace->fireItemAvailable("esSelectedHLTOutputModule",&esSelectedHLTOutputModule_);
 
   // for performance measurements
 
@@ -1978,6 +1933,9 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   }
   *out << "</table>"                                                 << endl;
 
+  EventServingParams esParams =
+    sharedResourcesInstance_._configuration->getEventServingParams();
+
   if(fsm_.stateName()->toString() == "Enabled")
   {
     boost::shared_ptr<EventServer> eventServer =
@@ -2011,19 +1969,12 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         *out << "    Maximum input data rate is "
              << eventServer->getMaxDataRate() << " MB/sec." << std::endl;
         *out << "    <br/>" << std::endl;
-        *out << "    Consumer queue size is " << consumerQueueSize_
+        *out << "    Consumer queue size is " << esParams._consumerQueueSize
              << "." << std::endl;
         *out << "    <br/>" << std::endl;
         *out << "    Selected HLT output module is "
              << eventServer->getHLTOutputSelection()
              << "." << std::endl;
-        //*out << "    Fair-share event serving is ";
-        //if (fairShareES_) {
-        //  *out << "ON." << std::endl;
-        //}
-        //else {
-        //  *out << "OFF." << std::endl;
-        //}
         *out << "  </td>" << std::endl;
         *out << "  <td width=\"25%\" align=\"center\">" << std::endl;
         if (autoUpdate) {
@@ -3130,17 +3081,22 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
       requestParamSet.getUntrackedParameter<std::string>("SelectHLTOutput",
                                                          std::string());
 
+    EventServingParams esParams =
+      sharedResourcesInstance_._configuration->getEventServingParams();
+
     // create the local consumer interface and add it to the event server
     boost::shared_ptr<ConsumerPipe>
       consPtr(new ConsumerPipe(consumerName, consumerPriority,
-                               activeConsumerTimeout_.value_,
-                               idleConsumerTimeout_.value_,
+                               (int)esParams._activeConsumerTimeout,
+                               (int)esParams._idleConsumerTimeout,
                                modifiedRequest, maxEventRequestRate,
                                hltOMLabel,
-                               consumerHost, consumerQueueSize_));
+                               consumerHost,
+                               esParams._consumerQueueSize));
     eventServer->addConsumer(consPtr);
     // over-ride pushmode if not set in StorageManager
-    if((consumerPriority.compare("PushMode") == 0) && !pushMode_)
+    if((consumerPriority.compare("PushMode") == 0) &&
+       !esParams._pushmode2proxy)
         consPtr->setPushMode(false);
 
     // build the registration response into the message buffer
@@ -3293,16 +3249,20 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     }
     else
     {
+      EventServingParams esParams =
+        sharedResourcesInstance_._configuration->getEventServingParams();
+
       // create the local consumer interface and add it to the event server
       boost::shared_ptr<DQMConsumerPipe>
         consPtr(new DQMConsumerPipe(consumerName, consumerPriority,
-                                    DQMactiveConsumerTimeout_.value_,
-                                    DQMidleConsumerTimeout_.value_,
+                                    (int)esParams._DQMactiveConsumerTimeout,
+                                    (int)esParams._DQMidleConsumerTimeout,
                                     consumerRequest, consumerHost,
-                                    DQMconsumerQueueSize_));
+                                    esParams._DQMconsumerQueueSize));
       eventServer->addConsumer(consPtr);
       // over-ride pushmode if not set in StorageManager
-      if((consumerPriority.compare("PushMode") == 0) && !pushMode_)
+      if((consumerPriority.compare("PushMode") == 0) &&
+         !esParams._pushmode2proxy)
           consPtr->setPushMode(false);
 
       // initialize it straight away (should later pass in the folder name to
@@ -3382,22 +3342,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("stateName",            fsm_.stateName());
   //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
-  is->fireItemAvailable("pushMode2Proxy",       &pushmode2proxy_);
-  is->fireItemAvailable("collateDQM",           &collateDQM_);
-  is->fireItemAvailable("archiveDQM",           &archiveDQM_);
-  is->fireItemAvailable("archiveIntervalDQM",   &archiveIntervalDQM_);
-  is->fireItemAvailable("purgeTimeDQM",         &purgeTimeDQM_);
-  is->fireItemAvailable("readyTimeDQM",         &readyTimeDQM_);
-  is->fireItemAvailable("filePrefixDQM",        &filePrefixDQM_);
-  is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
-  is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
-  is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
-  is->fireItemAvailable("maxESDataRate",        &maxESDataRate_);
-  is->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
-  is->fireItemAvailable("idleConsumerTimeout",  &idleConsumerTimeout_);
-  is->fireItemAvailable("consumerQueueSize",    &consumerQueueSize_);
-  is->fireItemAvailable("esSelectedHLTOutputModule",&esSelectedHLTOutputModule_);
-  //is->fireItemAvailable("fairShareES",          &fairShareES_);
 
   //----------------------------------------------------------------------------
   // Attach listener to myCounter_ to detect retrieval event
@@ -3416,22 +3360,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("stateName",            this);
   //  is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedRBs",         this);
-  is->addItemRetrieveListener("pushMode2Proxy",       this);
-  is->addItemRetrieveListener("collateDQM",           this);
-  is->addItemRetrieveListener("archiveDQM",           this);
-  is->addItemRetrieveListener("archiveIntervalDQM",   this);
-  is->addItemRetrieveListener("purgeTimeDQM",         this);
-  is->addItemRetrieveListener("readyTimeDQM",         this);
-  is->addItemRetrieveListener("filePrefixDQM",        this);
-  is->addItemRetrieveListener("useCompressionDQM",    this);
-  is->addItemRetrieveListener("compressionLevelDQM",  this);
-  is->addItemRetrieveListener("maxESEventRate",       this);
-  is->addItemRetrieveListener("maxESDataRate",        this);
-  is->addItemRetrieveListener("activeConsumerTimeout",this);
-  is->addItemRetrieveListener("idleConsumerTimeout",  this);
-  is->addItemRetrieveListener("consumerQueueSize",    this);
-  is->addItemRetrieveListener("esSelectedHLTOutputModule",this);
-  //is->addItemRetrieveListener("fairShareES",          this);
   //----------------------------------------------------------------------------
 }
 
@@ -3579,39 +3507,28 @@ void StorageManager::configureAction()
   sharedResourcesInstance_._configuration->updateAllParams();
   DiskWritingParams dwParams =
     sharedResourcesInstance_._configuration->getDiskWritingParams();
+  DQMProcessingParams dqmParams =
+    sharedResourcesInstance_._configuration->getDQMProcessingParams();
+  EventServingParams esParams =
+    sharedResourcesInstance_._configuration->getEventServingParams();
 
   if(!edmplugin::PluginManager::isAvailable()) {
     edmplugin::PluginManager::configure(edmplugin::standard::config());
   }
-    
-  pushMode_ = (bool) pushmode2proxy_;
 
   // check output locations and scripts before we continue
   checkDirectoryOK(dwParams._filePath);
-  if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
-
-  if (maxESEventRate_ < 0.0)
-    maxESEventRate_ = 0.0;
-  if (maxESDataRate_ < 0.0)
-    maxESDataRate_ = 0.0;
-  if (DQMmaxESEventRate_ < 0.0)
-    DQMmaxESEventRate_ = 0.0;
-    
-  xdata::Integer cutoff(1);
-  if (consumerQueueSize_ < cutoff)
-    consumerQueueSize_ = cutoff;
-  if (DQMconsumerQueueSize_ < cutoff)
-    DQMconsumerQueueSize_ = cutoff;
+  if((bool)dqmParams._archiveDQM) checkDirectoryOK(dqmParams._filePrefixDQM);
 
   sharedResourcesInstance_._oldEventServer.
-    reset(new EventServer(maxESEventRate_, maxESDataRate_,
-                          esSelectedHLTOutputModule_,
-                          fairShareES_));
+    reset(new EventServer(esParams._maxESEventRate, esParams._maxESDataRate,
+                          esParams._esSelectedHLTOutputModule));
   sharedResourcesInstance_._oldDQMEventServer.
-    reset(new DQMEventServer(DQMmaxESEventRate_));
+    reset(new DQMEventServer(esParams._DQMmaxESEventRate));
 
   sharedResourcesInstance_._serviceManager.reset(new ServiceManager(dwParams));
   sharedResourcesInstance_._dqmServiceManager.reset(new DQMServiceManager());
+  sharedResourcesInstance_._dqmServiceManager->setParameters(dqmParams);
 
   boost::shared_ptr<DiscardManager> discardMgr;
   Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
@@ -3630,15 +3547,6 @@ void StorageManager::configureAction()
 
   jc_.reset(new stor::JobController(getApplicationLogger(),
                                     sharedResourcesInstance_));
-
-  jc_->setCollateDQM(collateDQM_);
-  jc_->setArchiveDQM(archiveDQM_);
-  jc_->setArchiveIntervalDQM(archiveIntervalDQM_);
-  jc_->setPurgeTimeDQM(purgeTimeDQM_);
-  jc_->setReadyTimeDQM(readyTimeDQM_);
-  jc_->setFilePrefixDQM(filePrefixDQM_);
-  jc_->setUseCompressionDQM(useCompressionDQM_);
-  jc_->setCompressionLevelDQM(compressionLevelDQM_);
 
   jc_->setSMRBSenderList(&smrbsenders_);
 }
@@ -3848,7 +3756,6 @@ void StorageManager::haltAction()
 
   // make sure serialized product registry is cleared also as its used
   // to check state readiness for web transactions
-  pushMode_ = false;
 
   {
     boost::mutex::scoped_lock sl(halt_lock_);

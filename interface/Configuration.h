@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.2 2009/03/16 19:05:34 biery Exp $
+// $Id: Configuration.h,v 1.1.2.3 2009/03/17 14:39:15 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -22,8 +22,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/16 19:05:34 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/17 14:39:15 $
    */
 
   struct DiskWritingParams
@@ -107,7 +107,7 @@ namespace stor
      * will be current as of the most recent global update of the local
      * cache from the infospace (see the globalUpdate() method).
      */
-    struct DQMProcessingParams getDQMParams() const;
+    struct DQMProcessingParams getDQMProcessingParams() const;
 
     /**
      * Returns a copy of the event serving parameters.  These values
@@ -175,29 +175,27 @@ namespace stor
     xdata::Integer _fileClosingTestInterval;
     xdata::Boolean _exactFileSizeTest;
 
-    xdata::Boolean pushmode2proxy_;
-    xdata::Double maxESEventRate_;  // hertz
-    xdata::Double maxESDataRate_;  // MB/sec
-    xdata::Integer activeConsumerTimeout_;  // seconds
-    xdata::Integer idleConsumerTimeout_;  // seconds
-    xdata::Integer consumerQueueSize_;
-    xdata::Boolean fairShareES_;
-    xdata::Double DQMmaxESEventRate_;  // hertz
-    xdata::Integer DQMactiveConsumerTimeout_;  // seconds
-    xdata::Integer DQMidleConsumerTimeout_;  // seconds
-    xdata::Integer DQMconsumerQueueSize_;
-    boost::mutex consumerInitMsgLock_;
-    xdata::String esSelectedHLTOutputModule_;
+    xdata::Boolean _pushmode2proxy;
+    xdata::Double _maxESEventRate;  // hertz
+    xdata::Double _maxESDataRate;  // MB/sec
+    xdata::Integer _activeConsumerTimeout;  // seconds
+    xdata::Integer _idleConsumerTimeout;  // seconds
+    xdata::Integer _consumerQueueSize;
+    xdata::Boolean _fairShareES;
+    xdata::Double _DQMmaxESEventRate;  // hertz
+    xdata::Integer _DQMactiveConsumerTimeout;  // seconds
+    xdata::Integer _DQMidleConsumerTimeout;  // seconds
+    xdata::Integer _DQMconsumerQueueSize;
+    xdata::String _esSelectedHLTOutputModule;
 
-
-    xdata::Boolean collateDQM_;
-    xdata::Boolean archiveDQM_;
-    xdata::Integer archiveIntervalDQM_;
-    xdata::String  filePrefixDQM_;
-    xdata::Integer purgeTimeDQM_;
-    xdata::Integer readyTimeDQM_;
-    xdata::Boolean useCompressionDQM_;
-    xdata::Integer compressionLevelDQM_;
+    xdata::Boolean _collateDQM;
+    xdata::Boolean _archiveDQM;
+    xdata::Integer _archiveIntervalDQM;
+    xdata::String  _filePrefixDQM;
+    xdata::Integer _purgeTimeDQM;
+    xdata::Integer _readyTimeDQM;
+    xdata::Boolean _useCompressionDQM;
+    xdata::Integer _compressionLevelDQM;
   };
 
 }

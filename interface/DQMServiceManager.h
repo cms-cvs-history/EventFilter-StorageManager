@@ -1,7 +1,7 @@
 #ifndef _DQMSERVICEMANAGER_H_
 #define _DQMSERVICEMANAGER_H_
 
-// $Id: DQMServiceManager.h,v 1.4.10.1 2008/12/22 19:12:50 biery Exp $
+// $Id: DQMServiceManager.h,v 1.4.12.1 2008/12/22 19:17:59 biery Exp $
 
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
@@ -10,6 +10,7 @@
 #include "xdata/Boolean.h"
 #include "xdata/String.h"
 
+#include <EventFilter/StorageManager/interface/Configuration.h>
 #include "EventFilter/StorageManager/interface/DQMInstance.h"
 #include "EventFilter/StorageManager/interface/DQMEventServer.h"
 #include <IOPool/Streamer/interface/DQMEventMessage.h>
@@ -52,6 +53,7 @@ namespace stor
       { useCompression_ = useCompression;}
       void setCompressionLevel(int compressionLevel) 
       { compressionLevel_ = compressionLevel;}
+      void setParameters(DQMProcessingParams const& dqmParams);
 
     protected:
 

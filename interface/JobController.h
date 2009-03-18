@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.8 2009/03/16 20:28:22 biery Exp $
+// $Id: JobController.h,v 1.22.6.9 2009/03/17 02:05:05 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
@@ -40,19 +40,6 @@ namespace stor
       if (collector_.get() != NULL) collector_->setSMRBSenderList(senderList);
       smRBSenderList_ = senderList;
     }
-
-    void setCollateDQM(bool collateDQM)       { collector_->setCollateDQM(collateDQM);}
-    void setArchiveDQM(bool archiveDQM)       { collector_->setArchiveDQM(archiveDQM);}
-    void setArchiveIntervalDQM(int archiveInterval) {
-      collector_->setArchiveIntervalDQM(archiveInterval);
-    }
-    void setPurgeTimeDQM(int purgeTimeDQM)    { collector_->setPurgeTimeDQM(purgeTimeDQM);}
-    void setReadyTimeDQM(int readyTimeDQM)    { collector_->setReadyTimeDQM(readyTimeDQM);}
-    void setFilePrefixDQM(std::string filePrefixDQM)  { collector_->setFilePrefixDQM(filePrefixDQM);}
-    void setUseCompressionDQM(bool useCompressionDQM)
-    { collector_->setUseCompressionDQM(useCompressionDQM);}
-    void setCompressionLevelDQM(bool compressionLevelDQM)
-    { collector_->setCompressionLevelDQM(compressionLevelDQM);}
 
     std::list<std::string>& get_filelist() { return collector_->get_filelist(); }
     std::list<std::string>& get_currfiles() { return collector_->get_currfiles(); }

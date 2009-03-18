@@ -97,30 +97,6 @@ namespace stor
 
   public:
 
-    void setCollateDQM(bool collateDQM)
-    { dqmServiceManager_->setCollateDQM(collateDQM); }
-
-    void setArchiveDQM(bool archiveDQM)
-    { dqmServiceManager_->setArchiveDQM(archiveDQM); }
-
-    void setArchiveIntervalDQM(int archiveInterval)
-    { dqmServiceManager_->setArchiveInterval(archiveInterval); }
-
-    void setPurgeTimeDQM(int purgeTimeDQM)
-    { dqmServiceManager_->setPurgeTime(purgeTimeDQM);}
-
-    void setReadyTimeDQM(int readyTimeDQM)
-    { dqmServiceManager_->setReadyTime(readyTimeDQM);}
-
-    void setFilePrefixDQM(std::string filePrefixDQM)
-    { dqmServiceManager_->setFilePrefix(filePrefixDQM);}
-
-    void setUseCompressionDQM(bool useCompressionDQM)
-    { dqmServiceManager_->setUseCompression(useCompressionDQM);}
-
-    void setCompressionLevelDQM(int compressionLevelDQM)
-    { dqmServiceManager_->setCompressionLevel(compressionLevelDQM);}
-
     std::list<std::string>& get_filelist() { return writer_->get_filelist();  }
     std::list<std::string>& get_currfiles() { return writer_->get_currfiles(); }
     std::vector<uint32>& get_storedEvents() { return writer_->get_storedEvents(); }

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.23 2009/03/17 02:05:05 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.24 2009/03/17 14:39:15 biery Exp $
 */
 
 #include <string>
@@ -151,37 +151,13 @@ namespace stor {
 
     SharedResources sharedResourcesInstance_;
 
-    xdata::Boolean pushmode2proxy_;
-
-    bool pushMode_;
-
-    xdata::Boolean collateDQM_;
-    xdata::Boolean archiveDQM_;
-    xdata::Integer archiveIntervalDQM_;
-    xdata::String  filePrefixDQM_;
-    xdata::Integer purgeTimeDQM_;
-    xdata::Integer readyTimeDQM_;
-    xdata::Boolean useCompressionDQM_;
-    xdata::Integer compressionLevelDQM_;
-
     evf::Css css_;
     int pool_is_set_;
     toolbox::mem::Pool *pool_;
 
     // added for Event Server
     std::vector<unsigned char> mybuffer_; //temporary buffer instead of using stack
-    xdata::Double maxESEventRate_;  // hertz
-    xdata::Double maxESDataRate_;  // MB/sec
-    xdata::Integer activeConsumerTimeout_;  // seconds
-    xdata::Integer idleConsumerTimeout_;  // seconds
-    xdata::Integer consumerQueueSize_;
-    xdata::Boolean fairShareES_;
-    xdata::Double DQMmaxESEventRate_;  // hertz
-    xdata::Integer DQMactiveConsumerTimeout_;  // seconds
-    xdata::Integer DQMidleConsumerTimeout_;  // seconds
-    xdata::Integer DQMconsumerQueueSize_;
     boost::mutex consumerInitMsgLock_;
-    xdata::String esSelectedHLTOutputModule_;
 
     SMFUSenderList smrbsenders_;
     xdata::UnsignedInteger32 connectedRBs_;
