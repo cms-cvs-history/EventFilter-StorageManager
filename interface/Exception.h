@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.5 2009/03/03 22:01:39 biery Exp $
+// $Id: Exception.h,v 1.1.2.6 2009/03/13 10:23:48 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -79,9 +79,14 @@ XCEPT_DEFINE_EXCEPTION(stor, IncompleteEventMessage)
 XCEPT_DEFINE_EXCEPTION(stor, RBLookupFailed)
 
 /**
- * Exception raised when the SM when a non-existant queue is requested.
+ * Exception raised when a non-existant queue is requested.
  */
 XCEPT_DEFINE_EXCEPTION(stor, UnknownQueueId)
+
+/**
+ * Exception raised when a non-existant stream is requested.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, UnknownStreamId)
 
 
 #endif // _storagemanager_Exception_h_
