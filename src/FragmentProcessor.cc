@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.12 2009/03/18 20:39:41 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.13 2009/03/19 12:08:01 dshpakov Exp $
 
 #include <unistd.h>
 
@@ -11,7 +11,7 @@ using namespace stor;
 FragmentProcessor::FragmentProcessor( SharedResources sr ) :
   _sharedResources(sr),
   _fragmentStore(),
-  _eventDistributor(),
+  _eventDistributor(sr),
   _diskWriter(),
   _timeout(1),
   _actionIsActive(true),
