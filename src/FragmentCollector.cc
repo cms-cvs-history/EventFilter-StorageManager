@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.16 2009/03/17 02:05:08 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.17 2009/03/19 19:32:44 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -202,12 +202,6 @@ namespace stor
                   processEvent(i2oChain);
                   break;
                 }
-              case Header::DQM_EVENT:
-                {
-                  FR_DEBUG << "FragColl: Got a DQM_Event" << endl;
-                  processDQMEvent(i2oChain);
-                  break;
-                }
               case Header::ERROR_EVENT:
                 {
                   FR_DEBUG << "FragColl: Got an Error_Event" << endl;
@@ -356,28 +350,6 @@ namespace stor
                                           i2oChain.fragmentCount()-1, i2oChain.fragmentCount(), msg.size(),
                                           msg.outputModuleLabel(), msg.outputModuleId(),
                                           fragKey.originatorPid_);
-
-      // tell the resource broker that sent us this event
-      // that we are done with it and it can forget about it
-      discardManager_->sendDiscardMessage(i2oChain);
-
-      // check for stale fragments
-      removeStaleFragments();
-    }
-  }
-
-  void FragmentCollector::processDQMEvent(I2OChain i2oChain)
-  {
-    // add the fragment to the fragment store
-    bool complete = fragmentStore_.addFragment(i2oChain);
-
-    if(complete)
-    {
-      i2oChain.copyFragmentsIntoBuffer(event_area_);
-
-      // the DQM data is now in event_area_ deal with it
-      DQMEventMsgView dqmEventView(&event_area_[0]);
-      dqmServiceManager_->manageDQMEventMsg(dqmEventView);
 
       // tell the resource broker that sent us this event
       // that we are done with it and it can forget about it

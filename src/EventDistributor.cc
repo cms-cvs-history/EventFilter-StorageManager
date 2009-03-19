@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.25 2009/03/19 18:59:38 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.26 2009/03/19 19:32:44 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -79,6 +79,15 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
                 ioc.tagForDQMEventConsumer( it->queueId() );
               }
           }
+
+        // temporary handling (until the DQMProcessor comes online)
+        if ( _sharedResources->_dqmServiceManager.get() != 0 )
+          {
+            ioc.copyFragmentsIntoBuffer(_tempEventArea);
+            DQMEventMsgView dqmEventView(&_tempEventArea[0]);
+            _sharedResources->_dqmServiceManager->manageDQMEventMsg(dqmEventView);
+          }
+
         break;
       }
 
@@ -106,7 +115,8 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
   if( ioc.isTaggedForAnyStream() )
     {
-      _sharedResources->_streamQueue->enq_wait( ioc );
+      // enable this once we have the DiskWriter working...
+      //_sharedResources->_streamQueue->enq_wait( ioc );
     }
 
 }
