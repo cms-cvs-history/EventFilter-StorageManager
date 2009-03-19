@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.28 2009/03/19 20:08:52 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.29 2009/03/19 20:38:41 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -114,19 +114,28 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
         break;
       }
 
-   case Header::ERROR_EVENT:
-     {
-       for( ErrSelList::iterator it = _errorStreamSelectors.begin();
-            it != _errorStreamSelectors.end();
-            ++it )
-         {
-           if( it->acceptEvent( ioc ) )
-             {
-               ioc.tagForStream( it->configInfo().streamId() );
-             }
-         }
-       break;
-     }
+    case Header::ERROR_EVENT:
+      {
+        for( ErrSelList::iterator it = _errorStreamSelectors.begin();
+             it != _errorStreamSelectors.end();
+             ++it )
+          {
+            if( it->acceptEvent( ioc ) )
+              {
+                ioc.tagForStream( it->configInfo().streamId() );
+              }
+          }
+
+        // temporary handling (until the DiskWriter is ready)
+        if ( _sharedResources->_serviceManager.get() != 0 )
+          {
+            ioc.copyFragmentsIntoBuffer(_tempEventArea);
+            FRDEventMsgView emsg(&_tempEventArea[0]);
+            _sharedResources->_serviceManager->manageErrorEventMsg(emsg);
+          }
+
+        break;
+      }
 
     default:
       {

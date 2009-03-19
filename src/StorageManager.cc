@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.42 2009/03/19 19:32:44 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.43 2009/03/19 20:38:41 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.42 2009/03/19 19:32:44 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.43 2009/03/19 20:38:41 biery Exp $ $Name:  $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -443,7 +443,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =

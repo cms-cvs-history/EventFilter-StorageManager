@@ -78,7 +78,6 @@ namespace stor
     void processFragments();
     void processEvent(I2OChain i2oChain);
     void processHeader(I2OChain i2oChain);
-    void processErrorEvent(I2OChain i2oChain);
 
     int removeStaleFragments();
 

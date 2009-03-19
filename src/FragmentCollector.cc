@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.18 2009/03/19 19:45:34 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.19 2009/03/19 20:38:41 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -198,12 +198,6 @@ namespace stor
                   processEvent(i2oChain);
                   break;
                 }
-              case Header::ERROR_EVENT:
-                {
-                  FR_DEBUG << "FragColl: Got an Error_Event" << endl;
-                  processErrorEvent(i2oChain);
-                  break;
-                }
               default:
                 {
                   char codeString[32];
@@ -345,28 +339,6 @@ namespace stor
                                           i2oChain.fragmentCount()-1, i2oChain.fragmentCount(), msg.size(),
                                           msg.outputModuleLabel(), msg.outputModuleId(),
                                           fragKey.originatorPid_);
-
-      // tell the resource broker that sent us this event
-      // that we are done with it and it can forget about it
-      discardManager_->sendDiscardMessage(i2oChain);
-
-      // check for stale fragments
-      removeStaleFragments();
-    }
-  }
-
-  void FragmentCollector::processErrorEvent(I2OChain i2oChain)
-  {
-    // add the fragment to the fragment store
-    bool complete = fragmentStore_.addFragment(i2oChain);
-
-    if(complete)
-    {
-      int assembledSize = i2oChain.copyFragmentsIntoBuffer(event_area_);
-
-      FRDEventMsgView emsg(&event_area_[0]);
-      FR_DEBUG << "FragColl: writing error event size " << assembledSize << endl;
-      writer_->manageErrorEventMsg(emsg);
 
       // tell the resource broker that sent us this event
       // that we are done with it and it can forget about it
