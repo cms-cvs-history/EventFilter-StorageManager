@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.40 2009/03/19 10:07:56 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.41 2009/03/19 11:55:28 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.40 2009/03/19 10:07:56 dshpakov Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.41 2009/03/19 11:55:28 mommsen Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -205,19 +205,20 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
-  sharedResourcesInstance_._commandQueue.reset(new CommandQueue(128));
-  sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
-  sharedResourcesInstance_._fragmentQueue2.reset(new FragmentQueue(1024));
-  sharedResourcesInstance_._streamQueue.reset(new StreamQueue(1024));
-  sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
+  sharedResourcesPtr_.reset(new SharedResources());
+  sharedResourcesPtr_->_commandQueue.reset(new CommandQueue(128));
+  sharedResourcesPtr_->_fragmentQueue.reset(new FragmentQueue(1024));
+  sharedResourcesPtr_->_fragmentQueue2.reset(new FragmentQueue(1024));
+  sharedResourcesPtr_->_streamQueue.reset(new StreamQueue(1024));
+  sharedResourcesPtr_->_registrationQueue.reset(new RegistrationQueue(128));
 
   unsigned long instance = getApplicationDescriptor()->getInstance();
 
-  sharedResourcesInstance_._configuration.reset(new Configuration(ispace,
-                                                                  instance));
-  sharedResourcesInstance_._initMsgCollection.reset(new InitMsgCollection());
+  sharedResourcesPtr_->_configuration.reset(new Configuration(ispace,
+                                                              instance));
+  sharedResourcesPtr_->_initMsgCollection.reset(new InitMsgCollection());
 
-  fragmentProcessor_ = new FragmentProcessor(sharedResourcesInstance_);
+  fragmentProcessor_ = new FragmentProcessor(sharedResourcesPtr_);
 
   startFragmentProcessorWorkLoop();
 }
@@ -289,7 +290,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -386,7 +387,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -442,7 +443,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
   I2OChain i2oChain(ref);
-  sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -490,11 +491,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  I2OChain i2oChain(ref->duplicate());
-  sharedResourcesInstance_._fragmentQueue->enq_wait(i2oChain);
-
   I2OChain i2oChain2(ref);
-  sharedResourcesInstance_._fragmentQueue2->enq_wait(i2oChain2);
+  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain2);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -511,7 +509,7 @@ throw (xgi::exception::Exception)
   try
   {
     DiskWritingParams dwParams =
-      sharedResourcesInstance_._configuration->getDiskWritingParams();
+      sharedResourcesPtr_->_configuration->getDiskWritingParams();
 
     WebPageHelper::defaultWebPage(
       out,
@@ -629,7 +627,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
         boost::shared_ptr<InitMsgCollection> initMsgCollection =
-          sharedResourcesInstance_._initMsgCollection;
+          sharedResourcesPtr_->_initMsgCollection;
         idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
         for( ; oi != oe; ++oi) {
           std::string outputModuleLabel = oi->second;
@@ -897,7 +895,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</table>" << endl;
 
   DiskWritingParams dwParams =
-    sharedResourcesInstance_._configuration->getDiskWritingParams();
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
 
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
   *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
@@ -1425,8 +1423,8 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "<hr/>"                                                    << endl;
 
     // should first test if jc_ is valid
-    if(sharedResourcesInstance_._initMsgCollection.get() != NULL &&
-       sharedResourcesInstance_._initMsgCollection->size() > 0) {
+    if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+       sharedResourcesPtr_->_initMsgCollection->size() > 0) {
       boost::mutex::scoped_lock sl(halt_lock_);
       if(jc_.use_count() != 0) {
         std::list<std::string>& files = jc_->get_filelist();
@@ -1485,11 +1483,11 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
-     sharedResourcesInstance_._initMsgCollection.get() != NULL &&
-     sharedResourcesInstance_._initMsgCollection->size() > 0)
+     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection->size() > 0)
   {
     boost::shared_ptr<EventServer> eventServer =
-      sharedResourcesInstance_._oldEventServer;
+      sharedResourcesPtr_->_oldEventServer;
     if (eventServer.get() != NULL)
     {
       // if we've stored a "registry warning" in the consumer pipe, send
@@ -1514,7 +1512,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
       // that new INIT message(s) are available
       else if (consPtr.get() != NULL && consPtr->isProxyServer() &&
                consumerInitMsgCount >= 0 &&
-               sharedResourcesInstance_._initMsgCollection->size() > consumerInitMsgCount)
+               sharedResourcesPtr_->_initMsgCollection->size() > consumerInitMsgCount)
       {
         OtherMessageBuilder othermsg(&mybuffer_[0],
                                      Header::NEW_INIT_AVAILABLE);
@@ -1593,13 +1591,13 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(fsm_.stateName()->toString() == "Enabled" &&
-     sharedResourcesInstance_._initMsgCollection.get() != NULL &&
-     sharedResourcesInstance_._initMsgCollection->size() > 0)
+     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection->size() > 0)
     {
       std::string errorString;
       InitMsgSharedPtr serializedProds;
       boost::shared_ptr<EventServer> eventServer =
-        sharedResourcesInstance_._oldEventServer;
+        sharedResourcesPtr_->_oldEventServer;
       if (eventServer.get() != NULL)
       {
         boost::shared_ptr<ConsumerPipe> consPtr =
@@ -1611,7 +1609,7 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
           // picture to consumers
           boost::mutex::scoped_lock sl(consumerInitMsgLock_);
           boost::shared_ptr<InitMsgCollection> initMsgCollection =
-            sharedResourcesInstance_._initMsgCollection;
+            sharedResourcesPtr_->_initMsgCollection;
           try
           {
             if (consPtr->isProxyServer())
@@ -1735,7 +1733,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
     out->write(buffer,strlen(buffer));
 
     boost::shared_ptr<EventServer> eventServer =
-      sharedResourcesInstance_._oldEventServer;
+      sharedResourcesPtr_->_oldEventServer;
     if (eventServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
@@ -1792,7 +1790,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
       }
     }
     boost::shared_ptr<DQMEventServer> dqmServer =
-      sharedResourcesInstance_._oldDQMEventServer;
+      sharedResourcesPtr_->_oldDQMEventServer;
     if (dqmServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
@@ -1943,14 +1941,14 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</table>"                                                 << endl;
 
   EventServingParams esParams =
-    sharedResourcesInstance_._configuration->getEventServingParams();
+    sharedResourcesPtr_->_configuration->getEventServingParams();
 
   if(fsm_.stateName()->toString() == "Enabled")
   {
     boost::shared_ptr<EventServer> eventServer =
-      sharedResourcesInstance_._oldEventServer;
+      sharedResourcesPtr_->_oldEventServer;
     boost::shared_ptr<InitMsgCollection> initMsgCollection =
-      sharedResourcesInstance_._initMsgCollection;
+      sharedResourcesPtr_->_initMsgCollection;
     if (eventServer.get() != NULL && initMsgCollection.get() != NULL)
     {
       if (initMsgCollection->size() > 0)
@@ -2921,11 +2919,11 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
            << std::endl;
     }
 
-    if(sharedResourcesInstance_._initMsgCollection.get() != NULL &&
-       sharedResourcesInstance_._initMsgCollection->size() > 0)
+    if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+       sharedResourcesPtr_->_initMsgCollection->size() > 0)
     {
       boost::shared_ptr<InitMsgCollection> initMsgCollection =
-        sharedResourcesInstance_._initMsgCollection;
+        sharedResourcesPtr_->_initMsgCollection;
       *out << "<h3>HLT Trigger Paths:</h3>" << std::endl;
       *out << "<table border=\"1\" width=\"100%\">" << std::endl;
 
@@ -3011,7 +3009,7 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   // fetch the event server
   // (it and/or the job controller may not have been created yet)
   boost::shared_ptr<EventServer> eventServer =
-    sharedResourcesInstance_._oldEventServer;
+    sharedResourcesPtr_->_oldEventServer;
 
   // if no event server, tell the consumer that we're not ready
   if (eventServer.get() == NULL)
@@ -3091,7 +3089,7 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
                                                          std::string());
 
     EventServingParams esParams =
-      sharedResourcesInstance_._configuration->getEventServingParams();
+      sharedResourcesPtr_->_configuration->getEventServingParams();
 
     // create the local consumer interface and add it to the event server
     boost::shared_ptr<ConsumerPipe>
@@ -3169,7 +3167,7 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   if(fsm_.stateName()->toString() == "Enabled" && consumerId != 0)
   {
     boost::shared_ptr<DQMEventServer> eventServer =
-      sharedResourcesInstance_._oldDQMEventServer;
+      sharedResourcesPtr_->_oldDQMEventServer;
     if (eventServer.get() != NULL)
     {
       boost::shared_ptr< std::vector<char> > bufPtr =
@@ -3244,7 +3242,7 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     // (it and/or the job controller may not have been created yet
     //  if not in the enabled state)
     boost::shared_ptr<DQMEventServer> eventServer =
-      sharedResourcesInstance_._oldDQMEventServer;
+      sharedResourcesPtr_->_oldDQMEventServer;
 
     // if no event server, tell the consumer that we're not ready
     if (eventServer.get() == NULL)
@@ -3259,7 +3257,7 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     else
     {
       EventServingParams esParams =
-        sharedResourcesInstance_._configuration->getEventServingParams();
+        sharedResourcesPtr_->_configuration->getEventServingParams();
 
       // create the local consumer interface and add it to the event server
       boost::shared_ptr<DQMConsumerPipe>
@@ -3410,7 +3408,7 @@ void StorageManager::actionPerformed(xdata::Event& e)
       namesOfOutMod_.clear();
 
       boost::shared_ptr<InitMsgCollection> initMsgCollection =
-        sharedResourcesInstance_._initMsgCollection;
+        sharedResourcesPtr_->_initMsgCollection;
       idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
       for( ; oi != oe; ++oi) {
         std::string outputModuleLabel = oi->second;
@@ -3480,7 +3478,7 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
 
-    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
 
     configureAction();
 
@@ -3515,13 +3513,13 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
 
 void StorageManager::configureAction()
 {
-  sharedResourcesInstance_._configuration->updateAllParams();
+  sharedResourcesPtr_->_configuration->updateAllParams();
   DiskWritingParams dwParams =
-    sharedResourcesInstance_._configuration->getDiskWritingParams();
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
   DQMProcessingParams dqmParams =
-    sharedResourcesInstance_._configuration->getDQMProcessingParams();
+    sharedResourcesPtr_->_configuration->getDQMProcessingParams();
   EventServingParams esParams =
-    sharedResourcesInstance_._configuration->getEventServingParams();
+    sharedResourcesPtr_->_configuration->getEventServingParams();
 
   if(!edmplugin::PluginManager::isAvailable()) {
     edmplugin::PluginManager::configure(edmplugin::standard::config());
@@ -3531,20 +3529,20 @@ void StorageManager::configureAction()
   checkDirectoryOK(dwParams._filePath);
   if((bool)dqmParams._archiveDQM) checkDirectoryOK(dqmParams._filePrefixDQM);
 
-  sharedResourcesInstance_._oldEventServer.
+  sharedResourcesPtr_->_oldEventServer.
     reset(new EventServer(esParams._maxESEventRate, esParams._maxESDataRate,
                           esParams._esSelectedHLTOutputModule));
-  sharedResourcesInstance_._oldDQMEventServer.
+  sharedResourcesPtr_->_oldDQMEventServer.
     reset(new DQMEventServer(esParams._DQMmaxESEventRate));
 
-  sharedResourcesInstance_._serviceManager.reset(new ServiceManager(dwParams));
-  sharedResourcesInstance_._dqmServiceManager.reset(new DQMServiceManager());
-  sharedResourcesInstance_._dqmServiceManager->setParameters(dqmParams);
+  sharedResourcesPtr_->_serviceManager.reset(new ServiceManager(dwParams));
+  sharedResourcesPtr_->_dqmServiceManager.reset(new DQMServiceManager());
+  sharedResourcesPtr_->_dqmServiceManager->setParameters(dqmParams);
 
   boost::shared_ptr<DiscardManager> discardMgr;
   Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
   for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
-    //std::cout << "POOL NAME = " << nameList[idx] << std::endl;
+    //std::cout << "POOL NAME2 = " << nameList[idx] << std::endl;
     if (idx == 0 || nameList[idx].find("TCP") != std::string::npos) {
       toolbox::net::URN poolURN(nameList[idx]);
       toolbox::mem::Pool* thePool =
@@ -3554,10 +3552,10 @@ void StorageManager::configureAction()
                                           thePool));
     }
   }
-  sharedResourcesInstance_._discardManager = discardMgr;
+  sharedResourcesPtr_->_discardManager = discardMgr;
 
   jc_.reset(new stor::JobController(getApplicationLogger(),
-                                    sharedResourcesInstance_));
+                                    sharedResourcesPtr_));
 
   jc_->setSMRBSenderList(&smrbsenders_);
 }
@@ -3565,10 +3563,10 @@ void StorageManager::configureAction()
 
 bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
 {
-  if (sharedResourcesInstance_._configuration->streamConfigurationHasChanged()) {
+  if (sharedResourcesPtr_->_configuration->streamConfigurationHasChanged()) {
     try {
       LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
-      sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
+      sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
       this->haltAction();
       this->configureAction();
       LOG4CPLUS_INFO(getApplicationLogger(),"Finished re-configuring!");
@@ -3598,7 +3596,7 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start enabling ...");
 
-    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
 
     smrbsenders_.clear();
     
@@ -3621,7 +3619,7 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     jc_->start();
 
     boost::shared_ptr<InitMsgCollection> initMsgCollection =
-      sharedResourcesInstance_._initMsgCollection;
+      sharedResourcesPtr_->_initMsgCollection;
     if (initMsgCollection.get() != 0) {
       initMsgCollection->clear();
     }
@@ -3650,7 +3648,7 @@ bool StorageManager::stopping(toolbox::task::WorkLoop* wl)
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start stopping ...");
-    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
     stopAction();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished stopping!");
@@ -3678,7 +3676,7 @@ bool StorageManager::halting(toolbox::task::WorkLoop* wl)
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start halting ...");
 
-    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
 
     haltAction();
     
@@ -3734,7 +3732,7 @@ void StorageManager::stopAction()
   namesOfOutMod_.clear();
 
   boost::shared_ptr<InitMsgCollection> initMsgCollection =
-    sharedResourcesInstance_._initMsgCollection;
+    sharedResourcesPtr_->_initMsgCollection;
   idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
   for( ; oi != oe; ++oi) {
       std::string outputModuleLabel = oi->second;
@@ -3756,13 +3754,13 @@ void StorageManager::stopAction()
   }
   
   // should clear the event server(s) last event/queue
-  if (sharedResourcesInstance_._oldEventServer.get() != NULL)
+  if (sharedResourcesPtr_->_oldEventServer.get() != NULL)
   {
-    sharedResourcesInstance_._oldEventServer->clearQueue();
+    sharedResourcesPtr_->_oldEventServer->clearQueue();
   }
-  if (sharedResourcesInstance_._oldDQMEventServer.get() != NULL)
+  if (sharedResourcesPtr_->_oldDQMEventServer.get() != NULL)
   {
-    sharedResourcesInstance_._oldDQMEventServer->clearQueue();
+    sharedResourcesPtr_->_oldDQMEventServer->clearQueue();
   }
 }
 
@@ -3830,7 +3828,7 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 void StorageManager::startFragmentProcessorWorkLoop() throw (evf::Exception)
 {
   DiskWritingParams dwParams =
-    sharedResourcesInstance_._configuration->getDiskWritingParams();
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
   try {
     wlFragProc_=
       toolbox::task::getWorkLoopFactory()->
@@ -3850,7 +3848,7 @@ void StorageManager::startFragmentProcessorWorkLoop() throw (evf::Exception)
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)
 {
   DiskWritingParams dwParams =
-    sharedResourcesInstance_._configuration->getDiskWritingParams();
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
   try {
     wlMonitoring_=
       toolbox::task::getWorkLoopFactory()->
@@ -3883,8 +3881,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   }
 
   ::sleep(10);
-  if(sharedResourcesInstance_._initMsgCollection.get() != NULL &&
-     sharedResourcesInstance_._initMsgCollection->size() > 0) {
+  if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection->size() > 0) {
     boost::mutex::scoped_lock sl(halt_lock_);
     if(jc_.use_count() != 0) {
       // this is needed only if using flashlist infospace (not for the moment)

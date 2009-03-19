@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.25 2009/03/18 17:33:44 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.26 2009/03/18 20:47:22 biery Exp $
 */
 
 #include <string>
@@ -152,7 +152,7 @@ namespace stor {
     boost::shared_ptr<stor::JobController> jc_;
     boost::mutex                           halt_lock_;
 
-    SharedResources sharedResourcesInstance_;
+    boost::shared_ptr<SharedResources> sharedResourcesPtr_;
 
     evf::Css css_;
     int pool_is_set_;

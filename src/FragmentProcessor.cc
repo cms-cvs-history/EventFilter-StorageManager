@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.13 2009/03/19 12:08:01 dshpakov Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.14 2009/03/19 19:01:59 biery Exp $
 
 #include <unistd.h>
 
@@ -8,7 +8,7 @@
 using namespace stor;
 
 
-FragmentProcessor::FragmentProcessor( SharedResources sr ) :
+FragmentProcessor::FragmentProcessor( boost::shared_ptr<SharedResources> sr ) :
   _sharedResources(sr),
   _fragmentStore(),
   _eventDistributor(sr),
@@ -19,7 +19,7 @@ FragmentProcessor::FragmentProcessor( SharedResources sr ) :
   _fileCheckEventCounter(0)
 {
   _stateMachine.reset(new StateMachine(&_diskWriter, &_eventDistributor,
-                                       &_fragmentStore, &_sharedResources));
+                                       &_fragmentStore, &(*_sharedResources)));
   _stateMachine->initiate();
 }
 
@@ -47,7 +47,7 @@ void FragmentProcessor::processOneFragmentIfPossible()
 void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
-  boost::shared_ptr<FragmentQueue> fq = _sharedResources._fragmentQueue2;
+  boost::shared_ptr<FragmentQueue> fq = _sharedResources->_fragmentQueue2;
   ::sleep(_timeout);
   //if (fq->deq_timed_wait(fragment, _timeout))
   if (fq->deq_nowait(fragment))
@@ -82,7 +82,7 @@ void FragmentProcessor::updateStatistics()
 void FragmentProcessor::processAllCommands()
 {
 
-  boost::shared_ptr<CommandQueue> cq = _sharedResources._commandQueue;
+  boost::shared_ptr<CommandQueue> cq = _sharedResources->_commandQueue;
   stor::event_ptr evt;
 
   while( cq->deq_nowait( evt ) )
@@ -97,7 +97,7 @@ void FragmentProcessor::processAllRegistrations()
 {
   RegInfoBasePtr regInfo;
   boost::shared_ptr<RegistrationQueue> regQueue =
-    _sharedResources._registrationQueue;
+    _sharedResources->_registrationQueue;
   while ( regQueue->deq_nowait( regInfo ) )
     {
       regInfo->registerMe( &_eventDistributor );
@@ -109,13 +109,13 @@ void FragmentProcessor::processAllRegistrations()
 void FragmentProcessor::closeDiskFilesIfNeeded()
 {
   DiskWritingParams dwParams =
-    _sharedResources._configuration->getDiskWritingParams();
+    _sharedResources->_configuration->getDiskWritingParams();
   time_t now = time(0);
   if ((now - _fileCheckIntervalStart) >= dwParams._fileClosingTestInterval)
     {
       _fileCheckIntervalStart = now;
       boost::shared_ptr<edm::ServiceManager> serviceManager =
-        _sharedResources._serviceManager;
+        _sharedResources->_serviceManager;
       if (serviceManager.get() != NULL)
         {
           serviceManager->closeFilesIfNeeded();

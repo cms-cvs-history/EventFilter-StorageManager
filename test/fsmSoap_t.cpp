@@ -39,10 +39,11 @@ namespace stor {
 
             DiskWriter dw;
             FragmentStore fs;
-            SharedResources sr;
+            boost::shared_ptr<SharedResources> sr;
+            sr.reset(new SharedResources());
             EventDistributor ed(sr);
             
-            stateMachine = new StateMachine( &dw, &ed, &fs, &sr );
+            stateMachine = new StateMachine( &dw, &ed, &fs, &(*sr) );
             stateMachine->initiate();
             
 	    xoap::bind(

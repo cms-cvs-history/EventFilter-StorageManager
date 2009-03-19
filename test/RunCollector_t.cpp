@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.12.4.6 2009/03/13 17:37:03 biery Exp $
+// $Id: RunCollector_t.cpp,v 1.12.4.7 2009/03/16 19:21:40 biery Exp $
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -144,7 +144,7 @@ class Main
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
-  stor::SharedResources sharedResources_;
+  boost::shared_ptr<stor::SharedResources> sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -166,7 +166,8 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
-  sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
+  sharedResources_.reset(new stor::SharedResources());
+  sharedResources_->_fragmentQueue.reset(new stor::FragmentQueue(128));
 
   coll_.reset(new stor::FragmentCollector(info_,
                                           logger_,sharedResources_));

@@ -1,11 +1,11 @@
-// $Id: EventDistributor.cc,v 1.1.2.24 2009/03/19 11:54:33 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.25 2009/03/19 18:59:38 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
 using namespace stor;
 
 
-EventDistributor::EventDistributor( SharedResources sr ):
+EventDistributor::EventDistributor( boost::shared_ptr<SharedResources> sr ):
   _sharedResources(sr)
 {
 
@@ -28,7 +28,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         std::vector<unsigned char> b;
         ioc.copyFragmentsIntoBuffer(b);
         InitMsgView imv( &b[0] );
-        if( _sharedResources._initMsgCollection->addIfUnique( imv ) )
+        if( _sharedResources->_initMsgCollection->addIfUnique( imv ) )
           {
             for( EvtSelList::iterator it = _eventStreamSelectors.begin();
                  it != _eventStreamSelectors.end();
@@ -106,7 +106,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
   if( ioc.isTaggedForAnyStream() )
     {
-      _sharedResources._streamQueue->enq_wait( ioc );
+      _sharedResources->_streamQueue->enq_wait( ioc );
     }
 
 }
@@ -125,7 +125,7 @@ void EventDistributor::registerEventConsumer
   EventConsumerSelector evtSel( *registrationInfo );
 
   InitMsgSharedPtr initMsgPtr =
-    _sharedResources._initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
+    _sharedResources->_initMsgCollection->getElementForOutputModule( registrationInfo->selHLTOut() );
   if ( initMsgPtr.get() != 0 )
     {
       uint8* regPtr = &(*initMsgPtr)[0];

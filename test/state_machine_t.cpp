@@ -157,14 +157,15 @@ int main()
 
   DiskWriter dw;
   FragmentStore fs;
-  SharedResources sr;
+  boost::shared_ptr<SharedResources> sr;
+  sr.reset(new SharedResources());
 
   boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
-  sr._commandQueue = cmdQueue;
+  sr->_commandQueue = cmdQueue;
 
   EventDistributor ed(sr);
 
-  StateMachine m( &dw, &ed, &fs, &sr );
+  StateMachine m( &dw, &ed, &fs, &(*sr) );
 
   EventList elist;
 

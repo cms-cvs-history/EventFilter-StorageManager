@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.14.12.4 2009/03/11 17:30:57 biery Exp $
+ $Id: StorageManagerRun.cpp,v 1.14.12.5 2009/03/13 17:37:03 biery Exp $
 
 ----------------------------------------------------------------------*/  
 
@@ -105,7 +105,7 @@ class Main // : public xdaq::Application
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
-  stor::SharedResources sharedResources_;
+  boost::shared_ptr<stor::SharedResources> sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -145,7 +145,8 @@ Main::Main(const string& my_config_file,
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
-  sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
+  sharedResources_.reset(new stor::SharedResources());
+  sharedResources_->_fragmentQueue.reset(new stor::FragmentQueue(128));
 
   //jc_ = new stor::JobController(pr,
   jc_ = new stor::JobController(logger_,sharedResources_);

@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.15 2009/03/16 20:28:23 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.16 2009/03/17 02:05:08 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -47,7 +47,7 @@ namespace stor
 
   FragmentCollector::FragmentCollector(HLTInfo& h,
 				       log4cplus::Logger& applicationLogger,
-                                       SharedResources sharedResources):
+                                       boost::shared_ptr<SharedResources> sharedResources):
     cmd_q_(&(h.getCommandQueue())),
     frag_q_(&(h.getFragmentQueue())),
     prods_(0),
@@ -55,13 +55,13 @@ namespace stor
     lastStaleCheckTime_(time(0)),
     staleFragmentTimeout_(30),
     applicationLogger_(applicationLogger),
-    newFragmentQueue_(sharedResources._fragmentQueue),
-    discardManager_(sharedResources._discardManager),
-    writer_(sharedResources._serviceManager),
-    dqmServiceManager_(sharedResources._dqmServiceManager),
-    eventServer_(sharedResources._oldEventServer),
-    DQMeventServer_(sharedResources._oldDQMEventServer),
-    initMsgCollection_(sharedResources._initMsgCollection)
+    newFragmentQueue_(sharedResources->_fragmentQueue),
+    discardManager_(sharedResources->_discardManager),
+    writer_(sharedResources->_serviceManager),
+    dqmServiceManager_(sharedResources->_dqmServiceManager),
+    eventServer_(sharedResources->_oldEventServer),
+    DQMeventServer_(sharedResources->_oldDQMEventServer),
+    initMsgCollection_(sharedResources->_initMsgCollection)
   {
     // supposed to have given parameterSet smConfigString to writer_
     // at ctor
@@ -74,7 +74,7 @@ namespace stor
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,
 				       log4cplus::Logger& applicationLogger,
-                                       SharedResources sharedResources):
+                                       boost::shared_ptr<SharedResources> sharedResources):
     cmd_q_(&(info.get()->getCommandQueue())),
     frag_q_(&(info.get()->getFragmentQueue())),
     prods_(0),
@@ -82,13 +82,13 @@ namespace stor
     lastStaleCheckTime_(time(0)),
     staleFragmentTimeout_(30),
     applicationLogger_(applicationLogger),
-    newFragmentQueue_(sharedResources._fragmentQueue),
-    discardManager_(sharedResources._discardManager),
-    writer_(sharedResources._serviceManager),
-    dqmServiceManager_(sharedResources._dqmServiceManager),
-    eventServer_(sharedResources._oldEventServer),
-    DQMeventServer_(sharedResources._oldDQMEventServer),
-    initMsgCollection_(sharedResources._initMsgCollection)
+    newFragmentQueue_(sharedResources->_fragmentQueue),
+    discardManager_(sharedResources->_discardManager),
+    writer_(sharedResources->_serviceManager),
+    dqmServiceManager_(sharedResources->_dqmServiceManager),
+    eventServer_(sharedResources->_oldEventServer),
+    DQMeventServer_(sharedResources->_oldDQMEventServer),
+    initMsgCollection_(sharedResources->_initMsgCollection)
   {
     // supposed to have given parameterSet smConfigString to writer_
     // at ctor

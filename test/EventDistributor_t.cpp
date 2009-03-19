@@ -52,7 +52,7 @@ private:
                           EventDistributor::ErrStrConfList& errorConfigs);
   std::string getSampleStreamConfig();
 
-  SharedResources _sharedResources;
+  boost::shared_ptr<SharedResources> _sharedResources;
   boost::shared_ptr<EventDistributor> _eventDistributor;
 };
 
@@ -61,14 +61,15 @@ void testEventDistributor::testInitMessages()
 {
   if (_eventDistributor.get() == 0)
     {
-      _sharedResources._initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources._streamQueue.reset(new StreamQueue(1024));
+      _sharedResources.reset(new SharedResources());
+      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
+      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
@@ -82,7 +83,7 @@ void testEventDistributor::testInitMessages()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
 
   // *** first INIT message ***
 
@@ -94,7 +95,7 @@ void testEventDistributor::testInitMessages()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   // *** second INIT message ***
 
@@ -106,7 +107,7 @@ void testEventDistributor::testInitMessages()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 2);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 2);
 
   // *** third INIT message ***
 
@@ -118,7 +119,7 @@ void testEventDistributor::testInitMessages()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 3);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 3);
 
   // *** duplicate INIT message ***
 
@@ -130,7 +131,7 @@ void testEventDistributor::testInitMessages()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 3);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 3);
 
   // *** bogus INIT message ***
 
@@ -142,18 +143,18 @@ void testEventDistributor::testInitMessages()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 4);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 4);
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
   // *** cleanup ***
 
-  _sharedResources._initMsgCollection->clear();
+  _sharedResources->_initMsgCollection->clear();
   _eventDistributor->clearStreams();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 }
@@ -163,14 +164,15 @@ void testEventDistributor::testStreamSelection()
 {
   if (_eventDistributor.get() == 0)
     {
-      _sharedResources._initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources._streamQueue.reset(new StreamQueue(1024));
+      _sharedResources.reset(new SharedResources());
+      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
+      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
@@ -184,7 +186,7 @@ void testEventDistributor::testStreamSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
 
   // *** INIT message ***
 
@@ -196,7 +198,7 @@ void testEventDistributor::testStreamSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   // *** HLT trigger bit tests ***
   std::vector<unsigned char> hltBits;
@@ -234,7 +236,7 @@ void testEventDistributor::testStreamSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -265,7 +267,7 @@ void testEventDistributor::testStreamSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
@@ -290,7 +292,7 @@ void testEventDistributor::testStreamSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
@@ -311,7 +313,7 @@ void testEventDistributor::testStreamSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   CPPUNIT_ASSERT(errorMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
@@ -326,12 +328,12 @@ void testEventDistributor::testStreamSelection()
 
   // *** cleanup ***
 
-  _sharedResources._initMsgCollection->clear();
+  _sharedResources->_initMsgCollection->clear();
   _eventDistributor->clearStreams();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 }
@@ -341,14 +343,15 @@ void testEventDistributor::testConsumerSelection()
 {
   if (_eventDistributor.get() == 0)
     {
-      _sharedResources._initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources._streamQueue.reset(new StreamQueue(1024));
+      _sharedResources.reset(new SharedResources());
+      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
+      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
@@ -371,7 +374,7 @@ void testEventDistributor::testConsumerSelection()
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-    CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+    CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   }
 
   // *** INIT message ***
@@ -384,7 +387,7 @@ void testEventDistributor::testConsumerSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   // *** second consumer ***
   {
@@ -401,7 +404,7 @@ void testEventDistributor::testConsumerSelection()
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-    CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+    CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
   }
 
   // *** first event message (should pass both consumers) ***
@@ -452,7 +455,7 @@ void testEventDistributor::testConsumerSelection()
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 3);
-    CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+    CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
   }
   // *** fourth consumer ***
   {
@@ -469,7 +472,7 @@ void testEventDistributor::testConsumerSelection()
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
     CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
-    CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+    CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
   }
   
   // *** second event message (should not pass) ***
@@ -577,17 +580,17 @@ void testEventDistributor::testConsumerSelection()
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
-  _sharedResources._initMsgCollection->clear();
+  _sharedResources->_initMsgCollection->clear();
   _eventDistributor->clearStreams();
   _eventDistributor->clearConsumers();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources._initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 }
@@ -722,8 +725,9 @@ void testEventDistributor::testDQMMessages()
 
   if (_eventDistributor.get() == 0)
     {
-      _sharedResources._initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources._streamQueue.reset(new StreamQueue(1024));
+      _sharedResources.reset(new SharedResources());
+      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
+      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 

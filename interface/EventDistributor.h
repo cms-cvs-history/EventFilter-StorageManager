@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.20 2009/03/12 12:24:37 dshpakov Exp $
+// $Id: EventDistributor.h,v 1.1.2.21 2009/03/19 18:58:01 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -28,16 +28,16 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.20 $
-   * $Date: 2009/03/12 12:24:37 $
+   * $Author: biery $
+   * $Revision: 1.1.2.21 $
+   * $Date: 2009/03/19 18:58:01 $
    */
 
   class EventDistributor
   {
   public:
 
-    EventDistributor( SharedResources sr );
+    EventDistributor( boost::shared_ptr<SharedResources> sr );
 
     ~EventDistributor();
 
@@ -110,7 +110,7 @@ namespace stor {
     EventQueueCollection _eventConsumerQueueCollection;
     EventQueueCollection _DQMQueueCollection;
 
-    SharedResources _sharedResources;
+    boost::shared_ptr<SharedResources> _sharedResources;
 
     typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;

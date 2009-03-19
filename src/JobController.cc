@@ -20,13 +20,13 @@ namespace stor
   }
 
   JobController::JobController(log4cplus::Logger& applicationLogger,
-                               SharedResources sharedResources) :
+                               boost::shared_ptr<SharedResources> sharedResources) :
   applicationLogger_(applicationLogger)      
   {
     init(sharedResources);
   } 
 
-  void JobController::init(SharedResources sharedResources)
+  void JobController::init(boost::shared_ptr<SharedResources> sharedResources)
   {
     std::auto_ptr<HLTInfo> inf(new HLTInfo());
 

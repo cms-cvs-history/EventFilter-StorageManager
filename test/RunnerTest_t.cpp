@@ -88,7 +88,7 @@ class Main
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
-  stor::SharedResources sharedResources_;
+  boost::shared_ptr<stor::SharedResources> sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -109,7 +109,8 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
-  sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
+  sharedResources_.reset(new stor::SharedResources());
+  sharedResources_->_fragmentQueue.reset(new stor::FragmentQueue(128));
 
   coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),
                                           logger_,sharedResources_));
