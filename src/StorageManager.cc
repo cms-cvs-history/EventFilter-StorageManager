@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.38 2009/03/18 17:33:45 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.39 2009/03/18 20:47:23 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.38 2009/03/18 17:33:45 biery Exp $ $Name:  $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.39 2009/03/18 20:47:23 biery Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -3479,6 +3479,8 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
 
+    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
+
     configureAction();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished configuring!");
@@ -3565,6 +3567,7 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
   if (sharedResourcesInstance_._configuration->streamConfigurationHasChanged()) {
     try {
       LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
+      sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
       this->haltAction();
       this->configureAction();
       LOG4CPLUS_INFO(getApplicationLogger(),"Finished re-configuring!");
@@ -3593,6 +3596,8 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
 
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start enabling ...");
+
+    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
 
     smrbsenders_.clear();
     
@@ -3644,7 +3649,7 @@ bool StorageManager::stopping(toolbox::task::WorkLoop* wl)
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start stopping ...");
-
+    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
     stopAction();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished stopping!");
@@ -3671,6 +3676,8 @@ bool StorageManager::halting(toolbox::task::WorkLoop* wl)
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start halting ...");
+
+    sharedResourcesInstance_._commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
 
     haltAction();
     
@@ -3777,40 +3784,6 @@ void StorageManager::haltAction()
 xoap::MessageReference StorageManager::fsmCallback(xoap::MessageReference msg)
   throw (xoap::exception::Exception)
 {
-#if TEST_CMD_QUEUE
-  xoap::SOAPPart     part    =msg->getSOAPPart();
-  xoap::SOAPEnvelope env     =part.getEnvelope();
-  xoap::SOAPBody     body    =env.getBody();
-  DOMNode           *node    =body.getDOMNode();
-  DOMNodeList       *bodyList=node->getChildNodes();
-  DOMNode           *command =0;
-  string             commandName;
-  
-  for (unsigned int i=0;i<bodyList->getLength();i++) {
-    command = bodyList->item(i);
-    if(command->getNodeType() == DOMNode::ELEMENT_NODE) {
-      commandName = xoap::XMLCh2String(command->getLocalName());
-      break;
-    }
-  }
-  std::cout << std::endl << "commandName = " << commandName << std::endl;
-
-  stor::event_ptr stMachEvent;
-  if (commandName == "Configure") {
-    stMachEvent.reset(new stor::Configure());
-  }
-  else if (commandName == "Enable") {
-    stMachEvent.reset(new stor::Enable());
-  }
-  else if (commandName == "Stop") {
-    stMachEvent.reset(new stor::Stop());
-  }
-  else if (commandName == "Halt") {
-    stMachEvent.reset(new stor::Halt());
-  }
-  sharedResourcesInstance_._commandQueue->enq_wait(stMachEvent);
-#endif
-
   return fsm_.commandCallback(msg);
 }
 
