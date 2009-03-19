@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.2 2009/02/16 22:21:33 biery Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.3 2009/02/17 14:59:25 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -11,6 +11,7 @@
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 using namespace stor;
 
@@ -21,22 +22,26 @@ _runMonCollection(app),
 _fragMonCollection(app),
 _doMonitoring(true)
 {
+  startWorkLoop();
+}
+
+
+void StatisticsReporter::startWorkLoop()
+{
   try
   {
-    xdaq::ApplicationDescriptor *appDesc = _app->getApplicationDescriptor();
-    std::ostringstream identifier;
-    identifier << appDesc->getClassName() << appDesc->getInstance() << "/";
+    std::string identifier = utils::getIdentifier(_app->getApplicationDescriptor());
 
     _monitorWL=
       toolbox::task::getWorkLoopFactory()->getWorkLoop(
-        identifier.str() + "StatisticsReporter",
+        identifier + "StatisticsReporter",
         "waiting");
 
     if ( ! _monitorWL->isActive() )
     {
       toolbox::task::ActionSignature* monitorAction = 
         toolbox::task::bind(this, &StatisticsReporter::monitorAction, 
-          identifier.str() + "MonitorAction");
+          identifier + "MonitorAction");
       _monitorWL->submit(monitorAction);
 
       _monitorWL->activate();
