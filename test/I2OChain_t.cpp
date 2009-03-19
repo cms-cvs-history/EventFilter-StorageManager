@@ -1774,6 +1774,8 @@ testI2OChain::event_msg_header()
 
     stor::I2OChain eventMsgFrag(ref);
     CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
+    CPPUNIT_ASSERT(eventMsgFrag.runNumber() == runNumber);
+    CPPUNIT_ASSERT(eventMsgFrag.lumiSection() == lumiNumber);
 
     stor::FragKey fragmentKey = eventMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
@@ -2231,6 +2233,8 @@ testI2OChain::split_event_header()
       }
 
     CPPUNIT_ASSERT(eventMsgChain.messageCode() == Header::EVENT);
+    CPPUNIT_ASSERT(eventMsgChain.runNumber() == runNumber);
+    CPPUNIT_ASSERT(eventMsgChain.lumiSection() == lumiNumber);
 
     stor::FragKey fragmentKey = eventMsgChain.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
