@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.39 2009/03/18 20:47:23 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.40 2009/03/19 10:07:56 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.39 2009/03/18 20:47:23 biery Exp $ $Name: refdev01_scratch_branch $"),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.40 2009/03/19 10:07:56 dshpakov Exp $ $Name: refdev01_scratch_branch $"),
   _statReporter(new StatisticsReporter(this))
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
@@ -208,6 +208,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesInstance_._commandQueue.reset(new CommandQueue(128));
   sharedResourcesInstance_._fragmentQueue.reset(new FragmentQueue(1024));
   sharedResourcesInstance_._fragmentQueue2.reset(new FragmentQueue(1024));
+  sharedResourcesInstance_._streamQueue.reset(new StreamQueue(1024));
   sharedResourcesInstance_._registrationQueue.reset(new RegistrationQueue(128));
 
   unsigned long instance = getApplicationDescriptor()->getInstance();
