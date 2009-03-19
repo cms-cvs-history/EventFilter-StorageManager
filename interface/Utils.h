@@ -1,10 +1,13 @@
-// $Id: Utils.h,v 1.1.2.2 2009/03/03 18:32:08 paterno Exp $
+// $Id: Utils.h,v 1.1.2.3 2009/03/12 14:31:29 mommsen Exp $
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
 
 #include <string>
 #include <sys/time.h>
+
+#include "xdaq/ApplicationDescriptor.h"
+
 
 namespace stor {
 
@@ -13,9 +16,9 @@ namespace stor {
     /**
      * Collection of utility functions used in the storage manager
      *
-     * $Author: paterno $
-     * $Revision: 1.1.2.2 $
-     * $Date: 2009/03/03 18:32:08 $
+     * $Author: mommsen $
+     * $Revision: 1.1.2.3 $
+     * $Date: 2009/03/12 14:31:29 $
      */
 
     /**
@@ -48,6 +51,11 @@ namespace stor {
        may or may not depend on the actual formatting
     */
     std::string timeStamp(time_point_t);
+
+    /**
+       Returns an identifier string composed of class name and instance
+    */
+    std::string getIdentifier(xdaq::ApplicationDescriptor*);
 
 
   } // namespace utils

@@ -1,5 +1,5 @@
 /**
- * $Id: Utils.cc,v 1.1.2.1 2009/03/03 18:32:41 paterno Exp $
+ * $Id: Utils.cc,v 1.1.2.2 2009/03/12 14:31:39 mommsen Exp $
  */
 
 #include "EventFilter/StorageManager/interface/Utils.h"
@@ -13,7 +13,7 @@ namespace stor
 {
   namespace utils
   {
-
+    
     namespace
     {
       /**
@@ -29,8 +29,8 @@ namespace stor
 	out += static_cast<time_point_t>(in.tv_usec)/(1000*1000);
       }
     } // anonymous namespace
-    
-
+      
+      
     time_point_t getCurrentTime()
     {
       time_point_t result = -1.0;
@@ -38,8 +38,7 @@ namespace stor
       if (gettimeofday(&now, 0) == 0) timeval_to_timepoint(now, result);
       return result;
     }
-
-
+    
     std::string timeStamp(time_point_t)
     {
       time_t rawtime = (time_t)time;
@@ -57,6 +56,14 @@ namespace stor
       return timeStampStr.str();
     }
 
+    
+    std::string getIdentifier(xdaq::ApplicationDescriptor *appDesc)
+    {
+      std::ostringstream identifier;
+      identifier << appDesc->getClassName() << appDesc->getInstance() << "/";
+      return identifier.str();
+    }
+
   } // namespace utils
 
 } // namespace stor
@@ -66,3 +73,4 @@ namespace stor
 /// mode: c++ -
 /// c-basic-offset: 2 -
 /// indent-tabs-mode: nil -
+/// End: -
