@@ -942,6 +942,8 @@ testI2OChain::add_fragment()
     double lastFragmentTime3 = frag3.lastFragmentTime();
     ::usleep((unsigned int) 50);
 
+    CPPUNIT_ASSERT(frag3.messageCode() != Header::INVALID);
+
     frag1.addToChain(frag3);
     CPPUNIT_ASSERT(!frag1.empty());
     CPPUNIT_ASSERT(frag3.empty());
@@ -949,6 +951,8 @@ testI2OChain::add_fragment()
     CPPUNIT_ASSERT(!frag3.complete());
     CPPUNIT_ASSERT(frag1.faulty());
     CPPUNIT_ASSERT(!frag3.faulty());
+
+    CPPUNIT_ASSERT(frag1.messageCode() != Header::INVALID);
 
     CPPUNIT_ASSERT(frag1.fragmentCount() == 3);
     CPPUNIT_ASSERT(frag1.getFragmentID(0) == 1);
