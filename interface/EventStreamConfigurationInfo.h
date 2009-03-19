@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.4 2009/03/05 22:32:29 biery Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.1.2.5 2009/03/06 18:52:11 biery Exp $
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
@@ -24,14 +24,14 @@ namespace stor
     EventStreamConfigurationInfo( const std::string& streamLabel,
 				  long long maxFileSize,
 				  const FilterList& selEvents,
-				  const std::string& selHLTOut,
+				  const std::string& outputModuleLabel,
 				  bool useCompression,
 				  unsigned int compressionLevel,
 				  unsigned int maxEventSize ):
       _streamLabel( streamLabel ),
       _maxFileSize( maxFileSize ),
       _selEvents( selEvents ),
-      _selHLTOut( selHLTOut ),
+      _outputModuleLabel( outputModuleLabel ),
       _useCompression( useCompression ),
       _compressionLevel( compressionLevel ),
       _maxEventSize( maxEventSize ),
@@ -45,7 +45,7 @@ namespace stor
     const std::string& streamLabel() const { return _streamLabel; }
     long long maxFileSize() const { return _maxFileSize; }
     const FilterList& selEvents() const { return _selEvents; }
-    const std::string& selHLTOut() const { return _selHLTOut; }
+    const std::string& outputModuleLabel() const { return _outputModuleLabel; }
     bool useCompression() const { return _useCompression; }
     unsigned int compressionLevel() const { return _compressionLevel; }
     unsigned int maxEventSize() const { return _maxEventSize; }
@@ -63,7 +63,7 @@ namespace stor
     std::string _streamLabel;
     long long _maxFileSize;
     FilterList _selEvents;
-    std::string _selHLTOut;
+    std::string _outputModuleLabel;
     bool _useCompression;
     unsigned int _compressionLevel;
     unsigned int _maxEventSize;
