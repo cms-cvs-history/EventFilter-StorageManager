@@ -91,6 +91,7 @@ DrainingQueues::processStaleFragments() const
       outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 0);
     if ( gotStaleEvent )
     {
+      outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(staleEvent);
       ed->addEventToRelevantQueues(staleEvent);
     }
   }

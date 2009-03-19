@@ -78,6 +78,7 @@ Processing::do_noFragmentToProcess() const
     // TODO: make the timeout configurable
   if ( gotStaleEvent )
   {
+    outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(staleEvent);
     outermost_context().getEventDistributor()->addEventToRelevantQueues(staleEvent);
   }
 }
