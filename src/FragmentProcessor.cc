@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.11 2009/03/16 20:28:23 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.12 2009/03/18 20:39:41 biery Exp $
 
 #include <unistd.h>
 
@@ -81,6 +81,14 @@ void FragmentProcessor::updateStatistics()
 
 void FragmentProcessor::processAllCommands()
 {
+
+  boost::shared_ptr<CommandQueue> cq = _sharedResources._commandQueue;
+  stor::event_ptr evt;
+
+  while( cq->deq_nowait( evt ) )
+    {
+      _stateMachine->process_event( *evt );
+    }
 
 }
 
