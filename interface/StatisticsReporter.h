@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.1 2009/02/16 16:10:15 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -20,8 +20,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/02/16 16:10:15 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -52,6 +52,8 @@ namespace stor {
     //Prevent copying of the StatisticsReporter
     StatisticsReporter(StatisticsReporter const&);
     StatisticsReporter& operator=(StatisticsReporter const&);
+
+    void startWorkLoop();
 
     bool monitorAction(toolbox::task::WorkLoop*);
 
