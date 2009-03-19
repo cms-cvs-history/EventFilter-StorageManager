@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.19 2009/03/12 03:46:17 paterno Exp $
+// $Id: EventDistributor.h,v 1.1.2.20 2009/03/12 12:24:37 dshpakov Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -10,12 +10,10 @@
 #include "EventFilter/StorageManager/interface/EventConsumerSelector.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventStreamSelector.h"
-#include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/DQMEventSelector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
-#include "EventFilter/StorageManager/interface/StreamQueue.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -30,28 +28,23 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.19 $
-   * $Date: 2009/03/12 03:46:17 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.20 $
+   * $Date: 2009/03/12 12:24:37 $
    */
 
   class EventDistributor
   {
   public:
 
-    /**
-     * @deprecated
-     */
-    EventDistributor() {}
-
-    EventDistributor(boost::shared_ptr<InitMsgCollection>);
+    EventDistributor( SharedResources sr );
 
     ~EventDistributor();
 
     /**
      * Add the event given as I2OChain to the appropriate queues
      */
-    void addEventToRelevantQueues(I2OChain&);
+    void addEventToRelevantQueues( I2OChain& );
 
     /**
      * Returns false if no further events can be processed,
@@ -117,10 +110,7 @@ namespace stor {
     EventQueueCollection _eventConsumerQueueCollection;
     EventQueueCollection _DQMQueueCollection;
 
-    DQMEventQueue _dqmEventQueue;
-    StreamQueue _streamQueue;
-
-    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+    SharedResources _sharedResources;
 
     typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;
@@ -133,6 +123,9 @@ namespace stor {
 
     typedef std::vector<EventConsumerSelector> ConsSelList;
     ConsSelList _eventConsumerSelectors;
+
+    // temporary
+    std::vector<unsigned char> _tempEventArea;
 
   };
   
