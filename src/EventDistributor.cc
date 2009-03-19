@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.26 2009/03/19 19:32:44 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.27 2009/03/19 19:45:34 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -19,6 +19,29 @@ EventDistributor::~EventDistributor()
 
 
 void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
+{
+  // special handling for faulty or incomplete events
+  if ( ioc.faulty() || ioc.complete() )
+    {
+      // mark these events for the special SM error stream
+
+      // log a warning???
+    }
+
+  else
+    {
+      tagCompleteEventForQueues( ioc );
+    }
+
+  if( ioc.isTaggedForAnyStream() )
+    {
+      // enable this once we have the DiskWriter working...
+      //_sharedResources->_streamQueue->enq_wait( ioc );
+    }
+
+}
+
+void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
 {
   switch( ioc.messageCode() )
     {
@@ -111,12 +134,6 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
         break;
       }
 
-    }
-
-  if( ioc.isTaggedForAnyStream() )
-    {
-      // enable this once we have the DiskWriter working...
-      //_sharedResources->_streamQueue->enq_wait( ioc );
     }
 
 }

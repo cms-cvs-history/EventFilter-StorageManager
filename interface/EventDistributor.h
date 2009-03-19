@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.21 2009/03/19 18:58:01 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.22 2009/03/19 19:32:43 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -29,8 +29,8 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.21 $
-   * $Date: 2009/03/19 18:58:01 $
+   * $Revision: 1.1.2.22 $
+   * $Date: 2009/03/19 19:32:43 $
    */
 
   class EventDistributor
@@ -106,6 +106,8 @@ namespace stor {
     unsigned int initializedConsumerCount() const;
 
   private:
+
+    void tagCompleteEventForQueues( I2OChain& );
 
     EventQueueCollection _eventConsumerQueueCollection;
     EventQueueCollection _DQMQueueCollection;
