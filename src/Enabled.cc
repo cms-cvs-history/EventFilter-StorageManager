@@ -1,5 +1,6 @@
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include <iostream>
 
@@ -19,6 +20,9 @@ Enabled::~Enabled()
 
   // Clear any fragments left in the fragment store
   outermost_context().getFragmentStore()->clear();
+
+  // DQM end-run processing
+  outermost_context().getSharedResources()->_dqmServiceManager->stop();
 }
 
 string Enabled::do_stateName() const

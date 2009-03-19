@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.17 2009/03/19 19:32:44 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.18 2009/03/19 19:45:34 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -58,7 +58,6 @@ namespace stor
     newFragmentQueue_(sharedResources->_fragmentQueue),
     discardManager_(sharedResources->_discardManager),
     writer_(sharedResources->_serviceManager),
-    dqmServiceManager_(sharedResources->_dqmServiceManager),
     eventServer_(sharedResources->_oldEventServer),
     DQMeventServer_(sharedResources->_oldDQMEventServer),
     initMsgCollection_(sharedResources->_initMsgCollection)
@@ -70,7 +69,6 @@ namespace stor
     if (eventServer_.get() != NULL) {
       eventServer_->setStreamSelectionTable(writer_->getStreamSelectionTable());
     }
-    dqmServiceManager_->setDQMEventServer(DQMeventServer_);
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,
 				       log4cplus::Logger& applicationLogger,
@@ -85,7 +83,6 @@ namespace stor
     newFragmentQueue_(sharedResources->_fragmentQueue),
     discardManager_(sharedResources->_discardManager),
     writer_(sharedResources->_serviceManager),
-    dqmServiceManager_(sharedResources->_dqmServiceManager),
     eventServer_(sharedResources->_oldEventServer),
     DQMeventServer_(sharedResources->_oldDQMEventServer),
     initMsgCollection_(sharedResources->_initMsgCollection)
@@ -97,7 +94,6 @@ namespace stor
     if (eventServer_.get() != NULL) {
       eventServer_->setStreamSelectionTable(writer_->getStreamSelectionTable());
     }
-    dqmServiceManager_->setDQMEventServer(DQMeventServer_);
   }
 
   FragmentCollector::~FragmentCollector()
@@ -226,7 +222,6 @@ namespace stor
     
     FR_DEBUG << "FragColl: DONE!" << endl;
     writer_->stop();
-    dqmServiceManager_->stop();
   }
 
   void FragmentCollector::stop()

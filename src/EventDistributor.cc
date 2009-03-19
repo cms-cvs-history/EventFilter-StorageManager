@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.27 2009/03/19 19:45:34 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.28 2009/03/19 20:08:52 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -21,7 +21,7 @@ EventDistributor::~EventDistributor()
 void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 {
   // special handling for faulty or incomplete events
-  if ( ioc.faulty() || ioc.complete() )
+  if ( ioc.faulty() || !ioc.complete() )
     {
       // mark these events for the special SM error stream
 
