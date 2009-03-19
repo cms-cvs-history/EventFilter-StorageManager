@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.28 2009/03/13 15:55:24 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.29 2009/03/17 19:56:23 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -30,9 +30,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.28 $
-   * $Date: 2009/03/13 15:55:24 $
+   * $Author: biery $
+   * $Revision: 1.1.2.29 $
+   * $Date: 2009/03/17 19:56:23 $
    */
 
 
@@ -445,6 +445,20 @@ namespace stor {
        hltCount() method) with two bits per HLT trigger.
      */
     void hltTriggerBits(std::vector<unsigned char>& bitList) const;
+
+    /**
+       Returns the run number of the message, if and only if, the 
+       message is an Event or ErrorEvent message. 
+       Otherwise an exception is thrown.
+     */
+    uint32 runNumber() const;
+
+    /**
+       Returns the luminosity section of the message, if and only if,
+       the message is an Event or ErrorEvent message. 
+       Otherwise an exception is thrown.
+     */
+    uint32 lumiSection() const;
 
   private:
 
