@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.33 2009/03/13 15:55:24 mommsen Exp $
+// $Id: I2OChain.cc,v 1.1.2.34 2009/03/17 19:56:23 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -9,6 +9,7 @@
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
 #include "IOPool/Streamer/interface/DQMEventMessage.h"
+#include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 namespace stor
 {
@@ -80,6 +81,9 @@ namespace stor
       void hltTriggerSelections(Strings& nameList) const;
       void l1TriggerNames(Strings& nameList) const;
 
+      uint32 runNumber() const;
+      uint32 lumiSection() const;
+
       std::string topFolderName() const;
 
       uint32 hltTriggerCount() const;
@@ -146,6 +150,9 @@ namespace stor
 
       virtual uint32 do_hltTriggerCount() const;
       virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
+
+      virtual uint32 do_runNumber() const;
+      virtual uint32 do_lumiSection() const;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -668,6 +675,16 @@ namespace stor
       do_hltTriggerBits(bitList);
     }
 
+    inline uint32 ChainData::runNumber() const
+    {
+      return do_runNumber();
+    }
+
+    inline uint32 ChainData::lumiSection() const
+    {
+      return do_lumiSection();
+    }
+
     inline void ChainData::tagForStream(StreamID streamId)
     {
       _streamTags.push_back(streamId);
@@ -872,6 +889,23 @@ namespace stor
       msg << "complete Event message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
+
+    inline uint32 ChainData::do_runNumber() const
+    {
+      std::stringstream msg;
+      msg << "A run number is only available from a valid, ";
+      msg << "complete EVENT or ERROR_EVENT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline uint32 ChainData::do_lumiSection() const
+    {
+      std::stringstream msg;
+      msg << "A luminosity section is only available from a valid, ";
+      msg << "complete EVENT or ERROR_EVENT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
 
     class InitMsgData : public ChainData
     {
@@ -1112,6 +1146,8 @@ namespace stor
       uint32 do_outputModuleId() const;
       uint32 do_hltTriggerCount() const;
       void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
+      uint32 do_runNumber() const;
+      uint32 do_lumiSection() const;
 
     private:
       void parseI2OHeader();
@@ -1124,6 +1160,8 @@ namespace stor
       mutable uint32 _outputModuleId;
       mutable uint32 _hltTriggerCount;
       mutable std::vector<unsigned char> _hltTriggerBits;
+      mutable uint32 _runNumber;
+      mutable uint32 _lumiSection;
     };
 
     inline EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
@@ -1228,6 +1266,34 @@ namespace stor
       bitList = _hltTriggerBits;
     }
 
+    uint32 EventMsgData::do_runNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A run number can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _runNumber;
+    }
+
+    uint32 EventMsgData::do_lumiSection() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A luminosity section can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _lumiSection;
+    }
+
     inline void EventMsgData::parseI2OHeader()
     {
       if (parsable())
@@ -1292,6 +1358,9 @@ namespace stor
           _hltTriggerBits.resize(1 + (_hltTriggerCount-1)/4);
         }
       msgView->hltTriggerBits(&_hltTriggerBits[0]);
+
+      _runNumber = msgView->run();
+      _lumiSection = msgView->lumi();
 
       _headerFieldsCached = true;
     }
@@ -1469,14 +1538,24 @@ namespace stor
       ~ErrorEventMsgData() {}
 
     protected:
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      uint32 do_runNumber() const;
+      uint32 do_lumiSection() const;
 
     private:
       void parseI2OHeader();
+      void cacheHeaderFields() const;
+
+      mutable bool _headerFieldsCached;
+      mutable unsigned char* _headerLocation;
+      mutable uint32 _runNumber;
+      mutable uint32 _lumiSection;
     };
 
     inline ErrorEventMsgData::ErrorEventMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef)
+      ChainData(pRef),
+      _headerFieldsCached(false)
     {
       parseI2OHeader();
 
@@ -1496,6 +1575,17 @@ namespace stor
         }
     }
 
+    unsigned char* ErrorEventMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
+    }
+
     inline unsigned char*
     ErrorEventMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
@@ -1509,6 +1599,34 @@ namespace stor
         {
           return dataLoc;
         }
+    }
+
+    uint32 ErrorEventMsgData::do_runNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A run number can not be determined from a ";
+          msg << "faulty or incomplete ErrorEvent message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _runNumber;
+    }
+
+    uint32 ErrorEventMsgData::do_lumiSection() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A luminosity section can not be determined from a ";
+          msg << "faulty or incomplete ErrorEvent message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _lumiSection;
     }
 
     inline void ErrorEventMsgData::parseI2OHeader()
@@ -1530,6 +1648,23 @@ namespace stor
           _hltTid = smMsg->hltTid;
         }
     }
+
+    void ErrorEventMsgData::cacheHeaderFields() const
+    {
+      // The header of a FRD event is always contained in
+      // the first fragment. IS THIS TRUE?
+      unsigned char* firstFragLoc = dataLocation(0);
+      boost::shared_ptr<FRDEventMsgView> msgView;
+      msgView.reset(new FRDEventMsgView(firstFragLoc));
+
+      _headerLocation = msgView->startAddress();
+
+      _runNumber = msgView->run();
+      _lumiSection = msgView->lumi();
+
+      _headerFieldsCached = true;
+    }
+
   } // namespace detail
 
 
@@ -1984,6 +2119,26 @@ namespace stor
           "HLT trigger bits can not be determined from an empty I2OChain.");
       }
     _data->hltTriggerBits(bitList);
+  }
+
+  uint32 I2OChain::runNumber() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The run number can not be determined from an empty I2OChain.");
+      }
+    return _data->runNumber();
+  }
+
+  uint32 I2OChain::lumiSection() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The luminosity section can not be determined from an empty I2OChain.");
+      }
+    return _data->lumiSection();
   }
 
 } // namespace stor
