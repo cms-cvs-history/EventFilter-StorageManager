@@ -53,9 +53,8 @@ Processing::do_processI2OFragment( I2OChain& frag ) const
   bool completed = outermost_context().getFragmentStore()->addFragment(frag);
   if ( completed )
   {
-    //outermost_context().getEventDistributor()->addEventToRelevantQueues(frag);
-    std::cout << "(Temporarily) Dropping a complete event of type "
-              << frag.messageCode() << " on the floor." << std::endl;
+    outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(frag);
+    outermost_context().getEventDistributor()->addEventToRelevantQueues(frag);
   }
   else
   {
@@ -68,7 +67,6 @@ Processing::do_processI2OFragment( I2OChain& frag ) const
     }
   }
 }
-
 
 void
 Processing::do_noFragmentToProcess() const
