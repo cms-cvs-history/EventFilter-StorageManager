@@ -38,9 +38,9 @@ namespace stor {
             std::cout << "Constructor" << std::endl;
 
             DiskWriter dw;
-            EventDistributor ed;
             FragmentStore fs;
             SharedResources sr;
+            EventDistributor ed(sr);
             
             stateMachine = new StateMachine( &dw, &ed, &fs, &sr );
             stateMachine->initiate();
@@ -189,7 +189,7 @@ namespace stor {
         
         StateMachine *stateMachine;
         DiskWriter diskWriter;
-        EventDistributor eventDistributor;
+        //EventDistributor eventDistributor;
         
     };
     
