@@ -8,6 +8,7 @@
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -155,17 +156,17 @@ void checkHistory( const StateMachine& m,
 int main()
 {
 
-  DiskWriter dw;
   FragmentStore fs;
-  boost::shared_ptr<SharedResources> sr;
+  SharedResourcesPtr sr;
   sr.reset(new SharedResources());
-
+  sr->_dqmServiceManager.reset(new DQMServiceManager());
   boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
   sr->_commandQueue = cmdQueue;
 
+  DiskWriter dw(sr);
   EventDistributor ed(sr);
 
-  StateMachine m( &dw, &ed, &fs, &(*sr) );
+  StateMachine m( &dw, &ed, &fs, sr );
 
   EventList elist;
 

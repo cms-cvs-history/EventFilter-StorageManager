@@ -36,14 +36,17 @@ namespace stor {
         xdaq::WebApplication(s)
         {
             std::cout << "Constructor" << std::endl;
-
-            DiskWriter dw;
             FragmentStore fs;
-            boost::shared_ptr<SharedResources> sr;
+            SharedResourcesPtr sr;
             sr.reset(new SharedResources());
+            sr->_dqmServiceManager.reset(new DQMServiceManager());
+            boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
+            sr->_commandQueue = cmdQueue;
+
             EventDistributor ed(sr);
+            DiskWriter dw(sr);
             
-            stateMachine = new StateMachine( &dw, &ed, &fs, &(*sr) );
+            stateMachine = new StateMachine( &dw, &ed, &fs, sr );
             stateMachine->initiate();
             
 	    xoap::bind(
@@ -189,8 +192,6 @@ namespace stor {
     private:
         
         StateMachine *stateMachine;
-        DiskWriter diskWriter;
-        //EventDistributor eventDistributor;
         
     };
     
