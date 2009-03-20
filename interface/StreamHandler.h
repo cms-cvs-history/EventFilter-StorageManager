@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.1.2.5 2009/03/01 20:36:29 biery Exp $
+// $Id: StreamHandler.h,v 1.1.2.1 2009/03/20 10:30:16 mommsen Exp $
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
@@ -14,9 +14,9 @@ namespace stor {
   /**
    * Abstract class to handle one stream written to disk.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/01 20:36:29 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/20 10:30:16 $
    */
   
   class StreamHandler
@@ -114,6 +114,13 @@ namespace stor {
     typedef std::map<std::string, unsigned int> CoreFileNamesMap;
     CoreFileNamesMap _usedCoreFileNames;
     
+
+  private:
+
+    //Prevent copying of the StreamHandler
+    StreamHandler(StreamHandler const&);
+    StreamHandler& operator=(StreamHandler const&);
+
   };
   
 } // namespace stor

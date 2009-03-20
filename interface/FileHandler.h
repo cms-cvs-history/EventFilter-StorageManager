@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.4 2009/03/18 18:34:56 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.5 2009/03/20 10:30:16 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/18 18:34:56 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/20 10:30:16 $
    */
 
   class FileHandler
@@ -185,7 +185,15 @@ namespace stor {
     const double calcPctDiff(const double&, const double&) const;
     
 
+  private:
+
+    //Prevent copying of the FileHandler
+    FileHandler(FileHandler const&);
+    FileHandler& operator=(FileHandler const&);
+
+
   protected:
+
     FilesMonitorCollection::FileRecordPtr _fileRecord;
 
     utils::time_point_t _firstEntry;                // time when first event was writen
@@ -193,6 +201,7 @@ namespace stor {
 
     
   private:
+
     DiskWritingParams _diskWritingParams;
     
     std::string  _workingDir;                       // current working directory

@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.5 2009/03/01 20:36:29 biery Exp $
+// $Id: DiskWriter.h,v 1.1.2.6 2009/03/20 10:30:16 mommsen Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -22,9 +22,9 @@ namespace stor {
    * It gets the next event from the StreamQueue and writes it
    * to the appropriate stream file(s) on disk. 
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/01 20:36:29 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/20 10:30:16 $
    */
   
   class DiskWriter
@@ -63,7 +63,13 @@ namespace stor {
      */
     const bool empty() const;
 
+
   private:
+
+    //Prevent copying of the DiskWriter
+    DiskWriter(DiskWriter const&);
+    DiskWriter& operator=(DiskWriter const&);
+
 
     /**
      * Writes the event to the appropriate streams
