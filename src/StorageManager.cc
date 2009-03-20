@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.44 2009/03/19 20:56:29 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.44 2009/03/19 20:56:29 biery Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -218,6 +218,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesPtr_->_statisticsReporter.reset(new StatisticsReporter(this));
   sharedResourcesPtr_->_initMsgCollection.reset(new InitMsgCollection());
 
+  sharedResourcesPtr_->_smRBSenderList = &smrbsenders_;
+
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
@@ -253,7 +255,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
@@ -295,7 +297,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -312,8 +314,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  RunMonitorCollection& runMonCollection = _statisticsReporter->getRunMonitorCollection();
-  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
+  RunMonitorCollection& runMonCollection = sharedResourcesPtr_->_statisticsReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -409,8 +411,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  RunMonitorCollection& runMonCollection = _statisticsReporter->getRunMonitorCollection();
-  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
+  RunMonitorCollection& runMonCollection = sharedResourcesPtr_->_statisticsReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -465,7 +467,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -519,7 +521,7 @@ throw (xgi::exception::Exception)
     WebPageHelper::defaultWebPage(
       out,
       fsm_.stateName()->toString(),
-      _statisticsReporter,
+      sharedResourcesPtr_->_statisticsReporter,
       pool_,
       dwParams._nLogicalDisk,
       dwParams._filePath,

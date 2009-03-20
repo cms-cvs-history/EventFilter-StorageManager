@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.20 2009/03/19 20:56:29 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.21 2009/03/20 10:33:41 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -186,12 +186,6 @@ namespace stor
 
             switch(i2oChain.messageCode())
               {
-              case Header::INIT:
-                {
-                  FR_DEBUG << "FragColl: Got an Init" << endl;
-                  processHeader(i2oChain);
-                  break;
-                }
               case Header::EVENT:
                 {
                   FR_DEBUG << "FragColl: Got an Event" << endl;
@@ -245,100 +239,6 @@ namespace stor
         {
           eventServer_->processEvent(emsg);
         }
-
-      // tell the resource broker that sent us this event
-      // that we are done with it and it can forget about it
-      discardManager_->sendDiscardMessage(i2oChain);
-
-      // check for stale fragments
-      removeStaleFragments();
-    }
-  }
-
-  void FragmentCollector::processHeader(I2OChain i2oChain)
-  {
-    // add the fragment to the fragment store
-    bool complete = fragmentStore_.addFragment(i2oChain);
-
-    if(complete)
-    {
-      int assembledSize = i2oChain.copyFragmentsIntoBuffer(event_area_);
-
-      InitMsgView msg(&event_area_[0]);
-      FR_DEBUG << "FragColl: writing INIT size " << assembledSize << endl;
-      writer_->manageInitMsg(msg, *initMsgCollection_);
-
-      try
-      {
-        if (initMsgCollection_->addIfUnique(msg))
-        {
-          // check if any currently connected consumers did not specify
-          // an HLT output module label and we now have multiple, different,
-          // INIT messages.  If so, we need to complain because the
-          // SelectHLTOutput parameter needs to be specified when there
-          // is more than one HLT output module (and correspondingly, more
-          // than one INIT message)
-          if (initMsgCollection_->size() > 1)
-          {
-            std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
-              eventServer_->getConsumerTable();
-            std::map< uint32, boost::shared_ptr<ConsumerPipe> >::const_iterator 
-              consumerIter;
-            for (consumerIter = consumerTable.begin();
-                 consumerIter != consumerTable.end();
-                 ++consumerIter)
-            {
-              boost::shared_ptr<ConsumerPipe> consPtr = consumerIter->second;
-
-              // for regular consumers, we need to test whether the consumer
-              // configuration specified an HLT output module
-              if (! consPtr->isProxyServer())
-              {
-                if (consPtr->getHLTOutputSelection().empty())
-                {
-                  // store a warning message in the consumer pipe to be
-                  // sent to the consumer at the next opportunity
-                  std::string errorString;
-                  errorString.append("ERROR: The configuration for this ");
-                  errorString.append("consumer does not specify an HLT output ");
-                  errorString.append("module.\nPlease specify one of the HLT ");
-                  errorString.append("output modules listed below as the ");
-                  errorString.append("SelectHLTOutput parameter ");
-                  errorString.append("in the InputSource configuration.\n");
-                  errorString.append(initMsgCollection_->getSelectionHelpString());
-                  errorString.append("\n");
-                  consPtr->setRegistryWarning(errorString);
-                }
-              }
-            }
-          }
-        }
-      }
-      catch(cms::Exception& excpt)
-      {
-        char tidString[32];
-        sprintf(tidString, "%d", i2oChain.hltTid());
-        std::string logMsg = "receiveRegistryMessage: Error processing a ";
-        logMsg.append("registry message from URL ");
-        logMsg.append(i2oChain.hltURL());
-        logMsg.append(" and Tid ");
-        logMsg.append(tidString);
-        logMsg.append(":\n");
-        logMsg.append(excpt.what());
-        logMsg.append("\n");
-        logMsg.append(initMsgCollection_->getSelectionHelpString());
-        FDEBUG(9) << logMsg << std::endl;
-        LOG4CPLUS_ERROR(applicationLogger_, logMsg);
-
-        throw excpt;
-      }
-
-      FragKey fragKey = i2oChain.fragmentKey();
-      smRBSenderList_->registerDataSender(i2oChain.hltURL().c_str(), i2oChain.hltClassName().c_str(),
-                                          i2oChain.hltLocalId(), i2oChain.hltInstance(), i2oChain.hltTid(),
-                                          i2oChain.fragmentCount()-1, i2oChain.fragmentCount(), msg.size(),
-                                          msg.outputModuleLabel(), msg.outputModuleId(),
-                                          fragKey.originatorPid_);
 
       // tell the resource broker that sent us this event
       // that we are done with it and it can forget about it

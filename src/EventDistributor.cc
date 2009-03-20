@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.30 2009/03/19 20:56:29 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.31 2009/03/20 10:33:42 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -66,6 +66,25 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
                 it->initialize( imv );
               }
           }
+
+        // temporary handling (until the DiskWriter is ready)
+        if ( _sharedResources->_serviceManager.get() != 0 )
+          {
+            _sharedResources->_serviceManager->
+              manageInitMsg(imv, *(_sharedResources->_initMsgCollection));
+          }
+        if ( _sharedResources->_smRBSenderList != 0 )
+          {
+            FragKey fragKey = ioc.fragmentKey();
+            _sharedResources->_smRBSenderList->
+              registerDataSender(ioc.hltURL().c_str(), ioc.hltClassName().c_str(),
+                                 ioc.hltLocalId(), ioc.hltInstance(), ioc.hltTid(),
+                                 ioc.fragmentCount()-1, ioc.fragmentCount(), imv.size(),
+                                 imv.outputModuleLabel(), imv.outputModuleId(),
+                                 fragKey.originatorPid_);
+          }
+
+
         break;
       }
 

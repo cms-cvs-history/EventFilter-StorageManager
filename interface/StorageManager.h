@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.27 2009/03/19 19:32:43 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.28 2009/03/20 10:28:19 mommsen Exp $
 */
 
 #include <string>
@@ -27,7 +27,6 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
-#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 
@@ -252,8 +251,6 @@ namespace stor {
       DEFAULT_PURGE_TIME = 120,
       DEFAULT_READY_TIME = 30
     };
-
-    boost::shared_ptr<StatisticsReporter> _statisticsReporter;
 
   }; 
 } 

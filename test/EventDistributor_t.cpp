@@ -64,6 +64,7 @@ void testEventDistributor::testInitMessages()
       _sharedResources.reset(new SharedResources());
       _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
       _sharedResources->_streamQueue.reset(new StreamQueue(1024));
+      _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
@@ -167,6 +168,7 @@ void testEventDistributor::testStreamSelection()
       _sharedResources.reset(new SharedResources());
       _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
       _sharedResources->_streamQueue.reset(new StreamQueue(1024));
+      _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
@@ -346,6 +348,7 @@ void testEventDistributor::testConsumerSelection()
       _sharedResources.reset(new SharedResources());
       _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
       _sharedResources->_streamQueue.reset(new StreamQueue(1024));
+      _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
@@ -728,6 +731,7 @@ void testEventDistributor::testDQMMessages()
       _sharedResources.reset(new SharedResources());
       _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
       _sharedResources->_streamQueue.reset(new StreamQueue(1024));
+      _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
 
