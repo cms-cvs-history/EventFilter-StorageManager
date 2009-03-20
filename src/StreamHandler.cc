@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.4 2009/03/01 20:36:29 biery Exp $
+// $Id: StreamHandler.cc,v 1.1.2.1 2009/03/20 10:34:36 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -48,22 +48,6 @@ void StreamHandler::writeEvent(const I2OChain& event)
 }
 
 
-FilesMonitorCollection::FileRecordPtr StreamHandler::getNewFileRecord(const I2OChain& event)
-{
-  FilesMonitorCollection::FileRecordPtr fileRecord =
-    _filesMonitorCollection.getNewFileRecord();
-
-  fileRecord->runNumber = event.runNumber();
-  fileRecord->lumiSection = event.lumiSection();
-  fileRecord->streamLabel = streamLabel();
-  fileRecord->filePath = createFilePath(event.runNumber());
-  fileRecord->fileName = createFileName(event.runNumber(), event.lumiSection());
-  fileRecord->whyClosed = FilesMonitorCollection::FileRecord::notClosed;
-
-  return fileRecord;
-}
-
-
 StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& event)
 {
   for (
@@ -86,6 +70,22 @@ StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& even
     }
   }    
   return newFileHandler(event);
+}
+
+
+FilesMonitorCollection::FileRecordPtr StreamHandler::getNewFileRecord(const I2OChain& event)
+{
+  FilesMonitorCollection::FileRecordPtr fileRecord =
+    _filesMonitorCollection.getNewFileRecord();
+  
+  fileRecord->runNumber = event.runNumber();
+  fileRecord->lumiSection = event.lumiSection();
+  fileRecord->streamLabel = streamLabel();
+  fileRecord->filePath = createFilePath(event.runNumber());
+  fileRecord->fileName = createFileName(event.runNumber(), event.lumiSection());
+  fileRecord->whyClosed = FilesMonitorCollection::FileRecord::notClosed;
+  
+  return fileRecord;
 }
 
 
