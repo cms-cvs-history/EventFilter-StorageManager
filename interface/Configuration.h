@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.3 2009/03/17 14:39:15 biery Exp $
+// $Id: Configuration.h,v 1.1.2.4 2009/03/18 17:33:44 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -22,8 +22,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/17 14:39:15 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/18 17:33:44 $
    */
 
   struct DiskWritingParams
@@ -34,7 +34,7 @@ namespace stor
     std::string _fileCatalog;
     std::string _setupLabel;
     int _nLogicalDisk;
-    int _maxFileSize;
+    unsigned long _maxFileSize;
     double _highWaterMark;  // not actually used for anything, KAB 16-Mar-09
     utils::duration_t _lumiSectionTimeOut;
     utils::duration_t _fileClosingTestInterval;
