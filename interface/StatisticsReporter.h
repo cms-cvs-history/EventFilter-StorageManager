@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.1 2009/02/16 16:10:15 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.2 2009/03/19 09:05:14 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -7,6 +7,7 @@
 #include "toolbox/task/WaitingWorkLoop.h"
 #include "xdaq/Application.h"
 
+#include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 
@@ -20,8 +21,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/02/16 16:10:15 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/19 09:05:14 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -47,19 +48,31 @@ namespace stor {
     { return _fragMonCollection; }
 
 
+    const FilesMonitorCollection& getFilesMonitorCollection() const
+    { return _filesMonCollection; }
+
+    FilesMonitorCollection& getFilesMonitorCollection()
+    { return _filesMonCollection; }
+
+
+    /**
+     * Create and start the monitoring workloop
+     */
+    void startWorkLoop();
+
+
   private:
 
     //Prevent copying of the StatisticsReporter
     StatisticsReporter(StatisticsReporter const&);
     StatisticsReporter& operator=(StatisticsReporter const&);
 
-    void startWorkLoop();
-
     bool monitorAction(toolbox::task::WorkLoop*);
 
     xdaq::Application* _app;
     RunMonitorCollection _runMonCollection;
     FragmentMonitorCollection _fragMonCollection;
+    FilesMonitorCollection _filesMonCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 
