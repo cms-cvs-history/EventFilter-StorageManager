@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.8 2009/03/17 14:39:16 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.9 2009/03/18 17:33:45 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -93,7 +93,7 @@ namespace stor
     _diskWriteParamCopy._fileCatalog = "summaryCatalog.txt";
     _diskWriteParamCopy._setupLabel = "mtcc";
     _diskWriteParamCopy._nLogicalDisk = 0;
-    _diskWriteParamCopy._maxFileSize = -1;
+    _diskWriteParamCopy._maxFileSize = 0;
     _diskWriteParamCopy._highWaterMark = 0.9;
     _diskWriteParamCopy._lumiSectionTimeOut = 45.0;
     _diskWriteParamCopy._fileClosingTestInterval = 5.0;
