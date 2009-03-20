@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.3 2009/03/17 15:57:26 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.4 2009/03/18 18:34:56 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/17 15:57:26 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/18 18:34:56 $
    */
 
   class FileHandler
@@ -30,7 +30,7 @@ namespace stor {
         
     FileHandler
     (
-      FilesMonitorCollection::FileRecord&,
+      FilesMonitorCollection::FileRecordPtr,
       const DiskWritingParams&
     );
     
@@ -41,17 +41,17 @@ namespace stor {
      */
     virtual void writeEvent(const I2OChain&) = 0;
 
+    /**
+     * Returns true if the file has not seen any recent events
+     */
+    bool tooOld()
+    { return false; } //Fix me: add logic
 
 
     ////////////////////////////
     // File parameter setters //
     ////////////////////////////
 
-    /**
-     * Set the current file system
-     */
-    void setFileSystem(const unsigned int& i);
-    
     /**
      * Set the adler checksum for the file
      */
@@ -75,8 +75,6 @@ namespace stor {
     
 
 
-  protected:
-
     ////////////////////////////
     // File parameter getters //
     ////////////////////////////
@@ -85,36 +83,32 @@ namespace stor {
      * Return the number of events in the file
     */
     const int events() const
-    { return _fileRecord.fileSize.getSampleCount(); } 
+    { return _fileRecord->fileSize.getSampleCount(); } 
     
     /**
      * Return the luminosity section the file belongs to
      */
-    const uint32_t lumiSection() const
-    { return _fileRecord.lumiSection; }
+    const uint32 lumiSection() const
+    { return _fileRecord->lumiSection; }
     
     /**
      * Return the size of the file in bytes
      */
-    const long long fileSize() const
-    { return static_cast<long long>(_fileRecord.fileSize.getValueSum()); }
-    
-    /**
-     * Return the full path where the file resides
-     */
-    const std::string filePath() const
-    { return _fileRecord.filePath; }
-    
-    /**
-     * Return the complete file name and path w/o file ending
-     */
-    const std::string completeFileName() const
-    { return _fileRecord.filePath + "/" + _fileRecord.fileName; }
-    
+    const unsigned long fileSize() const
+    { return static_cast<unsigned long>(_fileRecord->fileSize.getValueSum()); }
+
+
+  protected:
     
     //////////////////////
     // File bookkeeping //
     //////////////////////
+
+    /**
+     * Return the complete file name and path w/o file ending
+     */
+    const std::string completeFileName() const
+    { return _fileRecord->filePath + "/" + _fileRecord->fileName; }
     
     /**
      * Close the file
@@ -179,11 +173,6 @@ namespace stor {
      * Throw a cms::Exception when the directory does not exist
      */
     void checkDirectory(const std::string&) const;
-        
-    /**
-     * Return the _fileName and _fileCounter
-     */
-    const std::string qualifiedFileName() const;
     
     /**
      * Return the name of the log file
@@ -197,7 +186,7 @@ namespace stor {
     
 
   protected:
-    FilesMonitorCollection::FileRecord& _fileRecord;
+    FilesMonitorCollection::FileRecordPtr _fileRecord;
 
     utils::time_point_t _firstEntry;                // time when first event was writen
     utils::time_point_t _lastEntry;                 // time when latest event was writen
@@ -209,15 +198,10 @@ namespace stor {
     std::string  _workingDir;                       // current working directory
     std::string  _logPath;                          // log path
     std::string  _logFile;                          // log file including path
-    std::string  _streamLabel;                      // datastream label
     std::string  _cmsver;                           // CMSSW version string
     
     uint32       _adlerstream;                      // adler32 checksum for streamer file
     uint32       _adlerindex;                       // adler32 checksum for index file
-
-    unsigned int _fileCounter;                      // number of files with _fileName as name
-    std::string  _fileSystem;                       // file system directory
-
   };
   
 } // stor namespace

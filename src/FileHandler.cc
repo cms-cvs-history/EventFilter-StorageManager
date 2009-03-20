@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.3 2009/03/16 19:21:39 biery Exp $
+// $Id: FileHandler.cc,v 1.1.2.4 2009/03/18 18:35:41 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -18,7 +18,7 @@ using namespace std;
 
 FileHandler::FileHandler
 (
-  FilesMonitorCollection::FileRecord& fileRecord,
+  FilesMonitorCollection::FileRecordPtr fileRecord,
   const DiskWritingParams& dwParams
 ):
 _fileRecord(fileRecord),
@@ -42,13 +42,13 @@ void FileHandler::writeToSummaryCatalog() const
 {
   ostringstream currentStat;
   string ind(":");
-  currentStat << _fileRecord.filePath                  << ind
-              << qualifiedFileName()                   << ind
+  currentStat << _fileRecord->filePath                 << ind
+              << _fileRecord->fileName                 << ind
 	      << fileSize()                            << ind 
 	      << events()                              << ind
               << utils::timeStamp(_lastEntry)          << ind
 	      << (int) (_lastEntry - _firstEntry)      << ind
-	      << _fileRecord.whyClosed << endl;
+	      << _fileRecord->whyClosed << endl;
   string currentStatString (currentStat.str());
   ofstream of(_diskWritingParams._fileCatalog.c_str(), ios_base::ate | ios_base::out | ios_base::app );
   of << currentStatString;
@@ -60,25 +60,25 @@ void FileHandler::updateDatabase() const
 {
   std::ostringstream oss;
   oss << "./closeFile.pl "
-      << " --FILENAME "     << qualifiedFileName() <<  ".dat"
-      << " --FILECOUNTER "  << _fileCounter                       
+      << " --FILENAME "     << _fileRecord->fileName <<  ".dat"
+    //      << " --FILECOUNTER "  << _fileCounter  Fix me: where to get that from?
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()                          
       << " --STARTTIME "    << (int) _firstEntry
       << " --STOPTIME "     << (int) _lastEntry
       << " --STATUS "       << "closed"
-      << " --RUNNUMBER "    << _fileRecord.runNumber
-      << " --LUMISECTION "  << _fileRecord.lumiSection
-      << " --PATHNAME "     << _fileRecord.filePath
+      << " --RUNNUMBER "    << _fileRecord->runNumber
+      << " --LUMISECTION "  << _fileRecord->lumiSection
+      << " --PATHNAME "     << _fileRecord->filePath
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
-      << " --STREAM "       << _fileRecord.streamLabel                      
+      << " --STREAM "       << _fileRecord->streamLabel                      
       << " --INSTANCE "     << _diskWritingParams._smInstanceString
       << " --SAFETY "       << _diskWritingParams._initialSafetyLevel
       << " --APPVERSION "   << _cmsver
       << " --APPNAME CMSSW"
       << " --TYPE streamer"               
-      << " --DEBUGCLOSE "   << _fileRecord.whyClosed
+      << " --DEBUGCLOSE "   << _fileRecord->whyClosed
       << " --CHECKSUM "     << hex << _adlerstream
       << " --CHECKSUMIND "  << hex << _adlerindex
       << "\n";
@@ -93,19 +93,19 @@ void FileHandler::insertFileInDatabase() const
 {
   std::ostringstream oss;
   oss << "./insertFile.pl "
-      << " --FILENAME "     << qualifiedFileName() <<  ".dat"
-      << " --FILECOUNTER "  << _fileCounter
+      << " --FILENAME "     << _fileRecord->fileName <<  ".dat"
+    //      << " --FILECOUNTER "  << _fileCounter  Fix me: where to get that from?
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()
       << " --STARTTIME "    << (int) _firstEntry
       << " --STOPTIME "     << (int) _lastEntry
       << " --STATUS "       << "open"
-      << " --RUNNUMBER "    << _fileRecord.runNumber
-      << " --LUMISECTION "  << _fileRecord.lumiSection
-      << " --PATHNAME "     << _fileRecord.filePath
+      << " --RUNNUMBER "    << _fileRecord->runNumber
+      << " --LUMISECTION "  << _fileRecord->lumiSection
+      << " --PATHNAME "     << _fileRecord->filePath
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
-      << " --STREAM "       << _fileRecord.streamLabel
+      << " --STREAM "       << _fileRecord->streamLabel
       << " --INSTANCE "     << _diskWritingParams._smInstanceString
       << " --SAFETY "       << _diskWritingParams._initialSafetyLevel
       << " --APPVERSION "   << _cmsver
@@ -118,28 +118,6 @@ void FileHandler::insertFileInDatabase() const
   ofstream of(_logFile.c_str(), ios_base::ate | ios_base::out | ios_base::app );
   of << oss.str().c_str();
   of.close();
-}
-
-
-
-////////////////////////////
-// File parameter setters //
-////////////////////////////
-
-void FileHandler::setFileSystem(const unsigned int& i)
-{
-  std::ostringstream oss;
-  oss << "/" << setfill('0') << std::setw(2) << i; 
-  _fileSystem = oss.str();
-}
-
-
-const string FileHandler::qualifiedFileName() const
-{
-  std::ostringstream oss;
-  oss << _fileRecord.fileName;
-  oss << "." << setfill('0') << std::setw(4) << _fileCounter;
-  return oss.str();
 }
 
 
@@ -250,9 +228,9 @@ const string FileHandler::logFile(const DiskWritingParams& dwp) const
 void FileHandler::checkDirectories() const
 {
   checkDirectory(_diskWritingParams._filePath);
-  checkDirectory(_diskWritingParams._filePath + _fileSystem);
-  checkDirectory(_diskWritingParams._filePath + _fileSystem + "/open");
-  checkDirectory(_diskWritingParams._filePath + _fileSystem + "/closed");
+  checkDirectory(_fileRecord->filePath);
+  checkDirectory(_fileRecord->filePath + "/open");
+  checkDirectory(_fileRecord->filePath + "/closed");
   checkDirectory(_logPath);
 }
 
@@ -292,38 +270,13 @@ const double FileHandler::calcPctDiff(const double& value1, const double& value2
 
 void FileHandler::info(ostream& os) const
 {
-  os << _fileCounter << " " 
+  os // << _fileCounter << " "  Fix me
      << completeFileName() << " " 
      << events() << " "
      << fileSize();
 }
 
 
-// void FileHandler::report(ostream &os, int indentation) const
-// {
-//   string prefix(indentation, ' ');
-//   os << "\n";
-//   os << prefix << "------------- FileHandler -------------\n";
-//   os << prefix << "fileName            " << _fileName                   << "\n";
-//   os << prefix << "filePath            " << _diskWritingParams._filePath<< "\n";  
-//   os << prefix << "_fileSystem         " << _fileSystem                 << "\n";
-//   os << prefix << "_workingDir         " << _workingDir                 << "\n";
-//   os << prefix << "_logPath            " << _logPath                    << "\n";
-//   os << prefix << "_logFile            " << _logFile                    << "\n";
-//   os << prefix << "_setupLabel         " << _diskWritingParams._setupLabel<< "\n";
-//   os << prefix << "_streamLabel        " << _streamLabel                << "\n";
-//   os << prefix << "hostName            " << _diskWritingParams._hostName<< "\n";
-//   os << prefix << "fileCatalog()       " << _diskWritingParams._fileCatalog<< "\n"; 
-//   os << prefix << "_lumiSection        " << _lumiSection                << "\n";
-//   os << prefix << "_runNumber          " << _runNumber                  << "\n";
-//   os << prefix << "_fileCounter        " << _fileCounter                << "\n";
-//   os << prefix << "fileSize            " << _fileSize                   << "\n";
-//   os << prefix << "events              " << _events                     << "\n";
-//   os << prefix << "first entry         " << _firstEntry                 << "\n";
-//   os << prefix << "last entry          " << _lastEntry                  << "\n";
-//   os << prefix << "why closed          " << _whyClosed                  << "\n";
-//   os << prefix << "-----------------------------------------\n";  
-// }
 
 /// emacs configuration
 /// Local Variables: -

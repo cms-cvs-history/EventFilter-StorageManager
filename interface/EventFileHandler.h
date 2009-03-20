@@ -1,11 +1,13 @@
-// $Id: EventFileHandler.h,v 1.1.2.2 2009/03/17 15:57:26 mommsen Exp $
+// $Id: EventFileHandler.h,v 1.1.2.3 2009/03/18 18:34:56 mommsen Exp $
 
 #ifndef StorageManager_EventFileHandler_h
 #define StorageManager_EventFileHandler_h
 
-#include <EventFilter/StorageManager/interface/FileHandler.h>
-#include <IOPool/Streamer/interface/InitMessage.h>
+#include "EventFilter/StorageManager/interface/FileHandler.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+
 #include <IOPool/Streamer/src/StreamerFileWriter.h>
+
 
 namespace stor {
   
@@ -13,8 +15,8 @@ namespace stor {
    * Represents a file holding event data
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/17 15:57:26 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/18 18:34:56 $
    */
   
   class EventFileHandler : public FileHandler
@@ -22,8 +24,8 @@ namespace stor {
   public:
     EventFileHandler
     (
-      InitMsgView const&,
-      FilesMonitorCollection::FileRecord&,
+      InitMsgSharedPtr,
+      FilesMonitorCollection::FileRecordPtr,
       const DiskWritingParams&
     );
 
@@ -46,7 +48,7 @@ namespace stor {
     /**
      * Write the init message to the head of the file
      */
-    void writeHeader(InitMsgView const&);
+    void writeHeader(InitMsgSharedPtr);
     
 
     edm::StreamerFileWriter _writer; // writes streamer and index file

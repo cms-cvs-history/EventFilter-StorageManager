@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.cc,v 1.1.2.2 2009/03/17 15:57:37 mommsen Exp $
+// $Id: FRDFileHandler.cc,v 1.1.2.3 2009/03/18 18:35:41 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -10,7 +10,7 @@ using namespace stor;
 
 FRDFileHandler::FRDFileHandler
 (
-  FilesMonitorCollection::FileRecord& fileRecord,
+  FilesMonitorCollection::FileRecordPtr fileRecord,
   const DiskWritingParams& dwParams
 ) :
 FileHandler(fileRecord, dwParams),
@@ -28,7 +28,7 @@ void FRDFileHandler::writeEvent(const I2OChain& chain)
 {
   FRDEventMsgView view( (void *) chain.getBufferData() );
   _writer.doOutputEvent(view);
-  _fileRecord.fileSize.addSample(view.size());
+  _fileRecord->fileSize.addSample(view.size());
   _lastEntry = utils::getCurrentTime();
 }
 
