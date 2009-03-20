@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.12 2009/03/19 19:32:43 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.13 2009/03/20 10:28:19 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -27,9 +27,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/03/19 19:32:43 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/03/20 10:28:19 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -51,6 +51,11 @@ namespace stor {
      * Updates the statistics of processed fragments
      */
     void updateStatistics();
+
+    /**
+     * Create and start the fragment processing workloop
+     */
+    void startWorkLoop(std::string applicationIdentifier);
 
 
   private:
@@ -84,6 +89,8 @@ namespace stor {
 
     const unsigned int                 _timeout; // Waiting time in microseconds.
     bool                               _actionIsActive;
+
+    toolbox::task::WorkLoop* _processWL;      
 
     // temporary!
     void closeDiskFilesIfNeeded();

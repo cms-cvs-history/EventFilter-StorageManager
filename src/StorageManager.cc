@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.47 2009/03/20 19:01:46 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.48 2009/03/20 20:35:58 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.47 2009/03/20 19:01:46 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.48 2009/03/20 20:35:58 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -223,10 +223,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // TODO: add try/catch block and handle exceptions
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
 
-
   fragmentProcessor_ = new FragmentProcessor(sharedResourcesPtr_);
-
-  startFragmentProcessorWorkLoop();
+  fragmentProcessor_->startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
 }
 
 StorageManager::~StorageManager()
@@ -3791,26 +3789,6 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 	  delete proxy;
 	}
     }
-}
-
-void StorageManager::startFragmentProcessorWorkLoop() throw (evf::Exception)
-{
-  DiskWritingParams dwParams =
-    sharedResourcesPtr_->_configuration->getDiskWritingParams();
-  try {
-    wlFragProc_=
-      toolbox::task::getWorkLoopFactory()->
-      getWorkLoop(dwParams._smInstanceString+"FragProc", "waiting");
-    if (!wlFragProc_->isActive()) wlFragProc_->activate();
-    asFragProc_ = toolbox::task::bind(fragmentProcessor_,
-                                      &FragmentProcessor::processMessages,
-                                      dwParams._smInstanceString+"FragProc");
-    wlFragProc_->submit(asFragProc_);
-  }
-  catch (xcept::Exception& e) {
-    string msg = "Failed to start workloop 'FragProc'.";
-    XCEPT_RETHROW(evf::Exception,msg,e);
-  }
 }
 
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)

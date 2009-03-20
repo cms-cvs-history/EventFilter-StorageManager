@@ -1,7 +1,10 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.16 2009/03/20 10:33:41 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.17 2009/03/20 19:01:46 biery Exp $
 
 #include <unistd.h>
 
+#include "toolbox/task/WorkLoopFactory.h"
+
+#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
@@ -25,6 +28,31 @@ FragmentProcessor::FragmentProcessor(SharedResourcesPtr sr) :
 
 FragmentProcessor::~FragmentProcessor()
 {
+}
+
+void FragmentProcessor::startWorkLoop(std::string applicationIdentifier)
+{
+  try
+    {
+      _processWL = toolbox::task::getWorkLoopFactory()->
+        getWorkLoop( applicationIdentifier + "FragmentProcessor",
+                     "waiting" );
+
+      if ( ! _processWL->isActive() )
+        {
+          toolbox::task::ActionSignature* processAction = 
+            toolbox::task::bind(this, &FragmentProcessor::processMessages, 
+                                applicationIdentifier + "ProcessMessages");
+          _processWL->submit(processAction);
+
+          _processWL->activate();
+        }
+    }
+  catch (xcept::Exception& e)
+    {
+      std::string msg = "Failed to start workloop 'FragmentProcessor' with 'processMessages'.";
+    XCEPT_RETHROW(stor::exception::FragmentProcessing, msg, e);
+  }
 }
 
 bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
