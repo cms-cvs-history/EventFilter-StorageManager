@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.6.2 2009/03/20 14:22:41 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -42,6 +42,8 @@
 #include "toolbox/mem/Reference.h"
 #include "toolbox/mem/MemoryPoolFactory.h"
 
+#include "toolbox/task/WorkLoopFactory.h"
+
 #include "xcept/tools.h"
 
 #include "xdata/InfoSpaceFactory.h"
@@ -49,6 +51,9 @@
 #include "xoap/SOAPEnvelope.h"
 #include "xoap/SOAPBody.h"
 #include "xoap/domutils.h"
+
+#include "xoap/MessageReference.h"
+#include "xoap/MessageFactory.h"
 
 #include "boost/lexical_cast.hpp"
 #include "boost/algorithm/string/case_conv.hpp"
@@ -102,7 +107,6 @@ namespace
 StorageManager::StorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
-  fsm_(this), 
   reasonForFailedState_(),
   ah_(0), 
   mybuffer_(7000000),
@@ -110,12 +114,11 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.6.2 2009/03/20 14:22:41 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
   ah_   = new edm::AssertHandler();
-  fsm_.initialize<StorageManager>(this);
 
   // Careful with next line: state machine fsm_ has to be setup first
   setupFlashList();
@@ -123,7 +126,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
   ispace->fireItemAvailable("runNumber",     &runNumber_);
-  ispace->fireItemAvailable("stateName",     fsm_.stateName());
+  //ispace->fireItemAvailable("stateName",     fsm_.stateName());
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
   ispace->fireItemAvailable("closedFiles",   &closedFiles_);
@@ -136,11 +139,13 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("namesOfStream",      &namesOfStream_);
   ispace->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
 
-  ispace->fireItemAvailable("rcmsStateListener", fsm_.rcmsStateListener());
-  ispace->fireItemAvailable("foundRcmsStateListener", fsm_.foundRcmsStateListener());
+  //ispace->fireItemAvailable("rcmsStateListener", fsm_.rcmsStateListener());
+  //ispace->fireItemAvailable("foundRcmsStateListener", fsm_.foundRcmsStateListener());
   // 21-Nov-2008, KAB: the findRcmsStateListener call needs to go after the
   // calls to add the RCMS vars to the application infospace.
-  fsm_.findRcmsStateListener();
+  //fsm_.findRcmsStateListener();
+
+  // TODO: add code to initialize rcms listener here...
 
   ispace->addItemRetrieveListener("closedFiles", this);
 
@@ -269,6 +274,10 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
 
   // *** check the Storage Manager is in the Ready or Enabled state first!
+
+  // No need for such checks with new state machine
+
+  /*
   if(fsm_.stateName()->toString() != "Enabled" && fsm_.stateName()->toString() != "Ready" )
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -279,6 +288,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
+  */
 
   // add this output module to the monitoring
   bool alreadyStoredOutMod = false;
@@ -333,6 +343,10 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
 
   // check the storage Manager is in the Ready state first!
+
+  // No need to check
+
+  /*
   if(fsm_.stateName()->toString() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -343,6 +357,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
+  */
 
   // should only do this test if the first data frame from each FU?
   // check if run number is the same as that in Run configuration, complain otherwise !!!
@@ -430,6 +445,10 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
 
   // check the storage Manager is in the Ready state first!
+
+  // No need to check
+
+  /*
   if(fsm_.stateName()->toString() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -440,6 +459,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
+  */
 
   // all access to the I2O message must happen before sending the fragment
   // to the fragment queue to avoid a race condition in which the buffer
@@ -485,6 +505,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   FDEBUG(10) << "StorageManager: received DQM frame size = " << len << std::endl;
 
   // check the storage Manager is in the Ready state first!
+
+  /*
   if(fsm_.stateName()->toString() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -495,6 +517,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
+  */
 
   I2OChain i2oChain2(ref);
   sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain2);
@@ -516,9 +539,13 @@ throw (xgi::exception::Exception)
     DiskWritingParams dwParams =
       sharedResourcesPtr_->_configuration->getDiskWritingParams();
 
+    // TODO: figure out how to get the state name
+
+    string state_name( "" );
+
     WebPageHelper::defaultWebPage(
       out,
-      fsm_.stateName()->toString(),
+      state_name,
       _statisticsReporter,
       pool_,
       dwParams._nLogicalDisk,
@@ -548,6 +575,10 @@ throw (xgi::exception::Exception)
 void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+
+  // TODO: figure out state name
+  string state_name( "" );
+
   *out << "<html>"                                                   << endl;
   *out << "<head>"                                                   << endl;
   *out << "<link type=\"text/css\" rel=\"stylesheet\"";
@@ -570,7 +601,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    <b>"                                                  << endl;
     *out << getApplicationDescriptor()->getClassName() << " instance "
          << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << fsm_.stateName()->toString()                   << endl;
+    *out << "      " << state_name                   << endl;
     *out << "    </b>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
@@ -587,7 +618,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
     *out << "  <td width=\"32\">"                                      << endl;
     *out << "  </td>"                                                  << endl;
     *out << "</tr>"                                                    << endl;
-    if(fsm_.stateName()->value_ == "Failed")
+    if(state_name == "Failed")
     {
       *out << "<tr>"					     << endl;
       *out << " <td>"					     << endl;
@@ -976,6 +1007,9 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+
+  string state_name( "" );
+
   *out << "<html>"                                                   << endl;
   *out << "<head>"                                                   << endl;
   *out << "<link type=\"text/css\" rel=\"stylesheet\"";
@@ -998,7 +1032,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    <b>"                                                  << endl;
     *out << getApplicationDescriptor()->getClassName() << " instance "
          << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << fsm_.stateName()->toString()                   << endl;
+    *out << "      " << state_name                   << endl;
     *out << "    </b>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
@@ -1027,7 +1061,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    </a>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "</tr>"                                                    << endl;
-    if(fsm_.stateName()->value_ == "Failed")
+    if(state_name == "Failed")
     {
       *out << "<tr>"					     << endl;
       *out << " <td>"					     << endl;
@@ -1361,6 +1395,9 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+
+  string state_name( "" );
+
   *out << "<html>"                                                   << endl;
   *out << "<head>"                                                   << endl;
   *out << "<link type=\"text/css\" rel=\"stylesheet\"";
@@ -1383,7 +1420,7 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    <b>"                                                  << endl;
     *out << getApplicationDescriptor()->getClassName() << " instance "
          << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << fsm_.stateName()->toString()                   << endl;
+    *out << "      " << state_name                   << endl;
     *out << "    </b>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
@@ -1412,7 +1449,7 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    </a>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "</tr>"                                                    << endl;
-    if(fsm_.stateName()->value_ == "Failed")
+    if(state_name == "Failed")
     {
       *out << "<tr>"					     << endl;
       *out << " <td>"					     << endl;
@@ -1487,7 +1524,11 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
+
+  // TODO: figure out state name
+  string state_name( "Enabled" );
+
+  if(state_name == "Enabled" && jc_.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0)
   {
@@ -1595,7 +1636,12 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(fsm_.stateName()->toString() == "Enabled" &&
+
+  // TODO: figure out state name:
+
+  string state_name( "Enabled" );
+
+  if( state_name == "Enabled" &&
      sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0)
     {
@@ -1727,12 +1773,14 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 {
   char buffer[65536];
 
+  string state_name( "Enabled" );
+
   out->getHTTPResponseHeader().addHeader("Content-Type", "application/xml");
   sprintf(buffer,
 	  "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<Monitor>\n");
   out->write(buffer,strlen(buffer));
 
-  if(fsm_.stateName()->toString() == "Enabled")
+  if( state_name == "Enabled")
   {
     sprintf(buffer, "<ConsumerList>\n");
     out->write(buffer,strlen(buffer));
@@ -1862,6 +1910,11 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+
+  // TODO: figure out state name
+
+  string state_name( "Enabled" );
+
   // We should make the HTML header and the page banner common
   std::string url =
     getApplicationDescriptor()->getContextDescriptor()->getURL();
@@ -1874,7 +1927,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   //bool autoUpdate = true;
   // 11-Jun-2008, KAB - changed auto update default to OFF
   bool autoUpdate = false;
-  if(fsm_.stateName()->toString() == "Enabled") {
+  if(state_name == "Enabled") {
     cgicc::Cgicc cgiWrapper(in);
     cgicc::const_form_iterator updateRef = cgiWrapper.getElement("update");
     if (updateRef != cgiWrapper.getElements().end()) {
@@ -1917,7 +1970,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   *out << "    <b>"                                                  << endl;
   *out << getApplicationDescriptor()->getClassName() << " Instance "
        << getApplicationDescriptor()->getInstance();
-  *out << ", State is " << fsm_.stateName()->toString()              << endl;
+  *out << ", State is " << state_name             << endl;
   *out << "    </b>"                                                 << endl;
   *out << "  </td>"                                                  << endl;
   *out << "  <td width=\"32\">"                                      << endl;
@@ -1932,7 +1985,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   *out << "    </a>"                                                 << endl;
   *out << "  </td>"                                                  << endl;
   *out << "</tr>"                                                    << endl;
-  if(fsm_.stateName()->value_ == "Failed")
+  if(state_name == "Failed")
   {
     *out << "<tr>"                                                   << endl;
     *out << " <td>"                                                  << endl;
@@ -1948,7 +2001,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   EventServingParams esParams =
     sharedResourcesPtr_->_configuration->getEventServingParams();
 
-  if(fsm_.stateName()->toString() == "Enabled")
+  if(state_name == "Enabled")
   {
     boost::shared_ptr<EventServer> eventServer =
       sharedResourcesPtr_->_oldEventServer;
@@ -2985,7 +3038,10 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  if(fsm_.stateName()->toString() == "Enabled")
+
+  string state_name( "Enabled" );
+
+  if(state_name == "Enabled")
   { // what is the right place for this?
 
   std::string consumerName = "None provided";
@@ -3147,6 +3203,11 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
+
+  // TODO: figure out state name
+
+  string state_name( "Enabled" );
+
   // default the message length to zero
   int len=0;
 
@@ -3169,7 +3230,7 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   
   // first test if StorageManager is in Enabled state and this is a valid request
   // there must also be DQM data available
-  if(fsm_.stateName()->toString() == "Enabled" && consumerId != 0)
+  if( state_name == "Enabled" && consumerId != 0)
   {
     boost::shared_ptr<DQMEventServer> eventServer =
       sharedResourcesPtr_->_oldDQMEventServer;
@@ -3216,7 +3277,10 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  if(fsm_.stateName()->toString() == "Enabled")
+
+  string state_name( "Enabled" );
+
+  if( state_name == "Enabled")
   { // We need to be in the enabled state
 
     std::string consumerName = "None provided";
@@ -3351,7 +3415,7 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
-  is->fireItemAvailable("stateName",            fsm_.stateName());
+  //is->fireItemAvailable("stateName",            fsm_.stateName());
   //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
 
@@ -3381,8 +3445,10 @@ void StorageManager::actionPerformed(xdata::Event& e)
   // 14-Oct-2008, KAB - skip all processing in this method, for now,
   // when the SM state is halted.  This will protect against the use
   // of un-initialized variables (like jc_).
-  if (fsm_.stateName()->toString()=="Halted") {return;}
-  if (fsm_.stateName()->toString()=="halting") {return;}
+
+  //if (fsm_.stateName()->toString()=="Halted") {return;}
+  //if (fsm_.stateName()->toString()=="halting") {return;}
+
   // paranoia - also return if jc_.get() is null.  Although, to do this
   // right, we would need a lock
   if (jc_.get() == 0) {return;}
@@ -3489,26 +3555,26 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished configuring!");
 
-    fsm_.fireEvent("ConfigureDone",this);
+    //fsm_.fireEvent("ConfigureDone",this);
   }
   catch (cms::Exception& e) {
     reasonForFailedState_ = e.explainSelf();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "configuring FAILED: " + (string)e.what();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   catch (std::exception& e) {
     reasonForFailedState_  = e.what();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   catch (...) {
     reasonForFailedState_  = "Unknown Exception while configuring";
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
 
@@ -3580,22 +3646,22 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     }
     catch (cms::Exception& e) {
       reasonForFailedState_ = e.explainSelf();
-      fsm_.fireFailed(reasonForFailedState_,this);
+      //fsm_.fireFailed(reasonForFailedState_,this);
       return false;
     }
     catch (xcept::Exception &e) {
       reasonForFailedState_ = "re-configuring FAILED: " + (string)e.what();
-      fsm_.fireFailed(reasonForFailedState_,this);
+      //fsm_.fireFailed(reasonForFailedState_,this);
       return false;
     }
     catch (std::exception& e) {
       reasonForFailedState_  = e.what();
-      fsm_.fireFailed(reasonForFailedState_,this);
+      //fsm_.fireFailed(reasonForFailedState_,this);
       return false;
     }
     catch (...) {
       reasonForFailedState_  = "Unknown Exception while re-configuring";
-      fsm_.fireFailed(reasonForFailedState_,this);
+      //fsm_.fireFailed(reasonForFailedState_,this);
       return false;
     }
   }
@@ -3633,17 +3699,17 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
     
-    fsm_.fireEvent("EnableDone",this);
+    //fsm_.fireEvent("EnableDone",this);
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "enabling FAILED: " + (string)e.what();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   catch(...)
   {
     reasonForFailedState_  = "Unknown Exception while enabling";
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   startMonitoringWorkLoop();
@@ -3660,17 +3726,17 @@ bool StorageManager::stopping(toolbox::task::WorkLoop* wl)
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished stopping!");
     
-    fsm_.fireEvent("StopDone",this);
+    //fsm_.fireEvent("StopDone",this);
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "stopping FAILED: " + (string)e.what();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   catch(...)
   {
     reasonForFailedState_  = "Unknown Exception while stopping";
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   
@@ -3689,17 +3755,17 @@ bool StorageManager::halting(toolbox::task::WorkLoop* wl)
     
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished halting!");
     
-    fsm_.fireEvent("HaltDone",this);
+    //fsm_.fireEvent("HaltDone",this);
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "halting FAILED: " + (string)e.what();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   catch(...)
   {
     reasonForFailedState_  = "Unknown Exception while halting";
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false;
   }
   
@@ -3790,7 +3856,14 @@ void StorageManager::haltAction()
 xoap::MessageReference StorageManager::fsmCallback(xoap::MessageReference msg)
   throw (xoap::exception::Exception)
 {
-  return fsm_.commandCallback(msg);
+
+  // TODO: this has to be moved elsewhere...
+
+  xoap::MessageReference reply = xoap::createMessage();
+  return reply;
+
+  //return fsm_.commandCallback(msg);
+
 }
 
 
@@ -3876,14 +3949,14 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 {
   // @@EM if state is already "failed" then no reason to firefailed again 
   //      (in fact it will cause problems) so bail out !
-  if(fsm_.stateName()->toString() == "Failed") return false;
+  //if(fsm_.stateName()->toString() == "Failed") return false;
   // @@EM Look for exceptions in the FragmentCollector thread, do a state transition if present
   if(stor::getSMFC_exceptionStatus()) {
     edm::LogError("StorageManager") << "Fatal BURP in FragmentCollector thread detected! \n"
        << stor::getSMFC_reason4Exception();
 
     reasonForFailedState_ = stor::getSMFC_reason4Exception();
-    fsm_.fireFailed(reasonForFailedState_,this);
+    //fsm_.fireFailed(reasonForFailedState_,this);
     return false; // stop monitoring workloop after going to failed state
   }
 

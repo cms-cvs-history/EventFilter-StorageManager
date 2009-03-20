@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.28 2009/03/20 10:28:19 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.8.2 2009/03/20 14:22:40 dshpakov Exp $
 */
 
 #include <string>
@@ -21,7 +21,6 @@
 #include "EventFilter/Utilities/interface/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
 #include "EventFilter/Utilities/interface/RunBase.h"
-#include "EventFilter/Utilities/interface/StateMachine.h"
 
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
@@ -142,8 +141,7 @@ namespace stor {
 
     std::string findStreamName(const std::string &in) const;
 	
-    // *** state machine related
-    evf::StateMachine fsm_;
+    // *** OLD state machine related
     std::string       reasonForFailedState_;
 
     edm::AssertHandler *ah_;
