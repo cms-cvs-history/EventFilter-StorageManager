@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.1 2009/03/20 10:34:36 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.1.2.2 2009/03/20 11:17:05 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -58,7 +58,7 @@ StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& even
   {
     if ( (*it)->lumiSection() == event.lumiSection() )
     {
-      if ( fileTooLarge( (*it), event.totalDataSize() ) )
+      if ( (*it)->tooLarge(event.totalDataSize()) )
       { 
         _fileHandlers.erase(it);
         break;
@@ -81,28 +81,17 @@ FilesMonitorCollection::FileRecordPtr StreamHandler::getNewFileRecord(const I2OC
   fileRecord->runNumber = event.runNumber();
   fileRecord->lumiSection = event.lumiSection();
   fileRecord->streamLabel = streamLabel();
-  fileRecord->filePath = createFilePath(event.runNumber());
-  fileRecord->fileName = createFileName(event.runNumber(), event.lumiSection());
+  fileRecord->baseFilePath = getBaseFilePath(event.runNumber());
+  fileRecord->coreFileName = getCoreFileName(event.runNumber(), event.lumiSection());
+  fileRecord->fileCounter = getFileCounter(fileRecord->coreFileName);
   fileRecord->whyClosed = FilesMonitorCollection::FileRecord::notClosed;
   
   return fileRecord;
 }
 
 
-const bool StreamHandler::fileTooLarge
-(
-  const FileHandlerPtr currentFile,
-  const unsigned long& dataSize
-)
+const std::string StreamHandler::getBaseFilePath(const uint32& runNumber)
 {
-  return ( ((currentFile->fileSize() + dataSize) > _diskWritingParams._maxFileSize)
-    && (currentFile->events() > 0 ) );
-}
-
-
-const std::string StreamHandler::createFilePath(const uint32& runNumber)
-{
-  // Fix me: where to add working directory (open/closed)?
   return _diskWritingParams._filePath + getFileSystem(runNumber);
 }
 
@@ -121,22 +110,6 @@ const std::string StreamHandler::getFileSystem(const uint32& runNumber)
   fileSystem << "/" << std::setfill('0') << std::setw(2) << fileSystemNumber; 
 
   return fileSystem.str();
-}
-
-
-const std::string StreamHandler::createFileName
-(
-  const uint32& runNumber,
-  const uint32& lumiSection
-)
-{
-  std::string coreFileName = getCoreFileName(runNumber, lumiSection);
-
-  std::ostringstream fileName;
-  fileName << coreFileName 
-    << "." << std::setfill('0') << std::setw(4) << getFileCounter(coreFileName);
-
-  return fileName.str();
 }
 
 

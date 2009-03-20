@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.cc,v 1.1.2.3 2009/03/18 18:35:41 mommsen Exp $
+// $Id: FRDFileHandler.cc,v 1.1.2.4 2009/03/20 10:34:36 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -14,7 +14,7 @@ FRDFileHandler::FRDFileHandler
   const DiskWritingParams& dwParams
 ) :
 FileHandler(fileRecord, dwParams),
-_writer(completeFileName()+".dat")
+_writer(fileRecord->completeFileName()+".dat")
 {}
 
 
@@ -41,23 +41,6 @@ void FRDFileHandler::closeFile()
   updateDatabase();
 }
 
-
-//
-// *** report status of FileHandler
-//
-// void FRDFileHandler::report(ostream &os, int indentation) const
-// {
-//   string prefix(indentation, ' ');
-//   os << prefix << "------------- FRDFileHandler -------------\n";
-//   _file -> report(os,indentation);
-//   double time = (double) _file -> lastEntry() - (double) _file -> firstEntry();
-//   double rate = (time>0) ? (double) _file -> events() / (double) time : 0.; 
-//   double tput = (time>0) ? (double) _file -> fileSize() / ((double) time * 1048576.) : 0.; 
-//   os << prefix << "rate                " << rate            << " evts/s\n";
-//   os << prefix << "throughput          " << tput            << " MB/s\n";
-//   os << prefix << "time                " << time            << " s\n";
-//   os << prefix << "-----------------------------------------\n";  
-// }
 
 
 /// emacs configuration

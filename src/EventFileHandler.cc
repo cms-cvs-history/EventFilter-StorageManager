@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.3 2009/03/18 18:35:41 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.4 2009/03/20 10:34:36 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -15,7 +15,10 @@ EventFileHandler::EventFileHandler
   const DiskWritingParams& dwParams
 ) :
 FileHandler(fileRecord, dwParams),
-_writer(completeFileName()+".dat", completeFileName()+".ind")
+_writer(
+  fileRecord->completeFileName()+".dat",
+  fileRecord->completeFileName()+".ind"
+)
 {
   writeHeader(view);
 }
@@ -47,7 +50,7 @@ void EventFileHandler::closeFile()
 {
   _writer.stop();
   _fileRecord->fileSize.addSample(_writer.getStreamEOFSize());
-  setadler(_writer.get_adler32_stream(), _writer.get_adler32_index());
+  setAdler(_writer.get_adler32_stream(), _writer.get_adler32_index());
   moveFileToClosed(true);
   writeToSummaryCatalog();
   updateDatabase();

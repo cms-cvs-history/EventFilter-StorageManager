@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.4 2009/03/18 18:35:41 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.5 2009/03/20 10:34:36 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -23,14 +23,20 @@ FileHandler::FileHandler
 ):
 _fileRecord(fileRecord),
 _firstEntry(utils::getCurrentTime()),
+_closingReason(FilesMonitorCollection::FileRecord::stop),
 _diskWritingParams(dwParams),
-_workingDir("/open/"),
 _logPath(dwParams._filePath+"/log"),
 _logFile(logFile(dwParams)),
 _cmsver(edm::getReleaseVersion())
 {
   // stripp quotes if present
   if(_cmsver[0]=='"') _cmsver=_cmsver.substr(1,_cmsver.size()-2);
+
+  // check that all required output directories are available
+  checkDirectories();
+
+  // insert the new file into the database
+  insertFileInDatabase();
 }
 
 
@@ -42,8 +48,8 @@ void FileHandler::writeToSummaryCatalog() const
 {
   ostringstream currentStat;
   string ind(":");
-  currentStat << _fileRecord->filePath                 << ind
-              << _fileRecord->fileName                 << ind
+  currentStat << _fileRecord->filePath()               << ind
+              << _fileRecord->fileName()               << ind
 	      << fileSize()                            << ind 
 	      << events()                              << ind
               << utils::timeStamp(_lastEntry)          << ind
@@ -60,8 +66,8 @@ void FileHandler::updateDatabase() const
 {
   std::ostringstream oss;
   oss << "./closeFile.pl "
-      << " --FILENAME "     << _fileRecord->fileName <<  ".dat"
-    //      << " --FILECOUNTER "  << _fileCounter  Fix me: where to get that from?
+      << " --FILENAME "     << _fileRecord->fileName() <<  ".dat"
+      << " --FILECOUNTER "  << _fileRecord->fileCounter
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()                          
       << " --STARTTIME "    << (int) _firstEntry
@@ -69,7 +75,7 @@ void FileHandler::updateDatabase() const
       << " --STATUS "       << "closed"
       << " --RUNNUMBER "    << _fileRecord->runNumber
       << " --LUMISECTION "  << _fileRecord->lumiSection
-      << " --PATHNAME "     << _fileRecord->filePath
+      << " --PATHNAME "     << _fileRecord->filePath()
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
       << " --STREAM "       << _fileRecord->streamLabel                      
@@ -93,8 +99,8 @@ void FileHandler::insertFileInDatabase() const
 {
   std::ostringstream oss;
   oss << "./insertFile.pl "
-      << " --FILENAME "     << _fileRecord->fileName <<  ".dat"
-    //      << " --FILECOUNTER "  << _fileCounter  Fix me: where to get that from?
+      << " --FILENAME "     << _fileRecord->fileName() <<  ".dat"
+      << " --FILECOUNTER "  << _fileRecord->fileCounter
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()
       << " --STARTTIME "    << (int) _firstEntry
@@ -102,7 +108,7 @@ void FileHandler::insertFileInDatabase() const
       << " --STATUS "       << "open"
       << " --RUNNUMBER "    << _fileRecord->runNumber
       << " --LUMISECTION "  << _fileRecord->lumiSection
-      << " --PATHNAME "     << _fileRecord->filePath
+      << " --PATHNAME "     << _fileRecord->filePath()
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
       << " --STREAM "       << _fileRecord->streamLabel
@@ -121,6 +127,27 @@ void FileHandler::insertFileInDatabase() const
 }
 
 
+bool FileHandler::tooOld()
+{
+  //Fix me: add logic
+  //_closingReason = FilesMonitorCollection::FileRecord::timeout;
+  return false; 
+}
+
+
+bool FileHandler::tooLarge(const unsigned long& dataSize)
+{
+  if ( ((fileSize() + dataSize) > _diskWritingParams._maxFileSize) && (events() > 0) )
+  {
+    _closingReason = FilesMonitorCollection::FileRecord::size;
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
 
 /////////////////////////////
 // File system interaction //
@@ -129,17 +156,17 @@ void FileHandler::insertFileInDatabase() const
 
 void FileHandler::moveFileToClosed(const bool& useIndexFile)
 {
-  string openIndexFileName      = completeFileName() + ".ind";
-  string openStreamerFileName   = completeFileName() + ".dat";
+  string openIndexFileName      = _fileRecord->completeFileName() + ".ind";
+  string openStreamerFileName   = _fileRecord->completeFileName() + ".dat";
 
   size_t openStreamerFileSize = checkFileSizeMatch(openStreamerFileName, fileSize());
 
   makeFileReadOnly(openStreamerFileName);
   if (useIndexFile) makeFileReadOnly(openIndexFileName);
 
-  _workingDir = "/closed/"; // Fix me!
-  string closedIndexFileName    = completeFileName() + ".ind";
-  string closedStreamerFileName = completeFileName() + ".dat";
+  _fileRecord->whyClosed = _closingReason;
+  string closedIndexFileName    = _fileRecord->completeFileName() + ".ind";
+  string closedStreamerFileName = _fileRecord->completeFileName() + ".dat";
 
   if (useIndexFile) renameFile(openIndexFileName, closedIndexFileName);
   renameFile(openStreamerFileName, closedStreamerFileName);
@@ -228,9 +255,9 @@ const string FileHandler::logFile(const DiskWritingParams& dwp) const
 void FileHandler::checkDirectories() const
 {
   checkDirectory(_diskWritingParams._filePath);
-  checkDirectory(_fileRecord->filePath);
-  checkDirectory(_fileRecord->filePath + "/open");
-  checkDirectory(_fileRecord->filePath + "/closed");
+  checkDirectory(_fileRecord->baseFilePath);
+  checkDirectory(_fileRecord->baseFilePath + "/open");
+  checkDirectory(_fileRecord->baseFilePath + "/closed");
   checkDirectory(_logPath);
 }
 
@@ -270,8 +297,8 @@ const double FileHandler::calcPctDiff(const double& value1, const double& value2
 
 void FileHandler::info(ostream& os) const
 {
-  os // << _fileCounter << " "  Fix me
-     << completeFileName() << " " 
+  os << _fileRecord->fileCounter << " "
+     << _fileRecord->completeFileName() << " " 
      << events() << " "
      << fileSize();
 }
