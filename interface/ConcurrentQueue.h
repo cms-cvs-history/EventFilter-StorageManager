@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.9 2009/03/13 21:16:32 paterno Exp $
+// $Id: ConcurrentQueue.h,v 1.1.2.10 2009/03/18 20:39:16 paterno Exp $
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -39,8 +39,8 @@ namespace stor
         not put onto the FIFO.
    
      $Author: paterno $
-     $Revision: 1.1.2.9 $
-     $Date: 2009/03/13 21:16:32 $
+     $Revision: 1.1.2.10 $
+     $Date: 2009/03/18 20:39:16 $
    */
 
   template <class T>
@@ -379,7 +379,7 @@ namespace stor
                                                unsigned long wait_sec)
   {
     lock_t lock(_protect_elements);
-    if (! (_size == 0) )
+    if (_size == 0)
       {
         boost::xtime now;
         if (boost::xtime_get(&now, CLOCK_MONOTONIC) != CLOCK_MONOTONIC)
