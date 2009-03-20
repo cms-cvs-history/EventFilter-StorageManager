@@ -58,10 +58,10 @@ namespace stor
 
     FragmentCollector(HLTInfo& h,
 		      log4cplus::Logger& applicationLogger,
-                      boost::shared_ptr<SharedResources> sharedResources);
+                      SharedResourcesPtr sharedResources);
     FragmentCollector(std::auto_ptr<HLTInfo>,
 		      log4cplus::Logger& applicationLogger,
-                      boost::shared_ptr<SharedResources> sharedResources);
+                      SharedResourcesPtr sharedResources);
     ~FragmentCollector();
 
     void start();

@@ -1,6 +1,6 @@
 #ifndef HLT_JOB_CNTLER_HPP
 #define HLT_JOB_CNTLER_HPP
-// $Id: JobController.h,v 1.22.6.10 2009/03/18 17:33:44 biery Exp $
+// $Id: JobController.h,v 1.22.6.11 2009/03/19 19:32:43 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
@@ -25,7 +25,7 @@ namespace stor
   {
   public:
     JobController(log4cplus::Logger& applicationLogger,
-                  boost::shared_ptr<SharedResources> sharedResources);
+                  SharedResourcesPtr sharedResources);
 
     ~JobController();
 
@@ -48,7 +48,7 @@ namespace stor
     boost::shared_ptr<stor::SMOnlyStats> get_stats() { return collector_->get_stats(); }
 
   private:
-    void init(boost::shared_ptr<SharedResources> sharedResources);
+    void init(SharedResourcesPtr sharedResources);
     void processCommands();
     static void run(JobController*);
 

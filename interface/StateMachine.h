@@ -3,6 +3,8 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/in_state_reaction.hpp>
 #include <boost/statechart/state_machine.hpp>
@@ -25,7 +27,6 @@ namespace stor
   class DiskWriter;
   class EventDistributor;
   class FragmentStore;
-  struct SharedResources;
 
   ////////////////////////////////////////////////
   //// Forward declarations of state classes: ////
@@ -119,7 +120,7 @@ namespace stor
     StateMachine( DiskWriter* dw,
                   EventDistributor* ed,
                   FragmentStore* fs,
-                  SharedResources* sr);
+                  SharedResourcesPtr sr);
 
     //void processI2OFragment();
     std::string getCurrentStateName() const;
@@ -136,7 +137,7 @@ namespace stor
     DiskWriter* getDiskWriter() const { return _diskWriter; }
     EventDistributor* getEventDistributor() const { return _eventDistributor; }
     FragmentStore* getFragmentStore() const { return _fragmentStore; }
-    SharedResources* getSharedResources() const { return _sharedResources; }
+    SharedResourcesPtr getSharedResources() const { return _sharedResources; }
 
     void unconsumed_event( bsc::event_base const& );
 
@@ -148,7 +149,7 @@ namespace stor
     DiskWriter* _diskWriter;
     EventDistributor* _eventDistributor;
     FragmentStore* _fragmentStore;
-    SharedResources* _sharedResources;
+    SharedResourcesPtr _sharedResources;
 
   };
 

@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.11 2009/03/18 20:39:41 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.12 2009/03/19 19:32:43 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -28,15 +28,15 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/03/18 20:39:41 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/03/19 19:32:43 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor( boost::shared_ptr<SharedResources> sr );
+    FragmentProcessor(SharedResourcesPtr sr);
 
     ~FragmentProcessor();
     
@@ -76,7 +76,7 @@ namespace stor {
      */
     void processOneFragment();
 
-    boost::shared_ptr<SharedResources> _sharedResources;
+    SharedResourcesPtr                 _sharedResources;
     boost::shared_ptr<StateMachine>    _stateMachine;
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;

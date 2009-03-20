@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.22 2009/03/19 19:32:43 biery Exp $
+// $Id: EventDistributor.h,v 1.1.2.23 2009/03/19 20:08:52 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -29,15 +29,15 @@ namespace stor {
    * header.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.22 $
-   * $Date: 2009/03/19 19:32:43 $
+   * $Revision: 1.1.2.23 $
+   * $Date: 2009/03/19 20:08:52 $
    */
 
   class EventDistributor
   {
   public:
 
-    EventDistributor( boost::shared_ptr<SharedResources> sr );
+    EventDistributor(SharedResourcesPtr sr);
 
     ~EventDistributor();
 
@@ -112,7 +112,7 @@ namespace stor {
     EventQueueCollection _eventConsumerQueueCollection;
     EventQueueCollection _DQMQueueCollection;
 
-    boost::shared_ptr<SharedResources> _sharedResources;
+    SharedResourcesPtr _sharedResources;
 
     typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;
