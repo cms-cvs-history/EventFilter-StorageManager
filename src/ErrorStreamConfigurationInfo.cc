@@ -1,4 +1,4 @@
-// $Id: ErrorStreamConfigurationInfo.cc,v 1.1.2.3 2009/03/03 16:59:26 dshpakov Exp $
+// $Id: ErrorStreamConfigurationInfo.cc,v 1.1.2.1 2009/03/06 19:17:29 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 
@@ -12,7 +12,7 @@ stor::operator << ( ostream& os,
 
   os << "ErrorStreamConfigurationInfo:" << endl
      << " Stream label: " << ci.streamLabel() << endl
-     << " Maximum file size, MB: " << ci.maxFileSize() << endl
+     << " Maximum file size, MB: " << ci.maxFileSizeMB() << endl
      << " Stream Id: " << ci.streamId() << endl;
 
   return os;

@@ -1,4 +1,4 @@
-// $Id: FRDStreamService.cc,v 1.4.10.7 2009/03/16 19:21:39 biery Exp $
+// $Id: FRDStreamService.cc,v 1.4.10.8 2009/03/17 02:05:08 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include "EventFilter/StorageManager/interface/FRDOutputService.h"  
@@ -31,9 +31,9 @@ FRDStreamService::FRDStreamService(ParameterSet const& pset,
 
   // over-ride the stream-based max size, if needed
   // (this must happen after setStreamParameter()
-  if (dwParams._maxFileSize > 0)
+  if (dwParams._maxFileSizeMB > 0)
     {
-      maxSize_ = 1048576 * ((long long) dwParams._maxFileSize);
+      maxSize_ = 1048576 * ((long long) dwParams._maxFileSizeMB);
     }
 }
 

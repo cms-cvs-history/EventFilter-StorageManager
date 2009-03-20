@@ -1,4 +1,4 @@
-// $Id: EventStreamService.cc,v 1.9.10.7 2009/03/16 19:21:39 biery Exp $
+// $Id: EventStreamService.cc,v 1.9.10.8 2009/03/17 02:05:08 biery Exp $
 
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
 #include "EventFilter/StorageManager/interface/EventOutputService.h"  
@@ -35,9 +35,9 @@ EventStreamService::EventStreamService(ParameterSet const& pset,
 
   // over-ride the stream-based max size, if needed
   // (this must happen after setStreamParameter()
-  if (dwParams._maxFileSize > 0)
+  if (dwParams._maxFileSizeMB > 0)
     {
-      maxSize_ = 1048576 * ((long long) dwParams._maxFileSize);
+      maxSize_ = 1048576 * ((long long) dwParams._maxFileSizeMB);
     }
 }
 

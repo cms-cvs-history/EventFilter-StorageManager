@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.9 2009/03/18 17:33:45 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.10 2009/03/20 10:34:04 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -93,7 +93,7 @@ namespace stor
     _diskWriteParamCopy._fileCatalog = "summaryCatalog.txt";
     _diskWriteParamCopy._setupLabel = "mtcc";
     _diskWriteParamCopy._nLogicalDisk = 0;
-    _diskWriteParamCopy._maxFileSize = 0;
+    _diskWriteParamCopy._maxFileSizeMB = 0;
     _diskWriteParamCopy._highWaterMark = 0.9;
     _diskWriteParamCopy._lumiSectionTimeOut = 45.0;
     _diskWriteParamCopy._fileClosingTestInterval = 5.0;
@@ -155,7 +155,7 @@ namespace stor
     _fileCatalog = _diskWriteParamCopy._fileCatalog;
     _setupLabel = _diskWriteParamCopy._setupLabel;
     _nLogicalDisk = _diskWriteParamCopy._nLogicalDisk;
-    _maxFileSize = _diskWriteParamCopy._maxFileSize;
+    _maxFileSize = _diskWriteParamCopy._maxFileSizeMB;
     _highWaterMark = _diskWriteParamCopy._highWaterMark;
     _lumiSectionTimeOut = _diskWriteParamCopy._lumiSectionTimeOut;
     _fileClosingTestInterval =
@@ -258,7 +258,7 @@ namespace stor
     _diskWriteParamCopy._fileCatalog = _fileCatalog;
     _diskWriteParamCopy._setupLabel = _setupLabel;
     _diskWriteParamCopy._nLogicalDisk = _nLogicalDisk;
-    _diskWriteParamCopy._maxFileSize = _maxFileSize;
+    _diskWriteParamCopy._maxFileSizeMB = _maxFileSize;
     _diskWriteParamCopy._highWaterMark = _highWaterMark;
     _diskWriteParamCopy._lumiSectionTimeOut = _lumiSectionTimeOut;
     _diskWriteParamCopy._fileClosingTestInterval = _fileClosingTestInterval;

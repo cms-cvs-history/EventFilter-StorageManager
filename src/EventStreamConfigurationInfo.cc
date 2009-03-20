@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo.cc,v 1.1.2.3 2009/03/03 16:59:26 dshpakov Exp $
+// $Id: EventStreamConfigurationInfo.cc,v 1.1.2.4 2009/03/19 17:08:33 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 
@@ -12,7 +12,7 @@ stor::operator << ( ostream& os,
 
   os << "EventStreamConfigurationInfo:" << endl
      << " Stream label: " << ci.streamLabel() << endl
-     << " Maximum file size, MB: " << ci.maxFileSize() << endl
+     << " Maximum file size, MB: " << ci.maxFileSizeMB() << endl
      << " HLT output: " << ci.outputModuleLabel() << endl
      << " Maximum event size, Bytes: " << ci.maxEventSize() << endl
      << " Stream Id: " << ci.streamId() << endl;

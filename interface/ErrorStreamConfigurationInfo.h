@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: ErrorStreamConfigurationInfo.h,v 1.1.2.5 2009/03/06 18:52:11 biery Exp $
+// $Id: ErrorStreamConfigurationInfo.h,v 1.1.2.1 2009/03/06 19:17:21 biery Exp $
 
 #ifndef ERRORSTREAMCONFIGURATIONINFO_H
 #define ERRORSTREAMCONFIGURATIONINFO_H
@@ -22,9 +22,9 @@ namespace stor
 
     // Constructor:
     ErrorStreamConfigurationInfo( const std::string& streamLabel,
-				  long long maxFileSize ):
+				  int maxFileSizeMB ):
       _streamLabel( streamLabel ),
-      _maxFileSize( maxFileSize ),
+      _maxFileSizeMB( maxFileSizeMB ),
       _streamId(0)
     {}
 
@@ -33,7 +33,7 @@ namespace stor
 
     // Accessors:
     const std::string& streamLabel() const { return _streamLabel; }
-    long long maxFileSize() const { return _maxFileSize; }
+    const int maxFileSizeMB() const { return _maxFileSizeMB; }
     StreamID streamId() const { return _streamId; }
 
     // Set stream Id:
@@ -46,7 +46,7 @@ namespace stor
   private:
 
     std::string _streamLabel;
-    long long _maxFileSize;
+    int _maxFileSizeMB;
     StreamID _streamId;
 
   };
