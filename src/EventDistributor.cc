@@ -1,11 +1,11 @@
-// $Id: EventDistributor.cc,v 1.1.2.29 2009/03/19 20:38:41 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.30 2009/03/19 20:56:29 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
 using namespace stor;
 
 
-EventDistributor::EventDistributor( boost::shared_ptr<SharedResources> sr ):
+EventDistributor::EventDistributor(SharedResourcesPtr sr):
   _sharedResources(sr)
 {
 

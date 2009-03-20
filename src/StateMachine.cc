@@ -16,7 +16,7 @@ StateMachine::StateMachine
   DiskWriter* dw,
   EventDistributor* ed,
   FragmentStore* fs,
-  SharedResources* sr
+  SharedResourcesPtr sr
 ):
 _diskWriter(dw),
 _eventDistributor(ed),

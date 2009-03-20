@@ -34,7 +34,7 @@ DrainingQueues::do_noFragmentToProcess() const
   std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
   if ( allQueuesAndWorkersAreEmpty() )
     {
-      SharedResources* sharedRes = outermost_context().getSharedResources();
+      SharedResourcesPtr sharedRes = outermost_context().getSharedResources();
       boost::shared_ptr<CommandQueue> commandQueue =
         sharedRes->_commandQueue;
       event_ptr stMachEvent( new StopDone() );

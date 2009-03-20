@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.19 2009/03/19 20:38:41 biery Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.20 2009/03/19 20:56:29 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -47,7 +47,7 @@ namespace stor
 
   FragmentCollector::FragmentCollector(HLTInfo& h,
 				       log4cplus::Logger& applicationLogger,
-                                       boost::shared_ptr<SharedResources> sharedResources):
+                                       SharedResourcesPtr sharedResources):
     cmd_q_(&(h.getCommandQueue())),
     frag_q_(&(h.getFragmentQueue())),
     prods_(0),
@@ -72,7 +72,7 @@ namespace stor
   }
   FragmentCollector::FragmentCollector(std::auto_ptr<HLTInfo> info,
 				       log4cplus::Logger& applicationLogger,
-                                       boost::shared_ptr<SharedResources> sharedResources):
+                                       SharedResourcesPtr sharedResources):
     cmd_q_(&(info.get()->getCommandQueue())),
     frag_q_(&(info.get()->getFragmentQueue())),
     prods_(0),

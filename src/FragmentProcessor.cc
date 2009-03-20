@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.14 2009/03/19 19:01:59 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.15 2009/03/19 19:32:44 biery Exp $
 
 #include <unistd.h>
 
@@ -8,18 +8,18 @@
 using namespace stor;
 
 
-FragmentProcessor::FragmentProcessor( boost::shared_ptr<SharedResources> sr ) :
+FragmentProcessor::FragmentProcessor(SharedResourcesPtr sr) :
   _sharedResources(sr),
   _fragmentStore(),
   _eventDistributor(sr),
-  _diskWriter(),
+  _diskWriter(sr),
   _timeout(1),
   _actionIsActive(true),
   _fileCheckIntervalStart(time(0)),
   _fileCheckEventCounter(0)
 {
   _stateMachine.reset(new StateMachine(&_diskWriter, &_eventDistributor,
-                                       &_fragmentStore, &(*_sharedResources)));
+                                       &_fragmentStore, _sharedResources));
   _stateMachine->initiate();
 }
 
