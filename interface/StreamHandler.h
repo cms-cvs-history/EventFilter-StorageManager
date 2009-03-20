@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.1.2.1 2009/03/20 10:30:16 mommsen Exp $
+// $Id: StreamHandler.h,v 1.1.2.2 2009/03/20 11:16:45 mommsen Exp $
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
@@ -15,8 +15,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/20 10:30:16 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/20 11:16:45 $
    */
   
   class StreamHandler
@@ -78,19 +78,14 @@ namespace stor {
     const bool fileTooLarge(const FileHandlerPtr, const unsigned long& dataSize);
 
     /**
-     * Create path to stream file
+     * Get path w/o working directory
      */    
-    const std::string createFilePath(const uint32& runNumber);
+    const std::string getBaseFilePath(const uint32& runNumber);
 
     /**
      * Get file system string
      */    
     const std::string getFileSystem(const uint32& runNumber);
-
-    /**
-     * Create a unique file name
-     */    
-    const std::string createFileName(const uint32& runNumber, const uint32& lumiSection);
 
     /**
      * Get the core file name

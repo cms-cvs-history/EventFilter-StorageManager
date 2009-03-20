@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.5 2009/03/20 10:30:16 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.6 2009/03/20 11:16:45 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/20 10:30:16 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/20 11:16:45 $
    */
 
   class FileHandler
@@ -44,20 +44,14 @@ namespace stor {
     /**
      * Returns true if the file has not seen any recent events
      */
-    bool tooOld()
-    { return false; } //Fix me: add logic
-
-
-    ////////////////////////////
-    // File parameter setters //
-    ////////////////////////////
+    bool tooOld();
 
     /**
-     * Set the adler checksum for the file
+     * Returns true if the additional data size would push the file size
+     * beyond maxFileSize.
      */
-    void setadler(uint32 s, uint32 i)
-    { _adlerstream = s; _adlerindex = i; }
-    
+    bool tooLarge(const unsigned long& dataSize);
+
         
     /////////////////////////////
     // File information dumper //
@@ -67,11 +61,6 @@ namespace stor {
      * Add file summary information to ostream
      */
     void info(std::ostream &os) const;
-    
-    /**
-     * Dump status information to ostream
-     */
-    //void report(std::ostream &os, int indentation) const;
     
 
 
@@ -100,20 +89,26 @@ namespace stor {
 
   protected:
     
-    //////////////////////
-    // File bookkeeping //
-    //////////////////////
-
-    /**
-     * Return the complete file name and path w/o file ending
-     */
-    const std::string completeFileName() const
-    { return _fileRecord->filePath + "/" + _fileRecord->fileName; }
-    
     /**
      * Close the file
      */
     virtual void closeFile() = 0;
+
+
+    ////////////////////////////
+    // File parameter setters //
+    ////////////////////////////
+
+    /**
+     * Set the adler checksum for the file
+     */
+    void setAdler(uint32 s, uint32 i)
+    { _adlerstream = s; _adlerindex = i; }
+    
+    
+    //////////////////////
+    // File bookkeeping //
+    //////////////////////
     
     /**
      * Write summary information in file catalog
@@ -125,6 +120,7 @@ namespace stor {
      * into the _logFile.
      */
     void updateDatabase() const;
+
 
     /**
      * Write command to insert a new file into the CMS_STOMGR.TIER0_INJECTION table
@@ -141,6 +137,9 @@ namespace stor {
      * Move index and streamer file to "closed" directory
      */
     void moveFileToClosed(const bool& useIndexFile);
+
+
+  private:
 
     /**
      * Check that the file size matches the given size.
@@ -199,12 +198,12 @@ namespace stor {
     utils::time_point_t _firstEntry;                // time when first event was writen
     utils::time_point_t _lastEntry;                 // time when latest event was writen
 
+    FilesMonitorCollection::FileRecord::ClosingReason _closingReason;
     
   private:
 
     DiskWritingParams _diskWritingParams;
     
-    std::string  _workingDir;                       // current working directory
     std::string  _logPath;                          // log path
     std::string  _logFile;                          // log file including path
     std::string  _cmsver;                           // CMSSW version string

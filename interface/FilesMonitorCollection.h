@@ -1,8 +1,10 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.6 2009/03/02 18:08:21 biery Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.1 2009/03/18 18:35:23 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
 
+#include <sstream>
+#include <iomanip>
 #include <vector>
 
 #include "xdata/UnsignedInteger32.h"
@@ -15,9 +17,9 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities of open and closed files
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/18 18:35:23 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -38,10 +40,26 @@ namespace stor {
       uint32_t          runNumber;          // run number
       uint32_t          lumiSection;        // luminosity section 
       std::string       streamLabel;        // datastream label
-      std::string       filePath;           // complete file path
-      std::string       fileName;           // qualified file name w/o file ending
+      std::string       baseFilePath;       // file path w/o the working directory
+      std::string       coreFileName;       // file name w/o instance & file ending
+      unsigned int      fileCounter;        // counter of number of coreFileNames used
       ClosingReason     whyClosed;          // reason why the given file was closed
       MonitoredQuantity fileSize;           // file size
+      std::string filePath()                // complete file path
+      { 
+        return ( baseFilePath + (whyClosed == notClosed ? "/open/" : "/closed/") );
+      }
+      std::string fileName()                // full file name w/o file ending
+      {
+        std::ostringstream fileName;
+        fileName << coreFileName 
+          << "." << std::setfill('0') << std::setw(4) << fileCounter;
+        return fileName.str();
+      }
+      std::string completeFileName()
+      {
+        return ( filePath() + "/" + fileName() );
+      }
     };
 
     // We do not know how many files there will be.
