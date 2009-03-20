@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.3 2009/02/17 14:59:25 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.4 2009/03/19 09:04:55 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -20,10 +20,9 @@ StatisticsReporter::StatisticsReporter(xdaq::Application *app) :
 _app(app),
 _runMonCollection(app),
 _fragMonCollection(app),
+_filesMonCollection(app),
 _doMonitoring(true)
-{
-  startWorkLoop();
-}
+{}
 
 
 void StatisticsReporter::startWorkLoop()
@@ -75,6 +74,7 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
   {
     _runMonCollection.update();
     _fragMonCollection.update();
+    _filesMonCollection.update();
   }
   catch(xcept::Exception &e)
   {
