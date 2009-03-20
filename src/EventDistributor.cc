@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.31 2009/03/20 10:33:42 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.32 2009/03/20 17:27:32 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -88,28 +88,41 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
         break;
       }
 
-   case Header::EVENT:
-     {
-       for( EvtSelList::iterator it = _eventStreamSelectors.begin();
-            it != _eventStreamSelectors.end();
-            ++it )
-         {
-           if( it->acceptEvent( ioc ) )
-             {
-               ioc.tagForStream( it->configInfo().streamId() );
-             }
-         }
-       for( ConsSelList::iterator it = _eventConsumerSelectors.begin();
-            it != _eventConsumerSelectors.end();
-            ++it )
-         {
-           if( it->acceptEvent( ioc ) )
-             {
-               ioc.tagForEventConsumer( it->queueId() );
-             }
-         }
-       break;
-     }
+    case Header::EVENT:
+      {
+        for( EvtSelList::iterator it = _eventStreamSelectors.begin();
+             it != _eventStreamSelectors.end();
+             ++it )
+          {
+            if( it->acceptEvent( ioc ) )
+              {
+                ioc.tagForStream( it->configInfo().streamId() );
+              }
+          }
+        for( ConsSelList::iterator it = _eventConsumerSelectors.begin();
+             it != _eventConsumerSelectors.end();
+             ++it )
+          {
+            if( it->acceptEvent( ioc ) )
+              {
+                ioc.tagForEventConsumer( it->queueId() );
+              }
+          }
+
+        // temporary handling (until the DiskWriter is ready)
+        if ( _sharedResources->_serviceManager.get() != 0 )
+          {
+            ioc.copyFragmentsIntoBuffer(_tempEventArea);
+            EventMsgView emsg(&_tempEventArea[0]);
+            _sharedResources->_serviceManager->manageEventMsg(emsg);
+            if ( _sharedResources->_oldEventServer.get() != NULL )
+              {
+                _sharedResources->_oldEventServer->processEvent(emsg);
+              }
+          }
+
+        break;
+      }
 
     case Header::DQM_EVENT:
       {

@@ -76,9 +76,6 @@ namespace stor
   private:
     static void run(FragmentCollector*);
     void processFragments();
-    void processEvent(I2OChain i2oChain);
-
-    int removeStaleFragments();
 
     edm::EventBuffer* cmd_q_;
     edm::EventBuffer* frag_q_;
@@ -102,8 +99,6 @@ namespace stor
   private:
     uint32 runNumber_;
     log4cplus::Logger& applicationLogger_;
-    boost::shared_ptr<FragmentQueue> newFragmentQueue_;
-    boost::shared_ptr<DiscardManager> discardManager_;
 
     boost::shared_ptr<edm::ServiceManager> writer_;
     boost::shared_ptr<stor::DQMServiceManager> dqmServiceManager_;

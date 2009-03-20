@@ -1,4 +1,4 @@
-// $Id: FragmentCollector.cc,v 1.43.4.21 2009/03/20 10:33:41 mommsen Exp $
+// $Id: FragmentCollector.cc,v 1.43.4.22 2009/03/20 17:27:32 biery Exp $
 
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -55,8 +55,6 @@ namespace stor
     lastStaleCheckTime_(time(0)),
     staleFragmentTimeout_(30),
     applicationLogger_(applicationLogger),
-    newFragmentQueue_(sharedResources->_fragmentQueue),
-    discardManager_(sharedResources->_discardManager),
     writer_(sharedResources->_serviceManager),
     eventServer_(sharedResources->_oldEventServer),
     DQMeventServer_(sharedResources->_oldDQMEventServer),
@@ -80,8 +78,6 @@ namespace stor
     lastStaleCheckTime_(time(0)),
     staleFragmentTimeout_(30),
     applicationLogger_(applicationLogger),
-    newFragmentQueue_(sharedResources->_fragmentQueue),
-    discardManager_(sharedResources->_discardManager),
     writer_(sharedResources->_serviceManager),
     eventServer_(sharedResources->_oldEventServer),
     DQMeventServer_(sharedResources->_oldDQMEventServer),
@@ -180,31 +176,6 @@ namespace stor
               }
           }
 
-        if (newFragmentQueue_->deq_nowait(i2oChain))
-          {
-            nothingHappening = false;
-
-            switch(i2oChain.messageCode())
-              {
-              case Header::EVENT:
-                {
-                  FR_DEBUG << "FragColl: Got an Event" << endl;
-                  processEvent(i2oChain);
-                  break;
-                }
-              default:
-                {
-                  char codeString[32];
-                  sprintf(codeString, "%d", i2oChain.messageCode());
-                  std::string logMsg = "Invalid message code (";
-                  logMsg.append(codeString);
-                  logMsg.append(") received on new fragment queue!");
-                  LOG4CPLUS_ERROR(applicationLogger_, logMsg);
-                  break;
-                }
-              }
-          }
-
         if (nothingHappening) { ::usleep(100); }
       }
     
@@ -220,58 +191,5 @@ namespace stor
 
     edm::EventBuffer::ProducerBuffer cb(*frag_q_);
     cb.commit();
-  }
-
-  void FragmentCollector::processEvent(I2OChain i2oChain)
-  {
-    // add the fragment to the fragment store
-    bool complete = fragmentStore_.addFragment(i2oChain);
-
-    if(complete)
-    {
-      int assembledSize = i2oChain.copyFragmentsIntoBuffer(event_area_);
-
-      EventMsgView emsg(&event_area_[0]);
-      FR_DEBUG << "FragColl: writing event size " << assembledSize << endl;
-      writer_->manageEventMsg(emsg);
-
-      if (eventServer_.get() != NULL)
-        {
-          eventServer_->processEvent(emsg);
-        }
-
-      // tell the resource broker that sent us this event
-      // that we are done with it and it can forget about it
-      discardManager_->sendDiscardMessage(i2oChain);
-
-      // check for stale fragments
-      removeStaleFragments();
-    }
-  }
-
-  /**
-   * This method removes stale fragments from the fragmentStore.
-   *
-   * @return the number of events (fragmentContainers, actually) that
-   *         were removed from the fragment_area_.
-   */
-  int FragmentCollector::removeStaleFragments()
-  {
-    I2OChain staleEvent;
-    bool gotStaleEvent = true;  
-    int loopCounter = 0;
-    int discardCount = 0;
-
-    while ( gotStaleEvent && loopCounter++ < 10 )
-      {
-        gotStaleEvent = fragmentStore_.getStaleEvent(staleEvent, staleFragmentTimeout_);
-        if ( gotStaleEvent )
-          {
-            LOG4CPLUS_WARN(applicationLogger_, "Deleting a stale I2OChain.");
-            ++discardCount;
-          }
-      }
-
-    return discardCount;
   }
 }

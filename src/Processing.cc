@@ -45,8 +45,7 @@ void Processing::logStopDoneRequest( const StopDone& request )
 void
 Processing::do_processI2OFragment( I2OChain& frag ) const
 {
-  std::cout << stateName() << "::processI2OFragment()" << std::endl;
-  //cout << "Processing a fragment\n";
+  //std::cout << stateName() << "::processI2OFragment()" << std::endl;
 
   static unsigned int noFragmentCount;
 
@@ -71,7 +70,7 @@ Processing::do_processI2OFragment( I2OChain& frag ) const
 void
 Processing::do_noFragmentToProcess() const
 {
-  std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
+  //std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
   I2OChain staleEvent;
   bool gotStaleEvent = 
     outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 5);

@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.15 2009/03/19 19:32:44 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.16 2009/03/20 10:33:41 mommsen Exp $
 
 #include <unistd.h>
 
@@ -47,10 +47,8 @@ void FragmentProcessor::processOneFragmentIfPossible()
 void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
-  boost::shared_ptr<FragmentQueue> fq = _sharedResources->_fragmentQueue2;
-  ::sleep(_timeout);
-  //if (fq->deq_timed_wait(fragment, _timeout))
-  if (fq->deq_nowait(fragment))
+  boost::shared_ptr<FragmentQueue> fq = _sharedResources->_fragmentQueue;
+  if (fq->deq_timed_wait(fragment, _timeout))
     {
       _stateMachine->getCurrentState().processI2OFragment(fragment);
 

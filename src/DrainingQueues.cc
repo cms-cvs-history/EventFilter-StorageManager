@@ -31,7 +31,7 @@ string DrainingQueues::do_stateName() const
 void
 DrainingQueues::do_noFragmentToProcess() const
 {
-  std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
+  //std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
   if ( allQueuesAndWorkersAreEmpty() )
     {
       SharedResourcesPtr sharedRes = outermost_context().getSharedResources();

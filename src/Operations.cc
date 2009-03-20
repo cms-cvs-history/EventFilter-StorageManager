@@ -40,20 +40,32 @@ std::string Operations::stateName() const
 ////////////////////////////////////////////////////////////
 
 void 
-Operations::do_processI2OFragment( I2OChain& /* unused */ ) const
+Operations::do_processI2OFragment( I2OChain& frag ) const
 {
-  // What should we really do here? 
-  //std::cerr << "Error: "
-  //	    << stateName()
-  //	    << " state cannot handle I2O messages\n";
-  std::cout << stateName() << "::processI2OFragment()" << std::endl;
+  //std::cout << stateName() << "::processI2OFragment()" << std::endl;
+
+  // 20-Mar-2009, KAB: if we get a fragment when we are not supposed to get
+  // one, should we still send a discard message to the resource broker?
+  // If we don't, couldn't that cause problems upstream?  If we do, though,
+  // we could end up sending duplicate discard messages (one per fragment).
+  // At a minimum, we should make sure that we don't try to use the discard
+  // manager before it is available.
+  // Of course, if we want to do this, we need to implement a way to get
+  // a handle to the discard manager since outermost_context() doesn't
+  // actually work here.
+  //
+  //if ( outermost_context().getSharedResources().get() != 0 &&
+  //     outermost_context().getSharedResources()->_discardManager.get() != 0)
+  //  {
+  //    outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(frag);
+  //  }
 }
 
 
 void 
 Operations::do_noFragmentToProcess() const
 {
-  std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
+  //std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
 }
 
 

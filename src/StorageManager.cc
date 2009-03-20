@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.46 2009/03/20 17:27:32 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.46 2009/03/20 17:27:32 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -207,7 +207,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesPtr_.reset(new SharedResources());
   sharedResourcesPtr_->_commandQueue.reset(new CommandQueue(128));
   sharedResourcesPtr_->_fragmentQueue.reset(new FragmentQueue(1024));
-  sharedResourcesPtr_->_fragmentQueue2.reset(new FragmentQueue(1024));
   sharedResourcesPtr_->_streamQueue.reset(new StreamQueue(1024));
   sharedResourcesPtr_->_registrationQueue.reset(new RegistrationQueue(128));
 
@@ -297,7 +296,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -450,7 +449,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -498,8 +497,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  I2OChain i2oChain2(ref);
-  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain2);
+  I2OChain i2oChain(ref);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
