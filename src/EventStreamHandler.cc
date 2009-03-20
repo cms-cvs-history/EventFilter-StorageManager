@@ -1,4 +1,4 @@
-// $Id: EventStreamHandler.cc,v 1.1.2.4 2009/03/01 20:36:29 biery Exp $
+// $Id: EventStreamHandler.cc,v 1.1.2.1 2009/03/20 10:34:36 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventFileHandler.h"
 #include "EventFilter/StorageManager/interface/EventStreamHandler.h"
@@ -26,7 +26,7 @@ EventStreamHandler::FileHandlerPtr EventStreamHandler::newFileHandler(const I2OC
   FilesMonitorCollection::FileRecordPtr fileRecord = getNewFileRecord(event);
 
   FileHandlerPtr newFileHandler(
-    new EventFileHandler(_initMsgView, fileRecord, _diskWritingParams)
+    new EventFileHandler(_initMsgView, fileRecord, _diskWritingParams, getMaxFileSize())
   );
   _fileHandlers.push_back(newFileHandler);
 

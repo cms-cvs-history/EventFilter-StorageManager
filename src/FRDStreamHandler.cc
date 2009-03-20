@@ -1,4 +1,4 @@
-// $Id: FRDStreamHandler.cc,v 1.1.2.4 2009/03/01 20:36:29 biery Exp $
+// $Id: FRDStreamHandler.cc,v 1.1.2.1 2009/03/20 10:34:36 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FRDFileHandler.h"
 #include "EventFilter/StorageManager/interface/FRDStreamHandler.h"
@@ -22,13 +22,12 @@ FRDStreamHandler::FileHandlerPtr FRDStreamHandler::newFileHandler(const I2OChain
   FilesMonitorCollection::FileRecordPtr fileRecord = getNewFileRecord(event);
 
   FileHandlerPtr newFileHandler(
-    new FRDFileHandler(fileRecord, _diskWritingParams)
+    new FRDFileHandler(fileRecord, _diskWritingParams, getMaxFileSize())
   );
   _fileHandlers.push_back(newFileHandler);
 
   return newFileHandler;
 }
-
 
 
 /// emacs configuration

@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.cc,v 1.1.2.4 2009/03/20 10:34:36 mommsen Exp $
+// $Id: FRDFileHandler.cc,v 1.1.2.5 2009/03/20 15:16:57 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -11,9 +11,10 @@ using namespace stor;
 FRDFileHandler::FRDFileHandler
 (
   FilesMonitorCollection::FileRecordPtr fileRecord,
-  const DiskWritingParams& dwParams
+  const DiskWritingParams& dwParams,
+  const long long& maxFileSize
 ) :
-FileHandler(fileRecord, dwParams),
+FileHandler(fileRecord, dwParams, maxFileSize),
 _writer(fileRecord->completeFileName()+".dat")
 {}
 

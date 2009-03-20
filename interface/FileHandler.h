@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.6 2009/03/20 11:16:45 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.7 2009/03/20 15:16:34 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/20 11:16:45 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/20 15:16:34 $
    */
 
   class FileHandler
@@ -31,8 +31,9 @@ namespace stor {
     FileHandler
     (
       FilesMonitorCollection::FileRecordPtr,
-      const DiskWritingParams&
-    );
+      const DiskWritingParams&,
+      const long long& maxFileSize
+     );
     
     virtual ~FileHandler() {};
  
@@ -83,8 +84,8 @@ namespace stor {
     /**
      * Return the size of the file in bytes
      */
-    const unsigned long fileSize() const
-    { return static_cast<unsigned long>(_fileRecord->fileSize.getValueSum()); }
+    const long long fileSize() const
+    { return static_cast<long long>(_fileRecord->fileSize.getValueSum()); }
 
 
   protected:
@@ -202,12 +203,14 @@ namespace stor {
     
   private:
 
-    DiskWritingParams _diskWritingParams;
+    const DiskWritingParams& _diskWritingParams;
     
-    std::string  _logPath;                          // log path
-    std::string  _logFile;                          // log file including path
+    const long long    _maxFileSize;                // maximal file size in bytes
+    
+    const std::string  _logPath;                    // log path
+    const std::string  _logFile;                    // log file including path
     std::string  _cmsver;                           // CMSSW version string
-    
+
     uint32       _adlerstream;                      // adler32 checksum for streamer file
     uint32       _adlerindex;                       // adler32 checksum for index file
   };

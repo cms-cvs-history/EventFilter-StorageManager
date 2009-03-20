@@ -1,4 +1,4 @@
-// $Id: EventStreamHandler.h,v 1.1.2.5 2009/03/01 20:36:29 biery Exp $
+// $Id: EventStreamHandler.h,v 1.1.2.1 2009/03/20 10:30:16 mommsen Exp $
 
 #ifndef StorageManager_EventStreamHandler_h
 #define StorageManager_EventStreamHandler_h
@@ -18,9 +18,9 @@ namespace stor {
   /**
    * Handle one event stream written to disk.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/01 20:36:29 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/03/20 10:30:16 $
    */
   
   class EventStreamHandler : public StreamHandler
@@ -46,6 +46,13 @@ namespace stor {
      * Return a new file handler for the provided event
      */    
     virtual FileHandlerPtr newFileHandler(const I2OChain& event);
+
+    /**
+     * Return the maximum file size for the stream in MB
+     */
+    virtual const int getStreamMaxFileSize()
+    { return _streamConfig.maxFileSizeMB(); }
+
 
     EventStreamConfigurationInfo _streamConfig;
     InitMsgSharedPtr _initMsgView;

@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.1.2.2 2009/03/20 11:16:45 mommsen Exp $
+// $Id: StreamHandler.h,v 1.1.2.3 2009/03/20 15:16:34 mommsen Exp $
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
@@ -15,8 +15,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/20 11:16:45 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/20 15:16:34 $
    */
   
   class StreamHandler
@@ -62,6 +62,16 @@ namespace stor {
      * Return a new file record for the event
      */    
     FilesMonitorCollection::FileRecordPtr getNewFileRecord(const I2OChain& event);
+
+    /**
+     * Return the maximum file size for the stream in MB
+     */
+    virtual const int getStreamMaxFileSize() = 0;
+
+    /**
+     * Return the maximum file size in bytes
+     */
+    const long long getMaxFileSize();
 
 
   private:

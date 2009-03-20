@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.2 2009/03/20 11:17:05 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.1.2.3 2009/03/20 15:16:57 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -145,6 +145,16 @@ const unsigned int StreamHandler::getFileCounter(const std::string& coreFileName
     ++(pos->second);
     return pos->second;
   }
+}
+
+
+
+const long long StreamHandler::getMaxFileSize()
+{
+  int maxFileSizeMB = _diskWritingParams._maxFileSizeMB > 0 ? 
+    _diskWritingParams._maxFileSizeMB : getStreamMaxFileSize();
+
+  return ( maxFileSizeMB * 1024 * 1024 );
 }
 
 

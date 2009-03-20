@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.5 2009/03/20 10:34:36 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.6 2009/03/20 15:16:57 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -19,12 +19,14 @@ using namespace std;
 FileHandler::FileHandler
 (
   FilesMonitorCollection::FileRecordPtr fileRecord,
-  const DiskWritingParams& dwParams
+  const DiskWritingParams& dwParams,
+  const long long& maxFileSize
 ):
 _fileRecord(fileRecord),
 _firstEntry(utils::getCurrentTime()),
 _closingReason(FilesMonitorCollection::FileRecord::stop),
 _diskWritingParams(dwParams),
+_maxFileSize(maxFileSize),
 _logPath(dwParams._filePath+"/log"),
 _logFile(logFile(dwParams)),
 _cmsver(edm::getReleaseVersion())
@@ -32,10 +34,8 @@ _cmsver(edm::getReleaseVersion())
   // stripp quotes if present
   if(_cmsver[0]=='"') _cmsver=_cmsver.substr(1,_cmsver.size()-2);
 
-  // check that all required output directories are available
   checkDirectories();
 
-  // insert the new file into the database
   insertFileInDatabase();
 }
 
@@ -137,7 +137,7 @@ bool FileHandler::tooOld()
 
 bool FileHandler::tooLarge(const unsigned long& dataSize)
 {
-  if ( ((fileSize() + dataSize) > _diskWritingParams._maxFileSize) && (events() > 0) )
+  if ( ((fileSize() + dataSize) > _maxFileSize) && (events() > 0) )
   {
     _closingReason = FilesMonitorCollection::FileRecord::size;
     return true;
