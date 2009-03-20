@@ -1,7 +1,7 @@
 #ifndef EVENTOUTPUTSERVICE_H
 #define EVENTOUTPUTSERVICE_H
 
-// $Id: EventOutputService.h,v 1.3 2008/08/07 11:33:14 loizides Exp $
+// $Id: EventOutputService.h,v 1.1.12.1 2009/03/12 14:38:19 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/OutputService.h>
 #include <IOPool/Streamer/interface/InitMessage.h>
@@ -12,7 +12,7 @@ namespace edm {
   class EventOutputService : public OutputService
   {
     public:
-      EventOutputService(boost::shared_ptr<FileRecord>, InitMsgView const&);
+      EventOutputService(boost::shared_ptr<stor::FileRecord>, InitMsgView const&);
       ~EventOutputService();
 
       void   writeEvent(const uint8 * const);

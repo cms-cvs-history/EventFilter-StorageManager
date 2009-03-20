@@ -2,7 +2,7 @@
 #define STOR_PROGRESSMARKER_H
 
 // Created by Markus Klute on 2007 Jan 09.
-// $Id:$
+// $Id: ProgressMarker.h,v 1.1.22.3 2009/03/13 15:10:37 mommsen Exp $
 
 // singleton class 
 // to return the status of the StorageManager

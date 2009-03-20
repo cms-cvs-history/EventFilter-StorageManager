@@ -1,7 +1,6 @@
-// $Id: FileRecord.cc,v 1.12 2008/08/20 13:20:47 loizides Exp $
+// $Id: FileRecord.cc,v 1.13.4.6 2009/03/16 19:21:39 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
-#include <EventFilter/StorageManager/interface/Configurator.h>
 #include <FWCore/MessageLogger/interface/MessageLogger.h>
 #include <FWCore/Utilities/interface/GetReleaseVersion.h>
 
@@ -12,67 +11,61 @@
 #include <iomanip>
 #include <sys/stat.h>
 
-using namespace edm;
+using namespace stor;
 using namespace std;
 
-//
-// *** FileRecord
-//
-FileRecord::FileRecord(int lumi, const string &file, const string &path):
-  smParameter_(stor::Configurator::instance()->getParameter()),
+
+FileRecord::FileRecord(const uint32_t lumiSection, const string &file, DiskWritingParams dwParams):
   fileName_(file),
-  basePath_(path),
+  basePath_(dwParams._filePath),
   fileSystem_(""),
   workingDir_("/open/"),
-  logPath_(path+"/log"),
-  logFile_(logFile()),
-  setupLabel_(""),
+  logPath_(dwParams._filePath+"/log"),
+  logFile_(logFile(dwParams)),
   streamLabel_(""),
-  cmsver_(getReleaseVersion()),
-  lumiSection_(lumi),
+  cmsver_(edm::getReleaseVersion()),
+  lumiSection_(lumiSection),
   runNumber_(0),
   fileCounter_(0),
   fileSize_(0), 
   events_(0), 
   firstEntry_(0.0), 
   lastEntry_(0.0),
-  whyClosed_(0)
+  whyClosed_(notClosed),
+  diskWritingParams_(dwParams)
 {
    // stripp quotes if present
    if(cmsver_[0]=='"') cmsver_=cmsver_.substr(1,cmsver_.size()-2);
 }
 
 
-//
-// *** write summary information in catalog
-//
-void FileRecord::writeToSummaryCatalog()
+//////////////////////
+// File bookkeeping //
+//////////////////////
+
+void FileRecord::writeToSummaryCatalog() const
 {
   ostringstream currentStat;
   string ind(":");
-  currentStat << workingDir()           << ind
-	      << fileName()  
-	      << fileCounterStr()       << ind
-	      << fileSize()             << ind 
-	      << events()               << ind
-              << timeStamp(lastEntry()) << ind
-	      << (int) (lastEntry()-firstEntry()) << ind
+  currentStat << basePath_ + fileSystem_ + workingDir_ << ind
+              << qualifiedFileName()                   << ind
+	      << fileSize()                            << ind 
+	      << events()                              << ind
+              << utils::timeStamp(lastEntry())         << ind
+	      << (int) (lastEntry()-firstEntry())      << ind
 	      << whyClosed_ << endl;
   string currentStatString (currentStat.str());
-  ofstream of(smParameter_->fileCatalog().c_str(), ios_base::ate | ios_base::out | ios_base::app );
+  ofstream of(diskWritingParams_._fileCatalog.c_str(), ios_base::ate | ios_base::out | ios_base::app );
   of << currentStatString;
   of.close();
 }
 
 
-//
-// *** write file information to log
-//
-void FileRecord::updateDatabase()
+void FileRecord::updateDatabase() const
 {
   std::ostringstream oss;
   oss << "./closeFile.pl "
-      << " --FILENAME "     << fileName() << fileCounterStr() <<  ".dat"
+      << " --FILENAME "     << qualifiedFileName() <<  ".dat"
       << " --FILECOUNTER "  << fileCounter_                       
       << " --NEVENTS "      << events_                            
       << " --FILESIZE "     << fileSize_                          
@@ -82,11 +75,11 @@ void FileRecord::updateDatabase()
       << " --RUNNUMBER "    << runNumber_                         
       << " --LUMISECTION "  << lumiSection_                      
       << " --PATHNAME "     << filePath()
-      << " --HOSTNAME "     << smParameter_->host()
-      << " --SETUPLABEL "   << setupLabel_ 
+      << " --HOSTNAME "     << diskWritingParams_._hostName
+      << " --SETUPLABEL "   << diskWritingParams_._setupLabel
       << " --STREAM "       << streamLabel_                      
-      << " --INSTANCE "     << smParameter_->smInstance()        
-      << " --SAFETY "       << smParameter_->initialSafetyLevel()
+      << " --INSTANCE "     << diskWritingParams_._smInstanceString
+      << " --SAFETY "       << diskWritingParams_._initialSafetyLevel
       << " --APPVERSION "   << cmsver_
       << " --APPNAME CMSSW"
       << " --TYPE streamer"               
@@ -101,28 +94,25 @@ void FileRecord::updateDatabase()
 }
 
 
-//
-// *** write file information to log
-//
-void FileRecord::insertFileInDatabase()
+void FileRecord::insertFileInDatabase() const
 {
   std::ostringstream oss;
   oss << "./insertFile.pl "
-      << " --FILENAME "     << fileName() << fileCounterStr() <<  ".dat"
+      << " --FILENAME "     << qualifiedFileName() <<  ".dat"
       << " --FILECOUNTER "  << fileCounter_                       
       << " --NEVENTS "      << events_                            
       << " --FILESIZE "     << fileSize_                          
-      << " --STARTTIME "   << (int) firstEntry()
-      << " --STOPTIME "    << (int) lastEntry()
+      << " --STARTTIME "    << (int) firstEntry()
+      << " --STOPTIME "     << (int) lastEntry()
       << " --STATUS "       << "open"
       << " --RUNNUMBER "    << runNumber_                         
       << " --LUMISECTION "  << lumiSection_                      
       << " --PATHNAME "     << filePath()
-      << " --HOSTNAME "     << smParameter_->host()
-      << " --SETUPLABEL "   << setupLabel_ 
+      << " --HOSTNAME "     << diskWritingParams_._hostName
+      << " --SETUPLABEL "   << diskWritingParams_._setupLabel
       << " --STREAM "       << streamLabel_                      
-      << " --INSTANCE "     << smParameter_->smInstance()        
-      << " --SAFETY "       << smParameter_->initialSafetyLevel()
+      << " --INSTANCE "     << diskWritingParams_._smInstanceString
+      << " --SAFETY "       << diskWritingParams_._initialSafetyLevel
       << " --APPVERSION "  << cmsver_
       << " --APPNAME CMSSW"
       << " --TYPE streamer"               
@@ -136,39 +126,12 @@ void FileRecord::insertFileInDatabase()
 }
 
 
-//
-// *** return a formatted string for the file counter
-//
-string FileRecord::fileCounterStr() const
-{
-  std::ostringstream oss;
-  oss << "." << setfill('0') << std::setw(4) << fileCounter_;
-  return oss.str();
-}
 
+////////////////////////////
+// File parameter setters //
+////////////////////////////
 
-//
-// *** return the full path
-//
-string FileRecord::filePath() const
-{
-  return ( basePath_ + fileSystem_ + workingDir_);
-}
-
-
-//
-// *** return the complete file name and path (w/o file ending)
-//
-string FileRecord::completeFileName() const
-{
-  return ( basePath_ + fileSystem_ + workingDir_ + fileName_ + fileCounterStr() );
-}
-
-
-// 
-// *** set the current file system
-// 
-void FileRecord::fileSystem(int i)
+void FileRecord::setFileSystem(const unsigned int i)
 {
   std::ostringstream oss;
   oss << "/" << setfill('0') << std::setw(2) << i; 
@@ -176,9 +139,36 @@ void FileRecord::fileSystem(int i)
 }
 
 
-//
-// *** move index and streamer file to "closed" directory
-//
+////////////////////////////
+// File parameter getters //
+////////////////////////////
+
+const string FileRecord::filePath() const
+{
+  return ( basePath_ + fileSystem_ + workingDir_);
+}
+
+
+const string FileRecord::completeFileName() const
+{
+  return ( filePath() + qualifiedFileName() );
+}
+
+
+const string FileRecord::qualifiedFileName() const
+{
+  std::ostringstream oss;
+  oss << fileName_;
+  oss << "." << setfill('0') << std::setw(4) << fileCounter_;
+  return oss.str();
+}
+
+
+
+/////////////////////////////
+// File system interaction //
+/////////////////////////////
+
 void FileRecord::moveFileToClosed()
 {
   struct stat64 initialStatBuff, finalStatBuff;
@@ -196,7 +186,7 @@ void FileRecord::moveFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (fileSize_ != initialStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -243,7 +233,7 @@ void FileRecord::moveFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (initialStatBuff.st_size != finalStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -263,9 +253,6 @@ void FileRecord::moveFileToClosed()
 }
 
 
-//
-// *** move error event file to "closed" directory
-//
 void FileRecord::moveErrorFileToClosed()
 {
   struct stat64 initialStatBuff, finalStatBuff;
@@ -282,7 +269,7 @@ void FileRecord::moveErrorFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (fileSize_ != initialStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -326,7 +313,7 @@ void FileRecord::moveErrorFileToClosed()
       << std::endl;
   }
   sizeMismatch = false;
-  if (smParameter_->exactFileSizeTest()) {
+  if (diskWritingParams_._exactFileSizeTest) {
     if (initialStatBuff.st_size != finalStatBuff.st_size) {
       sizeMismatch = true;
     }
@@ -346,25 +333,7 @@ void FileRecord::moveErrorFileToClosed()
 }
 
 
-string FileRecord::timeStamp(double time) const
-{
-  time_t rawtime = (time_t)time;
-  tm * ptm;
-  ptm = localtime(&rawtime);
-  ostringstream timeStampStr;
-  string colon(":");
-  string slash("/");
-  timeStampStr << setfill('0') << std::setw(2) << ptm->tm_mday      << slash 
-	       << setfill('0') << std::setw(2) << ptm->tm_mon+1     << slash
-	       << setfill('0') << std::setw(4) << ptm->tm_year+1900 << colon
-               << setfill('0') << std::setw(2) << ptm->tm_hour      << slash
-	       << setfill('0') << std::setw(2) << ptm->tm_min       << slash
-	       << setfill('0') << std::setw(2) << ptm->tm_sec;
-  return timeStampStr.str();
-}
-
-
-string FileRecord::logFile() const
+const string FileRecord::logFile(stor::DiskWritingParams const& dwp) const
 {
   time_t rawtime = time(0);
   tm * ptm;
@@ -375,8 +344,8 @@ string FileRecord::logFile() const
               << setfill('0') << std::setw(4) << ptm->tm_year+1900
               << setfill('0') << std::setw(2) << ptm->tm_mon+1
               << setfill('0') << std::setw(2) << ptm->tm_mday
-              << "-" << smParameter_->host()
-              << "-" << smParameter_->smInstance()
+              << "-" << dwp._hostName
+              << "-" << dwp._smInstanceString
               << ".log";
   return logfilename.str();
 }
@@ -384,10 +353,10 @@ string FileRecord::logFile() const
 
 void FileRecord::checkDirectories() const
 {
-  checkDirectory(basePath());
-  checkDirectory(fileSystem());
-  checkDirectory(fileSystem()+"/open");
-  checkDirectory(fileSystem()+"/closed");
+  checkDirectory(basePath_);
+  checkDirectory(basePath_ + fileSystem_);
+  checkDirectory(basePath_ + fileSystem_ + "/open");
+  checkDirectory(basePath_ + fileSystem_ + "/closed");
   checkDirectory(logPath_);
 }
 
@@ -407,7 +376,7 @@ void FileRecord::checkDirectory(const string &path) const
 }
 
 
-double FileRecord::calcPctDiff(long long value1, long long value2) const
+const double FileRecord::calcPctDiff(long long value1, long long value2) const
 {
   if (value1 == value2) {return 0.0;}
   long long largerValue = value1;
@@ -420,9 +389,20 @@ double FileRecord::calcPctDiff(long long value1, long long value2) const
 }
 
 
-//
-// *** report status of FileRecord
-//
+
+/////////////////////////////
+// File information dumper //
+/////////////////////////////
+
+void FileRecord::info(ostream &os) const
+{
+  os << fileCounter_ << " " 
+     << completeFileName() << " " 
+     << events_ << " "
+     << fileSize_;
+}
+
+
 void FileRecord::report(ostream &os, int indentation) const
 {
   string prefix(indentation, ' ');
@@ -434,10 +414,10 @@ void FileRecord::report(ostream &os, int indentation) const
   os << prefix << "workingDir_         " << workingDir_                 << "\n";
   os << prefix << "logPath_            " << logPath_                    << "\n";
   os << prefix << "logFile_            " << logFile_                    << "\n";
-  os << prefix << "setupLabel_         " << setupLabel_                 << "\n";
+  os << prefix << "setupLabel_         " << diskWritingParams_._setupLabel<< "\n";
   os << prefix << "streamLabel_        " << streamLabel_                << "\n";
-  os << prefix << "hostName_           " << smParameter_->host()        << "\n";
-  os << prefix << "fileCatalog()       " << smParameter_->fileCatalog() << "\n"; 
+  os << prefix << "hostName_           " << diskWritingParams_._hostName<< "\n";
+  os << prefix << "fileCatalog()       " << diskWritingParams_._fileCatalog<<"\n"; 
   os << prefix << "lumiSection_        " << lumiSection_                << "\n";
   os << prefix << "runNumber_          " << runNumber_                  << "\n";
   os << prefix << "fileCounter_        " << fileCounter_                << "\n";
@@ -448,3 +428,9 @@ void FileRecord::report(ostream &os, int indentation) const
   os << prefix << "why closed          " << whyClosed_                  << "\n";
   os << prefix << "-----------------------------------------\n";  
 }
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -

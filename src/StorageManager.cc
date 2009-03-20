@@ -1,22 +1,21 @@
-// $Id: StorageManager.cc,v 1.92.2.1 2008/12/22 19:12:52 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
-#include <sys/stat.h>
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
-#include "EventFilter/StorageManager/interface/ProgressMarker.h"
-#include "EventFilter/StorageManager/interface/Configurator.h"
-#include "EventFilter/StorageManager/interface/Parameter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
+#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/WebPageHelper.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
-#include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/ServiceRegistry/interface/ServiceToken.h"
@@ -40,16 +39,16 @@
 #include "i2o/utils/AddressMap.h"
 
 #include "toolbox/mem/Pool.h"
+#include "toolbox/mem/Reference.h"
+#include "toolbox/mem/MemoryPoolFactory.h"
 
 #include "xcept/tools.h"
 
-#include "xgi/Method.h"
+#include "xdata/InfoSpaceFactory.h"
 
 #include "xoap/SOAPEnvelope.h"
 #include "xoap/SOAPBody.h"
 #include "xoap/domutils.h"
-
-#include "xdata/InfoSpaceFactory.h"
 
 #include "boost/lexical_cast.hpp"
 #include "boost/algorithm/string/case_conv.hpp"
@@ -68,20 +67,35 @@ using namespace std;
 using namespace stor;
 
 
-static void deleteSMBuffer(void* Ref)
+namespace 
 {
-  // release the memory pool buffer
-  // once the fragment collector is done with it
-  stor::FragEntry* entry = (stor::FragEntry*)Ref;
-  toolbox::mem::Reference *ref=(toolbox::mem::Reference*)entry->buffer_object_;
-  ref->release();
-}
+  void
+  parseFileEntry(const std::string &in, 
+		 std::string &out, unsigned int &nev, unsigned long long &sz)
+  {
+    unsigned int no;
+    stringstream pippo;
+    pippo << in;
+    pippo >> no >> out >> nev >> sz;
+  }
 
-std::string smutil_itos(int i)	// convert int to string
-{
-  std::stringstream s;
-  s << i;
-  return s.str();
+  void
+  checkDirectoryOK(xdata::String const& p)
+  {
+    struct stat64 buf;
+    // The const-cast is needed because xdata::String::toString() is
+    // not declared const.
+    string path(const_cast<xdata::String&>(p).toString());
+    
+    int retVal = stat64(path.c_str(), &buf);
+    if(retVal !=0 )
+      {
+	edm::LogError("StorageManager") << "Directory or file " << path
+					<< " does not exist. Error=" << errno ;
+	throw cms::Exception("StorageManager","checkDirectoryOK")
+	  << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
+      }
+  }
 }
 
 
@@ -91,33 +105,12 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_(this), 
   reasonForFailedState_(),
   ah_(0), 
-  exactFileSizeTest_(false),
-  fileClosingTestInterval_(5),
-  pushMode_(false), 
-  reconfigurationRequested_(false),
-  collateDQM_(false),
-  archiveDQM_(false),
-  archiveIntervalDQM_(0),
-  filePrefixDQM_("/tmp/DQM"),
-  purgeTimeDQM_(DEFAULT_PURGE_TIME),
-  readyTimeDQM_(DEFAULT_READY_TIME),
-  useCompressionDQM_(true),
-  compressionLevelDQM_(1),
   mybuffer_(7000000),
-  fairShareES_(false),
   connectedRBs_(0), 
   storedEvents_(0), 
-  receivedEvents_(0), 
-  receivedErrorEvents_(0), 
-  dqmRecords_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  receivedVolume_(0.),
-  storedVolume_(0.),
-  progressMarker_(ProgressMarker::instance()->idle()),
-  lastEventSeen_(0),
-  lastErrorEventSeen_(0),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.2.1 2008/12/22 19:12:52 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.45 2009/03/20 10:31:58 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -129,14 +122,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
-  ispace->fireItemAvailable("STparameterSet",&offConfig_);
   ispace->fireItemAvailable("runNumber",     &runNumber_);
   ispace->fireItemAvailable("stateName",     fsm_.stateName());
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
-  ispace->fireItemAvailable("receivedEvents",&receivedEvents_);
-  ispace->fireItemAvailable("receivedErrorEvents",&receivedErrorEvents_);
-  ispace->fireItemAvailable("dqmRecords",    &dqmRecords_);
   ispace->fireItemAvailable("closedFiles",   &closedFiles_);
   ispace->fireItemAvailable("openFiles",     &openFiles_);
   ispace->fireItemAvailable("fileList",      &fileList_);
@@ -154,7 +143,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   fsm_.findRcmsStateListener();
 
   ispace->addItemRetrieveListener("closedFiles", this);
-  ispace->addItemChangedListener("STparameterSet", this);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -182,6 +170,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
+  xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
   xgi::bind(this,&StorageManager::streamerOutputWebPage,"streameroutput");
@@ -192,106 +181,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
   xgi::bind(this,&StorageManager::DQMconsumerWebPage,   "registerDQMConsumer");
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
-  receivedFrames_ = 0;
   pool_is_set_    = 0;
   pool_           = 0;
-  nLogicalDisk_   = 0;
-  pushmode2proxy_ = false;
-
-  // Variables needed for streamer file writing
-  ispace->fireItemAvailable("pushMode2Proxy", &pushmode2proxy_);
-  ispace->fireItemAvailable("collateDQM",     &collateDQM_);
-  ispace->fireItemAvailable("archiveDQM",     &archiveDQM_);
-  ispace->fireItemAvailable("archiveIntervalDQM",  &archiveIntervalDQM_);
-  ispace->fireItemAvailable("purgeTimeDQM",   &purgeTimeDQM_);
-  ispace->fireItemAvailable("readyTimeDQM",   &readyTimeDQM_);
-  ispace->fireItemAvailable("filePrefixDQM",       &filePrefixDQM_);
-  ispace->fireItemAvailable("useCompressionDQM",   &useCompressionDQM_);
-  ispace->fireItemAvailable("compressionLevelDQM", &compressionLevelDQM_);
-  ispace->fireItemAvailable("nLogicalDisk",        &nLogicalDisk_);
-
-  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  fileCatalog_        = smParameter_ -> fileCatalog(); 
-  fileName_           = smParameter_ -> fileName();
-  filePath_           = smParameter_ -> filePath();
-  maxFileSize_        = smParameter_ -> maxFileSize();
-  setupLabel_         = smParameter_ -> setupLabel();
-  highWaterMark_      = smParameter_ -> highWaterMark();
-  lumiSectionTimeOut_ = smParameter_ -> lumiSectionTimeOut();
-  exactFileSizeTest_  = smParameter_ -> exactFileSizeTest();
-
-  ispace->fireItemAvailable("fileCatalog",        &fileCatalog_);
-  ispace->fireItemAvailable("fileName",           &fileName_);
-  ispace->fireItemAvailable("filePath",           &filePath_);
-  ispace->fireItemAvailable("maxFileSize",        &maxFileSize_);
-  ispace->fireItemAvailable("setupLabel",         &setupLabel_);
-  ispace->fireItemAvailable("highWaterMark",      &highWaterMark_);
-  ispace->fireItemAvailable("lumiSectionTimeOut", &lumiSectionTimeOut_);
-  ispace->fireItemAvailable("exactFileSizeTest",  &exactFileSizeTest_);
-  ispace->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
-
-  // added for Event Server
-  maxESEventRate_ = 100.0;  // hertz
-  ispace->fireItemAvailable("maxESEventRate",&maxESEventRate_);
-  maxESDataRate_ = 1024.0;  // MB/sec
-  ispace->fireItemAvailable("maxESDataRate",&maxESDataRate_);
-  activeConsumerTimeout_ = 60;  // seconds
-  ispace->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
-  idleConsumerTimeout_ = 120;  // seconds
-  ispace->fireItemAvailable("idleConsumerTimeout",&idleConsumerTimeout_);
-  consumerQueueSize_ = 5;
-  ispace->fireItemAvailable("consumerQueueSize",&consumerQueueSize_);
-  //ispace->fireItemAvailable("fairShareES",&fairShareES_);
-  DQMmaxESEventRate_ = 1.0;  // hertz
-  ispace->fireItemAvailable("DQMmaxESEventRate",&DQMmaxESEventRate_);
-  DQMactiveConsumerTimeout_ = 60;  // seconds
-  ispace->fireItemAvailable("DQMactiveConsumerTimeout",&DQMactiveConsumerTimeout_);
-  DQMidleConsumerTimeout_ = 120;  // seconds
-  ispace->fireItemAvailable("DQMidleConsumerTimeout",&DQMidleConsumerTimeout_);
-  DQMconsumerQueueSize_ = 15;
-  ispace->fireItemAvailable("DQMconsumerQueueSize",&DQMconsumerQueueSize_);
-  esSelectedHLTOutputModule_ = "out4DQM";
-  ispace->fireItemAvailable("esSelectedHLTOutputModule",&esSelectedHLTOutputModule_);
 
   // for performance measurements
-  ispace->fireItemAvailable("receivedSamples4Stats",&samples_);
-  ispace->fireItemAvailable("receivedPeriod4Stats",&period4samples_);
-  samples_          = 1000; // measurements every 60MB (about) is the default
-  period4samples_   = 5;
-  instantBandwidth_ = 0.;
-  instantRate_      = 0.;
-  instantLatency_   = 0.;
-  totalSamples_     = 0;
-  duration_         = 0.;
-  meanBandwidth_    = 0.;
-  meanRate_         = 0.;
-  meanLatency_      = 0.;
-
-  instantBandwidth2_= 0.;
-  instantRate2_     = 0.;
-  instantLatency2_  = 0.;
-  totalSamples2_    = 0;
-  duration2_        = 0.;
-  meanBandwidth2_   = 0.;
-  meanRate2_        = 0.;
-  meanLatency2_     = 0.;
-
-  maxBandwidth_     = 0.;
-  minBandwidth_     = 999999.;
-
-  maxBandwidth2_    = 0.;
-  minBandwidth2_    = 999999.; 
-
-  pmeter_ = new stor::SMPerformanceMeter();
-  pmeter_->init(samples_, period4samples_);
-
-  string        xmlClass = getApplicationDescriptor()->getClassName();
-  unsigned long instance = getApplicationDescriptor()->getInstance();
-  ostringstream sourcename;
-  // sourcename << xmlClass << "_" << instance;
-  sourcename << instance;
-  sourceId_ = sourcename.str();
-  smParameter_ -> setSmInstance(sourceId_);
 
   storedEventsInStream_.reserve(20);
   storedEventsInStream_.clear();
@@ -310,12 +203,35 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
+
+  sharedResourcesPtr_.reset(new SharedResources());
+  sharedResourcesPtr_->_commandQueue.reset(new CommandQueue(128));
+  sharedResourcesPtr_->_fragmentQueue.reset(new FragmentQueue(1024));
+  sharedResourcesPtr_->_fragmentQueue2.reset(new FragmentQueue(1024));
+  sharedResourcesPtr_->_streamQueue.reset(new StreamQueue(1024));
+  sharedResourcesPtr_->_registrationQueue.reset(new RegistrationQueue(128));
+
+  unsigned long instance = getApplicationDescriptor()->getInstance();
+
+  sharedResourcesPtr_->_configuration.reset(new Configuration(ispace,
+                                                              instance));
+  sharedResourcesPtr_->_statisticsReporter.reset(new StatisticsReporter(this));
+  sharedResourcesPtr_->_initMsgCollection.reset(new InitMsgCollection());
+
+  // Start the workloops
+  // TODO: add try/catch block and handle exceptions
+  sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
+
+
+  fragmentProcessor_ = new FragmentProcessor(sharedResourcesPtr_);
+
+  startFragmentProcessorWorkLoop();
 }
 
 StorageManager::~StorageManager()
 {
   delete ah_;
-  delete pmeter_;
+  delete fragmentProcessor_;
 }
 
 xoap::MessageReference
@@ -336,6 +252,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
@@ -362,158 +280,27 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
-  // that we can use that information even after the Reference is released.
-  // Do *NOT* use the dataPtr() method of the localMsgCopy because this
-  // copy operation doesn't include the data, only the header!
-  I2O_SM_PREAMBLE_MESSAGE_FRAME localMsgCopy;
-  const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
-  char* dest = (char*) &localMsgCopy;
-  std::copy(from, from+msize, dest);
-  localMsgCopy.dataSize = msize;
-
-  // If running with local transfers, a chain of I2O frames when posted only has the
-  // head frame sent. So a single frame can complete a chain for local transfers.
-  // We need to test for this. Must be head frame, more than one frame
-  // and next pointer must exist.
-  int is_local_chain = 0;
-  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
-  {
-    // this looks like a chain of frames (local transfer)
-    toolbox::mem::Reference *head = ref;
-    toolbox::mem::Reference *next = 0;
-    // best to check the complete chain just in case!
-    unsigned int tested_frames = 1;
-    next = head;
-    while((next=next->getNextReference())!=0) ++tested_frames;
-    FDEBUG(10) << "StorageManager: INIT Head frame has " << tested_frames-1
-               << " linked frames out of " << msg->numFrames-1 << std::endl;
-    if(msg->numFrames == tested_frames)
-    {
-      // found a complete linked chain from the leading frame
-      is_local_chain = 1;
-      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
-                 << " - must be local transfer" << std::endl;
-      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
-      // break the chain and feed them to the fragment collector
-      next = head;
-
-      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
-      {
-         toolbox::mem::Reference *thisref=next;
-         next = thisref->getNextReference();
-         thisref->setNextReference(0);
-         I2O_MESSAGE_FRAME          *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
-         I2O_SM_PREAMBLE_MESSAGE_FRAME *thismsg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*)thisstdMsg;
-
-         // 04-Nov-2008, need to make a local copy of I2O header information.
-         // Do *NOT* use the dataPtr() method of the thisMsgCopy because this
-         // copy operation doesn't include the data, only the header!
-         I2O_SM_PREAMBLE_MESSAGE_FRAME thisMsgCopy;
-         from = static_cast<const char*>(thisref->getDataLocation());
-         msize = sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME);
-         dest = (char*) &thisMsgCopy;
-         std::copy(from, from+msize, dest);
-         thisMsgCopy.dataSize = msize;
-
-         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-         int thislen = thismsg->dataSize;
-         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                                          thismsg->frameCount+1, thismsg->numFrames, Header::INIT, 
-                                          0, thismsg->hltTid, thismsg->outModID,
-                                          thismsg->fuProcID, thismsg->fuGUID);
-         std::copy(thismsg->hltURL, thismsg->hltURL+MAX_I2O_SM_URLCHARS,
-                   static_cast<stor::FragEntry*>(b.buffer())->hltURL_);
-         std::copy(thismsg->hltClassName, thismsg->hltClassName+MAX_I2O_SM_URLCHARS,
-                   static_cast<stor::FragEntry*>(b.buffer())->hltClassName_);
-         static_cast<stor::FragEntry*>(b.buffer())->hltLocalId_ = thismsg->hltLocalId;
-         static_cast<stor::FragEntry*>(b.buffer())->hltInstance_ = thismsg->hltInstance;
-         static_cast<stor::FragEntry*>(b.buffer())->hltTid_ = thismsg->hltTid;
-         static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = thismsg->rbBufferID;
-         b.commit(sizeof(stor::FragEntry));
-
-         ++receivedFrames_;
-         // for bandwidth performance measurements
-         // Following is wrong for the last frame because frame sent is
-         // is actually larger than the size taken by actual data
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
-                                         +thislen;
-         addMeasurement(actualFrameSize);
-
-         // add this output module to the monitoring
-         bool alreadyStoredOutMod = false;
-         uint32 moduleId = thisMsgCopy.outModID;
-         std::string dmoduleLabel("ID_" + smutil_itos(thisMsgCopy.outModID));
-         if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
-         if(!alreadyStoredOutMod) {
-           modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
-           receivedEventsMap_.insert(std::make_pair(dmoduleLabel,0));
-           avEventSizeMap_.insert(std::make_pair(dmoduleLabel,
-                   boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-           avCompressRatioMap_.insert(std::make_pair(dmoduleLabel,
-                   boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-         }
-      }
-
-    } else {
-      // should never get here!
-      FDEBUG(10) << "StorageManager: INIT Head frame has fewer linked frames "
-                 << "than expected: abnormal error! " << std::endl;
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"INIT Head frame has fewer linked frames" 
-                      << " than expected: abnormal error! ");
-    }
+  // add this output module to the monitoring
+  bool alreadyStoredOutMod = false;
+  uint32 moduleId = msg->outModID;
+  std::string dmoduleLabel("ID_" + boost::lexical_cast<std::string>(msg->outModID));
+  if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
+  if(!alreadyStoredOutMod) {
+    modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
+    receivedEventsMap_.insert(std::make_pair(dmoduleLabel,0));
+    avEventSizeMap_.insert(std::make_pair(dmoduleLabel,
+      boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
+    avCompressRatioMap_.insert(std::make_pair(dmoduleLabel,
+      boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
   }
 
-  if (is_local_chain == 0) 
-  {
-    // put pointers into fragment collector queue
-    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                     msg->frameCount+1, msg->numFrames, Header::INIT,
-                                     0, msg->hltTid, msg->outModID,
-                                     msg->fuProcID, msg->fuGUID);
-    std::copy(msg->hltURL, msg->hltURL+MAX_I2O_SM_URLCHARS,
-              static_cast<stor::FragEntry*>(b.buffer())->hltURL_);
-    std::copy(msg->hltClassName, msg->hltClassName+MAX_I2O_SM_URLCHARS,
-              static_cast<stor::FragEntry*>(b.buffer())->hltClassName_);
-    static_cast<stor::FragEntry*>(b.buffer())->hltLocalId_ = msg->hltLocalId;
-    static_cast<stor::FragEntry*>(b.buffer())->hltInstance_ = msg->hltInstance;
-    static_cast<stor::FragEntry*>(b.buffer())->hltTid_ = msg->hltTid;
-    static_cast<stor::FragEntry*>(b.buffer())->rbBufferID_ = msg->rbBufferID;
-    b.commit(sizeof(stor::FragEntry));
-    // Frame release is done in the deleter.
-    ++receivedFrames_;
-    // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME)
-                                    + len;
-    addMeasurement(actualFrameSize);
+  I2OChain i2oChain(ref);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
 
-    // add this output module to the monitoring
-    bool alreadyStoredOutMod = false;
-    uint32 moduleId = localMsgCopy.outModID;
-    std::string dmoduleLabel("ID_" + smutil_itos(localMsgCopy.outModID));
-    if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
-    if(!alreadyStoredOutMod) {
-      modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
-      receivedEventsMap_.insert(std::make_pair(dmoduleLabel,0));
-      avEventSizeMap_.insert(std::make_pair(dmoduleLabel,
-          boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-      avCompressRatioMap_.insert(std::make_pair(dmoduleLabel,
-          boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-    }
-  }
-
-  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
-  {
-    string hltClassName(localMsgCopy.hltClassName);
-    sendDiscardMessage(localMsgCopy.rbBufferID, 
-                       localMsgCopy.hltInstance, 
-                       I2O_FU_DATA_DISCARD,
-                       hltClassName);
-  }
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize =
+    (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME) + len;
+  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
@@ -524,6 +311,9 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  RunMonitorCollection& runMonCollection = _statisticsReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -554,213 +344,60 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
-  // that we can use that information even after the Reference is released.
-  // Do *NOT* use the dataPtr() method of the localMsgCopy because this
-  // copy operation doesn't include the data, only the header!
-  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
-  const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-  char* dest = (char*) &localMsgCopy;
-  std::copy(from, from+msize, dest);
-  localMsgCopy.dataSize = msize;
-
-  // If running with local transfers, a chain of I2O frames when posted only has the
-  // head frame sent. So a single frame can complete a chain for local transfers.
-  // We need to test for this. Must be head frame, more than one frame
-  // and next pointer must exist.
-  int is_local_chain = 0;
-  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
-  {
-    // this looks like a chain of frames (local transfer)
-    toolbox::mem::Reference *head = ref;
-    toolbox::mem::Reference *next = 0;
-    // best to check the complete chain just in case!
-    unsigned int tested_frames = 1;
-    next = head;
-    while((next=next->getNextReference())!=0) ++tested_frames;
-    FDEBUG(10) << "StorageManager: Head frame has " << tested_frames-1
-               << " linked frames out of " << msg->numFrames-1 << std::endl;
-    if(msg->numFrames == tested_frames)
-    {
-      // found a complete linked chain from the leading frame
-      is_local_chain = 1;
-      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
-                 << " - must be local transfer" << std::endl;
-      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
-      // break the chain and feed them to the fragment collector
-      next = head;
-
-      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
-      {
-         toolbox::mem::Reference *thisref=next;
-         next = thisref->getNextReference();
-         thisref->setNextReference(0);
-         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
-         I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
-
-         // 04-Nov-2008, need to make a local copy of I2O header information.
-         // Do *NOT* use the dataPtr() method of the thisMsgCopy because this
-         // copy operation doesn't include the data, only the header!
-         I2O_SM_DATA_MESSAGE_FRAME thisMsgCopy;
-         from = static_cast<const char*>(thisref->getDataLocation());
-         msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-         dest = (char*) &thisMsgCopy;
-         std::copy(from, from+msize, dest);
-         thisMsgCopy.dataSize = msize;
-
-         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-         int thislen = thismsg->dataSize;
-         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                                          thismsg->frameCount+1, thismsg->numFrames, Header::EVENT, 
-                                          thismsg->runID, thismsg->eventID, thismsg->outModID,
-                                          thismsg->fuProcID, thismsg->fuGUID);
-         b.commit(sizeof(stor::FragEntry));
-
-         ++receivedFrames_;
-         // for bandwidth performance measurements
-         // Following is wrong for the last frame because frame sent is
-         // is actually larger than the size taken by actual data
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
-                                         +thislen;
-         addMeasurement(actualFrameSize);
-
-         // should only do this test if the first data frame from each FU?
-         // check if run number is the same as that in Run configuration, complain otherwise !!!
-         // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-         if(thisMsgCopy.runID != runNumber_)
-         {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = " << thisMsgCopy.runID
-                           << " From " << thisMsgCopy.hltURL
-                           << " Different from Run Number from configuration = " << runNumber_);
-         }
-         // for data sender list update
-         // thisMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
-         bool isLocal = true;
-
-         //update last event seen
-         lastEventSeen_ = thisMsgCopy.eventID;
-
-         int status = 
-	   smrbsenders_.updateSender4data(&thisMsgCopy.hltURL[0], &thisMsgCopy.hltClassName[0],
-					  thisMsgCopy.hltLocalId, thisMsgCopy.hltInstance, thisMsgCopy.hltTid,
-					  thisMsgCopy.runID, thisMsgCopy.eventID, thisMsgCopy.frameCount+1, thisMsgCopy.numFrames,
-					  thisMsgCopy.originalSize, isLocal, thisMsgCopy.outModID);
-
-         //if(status == 1) ++(storedEvents_.value_);
-         if(status == 1) {
-           ++(receivedEvents_.value_);
-           uint32 moduleId = thisMsgCopy.outModID;
-           if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
-             std::string moduleLabel = modId2ModOutMap_[moduleId];
-             ++(receivedEventsMap_[moduleLabel]);
-             avEventSizeMap_[moduleLabel]->addSample((double)thisMsgCopy.originalSize);
-             // TODO: get the uncompressed size to find compression ratio for stats
-           }
-           else {
-             LOG4CPLUS_WARN(this->getApplicationLogger(),
-                            "StorageManager::receiveDataMessage: "
-                            << "Unable to find output module label when "
-                            << "accumulating statistics for event "
-                            << thisMsgCopy.eventID << ", output module "
-                            << thisMsgCopy.outModID << ".");
-           }
-         }
-
-         if(status == -1) {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                    "updateSender4data: Cannot find RB in Data Sender list!"
-                    << " With URL "
-                    << thisMsgCopy.hltURL << " class " << thisMsgCopy.hltClassName  << " instance "
-                    << thisMsgCopy.hltInstance << " Tid " << thisMsgCopy.hltTid);
-         }
-      }
-
-    } else {
-      // should never get here!
-      FDEBUG(10) << "StorageManager: Head frame has fewer linked frames "
-                 << "than expected: abnormal error! " << std::endl;
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Head frame has fewer linked frames" 
-                      << " than expected: abnormal error! ");
-    }
-  }
-
-  if (is_local_chain == 0) 
-  {
-    // put pointers into fragment collector queue
-    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                     msg->frameCount+1, msg->numFrames, Header::EVENT, 
-                                     msg->runID, msg->eventID, msg->outModID,
-                                     msg->fuProcID, msg->fuGUID);
-    b.commit(sizeof(stor::FragEntry));
-    // Frame release is done in the deleter.
-    ++receivedFrames_;
-    // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
-                                    + len;
-    addMeasurement(actualFrameSize);
-
-    // should only do this test if the first data frame from each FU?
-    // check if run number is the same as that in Run configuration, complain otherwise !!!
-    // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-    if(localMsgCopy.runID != runNumber_)
+  // should only do this test if the first data frame from each FU?
+  // check if run number is the same as that in Run configuration, complain otherwise !!!
+  // this->runNumber_ comes from the RunBase class that StorageManager inherits from
+  if(msg->runID != runNumber_)
     {
       LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
-		      << localMsgCopy.runID << " From " << localMsgCopy.hltURL
+		      << msg->runID << " From " << msg->hltURL
                       << " Different from Run Number from configuration = " << runNumber_);
     }
 
-    //update last event seen
-    lastEventSeen_ = localMsgCopy.eventID;
+  // for data sender list update
+  // msg->frameCount start from 0, but in EventMsg header it starts from 1!
+  bool isLocal = false;
+  int status = 
+    smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
+                                   msg->hltLocalId, msg->hltInstance, msg->hltTid,
+                                   msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
+                                   msg->originalSize, isLocal, msg->outModID);
 
-    // for data sender list update
-    // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
-    bool isLocal = false;
-    int status = 
-      smrbsenders_.updateSender4data(&localMsgCopy.hltURL[0], &localMsgCopy.hltClassName[0],
-                                     localMsgCopy.hltLocalId, localMsgCopy.hltInstance, localMsgCopy.hltTid,
-                                     localMsgCopy.runID, localMsgCopy.eventID, localMsgCopy.frameCount+1, localMsgCopy.numFrames,
-                                     localMsgCopy.originalSize, isLocal, localMsgCopy.outModID);
+  if(status == 1) {
+    runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
+    runMonCollection.getEventIDsReceivedMQ().addSample(msg->eventID);
 
-    //if(status == 1) ++(storedEvents_.value_);
-    if(status == 1) {
-      ++(receivedEvents_.value_);
-      uint32 moduleId = localMsgCopy.outModID;
-      if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
-        std::string moduleLabel = modId2ModOutMap_[moduleId];
-        ++(receivedEventsMap_[moduleLabel]);
-        avEventSizeMap_[moduleLabel]->addSample((double)localMsgCopy.originalSize);
-        // TODO: get the uncompressed size to find compression ratio for stats
-      }
-      else {
-        LOG4CPLUS_WARN(this->getApplicationLogger(),
-                       "StorageManager::receiveDataMessage: "
-                       << "Unable to find output module label when "
-                       << "accumulating statistics for event "
-                       << localMsgCopy.eventID << ", output module "
-                       << localMsgCopy.outModID << ".");
-      }
+    uint32 moduleId = msg->outModID;
+    if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
+      std::string moduleLabel = modId2ModOutMap_[moduleId];
+      ++(receivedEventsMap_[moduleLabel]);
+      avEventSizeMap_[moduleLabel]->addSample((double)msg->originalSize);
+      // TODO: get the uncompressed size to find compression ratio for stats
     }
-    if(status == -1) {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-		      "updateSender4data: Cannot find RB in Data Sender list!"
-		      << " With URL "
-		      << localMsgCopy.hltURL << " class " << localMsgCopy.hltClassName  << " instance "
-		      << localMsgCopy.hltInstance << " Tid " << localMsgCopy.hltTid);
+    else {
+      LOG4CPLUS_WARN(this->getApplicationLogger(),
+                     "StorageManager::receiveDataMessage: "
+                     << "Unable to find output module label when "
+                     << "accumulating statistics for event "
+                     << msg->eventID << ", output module "
+                     << msg->outModID << ".");
     }
   }
+  if(status == -1) {
+    LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                    "updateSender4data: Cannot find RB in Data Sender list!"
+                    << " With URL "
+                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
+                    << msg->hltInstance << " Tid " << msg->hltTid);
+  }
 
-  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
-    {
-      string hltClassName(localMsgCopy.hltClassName);
-      sendDiscardMessage(localMsgCopy.rbBufferID, 
-			 localMsgCopy.hltInstance, 
-			 I2O_FU_DATA_DISCARD,
-			 hltClassName);
-    }
+  I2OChain i2oChain(ref);
+  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize =
+    (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME) + len;
+  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
@@ -771,6 +408,9 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  RunMonitorCollection& runMonCollection = _statisticsReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -801,195 +441,19 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
-  // that we can use that information even after the Reference is released.
-  // Do *NOT* use the dataPtr() method of the localMsgCopy because this
-  // copy operation doesn't include the data, only the header!
-  I2O_SM_DATA_MESSAGE_FRAME localMsgCopy;
-  const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-  char* dest = (char*) &localMsgCopy;
-  std::copy(from, from+msize, dest);
-  localMsgCopy.dataSize = msize;
+  // all access to the I2O message must happen before sending the fragment
+  // to the fragment queue to avoid a race condition in which the buffer
+  // is release before we finish here
+  runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
+  runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
-  // If running with local transfers, a chain of I2O frames when posted only has the
-  // head frame sent. So a single frame can complete a chain for local transfers.
-  // We need to test for this. Must be head frame, more than one frame
-  // and next pointer must exist.
-  int is_local_chain = 0;
-  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
-  {
-    // this looks like a chain of frames (local transfer)
-    toolbox::mem::Reference *head = ref;
-    toolbox::mem::Reference *next = 0;
-    // best to check the complete chain just in case!
-    unsigned int tested_frames = 1;
-    next = head;
-    while((next=next->getNextReference())!=0) ++tested_frames;
-    FDEBUG(10) << "StorageManager: Head frame has " << tested_frames-1
-               << " linked frames out of " << msg->numFrames-1 << std::endl;
-    if(msg->numFrames == tested_frames)
-    {
-      // found a complete linked chain from the leading frame
-      is_local_chain = 1;
-      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
-                 << " - must be local transfer" << std::endl;
-      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
-      // break the chain and feed them to the fragment collector
-      next = head;
+  I2OChain i2oChain(ref);
+  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain);
 
-      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
-      {
-         toolbox::mem::Reference *thisref=next;
-         next = thisref->getNextReference();
-         thisref->setNextReference(0);
-         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
-         I2O_SM_DATA_MESSAGE_FRAME *thismsg    = (I2O_SM_DATA_MESSAGE_FRAME*)thisstdMsg;
-
-         // 04-Nov-2008, need to make a local copy of I2O header information.
-         // Do *NOT* use the dataPtr() method of the thisMsgCopy because this
-         // copy operation doesn't include the data, only the header!
-         I2O_SM_DATA_MESSAGE_FRAME thisMsgCopy;
-         from = static_cast<const char*>(thisref->getDataLocation());
-         msize = sizeof(I2O_SM_DATA_MESSAGE_FRAME);
-         dest = (char*) &thisMsgCopy;
-         std::copy(from, from+msize, dest);
-         thisMsgCopy.dataSize = msize;
-
-         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-         int thislen = thismsg->dataSize;
-         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                                          thismsg->frameCount+1, thismsg->numFrames, Header::ERROR_EVENT, 
-                                          thismsg->runID, thismsg->eventID, thismsg->outModID,
-                                          thismsg->fuProcID, thismsg->fuGUID);
-         b.commit(sizeof(stor::FragEntry));
-
-         ++receivedFrames_;
-         // for bandwidth performance measurements
-         // Following is wrong for the last frame because frame sent is
-         // is actually larger than the size taken by actual data
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
-                                         +thislen;
-         addMeasurement(actualFrameSize);
-
-         // should only do this test if the first data frame from each FU?
-         // check if run number is the same as that in Run configuration, complain otherwise !!!
-         // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-         if(thisMsgCopy.runID != runNumber_)
-         {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = "
-			   << thisMsgCopy.runID << " From " << thisMsgCopy.hltURL
-                           << " Different from Run Number from configuration = " << runNumber_);
-         }
-         // for data sender list update
-         // thisMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
-         //bool isLocal = true;
-
-         //update last error event seen
-         lastErrorEventSeen_ = thisMsgCopy.eventID;
-
-         // TODO need to fix this as the outModId is not valid for error events
-         /*
-         int status = 
-	   smrbsenders_.updateSender4data(&thisMsgCopy.hltURL[0], &thisMsgCopy.hltClassName[0],
-	   thisMsgCopy.hltLocalId, thisMsgCopy.hltInstance, thisMsgCopy.hltTid,
-	   thisMsgCopy.runID, thisMsgCopy.eventID, thisMsgCopy.frameCount+1, thisMsgCopy.numFrames,
-	   thisMsgCopy.originalSize, isLocal, thisMsgCopy.outModID);
-         */
-
-         // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
-         // independent of the result of the updateFUSender4data() call since we
-         // know that the result is unlikely to be "success"
-         //if(status == 1) {
-           ++(receivedErrorEvents_.value_);
-         //}
-
-         /*
-         if(status == -1) {
-           LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                    "updateSender4data: Cannot find RB in Data Sender list!"
-                    << " For Error Event With URL "
-                    << thisMsgCopy.hltURL << " class " << thisMsgCopy.hltClassName  << " instance "
-                    << thisMsgCopy.hltInstance << " Tid " << thisMsgCopy.hltTid);
-         }
-         */
-      }
-
-    } else {
-      // should never get here!
-      FDEBUG(10) << "StorageManager: Head frame has fewer linked frames "
-                 << "than expected: abnormal error! " << std::endl;
-    }
-  }
-
-  if (is_local_chain == 0) 
-  {
-    // put pointers into fragment collector queue
-    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                     msg->frameCount+1, msg->numFrames, Header::ERROR_EVENT, 
-                                     msg->runID, msg->eventID, msg->outModID,
-                                     msg->fuProcID, msg->fuGUID);
-    b.commit(sizeof(stor::FragEntry));
-    // Frame release is done in the deleter.
-    ++receivedFrames_;
-    // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME)
-                                    + len;
-    addMeasurement(actualFrameSize);
-
-    // should only do this test if the first data frame from each FU?
-    // check if run number is the same as that in Run configuration, complain otherwise !!!
-    // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-    if(localMsgCopy.runID != runNumber_)
-    {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from error event stream = "
-		      << localMsgCopy.runID << " From " << localMsgCopy.hltURL
-                      << " Different from Run Number from configuration = " << runNumber_);
-    }
-
-    //update last error event seen
-    lastErrorEventSeen_ = localMsgCopy.eventID;
-
-    // for data sender list update
-    // localMsgCopy.frameCount start from 0, but in EventMsg header it starts from 1!
-    //bool isLocal = false;
-    // TODO need to fix this as the outModId is not valid for error events
-    /*
-    int status = 
-      smrbsenders_.updateSender4data(&localMsgCopy.hltURL[0], &localMsgCopy.hltClassName[0],
-      localMsgCopy.hltLocalId, localMsgCopy.hltInstance, localMsgCopy.hltTid,
-      localMsgCopy.runID, localMsgCopy.eventID, localMsgCopy.frameCount+1, localMsgCopy.numFrames,
-      localMsgCopy.originalSize, isLocal, localMsgCopy.outModID);
-    */
-    
-    // 13-Aug-2008, KAB - for now, increment the receivedErrorEvent counter
-    // independent of the result of the updateFUSender4data() call since we
-    // know that the result is unlikely to be "success"
-    //if(status == 1) {
-      ++(receivedErrorEvents_.value_);
-    //}
-    /*
-    if(status == -1) {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-		      "updateSender4data: Cannot find RB in Data Sender list!"
-		      << " For Error Event With URL "
-		      << localMsgCopy.hltURL << " class " << localMsgCopy.hltClassName  << " instance "
-		      << localMsgCopy.hltInstance << " Tid " << localMsgCopy.hltTid);
-    }
-    */
-  }
-
-  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
-    {
-      string hltClassName(localMsgCopy.hltClassName);
-      sendDiscardMessage(localMsgCopy.rbBufferID, 
-			 localMsgCopy.hltInstance, 
-			 I2O_FU_DATA_DISCARD,
-			 hltClassName);
-    }
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize =
+    (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME) + len;
+  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
@@ -1000,6 +464,8 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
+
+  FragmentMonitorCollection& fragMonCollection = _statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -1029,182 +495,57 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-  ++(dqmRecords_.value_);
 
-  // 04-Nov-2008, HWKC and KAB - make local copy of I2O message header so
-  // that we can use that information even after the Reference is released.
-  // Do *NOT* use the dataPtr() method of the localMsgCopy because this
-  // copy operation doesn't include the data, only the header!
-  I2O_SM_DQM_MESSAGE_FRAME localMsgCopy;
-  const char* from = static_cast<const char*>(ref->getDataLocation());
-  unsigned int msize = sizeof(I2O_SM_DQM_MESSAGE_FRAME);
-  char* dest = (char*) &localMsgCopy;
-  std::copy(from, from+msize, dest);
-  localMsgCopy.dataSize = msize;
+  I2OChain i2oChain2(ref);
+  sharedResourcesPtr_->_fragmentQueue2->enq_wait(i2oChain2);
 
-  // If running with local transfers, a chain of I2O frames when posted only has the
-  // head frame sent. So a single frame can complete a chain for local transfers.
-  // We need to test for this. Must be head frame, more than one frame
-  // and next pointer must exist.
-  // -- we have to break chains due to the way the FragmentCollector frees memory
-  //    for each frame after processing each as the freeing a chain frees all memory
-  //    in the chain
-  int is_local_chain = 0;
-  if(msg->frameCount == 0 && msg->numFrames > 1 && ref->getNextReference())
-  {
-    // this looks like a chain of frames (local transfer)
-    toolbox::mem::Reference *head = ref;
-    toolbox::mem::Reference *next = 0;
-    // best to check the complete chain just in case!
-    unsigned int tested_frames = 1;
-    next = head;
-    while((next=next->getNextReference())!=0) ++tested_frames;
-    FDEBUG(10) << "StorageManager: DQM Head frame has " << tested_frames-1
-               << " linked frames out of " << msg->numFrames-1 << std::endl;
-    if(msg->numFrames == tested_frames)
-    {
-      // found a complete linked chain from the leading frame
-      is_local_chain = 1;
-      FDEBUG(10) << "StorageManager: Leading frame contains a complete linked chain"
-                 << " - must be local transfer" << std::endl;
-      FDEBUG(10) << "StorageManager: Breaking the chain" << std::endl;
-      // break the chain and feed them to the fragment collector
-      next = head;
-
-      for(int iframe=0; iframe <(int)localMsgCopy.numFrames; ++iframe)
-      {
-         toolbox::mem::Reference *thisref=next;
-         next = thisref->getNextReference();
-         thisref->setNextReference(0);
-         I2O_MESSAGE_FRAME         *thisstdMsg = (I2O_MESSAGE_FRAME*)thisref->getDataLocation();
-         I2O_SM_DQM_MESSAGE_FRAME *thismsg    = (I2O_SM_DQM_MESSAGE_FRAME*)thisstdMsg;
-         EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-         int thislen = thismsg->dataSize;
-         // ***  must give it the 1 of N for this fragment (starts from 0 in i2o header)
-         new (b.buffer()) stor::FragEntry(thisref, (char*)(thismsg->dataPtr()), thislen,
-                                          thismsg->frameCount+1, thismsg->numFrames, Header::DQM_EVENT, 
-                                          thismsg->runID, thismsg->eventAtUpdateID, thismsg->folderID,
-                                          thismsg->fuProcID, thismsg->fuGUID);
-         b.commit(sizeof(stor::FragEntry));
-
-         // BE CAREFUL not to use thismsg after this point because it
-         // may have been released already by the FragmentCollector!
-         // If it needs to be used, make a copy.
-
-         ++receivedFrames_;
-         // for bandwidth performance measurements
-         // Following is wrong for the last frame because frame sent is
-         // is actually larger than the size taken by actual data
-         unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
-                                         +thislen;
-         addMeasurement(actualFrameSize);
-
-         // no data sender list update yet for DQM data, should add it here
-      }
-
-    } else {
-      // should never get here!
-      FDEBUG(10) << "StorageManager: DQM Head frame has fewer linked frames "
-                 << "than expected: abnormal error! " << std::endl;
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"DQM Head frame has fewer linked frames" 
-                      << " than expected: abnormal error! ");
-    }
-  }
-
-  if (is_local_chain == 0) 
-  {
-    // put pointers into fragment collector queue
-    EventBuffer::ProducerBuffer b(jc_->getFragmentQueue());
-    // must give it the 1 of N for this fragment (starts from 0 in i2o header)
-    new (b.buffer()) stor::FragEntry(ref, (char*)(msg->dataPtr()), len,
-                                     msg->frameCount+1, msg->numFrames, Header::DQM_EVENT, 
-                                     msg->runID, msg->eventAtUpdateID, msg->folderID,
-                                     msg->fuProcID, msg->fuGUID);
-    b.commit(sizeof(stor::FragEntry));
-    // Frame release is done in the deleter.
-    ++receivedFrames_;
-    // for bandwidth performance measurements
-    unsigned long actualFrameSize = (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME)
-                                    + len;
-    addMeasurement(actualFrameSize);
-
-    // no data sender list update yet for DQM data, should add it here
-  }
-
-  if (  localMsgCopy.frameCount == localMsgCopy.numFrames-1 )
-    {
-      string hltClassName(localMsgCopy.hltClassName);
-      sendDiscardMessage(localMsgCopy.rbBufferID, 
-			 localMsgCopy.hltInstance, 
-			 I2O_FU_DQM_DISCARD,
-			 hltClassName);
-    }
+  // for bandwidth performance measurements
+  unsigned long actualFrameSize =
+    (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME) + len;
+  fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 }
 
-//////////// ***  Performance //////////////////////////////////////////////////////////
-void StorageManager::addMeasurement(unsigned long size)
-{
-  // for bandwidth performance measurements, first sample based
-  if ( pmeter_->addSample(size) )
-  {
-    // Copy measurements for our record
-    stor::SMPerfStats stats = pmeter_->getStats();
-
-    instantBandwidth_= stats.shortTermCounter_->getValueRate();
-    instantRate_     = stats.shortTermCounter_->getSampleRate();
-    instantLatency_  = 1000000.0 / instantRate_;
-
-    double now = ForeverCounter::getCurrentTime();
-    totalSamples_    = stats.longTermCounter_->getSampleCount();
-    duration_        = stats.longTermCounter_->getDuration(now);
-    meanBandwidth_   = stats.longTermCounter_->getValueRate(now);
-    meanRate_        = stats.longTermCounter_->getSampleRate(now);
-    meanLatency_     = 1000000.0 / meanRate_;
-
-    maxBandwidth_    = stats.maxBandwidth_;
-    minBandwidth_    = stats.minBandwidth_;
-  }
-
-  // for time period bandwidth performance measurements
-  if ( pmeter_->getStats().shortPeriodCounter_->hasValidResult() )
-  {
-    // Copy measurements for our record
-    stor::SMPerfStats stats = pmeter_->getStats();
-
-    instantBandwidth2_= stats.shortPeriodCounter_->getValueRate();
-    instantRate2_     = stats.shortPeriodCounter_->getSampleRate();
-    instantLatency2_  = 1000000.0 / instantRate2_;
-
-    double now = ForeverCounter::getCurrentTime();
-    totalSamples2_    = stats.longTermCounter_->getSampleCount();
-    duration2_        = stats.longTermCounter_->getDuration(now);
-    meanBandwidth2_   = stats.longTermCounter_->getValueRate(now);
-    meanRate2_        = stats.longTermCounter_->getSampleRate(now);
-    meanLatency2_     = 1000000.0 / meanRate2_;
-
-    maxBandwidth2_    = stats.maxBandwidth2_;
-    minBandwidth2_    = stats.minBandwidth2_;
-  }
-  receivedVolume_ = pmeter_->totalvolumemb();
-
-  // TODO fixme: Find a better place to put this testing of the Fragment Collector thread status!
-  // leave this for now until we have the transition available and have clean up code
-  if(stor::getSMFC_exceptionStatus()) {
-    // there was a fatal exception in the Fragmentation Collector and
-    // we want to go to a fail state
-    //reasonForFailedState_  = stor::getSMFC_reason4Exception();
-    //fsm_.fireFailed(reasonForFailedState_,this);
-    edm::LogError("StorageManager") << "Fatal problem in FragmentCollector thread detected! \n"
-       << stor::getSMFC_reason4Exception();
-    //@@EM added state transition to failed
-    reasonForFailedState_ = stor::getSMFC_reason4Exception();
-    fsm_.fireFailed(reasonForFailedState_,this);
-
-  }
-}
-
-//////////// *** Default web page //////////////////////////////////////////////////////////
+//////////// *** Refactored default web page ///////////////////////////////////////////////
 void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
+throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the default webpage";
+  
+  try
+  {
+    DiskWritingParams dwParams =
+      sharedResourcesPtr_->_configuration->getDiskWritingParams();
+
+    WebPageHelper::defaultWebPage(
+      out,
+      fsm_.stateName()->toString(),
+      _statisticsReporter,
+      pool_,
+      dwParams._nLogicalDisk,
+      dwParams._filePath,
+      this->getApplicationDescriptor()
+    );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+}
+
+
+//////////// *** Store data web page //////////////////////////////////////////////////////////
+void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   *out << "<html>"                                                   << endl;
@@ -1245,20 +586,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
     *out << "  </td>"                                                  << endl;
-    /* @@EM commented out till there is something to link to
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "    <a href=\"/" << getApplicationDescriptor()->getURN()
-         << "/debug\">"                   << endl;
-    *out << "      <img"                                               << endl;
-    *out << "       align=\"middle\""                                  << endl;
-    *out << "       src=\"/evf/images/bugicon.jpg\""		       << endl;
-    *out << "       alt=\"debug\""                                     << endl;
-    *out << "       width=\"32\""                                      << endl;
-    *out << "       height=\"32\""                                     << endl;
-    *out << "       border=\"\"/>"                                     << endl;
-    *out << "    </a>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    */
     *out << "</tr>"                                                    << endl;
     if(fsm_.stateName()->value_ == "Failed")
     {
@@ -1273,11 +600,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     }
     *out << "</table>"                                                 << endl;
 
-  *out << "<hr/>"                                                    << endl;
-  *out << "<table>"                                                  << endl;
-  *out << "<tr valign=\"top\">"                                      << endl;
-  *out << "  <td>"                                                   << endl;
-
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\""	 << endl;
   *out << " readonly title=\"Note: parts of this info updates every 10 sec !!!\">"<< endl;
   *out << "<colgroup> <colgroup align=\"right\">"			 << endl;
@@ -1286,26 +608,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "      " << "Storage Manager Statistics"			 << endl;
     *out << "    </th>"							 << endl;
     *out << "  </tr>"							 << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Run Number" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << runNumber_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Total (Non-unique) Events Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedEvents_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
         *out << "<tr class=\"special\">" << endl;
           *out << "<td >" << endl;
           *out << "Output Module" << endl;
@@ -1329,10 +631,8 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "Max (KB)" << endl;
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
-        boost::shared_ptr<InitMsgCollection> initMsgCollection;
-        if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
-          initMsgCollection = jc_->getInitMsgCollection();
-        }
+        boost::shared_ptr<InitMsgCollection> initMsgCollection =
+          sharedResourcesPtr_->_initMsgCollection;
         idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
         for( ; oi != oe; ++oi) {
           std::string outputModuleLabel = oi->second;
@@ -1393,94 +693,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
             ++ni;
           *out << "</tr>" << endl;
         }
-        *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Last Event ID" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << lastEventSeen_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Error Events Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedErrorEvents_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Last Error Event ID" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << lastErrorEventSeen_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
-        int nD = nLogicalDisk_;
-        if (nD == 0) nD=1;
-        for(int i=0;i<nD;++i) {
-           string path(filePath_);
-           if(nLogicalDisk_>0) {
-              std::ostringstream oss;
-              oss << "/" << setfill('0') << std::setw(2) << i; 
-              path += oss.str();
-           }
-           struct statfs64 buf;
-           int retVal = statfs64(path.c_str(), &buf);
-           double btotal = 0;
-           double bfree = 0;
-           unsigned int used = 0;
-           if(retVal==0) {
-              unsigned int blksize = buf.f_bsize;
-              btotal = buf.f_blocks * blksize / 1024 / 1024 /1024;
-              bfree  = buf.f_bavail  * blksize / 1024 / 1024 /1024;
-              used   = (int)(100 * (1. - bfree / btotal)); 
-           }
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Disk " << i << " usage " << endl;
-          *out << "</td>" << endl;
-          if(used>89)
-             *out << "<td align=right bgcolor=\"#EF5A10\">" << endl;
-          else 
-             *out << "<td align=right>" << endl;
-          *out << used << "% (" << btotal-bfree << " of " << btotal << " GB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        }
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "# CopyWorker" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          int ps1 = system("exit `ps ax | grep CopyWorker | grep perl | grep -v grep | wc -l`") / 256;
-          *out << ps1 << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "# InjectWorker" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          int ps2 = system("exit `ps ax | grep InjectWorker | grep perl | grep -v grep | wc -l`") / 256;
-          *out << ps2 << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
     *out << "  <tr>"                                                   << endl;
     *out << "    <th colspan=7>"                                       << endl;
     *out << "      " << "Output Streams (updated only every 10 sec)"          << endl;
@@ -1523,143 +735,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
         *out << "  </tr>" << endl;
       }
     *out << "</table>" << endl;
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Received Data Statistics "                    << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-
-        *out << "<tr>" << endl;
-        *out << "<th >" << endl;
-        *out << "Parameter" << endl;
-        *out << "</th>" << endl;
-        *out << "<th>" << endl;
-        *out << "Value" << endl;
-        *out << "</th>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Frames Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedFrames_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "DQM Records Received" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << dqmRecords_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        if(pool_is_set_ == 1) 
-        {
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Memory Used (Bytes)" << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << pool_->getMemoryUsage().getUsed() << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-        } else {
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Memory Pool pointer not yet available" << endl;
-            *out << "</td>" << endl;
-          *out << "  </tr>" << endl;
-        }
-// performance statistics
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Statistics for last " << samples_ << " frames" << " (and last " << period4samples_ << " sec)" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << instantBandwidth_ << " (" << instantBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Frames/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << instantRate_ << " (" << instantRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/frame)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << instantLatency_ << " (" << instantLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Maximum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << maxBandwidth_ << " (" << maxBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Minimum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << minBandwidth_ << " (" << minBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-// mean performance statistics for whole run
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Mean Performance for " << totalSamples_ << " (" << totalSamples2_ << ")" << " frames, duration "
-         << duration_ << " (" << duration2_ << ")" << " seconds" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << meanBandwidth_ << " (" << meanBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Frames/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << meanRate_ << " (" << meanRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/frame)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << meanLatency_ << " (" << meanLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Total Volume Received (MB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << receivedVolume_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-
-  *out << "</table>" << endl;
 
 // statistics for stored data
 
@@ -1775,8 +850,6 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "</table>" << endl;
 
-  *out << "  </td>"                                                  << endl;
-  *out << "</table>"                                                 << endl;
 // now for RB sender list statistics
   *out << "<hr/>"                                                    << endl;
   *out << "<table>"                                                  << endl;
@@ -1826,6 +899,9 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "</table>" << endl;
 
+  DiskWritingParams dwParams =
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
+
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
   *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
     *out << "  <tr>"                                                   << endl;
@@ -1856,11 +932,11 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
       *out << "</td>" << endl;
     *out << "  </tr>" << endl;
     *out << "<tr>"					     << endl;
-      *out << " <td colspan=2>"					     << endl;
+      *out << " <td colspan=2>"				     << endl;
       *out << "<textarea rows=" << 10 << " cols=100 scroll=yes";
       *out << " readonly title=\"SM config\">"		     << endl;
-      *out << smConfigString_                                  << endl;
-      *out << "</textarea>"                                          << endl;
+      *out << dwParams._streamConfiguration                  << endl;
+      *out << "</textarea>"                                  << endl;
       *out << " </td>"					     << endl;
     *out << "</tr>"					     << endl;
 
@@ -1872,6 +948,9 @@ void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<hr/>"                                                 << endl;
   std::string url = getApplicationDescriptor()->getContextDescriptor()->getURL();
   std::string urn = getApplicationDescriptor()->getURN();
+  *out << "<a href=\"" << url << "/" << urn << "\">" 
+       << "New default web page" << "</a>" << endl;
+  *out << "<hr/>"                                                 << endl;
   *out << "<a href=\"" << url << "/" << urn << "/rbsenderlist" << "\">" 
        << "RB Sender list web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
@@ -2065,10 +1144,10 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
           *out << "<td >" << endl;
-          *out << "FU Sender id (shared memory id!)" << endl;
+          *out << "FU Sender process id" << endl;
           *out << "</td>" << endl;
           *out << "<td align=right>" << endl;
-          *out << (*pos)->rbBufferID_ << endl;
+          *out << (*pos)->fuProcId_ << endl;
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
         *out << "<tr>" << endl;
@@ -2349,8 +1428,8 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "<hr/>"                                                    << endl;
 
     // should first test if jc_ is valid
-    if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL &&
-       jc_->getInitMsgCollection()->size() > 0) {
+    if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+       sharedResourcesPtr_->_initMsgCollection->size() > 0) {
       boost::mutex::scoped_lock sl(halt_lock_);
       if(jc_.use_count() != 0) {
         std::list<std::string>& files = jc_->get_filelist();
@@ -2409,10 +1488,11 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
-     jc_->getInitMsgCollection().get() != NULL &&
-     jc_->getInitMsgCollection()->size() > 0)
+     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection->size() > 0)
   {
-    boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+    boost::shared_ptr<EventServer> eventServer =
+      sharedResourcesPtr_->_oldEventServer;
     if (eventServer.get() != NULL)
     {
       // if we've stored a "registry warning" in the consumer pipe, send
@@ -2437,7 +1517,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
       // that new INIT message(s) are available
       else if (consPtr.get() != NULL && consPtr->isProxyServer() &&
                consumerInitMsgCount >= 0 &&
-               jc_->getInitMsgCollection()->size() > consumerInitMsgCount)
+               sharedResourcesPtr_->_initMsgCollection->size() > consumerInitMsgCount)
       {
         OtherMessageBuilder othermsg(&mybuffer_[0],
                                      Header::NEW_INIT_AVAILABLE);
@@ -2515,13 +1595,14 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
-     jc_->getInitMsgCollection().get() != NULL &&
-     jc_->getInitMsgCollection()->size() > 0)
+  if(fsm_.stateName()->toString() == "Enabled" &&
+     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection->size() > 0)
     {
       std::string errorString;
       InitMsgSharedPtr serializedProds;
-      boost::shared_ptr<EventServer> eventServer = jc_->getEventServer();
+      boost::shared_ptr<EventServer> eventServer =
+        sharedResourcesPtr_->_oldEventServer;
       if (eventServer.get() != NULL)
       {
         boost::shared_ptr<ConsumerPipe> consPtr =
@@ -2533,8 +1614,7 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
           // picture to consumers
           boost::mutex::scoped_lock sl(consumerInitMsgLock_);
           boost::shared_ptr<InitMsgCollection> initMsgCollection =
-            jc_->getInitMsgCollection();
-
+            sharedResourcesPtr_->_initMsgCollection;
           try
           {
             if (consPtr->isProxyServer())
@@ -2657,11 +1737,8 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
     sprintf(buffer, "<ConsumerList>\n");
     out->write(buffer,strlen(buffer));
 
-    boost::shared_ptr<EventServer> eventServer;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getEventServer();
-    }
+    boost::shared_ptr<EventServer> eventServer =
+      sharedResourcesPtr_->_oldEventServer;
     if (eventServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
@@ -2717,11 +1794,8 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 	out->write(buffer,strlen(buffer));
       }
     }
-    boost::shared_ptr<DQMEventServer> dqmServer;
-    if (jc_.get() != NULL)
-    {
-      dqmServer = jc_->getDQMEventServer();
-    }
+    boost::shared_ptr<DQMEventServer> dqmServer =
+      sharedResourcesPtr_->_oldDQMEventServer;
     if (dqmServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
@@ -2871,15 +1945,15 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   }
   *out << "</table>"                                                 << endl;
 
+  EventServingParams esParams =
+    sharedResourcesPtr_->_configuration->getEventServingParams();
+
   if(fsm_.stateName()->toString() == "Enabled")
   {
-    boost::shared_ptr<EventServer> eventServer;
-    boost::shared_ptr<InitMsgCollection> initMsgCollection;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getEventServer();
-      initMsgCollection = jc_->getInitMsgCollection();
-    }
+    boost::shared_ptr<EventServer> eventServer =
+      sharedResourcesPtr_->_oldEventServer;
+    boost::shared_ptr<InitMsgCollection> initMsgCollection =
+      sharedResourcesPtr_->_initMsgCollection;
     if (eventServer.get() != NULL && initMsgCollection.get() != NULL)
     {
       if (initMsgCollection->size() > 0)
@@ -2907,19 +1981,12 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
         *out << "    Maximum input data rate is "
              << eventServer->getMaxDataRate() << " MB/sec." << std::endl;
         *out << "    <br/>" << std::endl;
-        *out << "    Consumer queue size is " << consumerQueueSize_
+        *out << "    Consumer queue size is " << esParams._consumerQueueSize
              << "." << std::endl;
         *out << "    <br/>" << std::endl;
         *out << "    Selected HLT output module is "
              << eventServer->getHLTOutputSelection()
              << "." << std::endl;
-        //*out << "    Fair-share event serving is ";
-        //if (fairShareES_) {
-        //  *out << "ON." << std::endl;
-        //}
-        //else {
-        //  *out << "OFF." << std::endl;
-        //}
         *out << "  </td>" << std::endl;
         *out << "  <td width=\"25%\" align=\"center\">" << std::endl;
         if (autoUpdate) {
@@ -3857,11 +2924,11 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
            << std::endl;
     }
 
-    if(jc_->getInitMsgCollection().get() != NULL &&
-       jc_->getInitMsgCollection()->size() > 0)
+    if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+       sharedResourcesPtr_->_initMsgCollection->size() > 0)
     {
       boost::shared_ptr<InitMsgCollection> initMsgCollection =
-        jc_->getInitMsgCollection();
+        sharedResourcesPtr_->_initMsgCollection;
       *out << "<h3>HLT Trigger Paths:</h3>" << std::endl;
       *out << "<table border=\"1\" width=\"100%\">" << std::endl;
 
@@ -3946,11 +3013,8 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 
   // fetch the event server
   // (it and/or the job controller may not have been created yet)
-  boost::shared_ptr<EventServer> eventServer;
-  if (jc_.get() != NULL)
-  {
-    eventServer = jc_->getEventServer();
-  }
+  boost::shared_ptr<EventServer> eventServer =
+    sharedResourcesPtr_->_oldEventServer;
 
   // if no event server, tell the consumer that we're not ready
   if (eventServer.get() == NULL)
@@ -3971,6 +3035,49 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 
     // fetch the event selection request from the consumer request
     edm::ParameterSet requestParamSet(consumerRequest);
+
+    // 26-Jan-2009, KAB: an ugly hack to get ParameterSet to serialize
+    // the parameters that we need.  A better solution is in the works.
+    try {
+      double rate =
+        requestParamSet.getUntrackedParameter<double>("maxEventRequestRate",
+                                                      -999.0);
+      if (rate == -999.0) {
+        rate = requestParamSet.getParameter<double>("TrackedMaxRate");
+        requestParamSet.addUntrackedParameter<double>("maxEventRequestRate",
+                                                      rate);
+      }
+    }
+    catch (...) {}
+    try {
+      std::string hltOMLabel =
+        requestParamSet.getUntrackedParameter<std::string>("SelectHLTOutput",
+                                                           "NoneFound");
+      if (hltOMLabel == "NoneFound") {
+        hltOMLabel =
+          requestParamSet.getParameter<std::string>("TrackedHLTOutMod");
+        requestParamSet.addUntrackedParameter<std::string>("SelectHLTOutput",
+                                                           hltOMLabel);
+      }
+    }
+    catch (...) {}
+    try {
+      edm::ParameterSet tmpPSet1 =
+        requestParamSet.getUntrackedParameter<edm::ParameterSet>("SelectEvents",
+                                                                 edm::ParameterSet());
+      if (tmpPSet1.empty()) {
+        Strings path_specs = 
+          requestParamSet.getParameter<Strings>("TrackedEventSelection");
+        if (! path_specs.empty()) {
+          edm::ParameterSet tmpPSet2;
+          tmpPSet2.addParameter<Strings>("SelectEvents", path_specs);
+          requestParamSet.addUntrackedParameter<edm::ParameterSet>("SelectEvents",
+                                                                   tmpPSet2);
+        }
+      }
+    }
+    catch (...) {}
+
     Strings selectionRequest =
       EventSelector::getEventSelectionVString(requestParamSet);
     Strings modifiedRequest =
@@ -3986,17 +3093,22 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
       requestParamSet.getUntrackedParameter<std::string>("SelectHLTOutput",
                                                          std::string());
 
+    EventServingParams esParams =
+      sharedResourcesPtr_->_configuration->getEventServingParams();
+
     // create the local consumer interface and add it to the event server
     boost::shared_ptr<ConsumerPipe>
       consPtr(new ConsumerPipe(consumerName, consumerPriority,
-                               activeConsumerTimeout_.value_,
-                               idleConsumerTimeout_.value_,
+                               (int)esParams._activeConsumerTimeout,
+                               (int)esParams._idleConsumerTimeout,
                                modifiedRequest, maxEventRequestRate,
                                hltOMLabel,
-                               consumerHost, consumerQueueSize_));
+                               consumerHost,
+                               esParams._consumerQueueSize));
     eventServer->addConsumer(consPtr);
     // over-ride pushmode if not set in StorageManager
-    if((consumerPriority.compare("PushMode") == 0) && !pushMode_)
+    if((consumerPriority.compare("PushMode") == 0) &&
+       !esParams._pushmode2proxy)
         consPtr->setPushMode(false);
 
     // build the registration response into the message buffer
@@ -4059,11 +3171,8 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   // there must also be DQM data available
   if(fsm_.stateName()->toString() == "Enabled" && consumerId != 0)
   {
-    boost::shared_ptr<DQMEventServer> eventServer;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getDQMEventServer();
-    }
+    boost::shared_ptr<DQMEventServer> eventServer =
+      sharedResourcesPtr_->_oldDQMEventServer;
     if (eventServer.get() != NULL)
     {
       boost::shared_ptr< std::vector<char> > bufPtr =
@@ -4137,11 +3246,8 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     // fetch the DQMevent server
     // (it and/or the job controller may not have been created yet
     //  if not in the enabled state)
-    boost::shared_ptr<DQMEventServer> eventServer;
-    if (jc_.get() != NULL)
-    {
-      eventServer = jc_->getDQMEventServer();
-    }
+    boost::shared_ptr<DQMEventServer> eventServer =
+      sharedResourcesPtr_->_oldDQMEventServer;
 
     // if no event server, tell the consumer that we're not ready
     if (eventServer.get() == NULL)
@@ -4155,16 +3261,20 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     }
     else
     {
+      EventServingParams esParams =
+        sharedResourcesPtr_->_configuration->getEventServingParams();
+
       // create the local consumer interface and add it to the event server
       boost::shared_ptr<DQMConsumerPipe>
         consPtr(new DQMConsumerPipe(consumerName, consumerPriority,
-                                    DQMactiveConsumerTimeout_.value_,
-                                    DQMidleConsumerTimeout_.value_,
+                                    (int)esParams._DQMactiveConsumerTimeout,
+                                    (int)esParams._DQMidleConsumerTimeout,
                                     consumerRequest, consumerHost,
-                                    DQMconsumerQueueSize_));
+                                    esParams._DQMconsumerQueueSize));
       eventServer->addConsumer(consPtr);
       // over-ride pushmode if not set in StorageManager
-      if((consumerPriority.compare("PushMode") == 0) && !pushMode_)
+      if((consumerPriority.compare("PushMode") == 0) &&
+         !esParams._pushmode2proxy)
           consPtr->setPushMode(false);
 
       // initialize it straight away (should later pass in the folder name to
@@ -4234,57 +3344,16 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("runNumber",            &runNumber_);
   is->fireItemAvailable("url",                  &url_);
   // Body
-  is->fireItemAvailable("receivedFrames",       &receivedFrames_);
   // should this be here also??
   is->fireItemAvailable("storedEvents",         &storedEvents_);
   is->fireItemAvailable("closedFiles",          &closedFiles_);
-  is->fireItemAvailable("receivedEvents",       &receivedEvents_);
-  is->fireItemAvailable("receivedErrorEvents",  &receivedErrorEvents_);
   is->fireItemAvailable("namesOfStream",      &namesOfStream_);
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
-  is->fireItemAvailable("dqmRecords",           &dqmRecords_);
-  is->fireItemAvailable("receivedVolume",       &receivedVolume_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
-  is->fireItemAvailable("instantBandwidth",     &instantBandwidth_);
-  is->fireItemAvailable("instantRate",          &instantRate_);
-  is->fireItemAvailable("instantLatency",       &instantLatency_);
-  is->fireItemAvailable("maxBandwidth",         &maxBandwidth_);
-  is->fireItemAvailable("minBandwidth",         &minBandwidth_);
-  is->fireItemAvailable("duration",             &duration_);
-  is->fireItemAvailable("totalSamples",         &totalSamples_);
-  is->fireItemAvailable("meanBandwidth",        &meanBandwidth_);
-  is->fireItemAvailable("meanRate",             &meanRate_);
-  is->fireItemAvailable("meanLatency",          &meanLatency_);
-  is->fireItemAvailable("STparameterSet",       &offConfig_);
   is->fireItemAvailable("stateName",            fsm_.stateName());
-  is->fireItemAvailable("progressMarker",       &progressMarker_);
+  //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
-  is->fireItemAvailable("pushMode2Proxy",       &pushmode2proxy_);
-  is->fireItemAvailable("collateDQM",           &collateDQM_);
-  is->fireItemAvailable("archiveDQM",           &archiveDQM_);
-  is->fireItemAvailable("archiveIntervalDQM",   &archiveIntervalDQM_);
-  is->fireItemAvailable("purgeTimeDQM",         &purgeTimeDQM_);
-  is->fireItemAvailable("readyTimeDQM",         &readyTimeDQM_);
-  is->fireItemAvailable("filePrefixDQM",        &filePrefixDQM_);
-  is->fireItemAvailable("useCompressionDQM",    &useCompressionDQM_);
-  is->fireItemAvailable("compressionLevelDQM",  &compressionLevelDQM_);
-  is->fireItemAvailable("nLogicalDisk",         &nLogicalDisk_);
-  is->fireItemAvailable("fileCatalog",          &fileCatalog_);
-  is->fireItemAvailable("fileName",             &fileName_);
-  is->fireItemAvailable("filePath",             &filePath_);
-  is->fireItemAvailable("setupLabel",           &setupLabel_);
-  is->fireItemAvailable("highWaterMark",        &highWaterMark_);
-  is->fireItemAvailable("lumiSectionTimeOut",   &lumiSectionTimeOut_);
-  is->fireItemAvailable("exactFileSizeTest",    &exactFileSizeTest_);
-  is->fireItemAvailable("fileClosingTestInterval",&fileClosingTestInterval_);
-  is->fireItemAvailable("maxESEventRate",       &maxESEventRate_);
-  is->fireItemAvailable("maxESDataRate",        &maxESDataRate_);
-  is->fireItemAvailable("activeConsumerTimeout",&activeConsumerTimeout_);
-  is->fireItemAvailable("idleConsumerTimeout",  &idleConsumerTimeout_);
-  is->fireItemAvailable("consumerQueueSize",    &consumerQueueSize_);
-  is->fireItemAvailable("esSelectedHLTOutputModule",&esSelectedHLTOutputModule_);
-  //is->fireItemAvailable("fairShareES",          &fairShareES_);
 
   //----------------------------------------------------------------------------
   // Attach listener to myCounter_ to detect retrieval event
@@ -4294,55 +3363,15 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("runNumber",            this);
   is->addItemRetrieveListener("url",                  this);
   // Body
-  is->addItemRetrieveListener("receivedFrames",       this);
   // should this be here also??
   //is->addItemRetrieveListener("storedEvents",         this);
-  is->addItemRetrieveListener("receivedEvents",       this);
   is->addItemRetrieveListener("namesOfStream", this);
   is->addItemRetrieveListener("namesOfOutMod", this);
-  is->addItemRetrieveListener("dqmRecords",           this);
-  is->addItemRetrieveListener("receivedVolume",       this);
   is->addItemRetrieveListener("storedVolume",         this);
   is->addItemRetrieveListener("memoryUsed",           this);
-  is->addItemRetrieveListener("instantBandwidth",     this);
-  is->addItemRetrieveListener("instantRate",          this);
-  is->addItemRetrieveListener("instantLatency",       this);
-  is->addItemRetrieveListener("maxBandwidth",         this);
-  is->addItemRetrieveListener("minBandwidth",         this);
-  is->addItemRetrieveListener("duration",             this);
-  is->addItemRetrieveListener("totalSamples",         this);
-  is->addItemRetrieveListener("meanBandwidth",        this);
-  is->addItemRetrieveListener("meanRate",             this);
-  is->addItemRetrieveListener("meanLatency",          this);
-  is->addItemRetrieveListener("STparameterSet",       this);
   is->addItemRetrieveListener("stateName",            this);
-  is->addItemRetrieveListener("progressMarker",       this);
+  //  is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedRBs",         this);
-  is->addItemRetrieveListener("pushMode2Proxy",       this);
-  is->addItemRetrieveListener("collateDQM",           this);
-  is->addItemRetrieveListener("archiveDQM",           this);
-  is->addItemRetrieveListener("archiveIntervalDQM",   this);
-  is->addItemRetrieveListener("purgeTimeDQM",         this);
-  is->addItemRetrieveListener("readyTimeDQM",         this);
-  is->addItemRetrieveListener("filePrefixDQM",        this);
-  is->addItemRetrieveListener("useCompressionDQM",    this);
-  is->addItemRetrieveListener("compressionLevelDQM",  this);
-  is->addItemRetrieveListener("nLogicalDisk",         this);
-  is->addItemRetrieveListener("fileCatalog",          this);
-  is->addItemRetrieveListener("fileName",             this);
-  is->addItemRetrieveListener("filePath",             this);
-  is->addItemRetrieveListener("setupLabel",           this);
-  is->addItemRetrieveListener("highWaterMark",        this);
-  is->addItemRetrieveListener("lumiSectionTimeOut",   this);
-  is->addItemRetrieveListener("exactFileSizeTest",    this);
-  is->addItemRetrieveListener("fileClosingTestInterval",this);
-  is->addItemRetrieveListener("maxESEventRate",       this);
-  is->addItemRetrieveListener("maxESDataRate",        this);
-  is->addItemRetrieveListener("activeConsumerTimeout",this);
-  is->addItemRetrieveListener("idleConsumerTimeout",  this);
-  is->addItemRetrieveListener("consumerQueueSize",    this);
-  is->addItemRetrieveListener("esSelectedHLTOutputModule",this);
-  //is->addItemRetrieveListener("fairShareES",          this);
   //----------------------------------------------------------------------------
 }
 
@@ -4370,10 +3399,7 @@ void StorageManager::actionPerformed(xdata::Event& e)
       connectedRBs_   = smrbsenders_.size();
     else if (item == "memoryUsed")
       memoryUsed_     = pool_->getMemoryUsage().getUsed();
-    else if (item == "receivedVolume")
-      receivedVolume_   = pmeter_->totalvolumemb();
     else if (item == "storedVolume")
-      //storedVolume_   = pmeter_->totalvolumemb();
       storedVolume_   = store_receivedVolume_;
     else if (item == "closedFiles") {
         std::list<std::string>& files = jc_->get_filelist();
@@ -4386,10 +3412,8 @@ void StorageManager::actionPerformed(xdata::Event& e)
       receivedEventsFromOutMod_.clear();
       namesOfOutMod_.clear();
 
-      boost::shared_ptr<InitMsgCollection> initMsgCollection;
-      if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
-        initMsgCollection = jc_->getInitMsgCollection();
-      }
+      boost::shared_ptr<InitMsgCollection> initMsgCollection =
+        sharedResourcesPtr_->_initMsgCollection;
       idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
       for( ; oi != oe; ++oi) {
         std::string outputModuleLabel = oi->second;
@@ -4422,27 +3446,11 @@ void StorageManager::actionPerformed(xdata::Event& e)
         }
       }
 */
-    } else if (item == "progressMarker")
-      progressMarker_ = ProgressMarker::instance()->status();
+    }
     is->unlock();
   }
-
-  if (e.type()=="ItemChangedEvent" && !(fsm_.stateName()->toString()=="Halted")) {
-    string item = dynamic_cast<xdata::ItemChangedEvent&>(e).itemName();
-    if ( item == "STparameterSet") {
-      reconfigurationRequested_ = true;
-    }
-  }
 }
 
-void StorageManager::parseFileEntry(const std::string &in, std::string &out, 
-                                    unsigned int &nev, unsigned long long &sz) const
-{
-  unsigned int no;
-  stringstream pippo;
-  pippo << in;
-  pippo >> no >> out >> nev >> sz;
-}
 
 std::string StorageManager::findStreamName(const std::string &in) const
 {
@@ -4475,6 +3483,8 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
 
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
+
     configureAction();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished configuring!");
@@ -4502,190 +3512,68 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
     return false;
   }
 
-  reconfigurationRequested_ = false;
   return false;
 }
 
 
 void StorageManager::configureAction()
 {
+  sharedResourcesPtr_->_configuration->updateAllParams();
+  DiskWritingParams dwParams =
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
+  DQMProcessingParams dqmParams =
+    sharedResourcesPtr_->_configuration->getDQMProcessingParams();
+  EventServingParams esParams =
+    sharedResourcesPtr_->_configuration->getEventServingParams();
+
   if(!edmplugin::PluginManager::isAvailable()) {
     edmplugin::PluginManager::configure(edmplugin::standard::config());
   }
-    
-  // give the JobController a configuration string and
-  // get the registry data coming over the network (the first one)
-  // Note that there is currently no run number check for the INIT
-  // message, just the first one received once in Enabled state is used
-  evf::ParameterSetRetriever smpset(offConfig_.value_);
-
-  string my_config = smpset.getAsString();
-
-  pushMode_ = (bool) pushmode2proxy_;
-  smConfigString_    = my_config;
-  smFileCatalog_     = fileCatalog_.toString();
-
-  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
-  smParameter_ -> setFileCatalog(fileCatalog_.toString());
-  smParameter_ -> setfileName(fileName_.toString());
-  smParameter_ -> setfilePath(filePath_.toString());
-  smParameter_ -> setmaxFileSize(maxFileSize_.value_);
-  smParameter_ -> setsetupLabel(setupLabel_.toString());
-  smParameter_ -> sethighWaterMark(highWaterMark_.value_);
-  smParameter_ -> setlumiSectionTimeOut(lumiSectionTimeOut_.value_);
-  smParameter_ -> setExactFileSizeTest(exactFileSizeTest_.value_);
 
   // check output locations and scripts before we continue
-  checkDirectoryOK(filePath_.toString());
-  if((bool)archiveDQM_) checkDirectoryOK(filePrefixDQM_.toString());
+  checkDirectoryOK(dwParams._filePath);
+  if((bool)dqmParams._archiveDQM) checkDirectoryOK(dqmParams._filePrefixDQM);
 
-  // check whether the maxSize parameter in an SM output stream
-  // is still specified in bytes (rather than MBytes).  (All we really
-  // check is if the maxSize is unreasonably large after converting
-  // it to bytes.)
-  //@@EM this is done on the xdaq parameter if it is set (i.e. if >0),
-  // otherwise on the cfg params
-  if(smParameter_ ->maxFileSize()>0) {
-    long long maxSize = 1048576 * (long long) smParameter_ -> maxFileSize();
-    if (maxSize > 2E+13) {
-      std::string errorString =  "The maxSize parameter (file size) ";
-      errorString.append("from xdaq configuration is too large(");
-      try {
-        errorString.append(boost::lexical_cast<std::string>(maxSize));
-      }
-      catch (boost::bad_lexical_cast& blcExcpt) {
-        errorString.append("???");
-      }
-      errorString.append(" bytes). ");
-      errorString.append("Please check that this parameter is ");
-      errorString.append("specified as the number of MBytes, not bytes. ");
-      errorString.append("(The units for maxSize was changed from ");
-      errorString.append("bytes to MBytes, and it is possible that ");
-      errorString.append("your storage manager configuration ");
-      errorString.append("needs to be updated to reflect this.)");
+  sharedResourcesPtr_->_oldEventServer.
+    reset(new EventServer(esParams._maxESEventRate, esParams._maxESDataRate,
+                          esParams._esSelectedHLTOutputModule));
+  sharedResourcesPtr_->_oldDQMEventServer.
+    reset(new DQMEventServer(esParams._DQMmaxESEventRate));
 
-      throw cms::Exception("StorageManager","configureAction")
-        << errorString;
-    }
-  } else {
-    try {
-      // create a parameter set from the configuration string
-      PythonProcessDesc py_pdesc(smConfigString_);
-      boost::shared_ptr<ProcessDesc> pdesc = py_pdesc.processDesc();
-      boost::shared_ptr<edm::ParameterSet> smPSet = pdesc->getProcessPSet();
+  sharedResourcesPtr_->_serviceManager.reset(new ServiceManager(dwParams));
+  sharedResourcesPtr_->_dqmServiceManager.reset(new DQMServiceManager());
+  sharedResourcesPtr_->_dqmServiceManager->setParameters(dqmParams);
+  sharedResourcesPtr_->_dqmServiceManager->
+    setDQMEventServer(sharedResourcesPtr_->_oldDQMEventServer);
 
-      // loop over each end path
-      std::vector<std::string> allEndPaths = 
-        smPSet->getParameter<std::vector<std::string> >("@end_paths");
-      for(std::vector<std::string>::iterator endPathIter = allEndPaths.begin();
-          endPathIter != allEndPaths.end(); ++endPathIter) {
-
-        // loop over each element in the end path list (not sure why...)
-        std::vector<std::string> anEndPath =
-          smPSet->getParameter<std::vector<std::string> >((*endPathIter));
-        for(std::vector<std::string>::iterator ep2Iter = anEndPath.begin();
-            ep2Iter != anEndPath.end(); ++ep2Iter) {
-
-          // fetch the end path parameter set
-          edm::ParameterSet endPathPSet =
-            smPSet->getParameter<edm::ParameterSet>((*ep2Iter));
-          if (! endPathPSet.empty()) {
-            std::string mod_type =
-              endPathPSet.getParameter<std::string> ("@module_type");
-            if (mod_type == "EventStreamFileWriter") {
-              // convert the maxSize parameter value from MB to bytes
-              long long maxSize = 1048576 *
-                (long long) endPathPSet.getParameter<int> ("maxSize");
-
-              // test the maxSize value.  2E13 is somewhat arbitrary,
-              // but ~18 TeraBytes seems larger than we would realistically
-              // want, and it will catch stale (byte-based) values greater
-              // than ~18 MBytes.)
-              if (maxSize > 2E+13) {
-                std::string streamLabel =  endPathPSet.getParameter<std::string> ("streamLabel");
-                std::string errorString =  "The maxSize parameter (file size) ";
-                errorString.append("for stream ");
-                errorString.append(streamLabel);
-                errorString.append(" is too large (");
-                try {
-                  errorString.append(boost::lexical_cast<std::string>(maxSize));
-                }
-                catch (boost::bad_lexical_cast& blcExcpt) {
-                  errorString.append("???");
-                }
-                errorString.append(" bytes). ");
-                errorString.append("Please check that this parameter is ");
-                errorString.append("specified as the number of MBytes, not bytes. ");
-                errorString.append("(The units for maxSize was changed from ");
-                errorString.append("bytes to MBytes, and it is possible that ");
-                errorString.append("your storage manager configuration file ");
-                errorString.append("needs to be updated to reflect this.)");
-                
-                throw cms::Exception("StorageManager","configureAction")
-                  << errorString;
-              }
-            }
-          }
-        }
-      }
-    }
-    catch (...) {
-      // since the maxSize test is just a convenience, we'll ignore
-      // exceptions and continue normally, for now.
+  boost::shared_ptr<DiscardManager> discardMgr;
+  Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
+  for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
+    //std::cout << "POOL NAME2 = " << nameList[idx] << std::endl;
+    if (idx == 0 || nameList[idx].find("TCP") != std::string::npos) {
+      toolbox::net::URN poolURN(nameList[idx]);
+      toolbox::mem::Pool* thePool =
+        toolbox::mem::getMemoryPoolFactory()->findPool(poolURN);
+      discardMgr.reset(new DiscardManager(getApplicationContext(),
+                                          getApplicationDescriptor(),
+                                          thePool));
     }
   }
+  sharedResourcesPtr_->_discardManager = discardMgr;
 
-  if (maxESEventRate_ < 0.0)
-    maxESEventRate_ = 0.0;
-  if (maxESDataRate_ < 0.0)
-    maxESDataRate_ = 0.0;
-  if (DQMmaxESEventRate_ < 0.0)
-    DQMmaxESEventRate_ = 0.0;
-    
-  xdata::Integer cutoff(1);
-  if (consumerQueueSize_ < cutoff)
-    consumerQueueSize_ = cutoff;
-  if (DQMconsumerQueueSize_ < cutoff)
-    DQMconsumerQueueSize_ = cutoff;
+  jc_.reset(new stor::JobController(getApplicationLogger(),
+                                    sharedResourcesPtr_));
 
-  jc_.reset(new stor::JobController(my_config, getApplicationLogger(), &deleteSMBuffer));
-
-  int disks(nLogicalDisk_);
-
-  jc_->setNumberOfFileSystems(disks);
-  jc_->setFileCatalog(smFileCatalog_);
-  jc_->setSourceId(sourceId_);
-
-  jc_->setCollateDQM(collateDQM_);
-  jc_->setArchiveDQM(archiveDQM_);
-  jc_->setArchiveIntervalDQM(archiveIntervalDQM_);
-  jc_->setPurgeTimeDQM(purgeTimeDQM_);
-  jc_->setReadyTimeDQM(readyTimeDQM_);
-  jc_->setFilePrefixDQM(filePrefixDQM_);
-  jc_->setUseCompressionDQM(useCompressionDQM_);
-  jc_->setCompressionLevelDQM(compressionLevelDQM_);
-  jc_->setFileClosingTestInterval(fileClosingTestInterval_);
-
-  boost::shared_ptr<EventServer>
-    eventServer(new EventServer(maxESEventRate_, maxESDataRate_,
-                                esSelectedHLTOutputModule_,
-                                fairShareES_));
-  jc_->setEventServer(eventServer);
-  boost::shared_ptr<DQMEventServer> DQMeventServer(new DQMEventServer(DQMmaxESEventRate_));
-  jc_->setDQMEventServer(DQMeventServer);
-  boost::shared_ptr<InitMsgCollection> initMsgCollection(new InitMsgCollection());
-  jc_->setInitMsgCollection(initMsgCollection);
   jc_->setSMRBSenderList(&smrbsenders_);
 }
 
 
 bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
 {
-  if (reconfigurationRequested_) {
-    reconfigurationRequested_ = false;
-
+  if (sharedResourcesPtr_->_configuration->streamConfigurationHasChanged()) {
     try {
       LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
+      sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
       this->haltAction();
       this->configureAction();
       LOG4CPLUS_INFO(getApplicationLogger(),"Finished re-configuring!");
@@ -4715,6 +3603,8 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start enabling ...");
 
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
+
     smrbsenders_.clear();
     
     fileList_.clear();
@@ -4722,10 +3612,7 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     storedEventsInStream_.clear();
     fileSize_.clear();
     storedEvents_ = 0;
-    receivedEvents_ = 0;
-    receivedErrorEvents_ = 0;
     storedVolume_ = 0;
-    receivedVolume_ = 0;
     receivedEventsFromOutMod_.clear();
     namesOfStream_.clear();
     namesOfOutMod_.clear();
@@ -4734,14 +3621,12 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     avCompressRatioMap_.clear();
     modId2ModOutMap_.clear();
     storedEventsMap_.clear();
-    dqmRecords_   = 0;
     closedFiles_  = 0;
     openFiles_  = 0;
-    lastEventSeen_ = 0;
-    lastErrorEventSeen_ = 0;
     jc_->start();
 
-    boost::shared_ptr<InitMsgCollection> initMsgCollection = jc_->getInitMsgCollection();
+    boost::shared_ptr<InitMsgCollection> initMsgCollection =
+      sharedResourcesPtr_->_initMsgCollection;
     if (initMsgCollection.get() != 0) {
       initMsgCollection->clear();
     }
@@ -4770,7 +3655,7 @@ bool StorageManager::stopping(toolbox::task::WorkLoop* wl)
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start stopping ...");
-
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
     stopAction();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished stopping!");
@@ -4797,6 +3682,8 @@ bool StorageManager::halting(toolbox::task::WorkLoop* wl)
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start halting ...");
+
+    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
 
     haltAction();
     
@@ -4851,10 +3738,8 @@ void StorageManager::stopAction()
   receivedEventsFromOutMod_.clear();
   namesOfOutMod_.clear();
 
-  boost::shared_ptr<InitMsgCollection> initMsgCollection;
-  if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL) {
-    initMsgCollection = jc_->getInitMsgCollection();
-  }
+  boost::shared_ptr<InitMsgCollection> initMsgCollection =
+    sharedResourcesPtr_->_initMsgCollection;
   idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
   for( ; oi != oe; ++oi) {
       std::string outputModuleLabel = oi->second;
@@ -4876,15 +3761,14 @@ void StorageManager::stopAction()
   }
   
   // should clear the event server(s) last event/queue
-  boost::shared_ptr<EventServer> eventServer;
-  boost::shared_ptr<DQMEventServer> dqmeventServer;
-  if (jc_.get() != NULL)
+  if (sharedResourcesPtr_->_oldEventServer.get() != NULL)
   {
-    eventServer = jc_->getEventServer();
-    dqmeventServer = jc_->getDQMEventServer();
+    sharedResourcesPtr_->_oldEventServer->clearQueue();
   }
-  if (eventServer.get() != NULL) eventServer->clearQueue();
-  if (dqmeventServer.get() != NULL) dqmeventServer->clearQueue();
+  if (sharedResourcesPtr_->_oldDQMEventServer.get() != NULL)
+  {
+    sharedResourcesPtr_->_oldDQMEventServer->clearQueue();
+  }
 }
 
 void StorageManager::haltAction()
@@ -4893,7 +3777,6 @@ void StorageManager::haltAction()
 
   // make sure serialized product registry is cleared also as its used
   // to check state readiness for web transactions
-  pushMode_ = false;
 
   {
     boost::mutex::scoped_lock sl(halt_lock_);
@@ -4901,19 +3784,6 @@ void StorageManager::haltAction()
   }
 }
 
-void StorageManager::checkDirectoryOK(const std::string path) const
-{
-  struct stat64 buf;
-
-  int retVal = stat64(path.c_str(), &buf);
-  if(retVal !=0 )
-  {
-    edm::LogError("StorageManager") << "Directory or file " << path
-                                    << " does not exist. Error=" << errno ;
-    throw cms::Exception("StorageManager","checkDirectoryOK")
-            << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
-  }
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4962,15 +3832,37 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
     }
 }
 
+void StorageManager::startFragmentProcessorWorkLoop() throw (evf::Exception)
+{
+  DiskWritingParams dwParams =
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
+  try {
+    wlFragProc_=
+      toolbox::task::getWorkLoopFactory()->
+      getWorkLoop(dwParams._smInstanceString+"FragProc", "waiting");
+    if (!wlFragProc_->isActive()) wlFragProc_->activate();
+    asFragProc_ = toolbox::task::bind(fragmentProcessor_,
+                                      &FragmentProcessor::processMessages,
+                                      dwParams._smInstanceString+"FragProc");
+    wlFragProc_->submit(asFragProc_);
+  }
+  catch (xcept::Exception& e) {
+    string msg = "Failed to start workloop 'FragProc'.";
+    XCEPT_RETHROW(evf::Exception,msg,e);
+  }
+}
+
 void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)
 {
+  DiskWritingParams dwParams =
+    sharedResourcesPtr_->_configuration->getDiskWritingParams();
   try {
     wlMonitoring_=
-      toolbox::task::getWorkLoopFactory()->getWorkLoop(sourceId_+"Monitoring",
-						       "waiting");
+      toolbox::task::getWorkLoopFactory()->
+      getWorkLoop(dwParams._smInstanceString+"Monitoring", "waiting");
     if (!wlMonitoring_->isActive()) wlMonitoring_->activate();
     asMonitoring_ = toolbox::task::bind(this,&StorageManager::monitoring,
-				      sourceId_+"Monitoring");
+                                        dwParams._smInstanceString+"Monitoring");
     wlMonitoring_->submit(asMonitoring_);
   }
   catch (xcept::Exception& e) {
@@ -4996,8 +3888,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   }
 
   ::sleep(10);
-  if(jc_.get() != NULL && jc_->getInitMsgCollection().get() != NULL &&
-     jc_->getInitMsgCollection()->size() > 0) {
+  if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection->size() > 0) {
     boost::mutex::scoped_lock sl(halt_lock_);
     if(jc_.use_count() != 0) {
       // this is needed only if using flashlist infospace (not for the moment)
@@ -5104,13 +3996,22 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   return true;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// *** Provides factory method for the instantiation of SM applications
-// should probably use the MACRO? Could a XDAQ version change cause problems?
-extern "C" xdaq::Application
-*instantiate_StorageManager(xdaq::ApplicationStub * stub)
-{
-  std::cout << "Going to construct a StorageManager instance "
-	    << std::endl;
-  return new stor::StorageManager(stub);
-}
+//////////////////////////////////////////////////////////////////////////
+// *** Provides factory method for the instantiation of SM applications //
+//////////////////////////////////////////////////////////////////////////
+// This macro is depreciated:
+XDAQ_INSTANTIATE(StorageManager)
+
+// One should use the XDAQ_INSTANTIATOR() in the header file
+// and this one here. But this breaks the backward compatibility,
+// as all xml configuration files would have to be changed to use
+// 'stor::StorageManager' instead of 'StorageManager'.
+// XDAQ_INSTANTIATOR_IMPL(stor::StorageManager)
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

@@ -1,7 +1,7 @@
 #ifndef OUTPUTSERVICE_H
 #define OUTPUTSERVICE_H
 
-// $Id: OutputService.h,v 1.3 2008/08/07 11:33:14 loizides Exp $
+// $Id: OutputService.h,v 1.4.12.1 2009/03/12 14:38:19 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileRecord.h>
 #include <IOPool/Streamer/interface/MsgHeader.h>
@@ -24,7 +24,7 @@ namespace edm {
     protected:
       double getTimeStamp() const;
 
-      boost::shared_ptr<FileRecord> file_;
+      boost::shared_ptr<stor::FileRecord> file_;
   };
 
 } // edm namespace

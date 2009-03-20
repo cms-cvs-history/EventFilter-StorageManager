@@ -21,13 +21,11 @@
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 
 #include "EventFilter/StorageManager/interface/EvtMsgRingBuffer.h"
-#include "EventFilter/StorageManager/interface/EventServer.h"
-#include "EventFilter/StorageManager/interface/DQMEventServer.h"
-#include "EventFilter/StorageManager/interface/ServiceManager.h"
-#include "EventFilter/StorageManager/interface/DQMServiceManager.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
@@ -51,7 +49,6 @@ namespace stor
   class FragmentCollector
   {
   public:
-    typedef void (*Deleter)(void*);
     typedef std::vector<unsigned char> Buffer;
 
     // This is not the most efficient way to store and manipulate this
@@ -59,12 +56,12 @@ namespace stor
     // available to create the prototype.
     typedef std::map<stor::FragKey, FragmentContainer> Collection;
 
-    FragmentCollector(HLTInfo& h, Deleter d,
+    FragmentCollector(HLTInfo& h,
 		      log4cplus::Logger& applicationLogger,
-                      const std::string& config_str="");
-    FragmentCollector(std::auto_ptr<HLTInfo>, Deleter d,
+                      SharedResourcesPtr sharedResources);
+    FragmentCollector(std::auto_ptr<HLTInfo>,
 		      log4cplus::Logger& applicationLogger,
-                      const std::string& config_str="");
+                      SharedResourcesPtr sharedResources);
     ~FragmentCollector();
 
     void start();
@@ -74,31 +71,19 @@ namespace stor
     edm::EventBuffer& getFragmentQueue() { return *frag_q_; }
     edm::EventBuffer& getCommandQueue() { return *cmd_q_; }
     
-    void setEventServer(boost::shared_ptr<EventServer>& es) {
-      eventServer_ = es;
-      if (eventServer_.get() != NULL && writer_.get() != NULL) {
-        eventServer_->setStreamSelectionTable(writer_->getStreamSelectionTable());
-      }
-    }
-    void setInitMsgCollection(boost::shared_ptr<InitMsgCollection>& imColl) { initMsgCollection_ = imColl; }
     void setSMRBSenderList(SMFUSenderList* senderList) { smRBSenderList_ = senderList; }
 
   private:
     static void run(FragmentCollector*);
     void processFragments();
-    void processEvent(FragEntry* msg);
-    void processHeader(FragEntry* msg);
-    void processDQMEvent(FragEntry* msg);
-    void processErrorEvent(FragEntry* msg);
+    void processEvent(I2OChain i2oChain);
+    void processHeader(I2OChain i2oChain);
 
-    int assembleFragments(std::map<int, FragEntry>& fragmentMap);
     int removeStaleFragments();
 
     edm::EventBuffer* cmd_q_;
-    edm::EventBuffer* evtbuf_q_;
     edm::EventBuffer* frag_q_;
 
-    Deleter buffer_deleter_;
     Buffer event_area_;
     Collection fragment_area_;
     boost::shared_ptr<boost::thread> me_;
@@ -110,42 +95,6 @@ namespace stor
 
   public:
 
-    void setNumberOfFileSystems(int disks)   { disks_        = disks; }
-    void setFileCatalog(std::string catalog) { catalog_      = catalog; }
-    void setSourceId(std::string sourceId)   { sourceId_     = sourceId; }
-
-    void setCollateDQM(bool collateDQM)
-    { dqmServiceManager_->setCollateDQM(collateDQM); }
-
-    void setArchiveDQM(bool archiveDQM)
-    { dqmServiceManager_->setArchiveDQM(archiveDQM); }
-
-    void setArchiveIntervalDQM(int archiveInterval)
-    { dqmServiceManager_->setArchiveInterval(archiveInterval); }
-
-    void setPurgeTimeDQM(int purgeTimeDQM)
-    { dqmServiceManager_->setPurgeTime(purgeTimeDQM);}
-
-    void setReadyTimeDQM(int readyTimeDQM)
-    { dqmServiceManager_->setReadyTime(readyTimeDQM);}
-
-    void setFilePrefixDQM(std::string filePrefixDQM)
-    { dqmServiceManager_->setFilePrefix(filePrefixDQM);}
-
-    void setUseCompressionDQM(bool useCompressionDQM)
-    { dqmServiceManager_->setUseCompression(useCompressionDQM);}
-
-    void setCompressionLevelDQM(int compressionLevelDQM)
-    { dqmServiceManager_->setCompressionLevel(compressionLevelDQM);}
-
-    void setDQMEventServer(boost::shared_ptr<DQMEventServer>& es)
-    {
-      // The auto_ptr still owns the memory after this get()
-      if (dqmServiceManager_.get() != NULL) dqmServiceManager_->setDQMEventServer(es);
-      DQMeventServer_ = es;
-    }
-    boost::shared_ptr<DQMEventServer>& getDQMEventServer() { return DQMeventServer_; }
-
     std::list<std::string>& get_filelist() { return writer_->get_filelist();  }
     std::list<std::string>& get_currfiles() { return writer_->get_currfiles(); }
     std::vector<uint32>& get_storedEvents() { return writer_->get_storedEvents(); }
@@ -153,19 +102,26 @@ namespace stor
     boost::shared_ptr<stor::SMOnlyStats> get_stats() { return writer_->get_stats(); }
   private:
     uint32 runNumber_;
-    uint32 disks_;
-    std::string catalog_;
-    std::string sourceId_;
     log4cplus::Logger& applicationLogger_;
+    boost::shared_ptr<FragmentQueue> newFragmentQueue_;
+    boost::shared_ptr<DiscardManager> discardManager_;
 
-    std::auto_ptr<edm::ServiceManager> writer_;
-    std::auto_ptr<stor::DQMServiceManager> dqmServiceManager_;
+    boost::shared_ptr<edm::ServiceManager> writer_;
+    boost::shared_ptr<stor::DQMServiceManager> dqmServiceManager_;
 
     boost::shared_ptr<EventServer> eventServer_;
     boost::shared_ptr<DQMEventServer> DQMeventServer_;
     boost::shared_ptr<InitMsgCollection> initMsgCollection_;
     SMFUSenderList* smRBSenderList_;
+
+    FragmentStore fragmentStore_;
   };
 }
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

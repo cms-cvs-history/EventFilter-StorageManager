@@ -1,9 +1,6 @@
-// $Id: StreamService.cc,v 1.14 2008/08/21 09:00:39 loizides Exp $
+// $Id: StreamService.cc,v 1.15.10.7 2009/03/17 02:05:08 biery Exp $
 
 #include <EventFilter/StorageManager/interface/StreamService.h>
-#include <EventFilter/StorageManager/interface/ProgressMarker.h>
-#include <EventFilter/StorageManager/interface/Parameter.h>
-#include "EventFilter/StorageManager/interface/Configurator.h"
 
 #include <iostream>
 #include <iomanip>
@@ -12,53 +9,15 @@
 #include <sys/statfs.h>
 
 using namespace edm;
+using namespace stor;
 using namespace std;
 using boost::shared_ptr;
-using stor::ProgressMarker;
 
 //
 // *** destructor
 //
 StreamService::~StreamService()
 {
-}
-
-
-//
-// *** check that the file system exists and that there
-// *** is enough disk space
-//
-bool StreamService::checkFileSystem() const
-{
-  struct statfs64 buf;
-  int retVal = statfs64(filePath_.c_str(), &buf);
-  if(retVal!=0)
-    {
-      std::cout << "StreamService: " << "Could not stat output filesystem for path " 
-		<< filePath_ << std::endl;
-      return false;
-    }
-  
-  unsigned int btotal = 0;
-  unsigned int bfree = 0;
-  unsigned int blksize = 0;
-  if(retVal==0)
-    {
-      blksize = buf.f_bsize;
-      btotal = buf.f_blocks;
-      bfree  = buf.f_bfree;
-    }
-  double dfree = double(bfree)/double(btotal);
-  double dusage = 1. - dfree;
-
-  if(dusage>highWaterMark_)
-    {
-      cout << "StreamService: " << "Output filesystem for path " << filePath_ 
-	   << " is more than " << highWaterMark_*100 << "% full " << endl;
-      return false;
-    }
-
-  return true;
 }
 
 
@@ -77,12 +36,6 @@ void StreamService::setStreamParameter()
 
   streamLabel_        = parameterSet_.getParameter<string> ("streamLabel");
   maxSize_ = 1048576 * (long long) parameterSet_.getParameter<int> ("maxSize");
-  fileName_           = ""; // set by setFileName
-  filePath_           = ""; // set by setFilePath
-  setupLabel_         = ""; // set by setSetupLabel
-  highWaterMark_      = 0.9;// set by setHighWaterMark
-  lumiSectionTimeOut_ = 45; // set by setLumiSectionTimeOut
-  sourceId_           = ""; // set by setSourceId
   // report(cout, 4);
 }
 
@@ -98,10 +51,7 @@ std::list<std::string> StreamService::getFileList()
   std::list<std::string> files_=outputSummaryClosed_;
   for (OutputMapIterator it = outputMap_.begin() ; it != outputMap_.end(); ++it) {
     std::ostringstream entry;
-    entry << it->first->fileCounter() << " " 
-          << it->first->completeFileName() << " " 
-          << it->first->events() << " "
-          << it->first->fileSize();
+    it->first->info(entry);
     files_.push_back(entry.str());
   }
 
@@ -116,10 +66,7 @@ void StreamService::fillOutputSummaryClosed(const boost::shared_ptr<FileRecord> 
   boost::mutex::scoped_lock sl(list_lock_);
 
   std::ostringstream entry;
-  entry << file->fileCounter() << " " 
-        << file->completeFileName() << " " 
-        << file->events() << " "
-        << file->fileSize();
+  file->info(entry);
   outputSummaryClosed_.push_back(entry.str());
 }
 
@@ -134,16 +81,6 @@ std::list<std::string> StreamService::getCurrentFileList()
     files_.push_back(it->first->completeFileName());
   }
   return files_;
-}
-
-//
-// *** override maxSize from cfg if xdaq parameter was set 
-//
-void StreamService::setMaxFileSize(int x)
-{
-  maxFileSizeInMB_ = x;
-  if(maxFileSizeInMB_ > 0)
-    maxSize_ = 1048576 * (long long) maxFileSizeInMB_;
 }
 
 //

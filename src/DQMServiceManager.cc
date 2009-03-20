@@ -3,7 +3,7 @@
 //
 // (W.Badgett)
 //
-// $Id: DQMServiceManager.cc,v 1.6.10.1 2008/12/22 19:12:51 biery Exp $
+// $Id: DQMServiceManager.cc,v 1.6.12.2 2009/03/18 17:33:45 biery Exp $
 //
 
 #include "FWCore/Utilities/interface/DebugMacros.h"
@@ -180,6 +180,18 @@ void DQMServiceManager::manageDQMEventMsg(DQMEventMsgView& msg)
     }
     delete(descriptor);
   }
+}
+
+void DQMServiceManager::setParameters(DQMProcessingParams const& dqmParams)
+{
+  useCompression_ = dqmParams._useCompressionDQM;
+  compressionLevel_ = dqmParams._compressionLevelDQM;
+  collateDQM_ = dqmParams._collateDQM;
+  archiveDQM_ = dqmParams._archiveDQM;
+  archiveInterval_ = static_cast<int>(dqmParams._archiveIntervalDQM);
+  filePrefix_ = dqmParams._filePrefixDQM;
+  purgeTime_ = static_cast<int>(dqmParams._purgeTimeDQM);
+  readyTime_ = static_cast<int>(dqmParams._readyTimeDQM);
 }
 
 DQMInstance * DQMServiceManager::findDQMInstance(int runNumber, 

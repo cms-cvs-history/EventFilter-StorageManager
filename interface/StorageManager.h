@@ -10,17 +10,13 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.4.1 2008/12/22 19:12:50 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.28 2009/03/20 10:28:19 mommsen Exp $
 */
 
 #include <string>
-#include <list>
 #include <map>
 
-#include "FWCore/PluginManager/interface/ProblemTracker.h"
-#include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageService/interface/MessageServicePresence.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "EventFilter/Utilities/interface/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
@@ -31,10 +27,9 @@
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
-
-#include "FWCore/PluginManager/interface/PluginManager.h"
-
-#include "toolbox/mem/Reference.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -46,13 +41,21 @@
 #include "xdata/Boolean.h"
 #include "xdata/Vector.h"
 
-#include "xgi/Input.h"
-#include "xgi/Output.h"
 #include "xgi/exception/Exception.h"
 
 #include "boost/shared_ptr.hpp"
-#include "boost/thread/thread.hpp"
+#include "boost/thread/mutex.hpp"
 
+namespace toolbox { 
+  namespace mem {
+    class Reference;
+  }
+}
+
+namespace xgi {
+  class Input;
+  class Output;
+}
 
 namespace stor {
 
@@ -85,9 +88,19 @@ namespace stor {
     // @@EM added monitoring workloop
     void startMonitoringWorkLoop() throw (evf::Exception);
     bool monitoring(toolbox::task::WorkLoop* wl);
-    
+
+    // tests of new Monitor classes
+    void startNewMonitorWorkloop() throw (evf::Exception);
+    bool newMonitorAction(toolbox::task::WorkLoop* wl);
+
+    void startFragmentProcessorWorkLoop() throw (evf::Exception);
+
 ////////////////////////////////////////////////////////////////////////////////
    private:  
+    StorageManager(StorageManager const&); // not implemented
+    StorageManager& operator=(StorageManager const&); // not implemented
+
+
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
     void receiveDataMessage(toolbox::mem::Reference *ref);
     void receiveErrorDataMessage(toolbox::mem::Reference *ref);
@@ -102,12 +115,12 @@ namespace stor {
     void stopAction();
     void haltAction();
 
-    void checkDirectoryOK(const std::string dir) const;
-
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
       {css_.css(in,out);}
+    void storedDataWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void rbsenderWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void streamerOutputWebPage
@@ -127,9 +140,6 @@ namespace stor {
     void DQMconsumerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
 
-
-    void parseFileEntry(const std::string &in, std::string &out, unsigned int &nev, unsigned long long &sz) const;
-
     std::string findStreamName(const std::string &in) const;
 	
     // *** state machine related
@@ -138,64 +148,24 @@ namespace stor {
 
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
-    xdata::String offConfig_;
   
     boost::shared_ptr<stor::JobController> jc_;
     boost::mutex                           halt_lock_;
 
-    xdata::Boolean pushmode2proxy_;
-    xdata::Integer nLogicalDisk_;
-    xdata::String  fileName_;
-    xdata::String  filePath_;
-    xdata::Integer maxFileSize_;
-    xdata::String  setupLabel_;
-    xdata::Double  highWaterMark_;
-    xdata::Double  lumiSectionTimeOut_;
-    xdata::String  fileCatalog_;
-    xdata::Boolean exactFileSizeTest_;
-    xdata::Integer fileClosingTestInterval_;
-
-    bool pushMode_;
-    std::string smConfigString_;
-    std::string smFileCatalog_;
-    bool reconfigurationRequested_;
-
-    xdata::Boolean collateDQM_;
-    xdata::Boolean archiveDQM_;
-    xdata::Integer archiveIntervalDQM_;
-    xdata::String  filePrefixDQM_;
-    xdata::Integer purgeTimeDQM_;
-    xdata::Integer readyTimeDQM_;
-    xdata::Boolean useCompressionDQM_;
-    xdata::Integer compressionLevelDQM_;
+    SharedResourcesPtr sharedResourcesPtr_;
 
     evf::Css css_;
-    xdata::UnsignedInteger32 receivedFrames_;
     int pool_is_set_;
     toolbox::mem::Pool *pool_;
 
     // added for Event Server
     std::vector<unsigned char> mybuffer_; //temporary buffer instead of using stack
-    xdata::Double maxESEventRate_;  // hertz
-    xdata::Double maxESDataRate_;  // MB/sec
-    xdata::Integer activeConsumerTimeout_;  // seconds
-    xdata::Integer idleConsumerTimeout_;  // seconds
-    xdata::Integer consumerQueueSize_;
-    xdata::Boolean fairShareES_;
-    xdata::Double DQMmaxESEventRate_;  // hertz
-    xdata::Integer DQMactiveConsumerTimeout_;  // seconds
-    xdata::Integer DQMidleConsumerTimeout_;  // seconds
-    xdata::Integer DQMconsumerQueueSize_;
     boost::mutex consumerInitMsgLock_;
-    xdata::String esSelectedHLTOutputModule_;
 
     SMFUSenderList smrbsenders_;
     xdata::UnsignedInteger32 connectedRBs_;
 
     xdata::UnsignedInteger32 storedEvents_;
-    xdata::UnsignedInteger32 receivedEvents_;
-    xdata::UnsignedInteger32 receivedErrorEvents_;
-    xdata::UnsignedInteger32 dqmRecords_;
     xdata::UnsignedInteger32 closedFiles_;
     xdata::UnsignedInteger32 openFiles_;
     xdata::Vector<xdata::String> fileList_;
@@ -214,39 +184,6 @@ namespace stor {
     xdata::Vector<xdata::UnsignedInteger32> fileSize_;
     xdata::Vector<xdata::String> namesOfStream_;
     xdata::Vector<xdata::String> namesOfOutMod_;
-
-    // *** for received data performance measurements
-    void addMeasurement(unsigned long size);
-    stor::SMPerformanceMeter *pmeter_;
-
-    // *** measurements for last set of samples
-    xdata::UnsignedInteger32 samples_; // number of samples/frames per measurement
-    xdata::UnsignedInteger32 period4samples_; // time period per measurement
-    xdata::Double instantBandwidth_; // bandwidth in MB/s
-    xdata::Double instantRate_;      // number of frames/s
-    xdata::Double instantLatency_;   // micro-seconds/frame
-    xdata::Double maxBandwidth_;     // maximum bandwidth in MB/s
-    xdata::Double minBandwidth_;     // minimum bandwidth in MB/s
-    // *** measurements for last time period
-    xdata::Double instantBandwidth2_;// bandwidth in MB/s
-    xdata::Double instantRate2_;     // number of frames/s
-    xdata::Double instantLatency2_;  // micro-seconds/frame
-    xdata::Double maxBandwidth2_;    // maximum bandwidth in MB/s
-    xdata::Double minBandwidth2_;    // minimum bandwidth in MB/s
-
-    // *** measurements for all samples
-    xdata::Double duration_;         // time for run in seconds
-    xdata::UnsignedInteger32 totalSamples_; //number of samples/frames per measurement
-    xdata::Double meanBandwidth_;    // bandwidth in MB/s
-    xdata::Double meanRate_;         // number of frames/s
-    xdata::Double meanLatency_;      // micro-seconds/frame
-    xdata::Double receivedVolume_;   // total received data in MB
-
-    xdata::Double duration2_;         // time for run in seconds
-    xdata::UnsignedInteger32 totalSamples2_; //number of samples/frames per measurement
-    xdata::Double meanBandwidth2_;    // bandwidth in MB/s
-    xdata::Double meanRate2_;         // number of frames/s
-    xdata::Double meanLatency2_;      // micro-seconds/frame
 
     // *** for stored data performance measurements
     // *** measurements for last set of samples
@@ -291,6 +228,10 @@ namespace stor {
     toolbox::task::WorkLoop         *wlMonitoring_;      
     toolbox::task::ActionSignature  *asMonitoring_;
 
+    FragmentProcessor *fragmentProcessor_;
+    toolbox::task::WorkLoop         *wlFragProc_;      
+    toolbox::task::ActionSignature  *asFragProc_;
+
     // @@EM parameters monitored by workloop (not in flashlist just yet) 
     struct streammon{
       int		nclosedfiles_;
@@ -302,8 +243,6 @@ namespace stor {
     typedef std::map<std::string,streammon>::iterator ismap;
     smap	 streams_;
 
-    unsigned int lastEventSeen_; // report last seen event id
-    unsigned int lastErrorEventSeen_; // report last error event id seen
     boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
 
     std::string sm_cvs_version_;
@@ -314,7 +253,15 @@ namespace stor {
       DEFAULT_READY_TIME = 30
     };
 
+    boost::shared_ptr<StatisticsReporter> _statisticsReporter;
+
   }; 
 } 
 
 #endif
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

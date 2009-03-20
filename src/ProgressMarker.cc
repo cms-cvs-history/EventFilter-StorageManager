@@ -1,5 +1,5 @@
 // Created by Markus Klute on 2007 Jan 09.
-// $Id:$
+// $Id: ProgressMarker.cc,v 1.1.22.2 2009/03/13 14:00:19 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/ProgressMarker.h>
 

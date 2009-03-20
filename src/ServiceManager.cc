@@ -1,7 +1,6 @@
-// $Id: ServiceManager.cc,v 1.18.4.1 2008/12/22 19:12:51 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.8 2009/03/17 14:39:16 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
-#include "EventFilter/StorageManager/interface/Configurator.h"
 #include <EventFilter/StorageManager/interface/EventStreamService.h>
 #include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include "FWCore/Framework/interface/EventSelector.h"
@@ -14,7 +13,7 @@ using namespace edm;
 using boost::shared_ptr;
 
 
-ServiceManager::ServiceManager(const std::string& config):
+ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
   outModPSets_(0),
   managedOutputs_(0),
   psetHLTOutputLabels_(0),
@@ -26,10 +25,11 @@ ServiceManager::ServiceManager(const std::string& config):
   errorStreamPSetIndex_(-1),
   errorStreamCreated_(false),
   samples_(1000),
-  period4samples_(10)
+  period4samples_(10),
+  diskWritingParams_(dwParams)
 {
   storedNames_.clear();
-  collectStreamerPSets(config);
+  collectStreamerPSets(dwParams._streamConfiguration);
   pmeter_ = new stor::SMPerformanceMeter();
   pmeter_->init(samples_, period4samples_);
 } 
@@ -74,9 +74,8 @@ void ServiceManager::stop()
 }
 
 
-void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::string sourceId, InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
+void ServiceManager::manageInitMsg(InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
 {
-  boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
   std::string inputOMLabel = view.outputModuleLabel();
   int psetIdx = -1;
   for(std::vector<ParameterSet>::iterator it = outModPSets_.begin(), itEnd = outModPSets_.end();
@@ -160,16 +159,7 @@ void ServiceManager::manageInitMsg(std::string catalog, uint32 disks, std::strin
     }
 
     if (createStreamNow) {
-      shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view));
-      stream->setCatalog(catalog);
-      stream->setNumberOfFileSystems(disks);
-      stream->setSourceId(sourceId);
-      stream->setFileName(smParameter_ -> fileName());
-      stream->setFilePath(smParameter_ -> filePath());
-      stream->setMaxFileSize(smParameter_ -> maxFileSize());
-      stream->setSetupLabel(smParameter_ -> setupLabel());
-      stream->setHighWaterMark(smParameter_ -> highWaterMark());
-      stream->setLumiSectionTimeOut(smParameter_ -> lumiSectionTimeOut());
+      shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view,diskWritingParams_));
       managedOutputs_.push_back(stream);
       outputModuleIds_.push_back(view.outputModuleId());
       storedEvents_.push_back(0);
@@ -202,7 +192,7 @@ void ServiceManager::manageEventMsg(EventMsgView& msg)
   }
 }
 
-void ServiceManager::manageErrorEventMsg(std::string catalog, uint32 disks, std::string sourceId, FRDEventMsgView& msg)
+void ServiceManager::manageErrorEventMsg(FRDEventMsgView& msg)
 {
   // if no error stream was configured, we can exit early
   if (errorStreamPSetIndex_ < 0) return;
@@ -210,19 +200,9 @@ void ServiceManager::manageErrorEventMsg(std::string catalog, uint32 disks, std:
   // create the error stream, if needed
   if (! errorStreamCreated_) {
     ParameterSet errorStreamPSet = outModPSets_.at(errorStreamPSetIndex_);
-    boost::shared_ptr<stor::Parameter> smParameter_ = stor::Configurator::instance()->getParameter();
 
     shared_ptr<StreamService> stream =
-      shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet));
-    stream->setCatalog(catalog);
-    stream->setNumberOfFileSystems(disks);
-    stream->setSourceId(sourceId);
-    stream->setFileName(smParameter_ -> fileName());
-    stream->setFilePath(smParameter_ -> filePath());
-    stream->setMaxFileSize(smParameter_ -> maxFileSize());
-    stream->setSetupLabel(smParameter_ -> setupLabel());
-    stream->setHighWaterMark(smParameter_ -> highWaterMark());
-    stream->setLumiSectionTimeOut(smParameter_ -> lumiSectionTimeOut());
+      shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));
     managedOutputs_.push_back(stream);
     outputModuleIds_.push_back(0xffffffff);
     storedEvents_.push_back(0);
