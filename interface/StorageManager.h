@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.28 2009/03/20 10:28:19 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.29 2009/03/20 17:27:32 biery Exp $
 */
 
 #include <string>
@@ -23,7 +23,6 @@
 #include "EventFilter/Utilities/interface/RunBase.h"
 #include "EventFilter/Utilities/interface/StateMachine.h"
 
-#include "EventFilter/StorageManager/interface/JobController.h"
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
@@ -148,7 +147,6 @@ namespace stor {
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
   
-    boost::shared_ptr<stor::JobController> jc_;
     boost::mutex                           halt_lock_;
 
     SharedResourcesPtr sharedResourcesPtr_;

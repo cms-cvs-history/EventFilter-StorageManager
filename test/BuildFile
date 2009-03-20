@@ -1,19 +1,9 @@
-# $Id: BuildFile,v 1.30.16.24 2009/03/09 20:29:35 biery Exp $
+# $Id: BuildFile,v 1.30.16.25 2009/03/13 03:15:13 paterno Exp $
 
 <environment>
   <use name=boost>
   <use name=xdaq>
    <use name=EventFilter/StorageManager>
-
-  <library file=StorageManagerRun.cpp>
-   <use name=FWCore/Framework>
-   <use name=FWCore/MessageLogger>
-   <use name=FWCore/MessageService>
-   <use name=FWCore/PluginManager>
-   <use name=DataFormats/Provenance>
-   <use name=DataFormats/Streamer>
-   <use name=IOPool/Streamer>
-  </library>
 
   <library file="SillyLockService.cc" name=SillyLockService>
    <flags EDM_PLUGIN=1>
@@ -47,23 +37,6 @@
 
   <library file=fsmSoap_t.cpp>
   </library>
-
-  <bin file=RunnerTest_t.cpp>
-   <use name=FWCore/MessageLogger>
-   <use name=FWCore/MessageService>
-   <use name=FWCore/PluginManager>
-   <use name=DataFormats/Provenance>
-   <use name=DataFormats/Streamer>
-   <use name=IOPool/Streamer>
-  </bin>
-
-  <bin file=RunCollector_t.cpp>
-   <use name=FWCore/MessageLogger>
-   <use name=FWCore/PluginManager>
-   <use name=DataFormats/Provenance>
-   <use name=DataFormats/Streamer>
-   <use name=IOPool/Streamer>
-  </bin>
 
   <bin file=state_machine_t.cpp>
   </bin>

@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.46 2009/03/20 17:27:32 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.47 2009/03/20 19:01:46 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.46 2009/03/20 17:27:32 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.47 2009/03/20 19:01:46 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -1428,27 +1428,26 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
 
     *out << "<hr/>"                                                    << endl;
 
-    // should first test if jc_ is valid
-    if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+    if(sharedResourcesPtr_->_serviceManager.get() != NULL &&
+       sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
        sharedResourcesPtr_->_initMsgCollection->size() > 0) {
       boost::mutex::scoped_lock sl(halt_lock_);
-      if(jc_.use_count() != 0) {
-        std::list<std::string>& files = jc_->get_filelist();
-        if(files.size() > 0 )
-          {
-            if(files.size() > 249 )
-              *out << "<P>250 last files (most recent first):</P>\n" << endl;
-            else 
-              *out << "<P>Files (most recent first):</P>\n" << endl;
-            *out << "<pre># pathname nevts size" << endl;
-            int c=0;
-            for(list<string>::reverse_iterator it = files.rbegin(); it != files.rend(); ++it) {
-              *out <<*it << endl;
-              ++c;
-              if(c>249) break;
-            }
+      std::list<std::string>& files =
+        sharedResourcesPtr_->_serviceManager->get_filelist();
+      if(files.size() > 0 )
+        {
+          if(files.size() > 249 )
+            *out << "<P>250 last files (most recent first):</P>\n" << endl;
+          else 
+            *out << "<P>Files (most recent first):</P>\n" << endl;
+          *out << "<pre># pathname nevts size" << endl;
+          int c=0;
+          for(list<string>::reverse_iterator it = files.rbegin(); it != files.rend(); ++it) {
+            *out <<*it << endl;
+            ++c;
+            if(c>249) break;
           }
-      }
+        }
     }
 
   *out << "</body>"                                                  << endl;
@@ -1488,7 +1487,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(fsm_.stateName()->toString() == "Enabled" && jc_.get() != NULL &&
+  if(fsm_.stateName()->toString() == "Enabled" &&
      sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0)
   {
@@ -2921,7 +2920,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
       *out << "<br/>The system is unable to fetch the Event Server "
            << "instance or the Init Message Collection instance. "
            << "This is a (very) unexpected error and could "
-           << "be caused by an uninitialized JobController.<br/>"
+           << "be caused by an uninitialized EventServer.<br/>"
            << std::endl;
     }
 
@@ -3381,12 +3380,12 @@ void StorageManager::actionPerformed(xdata::Event& e)
 {
   // 14-Oct-2008, KAB - skip all processing in this method, for now,
   // when the SM state is halted.  This will protect against the use
-  // of un-initialized variables (like jc_).
+  // of un-initialized variables.
   if (fsm_.stateName()->toString()=="Halted") {return;}
   if (fsm_.stateName()->toString()=="halting") {return;}
-  // paranoia - also return if jc_.get() is null.  Although, to do this
-  // right, we would need a lock
-  if (jc_.get() == 0) {return;}
+  // paranoia - also return if serviceManager ptr is null.  Although, to do
+  // this right, we would need a lock
+  if (sharedResourcesPtr_->_serviceManager.get() == 0) {return;}
 
   if (e.type() == "ItemRetrieveEvent") {
     std::ostringstream oss;
@@ -3403,11 +3402,14 @@ void StorageManager::actionPerformed(xdata::Event& e)
     else if (item == "storedVolume")
       storedVolume_   = store_receivedVolume_;
     else if (item == "closedFiles") {
-        std::list<std::string>& files = jc_->get_filelist();
-        std::list<std::string>& currfiles= jc_->get_currfiles();
+        std::list<std::string>& files =
+          sharedResourcesPtr_->_serviceManager->get_filelist();
+        std::list<std::string>& currfiles =
+          sharedResourcesPtr_->_serviceManager->get_currfiles();
         closedFiles_ = files.size() - currfiles.size();
     } else if (item == "openFiles") {
-        std::list<std::string>& currfiles= jc_->get_currfiles();
+        std::list<std::string>& currfiles =
+          sharedResourcesPtr_->_serviceManager->get_currfiles();
         openFiles_ = currfiles.size();
     } else if (item == "receivedEventsFromOutMod" || item == "namesOfOutMod") {
       receivedEventsFromOutMod_.clear();
@@ -3425,28 +3427,6 @@ void StorageManager::actionPerformed(xdata::Event& e)
         receivedEventsFromOutMod_.push_back(receivedEventsMap_[oi->second]);
         namesOfOutMod_.push_back(outputModuleLabel);
       }
-/* removed for temporary solution of using the monitoring loop
-
-    } else if (item == "storedEvents" || item == "storedEventsInStream" || item == "namesOfStream") {
-      // only clear and get values if in enabled state so latest values available if fail/stop
-      if(jc_.get() != NULL) {
-        storedEvents_ = 0;
-        storedEventsInStream_.clear();
-        namesOfStream_.clear();
-        // following is thread safe as size of all_storedEvents is fixed (number of streams)
-        std::vector<uint32> all_storedEvents = jc_->get_storedEvents();
-        std::vector<std::string> all_storedNames = jc_->get_storedNames();
-        for(std::vector<uint32>::iterator it = all_storedEvents.begin(), itEnd = all_storedEvents.end();
-            it != itEnd; ++it) {
-              storedEvents_ = storedEvents_ + (*it);
-              storedEventsInStream_.push_back(*it);
-        }
-        for(std::vector<std::string>::iterator it = all_storedNames.begin(), itEnd = all_storedNames.end();
-            it != itEnd; ++it) {
-              namesOfStream_.push_back(*it);
-        }
-      }
-*/
     }
     is->unlock();
   }
@@ -3547,6 +3527,10 @@ void StorageManager::configureAction()
   sharedResourcesPtr_->_dqmServiceManager->
     setDQMEventServer(sharedResourcesPtr_->_oldDQMEventServer);
 
+  sharedResourcesPtr_->_oldEventServer->
+    setStreamSelectionTable(sharedResourcesPtr_->_serviceManager->
+                            getStreamSelectionTable());
+
   boost::shared_ptr<DiscardManager> discardMgr;
   Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
   for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
@@ -3561,11 +3545,6 @@ void StorageManager::configureAction()
     }
   }
   sharedResourcesPtr_->_discardManager = discardMgr;
-
-  jc_.reset(new stor::JobController(getApplicationLogger(),
-                                    sharedResourcesPtr_));
-
-  jc_->setSMRBSenderList(&smrbsenders_);
 }
 
 
@@ -3624,13 +3603,6 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     storedEventsMap_.clear();
     closedFiles_  = 0;
     openFiles_  = 0;
-    jc_->start();
-
-    boost::shared_ptr<InitMsgCollection> initMsgCollection =
-      sharedResourcesPtr_->_initMsgCollection;
-    if (initMsgCollection.get() != 0) {
-      initMsgCollection->clear();
-    }
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
     
@@ -3709,16 +3681,11 @@ bool StorageManager::halting(toolbox::task::WorkLoop* wl)
 
 void StorageManager::stopAction()
 {
-  jc_->stop();
-  jc_->join();
-
-  // 08-Oct-2008, KAB
-  // The file statistics need to be determined after we close
-  // the files, n'est pas?  And since the file closing is
-  // done underneath jc.stop(), the following code needs
-  // to come after jc_->stop(), I believe.
-  std::list<std::string>& files = jc_->get_filelist();
-  std::list<std::string>& currfiles= jc_->get_currfiles();
+  // TODO - move this code so that it comes after files are closed
+  std::list<std::string>& files =
+    sharedResourcesPtr_->_serviceManager->get_filelist();
+  std::list<std::string>& currfiles =
+    sharedResourcesPtr_->_serviceManager->get_currfiles();
   closedFiles_ = files.size() - currfiles.size();
   openFiles_ = currfiles.size();
 
@@ -3754,7 +3721,8 @@ void StorageManager::stopAction()
   storedEvents_ = 0;
   storedEventsInStream_.clear();
   // following is thread safe as size of all_storedEvents is fixed (number of streams)
-  std::vector<uint32> all_storedEvents = jc_->get_storedEvents();
+  std::vector<uint32> all_storedEvents =
+    sharedResourcesPtr_->_serviceManager->get_storedEvents();
   for(std::vector<uint32>::iterator it = all_storedEvents.begin(), itEnd = all_storedEvents.end();
       it != itEnd; ++it) {
       storedEvents_ = storedEvents_ + (*it);
@@ -3775,14 +3743,6 @@ void StorageManager::stopAction()
 void StorageManager::haltAction()
 {
   stopAction();
-
-  // make sure serialized product registry is cleared also as its used
-  // to check state readiness for web transactions
-
-  {
-    boost::mutex::scoped_lock sl(halt_lock_);
-    jc_.reset();
-  }
 }
 
 
@@ -3889,10 +3849,12 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   }
 
   ::sleep(10);
-  if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
+  if(sharedResourcesPtr_->_serviceManager.get() != NULL &&
+     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0) {
     boost::mutex::scoped_lock sl(halt_lock_);
-    if(jc_.use_count() != 0) {
+
+    {
       // this is needed only if using flashlist infospace (not for the moment)
       std::ostringstream oss;
       oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
@@ -3901,7 +3863,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 
       // now for separate stored events via monitoring loop (temporary solution?)
       // following is thread safe as size of all_storedEvents is fixed (number of streams)
-      std::vector<uint32> all_storedEvents = jc_->get_storedEvents();
+      std::vector<uint32> all_storedEvents =
+        sharedResourcesPtr_->_serviceManager->get_storedEvents();
       if(all_storedEvents.begin() != all_storedEvents.end())
       {
         // only reset if there are stored events otherwise on stop stats are reset to zero
@@ -3909,7 +3872,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
         storedEvents_ = 0;
         storedEventsInStream_.clear();
         namesOfStream_.clear();
-        std::vector<std::string> all_storedNames = jc_->get_storedNames();
+        std::vector<std::string> all_storedNames = 
+          sharedResourcesPtr_->_serviceManager->get_storedNames();
         for(std::vector<uint32>::iterator it = all_storedEvents.begin(), itEnd = all_storedEvents.end();
             it != itEnd; ++it) {
               storedEvents_ = storedEvents_ + (*it);
@@ -3920,7 +3884,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
               namesOfStream_.push_back(*it);
         }
       }
-      boost::shared_ptr<stor::SMOnlyStats> stored_stats = jc_->get_stats();
+      boost::shared_ptr<stor::SMOnlyStats> stored_stats =
+        sharedResourcesPtr_->_serviceManager->get_stats();
       store_samples_ = stored_stats->samples_;
       store_period4samples_ = stored_stats->period4samples_;
       store_instantBandwidth_ = stored_stats->instantBandwidth_;
@@ -3948,7 +3913,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 
       // end temporary solution
       
-      std::list<std::string>& files = jc_->get_filelist();
+      std::list<std::string>& files =
+        sharedResourcesPtr_->_serviceManager->get_filelist();
 
       if(files.size()==0){is->unlock(); return true;}
       if(streams_.size()==0) {

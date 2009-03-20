@@ -1,4 +1,4 @@
-11-Mar-2009
+20-Mar-2009
 
 This file contains ideas for the steps that we should take to complete
 the "Incorporate FragmentProcessor and state machine into existing code"
@@ -20,8 +20,13 @@ one of our minor milestones with a target completion date of 20-Mar-2009.)
    temporarily be included in EventDistributor::addEventToRelevantQueues.
  -> more details needed
 
-3) add code to StorageManager::fsmCallback to put state machine events
-   on the command queue.
+3) remove the use of the old EventFilter/Utilities/StateMachine in
+   StorageManager.cc.  Currently, this appears to consist of the following:
+   - switch the xoap bindings to use SM callbacks directly
+   - add posting of new state machine events to the SM callbacks
+   - implement a new way to fetch the state name (for displays)
+   - implement the posting of new state information to run control in
+     the new state classes
 
 4) decide upon, document, and implement the creation of the worker classes
    that we need.
