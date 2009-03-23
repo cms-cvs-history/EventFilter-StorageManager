@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.32 2009/03/23 10:16:19 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.33 2009/03/23 13:05:25 dshpakov Exp $
 */
 
 #include <string>
@@ -147,9 +147,6 @@ namespace stor {
     // Get current state name:
     std::string stateName() const;
 
-    // RCMS notifier:
-    xdaq2rc::RcmsStateNotifier _rcms_notifier;
-
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
   
@@ -245,6 +242,9 @@ namespace stor {
     smap	 streams_;
 
     boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
+
+    // RCMS notifier:
+    xdaq2rc::RcmsStateNotifier _rcms_notifier;
 
     std::string sm_cvs_version_;
 
