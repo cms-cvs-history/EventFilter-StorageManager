@@ -39,7 +39,10 @@ string StateMachine::getCurrentStateName() const
 void StateMachine::updateHistory( const TransitionRecord& tr )
 {
   _history.push_back( tr );
-  _sharedResources->_statisticsReporter->setCurrentStateName( getCurrentState().stateName() );
+  if ( _sharedResources->_statisticsReporter.get() != 0 )
+    {
+      _sharedResources->_statisticsReporter->setCurrentStateName( getCurrentState().stateName() );
+    }
 }
 
 void StateMachine::dumpHistory( ostream& os ) const
