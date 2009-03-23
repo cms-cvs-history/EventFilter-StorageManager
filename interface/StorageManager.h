@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.30 2009/03/20 20:35:58 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.31 2009/03/20 21:30:06 biery Exp $
 */
 
 #include <string>
@@ -141,6 +141,9 @@ namespace stor {
     // *** state machine related
     evf::StateMachine fsm_;
     std::string       reasonForFailedState_;
+
+    // Get current state name:
+    std::string stateName() const;
 
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;

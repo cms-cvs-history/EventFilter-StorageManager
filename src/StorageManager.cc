@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.48 2009/03/20 20:35:58 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.49 2009/03/20 21:30:07 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.48 2009/03/20 20:35:58 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.49 2009/03/20 21:30:07 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3939,6 +3939,14 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   }
     
   return true;
+}
+
+/////////////////////////////////
+//// Get current state name: ////
+/////////////////////////////////
+std::string StorageManager::stateName() const
+{
+  return sharedResourcesPtr_->_statisticsReporter->currentStateName();
 }
 
 //////////////////////////////////////////////////////////////////////////
