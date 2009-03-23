@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.4 2009/03/19 09:04:55 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.5 2009/03/20 10:25:51 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -21,7 +21,8 @@ _app(app),
 _runMonCollection(app),
 _fragMonCollection(app),
 _filesMonCollection(app),
-_doMonitoring(true)
+_doMonitoring(true),
+_currentStateName( "Halted" )
 {}
 
 

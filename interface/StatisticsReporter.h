@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.2 2009/03/19 09:05:14 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.3 2009/03/20 10:25:06 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -11,6 +11,7 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 
+#include <string>
 
 namespace stor {
 
@@ -21,8 +22,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/19 09:05:14 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/20 10:25:06 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -55,6 +56,10 @@ namespace stor {
     { return _filesMonCollection; }
 
 
+    // Current state name:
+    const std::string& currentStateName() const { return _currentStateName; }
+    void setCurrentStateName( const std::string& n ) { _currentStateName = n; }
+
     /**
      * Create and start the monitoring workloop
      */
@@ -75,6 +80,8 @@ namespace stor {
     FilesMonitorCollection _filesMonCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
+
+    std::string _currentStateName;
 
   };
   
