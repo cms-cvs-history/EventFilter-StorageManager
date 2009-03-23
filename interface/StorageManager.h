@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.31 2009/03/20 21:30:06 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.32 2009/03/23 10:16:19 dshpakov Exp $
 */
 
 #include <string>
@@ -21,7 +21,6 @@
 #include "EventFilter/Utilities/interface/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
 #include "EventFilter/Utilities/interface/RunBase.h"
-#include "EventFilter/Utilities/interface/StateMachine.h"
 
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
@@ -38,6 +37,8 @@
 #include "xdata/Double.h"
 #include "xdata/Boolean.h"
 #include "xdata/Vector.h"
+
+#include "xdaq2rc/RcmsStateNotifier.h"
 
 #include "xgi/exception/Exception.h"
 
@@ -81,8 +82,10 @@ namespace stor {
     bool halting(toolbox::task::WorkLoop* wl);
 
     // *** FSM soap command callback
+    /*
     xoap::MessageReference fsmCallback(xoap::MessageReference msg)
       throw (xoap::exception::Exception);
+    */
     // @@EM added monitoring workloop
     void startMonitoringWorkLoop() throw (evf::Exception);
     bool monitoring(toolbox::task::WorkLoop* wl);
@@ -139,11 +142,13 @@ namespace stor {
     std::string findStreamName(const std::string &in) const;
 	
     // *** state machine related
-    evf::StateMachine fsm_;
     std::string       reasonForFailedState_;
 
     // Get current state name:
     std::string stateName() const;
+
+    // RCMS notifier:
+    xdaq2rc::RcmsStateNotifier _rcms_notifier;
 
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
