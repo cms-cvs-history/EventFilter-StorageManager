@@ -1,4 +1,4 @@
-// $Id: Utils.h,v 1.1.2.3 2009/03/12 14:31:29 mommsen Exp $
+// $Id: Utils.h,v 1.1.2.4 2009/03/19 09:05:21 mommsen Exp $
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
@@ -6,7 +6,10 @@
 #include <string>
 #include <sys/time.h>
 
-#include "xdaq/ApplicationDescriptor.h"
+namespace xdaq
+{
+  class ApplicationDescriptor;
+}
 
 
 namespace stor {
@@ -17,8 +20,8 @@ namespace stor {
      * Collection of utility functions used in the storage manager
      *
      * $Author: mommsen $
-     * $Revision: 1.1.2.3 $
-     * $Date: 2009/03/12 14:31:29 $
+     * $Revision: 1.1.2.4 $
+     * $Date: 2009/03/19 09:05:21 $
      */
 
     /**

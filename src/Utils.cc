@@ -1,5 +1,5 @@
 /**
- * $Id: Utils.cc,v 1.1.2.2 2009/03/12 14:31:39 mommsen Exp $
+ * $Id: Utils.cc,v 1.1.2.3 2009/03/19 09:04:17 mommsen Exp $
  */
 
 #include "EventFilter/StorageManager/interface/Utils.h"
@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <sstream>
 #include <sys/time.h>
+
+#include "xdaq/ApplicationDescriptor.h"
 
 
 namespace stor
