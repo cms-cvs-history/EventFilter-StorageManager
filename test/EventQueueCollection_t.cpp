@@ -6,6 +6,7 @@
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
@@ -99,30 +100,68 @@ void
 testEventQueueCollection::add_and_pop()
 {
   EventQueueCollection coll;
-  coll.setExpirationInterval(1.0);
-  CPPUNIT_ASSERT(coll.getExpirationInterval() == 1.0);
+  // We want events to go bad very rapidly.
+  double expiration_interval = 1.0;
 
   // Make some queues of each flavor, with very little capacity.  We want
   // them to fill rapidly.
-  QueueID q1 = coll.createQueue(stor::enquing_policy::DiscardOld,  2);
+  stor::utils::time_point_t now = stor::utils::getCurrentTime();
+  QueueID q1 = coll.createQueue(stor::enquing_policy::DiscardOld, 2, expiration_interval, now);
   CPPUNIT_ASSERT(q1.isValid());
-  QueueID q2 = coll.createQueue(stor::enquing_policy::DiscardNew, 2);
+  QueueID q2 = coll.createQueue(stor::enquing_policy::DiscardNew, 2, expiration_interval, now);
   CPPUNIT_ASSERT(q2.isValid());
-  QueueID q3 = coll.createQueue(stor::enquing_policy::DiscardNew, 1);
+  QueueID q3 = coll.createQueue(stor::enquing_policy::DiscardNew, 1, expiration_interval, now);
   CPPUNIT_ASSERT(q3.isValid());
 
   // Make some chains, tagging them, and inserting them into the
-  // collection.
+  // collection. We use many more chains than we have slots in the
+  // queues, to make sure that we don't block when the queues are full.
   const int num_chains = 100;
 
   for (int i = 0; i != num_chains; ++i)
     {
       I2OChain event(allocate_frame_with_sample_header(0,1,1));
+      CPPUNIT_ASSERT(event.totalDataSize() != 0);
+      unsigned char* payload = event.dataLocation(0);
+      CPPUNIT_ASSERT(payload);
+      payload[0] = i;      // event now carries an index as data.
       event.tagForEventConsumer(q1);
       if (i % 2 == 0) event.tagForEventConsumer(q2);
       if (i % 3 == 0) event.tagForEventConsumer(q3);
       coll.addEvent(event);
     }
+  // None of our queues should be empty; all should be full.
+  CPPUNIT_ASSERT(!coll.empty(q1));
+  CPPUNIT_ASSERT(coll.full(q1));
+
+  CPPUNIT_ASSERT(!coll.empty(q2));
+  CPPUNIT_ASSERT(coll.full(q2));
+
+  CPPUNIT_ASSERT(!coll.empty(q3));
+  CPPUNIT_ASSERT(coll.full(q3));
+
+  // Queue with id q1 should contain "new" events; q2 and q3 should
+  // contain "old" events.
+  CPPUNIT_ASSERT(coll.popEvent(q1).dataLocation(0)[0] > num_chains/2);
+  CPPUNIT_ASSERT(coll.popEvent(q2).dataLocation(0)[0] < num_chains/2);
+  CPPUNIT_ASSERT(coll.popEvent(q3).dataLocation(0)[0] < num_chains/2);
+
+  // Queues 1 and 2 should not be empty (because each contains one
+  // event), but q3 should be empty (it has a capacity of one, and we
+  // popped that one off).
+  CPPUNIT_ASSERT(!coll.empty(q1));
+  CPPUNIT_ASSERT(!coll.empty(q2));
+  CPPUNIT_ASSERT(coll.empty(q3));
+  
+  // Now sleep for 1 second. Our queues should have all become stale;
+  // they should also all be empty.
+  ::sleep(1);
+  std::vector<QueueID> stale_queues;
+  coll.clearStaleQueues(stale_queues);
+  CPPUNIT_ASSERT(stale_queues.size() == coll.size());
+  CPPUNIT_ASSERT(coll.empty(q1));
+  CPPUNIT_ASSERT(coll.empty(q2));
+  CPPUNIT_ASSERT(coll.empty(q3));
 }
 
 // This macro writes the 'main' for this test.

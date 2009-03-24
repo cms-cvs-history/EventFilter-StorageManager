@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.25 2009/03/13 03:15:13 paterno Exp $
+# $Id: BuildFile,v 1.30.16.26 2009/03/20 20:35:59 biery Exp $
 
 <environment>
   <use name=boost>
@@ -97,6 +97,11 @@
   <bin file=EventDistributor_t.cpp>
     <use name=cppunit>
   </bin>
+
+  <bin file=ExpirableEventQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
 
   <bin file=EventQueueCollection_t.cpp>
     <use name=cppunit>

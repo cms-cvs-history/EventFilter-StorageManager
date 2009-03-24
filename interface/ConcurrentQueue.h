@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.10 2009/03/18 20:39:16 paterno Exp $
+// $Id: ConcurrentQueue.h,v 1.1.2.11 2009/03/20 18:16:14 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -38,9 +38,9 @@ namespace stor
         RejectNewest: the function returns void; the new item is
         not put onto the FIFO.
    
-     $Author: paterno $
-     $Revision: 1.1.2.10 $
-     $Date: 2009/03/18 20:39:16 $
+     $Author: biery $
+     $Revision: 1.1.2.11 $
+     $Date: 2009/03/20 18:16:14 $
    */
 
   template <class T>
@@ -210,6 +210,11 @@ namespace stor
        Return true if the queue is empty, and false if it is not.
      */
     bool empty() const;
+
+    /**
+       Return true if the queue is full, and false if it is not.
+    */
+    bool full() const;
 
     /**
        Return the size of the queue, that is, the number of items it
@@ -396,6 +401,15 @@ namespace stor
   {
     // No lock is necessary: the read is atomic.
     return _size == 0;
+  }
+
+  template <class T, class EnqPolicy>
+  bool
+  ConcurrentQueue<T,EnqPolicy>::full() const
+  {
+    // Lock is needed, because we have to read two data members.
+    lock_t lock(_protect_elements);
+    return _size == _capacity;
   }
 
 

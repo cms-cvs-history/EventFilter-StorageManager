@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.3 2009/03/13 15:30:17 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.4 2009/03/13 21:16:32 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -11,6 +11,7 @@
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
+#include "EventFilter/StorageManager/interface/ExpirableEventQueue.h"
 
 namespace stor {
 
@@ -18,8 +19,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/13 15:30:17 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/13 21:16:32 $
    */
   
   class EventQueueCollection
@@ -32,11 +33,11 @@ namespace stor {
     EventQueueCollection();
 
     /**
-       Set or get the time in seconds until an unused queue becomes
-       stale.
+       Set or get the time in seconds that the queue with the given id
+       can be unused (by a consumer) before becoming stale.
      */
-    void setExpirationInterval(utils::duration_t interval);
-    utils::duration_t getExpirationInterval() const;
+    void setExpirationInterval(QueueID id, utils::duration_t interval);
+    utils::duration_t getExpirationInterval(QueueID id) const;
 
     /**
        Create a new contained queue, with the given policy and given
@@ -44,7 +45,9 @@ namespace stor {
       requests originating from this consumer.
     */
     QueueID createQueue(enquing_policy::PolicyTag policy,
-			size_t max);
+			size_t max,
+                        utils::duration_t interval = 120.0,
+                        utils::time_point_t now = utils::getCurrentTime());
 
     /**
        Return the number of queues in the collection.
@@ -79,24 +82,23 @@ namespace stor {
     bool full(QueueID id) const;
 
     /**
-      Remove queues which haven't been requested by a consumer since a
-      given time.
+       Clear queues which are 'stale'; a queue is stale if it hasn't
+      been requested by a consumer within its 'staleness
+      interval. Return the QueueID for each queue that is stale (not
+      merely those that have become stale recently, but all that are
+      stale) in the output argument 'stale_queues'.
      */
-    void expireStaleQueues();
+    void clearStaleQueues(std::vector<QueueID>& stale_queues);
 
   private:
+    typedef ExpirableEventQueueDiscardNew expirable_discard_new_queue_t;
+    typedef ExpirableEventQueueDiscardOld expirable_discard_old_queue_t;
 
-    typedef ConcurrentQueue<I2OChain, RejectNewest<I2OChain> > discard_new_queue_t;
-    typedef ConcurrentQueue<I2OChain, KeepNewest<I2OChain> >   discard_old_queue_t;
-    
-    // We use shared_ptr not because we want sharing between two
-    // different EventQueueCollections (they are not copyable), but
-    // rather because if a vector is resized due to a push_back,
-    // shared_ptr provides the correct semantics without necessitating
-    // a deep copy of any contained queue.
-    
-    typedef boost::shared_ptr<discard_new_queue_t> discard_new_queue_ptr;
-    typedef boost::shared_ptr<discard_old_queue_t> discard_old_queue_ptr;
+
+    typedef boost::shared_ptr<expirable_discard_new_queue_t> 
+            expirable_discard_new_queue_ptr;
+    typedef boost::shared_ptr<expirable_discard_old_queue_t> 
+            expirable_discard_old_queue_ptr;
 
     // These typedefs need to be changed when we move to Boost 1.38
     typedef boost::mutex::scoped_lock read_lock_t;
@@ -106,10 +108,8 @@ namespace stor {
     mutable read_write_mutex  _protect_discard_new_queues;
     mutable read_write_mutex  _protect_discard_old_queues;
 
-    std::vector<discard_new_queue_ptr> _discard_new_queues;
-    std::vector<discard_old_queue_ptr> _discard_old_queues;
-
-    utils::duration_t _staleness_interval;
+    std::vector<expirable_discard_new_queue_ptr> _discard_new_queues;
+    std::vector<expirable_discard_old_queue_ptr> _discard_old_queues;
 
     /*
       These functions are declared private and not implemented to

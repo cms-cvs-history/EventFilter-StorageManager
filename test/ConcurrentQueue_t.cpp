@@ -171,6 +171,7 @@ testConcurrentQueue::default_q_is_empty()
   std::cerr << "\nConcurrentQueue_t::default_q_is_empty\n";
   stor::ConcurrentQueue<int> q;
   CPPUNIT_ASSERT(q.empty());
+  CPPUNIT_ASSERT(!q.full());
 }
 
 void
@@ -189,6 +190,7 @@ testConcurrentQueue::queue_is_fifo()
   CPPUNIT_ASSERT(q.deq_nowait(value));
   CPPUNIT_ASSERT(value == 3);
   CPPUNIT_ASSERT(q.empty());
+  CPPUNIT_ASSERT(!q.full());
 }
 
 void
@@ -242,6 +244,7 @@ testConcurrentQueue::enq_timing()
   CPPUNIT_ASSERT(q.enq_nowait(1));
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.capacity() == 1);
+  CPPUNIT_ASSERT(q.full());
 
   // The queue is now full. The next enq should fail.
   edm::CPUTimer t;

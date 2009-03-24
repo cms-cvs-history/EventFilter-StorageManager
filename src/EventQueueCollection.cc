@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.4 2009/03/13 15:30:17 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.5 2009/03/13 21:16:32 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -28,31 +28,75 @@ namespace stor
     _protect_discard_new_queues(),
     _protect_discard_old_queues(),
     _discard_new_queues(),
-    _discard_old_queues(),
-    _staleness_interval(DEFAULT_STALENESS_INTERVAL)
+    _discard_old_queues()
   { }
 
   void
-  EventQueueCollection::setExpirationInterval(utils::duration_t interval)
+  EventQueueCollection::setExpirationInterval(QueueID id,
+                                              utils::duration_t interval)
   {
-    _staleness_interval = interval;
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          _discard_new_queues[id.index()]->set_staleness_interval(interval);
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          _discard_old_queues[id.index()]->set_staleness_interval(interval);
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
   }
 
   utils::duration_t
-  EventQueueCollection::getExpirationInterval() const
+  EventQueueCollection::getExpirationInterval(QueueID id) const
   {
-    return _staleness_interval;
+    utils::duration_t result(0.0);
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          result = _discard_new_queues[id.index()]->staleness_interval();
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          result = _discard_old_queues[id.index()]->staleness_interval();
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
+    return result;
   }
 
   QueueID 
   EventQueueCollection::createQueue(enquing_policy::PolicyTag policy,
-				    size_t max)
+				    size_t max,
+                                    utils::duration_t interval,
+                                    utils::time_point_t now)
   {
     QueueID result;
     if (policy == enquing_policy::DiscardNew)
       {
  	write_lock_t lock(_protect_discard_new_queues);
-        discard_new_queue_ptr newborn(new discard_new_queue_t(max));
+        expirable_discard_new_queue_ptr newborn(new expirable_discard_new_queue_t(max,
+                                                                                  interval,
+                                                                                  now));
         _discard_new_queues.push_back(newborn);
         result = QueueID(enquing_policy::DiscardNew,
  			 _discard_new_queues.size()-1);
@@ -60,13 +104,35 @@ namespace stor
     else if (policy == enquing_policy::DiscardOld)
       {
 	write_lock_t lock(_protect_discard_old_queues);
-        discard_old_queue_ptr newborn(new discard_old_queue_t(max));
+        expirable_discard_old_queue_ptr newborn(new expirable_discard_old_queue_t(max,
+                                                                                  interval,
+                                                                                  now));
 	_discard_old_queues.push_back(newborn);
 	result = QueueID(enquing_policy::DiscardOld,
 			 _discard_old_queues.size()-1);
 
       }
     return result;
+
+//     QueueID result;
+//     if (policy == enquing_policy::DiscardNew)
+//       {
+//  	write_lock_t lock(_protect_discard_new_queues);
+//         discard_new_queue_ptr newborn(new discard_new_queue_t(max));
+//         _discard_new_queues.push_back(newborn);
+//         result = QueueID(enquing_policy::DiscardNew,
+//  			 _discard_new_queues.size()-1);
+//       }
+//     else if (policy == enquing_policy::DiscardOld)
+//       {
+// 	write_lock_t lock(_protect_discard_old_queues);
+//         discard_old_queue_ptr newborn(new discard_old_queue_t(max));
+// 	_discard_old_queues.push_back(newborn);
+// 	result = QueueID(enquing_policy::DiscardOld,
+// 			 _discard_old_queues.size()-1);
+
+//       }
+//     return result;
   }
 
   size_t
@@ -120,11 +186,106 @@ namespace stor
   void
   EventQueueCollection::clearQueue(QueueID id)
   {
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          _discard_new_queues[id.index()]->clear();
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          _discard_old_queues[id.index()]->clear();
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
   } 
 
-  void 
-  EventQueueCollection::expireStaleQueues()
+  bool
+  EventQueueCollection::empty(QueueID id) const
   {
+    bool result(false);
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          result = _discard_new_queues[id.index()]->empty();
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          result = _discard_old_queues[id.index()]->empty();
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
+    return result;
+  }
+
+  bool
+  EventQueueCollection::full(QueueID id) const
+  {
+    bool result(false);
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          result = _discard_new_queues[id.index()]->full();
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          result = _discard_old_queues[id.index()]->full();
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
+    return result;
+  }
+
+
+  void 
+  EventQueueCollection::clearStaleQueues(std::vector<QueueID>& result)
+  {
+    result.clear();
+    utils::time_point_t now = utils::getCurrentTime();
+    read_lock_t lock_discard_old(_protect_discard_new_queues);
+    read_lock_t lock_discard_new(_protect_discard_old_queues);
+    
+    size_t num_queues = _discard_new_queues.size();
+    for (size_t i = 0; i < num_queues; ++i)
+      {
+        if ( _discard_new_queues[i]->clearIfStale(now))
+          result.push_back(QueueID(enquing_policy::DiscardNew, i));
+      }
+
+    num_queues = _discard_old_queues.size();
+    for (size_t i = 0; i < num_queues; ++i)
+      {
+        if ( _discard_old_queues[i]->clearIfStale(now))
+          result.push_back(QueueID(enquing_policy::DiscardOld, i));
+      }
+
+
   }
 
   void
