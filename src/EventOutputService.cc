@@ -1,4 +1,4 @@
-// $Id: EventOutputService.cc,v 1.3 2008/10/24 17:41:55 loizides Exp $
+// $Id: EventOutputService.cc,v 1.3.4.1 2009/03/12 14:35:01 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventOutputService.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -47,6 +47,25 @@ EventOutputService::~EventOutputService()
 void EventOutputService::writeHeader(InitMsgView const& view)
 {
   writer_ -> doOutputHeader(view);
+
+#ifdef USE_NEW_SFW
+  struct StreamerFileWriterHeaderParams hdrParams;
+
+  hdrParams.runNumber = view.run();
+  hdrParams.hltCount = view.get_hlt_bit_cnt();
+
+  hdrParams.headerPtr = (const char*) view.startAddress();
+  hdrParams.headerSize = view.headerSize();
+
+  hdrParams.fragmentIndex = 0;
+  hdrParams.fragmentCount = 1;
+
+  hdrParams.dataPtr = (const char*) view.startAddress();
+  hdrParams.dataSize = view.size();
+
+  writer_ -> doOutputHeaderFragment(hdrParams);
+#endif
+
   file_   -> increaseFileSize(view.size());
 }
 
@@ -61,6 +80,25 @@ void EventOutputService::writeEvent(const uint8 * const bufPtr)
 {
   EventMsgView view((void *) bufPtr);
   writer_ -> doOutputEvent(view);
+
+#ifdef USE_NEW_SFW
+  struct StreamerFileWriterEventParams evtParams;
+
+  evtParams.hltBits.resize(1 + (view.hltCount()-1)/4);
+  view.hltTriggerBits(&(evtParams.hltBits)[0]);
+
+  evtParams.headerPtr = (const char*) view.startAddress();
+  evtParams.headerSize = view.headerSize();
+
+  evtParams.fragmentIndex = 0;
+  evtParams.fragmentCount = 1;
+
+  evtParams.dataPtr = (const char*) view.startAddress();
+  evtParams.dataSize = view.size();
+
+  writer_ -> doOutputEventFragment(evtParams);
+#endif
+
   file_   -> increaseFileSize(view.size());
   file_   -> lastEntry(getTimeStamp());
   file_   -> increaseEventCount();
