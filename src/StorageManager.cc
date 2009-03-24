@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.51 2009/03/23 13:05:26 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.52 2009/03/24 11:07:42 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -116,7 +116,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _rcms_notifier( this->getApplicationLogger(),
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.51 2009/03/23 13:05:26 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.52 2009/03/24 11:07:42 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3972,6 +3972,8 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 /////////////////////////////////
 std::string StorageManager::stateName() const
 {
+  if( !sharedResourcesPtr_ ) return "Halted";
+  if( !sharedResourcesPtr_->_statisticsReporter ) return "Halted";
   return sharedResourcesPtr_->_statisticsReporter->currentStateName();
 }
 
