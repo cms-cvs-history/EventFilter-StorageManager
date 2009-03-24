@@ -15,6 +15,7 @@
 
 #include "IOPool/Streamer/interface/InitMsgBuilder.h"
 #include "IOPool/Streamer/interface/EventMsgBuilder.h"
+#include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 using stor::testhelper::outstanding_bytes;
 using stor::testhelper::allocate_frame;
@@ -46,6 +47,7 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(multipart_msg_header);
   CPPUNIT_TEST(init_msg_header);
   CPPUNIT_TEST(event_msg_header);
+  CPPUNIT_TEST(error_event_msg_header);
   CPPUNIT_TEST(stream_and_queue_tags);
   CPPUNIT_TEST(split_init_header);
   CPPUNIT_TEST(split_event_header);
@@ -77,6 +79,7 @@ public:
   void multipart_msg_header();
   void init_msg_header();
   void event_msg_header();
+  void error_event_msg_header();
   void stream_and_queue_tags();
   void split_init_header();
   void split_event_header();
@@ -1833,6 +1836,47 @@ testI2OChain::event_msg_header()
     CPPUNIT_ASSERT(eventMsgFrag.headerSize() == eventBuilder.headerSize());
     CPPUNIT_ASSERT(eventMsgFrag.headerLocation() ==
                    eventMsgFrag.dataLocation(0));
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+void
+testI2OChain::error_event_msg_header()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+    unsigned int runNumber = 100;
+    unsigned int eventNumber = 42;
+    unsigned int lumiNumber = 777;
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_ERROR, 0, 1);
+    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
+      (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
+    smMsg->hltTid = value1;
+    smMsg->rbBufferID = 3;
+    smMsg->runID = runNumber;
+    smMsg->eventID = eventNumber;
+    smMsg->outModID = 0xffffffff;
+    smMsg->fuProcID = value2;
+    smMsg->fuGUID = value3;
+
+    uint32* dataPtr = (uint32*) smMsg->dataPtr();
+    *dataPtr++ = 2;  // version number
+    *dataPtr++ = runNumber;
+    *dataPtr++ = lumiNumber;
+    *dataPtr++ = eventNumber;
+
+    stor::I2OChain errorMsgFrag(ref);
+    CPPUNIT_ASSERT(errorMsgFrag.messageCode() == Header::ERROR_EVENT);
+    CPPUNIT_ASSERT(errorMsgFrag.runNumber() == runNumber);
+    CPPUNIT_ASSERT(errorMsgFrag.lumiSection() == lumiNumber);
+
+    CPPUNIT_ASSERT(errorMsgFrag.headerSize() == sizeof(FRDEventHeader_V2));
+    CPPUNIT_ASSERT(errorMsgFrag.headerLocation() ==
+                   errorMsgFrag.dataLocation(0));
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }

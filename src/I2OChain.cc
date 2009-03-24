@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.34 2009/03/17 19:56:23 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.35 2009/03/19 15:11:27 mommsen Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -1538,6 +1538,7 @@ namespace stor
       ~ErrorEventMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
       unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_runNumber() const;
@@ -1548,6 +1549,7 @@ namespace stor
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
+      mutable unsigned long _headerSize;
       mutable unsigned char* _headerLocation;
       mutable uint32 _runNumber;
       mutable uint32 _lumiSection;
@@ -1573,6 +1575,17 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    unsigned long ErrorEventMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
     }
 
     unsigned char* ErrorEventMsgData::do_headerLocation() const
@@ -1651,12 +1664,36 @@ namespace stor
 
     void ErrorEventMsgData::cacheHeaderFields() const
     {
-      // The header of a FRD event is always contained in
-      // the first fragment. IS THIS TRUE?
       unsigned char* firstFragLoc = dataLocation(0);
-      boost::shared_ptr<FRDEventMsgView> msgView;
-      msgView.reset(new FRDEventMsgView(firstFragLoc));
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
 
+      // if there is only one fragment, use it
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      // otherwise, check if the first fragment is large enough to hold
+      // the full Event message header  (FRD events have fixed header
+      // size, so the check is easy)
+      else if (firstFragSize > sizeof(FRDEventHeader_V2))
+        {
+          useFirstFrag = true;
+        }
+
+      boost::shared_ptr<FRDEventMsgView> msgView;
+      std::vector<unsigned char> tempBuffer;
+      if (useFirstFrag)
+        {
+          msgView.reset(new FRDEventMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(tempBuffer);
+          msgView.reset(new FRDEventMsgView(&tempBuffer[0]));
+        }
+
+      _headerSize = sizeof(FRDEventHeader_V2);
       _headerLocation = msgView->startAddress();
 
       _runNumber = msgView->run();
