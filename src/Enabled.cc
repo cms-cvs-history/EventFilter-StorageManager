@@ -13,10 +13,7 @@ Enabled::Enabled( my_context c ): my_base(c)
   outermost_context().updateHistory( tr );
 
   // clear the INIT message collection at begin run
-  if ( outermost_context().getSharedResources()->_initMsgCollection.get() != 0 )
-    {
-      outermost_context().getSharedResources()->_initMsgCollection->clear();
-    }
+  outermost_context().getSharedResources()->_initMsgCollection->clear();
 
   // disk writing begin-run processing
   if ( outermost_context().getSharedResources()->_serviceManager.get() != 0 )

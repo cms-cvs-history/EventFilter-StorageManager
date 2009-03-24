@@ -159,6 +159,7 @@ int main()
   FragmentStore fs;
   SharedResourcesPtr sr;
   sr.reset(new SharedResources());
+  sr->_initMsgCollection.reset(new InitMsgCollection());
   sr->_dqmServiceManager.reset(new DQMServiceManager());
   boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
   sr->_commandQueue = cmdQueue;
