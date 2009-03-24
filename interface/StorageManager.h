@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.33 2009/03/23 13:05:25 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.34 2009/03/23 17:02:32 dshpakov Exp $
 */
 
 #include <string>
@@ -76,10 +76,14 @@ namespace stor {
     void actionPerformed(xdata::Event& e);
 
     // *** Callbacks to be executed during transitional states
-    bool configuring(toolbox::task::WorkLoop* wl);
-    bool enabling(toolbox::task::WorkLoop* wl);
-    bool stopping(toolbox::task::WorkLoop* wl);
-    bool halting(toolbox::task::WorkLoop* wl);
+    xoap::MessageReference configuring( xoap::MessageReference )
+      throw( xoap::exception::Exception );
+    xoap::MessageReference enabling( xoap::MessageReference )
+      throw( xoap::exception::Exception );
+    xoap::MessageReference stopping( xoap::MessageReference )
+      throw( xoap::exception::Exception );
+    xoap::MessageReference halting( xoap::MessageReference )
+      throw( xoap::exception::Exception );
 
     // *** FSM soap command callback
     /*

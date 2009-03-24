@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.50 2009/03/23 10:16:20 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.51 2009/03/23 13:05:26 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -46,6 +46,9 @@
 #include "xcept/tools.h"
 
 #include "xdata/InfoSpaceFactory.h"
+
+#include "xdaq/NamespaceURI.h"
+#include "xoap/Method.h"
 
 #include "xoap/SOAPEnvelope.h"
 #include "xoap/SOAPBody.h"
@@ -113,7 +116,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _rcms_notifier( this->getApplicationLogger(),
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.50 2009/03/23 10:16:20 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.51 2009/03/23 13:05:26 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -172,6 +175,24 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
             &StorageManager::receiveDQMMessage,
             I2O_SM_DQM,
             XDAQ_ORGANIZATION_ID);
+
+  // Bind callbacks:
+  xoap::bind( this,
+              &StorageManager::configuring,
+              "Configure",
+              XDAQ_NS_URI );
+  xoap::bind( this,
+              &StorageManager::enabling,
+              "Enable",
+              XDAQ_NS_URI );
+  xoap::bind( this,
+              &StorageManager::stopping,
+              "Stop",
+              XDAQ_NS_URI );
+  xoap::bind( this,
+              &StorageManager::halting,
+              "Halt",
+              XDAQ_NS_URI );
 
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
@@ -3465,7 +3486,8 @@ std::string StorageManager::findStreamName(const std::string &in) const
 }
 
 
-bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
+xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
+  throw( xoap::exception::Exception )
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
@@ -3479,25 +3501,25 @@ bool StorageManager::configuring(toolbox::task::WorkLoop* wl)
   catch (cms::Exception& e) {
     reasonForFailedState_ = e.explainSelf();
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "configuring FAILED: " + (string)e.what();
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   catch (std::exception& e) {
     reasonForFailedState_  = e.what();
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   catch (...) {
     reasonForFailedState_  = "Unknown Exception while configuring";
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
 
-  return false;
+  return msg;
 }
 
 
@@ -3552,7 +3574,8 @@ void StorageManager::configureAction()
 }
 
 
-bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
+xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
+  throw( xoap::exception::Exception )
 {
   if (sharedResourcesPtr_->_configuration->streamConfigurationHasChanged()) {
     try {
@@ -3565,22 +3588,22 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
     catch (cms::Exception& e) {
       reasonForFailedState_ = e.explainSelf();
       LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-      return false;
+      return msg;
     }
     catch (xcept::Exception &e) {
       reasonForFailedState_ = "re-configuring FAILED: " + (string)e.what();
       LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-      return false;
+      return msg;
     }
     catch (std::exception& e) {
       reasonForFailedState_  = e.what();
       LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-      return false;
+      return msg;
     }
     catch (...) {
       reasonForFailedState_  = "Unknown Exception while re-configuring";
       LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-      return false;
+      return msg;
     }
   }
 
@@ -3613,20 +3636,21 @@ bool StorageManager::enabling(toolbox::task::WorkLoop* wl)
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "enabling FAILED: " + (string)e.what();
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   catch(...)
   {
     reasonForFailedState_  = "Unknown Exception while enabling";
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   startMonitoringWorkLoop();
-  return false;
+  return msg;
 }
 
 
-bool StorageManager::stopping(toolbox::task::WorkLoop* wl)
+xoap::MessageReference StorageManager::stopping( xoap::MessageReference msg )
+  throw( xoap::exception::Exception )
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start stopping ...");
@@ -3638,20 +3662,21 @@ bool StorageManager::stopping(toolbox::task::WorkLoop* wl)
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "stopping FAILED: " + (string)e.what();
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   catch(...)
   {
     reasonForFailedState_  = "Unknown Exception while stopping";
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   
-  return false;
+  return msg;
 }
 
 
-bool StorageManager::halting(toolbox::task::WorkLoop* wl)
+xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
+  throw( xoap::exception::Exception )
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start halting ...");
@@ -3665,16 +3690,16 @@ bool StorageManager::halting(toolbox::task::WorkLoop* wl)
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "halting FAILED: " + (string)e.what();
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   catch(...)
   {
     reasonForFailedState_  = "Unknown Exception while halting";
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false;
+    return msg;
   }
   
-  return false;
+  return msg;
 }
 
 void StorageManager::stopAction()
