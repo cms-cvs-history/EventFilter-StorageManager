@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.3 2009/03/20 10:25:06 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.4 2009/03/23 10:03:03 dshpakov Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -11,6 +11,8 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 
+#include "boost/thread/mutex.hpp"
+
 #include <string>
 
 namespace stor {
@@ -21,9 +23,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/20 10:25:06 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/03/23 10:03:03 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -57,8 +59,8 @@ namespace stor {
 
 
     // Current state name:
-    const std::string& currentStateName() const { return _currentStateName; }
-    void setCurrentStateName( const std::string& n ) { _currentStateName = n; }
+    const std::string& currentStateName() const;
+    void setCurrentStateName( const std::string& n );
 
     /**
      * Create and start the monitoring workloop
@@ -82,6 +84,7 @@ namespace stor {
     bool _doMonitoring;
 
     std::string _currentStateName;
+    mutable boost::mutex _state_name_lock;
 
   };
   

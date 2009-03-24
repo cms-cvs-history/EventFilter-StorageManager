@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.5 2009/03/20 10:25:51 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.6 2009/03/23 10:03:03 dshpakov Exp $
 
 #include <string>
 #include <sstream>
@@ -111,6 +111,24 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
   }
 
   return _doMonitoring;
+}
+
+/////////////////////////
+//// Set state name: ////
+/////////////////////////
+void StatisticsReporter::setCurrentStateName( const std::string& n )
+{
+  boost::mutex::scoped_lock sl( _state_name_lock );
+  _currentStateName = n;
+}
+
+/////////////////////////
+//// Get state name: ////
+/////////////////////////
+const std::string& StatisticsReporter::currentStateName() const
+{
+  boost::mutex::scoped_lock sl( _state_name_lock );
+  return _currentStateName;
 }
 
 
