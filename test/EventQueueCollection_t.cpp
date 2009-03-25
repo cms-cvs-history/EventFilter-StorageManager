@@ -10,10 +10,22 @@
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
+#include "boost/thread.hpp"
+#include "boost/shared_ptr.hpp"
+#include "boost/bind.hpp"
+
+#include <algorithm>
+
 using stor::EventQueueCollection;
 using stor::I2OChain;
 using stor::QueueID;
 using stor::testhelper::allocate_frame_with_sample_header;
+
+using stor::enquing_policy::DiscardOld;
+using stor::enquing_policy::DiscardNew;
+
+using std::binary_search;
+using std::sort;
 
 class testEventQueueCollection : public CppUnit::TestFixture
 {
@@ -58,18 +70,18 @@ testEventQueueCollection::create_queues()
 
   // Make sure that the different types of queue are both counted
   // correctly.
-  QueueID id1 = c.createQueue(stor::enquing_policy::DiscardNew, 10);
+  QueueID id1 = c.createQueue(DiscardNew, 10);
   CPPUNIT_ASSERT(c.size() == 1);
-  CPPUNIT_ASSERT(id1.policy() == stor::enquing_policy::DiscardNew);
+  CPPUNIT_ASSERT(id1.policy() == DiscardNew);
   CPPUNIT_ASSERT(id1.index() == 0);
 
 
-  QueueID id2 = c.createQueue(stor::enquing_policy::DiscardOld, 20);
+  QueueID id2 = c.createQueue(DiscardOld, 20);
   CPPUNIT_ASSERT(c.size() == 2);
-  CPPUNIT_ASSERT(id2.policy() == stor::enquing_policy::DiscardOld);
+  CPPUNIT_ASSERT(id2.policy() == DiscardOld);
   CPPUNIT_ASSERT(id2.index() == 0);
 
-  QueueID id3 = c.createQueue(stor::enquing_policy::DiscardOld, 20);
+  QueueID id3 = c.createQueue(DiscardOld, 20);
   CPPUNIT_ASSERT(c.size() == 3);
   CPPUNIT_ASSERT(id3.index() == 1);
 
@@ -96,21 +108,55 @@ testEventQueueCollection::pop_event_from_non_existing_queue()
   CPPUNIT_ASSERT(chain.empty());
 }
 
+void add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll);
+void create_queues_helper(boost::shared_ptr<EventQueueCollection> pcoll);
+
 void
 testEventQueueCollection::add_and_pop()
 {
-  EventQueueCollection coll;
+  using namespace boost;
+  shared_ptr<EventQueueCollection> pcoll(new EventQueueCollection);
+
+  thread t1(bind(add_and_pop_helper, pcoll));
+  thread t2(bind(create_queues_helper, pcoll));
+  thread t3(bind(create_queues_helper, pcoll));
+  thread t4(bind(create_queues_helper, pcoll));
+  thread t5(bind(create_queues_helper, pcoll));
+
+  t1.join();
+  t2.join();
+  t3.join();
+  t4.join();
+  t5.join();
+}
+
+void
+create_queues_helper(boost::shared_ptr<EventQueueCollection> pcoll)
+{
+  for (int i = 0; i < 1000; ++i)
+    {
+      pcoll->createQueue(DiscardNew);
+      pcoll->createQueue(DiscardOld);
+      ::usleep(2000); // 1000 microseconds
+    }
+}
+
+void
+add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
+{
+  EventQueueCollection& coll = *pcoll;
   // We want events to go bad very rapidly.
   double expiration_interval = 1.0;
 
   // Make some queues of each flavor, with very little capacity.  We want
   // them to fill rapidly.
   stor::utils::time_point_t now = stor::utils::getCurrentTime();
-  QueueID q1 = coll.createQueue(stor::enquing_policy::DiscardOld, 2, expiration_interval, now);
+
+  QueueID q1 = coll.createQueue(DiscardOld, 2, expiration_interval, now);
   CPPUNIT_ASSERT(q1.isValid());
-  QueueID q2 = coll.createQueue(stor::enquing_policy::DiscardNew, 2, expiration_interval, now);
+  QueueID q2 = coll.createQueue(DiscardNew, 2, expiration_interval, now);
   CPPUNIT_ASSERT(q2.isValid());
-  QueueID q3 = coll.createQueue(stor::enquing_policy::DiscardNew, 1, expiration_interval, now);
+  QueueID q3 = coll.createQueue(DiscardNew, 1, expiration_interval, now);
   CPPUNIT_ASSERT(q3.isValid());
 
   // Make some chains, tagging them, and inserting them into the
@@ -158,7 +204,11 @@ testEventQueueCollection::add_and_pop()
   ::sleep(1);
   std::vector<QueueID> stale_queues;
   coll.clearStaleQueues(stale_queues);
-  CPPUNIT_ASSERT(stale_queues.size() == coll.size());
+  //CPPUNIT_ASSERT(stale_queues.size() == coll.size());
+  sort(stale_queues.begin(), stale_queues.end());
+  CPPUNIT_ASSERT(binary_search(stale_queues.begin(), stale_queues.end(), q1));
+  CPPUNIT_ASSERT(binary_search(stale_queues.begin(), stale_queues.end(), q2));
+  CPPUNIT_ASSERT(binary_search(stale_queues.begin(), stale_queues.end(), q3));
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
