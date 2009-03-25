@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.53 2009/03/24 14:03:06 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.54 2009/03/25 11:16:19 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -116,7 +117,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _rcms_notifier( this->getApplicationLogger(),
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.53 2009/03/24 14:03:06 dshpakov Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.54 2009/03/25 11:16:19 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -250,9 +251,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
 
   fragmentProcessor_ = new FragmentProcessor(sharedResourcesPtr_);
+
   fragmentProcessor_->startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
 
-  cout << "_-_-_-_ C'tor done _-_-_-_" << endl;
 }
 
 StorageManager::~StorageManager()
