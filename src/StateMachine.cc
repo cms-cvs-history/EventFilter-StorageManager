@@ -21,7 +21,8 @@ StateMachine::StateMachine
 _diskWriter(dw),
 _eventDistributor(ed),
 _fragmentStore(fs),
-_sharedResources(sr)
+_sharedResources(sr),
+_initialized( false )
 {
 }
 
@@ -39,9 +40,12 @@ string StateMachine::getCurrentStateName() const
 void StateMachine::updateHistory( const TransitionRecord& tr )
 {
   _history.push_back( tr );
-  if ( _sharedResources->_statisticsReporter.get() != 0 )
+  if( _initialized )
     {
-      _sharedResources->_statisticsReporter->setCurrentStateName( getCurrentState().stateName() );
+      if ( _sharedResources->_statisticsReporter.get() != 0 )
+        {
+          _sharedResources->_statisticsReporter->setCurrentStateName( getCurrentState().stateName() );
+        }
     }
 }
 

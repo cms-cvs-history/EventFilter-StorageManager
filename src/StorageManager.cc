@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.54 2009/03/25 11:16:19 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.55 2009/03/25 13:22:35 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -117,7 +117,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _rcms_notifier( this->getApplicationLogger(),
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.54 2009/03/25 11:16:19 dshpakov Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.55 2009/03/25 13:22:35 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3526,6 +3526,7 @@ xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
 
 void StorageManager::configureAction()
 {
+
   sharedResourcesPtr_->_configuration->updateAllParams();
   DiskWritingParams dwParams =
     sharedResourcesPtr_->_configuration->getDiskWritingParams();

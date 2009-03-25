@@ -141,6 +141,7 @@ namespace stor
 
     void unconsumed_event( bsc::event_base const& );
 
+    void declareInitialized() { _initialized = true; }
 
   private:
 
@@ -150,6 +151,8 @@ namespace stor
     EventDistributor* _eventDistributor;
     FragmentStore* _fragmentStore;
     SharedResourcesPtr _sharedResources;
+
+    bool _initialized; // to control access to state name
 
   };
 
