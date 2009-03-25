@@ -1,9 +1,10 @@
-// $Id: EventQueueCollection.h,v 1.1.2.4 2009/03/13 21:16:32 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.5 2009/03/24 15:49:25 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
 
 #include <vector>
+#include <limits>
 #include "boost/thread/mutex.hpp"
 #include "boost/shared_ptr.hpp"
 
@@ -19,8 +20,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/13 21:16:32 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/24 15:49:25 $
    */
   
   class EventQueueCollection
@@ -45,7 +46,7 @@ namespace stor {
       requests originating from this consumer.
     */
     QueueID createQueue(enquing_policy::PolicyTag policy,
-			size_t max,
+                        size_t max = std::numeric_limits<size_t>::max(),
                         utils::duration_t interval = 120.0,
                         utils::time_point_t now = utils::getCurrentTime());
 
