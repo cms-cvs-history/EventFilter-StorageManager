@@ -34,6 +34,7 @@ class testEventQueueCollection : public CppUnit::TestFixture
   CPPUNIT_TEST(create_queues);
   CPPUNIT_TEST(pop_event_from_non_existing_queue);
   CPPUNIT_TEST(add_and_pop);
+  CPPUNIT_TEST(invalid_queueid);
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -43,6 +44,7 @@ public:
   void create_queues();
   void pop_event_from_non_existing_queue();
   void add_and_pop();
+  void invalid_queueid();
 
 private:
   // No data members yet.
@@ -212,6 +214,51 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
+}
+
+void
+testEventQueueCollection::invalid_queueid()
+{
+  EventQueueCollection coll;
+  // Make sure none of the interface functions cause a failure. Many
+  // do not return any status we can test; we just run the function
+  // and observe that we do *not* crash or throw any exception.
+  QueueID id1(stor::enquing_policy::DiscardNew, 0);
+  QueueID id2(stor::enquing_policy::DiscardOld, 0);
+
+  coll.setExpirationInterval(id1, 2.0);
+  coll.setExpirationInterval(id2, 2.0);
+
+  CPPUNIT_ASSERT(coll.getExpirationInterval(id1) == 0.0);
+  CPPUNIT_ASSERT(coll.getExpirationInterval(id2) == 0.0);
+
+  {
+    I2OChain event(allocate_frame_with_sample_header(0,1,1));
+    event.tagForEventConsumer(id1);
+    event.tagForEventConsumer(id2);
+    CPPUNIT_ASSERT(!event.empty());
+    coll.addEvent(event);
+  }
+  // Trying to pop an event off an nonexistent queue should give an
+  // empty event.
+  I2OChain event;
+  CPPUNIT_ASSERT(event.empty());
+  event = coll.popEvent(id1);
+  CPPUNIT_ASSERT(event.empty());
+  event = coll.popEvent(id2);
+  CPPUNIT_ASSERT(event.empty());
+
+  coll.clearQueue(id1); // should have no effect
+  coll.clearQueue(id2); // should have no effect
+  CPPUNIT_ASSERT(coll.empty(id1)); // nonexistent queue is empty.
+  CPPUNIT_ASSERT(coll.full(id1));  // nonexistent queue is also full.
+  CPPUNIT_ASSERT(coll.empty(id2)); // nonexistent queue is empty.
+  CPPUNIT_ASSERT(coll.full(id2));  // nonexistent queue is also full.
+
+  
+  std::vector<QueueID> stale_queues;
+  coll.clearStaleQueues(stale_queues);
+  CPPUNIT_ASSERT(stale_queues.empty());
 }
 
 // This macro writes the 'main' for this test.

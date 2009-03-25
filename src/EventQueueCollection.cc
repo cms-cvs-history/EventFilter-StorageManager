@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.5 2009/03/13 21:16:32 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.6 2009/03/24 15:49:25 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -40,13 +40,15 @@ namespace stor
       case enquing_policy::DiscardNew:
         {
           read_lock_t lock(_protect_discard_new_queues);
-          _discard_new_queues[id.index()]->set_staleness_interval(interval);
+          if (id.index() < _discard_new_queues.size())
+            _discard_new_queues[id.index()]->set_staleness_interval(interval);
           break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
-          _discard_old_queues[id.index()]->set_staleness_interval(interval);
+          if (id.index() < _discard_old_queues.size())
+            _discard_old_queues[id.index()]->set_staleness_interval(interval);
           break;
         }
       default:
@@ -66,13 +68,15 @@ namespace stor
       case enquing_policy::DiscardNew:
         {
           read_lock_t lock(_protect_discard_new_queues);
-          result = _discard_new_queues[id.index()]->staleness_interval();
+          if (id.index() < _discard_new_queues.size())
+            result = _discard_new_queues[id.index()]->staleness_interval();
           break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
-          result = _discard_old_queues[id.index()]->staleness_interval();
+          if (id.index() < _discard_old_queues.size())
+            result = _discard_old_queues[id.index()]->staleness_interval();
           break;
         }
       default:
@@ -113,26 +117,6 @@ namespace stor
 
       }
     return result;
-
-//     QueueID result;
-//     if (policy == enquing_policy::DiscardNew)
-//       {
-//  	write_lock_t lock(_protect_discard_new_queues);
-//         discard_new_queue_ptr newborn(new discard_new_queue_t(max));
-//         _discard_new_queues.push_back(newborn);
-//         result = QueueID(enquing_policy::DiscardNew,
-//  			 _discard_new_queues.size()-1);
-//       }
-//     else if (policy == enquing_policy::DiscardOld)
-//       {
-// 	write_lock_t lock(_protect_discard_old_queues);
-//         discard_old_queue_ptr newborn(new discard_old_queue_t(max));
-// 	_discard_old_queues.push_back(newborn);
-// 	result = QueueID(enquing_policy::DiscardOld,
-// 			 _discard_old_queues.size()-1);
-
-//       }
-//     return result;
   }
 
   size_t
@@ -165,13 +149,15 @@ namespace stor
       case enquing_policy::DiscardNew:
         {
           read_lock_t lock(_protect_discard_new_queues);
-          _discard_new_queues[id.index()]->deq_nowait(result);
+          if (id.index() < _discard_new_queues.size())
+            _discard_new_queues[id.index()]->deq_nowait(result);
           break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
-          _discard_old_queues[id.index()]->deq_nowait(result);
+          if (id.index() < _discard_old_queues.size())
+            _discard_old_queues[id.index()]->deq_nowait(result);
           break;
         }
       default:
@@ -191,13 +177,15 @@ namespace stor
       case enquing_policy::DiscardNew:
         {
           read_lock_t lock(_protect_discard_new_queues);
-          _discard_new_queues[id.index()]->clear();
+          if (id.index() < _discard_new_queues.size())
+            _discard_new_queues[id.index()]->clear();
           break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
-          _discard_old_queues[id.index()]->clear();
+          if (id.index() < _discard_old_queues.size())
+            _discard_old_queues[id.index()]->clear();
           break;
         }
       default:
@@ -211,19 +199,21 @@ namespace stor
   bool
   EventQueueCollection::empty(QueueID id) const
   {
-    bool result(false);
+    bool result(true);
     switch (id.policy()) 
       {
       case enquing_policy::DiscardNew:
         {
           read_lock_t lock(_protect_discard_new_queues);
-          result = _discard_new_queues[id.index()]->empty();
+          if (id.index() < _discard_new_queues.size())
+            result = _discard_new_queues[id.index()]->empty();
           break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
-          result = _discard_old_queues[id.index()]->empty();
+          if (id.index() < _discard_old_queues.size())
+            result = _discard_old_queues[id.index()]->empty();
           break;
         }
       default:
@@ -238,19 +228,21 @@ namespace stor
   bool
   EventQueueCollection::full(QueueID id) const
   {
-    bool result(false);
+    bool result(true);
     switch (id.policy()) 
       {
       case enquing_policy::DiscardNew:
         {
           read_lock_t lock(_protect_discard_new_queues);
-          result = _discard_new_queues[id.index()]->full();
+          if (id.index() < _discard_new_queues.size())
+            result = _discard_new_queues[id.index()]->full();
           break;
         }
       case enquing_policy::DiscardOld:
         {
           read_lock_t lock(_protect_discard_old_queues);
-          result = _discard_old_queues[id.index()]->full();
+          if (id.index() < _discard_old_queues.size())
+            result = _discard_old_queues[id.index()]->full();
           break;
         }
       default:
@@ -284,8 +276,6 @@ namespace stor
         if ( _discard_old_queues[i]->clearIfStale(now))
           result.push_back(QueueID(enquing_policy::DiscardOld, i));
       }
-
-
   }
 
   void
@@ -296,12 +286,14 @@ namespace stor
       {
       case enquing_policy::DiscardNew:
         {
-          _discard_new_queues[id.index()]->enq_nowait(event);
+          if (id.index() < _discard_new_queues.size())
+            _discard_new_queues[id.index()]->enq_nowait(event);
           break;
         }
       case enquing_policy::DiscardOld:
         {
-          _discard_old_queues[id.index()]->enq_nowait(event);
+          if (id.index() < _discard_old_queues.size())
+            _discard_old_queues[id.index()]->enq_nowait(event);
           break;
         }
       default:
