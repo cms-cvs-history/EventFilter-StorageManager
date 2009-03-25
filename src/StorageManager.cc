@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.52 2009/03/24 11:07:42 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.53 2009/03/24 14:03:06 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -116,9 +116,11 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _rcms_notifier( this->getApplicationLogger(),
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.52 2009/03/24 11:07:42 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.53 2009/03/24 14:03:06 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
+
+  _xdaq_state_name = "Halted";
 
   ah_   = new edm::AssertHandler();
 
@@ -126,10 +128,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
-  xdata::String sname = stateName();
-
   ispace->fireItemAvailable("runNumber",     &runNumber_);
-  ispace->fireItemAvailable("stateName",     &sname );
+  ispace->fireItemAvailable("stateName",     &_xdaq_state_name );
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
   ispace->fireItemAvailable("closedFiles",   &closedFiles_);
@@ -251,6 +251,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   fragmentProcessor_ = new FragmentProcessor(sharedResourcesPtr_);
   fragmentProcessor_->startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
+
+  cout << "_-_-_-_ C'tor done _-_-_-_" << endl;
 }
 
 StorageManager::~StorageManager()
@@ -3364,8 +3366,6 @@ void StorageManager::setupFlashList()
   // Publish monitor data in monitorable info space -- Head
   //----------------------------------------------------------------------------
 
-  xdata::String sname = stateName();
-
   is->fireItemAvailable("class",                &class_);
   is->fireItemAvailable("instance",             &instance_);
   is->fireItemAvailable("runNumber",            &runNumber_);
@@ -3378,7 +3378,7 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
-  is->fireItemAvailable("stateName",            &sname );
+  is->fireItemAvailable("stateName",            &_xdaq_state_name );
   //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
 

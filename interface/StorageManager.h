@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.34 2009/03/23 17:02:32 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.35 2009/03/24 11:07:42 dshpakov Exp $
 */
 
 #include <string>
@@ -150,6 +150,9 @@ namespace stor {
 
     // Get current state name:
     std::string stateName() const;
+
+    // State name for infospace updates:
+    xdata::String _xdaq_state_name;
 
     edm::AssertHandler *ah_;
     edm::service::MessageServicePresence theMessageServicePresence;
