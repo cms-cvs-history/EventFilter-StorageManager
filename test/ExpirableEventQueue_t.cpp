@@ -74,6 +74,39 @@ test_fill_and_go_stale()
   CPPUNIT_ASSERT(q.empty());
 }
 
+template <class Q>
+void
+test_pop_freshens_queue()
+{
+  size_t capacity(2);
+  duration_t seconds_to_stale(1.0);
+  Q q(capacity, seconds_to_stale);
+
+  // Push in an event, then let the queue go stale.
+  q.enq_nowait(I2OChain(allocate_frame_with_sample_header(0,1,1)));
+  CPPUNIT_ASSERT(!q.empty());
+  ::sleep(static_cast<int>(seconds_to_stale));
+
+  // Verify the queue has gone stale.
+  CPPUNIT_ASSERT(q.clearIfStale());
+  CPPUNIT_ASSERT(q.empty());
+
+  // A queue that has gone stale should remain stale if we add a new
+  // event to it.
+  q.enq_nowait(I2OChain(allocate_frame_with_sample_header(0,1,1)));
+  CPPUNIT_ASSERT(!q.empty());
+  CPPUNIT_ASSERT(q.clearIfStale());
+  CPPUNIT_ASSERT(q.empty());
+
+  // Popping from the queue should make it non-stale. This must be
+  // true *even if the queue is empty*, so that popping does not get
+  // an event.
+   I2OChain popped;
+   CPPUNIT_ASSERT(!q.deq_nowait(popped));
+   CPPUNIT_ASSERT(q.empty());
+   CPPUNIT_ASSERT(!q.clearIfStale());
+}
+
 //  -------------------------------------------------------------------
 
 class testExpirableEventQueue : public CppUnit::TestFixture
@@ -82,6 +115,7 @@ class testExpirableEventQueue : public CppUnit::TestFixture
 
   CPPUNIT_TEST(default_queue);
   CPPUNIT_TEST(fill_and_go_stale);
+  CPPUNIT_TEST(pop_freshens_queue);
 
   CPPUNIT_TEST_SUITE_END();
 
@@ -91,6 +125,7 @@ public:
 
   void default_queue();
   void fill_and_go_stale();
+  void pop_freshens_queue();
 
 private:
 
@@ -121,6 +156,13 @@ testExpirableEventQueue::fill_and_go_stale()
 {
   test_fill_and_go_stale<DN_q_t>();
   test_fill_and_go_stale<DO_q_t>();
+}
+
+void
+testExpirableEventQueue::pop_freshens_queue()
+{
+  test_pop_freshens_queue<DN_q_t>();
+  test_pop_freshens_queue<DO_q_t>();
 }
 
 // This macro writes the 'main' for this test.
