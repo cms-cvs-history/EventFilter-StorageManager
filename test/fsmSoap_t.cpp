@@ -3,6 +3,7 @@
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/MockNotifier.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -45,8 +46,9 @@ namespace stor {
 
             EventDistributor ed(sr);
             DiskWriter dw(sr);
-            
-            stateMachine = new StateMachine( &dw, &ed, &fs, sr );
+            MockNotifier mn;
+
+            stateMachine = new StateMachine( &dw, &ed, &fs, &mn, sr );
             stateMachine->initiate();
             
 	    xoap::bind(

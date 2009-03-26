@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.13 2009/03/20 10:28:19 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.14 2009/03/20 21:30:06 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -16,7 +16,7 @@
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-
+#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 namespace stor {
 
@@ -27,16 +27,16 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/03/20 10:28:19 $
+   * $Author: biery $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/03/20 21:30:06 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor(SharedResourcesPtr sr);
+    FragmentProcessor( SharedResourcesPtr sr, WrapperNotifier& wn );
 
     ~FragmentProcessor();
     
@@ -86,6 +86,7 @@ namespace stor {
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;
     DiskWriter                         _diskWriter;
+    WrapperNotifier _wrapperNotifier;
 
     const unsigned int                 _timeout; // Waiting time in microseconds.
     bool                               _actionIsActive;

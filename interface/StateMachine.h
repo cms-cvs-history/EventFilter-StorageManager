@@ -27,6 +27,7 @@ namespace stor
   class DiskWriter;
   class EventDistributor;
   class FragmentStore;
+  class Notifier;
 
   ////////////////////////////////////////////////
   //// Forward declarations of state classes: ////
@@ -120,7 +121,8 @@ namespace stor
     StateMachine( DiskWriter* dw,
                   EventDistributor* ed,
                   FragmentStore* fs,
-                  SharedResourcesPtr sr);
+                  Notifier* n,
+                  SharedResourcesPtr sr );
 
     //void processI2OFragment();
     std::string getCurrentStateName() const;
@@ -137,11 +139,14 @@ namespace stor
     DiskWriter* getDiskWriter() const { return _diskWriter; }
     EventDistributor* getEventDistributor() const { return _eventDistributor; }
     FragmentStore* getFragmentStore() const { return _fragmentStore; }
+    Notifier* getNotifier() { return _notifier; }
     SharedResourcesPtr getSharedResources() const { return _sharedResources; }
 
     void unconsumed_event( bsc::event_base const& );
 
     void declareInitialized() { _initialized = true; }
+
+    void setExternallyVisibleState( const std::string& );
 
   private:
 
@@ -150,6 +155,7 @@ namespace stor
     DiskWriter* _diskWriter;
     EventDistributor* _eventDistributor;
     FragmentStore* _fragmentStore;
+    Notifier* _notifier;
     SharedResourcesPtr _sharedResources;
 
     bool _initialized; // to control access to state name

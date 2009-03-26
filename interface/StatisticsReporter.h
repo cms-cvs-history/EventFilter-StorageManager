@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.4 2009/03/23 10:03:03 dshpakov Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.5 2009/03/24 10:25:29 dshpakov Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -24,8 +24,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/23 10:03:03 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/24 10:25:29 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -59,8 +59,8 @@ namespace stor {
 
 
     // Current state name:
-    const std::string& currentStateName() const;
-    void setCurrentStateName( const std::string& n );
+    const std::string& externallyVisibleState() const;
+    void setExternallyVisibleState( const std::string& );
 
     /**
      * Create and start the monitoring workloop
@@ -83,7 +83,7 @@ namespace stor {
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 
-    std::string _currentStateName;
+    std::string _externallyVisibleState;
     mutable boost::mutex _state_name_lock;
 
   };

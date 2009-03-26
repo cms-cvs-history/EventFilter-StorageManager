@@ -16,11 +16,13 @@ StateMachine::StateMachine
   DiskWriter* dw,
   EventDistributor* ed,
   FragmentStore* fs,
+  Notifier* n,
   SharedResourcesPtr sr
 ):
 _diskWriter(dw),
 _eventDistributor(ed),
 _fragmentStore(fs),
+_notifier(n),
 _sharedResources(sr),
 _initialized( false )
 {
@@ -40,13 +42,6 @@ string StateMachine::getCurrentStateName() const
 void StateMachine::updateHistory( const TransitionRecord& tr )
 {
   _history.push_back( tr );
-  if( _initialized )
-    {
-      if ( _sharedResources->_statisticsReporter.get() != 0 )
-        {
-          _sharedResources->_statisticsReporter->setCurrentStateName( getCurrentState().stateName() );
-        }
-    }
 }
 
 void StateMachine::dumpHistory( ostream& os ) const
@@ -73,7 +68,16 @@ void StateMachine::unconsumed_event( bsc::event_base const &event)
     << getCurrentStateName() << " state!" << std::endl;
 }
 
-
+void StateMachine::setExternallyVisibleState( const std::string& s )
+{
+  if( _initialized )
+    {
+      if( _sharedResources->_statisticsReporter.get() != 0 )
+        {
+          _sharedResources->_statisticsReporter->setExternallyVisibleState( s );
+        }
+    }
+}
 
 /// emacs configuration
 /// Local Variables: -

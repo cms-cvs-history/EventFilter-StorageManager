@@ -13,6 +13,7 @@
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/MockNotifier.h"
 
 using namespace std;
 using namespace boost::statechart;
@@ -167,7 +168,9 @@ int main()
   DiskWriter dw(sr);
   EventDistributor ed(sr);
 
-  StateMachine m( &dw, &ed, &fs, sr );
+  MockNotifier mn;
+
+  StateMachine m( &dw, &ed, &fs, &mn, sr );
 
   EventList elist;
 

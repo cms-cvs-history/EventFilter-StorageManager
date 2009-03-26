@@ -9,6 +9,8 @@ Stopped::Stopped( my_context c ): my_base(c)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
+  outermost_context().setExternallyVisibleState( "Ready" );
+  outermost_context().getNotifier()->reportNewState( "Ready" );
 }
 
 Stopped::~Stopped()

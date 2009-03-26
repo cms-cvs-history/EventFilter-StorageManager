@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.55 2009/03/25 13:22:35 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.56 2009/03/25 17:24:04 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -117,7 +117,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _rcms_notifier( this->getApplicationLogger(),
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.55 2009/03/25 13:22:35 dshpakov Exp $ $Name:  $")
+  _wrapper_notifier( _rcms_notifier ),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.56 2009/03/25 17:24:04 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -250,7 +251,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // TODO: add try/catch block and handle exceptions
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
 
-  fragmentProcessor_ = new FragmentProcessor(sharedResourcesPtr_);
+  fragmentProcessor_ = new FragmentProcessor( sharedResourcesPtr_,
+                                              _wrapper_notifier );
 
   fragmentProcessor_->startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
 
@@ -297,11 +299,11 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
 
   // *** check the Storage Manager is in the Ready or Enabled state first!
-  if( stateName() != "Enabled" && stateName() != "Ready" )
+  if( externallyVisibleState() != "Enabled" && externallyVisibleState() != "Ready" )
   {
     LOG4CPLUS_ERROR( this->getApplicationLogger(),
                      "Received INIT message but not in Ready/Enabled state! Current state = "
-                     << stateName() << " INIT from " << msg->hltURL
+                     << externallyVisibleState() << " INIT from " << msg->hltURL
                      << " application " << msg->hltClassName );
     // just release the memory at least - is that what we want to do?
     ref->release();
@@ -361,11 +363,11 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
 
   // check the storage Manager is in the Ready state first!
-  if( stateName() != "Enabled")
+  if( externallyVisibleState() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
                        "Received EVENT message but not in Enabled state! Current state = "
-                       << stateName() << " EVENT from" << msg->hltURL
+                       << externallyVisibleState() << " EVENT from" << msg->hltURL
                        << " application " << msg->hltClassName);
     // just release the memory at least - is that what we want to do?
     ref->release();
@@ -458,11 +460,11 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   int len = msg->dataSize;
 
   // check the storage Manager is in the Ready state first!
-  if(stateName() != "Enabled")
+  if(externallyVisibleState() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
                        "Received ERROR message but not in Enabled state! Current state = "
-                       << stateName() << " ERROR from" << msg->hltURL
+                       << externallyVisibleState() << " ERROR from" << msg->hltURL
                        << " application " << msg->hltClassName);
     // just release the memory at least - is that what we want to do?
     ref->release();
@@ -513,11 +515,11 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   FDEBUG(10) << "StorageManager: received DQM frame size = " << len << std::endl;
 
   // check the storage Manager is in the Ready state first!
-  if(stateName() != "Enabled")
+  if(externallyVisibleState() != "Enabled")
   {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
                        "Received DQM message but not in Enabled state! Current state = "
-                       << stateName() << " DQMMessage from" << msg->hltURL
+                       << externallyVisibleState() << " DQMMessage from" << msg->hltURL
                        << " application " << msg->hltClassName);
     // just release the memory at least - is that what we want to do?
     ref->release();
@@ -546,7 +548,7 @@ throw (xgi::exception::Exception)
 
     WebPageHelper::defaultWebPage(
       out,
-      stateName(),
+      externallyVisibleState(),
       sharedResourcesPtr_->_statisticsReporter,
       pool_,
       dwParams._nLogicalDisk,
@@ -598,7 +600,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    <b>"                                                  << endl;
     *out << getApplicationDescriptor()->getClassName() << " instance "
          << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << stateName()                   << endl;
+    *out << "      " << externallyVisibleState()                   << endl;
     *out << "    </b>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
@@ -615,7 +617,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
     *out << "  <td width=\"32\">"                                      << endl;
     *out << "  </td>"                                                  << endl;
     *out << "</tr>"                                                    << endl;
-    if( stateName() == "Failed")
+    if( externallyVisibleState() == "Failed")
     {
       *out << "<tr>"					     << endl;
       *out << " <td>"					     << endl;
@@ -1026,7 +1028,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    <b>"                                                  << endl;
     *out << getApplicationDescriptor()->getClassName() << " instance "
          << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << stateName()                   << endl;
+    *out << "      " << externallyVisibleState()                   << endl;
     *out << "    </b>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
@@ -1055,7 +1057,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    </a>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "</tr>"                                                    << endl;
-    if( stateName() == "Failed")
+    if( externallyVisibleState() == "Failed")
     {
       *out << "<tr>"					     << endl;
       *out << " <td>"					     << endl;
@@ -1411,7 +1413,7 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    <b>"                                                  << endl;
     *out << getApplicationDescriptor()->getClassName() << " instance "
          << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << stateName()                   << endl;
+    *out << "      " << externallyVisibleState()                   << endl;
     *out << "    </b>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "  <td width=\"32\">"                                      << endl;
@@ -1440,7 +1442,7 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
     *out << "    </a>"                                                 << endl;
     *out << "  </td>"                                                  << endl;
     *out << "</tr>"                                                    << endl;
-    if( stateName() == "Failed")
+    if( externallyVisibleState() == "Failed")
     {
       *out << "<tr>"					     << endl;
       *out << " <td>"					     << endl;
@@ -1514,7 +1516,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(stateName() == "Enabled" &&
+  if(externallyVisibleState() == "Enabled" &&
      sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0)
   {
@@ -1622,7 +1624,7 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
-  if(stateName() == "Enabled" &&
+  if(externallyVisibleState() == "Enabled" &&
      sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0)
     {
@@ -1759,7 +1761,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 	  "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<Monitor>\n");
   out->write(buffer,strlen(buffer));
 
-  if(stateName() == "Enabled")
+  if(externallyVisibleState() == "Enabled")
   {
     sprintf(buffer, "<ConsumerList>\n");
     out->write(buffer,strlen(buffer));
@@ -1901,7 +1903,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   //bool autoUpdate = true;
   // 11-Jun-2008, KAB - changed auto update default to OFF
   bool autoUpdate = false;
-  if(stateName() == "Enabled") {
+  if(externallyVisibleState() == "Enabled") {
     cgicc::Cgicc cgiWrapper(in);
     cgicc::const_form_iterator updateRef = cgiWrapper.getElement("update");
     if (updateRef != cgiWrapper.getElements().end()) {
@@ -1944,7 +1946,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   *out << "    <b>"                                                  << endl;
   *out << getApplicationDescriptor()->getClassName() << " Instance "
        << getApplicationDescriptor()->getInstance();
-  *out << ", State is " << stateName()              << endl;
+  *out << ", State is " << externallyVisibleState()              << endl;
   *out << "    </b>"                                                 << endl;
   *out << "  </td>"                                                  << endl;
   *out << "  <td width=\"32\">"                                      << endl;
@@ -1959,7 +1961,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   *out << "    </a>"                                                 << endl;
   *out << "  </td>"                                                  << endl;
   *out << "</tr>"                                                    << endl;
-  if( stateName() == "Failed")
+  if( externallyVisibleState() == "Failed")
   {
     *out << "<tr>"                                                   << endl;
     *out << " <td>"                                                  << endl;
@@ -1975,7 +1977,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   EventServingParams esParams =
     sharedResourcesPtr_->_configuration->getEventServingParams();
 
-  if(stateName() == "Enabled")
+  if(externallyVisibleState() == "Enabled")
   {
     boost::shared_ptr<EventServer> eventServer =
       sharedResourcesPtr_->_oldEventServer;
@@ -3012,7 +3014,7 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  if(stateName() == "Enabled")
+  if(externallyVisibleState() == "Enabled")
   { // what is the right place for this?
 
   std::string consumerName = "None provided";
@@ -3196,7 +3198,7 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   
   // first test if StorageManager is in Enabled state and this is a valid request
   // there must also be DQM data available
-  if(stateName() == "Enabled" && consumerId != 0)
+  if(externallyVisibleState() == "Enabled" && consumerId != 0)
   {
     boost::shared_ptr<DQMEventServer> eventServer =
       sharedResourcesPtr_->_oldDQMEventServer;
@@ -3243,7 +3245,7 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  if(stateName() == "Enabled")
+  if(externallyVisibleState() == "Enabled")
   { // We need to be in the enabled state
 
     std::string consumerName = "None provided";
@@ -3409,8 +3411,8 @@ void StorageManager::actionPerformed(xdata::Event& e)
   // 14-Oct-2008, KAB - skip all processing in this method, for now,
   // when the SM state is halted.  This will protect against the use
   // of un-initialized variables.
-  if (stateName()=="Halted") {return;}
-  if (stateName()=="halting") {return;}
+  if (externallyVisibleState()=="Halted") {return;}
+  if (externallyVisibleState()=="halting") {return;}
   // paranoia - also return if serviceManager ptr is null.  Although, to do
   // this right, we would need a lock
   if (sharedResourcesPtr_->_serviceManager.get() == 0) {return;}
@@ -3843,7 +3845,7 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 {
   // @@EM if state is already "failed" then no reason to firefailed again 
   //      (in fact it will cause problems) so bail out !
-  if(stateName() == "Failed") return false;
+  if(externallyVisibleState() == "Failed") return false;
   // @@EM Look for exceptions in the FragmentCollector thread, do a state transition if present
   if(stor::getSMFC_exceptionStatus()) {
     edm::LogError("StorageManager") << "Fatal BURP in FragmentCollector thread detected! \n"
@@ -3972,11 +3974,11 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
 /////////////////////////////////
 //// Get current state name: ////
 /////////////////////////////////
-std::string StorageManager::stateName() const
+std::string StorageManager::externallyVisibleState() const
 {
   if( !sharedResourcesPtr_ ) return "Halted";
   if( !sharedResourcesPtr_->_statisticsReporter ) return "Halted";
-  return sharedResourcesPtr_->_statisticsReporter->currentStateName();
+  return sharedResourcesPtr_->_statisticsReporter->externallyVisibleState();
 }
 
 //////////////////////////////////////////////////////////////////////////

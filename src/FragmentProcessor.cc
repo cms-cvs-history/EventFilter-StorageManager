@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.17 2009/03/20 19:01:46 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.18 2009/03/20 21:30:07 biery Exp $
 
 #include <unistd.h>
 
@@ -11,18 +11,21 @@
 using namespace stor;
 
 
-FragmentProcessor::FragmentProcessor(SharedResourcesPtr sr) :
+FragmentProcessor::FragmentProcessor( SharedResourcesPtr sr,
+                                      WrapperNotifier& wn ) :
   _sharedResources(sr),
   _fragmentStore(),
   _eventDistributor(sr),
   _diskWriter(sr),
+  _wrapperNotifier( wn ),
   _timeout(1),
   _actionIsActive(true),
   _fileCheckIntervalStart(time(0)),
   _fileCheckEventCounter(0)
 {
-  _stateMachine.reset(new StateMachine(&_diskWriter, &_eventDistributor,
-                                       &_fragmentStore, _sharedResources));
+  _stateMachine.reset( new StateMachine( &_diskWriter, &_eventDistributor,
+                                         &_fragmentStore, &_wrapperNotifier,
+                                         _sharedResources ) );
   _stateMachine->initiate();
 }
 

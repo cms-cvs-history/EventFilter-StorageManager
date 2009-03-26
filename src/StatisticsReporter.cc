@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.6 2009/03/23 10:03:03 dshpakov Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.7 2009/03/24 10:25:30 dshpakov Exp $
 
 #include <string>
 #include <sstream>
@@ -22,7 +22,7 @@ _runMonCollection(app),
 _fragMonCollection(app),
 _filesMonCollection(app),
 _doMonitoring(true),
-_currentStateName( "Halted" )
+_externallyVisibleState( "Halted" )
 {}
 
 
@@ -116,19 +116,19 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
 /////////////////////////
 //// Set state name: ////
 /////////////////////////
-void StatisticsReporter::setCurrentStateName( const std::string& n )
+void StatisticsReporter::setExternallyVisibleState( const std::string& n )
 {
   boost::mutex::scoped_lock sl( _state_name_lock );
-  _currentStateName = n;
+  _externallyVisibleState = n;
 }
 
 /////////////////////////
 //// Get state name: ////
 /////////////////////////
-const std::string& StatisticsReporter::currentStateName() const
+const std::string& StatisticsReporter::externallyVisibleState() const
 {
   boost::mutex::scoped_lock sl( _state_name_lock );
-  return _currentStateName;
+  return _externallyVisibleState;
 }
 
 

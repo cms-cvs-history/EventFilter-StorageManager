@@ -16,6 +16,8 @@ Halted::~Halted()
 {
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
+  outermost_context().setExternallyVisibleState( "Halted" );
+  outermost_context().getNotifier()->reportNewState( "Halted" );
 }
 
 string Halted::do_stateName() const

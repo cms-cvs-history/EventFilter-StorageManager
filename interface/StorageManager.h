@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.35 2009/03/24 11:07:42 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.36 2009/03/25 11:16:19 dshpakov Exp $
 */
 
 #include <string>
@@ -27,6 +27,7 @@
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
+#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -149,7 +150,7 @@ namespace stor {
     std::string       reasonForFailedState_;
 
     // Get current state name:
-    std::string stateName() const;
+    std::string externallyVisibleState() const;
 
     // State name for infospace updates:
     xdata::String _xdaq_state_name;
@@ -252,6 +253,9 @@ namespace stor {
 
     // RCMS notifier:
     xdaq2rc::RcmsStateNotifier _rcms_notifier;
+
+    // Wrapper notifier:
+    WrapperNotifier _wrapper_notifier;
 
     std::string sm_cvs_version_;
 
