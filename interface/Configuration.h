@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.6 2009/03/20 17:53:01 mommsen Exp $
+// $Id: Configuration.h,v 1.1.2.7 2009/03/26 15:16:17 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -83,20 +83,18 @@ namespace stor
    * Free function to parse a storage manager configuration string
    * into the appropriate "configuration info" objects.
    */
-  typedef std::vector<EventStreamConfigurationInfo> EvtStrConfList;
-  typedef std::vector<ErrorStreamConfigurationInfo> ErrStrConfList;
   void parseStreamConfiguration(std::string cfgString,
-                                EvtStrConfList& evtCfgList,
-                                ErrStrConfList& errCfgList);
+                                EvtStrConfigList& evtCfgList,
+                                ErrStrConfigList& errCfgList);
 
   /**
    * Class for managing configuration information from the infospace
    * and providing local copies of that information that are updated
    * only at requested times.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/20 17:53:01 $
+   * $Author: biery $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/26 15:16:17 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -168,25 +166,25 @@ namespace stor
      * Sets the current list of event stream configuration info
      * objects.
      */
-    void setCurrentEventStreamConfig(EvtStrConfList cfgList);
+    void setCurrentEventStreamConfig(EvtStrConfigList cfgList);
 
     /**
      * Sets the current list of error stream configuration info
      * objects.
      */
-    void setCurrentErrorStreamConfig(ErrStrConfList cfgList);
+    void setCurrentErrorStreamConfig(ErrStrConfigList cfgList);
 
     /**
      * Retrieves the current list of event stream configuration info
      * objects.
      */
-    EvtStrConfList getCurrentEventStreamConfig() const;
+    EvtStrConfigList getCurrentEventStreamConfig() const;
 
     /**
      * Retrieves the current list of error stream configuration info
      * objects.
      */
-    ErrStrConfList getCurrentErrorStreamConfig() const;
+    ErrStrConfigList getCurrentErrorStreamConfig() const;
 
   private:
 
@@ -249,8 +247,8 @@ namespace stor
     mutable boost::mutex _evtStrCfgMutex;
     mutable boost::mutex _errStrCfgMutex;
 
-    EvtStrConfList _currentEventStreamConfig;
-    ErrStrConfList _currentErrorStreamConfig;
+    EvtStrConfigList _currentEventStreamConfig;
+    ErrStrConfigList _currentErrorStreamConfig;
   };
 
 }

@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.4 2009/03/01 20:36:29 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.5 2009/03/20 10:34:36 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -48,10 +48,10 @@ void DiskWriter::writeEventToStreams(const I2OChain& event)
 }
 
 
-void DiskWriter::configureEventStreams(EventStreamConfigurationInfoList& cfgList)
+void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
 {
   for (
-    EventStreamConfigurationInfoList::iterator it = cfgList.begin(),
+    EvtStrConfigList::iterator it = cfgList.begin(),
       itEnd = cfgList.end();
     it != itEnd;
     ++it
@@ -62,10 +62,10 @@ void DiskWriter::configureEventStreams(EventStreamConfigurationInfoList& cfgList
 }
 
 
-void DiskWriter::configureErrorStreams(ErrorStreamConfigurationInfoList& cfgList)
+void DiskWriter::configureErrorStreams(ErrStrConfigList& cfgList)
 {
   for (
-    ErrorStreamConfigurationInfoList::iterator it = cfgList.begin(),
+    ErrStrConfigList::iterator it = cfgList.begin(),
       itEnd = cfgList.end();
     it != itEnd;
     ++it

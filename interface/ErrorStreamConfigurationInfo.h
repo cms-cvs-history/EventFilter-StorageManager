@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: ErrorStreamConfigurationInfo.h,v 1.1.2.1 2009/03/06 19:17:21 biery Exp $
+// $Id: ErrorStreamConfigurationInfo.h,v 1.1.2.2 2009/03/20 17:53:01 mommsen Exp $
 
 #ifndef ERRORSTREAMCONFIGURATIONINFO_H
 #define ERRORSTREAMCONFIGURATIONINFO_H
@@ -50,6 +50,8 @@ namespace stor
     StreamID _streamId;
 
   };
+
+  typedef std::vector<ErrorStreamConfigurationInfo> ErrStrConfigList;
 
 }
 

@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.6 2009/03/19 17:05:05 mommsen Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.1.2.7 2009/03/20 17:53:01 mommsen Exp $
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
@@ -70,6 +70,8 @@ namespace stor
     StreamID _streamId;
 
   };
+
+  typedef std::vector<EventStreamConfigurationInfo> EvtStrConfigList;
 
 }
 

@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.11 2009/03/20 17:54:52 mommsen Exp $
+// $Id: Configuration.cc,v 1.1.2.12 2009/03/26 15:16:17 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -87,25 +87,25 @@ namespace stor
       }
   }
 
-  void Configuration::setCurrentEventStreamConfig(EvtStrConfList cfgList)
+  void Configuration::setCurrentEventStreamConfig(EvtStrConfigList cfgList)
   {
     boost::mutex::scoped_lock sl(_evtStrCfgMutex);
     _currentEventStreamConfig = cfgList;
   }
 
-  void Configuration::setCurrentErrorStreamConfig(ErrStrConfList cfgList)
+  void Configuration::setCurrentErrorStreamConfig(ErrStrConfigList cfgList)
   {
     boost::mutex::scoped_lock sl(_errStrCfgMutex);
     _currentErrorStreamConfig = cfgList;
   }
 
-  EvtStrConfList Configuration::getCurrentEventStreamConfig() const
+  EvtStrConfigList Configuration::getCurrentEventStreamConfig() const
   {
     boost::mutex::scoped_lock sl(_evtStrCfgMutex);
     return _currentEventStreamConfig;
   }
 
-  ErrStrConfList Configuration::getCurrentErrorStreamConfig() const
+  ErrStrConfigList Configuration::getCurrentErrorStreamConfig() const
   {
     boost::mutex::scoped_lock sl(_errStrCfgMutex);
     return _currentErrorStreamConfig;
@@ -345,8 +345,8 @@ namespace stor
   }
 
   void parseStreamConfiguration(std::string cfgString,
-                                EvtStrConfList& evtCfgList,
-                                ErrStrConfList& errCfgList)
+                                EvtStrConfigList& evtCfgList,
+                                ErrStrConfigList& errCfgList)
   {
     PythonProcessDesc py_pdesc(cfgString.c_str());
     boost::shared_ptr<edm::ProcessDesc> pdesc = py_pdesc.processDesc();

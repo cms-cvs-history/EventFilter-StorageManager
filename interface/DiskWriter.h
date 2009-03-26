@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.6 2009/03/20 10:30:16 mommsen Exp $
+// $Id: DiskWriter.h,v 1.1.2.7 2009/03/20 11:16:43 mommsen Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -23,17 +23,14 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/20 10:30:16 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/20 11:16:43 $
    */
   
   class DiskWriter
   {
   public:
 
-    typedef std::vector<EventStreamConfigurationInfo> EventStreamConfigurationInfoList;
-    typedef std::vector<ErrorStreamConfigurationInfo> ErrorStreamConfigurationInfoList;
-    
 
     DiskWriter(SharedResourcesPtr sr);
 
@@ -46,12 +43,12 @@ namespace stor {
     /**
      * Configures the event streams to be written to disk
      */    
-    void configureEventStreams(EventStreamConfigurationInfoList&);
+    void configureEventStreams(EvtStrConfigList&);
 
     /**
      * Configures the error streams to be written to disk
      */    
-    void configureErrorStreams(ErrorStreamConfigurationInfoList&);
+    void configureErrorStreams(ErrStrConfigList&);
 
     /**
      * Gracefully close all streams
