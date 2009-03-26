@@ -35,6 +35,7 @@ class testEventQueueCollection : public CppUnit::TestFixture
   CPPUNIT_TEST(pop_event_from_non_existing_queue);
   CPPUNIT_TEST(add_and_pop);
   CPPUNIT_TEST(invalid_queueid);
+  CPPUNIT_TEST(clear_all_queues);
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -45,6 +46,7 @@ public:
   void pop_event_from_non_existing_queue();
   void add_and_pop();
   void invalid_queueid();
+  void clear_all_queues();
 
 private:
   // No data members yet.
@@ -259,6 +261,36 @@ testEventQueueCollection::invalid_queueid()
   std::vector<QueueID> stale_queues;
   coll.clearStaleQueues(stale_queues);
   CPPUNIT_ASSERT(stale_queues.empty());
+}
+
+void
+testEventQueueCollection::clear_all_queues()
+{
+  EventQueueCollection coll;
+  QueueID q1 = coll.createQueue(DiscardNew);
+  QueueID q2 = coll.createQueue(DiscardOld);
+  QueueID q3 = coll.createQueue(DiscardOld);
+  QueueID q4 = coll.createQueue(DiscardNew);
+  
+  for (int i = 0; i < 100; ++i)
+    {
+      I2OChain event(allocate_frame_with_sample_header(0,1,1));
+      event.tagForEventConsumer(q1);
+      if (i%2 == 0) event.tagForEventConsumer(q2);
+      if (i%3 == 0) event.tagForEventConsumer(q3);
+      if (i%4 == 0) event.tagForEventConsumer(q4);
+      coll.addEvent(event);
+    }
+  CPPUNIT_ASSERT(!coll.empty(q1));
+  CPPUNIT_ASSERT(!coll.empty(q2));
+  CPPUNIT_ASSERT(!coll.empty(q3));
+  CPPUNIT_ASSERT(!coll.empty(q4));
+  
+  coll.clearQueues();
+  CPPUNIT_ASSERT(coll.empty(q1));
+  CPPUNIT_ASSERT(coll.empty(q2));
+  CPPUNIT_ASSERT(coll.empty(q3));
+  CPPUNIT_ASSERT(coll.empty(q4));
 }
 
 // This macro writes the 'main' for this test.

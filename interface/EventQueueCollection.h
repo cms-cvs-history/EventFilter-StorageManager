@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.5 2009/03/24 15:49:25 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.6 2009/03/25 14:38:23 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/24 15:49:25 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/25 14:38:23 $
    */
   
   class EventQueueCollection
@@ -71,6 +71,11 @@ namespace stor {
        Clear the queue with the given QueueID.
      */
     void clearQueue(QueueID id);
+
+    /**
+       Clear all the contained queues.
+    */
+    void clearQueues();
 
     /**
        Test to see if the queue with the given QueueID is empty.

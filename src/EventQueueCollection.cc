@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.6 2009/03/24 15:49:25 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.7 2009/03/25 21:18:44 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -194,7 +194,16 @@ namespace stor
           // does not return, no break needed
         }
       }
-  } 
+  }
+
+  void
+  EventQueueCollection::clearQueues()
+  {
+    read_lock_t lock_discard_new(_protect_discard_new_queues);
+    read_lock_t lock_discard_old(_protect_discard_old_queues);
+    _discard_new_queues.clear();
+    _discard_old_queues.clear();
+  }
 
   bool
   EventQueueCollection::empty(QueueID id) const
