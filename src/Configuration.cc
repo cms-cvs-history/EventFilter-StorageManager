@@ -1,7 +1,9 @@
-// $Id: Configuration.cc,v 1.1.2.10 2009/03/20 10:34:04 mommsen Exp $
+// $Id: Configuration.cc,v 1.1.2.11 2009/03/20 17:54:52 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
+#include "FWCore/Framework/interface/EventSelector.h"
+#include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
 
 #include <toolbox/net/Utils.h>
 
@@ -83,6 +85,30 @@ namespace stor
               }
           }
       }
+  }
+
+  void Configuration::setCurrentEventStreamConfig(EvtStrConfList cfgList)
+  {
+    boost::mutex::scoped_lock sl(_evtStrCfgMutex);
+    _currentEventStreamConfig = cfgList;
+  }
+
+  void Configuration::setCurrentErrorStreamConfig(ErrStrConfList cfgList)
+  {
+    boost::mutex::scoped_lock sl(_errStrCfgMutex);
+    _currentErrorStreamConfig = cfgList;
+  }
+
+  EvtStrConfList Configuration::getCurrentEventStreamConfig() const
+  {
+    boost::mutex::scoped_lock sl(_evtStrCfgMutex);
+    return _currentEventStreamConfig;
+  }
+
+  ErrStrConfList Configuration::getCurrentErrorStreamConfig() const
+  {
+    boost::mutex::scoped_lock sl(_errStrCfgMutex);
+    return _currentErrorStreamConfig;
   }
 
   void Configuration::setDiskWritingDefaults(unsigned long instanceNumber)
@@ -316,6 +342,79 @@ namespace stor
       {
         _eventServeParamCopy._DQMmaxESEventRate = 0.0;
       }
+  }
+
+  void parseStreamConfiguration(std::string cfgString,
+                                EvtStrConfList& evtCfgList,
+                                ErrStrConfList& errCfgList)
+  {
+    PythonProcessDesc py_pdesc(cfgString.c_str());
+    boost::shared_ptr<edm::ProcessDesc> pdesc = py_pdesc.processDesc();
+    boost::shared_ptr<edm::ParameterSet> smPSet = pdesc->getProcessPSet();
+
+    // loop over each end path
+    size_t streamId = 0;
+    std::vector<std::string> allEndPaths = 
+      smPSet->getParameter<std::vector<std::string> >("@end_paths");
+    for(std::vector<std::string>::iterator endPathIter = allEndPaths.begin();
+        endPathIter != allEndPaths.end(); ++endPathIter) {
+
+      // loop over each element in the end path list (not sure why...)
+      std::vector<std::string> anEndPath =
+        smPSet->getParameter<std::vector<std::string> >((*endPathIter));
+      for(std::vector<std::string>::iterator ep2Iter = anEndPath.begin();
+          ep2Iter != anEndPath.end(); ++ep2Iter) {
+
+        // fetch the end path parameter set
+        edm::ParameterSet endPathPSet =
+          smPSet->getParameter<edm::ParameterSet>((*ep2Iter));
+        if (! endPathPSet.empty()) {
+          std::string mod_type =
+            endPathPSet.getParameter<std::string> ("@module_type");
+          if (mod_type == "EventStreamFileWriter") {
+
+            std::string streamLabel =
+              endPathPSet.getParameter<std::string> ("streamLabel");
+            long long maxFileSize =
+              1048576 * (long long) endPathPSet.getParameter<int> ("maxSize");
+            EventStreamConfigurationInfo::FilterList requestedEvents =
+              edm::EventSelector::getEventSelectionVString(endPathPSet);
+            std::string requestedOMLabel =
+              endPathPSet.getUntrackedParameter<std::string>("SelectHLTOutput",
+                                                             std::string());
+            bool useCompression =
+              endPathPSet.getUntrackedParameter<bool>("use_compression", true);
+            unsigned int compressionLevel =
+              endPathPSet.getUntrackedParameter<int>("compression_level", 1);
+            unsigned int maxEventSize =
+              endPathPSet.getUntrackedParameter<int>("max_event_size", 7000000);
+
+            EventStreamConfigurationInfo cfgInfo(streamLabel,
+                                                 maxFileSize,
+                                                 requestedEvents,
+                                                 requestedOMLabel,
+                                                 useCompression,
+                                                 compressionLevel,
+                                                 maxEventSize);
+            cfgInfo.setStreamId(++streamId);
+            evtCfgList.push_back(cfgInfo);
+          }
+          else if (mod_type == "ErrorStreamFileWriter" ||
+                   mod_type == "FRDStreamFileWriter") {
+
+            std::string streamLabel =
+              endPathPSet.getParameter<std::string> ("streamLabel");
+            long long maxFileSize =
+              1048576 * (long long) endPathPSet.getParameter<int> ("maxSize");
+
+            ErrorStreamConfigurationInfo cfgInfo(streamLabel,
+                                                 maxFileSize);
+            cfgInfo.setStreamId(++streamId);
+            errCfgList.push_back(cfgInfo);
+          }
+        }
+      }
+    }
   }
 
 } // namespace stor

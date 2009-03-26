@@ -1,9 +1,11 @@
-// $Id: Configuration.h,v 1.1.2.5 2009/03/20 10:28:58 mommsen Exp $
+// $Id: Configuration.h,v 1.1.2.6 2009/03/20 17:53:01 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
 #define EventFilter_StorageManager_Configuration_h
 
+#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 
 #include "xdata/InfoSpace.h"
@@ -17,15 +19,9 @@
 namespace stor
 {
   /**
-   * Class for managing configuration information from the infospace
-   * and providing local copies of that information that are updated
-   * only at requested times.
-   *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/20 10:28:58 $
+   * Data structure to hold configuration parameters
+   * that are relevant for writing data to disk.
    */
-
   struct DiskWritingParams
   {
     std::string _streamConfiguration;
@@ -46,6 +42,10 @@ namespace stor
     int _initialSafetyLevel;  // what is this used for?
   };
 
+  /**
+   * Data structure to hold configuration parameters
+   * that are relevant for the processing of DQM histograms.
+   */
   struct DQMProcessingParams
   {
     bool _collateDQM;
@@ -58,9 +58,13 @@ namespace stor
     int _compressionLevelDQM;
   };
 
-  // some of these may go away once we get rid of the event server
+  /**
+   * Data structure to hold configuration parameters
+   * that are relevant for serving events to consumers.
+   */
   struct EventServingParams
   {
+    // some of these may go away once we get rid of the event server
     bool _pushmode2proxy;
     double _maxESEventRate;  // hertz
     double _maxESDataRate;  // MB/sec
@@ -74,6 +78,26 @@ namespace stor
     int _DQMconsumerQueueSize;
     std::string _esSelectedHLTOutputModule;
   };
+
+  /**
+   * Free function to parse a storage manager configuration string
+   * into the appropriate "configuration info" objects.
+   */
+  typedef std::vector<EventStreamConfigurationInfo> EvtStrConfList;
+  typedef std::vector<ErrorStreamConfigurationInfo> ErrStrConfList;
+  void parseStreamConfiguration(std::string cfgString,
+                                EvtStrConfList& evtCfgList,
+                                ErrStrConfList& errCfgList);
+
+  /**
+   * Class for managing configuration information from the infospace
+   * and providing local copies of that information that are updated
+   * only at requested times.
+   *
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/20 17:53:01 $
+   */
 
   class Configuration : public xdata::ActionListener
   {
@@ -140,6 +164,30 @@ namespace stor
      */
     void actionPerformed(xdata::Event& isEvt);
 
+    /**
+     * Sets the current list of event stream configuration info
+     * objects.
+     */
+    void setCurrentEventStreamConfig(EvtStrConfList cfgList);
+
+    /**
+     * Sets the current list of error stream configuration info
+     * objects.
+     */
+    void setCurrentErrorStreamConfig(ErrStrConfList cfgList);
+
+    /**
+     * Retrieves the current list of event stream configuration info
+     * objects.
+     */
+    EvtStrConfList getCurrentEventStreamConfig() const;
+
+    /**
+     * Retrieves the current list of error stream configuration info
+     * objects.
+     */
+    ErrStrConfList getCurrentErrorStreamConfig() const;
+
   private:
 
     void setDiskWritingDefaults(unsigned long instanceNumber);
@@ -196,6 +244,13 @@ namespace stor
     xdata::Integer _readyTimeDQM;
     xdata::Boolean _useCompressionDQM;
     xdata::Integer _compressionLevelDQM;
+
+
+    mutable boost::mutex _evtStrCfgMutex;
+    mutable boost::mutex _errStrCfgMutex;
+
+    EvtStrConfList _currentEventStreamConfig;
+    ErrStrConfList _currentErrorStreamConfig;
   };
 
 }
