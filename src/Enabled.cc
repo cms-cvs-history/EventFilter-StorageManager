@@ -1,5 +1,4 @@
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
-#include "EventFilter/StorageManager/interface/Notifier.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
