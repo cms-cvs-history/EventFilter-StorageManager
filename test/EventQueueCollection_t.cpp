@@ -20,6 +20,7 @@ using stor::EventQueueCollection;
 using stor::I2OChain;
 using stor::QueueID;
 using stor::testhelper::allocate_frame_with_sample_header;
+using stor::testhelper::outstanding_bytes;
 
 using stor::enquing_policy::DiscardOld;
 using stor::enquing_policy::DiscardNew;
@@ -36,6 +37,7 @@ class testEventQueueCollection : public CppUnit::TestFixture
   CPPUNIT_TEST(add_and_pop);
   CPPUNIT_TEST(invalid_queueid);
   CPPUNIT_TEST(clear_all_queues);
+  CPPUNIT_TEST(remove_all_queues);
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -47,6 +49,7 @@ public:
   void add_and_pop();
   void invalid_queueid();
   void clear_all_queues();
+  void remove_all_queues();
 
 private:
   // No data members yet.
@@ -148,6 +151,7 @@ create_queues_helper(boost::shared_ptr<EventQueueCollection> pcoll)
 void
 add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
 {
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
   EventQueueCollection& coll = *pcoll;
   // We want events to go bad very rapidly.
   double expiration_interval = 1.0;
@@ -179,6 +183,7 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
       if (i % 2 == 0) event.tagForEventConsumer(q2);
       if (i % 3 == 0) event.tagForEventConsumer(q3);
       coll.addEvent(event);
+      CPPUNIT_ASSERT(outstanding_bytes() != 0);
     }
   // None of our queues should be empty; all should be full.
   CPPUNIT_ASSERT(!coll.empty(q1));
@@ -216,11 +221,14 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
+
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
 void
 testEventQueueCollection::invalid_queueid()
 {
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
   EventQueueCollection coll;
   // Make sure none of the interface functions cause a failure. Many
   // do not return any status we can test; we just run the function
@@ -240,6 +248,7 @@ testEventQueueCollection::invalid_queueid()
     event.tagForEventConsumer(id2);
     CPPUNIT_ASSERT(!event.empty());
     coll.addEvent(event);
+    CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   // Trying to pop an event off an nonexistent queue should give an
   // empty event.
@@ -261,16 +270,19 @@ testEventQueueCollection::invalid_queueid()
   std::vector<QueueID> stale_queues;
   coll.clearStaleQueues(stale_queues);
   CPPUNIT_ASSERT(stale_queues.empty());
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
 void
 testEventQueueCollection::clear_all_queues()
 {
+    CPPUNIT_ASSERT(outstanding_bytes() == 0);
   EventQueueCollection coll;
   QueueID q1 = coll.createQueue(DiscardNew);
   QueueID q2 = coll.createQueue(DiscardOld);
   QueueID q3 = coll.createQueue(DiscardOld);
   QueueID q4 = coll.createQueue(DiscardNew);
+  CPPUNIT_ASSERT(coll.size() == 4);
   
   for (int i = 0; i < 100; ++i)
     {
@@ -280,6 +292,7 @@ testEventQueueCollection::clear_all_queues()
       if (i%3 == 0) event.tagForEventConsumer(q3);
       if (i%4 == 0) event.tagForEventConsumer(q4);
       coll.addEvent(event);
+      CPPUNIT_ASSERT(outstanding_bytes() != 0);
     }
   CPPUNIT_ASSERT(!coll.empty(q1));
   CPPUNIT_ASSERT(!coll.empty(q2));
@@ -287,11 +300,28 @@ testEventQueueCollection::clear_all_queues()
   CPPUNIT_ASSERT(!coll.empty(q4));
   
   coll.clearQueues();
+  CPPUNIT_ASSERT(coll.size() == 4);
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
   CPPUNIT_ASSERT(coll.empty(q4));
+    CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
+
+void
+testEventQueueCollection::remove_all_queues()
+{
+  EventQueueCollection coll;
+  QueueID q1 = coll.createQueue(DiscardNew);
+  QueueID q2 = coll.createQueue(DiscardOld);
+  QueueID q3 = coll.createQueue(DiscardOld);
+  QueueID q4 = coll.createQueue(DiscardNew);
+
+  CPPUNIT_ASSERT(coll.size() == 4);
+  coll.removeQueues();
+  CPPUNIT_ASSERT(coll.size() == 0);  
+}
+
 
 // This macro writes the 'main' for this test.
 CPPUNIT_TEST_SUITE_REGISTRATION(testEventQueueCollection);

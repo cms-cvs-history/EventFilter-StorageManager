@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.7 2009/03/25 21:18:44 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.8 2009/03/26 01:27:51 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -7,6 +7,13 @@
 
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "boost/bind.hpp"
+
+
+/**
+   N.B.: To avoid deadlock, in any member function that must obtain a
+   lock on both the discard_new_queues and on the discard_old_queues,
+   always do the locking in that order.
+ */
 
 namespace stor
 {
@@ -119,6 +126,15 @@ namespace stor
     return result;
   }
 
+  void
+  EventQueueCollection::removeQueues()
+  {
+    write_lock_t lock_discard_new(_protect_discard_new_queues);
+    write_lock_t lock_discard_old(_protect_discard_old_queues);
+    _discard_new_queues.clear();
+    _discard_old_queues.clear();    
+  }
+
   size_t
   EventQueueCollection::size() const
   {
@@ -201,8 +217,11 @@ namespace stor
   {
     read_lock_t lock_discard_new(_protect_discard_new_queues);
     read_lock_t lock_discard_old(_protect_discard_old_queues);
-    _discard_new_queues.clear();
-    _discard_old_queues.clear();
+    edm::for_all(_discard_new_queues, 
+                 boost::bind(&ExpirableEventQueueDiscardNew::clear, _1));
+    edm::for_all(_discard_old_queues, 
+                 boost::bind(&ExpirableEventQueueDiscardOld::clear, _1));
+
   }
 
   bool

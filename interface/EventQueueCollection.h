@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.6 2009/03/25 14:38:23 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.7 2009/03/26 01:27:50 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/25 14:38:23 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/26 01:27:50 $
    */
   
   class EventQueueCollection
@@ -49,6 +49,12 @@ namespace stor {
                         size_t max = std::numeric_limits<size_t>::max(),
                         utils::duration_t interval = 120.0,
                         utils::time_point_t now = utils::getCurrentTime());
+
+    /**
+       Remove all contained queues. Note that this has the effect of
+       clearing all the queues as well.
+    */
+    void removeQueues();
 
     /**
        Return the number of queues in the collection.
