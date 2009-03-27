@@ -1,3 +1,5 @@
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -12,13 +14,48 @@ Enabled::Enabled( my_context c ): my_base(c)
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
 
+  SharedResourcesPtr sharedResources =
+    outermost_context().getSharedResources();
+
   // clear the INIT message collection at begin run
-  outermost_context().getSharedResources()->_initMsgCollection->clear();
+  sharedResources->_initMsgCollection->clear();
+
+  // convert the SM configuration string into ConfigInfo objects
+  // and store them for later use
+  // !!! This should probably be in the Ready entry action.
+  // !!! It is here to avoid accessing the PythonProcessPSet code
+  // !!! in the old code and the new code at the same time
+  DiskWritingParams dwParams =
+    sharedResources->_configuration->getDiskWritingParams();
+  EvtStrConfigList evtCfgList;
+  ErrStrConfigList errCfgList;
+  parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
+                           errCfgList);
+  sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
+  sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
 
   // disk writing begin-run processing
-  if ( outermost_context().getSharedResources()->_serviceManager.get() != 0 )
+  if ( sharedResources->_serviceManager.get() != 0 )
     {
-      outermost_context().getSharedResources()->_serviceManager->start();
+      sharedResources->_serviceManager->start();
+    }
+  if ( sharedResources->_diskWriter.get() != 0)
+    {
+      EventDistributor* ed = outermost_context().getEventDistributor();
+
+      sharedResources->_diskWriter->destroyStreams();
+      ed->clearStreams();
+
+      EvtStrConfigList evtCfgList =
+        sharedResources->_configuration->getCurrentEventStreamConfig();
+      ErrStrConfigList errCfgList =
+        sharedResources->_configuration->getCurrentErrorStreamConfig();
+
+      sharedResources->_diskWriter->configureEventStreams(evtCfgList);
+      sharedResources->_diskWriter->configureErrorStreams(errCfgList);
+
+      ed->registerEventStreams(evtCfgList);
+      ed->registerErrorStreams(errCfgList);
     }
 }
 
