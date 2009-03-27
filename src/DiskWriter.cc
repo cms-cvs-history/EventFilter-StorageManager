@@ -1,4 +1,6 @@
-// $Id: DiskWriter.cc,v 1.1.2.5 2009/03/20 10:34:36 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.6 2009/03/26 15:35:47 biery Exp $
+
+#include "toolbox/task/WorkLoopFactory.h"
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -9,11 +11,38 @@ using namespace stor;
 
 DiskWriter::DiskWriter(SharedResourcesPtr sr) :
 _sharedResources(sr),
-_timeout(1000)
+_timeout(1),
+_actionIsActive(true)
 {}
 
 
-void DiskWriter::writeNextEvent()
+void DiskWriter::startWorkLoop(std::string applicationIdentifier)
+{
+  try
+    {
+      _writingWL = toolbox::task::getWorkLoopFactory()->
+        getWorkLoop( applicationIdentifier + "DiskWriter",
+                     "waiting" );
+
+      if ( ! _writingWL->isActive() )
+        {
+          toolbox::task::ActionSignature* processAction = 
+            toolbox::task::bind(this, &DiskWriter::writeNextEvent, 
+                                applicationIdentifier + "WriteNextEvent");
+          _writingWL->submit(processAction);
+
+          _writingWL->activate();
+        }
+    }
+  catch (xcept::Exception& e)
+    {
+      std::string msg = "Failed to start workloop 'DiskWriter' with 'writeNextEvent'.";
+    XCEPT_RETHROW(stor::exception::DiskWriting, msg, e);
+  }
+}
+
+
+bool DiskWriter::writeNextEvent(toolbox::task::WorkLoop*)
 {
   I2OChain event;
   boost::shared_ptr<StreamQueue> sq = _sharedResources->_streamQueue;
@@ -21,11 +50,15 @@ void DiskWriter::writeNextEvent()
   {
     writeEventToStreams(event);
   }
+
+  return _actionIsActive;
 }
 
 
 void DiskWriter::writeEventToStreams(const I2OChain& event)
 {
+  boost::mutex::scoped_lock sl(_streamConfigMutex);
+
   std::vector<StreamID> streams = event.getStreamTags();
   for (
     std::vector<StreamID>::iterator it = streams.begin(), itEnd = streams.end();
@@ -50,6 +83,8 @@ void DiskWriter::writeEventToStreams(const I2OChain& event)
 
 void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
 {
+  boost::mutex::scoped_lock sl(_streamConfigMutex);
+
   for (
     EvtStrConfigList::iterator it = cfgList.begin(),
       itEnd = cfgList.end();
@@ -64,6 +99,8 @@ void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
 
 void DiskWriter::configureErrorStreams(ErrStrConfigList& cfgList)
 {
+  boost::mutex::scoped_lock sl(_streamConfigMutex);
+
   for (
     ErrStrConfigList::iterator it = cfgList.begin(),
       itEnd = cfgList.end();
@@ -98,6 +135,8 @@ void DiskWriter::makeErrorStream(ErrorStreamConfigurationInfo& streamCfg)
 
 void DiskWriter::destroyStreams()
 {
+  boost::mutex::scoped_lock sl(_streamConfigMutex);
+
   _streamHandlers.clear();
 }
 
@@ -107,8 +146,6 @@ const bool DiskWriter::empty() const
   // TODO: actual implementation of logic: all events are written
   return true;
 }
-
-
 
 
 /// emacs configuration

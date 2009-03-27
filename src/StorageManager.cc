@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.56 2009/03/25 17:24:04 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.57 2009/03/26 10:52:03 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -118,7 +118,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.56 2009/03/25 17:24:04 dshpakov Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.57 2009/03/26 10:52:03 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -247,9 +247,19 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   sharedResourcesPtr_->_smRBSenderList = &smrbsenders_;
 
+  // 26-Mar-2009, KAB - it seems a little circular to be storing the
+  // disk writer in the SharedResources while passing the SharedResources
+  // to the DiskWriter constructor.  We may want to revisit this once
+  // we agree as a group whether we want the DiskWriter to be as
+  // shared resource.
+  sharedResourcesPtr_->_diskWriter.reset(new DiskWriter(sharedResourcesPtr_));
+
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
+
+  sharedResourcesPtr_->_diskWriter->
+    startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
 
   fragmentProcessor_ = new FragmentProcessor( sharedResourcesPtr_,
                                               _wrapper_notifier );
