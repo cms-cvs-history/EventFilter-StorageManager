@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.6 2009/03/20 17:54:30 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.7 2009/03/27 01:30:09 biery Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -41,6 +41,7 @@ void EventFileHandler::writeHeader(InitMsgSharedPtr view)
 
 void EventFileHandler::writeEvent(const I2OChain& event)
 {
+#if 0
   edm::StreamerFileWriterEventParams evtParams;
 
   event.hltTriggerBits(evtParams.hltBits);
@@ -61,6 +62,7 @@ void EventFileHandler::writeEvent(const I2OChain& event)
 
   _fileRecord->fileSize.addSample(static_cast<uint32_t>(event.totalDataSize()));
   _lastEntry = utils::getCurrentTime();
+#endif
 }
 
 
