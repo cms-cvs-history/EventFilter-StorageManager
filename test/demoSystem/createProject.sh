@@ -73,34 +73,21 @@ cvs co -r $tagName IOPool/Streamer
 #cvs co -r $tagName FWCore/Modules
 #cvs co -r $tagName IORawData/DaqSource
 
-# 09-Feb-2009 - using the SM refdev01 "work" branch with 3_0_0_pre8
-if [ "$tagName" == "CMSSW_3_0_0_pre8" ]
+# 27-Mar-2009 - using the SM refdev01 "work" branch with 3_0_0_pre9
+if [ "$tagName" == "CMSSW_3_0_0_pre9" ]
 then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V01-08-08 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
+  cvs update -dR -r V05-06-08-01 IOPool/Streamer
 fi
 
-# 23-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre7
-if [ "$tagName" == "CMSSW_3_0_0_pre7" ]
-then
-  cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -dR -r V01-08-08 EventFilter/SMProxyServer
-  cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
-fi
-
-# 22-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre5
+# 27-Mar-2009 - using the SM refdev01 "work" branch with 3_0_0_pre5
 if [ "$tagName" == "CMSSW_3_0_0_pre5" ]
 then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
-fi
-
-# 02-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre3
-if [ "$tagName" == "CMSSW_3_0_0_pre3" ]
-then
-  cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -r 1.13 IOPool/Streamer/interface/HLTInfo.h
+  cvs update -dR -r V05-06-08-01 IOPool/Streamer
 fi
 
 # 02-Jan-2009 - using the SM refdev01 "work" branch with 2_1_11

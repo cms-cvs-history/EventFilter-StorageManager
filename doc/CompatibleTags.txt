@@ -7,23 +7,14 @@ For development in the refdev01_scratch_branch of the
 EventFilter/StorageManager package, please use the following tags
 with the specified releases:
 
-CMSSW_3_0_0_pre8:
+CMSSW_3_0_0_pre9:
  - EventFilter/SMProxyServer V01-08-08
  - EventFilter/ResourceBroker V00-12-02
-
-CMSSW_3_0_0_pre7:
- - EventFilter/SMProxyServer V01-08-08
- - EventFilter/ResourceBroker V00-12-02
-
-CMSSW_3_0_0_pre6:
- - EventFilter/ResourceBroker V00-12-02
+ - IOPool/Streamer V05-06-08-01
 
 CMSSW_3_0_0_pre5:
  - EventFilter/ResourceBroker V00-12-02
-
-CMSSW_3_0_0_pre3:
- - IOPool/Streamer/interface/HLTInfo.h 1.13
- - EventFilter/ResourceBroker V00-12-02
+ - IOPool/Streamer V05-06-08-01
 
 ----------------------------------------
 
@@ -33,4 +24,4 @@ package, please use the following tags with the specified releases:
 CMSSW_3_0_0_pre9:
  - EventFilter/SMProxyServer V01-08-08
  - EventFilter/ResourceBroker V00-12-02
- - IOPool/Streamer V05-06-06
+ - IOPool/Streamer V05-06-08-01
