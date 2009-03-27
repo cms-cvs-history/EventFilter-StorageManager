@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.3 2009/03/20 15:16:57 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.1.2.4 2009/03/20 17:54:30 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -98,13 +98,15 @@ const std::string StreamHandler::getBaseFilePath(const uint32& runNumber)
 
 const std::string StreamHandler::getFileSystem(const uint32& runNumber)
 {
-  unsigned int fileSystemNumber = 0;
+  // if the number of logical disks is not specified, don't
+  // add a file system subdir to the path
+  if (_diskWritingParams._nLogicalDisk <= 0) {return "";}
 
-  if (_diskWritingParams._nLogicalDisk > 0)
-    fileSystemNumber = (runNumber
-      + atoi(_diskWritingParams._smInstanceString.c_str())
-      + _fileHandlers.size())
-      % _diskWritingParams._nLogicalDisk;
+  unsigned int fileSystemNumber =
+    (runNumber
+     + atoi(_diskWritingParams._smInstanceString.c_str())
+     + _fileHandlers.size())
+    % _diskWritingParams._nLogicalDisk;
 
   std::ostringstream fileSystem;
   fileSystem << "/" << std::setfill('0') << std::setw(2) << fileSystemNumber; 
@@ -121,6 +123,7 @@ const std::string StreamHandler::getCoreFileName
 {
   std::ostringstream coreFileName;
   coreFileName << _diskWritingParams._setupLabel
+               << "NEW" // KAB extremely temporary
     << "." << std::setfill('0') << std::setw(8) << runNumber
     << "." << std::setfill('0') << std::setw(4) << lumiSection
     << "." << streamLabel()
