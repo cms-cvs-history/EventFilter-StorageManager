@@ -20,42 +20,45 @@ Enabled::Enabled( my_context c ): my_base(c)
   // clear the INIT message collection at begin run
   sharedResources->_initMsgCollection->clear();
 
-  // convert the SM configuration string into ConfigInfo objects
-  // and store them for later use
-  // !!! This should probably be in the Ready entry action.
-  // !!! It is here to avoid accessing the PythonProcessPSet code
-  // !!! in the old code and the new code at the same time
-  DiskWritingParams dwParams =
-    sharedResources->_configuration->getDiskWritingParams();
-  EvtStrConfigList evtCfgList;
-  ErrStrConfigList errCfgList;
-  parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
-                           errCfgList);
-  sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
-  sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
-
-  // disk writing begin-run processing
-  if ( sharedResources->_serviceManager.get() != 0 )
+  if ( sharedResources->_configuration.get() != 0 )
     {
-      sharedResources->_serviceManager->start();
-    }
-  if ( sharedResources->_diskWriter.get() != 0)
-    {
-      EventDistributor* ed = outermost_context().getEventDistributor();
+      // convert the SM configuration string into ConfigInfo objects
+      // and store them for later use
+      // !!! This should probably be in the Ready entry action.
+      // !!! It is here to avoid accessing the PythonProcessPSet code
+      // !!! in the old code and the new code at the same time
+      DiskWritingParams dwParams =
+        sharedResources->_configuration->getDiskWritingParams();
+      EvtStrConfigList evtCfgList;
+      ErrStrConfigList errCfgList;
+      parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
+                               errCfgList);
+      sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
+      sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
 
-      sharedResources->_diskWriter->destroyStreams();
-      ed->clearStreams();
+      // disk writing begin-run processing
+      if ( sharedResources->_serviceManager.get() != 0 )
+        {
+          sharedResources->_serviceManager->start();
+        }
+      if ( sharedResources->_diskWriter.get() != 0)
+        {
+          EventDistributor* ed = outermost_context().getEventDistributor();
 
-      EvtStrConfigList evtCfgList =
-        sharedResources->_configuration->getCurrentEventStreamConfig();
-      ErrStrConfigList errCfgList =
-        sharedResources->_configuration->getCurrentErrorStreamConfig();
+          sharedResources->_diskWriter->destroyStreams();
+          ed->clearStreams();
 
-      sharedResources->_diskWriter->configureEventStreams(evtCfgList);
-      sharedResources->_diskWriter->configureErrorStreams(errCfgList);
+          EvtStrConfigList evtCfgList =
+            sharedResources->_configuration->getCurrentEventStreamConfig();
+          ErrStrConfigList errCfgList =
+            sharedResources->_configuration->getCurrentErrorStreamConfig();
 
-      ed->registerEventStreams(evtCfgList);
-      ed->registerErrorStreams(errCfgList);
+          sharedResources->_diskWriter->configureEventStreams(evtCfgList);
+          sharedResources->_diskWriter->configureErrorStreams(errCfgList);
+
+          ed->registerEventStreams(evtCfgList);
+          ed->registerErrorStreams(errCfgList);
+        }
     }
 }
 

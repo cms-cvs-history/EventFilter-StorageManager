@@ -15,7 +15,10 @@ Ready::Ready( my_context c ): my_base(c)
     outermost_context().getSharedResources();
 
   // update all configuration parameters
-  sharedResources->_configuration->updateAllParams();
+  if ( sharedResources->_configuration.get() != 0 )
+    {
+      sharedResources->_configuration->updateAllParams();
+    }
 }
 
 Ready::~Ready()
