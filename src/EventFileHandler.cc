@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.5 2009/03/20 15:16:57 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.6 2009/03/20 17:54:30 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -41,7 +41,24 @@ void EventFileHandler::writeHeader(InitMsgSharedPtr view)
 
 void EventFileHandler::writeEvent(const I2OChain& event)
 {
-  // Fix me: use correct API: _writer.doOutputEvent(view);
+  edm::StreamerFileWriterEventParams evtParams;
+
+  event.hltTriggerBits(evtParams.hltBits);
+  evtParams.headerPtr = (char*) event.headerLocation();
+  evtParams.headerSize = event.headerSize();
+
+  unsigned int fragCount = event.fragmentCount();
+  evtParams.fragmentCount = fragCount;
+
+  for (unsigned int idx = 0; idx < fragCount; ++idx)
+    {
+      evtParams.fragmentIndex = idx;
+      evtParams.dataPtr = (char*) event.dataLocation(idx);
+      evtParams.dataSize = event.dataSize(idx);
+
+      _writer.doOutputEventFragment(evtParams);
+    }
+
   _fileRecord->fileSize.addSample(static_cast<uint32_t>(event.totalDataSize()));
   _lastEntry = utils::getCurrentTime();
 }
