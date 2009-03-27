@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.33 2009/03/20 19:01:46 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.34 2009/03/26 15:35:47 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -35,8 +35,9 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
 
   if( ioc.isTaggedForAnyStream() )
     {
-      // enable this once we have the DiskWriter working...
-      //_sharedResources->_streamQueue->enq_wait( ioc );
+#ifdef NEW_DW_TEST
+      _sharedResources->_streamQueue->enq_wait( ioc );
+#endif
     }
 
 }

@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.7 2009/03/27 01:30:09 biery Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.8 2009/03/27 14:46:18 biery Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -36,12 +36,19 @@ void EventFileHandler::writeHeader(InitMsgSharedPtr view)
   // Fix me: use correct API:  _writer.doOutputHeader(view);
   //_fileRecord->fileSize.addSample(view.size());
   // Fix me: the header increments the event count
+
+#ifdef NEW_DW_TEST
+  InitMsgView initView(&(*view)[0]);
+  _writer.doOutputHeader(initView);
+  _fileRecord->fileSize.addSample(view->size());
+  _lastEntry = utils::getCurrentTime();
+#endif
 }
 
 
 void EventFileHandler::writeEvent(const I2OChain& event)
 {
-#if 0
+#ifdef NEW_DW_TEST
   edm::StreamerFileWriterEventParams evtParams;
 
   event.hltTriggerBits(evtParams.hltBits);
