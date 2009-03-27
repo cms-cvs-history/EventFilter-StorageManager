@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.7 2009/03/18 09:13:05 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.1 2009/03/18 18:35:53 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -20,7 +20,7 @@ MonitorCollection(app, "Files")
 FilesMonitorCollection::FileRecordPtr
 FilesMonitorCollection::getNewFileRecord(double timeWindowForRecentResults)
 {
-  boost::shared_ptr<FileRecord> fileRecord;
+  boost::shared_ptr<FileRecord> fileRecord(new FilesMonitorCollection::FileRecord());
   _fileRecords.push_back(fileRecord);
   return fileRecord;
 }
