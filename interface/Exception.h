@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.7 2009/03/19 11:53:18 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.8 2009/03/20 21:30:06 biery Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -92,6 +92,11 @@ XCEPT_DEFINE_EXCEPTION(stor, UnknownStreamId)
  * Exception raised in case of a fragment processing error
  */
 XCEPT_DEFINE_EXCEPTION(stor, FragmentProcessing)
+
+/**
+ * Exception raised in case of a disk writing error
+ */
+XCEPT_DEFINE_EXCEPTION(stor, DiskWriting)
 
 
 #endif // _storagemanager_Exception_h_
