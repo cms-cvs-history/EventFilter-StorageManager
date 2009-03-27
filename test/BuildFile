@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.26 2009/03/20 20:35:59 biery Exp $
+# $Id: BuildFile,v 1.30.16.27 2009/03/24 15:49:25 paterno Exp $
 
 <environment>
   <use name=boost>
@@ -102,10 +102,12 @@
     <use name=cppunit>
   </bin>
 
-
   <bin file=EventQueueCollection_t.cpp>
     <use name=cppunit>
   </bin>
 
+  <bin file=Sleep_t.cpp>
+    <use name=cppunit>
+  </bin>
 
 </environment>

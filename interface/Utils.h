@@ -1,10 +1,10 @@
-// $Id: Utils.h,v 1.1.2.4 2009/03/19 09:05:21 mommsen Exp $
+// $Id: Utils.h,v 1.1.2.5 2009/03/24 14:36:10 paterno Exp $
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
 
 #include <string>
-#include <sys/time.h>
+
 
 namespace xdaq
 {
@@ -19,9 +19,9 @@ namespace stor {
     /**
      * Collection of utility functions used in the storage manager
      *
-     * $Author: mommsen $
-     * $Revision: 1.1.2.4 $
-     * $Date: 2009/03/19 09:05:21 $
+     * $Author: paterno $
+     * $Revision: 1.1.2.5 $
+     * $Date: 2009/03/24 14:36:10 $
      */
 
     /**
@@ -47,6 +47,16 @@ namespace stor {
        system.
     */
     time_point_t getCurrentTime();
+
+    /**
+       Sleep for at least the given duration. Note that the underlying
+       system will round the interval up to an integer multiple of the
+       system's sleep resolution. (The underlying implementation
+       relies upon nanosleep, so see documentation for nanosleep for
+       details). Negative intervals are not allowed, and result in an
+       error (returning -1, and no sleeping).
+     */
+    int sleep(duration_t interval);
 
     /**
        Converts a time_point_t into a string.

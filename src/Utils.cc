@@ -1,11 +1,12 @@
 /**
- * $Id: Utils.cc,v 1.1.2.3 2009/03/19 09:04:17 mommsen Exp $
+ * $Id: Utils.cc,v 1.1.2.4 2009/03/24 14:36:10 paterno Exp $
  */
 
 #include "EventFilter/StorageManager/interface/Utils.h"
 
 #include <iomanip>
 #include <sstream>
+
 #include <sys/time.h>
 
 #include "xdaq/ApplicationDescriptor.h"
@@ -40,6 +41,16 @@ namespace stor
       if (gettimeofday(&now, 0) == 0) timeval_to_timepoint(now, result);
       return result;
     }
+
+    int sleep(duration_t interval)
+    {
+      if (interval < 0) return -1;
+      timespec rqtp;
+      rqtp.tv_sec = static_cast<time_t>(interval); // truncate
+      rqtp.tv_nsec = static_cast<long>((interval-rqtp.tv_sec)*1000000);
+      return nanosleep(&rqtp, 0);
+    }
+    
     
     std::string timeStamp(time_point_t)
     {
