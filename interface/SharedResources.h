@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.9 2009/03/20 10:26:32 mommsen Exp $
+// $Id: SharedResources.h,v 1.1.2.10 2009/03/20 19:01:46 biery Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -7,14 +7,13 @@
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
+#include "EventFilter/StorageManager/interface/DiscardManager.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
+#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/RegistrationQueue.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
-
-#include "EventFilter/StorageManager/interface/DiscardManager.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
 #include "EventFilter/StorageManager/interface/DQMEventServer.h"
@@ -24,12 +23,14 @@
 
 namespace stor {
 
+  class DiskWriter;
+
   /**
    * Container for shared resources.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/03/20 10:26:32 $
+   * $Author: biery $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/03/20 19:01:46 $
    */
 
   struct SharedResources
@@ -44,6 +45,7 @@ namespace stor {
 
     // other
     boost::shared_ptr<Configuration> _configuration;
+    boost::shared_ptr<DiskWriter> _diskWriter;
     boost::shared_ptr<StatisticsReporter> _statisticsReporter;
 
     // temporary?
