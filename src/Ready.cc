@@ -1,3 +1,4 @@
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -9,6 +10,12 @@ Ready::Ready( my_context c ): my_base(c)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
+
+  SharedResourcesPtr sharedResources =
+    outermost_context().getSharedResources();
+
+  // update all configuration parameters
+  sharedResources->_configuration->updateAllParams();
 }
 
 Ready::~Ready()
