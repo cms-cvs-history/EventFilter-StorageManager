@@ -14,7 +14,7 @@ CMSSW_3_0_0_pre9:
 
 CMSSW_3_0_0_pre5:
  - EventFilter/ResourceBroker V00-12-02
- - IOPool/Streamer V05-06-08-01
+ - IOPool/Streamer V05-06-02-01
 
 ----------------------------------------
 

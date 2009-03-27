@@ -12,7 +12,7 @@ set BASE_DIR = `pwd`
 
 # check for valid arguments
 if ($#argv < 1 || $1 == "-h") then
-    echo "Usage: createProject.csh <CMSSW_release_label_or_tag>"
+    echo "Usage: createRWProject.csh <CMSSW_release_label_or_tag>"
     exit
 endif
 
@@ -93,10 +93,10 @@ endif
 if ($tagName == "CMSSW_3_0_0_pre5") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
-  cvs update -dR -r V05-06-08-01 IOPool/Streamer
+  cvs update -dR -r V05-06-02-01 IOPool/Streamer
 endif
 
-# 02-Jan-2009 - using the SM refdev01 work branch with 2_1_11
+# 02-Jan-2009 - using the SM refdev01 "work" branch with 2_1_11
 if ($tagName == "CMSSW_2_1_11") then
   cvs update -dR -r CMSSW_3_0_0_pre2 EventFilter/AutoBU
   cvs co -r CMSSW_3_0_0_pre2 EventFilter/Modules
@@ -121,4 +121,4 @@ echo "Applying development-specific patches..."
 ../../bin/applyDevelopmentPatches.pl
 
 echo "Building..."
-scramv1 build
+scramv1 build -j 8
