@@ -3,7 +3,7 @@
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/MockNotifier.h"
+#include "EventFilter/StorageManager/test/MockNotifier.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
