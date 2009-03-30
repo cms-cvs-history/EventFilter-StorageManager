@@ -1,12 +1,22 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.9 2009/02/12 15:11:38 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.10 2009/02/18 14:59:14 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
 #include <math.h>
 
 using namespace stor;
+using stor::utils::duration_t;
 
-MonitoredQuantity::MonitoredQuantity(double timeWindowForRecentResults):
+namespace {
+  const utils::duration_t EXPECTED_CALCULATION_INTERVAL = 1.0; // seconds
+}
+
+duration_t MonitoredQuantity::ExpectedCalculationInterval()
+{
+  return EXPECTED_CALCULATION_INTERVAL;
+}
+
+MonitoredQuantity::MonitoredQuantity(duration_t timeWindowForRecentResults):
   _enabled(true)
 {
   setNewTimeWindowForRecentResults(timeWindowForRecentResults);
@@ -169,7 +179,7 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
   double latestValueSumOfSquares;
   double latestValueMin;
   double latestValueMax;
-  double latestDuration;
+  duration_t latestDuration;
   {
     boost::mutex::scoped_lock sl(_accumulationMutex);
 

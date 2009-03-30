@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.11 2009/02/16 15:52:25 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.12 2009/02/18 14:58:47 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -18,19 +18,18 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/02/16 15:52:25 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/02/18 14:58:47 $
    */
 
   class MonitoredQuantity
   {
     
   public:
-
-    static const int EXPECTED_CALCULATION_INTERVAL = 1;  // seconds
-
     enum DataSetType { FULL = 0,      // the full data set (all samples)
                        RECENT = 1 };  // recent data only
+
+    static utils::duration_t ExpectedCalculationInterval();
 
     explicit MonitoredQuantity(double timeWindowForRecentResults = 10.0);
 
@@ -124,7 +123,8 @@ namespace stor
      * will be called once per interval specified by
      * EXPECTED_CALCULATION_INTERVAL.
      */
-    void calculateStatistics(double currentTime = utils::getCurrentTime());
+    void calculateStatistics(utils::time_point_t currentTime = 
+                             utils::getCurrentTime());
 
     /**
      * Resets the monitor (zeroes out all counters and restarts the
@@ -147,7 +147,7 @@ namespace stor
      * Specifies a new time interval to be used when calculating
      * "recent" statistics.
      */
-    void setNewTimeWindowForRecentResults(double interval);
+    void setNewTimeWindowForRecentResults(utils::duration_t interval);
 
     /**
      * Tests whether the monitor is currently enabled.
@@ -162,7 +162,7 @@ namespace stor
      * a getDuration(RECENT) call to determine the actual recent
      * time window.)
      */
-    double getTimeWindowForRecentResults() const {
+    utils::duration_t getTimeWindowForRecentResults() const {
       return _intervalForRecentStats;
     }
 
@@ -172,7 +172,7 @@ namespace stor
     MonitoredQuantity(MonitoredQuantity const&);
     MonitoredQuantity& operator=(MonitoredQuantity const&);
 
-    double _lastCalculationTime;
+    utils::time_point_t _lastCalculationTime;
     double _lastSampleValue;
     long long _workingSampleCount;
     double _workingValueSum;
@@ -188,7 +188,7 @@ namespace stor
     std::vector<double> _binValueSumOfSquares;
     std::vector<double> _binValueMin;
     std::vector<double> _binValueMax;
-    std::vector<double> _binDuration;
+    std::vector<utils::duration_t> _binDuration;
 
     long long _fullSampleCount;
     double _fullSampleRate;
@@ -199,7 +199,7 @@ namespace stor
     double _fullValueMin;
     double _fullValueMax;
     double _fullValueRate;
-    double _fullDuration;
+    utils::duration_t _fullDuration;
 
     long long _recentSampleCount;
     double _recentSampleRate;
@@ -210,12 +210,12 @@ namespace stor
     double _recentValueMin;
     double _recentValueMax;
     double _recentValueRate;
-    double _recentDuration;
+    utils::duration_t _recentDuration;
 
     mutable boost::mutex _resultsMutex;
 
     bool _enabled;
-    double _intervalForRecentStats;  // seconds
+    utils::duration_t _intervalForRecentStats;  // seconds
 
   };
 
