@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.7 2009/03/24 10:25:30 dshpakov Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.8 2009/03/26 10:52:03 dshpakov Exp $
 
 #include <string>
 #include <sstream>
@@ -67,7 +67,7 @@ StatisticsReporter::~StatisticsReporter()
 
 bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
 {
-  ::sleep(MonitoredQuantity::EXPECTED_CALCULATION_INTERVAL);
+  utils::sleep(MonitoredQuantity::ExpectedCalculationInterval());
 
   std::string errorMsg = "Failed to update the monitoring information";
 

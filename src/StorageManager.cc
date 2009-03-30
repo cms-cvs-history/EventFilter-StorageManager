@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.57 2009/03/26 10:52:03 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.58 2009/03/27 01:55:53 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -118,7 +118,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.57 2009/03/26 10:52:03 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.58 2009/03/27 01:55:53 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3866,7 +3866,7 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
     return false; // stop monitoring workloop after going to failed state
   }
 
-  ::sleep(10);
+  stor::utils::sleep(10.0);
   if(sharedResourcesPtr_->_serviceManager.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
      sharedResourcesPtr_->_initMsgCollection->size() > 0) {
