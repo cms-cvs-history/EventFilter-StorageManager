@@ -93,7 +93,7 @@ void testMonitoredQuantity::testResults
 )
 {
   // we don't expect an exact agreement due to rounding precision
-  const double smallValue = 1e-5;
+  const double smallValue = 1e-05;;
 
   CPPUNIT_ASSERT(_quantity.getSampleCount(type) == cycleCount * sampleCount);
   
