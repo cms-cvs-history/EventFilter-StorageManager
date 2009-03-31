@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: WrapperNotifier.h,v 1.1.2.1 2009/03/25 13:22:35 dshpakov Exp $
+// $Id: WrapperNotifier.h,v 1.1.2.2 2009/03/31 11:58:00 dshpakov Exp $
 
 #ifndef WRAPPERNOTIFIER_H
 #define WRAPPERNOTIFIER_H
@@ -8,33 +8,38 @@
 
 #include "EventFilter/StorageManager/interface/Notifier.h"
 
+#include "xdaq/Application.h"
 #include "xdaq2rc/RcmsStateNotifier.h"
 
-class xdata::InfoSpace;
 
 namespace stor
 {
 
   class WrapperNotifier: public Notifier
   {
-
+    
   public:
 
-    WrapperNotifier( xdaq2rc::RcmsStateNotifier& rcmsNotifier );
-
-    ~WrapperNotifier() {}
-
-    void setupInfospace( xdata::InfoSpace* );
-
+    WrapperNotifier( xdaq::Application* app );
+    
     void reportNewState( const std::string& stateName );
+
 
   private:
 
     xdaq2rc::RcmsStateNotifier _rcms_notifier;
-    xdata::InfoSpace* _infospace;
 
   };
 
 }
 
 #endif // WRAPPERNOTIFIER_H
+
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

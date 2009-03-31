@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.64 2009/03/31 19:29:48 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.63 2009/03/31 16:31:40 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
-#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
@@ -117,11 +117,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   storedEvents_(0), 
   closedFiles_(0), 
   openFiles_(0), 
-  _rcms_notifier( this->getApplicationLogger(),
-                  this->getApplicationDescriptor(),
-                  this->getApplicationContext() ),
-  _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.64 2009/03/31 19:29:48 mommsen Exp $ $Name: refdev01_scratch_branch $")
+  _wrapper_notifier( this ),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.59 2009/03/30 14:40:30 paterno Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -142,8 +139,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ispace->fireItemAvailable("fileSize",      &fileSize_);
   ispace->fireItemAvailable("namesOfStream",      &namesOfStream_);
   ispace->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
-
-  _wrapper_notifier.setupInfospace( ispace );
 
   ispace->addItemRetrieveListener("closedFiles", this);
 
