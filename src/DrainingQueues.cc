@@ -47,6 +47,8 @@ DrainingQueues::do_noFragmentToProcess() const
 bool
 DrainingQueues::allQueuesAndWorkersAreEmpty() const
 {
+  SharedResourcesPtr sharedResources = outermost_context().getSharedResources();
+
   // the order is important here - upstream entities first,
   // followed by more downstream entities
 
@@ -57,18 +59,11 @@ DrainingQueues::allQueuesAndWorkersAreEmpty() const
   FragmentStore *fs = outermost_context().getFragmentStore();
   if ( ! fs->empty() ) return false;
 
-  //<queue collection> *qCollection = outermost_context.<getQueueCollection>
-  //boost::shared_ptr<StreamQueue> streamQueue =
-  //    <queue collection>.getStreamQueue();
-  //if ( ! streamQueue->empty() ) return false;
+  if ( ! sharedResources->_streamQueue->empty() ) return false;
 
-  DiskWriter *ds = outermost_context().getDiskWriter();
-  if ( ! ds->empty() ) return false;
-
-  //<queue collection> *qCollection = outermost_context.<getQueueCollection>
-  //boost::shared_ptr<DQMEventQueue> dqmEventQueue =
-  //    <queue collection>.getDQMEventQueue();
-  //if ( ! dqmEventQueue->empty() ) return false;
+  if ( ! sharedResources->_diskWriter->empty() ) return false;
+  
+  //  if ( ! sharedResources->_dqmEventQueue->empty() ) return false;
 
   //DQMEventProcessor *dqmEP = outermost_context.getDQMEventProcessor();
   //if ( ! dqmEP->empty() ) return false;
