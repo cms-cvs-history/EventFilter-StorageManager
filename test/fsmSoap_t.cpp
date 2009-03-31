@@ -40,15 +40,18 @@ namespace stor {
             FragmentStore fs;
             SharedResourcesPtr sr;
             sr.reset(new SharedResources());
+            sr->_initMsgCollection.reset(new InitMsgCollection());
             sr->_dqmServiceManager.reset(new DQMServiceManager());
-            boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
-            sr->_commandQueue = cmdQueue;
-
+            sr->_commandQueue.reset(new CommandQueue(32));
+            sr->_fragmentQueue.reset(new FragmentQueue(32));
+            sr->_streamQueue.reset(new StreamQueue(32));
+            
+            sr->_diskWriter.reset(new DiskWriter(this, sr));
+            
             EventDistributor ed(sr);
-            DiskWriter dw(sr);
             MockNotifier mn;
 
-            stateMachine = new StateMachine( &dw, &ed, &fs, &mn, sr );
+            stateMachine = new StateMachine( &ed, &fs, &mn, sr );
             stateMachine->initiate();
             
 	    xoap::bind(

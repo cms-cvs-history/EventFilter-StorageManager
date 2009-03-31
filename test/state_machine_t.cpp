@@ -10,9 +10,11 @@
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/test/MockApplication.h"
 #include "EventFilter/StorageManager/test/MockNotifier.h"
 
 using namespace std;
@@ -162,15 +164,19 @@ int main()
   sr.reset(new SharedResources());
   sr->_initMsgCollection.reset(new InitMsgCollection());
   sr->_dqmServiceManager.reset(new DQMServiceManager());
-  boost::shared_ptr<CommandQueue> cmdQueue(new CommandQueue(32));
-  sr->_commandQueue = cmdQueue;
+  sr->_commandQueue.reset(new CommandQueue(32));
+  sr->_fragmentQueue.reset(new FragmentQueue(32));
+  sr->_streamQueue.reset(new StreamQueue(32));
 
-  DiskWriter dw(sr);
+  MockApplicationStub* stub(new MockApplicationStub());
+  MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
+  sr->_diskWriter.reset(new DiskWriter(app, sr));
+
   EventDistributor ed(sr);
 
   MockNotifier mn;
 
-  StateMachine m( &dw, &ed, &fs, &mn, sr );
+  StateMachine m( &ed, &fs, &mn, sr );
 
   EventList elist;
 
@@ -331,5 +337,7 @@ int main()
   processEvent( m, stMachEvent );
   checkState( m, "Failed" );
   m.terminate();
+
+  delete app;
 
 }
