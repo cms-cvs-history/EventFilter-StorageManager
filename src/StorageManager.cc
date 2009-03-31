@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.61 2009/03/31 11:58:00 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.62 2009/03/31 14:48:33 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -120,7 +120,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.61 2009/03/31 11:58:00 dshpakov Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.62 2009/03/31 14:48:33 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3401,7 +3401,6 @@ void StorageManager::setupFlashList()
   is->addItemRetrieveListener("namesOfOutMod", this);
   is->addItemRetrieveListener("storedVolume",         this);
   is->addItemRetrieveListener("memoryUsed",           this);
-  is->addItemRetrieveListener("stateName",            this);
   //  is->addItemRetrieveListener("progressMarker",       this);
   is->addItemRetrieveListener("connectedRBs",         this);
   //----------------------------------------------------------------------------
