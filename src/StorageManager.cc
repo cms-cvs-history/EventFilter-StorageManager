@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.62 2009/03/31 14:48:33 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.63 2009/03/31 16:31:40 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -120,7 +120,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.62 2009/03/31 14:48:33 dshpakov Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.63 2009/03/31 16:31:40 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -244,14 +244,13 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // to the DiskWriter constructor.  We may want to revisit this once
   // we agree as a group whether we want the DiskWriter to be as
   // shared resource.
-  sharedResourcesPtr_->_diskWriter.reset(new DiskWriter(sharedResourcesPtr_));
+  sharedResourcesPtr_->_diskWriter.reset(new DiskWriter(this, sharedResourcesPtr_));
 
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
 
-  sharedResourcesPtr_->_diskWriter->
-    startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
+  sharedResourcesPtr_->_diskWriter->startWorkLoop();
 
   fragmentProcessor_ = new FragmentProcessor( sharedResourcesPtr_,
                                               _wrapper_notifier );
