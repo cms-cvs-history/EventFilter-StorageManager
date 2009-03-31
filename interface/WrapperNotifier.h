@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: WrapperNotifier.h,v 1.1.2.1 2009/03/25 13:22:35 dshpakov Exp $
 
 #ifndef WRAPPERNOTIFIER_H
 #define WRAPPERNOTIFIER_H
@@ -10,6 +10,8 @@
 
 #include "xdaq2rc/RcmsStateNotifier.h"
 
+class xdata::InfoSpace;
+
 namespace stor
 {
 
@@ -18,20 +20,18 @@ namespace stor
 
   public:
 
-    WrapperNotifier( xdaq2rc::RcmsStateNotifier& rcmsNotifier ):
-      _rcms_notifier( rcmsNotifier ) {}
+    WrapperNotifier( xdaq2rc::RcmsStateNotifier& rcmsNotifier );
 
     ~WrapperNotifier() {}
 
-    void reportNewState( const std::string& stateName )
-    {
-     _rcms_notifier.stateChanged( stateName,
-				  std::string( "StorageManager is now " ) + stateName );
-    }
+    void setupInfospace( xdata::InfoSpace* );
+
+    void reportNewState( const std::string& stateName );
 
   private:
 
     xdaq2rc::RcmsStateNotifier _rcms_notifier;
+    xdata::InfoSpace* _infospace;
 
   };
 
