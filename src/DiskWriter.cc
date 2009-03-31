@@ -1,6 +1,7 @@
-// $Id: DiskWriter.cc,v 1.1.2.6 2009/03/26 15:35:47 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.7 2009/03/27 01:55:53 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
+#include "xcept/tools.h"
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -9,40 +10,99 @@
 
 using namespace stor;
 
-DiskWriter::DiskWriter(SharedResourcesPtr sr) :
+DiskWriter::DiskWriter(xdaq::Application *app, SharedResourcesPtr sr) :
+_app(app),
 _sharedResources(sr),
 _timeout(1),
 _actionIsActive(true)
 {}
 
 
-void DiskWriter::startWorkLoop(std::string applicationIdentifier)
+DiskWriter::~DiskWriter()
+{
+  // Stop the activity
+  _actionIsActive = false;
+
+  // Cancel the workloop (will wait until the action has finished)
+  _writingWL->cancel();
+}
+
+
+void DiskWriter::startWorkLoop()
 {
   try
+  {
+    std::string identifier = utils::getIdentifier(_app->getApplicationDescriptor());
+    
+    _writingWL = toolbox::task::getWorkLoopFactory()->
+      getWorkLoop( identifier + "DiskWriter",
+        "waiting" );
+    
+    if ( ! _writingWL->isActive() )
     {
-      _writingWL = toolbox::task::getWorkLoopFactory()->
-        getWorkLoop( applicationIdentifier + "DiskWriter",
-                     "waiting" );
-
-      if ( ! _writingWL->isActive() )
-        {
-          toolbox::task::ActionSignature* processAction = 
-            toolbox::task::bind(this, &DiskWriter::writeNextEvent, 
-                                applicationIdentifier + "WriteNextEvent");
-          _writingWL->submit(processAction);
-
-          _writingWL->activate();
-        }
+      toolbox::task::ActionSignature* processAction = 
+        toolbox::task::bind(this, &DiskWriter::writeAction, 
+          identifier + "WriteNextEvent");
+      _writingWL->submit(processAction);
+      
+      _writingWL->activate();
     }
+  }
   catch (xcept::Exception& e)
-    {
-      std::string msg = "Failed to start workloop 'DiskWriter' with 'writeNextEvent'.";
+  {
+    std::string msg = "Failed to start workloop 'DiskWriter' with 'writeNextEvent'.";
     XCEPT_RETHROW(stor::exception::DiskWriting, msg, e);
   }
 }
 
 
-bool DiskWriter::writeNextEvent(toolbox::task::WorkLoop*)
+bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
+{
+  std::string errorMsg = "Failed to write an event";
+  
+  try
+  {
+    writeNextEvent();
+  }
+  catch(xcept::Exception &e)
+  {
+    LOG4CPLUS_ERROR(_app->getApplicationLogger(),
+      errorMsg << xcept::stdformat_exception_history(e));
+
+    XCEPT_DECLARE_NESTED(stor::exception::DiskWriting,
+      sentinelException, errorMsg, e);
+    _app->notifyQualified("error", sentinelException);
+    // How to go to failed state?
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+
+    LOG4CPLUS_ERROR(_app->getApplicationLogger(),
+      errorMsg);
+    
+    XCEPT_DECLARE(stor::exception::DiskWriting,
+      sentinelException, errorMsg);
+    _app->notifyQualified("error", sentinelException);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+
+    LOG4CPLUS_ERROR(_app->getApplicationLogger(),
+      errorMsg);
+    
+    XCEPT_DECLARE(stor::exception::DiskWriting,
+      sentinelException, errorMsg);
+    _app->notifyQualified("error", sentinelException);
+  }
+
+  return _actionIsActive;
+}
+
+
+void DiskWriter::writeNextEvent()
 {
   I2OChain event;
   boost::shared_ptr<StreamQueue> sq = _sharedResources->_streamQueue;
@@ -50,8 +110,6 @@ bool DiskWriter::writeNextEvent(toolbox::task::WorkLoop*)
   {
     writeEventToStreams(event);
   }
-
-  return _actionIsActive;
 }
 
 
