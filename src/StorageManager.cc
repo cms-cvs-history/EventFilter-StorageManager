@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.63 2009/03/31 16:31:40 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.64 2009/03/31 19:29:48 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -7,6 +7,7 @@
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
@@ -120,7 +121,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.63 2009/03/31 16:31:40 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.64 2009/03/31 19:29:48 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
