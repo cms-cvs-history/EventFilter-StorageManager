@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.36 2009/03/25 11:16:19 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.37 2009/03/26 10:52:03 dshpakov Exp $
 */
 
 #include <string>
@@ -20,7 +20,6 @@
 
 #include "EventFilter/Utilities/interface/Exception.h"
 #include "EventFilter/Utilities/interface/Css.h"
-#include "EventFilter/Utilities/interface/RunBase.h"
 
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
 #include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
@@ -60,8 +59,7 @@ namespace xgi {
 namespace stor {
 
   class StorageManager: public xdaq::Application, 
-                        public xdata::ActionListener,
-                        public evf::RunBase
+                        public xdata::ActionListener
   {
    public:
     StorageManager(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
@@ -118,6 +116,8 @@ namespace stor {
     void configureAction();
     void stopAction();
     void haltAction();
+
+    unsigned int getRunNumber() const;
 
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);

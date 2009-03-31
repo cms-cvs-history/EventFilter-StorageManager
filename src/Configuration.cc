@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.13 2009/03/26 15:35:47 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.14 2009/03/27 01:28:15 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -13,7 +13,9 @@ namespace stor
 {
   Configuration::Configuration(xdata::InfoSpace* infoSpace,
                                unsigned long instanceNumber) :
-    _streamConfigurationChanged(false)
+    _streamConfigurationChanged(false),
+    _infospaceRunNumber(0),
+    _localRunNumber(0)
   {
     // default values are used to initialize infospace values,
     // so they should be set first
@@ -51,6 +53,12 @@ namespace stor
     updateLocalDiskWritingData();
     updateLocalDQMProcessingData();
     updateLocalEventServingData();
+    updateLocalRunNumber();
+  }
+
+  unsigned int Configuration::getRunNumber() const
+  {
+    return _localRunNumber;
   }
 
   void Configuration::updateDiskWritingParams()
@@ -255,6 +263,7 @@ namespace stor
       _eventServeParamCopy._esSelectedHLTOutputModule;
 
     // bind the local xdata variables to the infospace
+    infoSpace->fireItemAvailable( "runNumber", &_infospaceRunNumber );
     infoSpace->fireItemAvailable("pushMode2Proxy", &_pushmode2proxy);
     infoSpace->fireItemAvailable("maxESEventRate",&_maxESEventRate);
     infoSpace->fireItemAvailable("maxESDataRate",&_maxESDataRate);
@@ -342,6 +351,11 @@ namespace stor
       {
         _eventServeParamCopy._DQMmaxESEventRate = 0.0;
       }
+  }
+
+  void Configuration::updateLocalRunNumber()
+  {
+    _localRunNumber = _infospaceRunNumber;
   }
 
   void parseStreamConfiguration(std::string cfgString,

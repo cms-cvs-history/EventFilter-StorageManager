@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.7 2009/03/26 15:16:17 biery Exp $
+// $Id: Configuration.h,v 1.1.2.8 2009/03/26 15:35:46 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -11,6 +11,7 @@
 #include "xdata/InfoSpace.h"
 #include "xdata/String.h"
 #include "xdata/Integer.h"
+#include "xdata/UnsignedInteger32.h"
 #include "xdata/Double.h"
 #include "xdata/Boolean.h"
 
@@ -93,8 +94,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/26 15:16:17 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/03/26 15:35:46 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -186,6 +187,11 @@ namespace stor
      */
     ErrStrConfigList getCurrentErrorStreamConfig() const;
 
+    /**
+     * Get run number:
+     */
+    unsigned int getRunNumber() const;
+
   private:
 
     void setDiskWritingDefaults(unsigned long instanceNumber);
@@ -199,6 +205,7 @@ namespace stor
     void updateLocalDiskWritingData();
     void updateLocalDQMProcessingData();
     void updateLocalEventServingData();
+    void updateLocalRunNumber();
 
     struct DiskWritingParams _diskWriteParamCopy;
     struct DQMProcessingParams _dqmParamCopy;
@@ -208,6 +215,9 @@ namespace stor
 
     std::string _previousStreamCfg;
     bool _streamConfigurationChanged;
+
+    xdata::UnsignedInteger32 _infospaceRunNumber;
+    unsigned int _localRunNumber;
 
     xdata::String _streamConfiguration;
     xdata::String _fileName;

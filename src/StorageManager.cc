@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.58 2009/03/27 01:55:53 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.59 2009/03/30 14:40:30 paterno Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -118,7 +118,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.58 2009/03/27 01:55:53 biery Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.59 2009/03/30 14:40:30 paterno Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -130,7 +130,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
-  ispace->fireItemAvailable("runNumber",     &runNumber_);
   ispace->fireItemAvailable("stateName",     &_xdaq_state_name );
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
@@ -385,13 +384,16 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   }
 
   // should only do this test if the first data frame from each FU?
-  // check if run number is the same as that in Run configuration, complain otherwise !!!
-  // this->runNumber_ comes from the RunBase class that StorageManager inherits from
-  if(msg->runID != runNumber_)
+  // check if run number is the same as that in Run configuration,
+  // complain otherwise !!!
+  //
+  // "The run number check should move somewhere else once we know the
+  // right place to put it" (Kurt).
+  if(msg->runID != getRunNumber())
     {
       LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
 		      << msg->runID << " From " << msg->hltURL
-                      << " Different from Run Number from configuration = " << runNumber_);
+                      << " Different from Run Number from configuration = " << getRunNumber());
     }
 
   // for data sender list update
@@ -3381,7 +3383,6 @@ void StorageManager::setupFlashList()
 
   is->fireItemAvailable("class",                &class_);
   is->fireItemAvailable("instance",             &instance_);
-  is->fireItemAvailable("runNumber",            &runNumber_);
   is->fireItemAvailable("url",                  &url_);
   // Body
   // should this be here also??
@@ -3400,7 +3401,6 @@ void StorageManager::setupFlashList()
   //----------------------------------------------------------------------------
   is->addItemRetrieveListener("class",                this);
   is->addItemRetrieveListener("instance",             this);
-  is->addItemRetrieveListener("runNumber",            this);
   is->addItemRetrieveListener("url",                  this);
   // Body
   // should this be here also??
@@ -3989,6 +3989,16 @@ std::string StorageManager::externallyVisibleState() const
   if( !sharedResourcesPtr_ ) return "Halted";
   if( !sharedResourcesPtr_->_statisticsReporter ) return "Halted";
   return sharedResourcesPtr_->_statisticsReporter->externallyVisibleState();
+}
+
+////////////////////////////////////////////
+//// Get run number from Configuration: ////
+////////////////////////////////////////////
+unsigned int StorageManager::getRunNumber() const
+{
+  if( !sharedResourcesPtr_ ) return 0;
+  if( !sharedResourcesPtr_->_configuration ) return 0;
+  return sharedResourcesPtr_->_configuration->getRunNumber();
 }
 
 //////////////////////////////////////////////////////////////////////////
