@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.60 2009/03/31 11:31:55 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.61 2009/03/31 11:58:00 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -120,11 +120,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                   this->getApplicationDescriptor(),
                   this->getApplicationContext() ),
   _wrapper_notifier( _rcms_notifier ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.60 2009/03/31 11:31:55 dshpakov Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.61 2009/03/31 11:58:00 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
-
-  _xdaq_state_name = "Halted";
 
   ah_   = new edm::AssertHandler();
 
@@ -132,7 +130,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
-  ispace->fireItemAvailable("stateName",     &_xdaq_state_name );
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
   ispace->fireItemAvailable("storedEvents",  &storedEvents_);
   ispace->fireItemAvailable("closedFiles",   &closedFiles_);
@@ -3388,7 +3385,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
-  is->fireItemAvailable("stateName",            &_xdaq_state_name );
   //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
 

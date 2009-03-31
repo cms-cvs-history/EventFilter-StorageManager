@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.5 2009/03/24 10:25:29 dshpakov Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.6 2009/03/26 10:52:03 dshpakov Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -6,6 +6,7 @@
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
 #include "xdaq/Application.h"
+#include "xdata/String.h"
 
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
@@ -24,8 +25,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/24 10:25:29 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/03/26 10:52:03 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -85,6 +86,10 @@ namespace stor {
 
     std::string _externallyVisibleState;
     mutable boost::mutex _state_name_lock;
+
+    // State name for infospace updates:
+    xdata::String _xdaq_state_name;
+    void reportStateName();
 
   };
   

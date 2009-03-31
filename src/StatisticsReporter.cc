@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.8 2009/03/26 10:52:03 dshpakov Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.9 2009/03/30 14:40:08 paterno Exp $
 
 #include <string>
 #include <sstream>
@@ -22,8 +22,12 @@ _runMonCollection(app),
 _fragMonCollection(app),
 _filesMonCollection(app),
 _doMonitoring(true),
-_externallyVisibleState( "Halted" )
-{}
+_externallyVisibleState( "Halted" ),
+_xdaq_state_name( "Halted" )
+{
+  xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
+  ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
+}
 
 
 void StatisticsReporter::startWorkLoop()
@@ -76,6 +80,7 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _runMonCollection.update();
     _fragMonCollection.update();
     _filesMonCollection.update();
+    reportStateName();
   }
   catch(xcept::Exception &e)
   {
@@ -129,6 +134,32 @@ const std::string& StatisticsReporter::externallyVisibleState() const
 {
   boost::mutex::scoped_lock sl( _state_name_lock );
   return _externallyVisibleState;
+}
+
+/////////////////////////////////////////
+//// Update state name in infospace: ////
+/////////////////////////////////////////
+void StatisticsReporter::reportStateName()
+{
+
+  xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
+
+  const std::string emsg =
+    "Failed to update state name in infospace " + ispace->name();
+
+  try
+    {
+      ispace->lock();
+      _xdaq_state_name =
+        static_cast<xdata::String>( _externallyVisibleState );
+      ispace->unlock();
+    }
+  catch( ... )
+    {
+      ispace->unlock();
+      XCEPT_RAISE( stor::exception::Monitoring, emsg );
+    }
+
 }
 
 
