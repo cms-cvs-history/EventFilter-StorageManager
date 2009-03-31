@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.8 2009/03/26 15:35:46 biery Exp $
+// $Id: DiskWriter.h,v 1.1.2.9 2009/03/27 01:55:52 biery Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -27,8 +27,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: biery $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/03/26 15:35:46 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/03/27 01:55:52 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -36,14 +36,16 @@ namespace stor {
   public:
 
 
-    DiskWriter(SharedResourcesPtr sr);
+    DiskWriter(xdaq::Application*, SharedResourcesPtr sr);
+
+    ~DiskWriter();
 
 
     /**
      * The workloop action taking the next event from the StreamQueue
      * and writing it to disk
      */    
-    bool writeNextEvent(toolbox::task::WorkLoop*);
+    bool writeAction(toolbox::task::WorkLoop*);
 
     /**
      * Configures the event streams to be written to disk
@@ -68,7 +70,7 @@ namespace stor {
     /**
      * Creates and starts the disk writing workloop
      */
-    void startWorkLoop(std::string applicationIdentifier);
+    void startWorkLoop();
 
 
   private:
@@ -77,6 +79,11 @@ namespace stor {
     DiskWriter(DiskWriter const&);
     DiskWriter& operator=(DiskWriter const&);
 
+
+    /**
+     * Takes the event from the stream queue
+     */    
+    void writeNextEvent();
 
     /**
      * Writes the event to the appropriate streams
@@ -93,6 +100,7 @@ namespace stor {
      */    
     void makeErrorStream(ErrorStreamConfigurationInfo&);
 
+    xdaq::Application* _app;
     SharedResourcesPtr _sharedResources;
 
     const unsigned int _timeout; // Timeout in seconds on stream queue
