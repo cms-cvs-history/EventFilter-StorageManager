@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.11 2009/03/30 14:40:49 paterno Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.12 2009/03/30 19:11:45 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -17,7 +17,8 @@ duration_t MonitoredQuantity::ExpectedCalculationInterval()
 }
 
 MonitoredQuantity::MonitoredQuantity(duration_t timeWindowForRecentResults):
-  _enabled(true)
+_lastSampleValue(0),
+_enabled(true)
 {
   setNewTimeWindowForRecentResults(timeWindowForRecentResults);
 }
