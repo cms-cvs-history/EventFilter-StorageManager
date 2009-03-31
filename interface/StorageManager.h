@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.39 2009/03/31 11:58:00 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.40 2009/03/31 14:48:32 dshpakov Exp $
 */
 
 #include <string>
@@ -246,8 +246,7 @@ namespace stor {
 
     boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
 
-    // Notifier and wrapper:
-    xdaq2rc::RcmsStateNotifier _rcms_notifier;
+    // Notifier wrapper:
     WrapperNotifier _wrapper_notifier;
 
     std::string sm_cvs_version_;
