@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.14 2009/03/20 21:30:06 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.15 2009/03/26 10:52:03 dshpakov Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -8,7 +8,6 @@
 
 #include "boost/shared_ptr.hpp"
 
-#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -27,9 +26,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/03/20 21:30:06 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/03/26 10:52:03 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -85,13 +84,12 @@ namespace stor {
     boost::shared_ptr<StateMachine>    _stateMachine;
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;
-    DiskWriter                         _diskWriter;
-    WrapperNotifier _wrapperNotifier;
+    WrapperNotifier                    _wrapperNotifier;
 
     const unsigned int                 _timeout; // Waiting time in microseconds.
     bool                               _actionIsActive;
 
-    toolbox::task::WorkLoop* _processWL;      
+    toolbox::task::WorkLoop*           _processWL;      
 
     // temporary!
     void closeDiskFilesIfNeeded();

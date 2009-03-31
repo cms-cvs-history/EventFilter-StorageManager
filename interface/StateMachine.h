@@ -118,8 +118,7 @@ namespace stor
 
   public:
 
-    StateMachine( DiskWriter* dw,
-                  EventDistributor* ed,
+    StateMachine( EventDistributor* ed,
                   FragmentStore* fs,
                   Notifier* n,
                   SharedResourcesPtr sr );
@@ -136,7 +135,6 @@ namespace stor
 
     void dumpHistory( std::ostream& ) const;
 
-    DiskWriter* getDiskWriter() const { return _diskWriter; }
     EventDistributor* getEventDistributor() const { return _eventDistributor; }
     FragmentStore* getFragmentStore() const { return _fragmentStore; }
     Notifier* getNotifier() { return _notifier; }

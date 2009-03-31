@@ -13,13 +13,11 @@ using namespace std;
 
 StateMachine::StateMachine
 ( 
-  DiskWriter* dw,
   EventDistributor* ed,
   FragmentStore* fs,
   Notifier* n,
   SharedResourcesPtr sr
 ):
-_diskWriter(dw),
 _eventDistributor(ed),
 _fragmentStore(fs),
 _notifier(n),
