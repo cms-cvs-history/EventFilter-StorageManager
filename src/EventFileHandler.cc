@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.8 2009/03/27 14:46:18 biery Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.9 2009/03/27 18:56:33 biery Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -81,6 +81,13 @@ void EventFileHandler::closeFile()
   moveFileToClosed(true);
   writeToSummaryCatalog();
   updateDatabase();
+}
+
+
+const int EventFileHandler::events() const
+{
+  int eventCount = _fileRecord->fileSize.getSampleCount();
+  return (eventCount > 0 ? eventCount - 1 : 0);
 }
 
 

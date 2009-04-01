@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.h,v 1.1.2.4 2009/03/20 10:30:16 mommsen Exp $
+// $Id: EventFileHandler.h,v 1.1.2.5 2009/03/20 17:53:53 mommsen Exp $
 
 #ifndef StorageManager_EventFileHandler_h
 #define StorageManager_EventFileHandler_h
@@ -15,8 +15,8 @@ namespace stor {
    * Represents a file holding event data
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/20 10:30:16 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/20 17:53:53 $
    */
   
   class EventFileHandler : public FileHandler
@@ -36,7 +36,14 @@ namespace stor {
      * Write the event contained in the I2OChain
      */
     virtual void writeEvent(const I2OChain&);
-    
+ 
+    /**
+     * Return the number of events in the file.
+     * The event fileRecord has one entry more than than events
+     * as the Init message is counted, too.
+     */
+    const int events() const;
+     
     //      void   report(std::ostream &os, int indentation) const;
     
   private:
