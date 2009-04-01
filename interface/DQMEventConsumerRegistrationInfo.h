@@ -1,86 +1,77 @@
 // -*- c++ -*-
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.6 2009/03/10 21:19:38 biery Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.7 2009/03/12 03:46:17 paterno Exp $
 
 #ifndef DQMEVENTCONSUMERREGISTRATIONINFO_H
 #define DQMEVENTCONSUMERREGISTRATIONINFO_H
 
+#include <iosfwd>
 #include <string>
-#include <iostream>
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
+#include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
 
 namespace stor
 {
   /**
    * Holds the registration information for a DQM event consumer.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/12 03:46:17 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
   {
-
   public:
 
     /**
      * Constructs an instance from the specified registration information.
      */
-    DQMEventConsumerRegistrationInfo( const std::string& sourceURL,
-				      const std::string& consumerName,
-				      unsigned int headerRetryInterval, // seconds
-				      double maxEventRequestRate, // Hz
-				      const std::string& topLevelFolderName,
-				      enquing_policy::PolicyTag policy,
-				      size_t maxQueueSize):
-      _sourceURL( sourceURL ),
-      _consumerName( consumerName ),
-      _headerRetryInterval( headerRetryInterval ),
-      _maxEventRequestRate( maxEventRequestRate ),
-      _topLevelFolderName( topLevelFolderName ),
-      _policy( policy ),
-      _maxQueueSize( maxQueueSize )
-    {}
+    DQMEventConsumerRegistrationInfo(const std::string& sourceURL,
+				     const std::string& consumerName,
+				     unsigned int headerRetryInterval,// seconds
+				     double maxEventRequestRate, // Hz
+				     const std::string& topLevelFolderName,
+				     QueueID queueId,
+				     size_t maxQueueSize);
 
     // Destructor:
-    ~DQMEventConsumerRegistrationInfo() {}
+    ~DQMEventConsumerRegistrationInfo();
 
-    // Accessors:
-    const std::string& sourceURL() const { return _sourceURL; }
-    const std::string& consumerName() const { return _consumerName; }
-    unsigned int headerRetryInterval() const { return _headerRetryInterval; }
-    double maxEventRequestRate() const { return _maxEventRequestRate; }
+    // Additional accessors:
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
-    const QueueID& queueId() const { return _queueId; }
-    const enquing_policy::PolicyTag& queuePolicy() const { return _policy; }
     size_t maxQueueSize() const { return _maxQueueSize; }
 
-    // Set queue Id:
-    void setQueueId( QueueID qid ) { _queueId = qid; }
-
-    /**
-     * Registers the consumer represented by this registration with
-     * the specified EventDistributor.
-     */
-    void registerMe(EventDistributor*);
-
     // Output:
-    friend std::ostream& operator <<
-      ( std::ostream&, const DQMEventConsumerRegistrationInfo& );
+    std::ostream& write(std::ostream& os) const;
+
+    // Implementation of the Template Method pattern.
+    virtual void do_registerMe(EventDistributor*);
+    virtual QueueID do_queueId() const;
+    virtual std::string do_sourceURL() const;
+    virtual std::string do_consumerName() const;
+    virtual unsigned int do_headerRetryInterval() const;
+    virtual double       do_maxEventRequestRate() const;
 
   private:
 
-    std::string _sourceURL;
-    std::string _consumerName;
-    unsigned int _headerRetryInterval;
-    double _maxEventRequestRate;
+    CommonRegistrationInfo _common;
+
     std::string _topLevelFolderName;
-    QueueID _queueId;
-    enquing_policy::PolicyTag _policy;
     size_t _maxQueueSize;
 
   };
+
+  /**
+     Print the given DQMEventConsumerRegistrationInfo to the given
+     stream.
+  */
+  inline
+  std::ostream& operator<<(std::ostream& os, 
+			   const DQMEventConsumerRegistrationInfo& ri)
+  {
+    return ri.write(os);
+  }
   
 } // namespace stor
 
