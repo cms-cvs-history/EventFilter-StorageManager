@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.8 2009/03/31 19:25:03 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.9 2009/04/01 12:34:13 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -8,12 +8,14 @@
 #include "EventFilter/StorageManager/interface/FRDStreamHandler.h"
 #include "EventFilter/StorageManager/interface/EventStreamHandler.h"
 
+
 using namespace stor;
 
 DiskWriter::DiskWriter(xdaq::Application *app, SharedResourcesPtr sr) :
 _app(app),
 _sharedResources(sr),
 _timeout(1),
+_lastFileTimeoutCheckTime(utils::getCurrentTime()),
 _actionIsActive(true)
 {}
 
@@ -110,6 +112,12 @@ void DiskWriter::writeNextEvent()
   if (sq->deq_timed_wait(event, _timeout))
   {
     writeEventToStreams(event);
+
+    if ( timeToCheckForFileTimeOut() ) closeTimedOutFiles();
+  }
+  else
+  {
+    closeTimedOutFiles();
   }
 }
 
@@ -137,6 +145,29 @@ void DiskWriter::writeEventToStreams(const I2OChain& event)
       XCEPT_RAISE(exception::UnknownStreamId, msg.str());
     }
   }
+}
+
+
+void DiskWriter::closeTimedOutFiles()
+{
+  for (
+    StreamHandlers::iterator it = _streamHandlers.begin(), itEnd = _streamHandlers.end();
+    it != itEnd;
+    ++it
+  )
+  {
+    (*it)->closeTimedOutFiles();
+  }
+  _lastFileTimeoutCheckTime  = utils::getCurrentTime();
+}
+
+
+bool DiskWriter::timeToCheckForFileTimeOut()
+{
+  DiskWritingParams dwParams =
+    _sharedResources->_configuration->getDiskWritingParams();
+  utils::time_point_t now = utils::getCurrentTime();
+  return ((now - _lastFileTimeoutCheckTime) > dwParams._fileClosingTestInterval);
 }
 
 

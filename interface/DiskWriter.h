@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.9 2009/03/27 01:55:52 biery Exp $
+// $Id: DiskWriter.h,v 1.1.2.10 2009/03/31 19:24:14 mommsen Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -16,6 +16,7 @@
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StreamHandler.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 
 namespace stor {
@@ -26,9 +27,9 @@ namespace stor {
    * It gets the next event from the StreamQueue and writes it
    * to the appropriate stream file(s) on disk. 
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/03/27 01:55:52 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/03/31 19:24:14 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -91,6 +92,16 @@ namespace stor {
     void writeEventToStreams(const I2OChain&);
 
     /**
+     * Close all timed-out files
+     */    
+    void closeTimedOutFiles();
+
+    /**
+     * Returns true if the next check for timed-out files is due
+     */    
+    bool timeToCheckForFileTimeOut();
+
+    /**
      * Creates the handler for the given event stream
      */    
     void makeEventStream(EventStreamConfigurationInfo&);
@@ -104,6 +115,7 @@ namespace stor {
     SharedResourcesPtr _sharedResources;
 
     const unsigned int _timeout; // Timeout in seconds on stream queue
+    utils::time_point_t _lastFileTimeoutCheckTime; // Last time we checked for time-out files
 
     typedef boost::shared_ptr<StreamHandler> StreamHandlerPtr;
     typedef std::vector<StreamHandlerPtr> StreamHandlers;

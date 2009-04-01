@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.7 2009/03/20 15:16:34 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.8 2009/03/20 17:53:54 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/20 15:16:34 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/03/20 17:53:54 $
    */
 
   class FileHandler
@@ -71,7 +71,7 @@ namespace stor {
     
     /**
      * Return the number of events in the file
-    */
+     */
     const int events() const
     { return _fileRecord->fileSize.getSampleCount(); } 
     

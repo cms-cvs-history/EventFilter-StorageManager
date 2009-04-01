@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.19 2009/03/26 10:52:03 dshpakov Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.20 2009/03/31 19:37:46 mommsen Exp $
 
 #include <unistd.h>
 
@@ -18,9 +18,7 @@ FragmentProcessor::FragmentProcessor( SharedResourcesPtr sr,
   _eventDistributor(sr),
   _wrapperNotifier( wn ),
   _timeout(1),
-  _actionIsActive(true),
-  _fileCheckIntervalStart(time(0)),
-  _fileCheckEventCounter(0)
+  _actionIsActive(true)
 {
   _stateMachine.reset( new StateMachine( &_eventDistributor,
                                          &_fragmentStore, &_wrapperNotifier,
@@ -81,22 +79,10 @@ void FragmentProcessor::processOneFragment()
   if (fq->deq_timed_wait(fragment, _timeout))
     {
       _stateMachine->getCurrentState().processI2OFragment(fragment);
-
-      // temporary!
-      ++_fileCheckEventCounter;
-      if (_fileCheckEventCounter >= 100)
-        {
-          _fileCheckEventCounter = 0;
-          closeDiskFilesIfNeeded();
-        }
     }
   else
     {
       _stateMachine->getCurrentState().noFragmentToProcess();  
-
-      // temporary!
-      _fileCheckEventCounter = 0;
-      closeDiskFilesIfNeeded();
     }
 }
 
@@ -129,25 +115,6 @@ void FragmentProcessor::processAllRegistrations()
   while ( regQueue->deq_nowait( regInfo ) )
     {
       regInfo->registerMe( &_eventDistributor );
-    }
-}
-
-
-// temporary!
-void FragmentProcessor::closeDiskFilesIfNeeded()
-{
-  DiskWritingParams dwParams =
-    _sharedResources->_configuration->getDiskWritingParams();
-  time_t now = time(0);
-  if ((now - _fileCheckIntervalStart) >= dwParams._fileClosingTestInterval)
-    {
-      _fileCheckIntervalStart = now;
-      boost::shared_ptr<edm::ServiceManager> serviceManager =
-        _sharedResources->_serviceManager;
-      if (serviceManager.get() != NULL)
-        {
-          serviceManager->closeFilesIfNeeded();
-        }
     }
 }
 
