@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.10 2009/03/20 19:01:46 biery Exp $
+// $Id: SharedResources.h,v 1.1.2.11 2009/03/27 01:54:20 biery Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -29,8 +29,8 @@ namespace stor {
    * Container for shared resources.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/03/20 19:01:46 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/03/27 01:54:20 $
    */
 
   struct SharedResources
@@ -58,6 +58,11 @@ namespace stor {
     SMFUSenderList* _smRBSenderList;
     boost::shared_ptr<edm::ServiceManager> _serviceManager;
     boost::shared_ptr<stor::DQMServiceManager> _dqmServiceManager;
+
+    /**
+     * Add a Failed state-machine event to the command queue
+     */
+    void moveToFailedState();
 
   };
 
