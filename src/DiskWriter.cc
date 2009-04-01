@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.10 2009/04/01 14:24:22 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.11 2009/04/01 14:44:01 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -161,7 +161,7 @@ void DiskWriter::closeTimedOutFiles()
   {
     (*it)->closeTimedOutFiles(currentTime);
   }
-  _lastFileTimeoutCheckTime  = currentTime
+  _lastFileTimeoutCheckTime  = currentTime;
 }
 
 
