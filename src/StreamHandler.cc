@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.4 2009/03/20 17:54:30 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.1.2.5 2009/03/27 01:45:54 biery Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -27,7 +27,7 @@ void StreamHandler::closeAllFiles()
 }
 
 
-void StreamHandler::closeTimedOutFiles()
+void StreamHandler::closeTimedOutFiles(utils::time_point_t currentTime)
 {
   for (
     FileHandlers::iterator it = _fileHandlers.begin(), itEnd = _fileHandlers.end();
@@ -35,7 +35,7 @@ void StreamHandler::closeTimedOutFiles()
     ++it
   ) 
   {
-    if ( (*it)->tooOld() )
+    if ( (*it)->tooOld(currentTime) )
       it = _fileHandlers.erase(it); // Is this correct?
   }
 }

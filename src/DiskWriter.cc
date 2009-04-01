@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.9 2009/04/01 12:34:13 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.10 2009/04/01 14:24:22 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -150,15 +150,18 @@ void DiskWriter::writeEventToStreams(const I2OChain& event)
 
 void DiskWriter::closeTimedOutFiles()
 {
+  boost::mutex::scoped_lock sl(_streamConfigMutex);
+
+  utils::time_point_t currentTime = utils::getCurrentTime();
   for (
     StreamHandlers::iterator it = _streamHandlers.begin(), itEnd = _streamHandlers.end();
     it != itEnd;
     ++it
   )
   {
-    (*it)->closeTimedOutFiles();
+    (*it)->closeTimedOutFiles(currentTime);
   }
-  _lastFileTimeoutCheckTime  = utils::getCurrentTime();
+  _lastFileTimeoutCheckTime  = currentTime
 }
 
 
