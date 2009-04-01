@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.6 2009/03/20 15:16:57 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.7 2009/03/20 17:54:30 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -129,9 +129,15 @@ void FileHandler::insertFileInDatabase() const
 
 bool FileHandler::tooOld()
 {
-  //Fix me: add logic
-  //_closingReason = FilesMonitorCollection::FileRecord::timeout;
-  return false; 
+  if (utils::getCurrentTime() - _lastEntry > _diskWritingParams._lumiSectionTimeOut)
+  {
+    _closingReason = FilesMonitorCollection::FileRecord::timeout;
+    return true;
+  }
+  else
+  {
+    return false; 
+  }
 }
 
 
