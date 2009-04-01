@@ -91,6 +91,10 @@ namespace stor {
 
     toolbox::task::WorkLoop*           _processWL;      
 
+    // temporary!
+    void closeDiskFilesIfNeeded();
+    size_t _fileCheckIntervalStart;
+    unsigned int _fileCheckEventCounter;
   };
   
 } // namespace stor
