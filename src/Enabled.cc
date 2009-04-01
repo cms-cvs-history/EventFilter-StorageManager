@@ -22,6 +22,9 @@ Enabled::Enabled( my_context c ): my_base(c)
 
   if ( sharedResources->_configuration.get() != 0 )
     {
+      // update the run-based configuration parameters
+      sharedResources->_configuration->updateRunParams();
+
       // convert the SM configuration string into ConfigInfo objects
       // and store them for later use
       // !!! This should probably be in the Ready entry action.
