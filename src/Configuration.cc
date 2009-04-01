@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.14 2009/03/27 01:28:15 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.15 2009/03/31 11:31:55 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -65,6 +65,12 @@ namespace stor
   {
     boost::mutex::scoped_lock sl(_generalMutex);
     updateLocalDiskWritingData();
+  }
+
+  void Configuration::updateRunParams()
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    updateLocalRunNumber();
   }
 
   bool Configuration::streamConfigurationHasChanged() const

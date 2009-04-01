@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.8 2009/03/26 15:35:46 biery Exp $
+// $Id: Configuration.h,v 1.1.2.9 2009/03/31 11:31:54 dshpakov Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -93,9 +93,9 @@ namespace stor
    * and providing local copies of that information that are updated
    * only at requested times.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/03/26 15:35:46 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/03/31 11:31:54 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -150,6 +150,12 @@ namespace stor
      * from the infospace.
      */
     void updateDiskWritingParams();
+
+    /**
+     * Updates the local copy of run-based configuration parameter
+     * from the infospace.
+     */
+    void updateRunParams();
 
     /**
      * Tests whether the stream configuration string has changed in
