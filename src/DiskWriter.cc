@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.7 2009/03/27 01:55:53 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.8 2009/03/31 19:25:03 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -58,7 +58,7 @@ void DiskWriter::startWorkLoop()
 
 bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
 {
-  std::string errorMsg = "Failed to write an event";
+  std::string errorMsg = "Failed to write an event: ";
   
   try
   {
@@ -66,36 +66,37 @@ bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
   }
   catch(xcept::Exception &e)
   {
-    LOG4CPLUS_ERROR(_app->getApplicationLogger(),
+    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg << xcept::stdformat_exception_history(e));
 
     XCEPT_DECLARE_NESTED(stor::exception::DiskWriting,
       sentinelException, errorMsg, e);
-    _app->notifyQualified("error", sentinelException);
-    // How to go to failed state?
+    _app->notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
   }
   catch(std::exception &e)
   {
-    errorMsg += ": ";
     errorMsg += e.what();
 
-    LOG4CPLUS_ERROR(_app->getApplicationLogger(),
+    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg);
     
     XCEPT_DECLARE(stor::exception::DiskWriting,
       sentinelException, errorMsg);
-    _app->notifyQualified("error", sentinelException);
+    _app->notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
   }
   catch(...)
   {
-    errorMsg += ": Unknown exception";
+    errorMsg += "Unknown exception";
 
-    LOG4CPLUS_ERROR(_app->getApplicationLogger(),
+    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg);
     
     XCEPT_DECLARE(stor::exception::DiskWriting,
       sentinelException, errorMsg);
-    _app->notifyQualified("error", sentinelException);
+    _app->notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
   }
 
   return _actionIsActive;
