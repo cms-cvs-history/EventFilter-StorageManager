@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.9 2009/03/27 18:56:33 biery Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.10 2009/04/01 14:24:05 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -68,6 +68,7 @@ void EventFileHandler::writeEvent(const I2OChain& event)
     }
 
   _fileRecord->fileSize.addSample(static_cast<uint32_t>(event.totalDataSize()));
+  _fileRecord->eventCount.addSample(1);
   _lastEntry = utils::getCurrentTime();
 #endif
 }
@@ -81,13 +82,6 @@ void EventFileHandler::closeFile()
   moveFileToClosed(true);
   writeToSummaryCatalog();
   updateDatabase();
-}
-
-
-const int EventFileHandler::events() const
-{
-  int eventCount = _fileRecord->fileSize.getSampleCount();
-  return (eventCount > 0 ? eventCount - 1 : 0);
 }
 
 

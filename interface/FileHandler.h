@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.9 2009/04/01 14:23:29 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.10 2009/04/01 14:44:01 biery Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -19,9 +19,9 @@ namespace stor {
   /**
    * Abstract representation of a physical file
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/01 14:23:29 $
+   * $Author: biery $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/01 14:44:01 $
    */
 
   class FileHandler
@@ -72,8 +72,7 @@ namespace stor {
     /**
      * Return the number of events in the file
      */
-    const int events() const
-    { return _fileRecord->fileSize.getSampleCount(); } 
+    const int events() const;
     
     /**
      * Return the luminosity section the file belongs to
@@ -84,8 +83,7 @@ namespace stor {
     /**
      * Return the size of the file in bytes
      */
-    const long long fileSize() const
-    { return static_cast<long long>(_fileRecord->fileSize.getValueSum()); }
+    const long long fileSize() const;
 
 
   protected:
