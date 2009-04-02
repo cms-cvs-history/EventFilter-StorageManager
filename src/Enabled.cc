@@ -78,6 +78,8 @@ Enabled::~Enabled()
     {
       outermost_context().getSharedResources()->_serviceManager->stop();
     }
+  // do we have to check here if the diskWriter is not null?
+  outermost_context().getSharedResources()->_diskWriter->destroyStreams();
 
   // DQM end-run processing
   if ( outermost_context().getSharedResources()->_dqmServiceManager.get() != 0 )
