@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.1 2009/03/18 18:35:23 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.2 2009/03/20 15:16:34 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -6,6 +6,8 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+
+#include <boost/shared_ptr.hpp>
 
 #include "xdata/UnsignedInteger32.h"
 
@@ -18,8 +20,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/18 18:35:23 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/20 15:16:34 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -45,6 +47,7 @@ namespace stor {
       unsigned int      fileCounter;        // counter of number of coreFileNames used
       ClosingReason     whyClosed;          // reason why the given file was closed
       MonitoredQuantity fileSize;           // file size
+      MonitoredQuantity eventCount;         // number of events
       std::string filePath()                // complete file path
       { 
         return ( baseFilePath + (whyClosed == notClosed ? "/open/" : "/closed/") );
