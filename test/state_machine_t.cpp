@@ -163,6 +163,7 @@ int main()
   SharedResourcesPtr sr;
   sr.reset(new SharedResources());
   sr->_initMsgCollection.reset(new InitMsgCollection());
+  sr->_diskWriterResources.reset(new DiskWriterResources());
   sr->_dqmServiceManager.reset(new DQMServiceManager());
   sr->_commandQueue.reset(new CommandQueue(32));
   sr->_fragmentQueue.reset(new FragmentQueue(32));
