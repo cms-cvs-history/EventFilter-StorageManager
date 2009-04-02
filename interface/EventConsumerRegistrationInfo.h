@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.7 2009/03/10 21:19:38 biery Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.8 2009/04/01 18:44:55 paterno Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -9,17 +9,24 @@
 #include <string>
 #include <vector>
 
+#include "boost/shared_ptr.hpp"
+
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
+
+namespace xgi
+{
+  class Input;
+}
 
 namespace stor
 {
   /**
    * Holds the registration information from a event consumer.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/04/01 18:44:55 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -85,7 +92,14 @@ namespace stor
   {
     return ri.write(os);
   }
-  
+
+  typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
+
+  /**
+     Parse consumer registration request (free function):
+  */
+  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in );
+
 } // namespace stor
 
 #endif

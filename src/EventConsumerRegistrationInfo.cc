@@ -1,7 +1,13 @@
-// $Id: nInfo.cc,v 1.1.2.4 2009/03/10 20:39:44 biery Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.5 2009/04/01 18:44:55 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
+
+#include "xgi/Input.h"
+
+#include "IOPool/Streamer/interface/ConsRegMessage.h"
+
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include <algorithm>
 #include <iterator>
@@ -12,6 +18,65 @@ using namespace std;
 
 namespace stor
 {
+
+  // Create consumer registration info (free function):
+  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in )
+  {
+
+    // TODO: what if in = 0 ?
+
+    string name = "unknown";
+    string pset_str = "<>";
+
+    const string l_str = in->getenv( "CONTENT_LENGTH" );
+    unsigned long l = atol( l_str.c_str() );
+
+    if( l > 0 )
+      {
+        auto_ptr< vector<char> > buf( new vector<char>(l) );
+        in->read( &(*buf)[0], l );
+        ConsRegRequestView req( &(*buf)[0] );
+        name = req.getConsumerName();
+        pset_str = req.getRequestParameterSet();
+      }
+
+    const edm::ParameterSet pset( pset_str );
+
+    // TODO: hanlde exceptions, choose defaults
+    const double max_rate =
+      pset.getUntrackedParameter<double>( "maxEventRequestRate", 1.0 );
+    const string sel_hlt_out =
+      pset.getUntrackedParameter<string>( "SelectHLTOutput", "none" );
+    const EventConsumerRegistrationInfo::FilterList sel_events =
+      pset.getParameter<Strings>( "SelectEvents" );
+    const unsigned int max_conn_retr =
+      pset.getUntrackedParameter<int>( "maxConnectTries", 10 );
+    const unsigned int conn_retr_interval =
+      pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
+    const unsigned int hdr_retr_interval =
+      pset.getUntrackedParameter<int>( "headerRetryInterval", 5 );
+    const unsigned int secs_to_stale =
+      pset.getUntrackedParameter<int>( "secondsToStale", 10 ); // TODO
+
+    // Queue ID will be removed from c'tor arg list and set later:
+    QueueID dummy_qid;
+
+    const string url = in->getenv( "REMOTE_HOST" ); // ???
+
+    ConsRegPtr cr( new EventConsumerRegistrationInfo( url,
+                                                      max_conn_retr,
+                                                      conn_retr_interval,
+                                                      name,
+                                                      hdr_retr_interval,
+                                                      max_rate,
+                                                      sel_events,
+                                                      sel_hlt_out,
+                                                      secs_to_stale,
+                                                      dummy_qid ) );
+    return cr;
+
+  }
+
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
   (string const& sourceURL,
    unsigned int maxConnectRetries,
