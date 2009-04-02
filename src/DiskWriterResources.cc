@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.cc,v 1.1.2.16 2009/04/01 20:02:19 biery Exp $
+// $Id: DiskWriterResources.cc,v 1.1.2.1 2009/04/02 20:49:32 biery Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
 
@@ -8,13 +8,15 @@ namespace stor
     _configurationIsNeeded(false),
     _streamDestructionIsNeeded(false),
     _fileClosingTestIsNeeded(false),
-    _diskWriterIsBusy(false)
+    _diskWriterIsBusy(false),
+    _configurationInProgress(false),
+    _streamDestructionInProgress(false)
   {
   }
 
   void DiskWriterResources::
-  requestStreamConfiguration(EvtStrConfigList evtStrConfig,
-                             ErrStrConfigList errStrConfig)
+  requestStreamConfiguration(EvtStrConfigList* evtStrConfig,
+                             ErrStrConfigList* errStrConfig)
   {
     boost::mutex::scoped_lock sl(_generalMutex);
 
@@ -24,8 +26,8 @@ namespace stor
   }
 
   bool DiskWriterResources::
-  streamConfigurationRequested(EvtStrConfigList& evtStrConfig,
-                               ErrStrConfigList& errStrConfig)
+  streamConfigurationRequested(EvtStrConfigList*& evtStrConfig,
+                               ErrStrConfigList*& errStrConfig)
   {
     boost::mutex::scoped_lock sl(_generalMutex);
     if (! _configurationIsNeeded) {return false;}
@@ -33,7 +35,27 @@ namespace stor
     _configurationIsNeeded = false;
     evtStrConfig = _requestedEventStreamConfig;
     errStrConfig = _requestedErrorStreamConfig;
+    _configurationInProgress = true;
     return true;
+  }
+
+  void DiskWriterResources::waitForStreamConfiguration()
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    if (_configurationIsNeeded || _configurationInProgress)
+      {
+        _configurationCondition.wait(sl);
+      }
+  }
+
+  void DiskWriterResources::streamConfigurationDone()
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    if (_configurationInProgress)
+      {
+        _configurationCondition.notify_one();
+      }
+    _configurationInProgress = false;
   }
 
   void DiskWriterResources::requestStreamDestruction()
@@ -48,7 +70,27 @@ namespace stor
     if (! _streamDestructionIsNeeded) {return false;}
 
     _streamDestructionIsNeeded = false;
+    _streamDestructionInProgress = true;
     return true;
+  }
+
+  void DiskWriterResources::waitForStreamDestruction()
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    if (_streamDestructionIsNeeded || _streamDestructionInProgress)
+      {
+        _destructionCondition.wait(sl);
+      }
+  }
+
+  void DiskWriterResources::streamDestructionDone()
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    if (_streamDestructionInProgress)
+      {
+        _destructionCondition.notify_one();
+      }
+    _streamDestructionInProgress = false;
   }
 
   void DiskWriterResources::requestFileClosingTest()

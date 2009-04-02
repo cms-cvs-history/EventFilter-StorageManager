@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.1.2.10 2009/04/01 20:02:18 biery Exp $
+// $Id: DiskWriterResources.h,v 1.1.2.1 2009/04/02 20:49:32 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_DiskWriterResources_h
@@ -7,6 +7,7 @@
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 
+#include "boost/thread/condition.hpp"
 #include "boost/thread/mutex.hpp"
 
 namespace stor
@@ -17,8 +18,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/01 20:02:18 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/02 20:49:32 $
    */
 
   class DiskWriterResources
@@ -39,13 +40,23 @@ namespace stor
      * Requests that the DiskWriter streams be configured with the
      * specified configurations..
      */
-    void requestStreamConfiguration(EvtStrConfigList, ErrStrConfigList);
+    void requestStreamConfiguration(EvtStrConfigList*, ErrStrConfigList*);
 
     /**
      * Checks if a request has been made to configure the DiskWriter
      * streams *and* clears any pending request.
      */
-    bool streamConfigurationRequested(EvtStrConfigList&, ErrStrConfigList&);
+    bool streamConfigurationRequested(EvtStrConfigList*&, ErrStrConfigList*&);
+
+    /**
+     * Waits until a requested stream configuration has been completed.
+     */
+    void waitForStreamConfiguration();
+
+    /**
+     * Indicates that the stream configuration operation is done.
+     */
+    void streamConfigurationDone();
 
     /**
      * Requests that the DiskWriter streams be destroyed.
@@ -57,6 +68,16 @@ namespace stor
      * streams *and* clears any pending request.
      */
     bool streamDestructionRequested();
+
+    /**
+     * Waits until a requested stream destruction has been completed.
+     */
+    void waitForStreamDestruction();
+
+    /**
+     * Indicates that the stream destruction operation is done.
+     */
+    void streamDestructionDone();
 
     /**
      * Requests that the DiskWriter check if files need to be closed.
@@ -86,8 +107,13 @@ namespace stor
     bool _fileClosingTestIsNeeded;
     bool _diskWriterIsBusy;
 
-    EvtStrConfigList _requestedEventStreamConfig;
-    ErrStrConfigList _requestedErrorStreamConfig;
+    EvtStrConfigList* _requestedEventStreamConfig;
+    ErrStrConfigList* _requestedErrorStreamConfig;
+
+    bool _configurationInProgress;
+    boost::condition _configurationCondition;
+    bool _streamDestructionInProgress;
+    boost::condition _destructionCondition;
 
     mutable boost::mutex _generalMutex;
   };
