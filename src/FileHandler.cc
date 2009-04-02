@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.8 2009/04/01 14:25:08 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.9 2009/04/01 14:44:01 biery Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -24,6 +24,7 @@ FileHandler::FileHandler
 ):
 _fileRecord(fileRecord),
 _firstEntry(utils::getCurrentTime()),
+_lastEntry(0),
 _closingReason(FilesMonitorCollection::FileRecord::stop),
 _diskWritingParams(dwParams),
 _maxFileSize(maxFileSize),
@@ -104,8 +105,8 @@ void FileHandler::insertFileInDatabase() const
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()
       << " --STARTTIME "    << (int) _firstEntry
-      << " --STOPTIME "     << (int) _lastEntry
-      << " --STATUS "       << "open"
+      << " --STOPTIME 0"
+      << " --STATUS open"
       << " --RUNNUMBER "    << _fileRecord->runNumber
       << " --LUMISECTION "  << _fileRecord->lumiSection
       << " --PATHNAME "     << _fileRecord->filePath()
@@ -152,6 +153,22 @@ bool FileHandler::tooLarge(const unsigned long& dataSize)
   {
     return false;
   }
+}
+
+
+const int FileHandler::events() const
+{
+  // Fix me: do not call calculateStatistics() every time
+  _fileRecord->eventCount.calculateStatistics();
+  return _fileRecord->eventCount.getSampleCount();
+}
+
+
+const long long FileHandler::fileSize() const
+{
+  // Fix me: do not call calculateStatistics() every time
+  _fileRecord->fileSize.calculateStatistics();
+  return static_cast<long long>(_fileRecord->fileSize.getValueSum());
 }
 
 
@@ -285,14 +302,14 @@ void FileHandler::checkDirectory(const string& path) const
 
 const double FileHandler::calcPctDiff(const double& value1, const double& value2) const
 {
-  if (value1 == value2) {return 0.0;}
+  if (value1 == value2) return 0;
   double largerValue = value1;
   double smallerValue = value2;
   if (value1 < value2) {
     largerValue = value2;
     smallerValue = value1;
   }
-  return (largerValue - smallerValue) / largerValue;
+  return ( largerValue > 0 ? (largerValue - smallerValue) / largerValue : 0 );
 }
 
 
