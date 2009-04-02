@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.11 2009/04/01 14:44:01 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.12 2009/04/01 14:48:16 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -111,12 +111,14 @@ void DiskWriter::writeNextEvent()
   boost::shared_ptr<StreamQueue> sq = _sharedResources->_streamQueue;
   if (sq->deq_timed_wait(event, _timeout))
   {
+    _sharedResources->_diskWriterResources->setBusy(true);
     writeEventToStreams(event);
 
     if ( timeToCheckForFileTimeOut() ) closeTimedOutFiles();
   }
   else
   {
+    _sharedResources->_diskWriterResources->setBusy(false);
     closeTimedOutFiles();
   }
 }
