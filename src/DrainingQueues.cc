@@ -61,7 +61,7 @@ DrainingQueues::allQueuesAndWorkersAreEmpty() const
 
   if ( ! sharedResources->_streamQueue->empty() ) return false;
 
-  if ( ! sharedResources->_diskWriter->empty() ) return false;
+  if ( sharedResources->_diskWriterResources->isBusy() ) return false;
   
   //  if ( ! sharedResources->_dqmEventQueue->empty() ) return false;
 

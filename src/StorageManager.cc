@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.63 2009/03/31 16:31:40 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.66 2009/03/31 20:31:44 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -118,7 +118,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   _wrapper_notifier( this ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.59 2009/03/30 14:40:30 paterno Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.66 2009/03/31 20:31:44 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -232,6 +232,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                                                               instance));
   sharedResourcesPtr_->_statisticsReporter.reset(new StatisticsReporter(this));
   sharedResourcesPtr_->_initMsgCollection.reset(new InitMsgCollection());
+  sharedResourcesPtr_->_diskWriterResources.reset(new DiskWriterResources());
 
   sharedResourcesPtr_->_smRBSenderList = &smrbsenders_;
 

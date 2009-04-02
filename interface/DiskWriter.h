@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.10 2009/03/31 19:24:14 mommsen Exp $
+// $Id: DiskWriter.h,v 1.1.2.11 2009/04/01 14:23:28 mommsen Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -28,8 +28,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/03/31 19:24:14 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/01 14:23:28 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -57,16 +57,6 @@ namespace stor {
      * Configures the error streams to be written to disk
      */    
     void configureErrorStreams(ErrStrConfigList&);
-
-    /**
-     * Gracefully close all streams
-     */    
-    void destroyStreams();
-
-    /**
-     * Checks if the disk writer is currently not processing any events.
-     */
-    const bool empty() const;
 
     /**
      * Creates and starts the disk writing workloop
@@ -110,6 +100,11 @@ namespace stor {
      * Creates the handler for the given error event stream
      */    
     void makeErrorStream(ErrorStreamConfigurationInfo&);
+
+    /**
+     * Gracefully close all streams
+     */    
+    void destroyStreams();
 
     xdaq::Application* _app;
     SharedResourcesPtr _sharedResources;

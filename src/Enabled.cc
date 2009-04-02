@@ -46,11 +46,6 @@ Enabled::Enabled( my_context c ): my_base(c)
         }
       if ( sharedResources->_diskWriter.get() != 0)
         {
-          EventDistributor* ed = outermost_context().getEventDistributor();
-
-          sharedResources->_diskWriter->destroyStreams();
-          ed->clearStreams();
-
           EvtStrConfigList evtCfgList =
             sharedResources->_configuration->getCurrentEventStreamConfig();
           ErrStrConfigList errCfgList =
@@ -59,6 +54,7 @@ Enabled::Enabled( my_context c ): my_base(c)
           sharedResources->_diskWriter->configureEventStreams(evtCfgList);
           sharedResources->_diskWriter->configureErrorStreams(errCfgList);
 
+          EventDistributor* ed = outermost_context().getEventDistributor();
           ed->registerEventStreams(evtCfgList);
           ed->registerErrorStreams(errCfgList);
         }
@@ -78,14 +74,20 @@ Enabled::~Enabled()
     {
       outermost_context().getSharedResources()->_serviceManager->stop();
     }
-  // do we have to check here if the diskWriter is not null?
-  outermost_context().getSharedResources()->_diskWriter->destroyStreams();
 
   // DQM end-run processing
   if ( outermost_context().getSharedResources()->_dqmServiceManager.get() != 0 )
     {
       outermost_context().getSharedResources()->_dqmServiceManager->stop();
     }
+
+  // request that the streams that are currently configured in the disk
+  // writer be destroyed (this has the side effect of closing files)
+  outermost_context().getSharedResources()->_diskWriterResources->requestStreamDestruction();
+
+  // clear the stream selections in the event distributor
+  outermost_context().getEventDistributor()->clearStreams();
+
 }
 
 string Enabled::do_stateName() const

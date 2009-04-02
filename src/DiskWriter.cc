@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.12 2009/04/01 14:48:16 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.13 2009/04/02 20:49:32 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -121,6 +121,11 @@ void DiskWriter::writeNextEvent()
     _sharedResources->_diskWriterResources->setBusy(false);
     closeTimedOutFiles();
   }
+
+  if (_sharedResources->_diskWriterResources->streamDestructionRequested())
+  {
+    destroyStreams();
+  }
 }
 
 
@@ -152,8 +157,6 @@ void DiskWriter::writeEventToStreams(const I2OChain& event)
 
 void DiskWriter::closeTimedOutFiles()
 {
-  boost::mutex::scoped_lock sl(_streamConfigMutex);
-
   utils::time_point_t currentTime = utils::getCurrentTime();
   for (
     StreamHandlers::iterator it = _streamHandlers.begin(), itEnd = _streamHandlers.end();
@@ -230,16 +233,7 @@ void DiskWriter::makeErrorStream(ErrorStreamConfigurationInfo& streamCfg)
 
 void DiskWriter::destroyStreams()
 {
-  boost::mutex::scoped_lock sl(_streamConfigMutex);
-
   _streamHandlers.clear();
-}
-
-
-const bool DiskWriter::empty() const
-{
-  // TODO: actual implementation of logic: all events are written
-  return true;
 }
 
 
