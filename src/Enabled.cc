@@ -1,4 +1,3 @@
-#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
@@ -44,20 +43,18 @@ Enabled::Enabled( my_context c ): my_base(c)
         {
           sharedResources->_serviceManager->start();
         }
-      if ( sharedResources->_diskWriter.get() != 0)
-        {
-          EvtStrConfigList evtCfgList =
-            sharedResources->_configuration->getCurrentEventStreamConfig();
-          ErrStrConfigList errCfgList =
-            sharedResources->_configuration->getCurrentErrorStreamConfig();
+      evtCfgList = sharedResources->_configuration->
+        getCurrentEventStreamConfig();
+      errCfgList = sharedResources->_configuration->
+        getCurrentErrorStreamConfig();
 
-          sharedResources->_diskWriter->configureEventStreams(evtCfgList);
-          sharedResources->_diskWriter->configureErrorStreams(errCfgList);
+      sharedResources->_diskWriterResources->
+        requestStreamConfiguration(&evtCfgList, &errCfgList);
+      sharedResources->_diskWriterResources->waitForStreamConfiguration();
 
-          EventDistributor* ed = outermost_context().getEventDistributor();
-          ed->registerEventStreams(evtCfgList);
-          ed->registerErrorStreams(errCfgList);
-        }
+      EventDistributor* ed = outermost_context().getEventDistributor();
+      ed->registerEventStreams(evtCfgList);
+      ed->registerErrorStreams(errCfgList);
     }
 }
 
@@ -83,7 +80,10 @@ Enabled::~Enabled()
 
   // request that the streams that are currently configured in the disk
   // writer be destroyed (this has the side effect of closing files)
-  outermost_context().getSharedResources()->_diskWriterResources->requestStreamDestruction();
+  outermost_context().getSharedResources()->
+    _diskWriterResources->requestStreamDestruction();
+  outermost_context().getSharedResources()->
+    _diskWriterResources->waitForStreamDestruction();
 
   // clear the stream selections in the event distributor
   outermost_context().getEventDistributor()->clearStreams();

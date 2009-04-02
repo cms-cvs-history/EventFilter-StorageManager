@@ -1,10 +1,9 @@
-// $Id: DiskWriter.h,v 1.1.2.11 2009/04/01 14:23:28 mommsen Exp $
+// $Id: DiskWriter.h,v 1.1.2.12 2009/04/02 21:28:08 biery Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
 
 #include "boost/shared_ptr.hpp"
-#include "boost/thread/mutex.hpp"
 
 #include <vector>
 
@@ -27,9 +26,9 @@ namespace stor {
    * It gets the next event from the StreamQueue and writes it
    * to the appropriate stream file(s) on disk. 
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/01 14:23:28 $
+   * $Author: biery $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/02 21:28:08 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -47,16 +46,6 @@ namespace stor {
      * and writing it to disk
      */    
     bool writeAction(toolbox::task::WorkLoop*);
-
-    /**
-     * Configures the event streams to be written to disk
-     */    
-    void configureEventStreams(EvtStrConfigList&);
-
-    /**
-     * Configures the error streams to be written to disk
-     */    
-    void configureErrorStreams(ErrStrConfigList&);
 
     /**
      * Creates and starts the disk writing workloop
@@ -92,6 +81,16 @@ namespace stor {
     bool timeToCheckForFileTimeOut();
 
     /**
+     * Configures the event streams to be written to disk
+     */    
+    void configureEventStreams(EvtStrConfigList&);
+
+    /**
+     * Configures the error streams to be written to disk
+     */    
+    void configureErrorStreams(ErrStrConfigList&);
+
+    /**
      * Creates the handler for the given event stream
      */    
     void makeEventStream(EventStreamConfigurationInfo&);
@@ -116,8 +115,6 @@ namespace stor {
     typedef std::vector<StreamHandlerPtr> StreamHandlers;
     StreamHandlers _streamHandlers;
 
-    mutable boost::mutex _streamConfigMutex;
-    
     bool _actionIsActive;
     toolbox::task::WorkLoop* _writingWL;      
 

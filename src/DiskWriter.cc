@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.13 2009/04/02 20:49:32 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.14 2009/04/02 21:28:08 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -122,17 +122,26 @@ void DiskWriter::writeNextEvent()
     closeTimedOutFiles();
   }
 
+  EvtStrConfigList* evtCfgList;
+  ErrStrConfigList* errCfgList;
+  if (_sharedResources->_diskWriterResources->
+      streamConfigurationRequested(evtCfgList, errCfgList))
+  {
+    configureEventStreams(*evtCfgList);
+    configureErrorStreams(*errCfgList);
+    _sharedResources->_diskWriterResources->streamConfigurationDone();
+  }
+
   if (_sharedResources->_diskWriterResources->streamDestructionRequested())
   {
     destroyStreams();
+    _sharedResources->_diskWriterResources->streamDestructionDone();
   }
 }
 
 
 void DiskWriter::writeEventToStreams(const I2OChain& event)
 {
-  boost::mutex::scoped_lock sl(_streamConfigMutex);
-
   std::vector<StreamID> streams = event.getStreamTags();
   for (
     std::vector<StreamID>::iterator it = streams.begin(), itEnd = streams.end();
@@ -181,8 +190,6 @@ bool DiskWriter::timeToCheckForFileTimeOut()
 
 void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
 {
-  boost::mutex::scoped_lock sl(_streamConfigMutex);
-
   for (
     EvtStrConfigList::iterator it = cfgList.begin(),
       itEnd = cfgList.end();
@@ -197,8 +204,6 @@ void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
 
 void DiskWriter::configureErrorStreams(ErrStrConfigList& cfgList)
 {
-  boost::mutex::scoped_lock sl(_streamConfigMutex);
-
   for (
     ErrStrConfigList::iterator it = cfgList.begin(),
       itEnd = cfgList.end();
