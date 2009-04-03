@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.9 2009/04/02 13:55:28 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.10 2009/04/03 12:22:08 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -25,8 +25,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/02 13:55:28 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/03 12:22:08 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -98,7 +98,8 @@ namespace stor
   /**
      Parse consumer registration request (free function):
   */
-  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in );
+  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in,
+					     unsigned int secondsToStale );
 
 } // namespace stor
 

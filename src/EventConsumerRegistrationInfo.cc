@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.6 2009/04/02 13:55:28 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.7 2009/04/03 12:22:08 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -20,7 +20,8 @@ namespace stor
 {
 
   // Create consumer registration info (free function):
-  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in )
+  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in,
+                                             unsigned int sts )
   {
 
     // TODO: what if in = 0 ?
@@ -55,8 +56,6 @@ namespace stor
       pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
     const unsigned int hdr_retr_interval =
       pset.getUntrackedParameter<int>( "headerRetryInterval", 5 );
-    const unsigned int secs_to_stale =
-      pset.getUntrackedParameter<int>( "secondsToStale", 10 ); // TODO
 
     ConsRegPtr cr( new EventConsumerRegistrationInfo( max_conn_retr,
                                                       conn_retr_interval,
@@ -65,7 +64,7 @@ namespace stor
                                                       max_rate,
                                                       sel_events,
                                                       sel_hlt_out,
-                                                      secs_to_stale ) );
+                                                      sts ) );
     return cr;
 
   }
