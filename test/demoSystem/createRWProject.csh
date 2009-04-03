@@ -86,14 +86,14 @@ if ($tagName == "CMSSW_3_0_0_pre9") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V01-08-08 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
-  cvs update -dR -r V05-06-08-01 IOPool/Streamer
+  cvs update -dR -r V05-06-08-03 IOPool/Streamer
 endif
 
 # 27-Mar-2009 - using the SM refdev01 "work" branch with 3_0_0_pre5
 if ($tagName == "CMSSW_3_0_0_pre5") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
-  cvs update -dR -r V05-06-02-01 IOPool/Streamer
+  cvs update -dR -r V05-06-02-03 IOPool/Streamer
 endif
 
 # 02-Jan-2009 - using the SM refdev01 "work" branch with 2_1_11
