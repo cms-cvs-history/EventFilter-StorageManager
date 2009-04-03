@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.12 2009/04/01 12:33:32 mommsen Exp $
+// $Id: SharedResources.h,v 1.1.2.13 2009/04/02 20:49:32 biery Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -24,14 +24,12 @@
 
 namespace stor {
 
-  class DiskWriter;
-
   /**
    * Container for shared resources.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/04/01 12:33:32 $
+   * $Author: biery $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/04/02 20:49:32 $
    */
 
   struct SharedResources
@@ -54,7 +52,6 @@ namespace stor {
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
 
     // definitely temporary!
-    boost::shared_ptr<DiskWriter> _diskWriter;
     boost::shared_ptr<EventServer> _oldEventServer;
     boost::shared_ptr<DQMEventServer> _oldDQMEventServer;
     SMFUSenderList* _smRBSenderList;

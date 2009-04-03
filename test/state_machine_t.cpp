@@ -7,7 +7,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
-#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
@@ -172,7 +171,6 @@ int main()
 
   MockApplicationStub* stub(new MockApplicationStub());
   MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
-  sr->_diskWriter.reset(new DiskWriter(app, sr));
 
   EventDistributor ed(sr);
 

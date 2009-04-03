@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.68 2009/04/03 10:58:46 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.69 2009/04/03 12:36:00 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "EventFilter/StorageManager/interface/StorageManager.h"
-#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
@@ -118,7 +117,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   _wrapper_notifier( this ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.68 2009/04/03 10:58:46 mommsen Exp $ $Name:  $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.69 2009/04/03 12:36:00 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -237,23 +236,16 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   sharedResourcesPtr_->_smRBSenderList = &smrbsenders_;
 
-  // 26-Mar-2009, KAB - it seems a little circular to be storing the
-  // disk writer in the SharedResources while passing the SharedResources
-  // to the DiskWriter constructor.  We may want to revisit this once
-  // we agree as a group whether we want the DiskWriter to be as
-  // shared resource.
-  sharedResourcesPtr_->_diskWriter.reset(new DiskWriter(this, sharedResourcesPtr_));
-
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
   sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
 
-  sharedResourcesPtr_->_diskWriter->startWorkLoop();
-
   fragmentProcessor_ = new FragmentProcessor( sharedResourcesPtr_,
                                               _wrapper_notifier );
-
   fragmentProcessor_->startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
+
+  diskWriter_ = new DiskWriter(this, sharedResourcesPtr_);
+  diskWriter_->startWorkLoop();
 
 }
 
@@ -261,6 +253,7 @@ StorageManager::~StorageManager()
 {
   delete ah_;
   delete fragmentProcessor_;
+  delete diskWriter_;
 }
 
 xoap::MessageReference

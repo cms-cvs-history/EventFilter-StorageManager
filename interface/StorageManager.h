@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.41 2009/03/31 20:32:17 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.42 2009/04/03 12:35:40 mommsen Exp $
 */
 
 #include <string>
@@ -26,6 +26,7 @@
 #include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
+#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 #include "xdaq/Application.h"
@@ -234,6 +235,7 @@ namespace stor {
     toolbox::task::ActionSignature  *asMonitoring_;
 
     FragmentProcessor *fragmentProcessor_;
+    DiskWriter *diskWriter_;
 
     // @@EM parameters monitored by workloop (not in flashlist just yet) 
     struct streammon{

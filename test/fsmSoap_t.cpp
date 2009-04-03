@@ -1,9 +1,9 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/test/MockNotifier.h"
+#include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -41,12 +41,11 @@ namespace stor {
             SharedResourcesPtr sr;
             sr.reset(new SharedResources());
             sr->_initMsgCollection.reset(new InitMsgCollection());
+            sr->_diskWriterResources.reset(new MockDiskWriterResources());
             sr->_dqmServiceManager.reset(new DQMServiceManager());
             sr->_commandQueue.reset(new CommandQueue(32));
             sr->_fragmentQueue.reset(new FragmentQueue(32));
             sr->_streamQueue.reset(new StreamQueue(32));
-            
-            sr->_diskWriter.reset(new DiskWriter(this, sr));
             
             EventDistributor ed(sr);
             MockNotifier mn;
