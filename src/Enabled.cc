@@ -24,28 +24,16 @@ Enabled::Enabled( my_context c ): my_base(c)
       // update the run-based configuration parameters
       sharedResources->_configuration->updateRunParams();
 
-      // convert the SM configuration string into ConfigInfo objects
-      // and store them for later use
-      // !!! This should probably be in the Ready entry action.
-      // !!! It is here to avoid accessing the PythonProcessPSet code
-      // !!! in the old code and the new code at the same time
-      DiskWritingParams dwParams =
-        sharedResources->_configuration->getDiskWritingParams();
-      EvtStrConfigList evtCfgList;
-      ErrStrConfigList errCfgList;
-      parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
-                               errCfgList);
-      sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
-      sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
-
-      // disk writing begin-run processing
+      // old disk writing begin-run processing
       if ( sharedResources->_serviceManager.get() != 0 )
         {
           sharedResources->_serviceManager->start();
         }
-      evtCfgList = sharedResources->_configuration->
+
+      // disk writer and event distributor begin-run processing
+      EvtStrConfigList evtCfgList = sharedResources->_configuration->
         getCurrentEventStreamConfig();
-      errCfgList = sharedResources->_configuration->
+      ErrStrConfigList errCfgList = sharedResources->_configuration->
         getCurrentErrorStreamConfig();
 
       sharedResources->_diskWriterResources->

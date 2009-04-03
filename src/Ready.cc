@@ -18,6 +18,22 @@ Ready::Ready( my_context c ): my_base(c)
   if ( sharedResources->_configuration.get() != 0 )
     {
       sharedResources->_configuration->updateAllParams();
+
+      // convert the SM configuration string into ConfigInfo objects
+      // and store them for later use
+      DiskWritingParams dwParams =
+        sharedResources->_configuration->getDiskWritingParams();
+      EvtStrConfigList evtCfgList;
+      ErrStrConfigList errCfgList;
+
+      // extremely temporary.  Once we remove the old disk writing code
+      // this sleep should be removed.
+      ::sleep(3);
+
+      parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
+                               errCfgList);
+      sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
+      sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
     }
 }
 
