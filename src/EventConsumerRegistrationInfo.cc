@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.7 2009/04/03 12:22:08 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.8 2009/04/03 12:30:45 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -85,7 +85,16 @@ namespace stor
     _selEvents( selEvents ),
     _selHLTOut( selHLTOut ),
     _secondsToStale( secondsToStale )
-  { }
+  {
+    if( consumerName == "SMProxyServer" )
+      {
+        _isProxy = true;
+      }
+    else
+      {
+        _isProxy = false;
+      }
+  }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
   { }

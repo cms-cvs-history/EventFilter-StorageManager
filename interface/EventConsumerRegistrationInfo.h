@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.10 2009/04/03 12:22:08 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.11 2009/04/03 12:30:44 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -25,8 +25,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/03 12:22:08 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/03 12:30:44 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -56,6 +56,7 @@ namespace stor
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
     unsigned int secondsToStale() const { return _secondsToStale; }
+    bool isProxyServer() const { return _isProxy; }
 
     // Output:
     std::ostream& write(std::ostream& os) const;
@@ -79,6 +80,7 @@ namespace stor
     FilterList       _selEvents;
     std::string      _selHLTOut;
     unsigned long    _secondsToStale;
+    bool             _isProxy;
 
   };
 
