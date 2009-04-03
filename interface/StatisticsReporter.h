@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.6 2009/03/26 10:52:03 dshpakov Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.7 2009/03/31 14:48:32 dshpakov Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 
+#include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 
 #include <string>
@@ -25,8 +26,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/26 10:52:03 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/31 14:48:32 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -92,6 +93,8 @@ namespace stor {
     void reportStateName();
 
   };
+
+  typedef boost::shared_ptr<StatisticsReporter> StatisticsReporterPtr;
   
 } // namespace stor
 

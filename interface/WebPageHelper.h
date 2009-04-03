@@ -1,20 +1,20 @@
-// $Id: WebPageHelper.h,v 1.1.2.6 2009/02/18 08:26:29 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.7 2009/03/02 18:08:21 biery Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
 
 #include <string>
 
-#include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 
 #include "toolbox/mem/Pool.h"
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
 
-#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 namespace stor {
@@ -22,9 +22,9 @@ namespace stor {
   /**
    * Helper class to handle web page requests
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/02/18 08:26:29 $
+   * $Author: biery $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/02 18:08:21 $
    */
   
   class WebPageHelper
@@ -37,11 +37,18 @@ namespace stor {
     static void defaultWebPage
     (
       xgi::Output*, 
-      const std::string stateName,
-      const boost::shared_ptr<StatisticsReporter>&,
-      toolbox::mem::Pool*,
-      const int nLogicalDisk,
-      const std::string filePath,
+      const SharedResourcesPtr,
+      xdaq::ApplicationDescriptor*,
+      toolbox::mem::Pool*
+    );
+
+    /**
+     * Generates the files monitoring webpage for the SM
+     */
+    static void filesWebPage
+    (
+      xgi::Output*,
+      const StatisticsReporterPtr,
       xdaq::ApplicationDescriptor*
     );
 
@@ -74,8 +81,7 @@ namespace stor {
       XHTMLMaker&,
       XHTMLMaker::Node *parent,
       toolbox::mem::Pool*,
-      const int nLogicalDisk,
-      const std::string filePath
+      const DiskWritingParams
     );
 
     /**
@@ -91,6 +97,7 @@ namespace stor {
     static void addDOMforRunMonitor(XHTMLMaker& maker,
                                     XHTMLMaker::Node *parent,
                                     RunMonitorCollection const& rmc);
+
 
   private:
 

@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.66 2009/03/31 20:31:44 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.67 2009/04/02 21:28:08 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -118,7 +118,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   _wrapper_notifier( this ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.66 2009/03/31 20:31:44 mommsen Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.67 2009/04/02 21:28:08 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -544,17 +544,11 @@ throw (xgi::exception::Exception)
   
   try
   {
-    DiskWritingParams dwParams =
-      sharedResourcesPtr_->_configuration->getDiskWritingParams();
-
     WebPageHelper::defaultWebPage(
       out,
-      externallyVisibleState(),
-      sharedResourcesPtr_->_statisticsReporter,
-      pool_,
-      dwParams._nLogicalDisk,
-      dwParams._filePath,
-      this->getApplicationDescriptor()
+      sharedResourcesPtr_,
+      this->getApplicationDescriptor(),
+      pool_
     );
   }
   catch(std::exception &e)

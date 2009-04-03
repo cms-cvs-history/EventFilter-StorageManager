@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.7 2009/02/18 11:12:35 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.8 2009/03/02 18:08:22 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -19,20 +19,20 @@ boost::mutex WebPageHelper::_xhtmlMakerMutex;
 void WebPageHelper::defaultWebPage
 (
   xgi::Output *out, 
-  const std::string stateName,
-  const boost::shared_ptr<StatisticsReporter>& statReporter,
-  toolbox::mem::Pool *pool,
-  const int nLogicalDisk,
-  const std::string filePath,
-  xdaq::ApplicationDescriptor* appDesc
+  const SharedResourcesPtr sharedResources,
+  xdaq::ApplicationDescriptor* appDesc,
+  toolbox::mem::Pool *pool
 )
 {
   boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
   XHTMLMonitor theMonitor;
   XHTMLMaker maker;
   
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
+
   // Create the body with the standard header
-  XHTMLMaker::Node* body = createWebPageBody(maker, stateName, appDesc);
+  XHTMLMaker::Node* body = createWebPageBody(maker,
+    statReporter->externallyVisibleState(), appDesc);
 
   //TODO: Failed printout
 
@@ -40,7 +40,8 @@ void WebPageHelper::defaultWebPage
   addDOMforRunMonitor(maker, body, statReporter->getRunMonitorCollection());
   
   // Resource usage
-  addDOMforResourceUsage(maker, body, pool, nLogicalDisk, filePath);
+  addDOMforResourceUsage(maker, body, pool, 
+    sharedResources->_configuration->getDiskWritingParams());
   
   // Add the received data statistics table
   addDOMforFragmentMonitor(maker, body,
@@ -50,7 +51,29 @@ void WebPageHelper::defaultWebPage
   
   // Dump the webpage to the output stream
   maker.out(*out);
+}
 
+
+void WebPageHelper::filesWebPage
+(
+  xgi::Output *out,
+  const StatisticsReporterPtr statReporter,
+  xdaq::ApplicationDescriptor* appDesc
+)
+{
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+  
+  // Create the body with the standard header
+  XHTMLMaker::Node* body = 
+    createWebPageBody(maker, statReporter->externallyVisibleState(), appDesc);
+
+
+  addDOMforSMLinks(maker, body, appDesc);
+  
+   // Dump the webpage to the output stream
+  maker.out(*out);
 }
 
 
@@ -182,8 +205,7 @@ void WebPageHelper::addDOMforResourceUsage
   XHTMLMaker& maker,
   XHTMLMaker::Node *parent,
   toolbox::mem::Pool *pool,
-  const int nLogicalDisk,
-  const std::string filePath
+  const DiskWritingParams dwParams
 )
 {
   XHTMLMaker::AttrMap tableAttr;
@@ -243,9 +265,10 @@ void WebPageHelper::addDOMforResourceUsage
   
   
   // Disk usage
+  int nLogicalDisk = dwParams._nLogicalDisk;
   unsigned int nD = nLogicalDisk ? nLogicalDisk : 1;
   for(unsigned int i=0;i<nD;++i) {
-    std::string path(filePath);
+    std::string path(dwParams._filePath);
     if(nLogicalDisk>0) {
       std::ostringstream oss;
       oss << "/" << std::setfill('0') << std::setw(2) << i; 
