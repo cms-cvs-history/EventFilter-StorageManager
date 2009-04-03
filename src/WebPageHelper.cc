@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.12 2009/04/03 14:27:59 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.13 2009/04/03 14:50:37 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -334,19 +334,19 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
                          XHTMLMaker::Node *parent,
                          FragmentMonitorCollection const& fmc)
 {
-  MonitoredQuantity const& allFragmentSizes =
-    fmc.getAllFragmentSizeMQ();
-  MonitoredQuantity const& eventFragmentSizes =
-    fmc.getEventFragmentSizeMQ();
-  MonitoredQuantity const& dqmEventFragmentSizes =
-    fmc.getDQMEventFragmentSizeMQ();
+  MonitoredQuantity::Stats allFragmentSizeStats;
+  fmc.getAllFragmentSizeMQ().getStats(allFragmentSizeStats);
+  MonitoredQuantity::Stats eventFragmentSizeStats;
+  fmc.getEventFragmentSizeMQ().getStats(eventFragmentSizeStats);
+  MonitoredQuantity::Stats dqmEventFragmentSizeStats;
+  fmc.getDQMEventFragmentSizeMQ().getStats(dqmEventFragmentSizeStats);
 
-  MonitoredQuantity const& allFragmentBandwidth =
-    fmc.getAllFragmentBandwidthMQ();
-  MonitoredQuantity const& eventFragmentBandwidth =
-    fmc.getEventFragmentBandwidthMQ();
-  MonitoredQuantity const& dqmEventFragmentBandwidth =
-    fmc.getDQMEventFragmentBandwidthMQ();
+  MonitoredQuantity::Stats allFragmentBandwidthStats;
+  fmc.getAllFragmentBandwidthMQ().getStats(allFragmentBandwidthStats);
+  MonitoredQuantity::Stats eventFragmentBandwidthStats;
+  fmc.getEventFragmentBandwidthMQ().getStats(eventFragmentBandwidthStats);
+  MonitoredQuantity::Stats dqmEventFragmentBandwidthStats;
+  fmc.getDQMEventFragmentBandwidthMQ().getStats(dqmEventFragmentBandwidthStats);
 
   XHTMLMaker::AttrMap tableAttr;
   tableAttr[ "frame" ] = "void";
@@ -389,21 +389,21 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
     tmpString << std::fixed << std::setprecision(1) <<
-      allFragmentSizes.getDuration(MonitoredQuantity::FULL) << " s";
+      allFragmentSizeStats.getDuration(MonitoredQuantity::FULL) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
     tmpString << std::fixed << std::setprecision(1) <<
-      eventFragmentSizes.getDuration(MonitoredQuantity::FULL) << " s";
+      eventFragmentSizeStats.getDuration(MonitoredQuantity::FULL) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
     tmpString << std::fixed << std::setprecision(1) <<
-      dqmEventFragmentSizes.getDuration(MonitoredQuantity::FULL) << " s";
+      dqmEventFragmentSizeStats.getDuration(MonitoredQuantity::FULL) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
 
@@ -412,55 +412,55 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Frames Received");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getSampleCount(MonitoredQuantity::FULL), 0);
+  maker.addText(tableDiv, allFragmentSizeStats.getSampleCount(MonitoredQuantity::FULL), 0);
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getSampleCount(MonitoredQuantity::FULL), 0);
+  maker.addText(tableDiv, eventFragmentSizeStats.getSampleCount(MonitoredQuantity::FULL), 0);
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::FULL), 0);
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getSampleCount(MonitoredQuantity::FULL), 0);
 
   // Bandwidth
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Bandwidth (MB/s)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, allFragmentSizeStats.getValueRate(MonitoredQuantity::FULL));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, eventFragmentSizeStats.getValueRate(MonitoredQuantity::FULL));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getValueRate(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getValueRate(MonitoredQuantity::FULL));
 
   // Rate
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Rate (frames/s)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, allFragmentSizeStats.getSampleRate(MonitoredQuantity::FULL));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, eventFragmentSizeStats.getSampleRate(MonitoredQuantity::FULL));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleRate(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getSampleRate(MonitoredQuantity::FULL));
 
   // Latency
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Latency (us/frame)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, allFragmentSizeStats.getSampleLatency(MonitoredQuantity::FULL));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, eventFragmentSizeStats.getSampleLatency(MonitoredQuantity::FULL));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleLatency(MonitoredQuantity::FULL));
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getSampleLatency(MonitoredQuantity::FULL));
 
   // Total volume received
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Total volume received (MB)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
+  maker.addText(tableDiv, allFragmentSizeStats.getValueSum(MonitoredQuantity::FULL), 3);
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
+  maker.addText(tableDiv, eventFragmentSizeStats.getValueSum(MonitoredQuantity::FULL), 3);
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getValueSum(MonitoredQuantity::FULL), 3);
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getValueSum(MonitoredQuantity::FULL), 3);
 
 
   // Recent statistics header
@@ -471,21 +471,21 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
     tmpString << std::fixed << std::setprecision(1) <<
-      allFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " s";
+      allFragmentSizeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
     tmpString << std::fixed << std::setprecision(1) <<
-      eventFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " s";
+      eventFragmentSizeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
     tmpString << std::fixed << std::setprecision(1) <<
-      dqmEventFragmentSizes.getDuration(MonitoredQuantity::RECENT) << " s";
+      dqmEventFragmentSizeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
 
@@ -494,66 +494,66 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Frames Received");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getSampleCount(MonitoredQuantity::RECENT), 0);
+  maker.addText(tableDiv, allFragmentSizeStats.getSampleCount(MonitoredQuantity::RECENT), 0);
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT), 0);
+  maker.addText(tableDiv, eventFragmentSizeStats.getSampleCount(MonitoredQuantity::RECENT), 0);
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleCount(MonitoredQuantity::RECENT), 0);
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getSampleCount(MonitoredQuantity::RECENT), 0);
 
   // Bandwidth
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Bandwidth (MB/s)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, allFragmentSizeStats.getValueRate(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, eventFragmentSizeStats.getValueRate(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getValueRate(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getValueRate(MonitoredQuantity::RECENT));
 
   // Rate
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Rate (frames/s)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, allFragmentSizeStats.getSampleRate(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, eventFragmentSizeStats.getSampleRate(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleRate(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getSampleRate(MonitoredQuantity::RECENT));
 
   // Latency
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Latency (us/frame)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, allFragmentSizeStats.getSampleLatency(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, eventFragmentSizeStats.getSampleLatency(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentSizes.getSampleLatency(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, dqmEventFragmentSizeStats.getSampleLatency(MonitoredQuantity::RECENT));
 
   // Maximum Bandwidth
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Maximum Bandwidth (MB/s)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, allFragmentBandwidthStats.getValueMax(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, eventFragmentBandwidthStats.getValueMax(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentBandwidth.getValueMax(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, dqmEventFragmentBandwidthStats.getValueMax(MonitoredQuantity::RECENT));
 
   // Minimum Bandwidth
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow);
   maker.addText(tableDiv, "Minimum Bandwidth (MB/s)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, allFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, allFragmentBandwidthStats.getValueMin(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, eventFragmentBandwidthStats.getValueMin(MonitoredQuantity::RECENT));
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, dqmEventFragmentBandwidth.getValueMin(MonitoredQuantity::RECENT));
+  maker.addText(tableDiv, dqmEventFragmentBandwidthStats.getValueMin(MonitoredQuantity::RECENT));
 
 }
 
@@ -562,14 +562,14 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
                                         XHTMLMaker::Node *parent,
                                         RunMonitorCollection const& rmc)
 {
-  MonitoredQuantity const& eventIDsReceived =
-    rmc.getEventIDsReceivedMQ();
-  MonitoredQuantity const& errorEventIDsReceived =
-    rmc.getErrorEventIDsReceivedMQ();
-  MonitoredQuantity const& runNumbersSeen =
-      rmc.getRunNumbersSeenMQ();
-  MonitoredQuantity const& lumiSectionsSeen =
-      rmc.getLumiSectionsSeenMQ();
+  MonitoredQuantity::Stats eventIDsReceivedStats;
+  rmc.getEventIDsReceivedMQ().getStats(eventIDsReceivedStats);
+  MonitoredQuantity::Stats errorEventIDsReceivedStats;
+  rmc.getErrorEventIDsReceivedMQ().getStats(errorEventIDsReceivedStats);
+  MonitoredQuantity::Stats runNumbersSeenStats;
+  rmc.getRunNumbersSeenMQ().getStats(runNumbersSeenStats);
+  MonitoredQuantity::Stats lumiSectionsSeenStats;
+  rmc.getLumiSectionsSeenMQ().getStats(lumiSectionsSeenStats);
 
   XHTMLMaker::AttrMap tableAttr;
   tableAttr[ "frame" ] = "void";
@@ -603,33 +603,33 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Run number");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, runNumbersSeen.getLastSampleValue(), 0);
+  maker.addText(tableDiv, runNumbersSeenStats.getLastSampleValue(), 0);
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Lumi section");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, lumiSectionsSeen.getLastSampleValue(), 0);
+  maker.addText(tableDiv, lumiSectionsSeenStats.getLastSampleValue(), 0);
 
   // Total events received
   tableRow = maker.addNode("tr", table, specialRowAttr);
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Events received (non-unique)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventIDsReceived.getSampleCount(), 0);
+  maker.addText(tableDiv, eventIDsReceivedStats.getSampleCount(), 0);
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Error events received");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, errorEventIDsReceived.getSampleCount(), 0);
+  maker.addText(tableDiv, errorEventIDsReceivedStats.getSampleCount(), 0);
 
   // Last event IDs
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Last event ID");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, eventIDsReceived.getLastSampleValue(), 0);
+  maker.addText(tableDiv, eventIDsReceivedStats.getLastSampleValue(), 0);
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Last error event ID");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, errorEventIDsReceived.getLastSampleValue(), 0);
+  maker.addText(tableDiv, errorEventIDsReceivedStats.getLastSampleValue(), 0);
 
 }
 
