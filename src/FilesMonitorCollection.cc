@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.1 2009/03/18 18:35:53 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.2 2009/03/27 01:31:09 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -80,6 +80,33 @@ void FilesMonitorCollection::do_updateInfoSpace()
 }
 
 
+std::string FilesMonitorCollection::FileRecord::closingReason()
+{
+  switch (whyClosed)
+  {
+    case notClosed:   return "open";
+    case stop:        return "run stopped";
+    case Nminus2lumi: return "LS changed";
+    case timeout:     return "timeout";
+    case size:        return "file size";
+    default:          return "unknown";
+  }
+}
+
+
+std::string FilesMonitorCollection::FileRecord::filePath()
+{
+  return ( baseFilePath + (whyClosed == notClosed ? "/open/" : "/closed/") );
+}
+
+
+std::string FilesMonitorCollection::FileRecord::fileName()
+{
+  std::ostringstream fileName;
+  fileName << coreFileName 
+    << "." << std::setfill('0') << std::setw(4) << fileCounter;
+  return fileName.str();
+}
 
 
 /// emacs configuration
