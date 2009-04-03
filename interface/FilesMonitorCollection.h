@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.3 2009/04/02 13:56:05 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.4 2009/04/03 12:35:20 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/02 13:56:05 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/03 12:35:20 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -46,8 +46,8 @@ namespace stor {
       std::string       coreFileName;       // file name w/o instance & file ending
       unsigned int      fileCounter;        // counter of number of coreFileNames used
       ClosingReason     whyClosed;          // reason why the given file was closed
-      MonitoredQuantity fileSize;           // file size
-      MonitoredQuantity eventCount;         // number of events
+      long long         fileSize;           // file size in bytes
+      uint32_t          eventCount;         // number of events
       std::string closingReason();          // reason why file was closed
       std::string filePath();               // complete file path
       std::string fileName();               // full file name w/o file ending
