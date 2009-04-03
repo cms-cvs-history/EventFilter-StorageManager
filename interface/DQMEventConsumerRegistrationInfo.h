@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.7 2009/03/12 03:46:17 paterno Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.8 2009/04/01 18:44:55 paterno Exp $
 
 #ifndef DQMEVENTCONSUMERREGISTRATIONINFO_H
 #define DQMEVENTCONSUMERREGISTRATIONINFO_H
@@ -16,8 +16,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/12 03:46:17 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/04/01 18:44:55 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -27,13 +27,12 @@ namespace stor
     /**
      * Constructs an instance from the specified registration information.
      */
-    DQMEventConsumerRegistrationInfo(const std::string& sourceURL,
-				     const std::string& consumerName,
-				     unsigned int headerRetryInterval,// seconds
-				     double maxEventRequestRate, // Hz
-				     const std::string& topLevelFolderName,
-				     QueueID queueId,
-				     size_t maxQueueSize);
+    DQMEventConsumerRegistrationInfo( const std::string& consumerName,
+				      unsigned int headerRetryInterval,// seconds
+				      double maxEventRequestRate, // Hz
+				      const std::string& topLevelFolderName,
+				      QueueID queueId,
+				      size_t maxQueueSize );
 
     // Destructor:
     ~DQMEventConsumerRegistrationInfo();
@@ -48,7 +47,6 @@ namespace stor
     // Implementation of the Template Method pattern.
     virtual void do_registerMe(EventDistributor*);
     virtual QueueID do_queueId() const;
-    virtual std::string do_sourceURL() const;
     virtual std::string do_consumerName() const;
     virtual unsigned int do_headerRetryInterval() const;
     virtual double       do_maxEventRequestRate() const;

@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.8 2009/04/01 18:44:55 paterno Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.9 2009/04/02 13:55:28 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -24,9 +24,9 @@ namespace stor
   /**
    * Holds the registration information from a event consumer.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/04/01 18:44:55 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/04/02 13:55:28 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -38,16 +38,14 @@ namespace stor
     /**
      * Constructs an instance with the specified registration information.
      */
-    EventConsumerRegistrationInfo(const std::string& sourceURL,
-				  unsigned int maxConnectRetries,
-				  unsigned int connectRetryInterval,// seconds
-				  const std::string& consumerName,
-				  unsigned int headerRetryInterval, // seconds
-				  double maxEventRequestRate, // Hz
-				  const FilterList& selEvents,
-				  const std::string& selHLTOut,
-				  unsigned int secondsToStale,
-				  QueueID queueId);
+    EventConsumerRegistrationInfo( unsigned int maxConnectRetries,
+				   unsigned int connectRetryInterval,// seconds
+				   const std::string& consumerName,
+				   unsigned int headerRetryInterval, // seconds
+				   double maxEventRequestRate, // Hz
+				   const FilterList& selEvents,
+				   const std::string& selHLTOut,
+				   unsigned int secondsToStale );
 
     ~EventConsumerRegistrationInfo();
 
@@ -65,10 +63,12 @@ namespace stor
     // Implementation of Template Method pattern.
     virtual void do_registerMe(EventDistributor*);
     virtual QueueID do_queueId() const;
-    virtual std::string do_sourceURL() const;
     virtual std::string do_consumerName() const;
     virtual unsigned int do_headerRetryInterval() const;
     virtual double       do_maxEventRequestRate() const;
+
+    // Set queue ID:
+    void setQueueID( const QueueID& qid ) { _common.queueId = qid; }
 
   private:
 

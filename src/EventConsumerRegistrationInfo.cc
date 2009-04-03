@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.5 2009/04/01 18:44:55 paterno Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.6 2009/04/02 13:55:28 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -58,38 +58,29 @@ namespace stor
     const unsigned int secs_to_stale =
       pset.getUntrackedParameter<int>( "secondsToStale", 10 ); // TODO
 
-    // Queue ID will be removed from c'tor arg list and set later:
-    QueueID dummy_qid;
-
-    const string url = in->getenv( "REMOTE_HOST" ); // ???
-
-    ConsRegPtr cr( new EventConsumerRegistrationInfo( url,
-                                                      max_conn_retr,
+    ConsRegPtr cr( new EventConsumerRegistrationInfo( max_conn_retr,
                                                       conn_retr_interval,
                                                       name,
                                                       hdr_retr_interval,
                                                       max_rate,
                                                       sel_events,
                                                       sel_hlt_out,
-                                                      secs_to_stale,
-                                                      dummy_qid ) );
+                                                      secs_to_stale ) );
     return cr;
 
   }
 
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
-  (string const& sourceURL,
-   unsigned int maxConnectRetries,
-   unsigned int connectRetryInterval, // seconds
-   const string& consumerName,
-   unsigned int headerRetryInterval, // seconds
-   double maxEventRequestRate, // Hz
-   const FilterList& selEvents,
-   const string& selHLTOut,
-   unsigned int secondsToStale,
-   QueueID queueId) :
-    _common(sourceURL, consumerName, headerRetryInterval, 
-            maxEventRequestRate, queueId),
+  ( unsigned int maxConnectRetries,
+    unsigned int connectRetryInterval, // seconds
+    const string& consumerName,
+    unsigned int headerRetryInterval, // seconds
+    double maxEventRequestRate, // Hz
+    const FilterList& selEvents,
+    const string& selHLTOut,
+    unsigned int secondsToStale ):
+    _common( consumerName, headerRetryInterval, 
+             maxEventRequestRate, QueueID() ),
     _maxConnectRetries( maxConnectRetries ),
     _connectRetryInterval( connectRetryInterval ),
     _selEvents( selEvents ),
@@ -110,12 +101,6 @@ namespace stor
   EventConsumerRegistrationInfo::do_queueId() const
   {
     return _common.queueId;
-  }
-
-  string
-  EventConsumerRegistrationInfo::do_sourceURL() const
-  {
-    return _common.sourceURL;
   }
 
   string
@@ -140,7 +125,6 @@ namespace stor
   EventConsumerRegistrationInfo::write(ostream& os) const
   {
     os << "EventConsumerRegistrationInfo:" << '\n'
-       << " Source URL: " << _common.sourceURL << '\n'
        << " Maximum number of connection attempts: "
        << _maxConnectRetries << '\n'
        << " Connection retry interval, seconds: "

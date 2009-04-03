@@ -368,9 +368,8 @@ void testEventDistributor::testConsumerSelection()
     QueueID queueId(enquing_policy::DiscardOld, 1);
 
     consInfo.reset(new EventConsumerRegistrationInfo(
-        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-        queueId));
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120));
+    consInfo->setQueueID( queueId );
 
     _eventDistributor->registerEventConsumer(&(*consInfo));
     
@@ -398,9 +397,8 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("d");
     QueueID queueId(enquing_policy::DiscardNew, 2);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-        queueId));
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120));
+    consInfo->setQueueID( queueId );
 
     _eventDistributor->registerEventConsumer(&(*consInfo));
     
@@ -449,9 +447,8 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("a");
     QueueID queueId(enquing_policy::DiscardOld, 3);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-        queueId));
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120));
+    consInfo->setQueueID( queueId );
     consInfo->registerMe(&(*_eventDistributor));
     
     CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
@@ -465,9 +462,8 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("d");
     QueueID queueId(enquing_policy::DiscardNew, 4);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        "http://cmswn1340.fnal.gov:52985/urn:xdaq-application:lid=29",
-        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120,
-        queueId));
+        5, 5, "Test Consumer", 5, 10, selections, "out4DQM", 120));
+    consInfo->setQueueID( queueId );
 
     consInfo->registerMe(&(*_eventDistributor));
     
@@ -669,8 +665,7 @@ void testEventDistributor::testDQMMessages()
   // Consumer for HCAL:
   boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1;
   QueueID qid1( policy, 1 );
-  ri1.reset( new DQMEventConsumerRegistrationInfo( url,
-                                                   "DQM Consumer 1",
+  ri1.reset( new DQMEventConsumerRegistrationInfo( "DQM Consumer 1",
                                                    10, 10, "HCAL",
                                                    qid1, 10 ) );
   _eventDistributor->registerDQMEventConsumer( &( *ri1 ) );
@@ -678,8 +673,7 @@ void testEventDistributor::testDQMMessages()
   // Consumer for ECAL:
   boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2;
   QueueID qid2( policy, 2 );
-  ri2.reset( new DQMEventConsumerRegistrationInfo( url,
-                                                   "DQM Consumer 2",
+  ri2.reset( new DQMEventConsumerRegistrationInfo( "DQM Consumer 2",
                                                    10, 10, "ECAL",
                                                    qid2, 10 ) );
   _eventDistributor->registerDQMEventConsumer( &( *ri2 ) );
@@ -711,8 +705,7 @@ void testEventDistributor::testDQMMessages()
   // Wildcard consumer:
   boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri3;
   QueueID qid3( policy, 3 );
-  ri3.reset( new DQMEventConsumerRegistrationInfo( url,
-                                                   "DQM Consumer 3",
+  ri3.reset( new DQMEventConsumerRegistrationInfo( "DQM Consumer 3",
                                                    10, 10, "*",
                                                    qid3, 10 ) );
 

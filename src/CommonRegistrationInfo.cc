@@ -4,12 +4,10 @@ using std::string;
 
 namespace stor
 {
-  CommonRegistrationInfo::CommonRegistrationInfo(string const& url,
-						 string const& name,
-						 unsigned int hri,
-						 double merr,
-						 QueueID id) :
-    sourceURL(url),
+  CommonRegistrationInfo::CommonRegistrationInfo( string const& name,
+						  unsigned int hri,
+						  double merr,
+						  QueueID id ):
     consumerName(name),
     headerRetryInterval(hri),
     maxEventRequestRate(merr),
@@ -20,7 +18,6 @@ namespace stor
 			    CommonRegistrationInfo const& ri)
   {
     os << "EventConsumerRegistrationInfo:"
-       << "\n Source URL: " << ri.sourceURL
        << "\n Consumer name: " << ri.consumerName
        << "\n Header retry interval, seconds: " << ri.headerRetryInterval
        << "\n Maximum event request rate, Hz: " << ri.maxEventRequestRate 

@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: CommonRegistrationInfo.h,v 1.1.2.7 2009/03/10 21:19:38 biery Exp $
+// $Id: CommonRegistrationInfo.h,v 1.1.2.1 2009/04/01 18:44:55 paterno Exp $
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
 #define EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -18,20 +18,18 @@ namespace stor
    * that don't have reason to do otherwise should include this as a
    * data member.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/01 18:44:55 $
    */
 
   struct CommonRegistrationInfo
   {
-    CommonRegistrationInfo(std::string const& sourceURL,
-			   std::string const& consumerName,
-			   unsigned int headerRetryInterval,
-			   double maxEventRequestRate,
-			   QueueID queueID);
+    CommonRegistrationInfo( std::string const& consumerName,
+			    unsigned int headerRetryInterval,
+			    double maxEventRequestRate,
+			    QueueID queueID );
 
-    std::string   sourceURL;
     std::string   consumerName;
     unsigned int  headerRetryInterval;
     double        maxEventRequestRate;

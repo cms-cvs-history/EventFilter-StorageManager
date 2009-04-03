@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: RegistrationInfoBase.h,v 1.1.2.2 2009/03/10 21:19:38 biery Exp $
+// $Id: RegistrationInfoBase.h,v 1.1.2.3 2009/04/01 18:44:55 paterno Exp $
 
 #ifndef REGISTRATIONINFOBASE_H
 #define REGISTRATIONINFOBASE_H
@@ -17,9 +17,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/01 18:44:55 $
    */
 
   class RegistrationInfoBase
@@ -52,11 +52,6 @@ namespace stor {
     enquing_policy::PolicyTag queuePolicy() const;
 
     /**
-       Returns the source URL  for this consumer.
-    */
-    std::string sourceURL() const;
-
-    /**
        Returns the name supplied by the consumer.
      */
     std::string consumerName() const;
@@ -74,7 +69,6 @@ namespace stor {
   private:
     virtual void do_registerMe(EventDistributor*) = 0;
     virtual QueueID do_queueId() const = 0;
-    virtual std::string do_sourceURL() const = 0;
     virtual std::string do_consumerName() const = 0;
     virtual unsigned int do_headerRetryInterval() const = 0;
     virtual double do_maxEventRequestRate() const = 0;
@@ -96,12 +90,6 @@ namespace stor {
   enquing_policy::PolicyTag RegistrationInfoBase::queuePolicy() const
   {
     return do_queueId().policy();
-  }
-
-  inline
-  std::string RegistrationInfoBase::sourceURL() const
-  {
-    return do_sourceURL();
   }
 
   inline

@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.1.2.2 2009/03/02 17:41:44 paterno Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.1.2.3 2009/04/01 18:44:56 paterno Exp $
 
 #include <iostream>
 
@@ -18,16 +18,15 @@ int main()
   fl.push_back( "DQM2" );
   QueueID id1(stor::enquing_policy::DiscardOld, 3);
 
-  ECRI ecri( "http://cmsmon.cms:50082/urn:xdaq-application:lid=29",
-	     1,
+  ECRI ecri( 1,
 	     1,
 	     "Test Consumer",
 	     3,
 	     10.,
 	     fl,
 	     "out4DQM",
-	     10,
-	     id1);
+	     10 );
+  ecri.setQueueID( id1 );
 	     
 
   cout << ecri << endl;

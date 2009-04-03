@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo_t.cpp,v 1.1.2.3 2009/03/12 03:46:18 paterno Exp $
+// $Id: DQMEventConsumerRegistrationInfo_t.cpp,v 1.1.2.4 2009/04/01 18:44:56 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
@@ -11,13 +11,12 @@ int main()
 {
   typedef DQMEventConsumerRegistrationInfo DECRI;
   QueueID id1(stor::enquing_policy::DiscardOld, 2);
-  DECRI ecri( "http://cmsmon.cms:50082/urn:xdaq-application:lid=29",
-	      "Test Consumer",
+  DECRI ecri( "Test Consumer",
 	      5,
 	      1.,
 	      "*",
 	      id1,
-	      1024);
+	      1024 );
 
   cout << ecri << endl;
   return 0;
