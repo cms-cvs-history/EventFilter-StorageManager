@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.11 2009/04/03 13:36:37 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.12 2009/04/03 14:27:59 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -673,7 +673,7 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Pathname");
   tableDiv = maker.addNode("th", tableRow);
-  maker.addText(tableDiv, "Event count");
+  maker.addText(tableDiv, "Events");
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Size (Bytes)");
   tableDiv = maker.addNode("th", tableRow);
