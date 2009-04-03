@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.1.2.1 2009/04/02 20:49:32 biery Exp $
+// $Id: DiskWriterResources.h,v 1.1.2.2 2009/04/02 23:14:29 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_DiskWriterResources_h
@@ -18,8 +18,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/04/02 20:49:32 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/04/02 23:14:29 $
    */
 
   class DiskWriterResources
@@ -51,7 +51,7 @@ namespace stor
     /**
      * Waits until a requested stream configuration has been completed.
      */
-    void waitForStreamConfiguration();
+    virtual void waitForStreamConfiguration();
 
     /**
      * Indicates that the stream configuration operation is done.
@@ -72,7 +72,7 @@ namespace stor
     /**
      * Waits until a requested stream destruction has been completed.
      */
-    void waitForStreamDestruction();
+    virtual void waitForStreamDestruction();
 
     /**
      * Indicates that the stream destruction operation is done.
@@ -122,7 +122,7 @@ namespace stor
 
 #endif
 
-/// emacs DiskWriterResources
+/// emacs configuration
 /// Local Variables: -
 /// mode: c++ -
 /// c-basic-offset: 2 -

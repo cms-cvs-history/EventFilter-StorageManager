@@ -15,6 +15,7 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/test/MockApplication.h"
+#include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
 #include "EventFilter/StorageManager/test/MockNotifier.h"
 
 using namespace std;
@@ -163,7 +164,7 @@ int main()
   SharedResourcesPtr sr;
   sr.reset(new SharedResources());
   sr->_initMsgCollection.reset(new InitMsgCollection());
-  sr->_diskWriterResources.reset(new DiskWriterResources());
+  sr->_diskWriterResources.reset(new MockDiskWriterResources());
   sr->_dqmServiceManager.reset(new DQMServiceManager());
   sr->_commandQueue.reset(new CommandQueue(32));
   sr->_fragmentQueue.reset(new FragmentQueue(32));

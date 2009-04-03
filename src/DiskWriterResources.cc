@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.cc,v 1.1.2.1 2009/04/02 20:49:32 biery Exp $
+// $Id: DiskWriterResources.cc,v 1.1.2.2 2009/04/02 23:14:30 biery Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
 
@@ -122,7 +122,7 @@ namespace stor
 
 } // namespace stor
 
-/// emacs DiskWriterResources
+/// emacs configuration
 /// Local Variables: -
 /// mode: c++ -
 /// c-basic-offset: 2 -
