@@ -1,9 +1,11 @@
 // -*- c++ -*-
+// $Id: $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/Notifier.h"
 
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/in_state_reaction.hpp>

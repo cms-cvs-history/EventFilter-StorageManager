@@ -1,3 +1,5 @@
+// $Id: $
+
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <typeinfo>
@@ -57,13 +59,18 @@ void StateMachine::dumpHistory( ostream& os ) const
 
 }
 
-void StateMachine::unconsumed_event( bsc::event_base const &event)
+void StateMachine::unconsumed_event( bsc::event_base const &event )
 {
+
   std::cerr << "The " << 
     //event.dynamic_type()
     typeid(event).name()
     << " event is not supported from the "
     << getCurrentStateName() << " state!" << std::endl;
+
+  // Tell run control not to wait:
+  _notifier->reportNewState( "Unchanged" );
+
 }
 
 void StateMachine::setExternallyVisibleState( const std::string& s )
