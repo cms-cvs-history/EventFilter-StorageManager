@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.12 2009/03/30 19:11:45 paterno Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.13 2009/03/31 10:29:57 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -53,119 +53,119 @@ void  MonitoredQuantity::addSample(const uint32_t value)
   addSample(static_cast<double>(value));
 }
 
-long long MonitoredQuantity::getSampleCount(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// long long MonitoredQuantity::getSampleCount(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentSampleCount;
-  }
-  else {
-    return _fullSampleCount;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentSampleCount;
+//   }
+//   else {
+//     return _fullSampleCount;
+//   }
+// }
 
-double MonitoredQuantity::getSampleRate(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getSampleRate(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentSampleRate;
-  }
-  else {
-    return _fullSampleRate;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentSampleRate;
+//   }
+//   else {
+//     return _fullSampleRate;
+//   }
+// }
 
-double MonitoredQuantity::getSampleLatency(DataSetType dataSet) const
-{
-  double value = getSampleRate(dataSet);
-  return (value) ? 1e6/value : INFINITY;
-}
+// double MonitoredQuantity::getSampleLatency(DataSetType dataSet) const
+// {
+//   double value = getSampleRate(dataSet);
+//   return (value) ? 1e6/value : INFINITY;
+// }
 
-double MonitoredQuantity::getValueSum(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getValueSum(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentValueSum;
-  }
-  else {
-    return _fullValueSum;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentValueSum;
+//   }
+//   else {
+//     return _fullValueSum;
+//   }
+// }
 
-double MonitoredQuantity::getValueAverage(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getValueAverage(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentValueAverage;
-  }
-  else {
-    return _fullValueAverage;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentValueAverage;
+//   }
+//   else {
+//     return _fullValueAverage;
+//   }
+// }
 
-double MonitoredQuantity::getValueRMS(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getValueRMS(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentValueRMS;
-  }
-  else {
-    return _fullValueRMS;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentValueRMS;
+//   }
+//   else {
+//     return _fullValueRMS;
+//   }
+// }
 
-double MonitoredQuantity::getValueMin(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getValueMin(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentValueMin;
-  }
-  else {
-    return _fullValueMin;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentValueMin;
+//   }
+//   else {
+//     return _fullValueMin;
+//   }
+// }
 
-double MonitoredQuantity::getValueMax(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getValueMax(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentValueMax;
-  }
-  else {
-    return _fullValueMax;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentValueMax;
+//   }
+//   else {
+//     return _fullValueMax;
+//   }
+// }
 
-double MonitoredQuantity::getValueRate(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getValueRate(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentValueRate;
-  }
-  else {
-    return _fullValueRate;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentValueRate;
+//   }
+//   else {
+//     return _fullValueRate;
+//   }
+// }
 
-double MonitoredQuantity::getDuration(DataSetType dataSet) const
-{
-  boost::mutex::scoped_lock sl(_resultsMutex);
+// double MonitoredQuantity::getDuration(DataSetType dataSet) const
+// {
+//   boost::mutex::scoped_lock sl(_resultsMutex);
 
-  if (dataSet == RECENT) {
-    return _recentDuration;
-  }
-  else {
-    return _fullDuration;
-  }
-}
+//   if (dataSet == RECENT) {
+//     return _recentDuration;
+//   }
+//   else {
+//     return _fullDuration;
+//   }
+// }
 
 void MonitoredQuantity::calculateStatistics(double currentTime)
 {
@@ -413,6 +413,38 @@ void MonitoredQuantity::setNewTimeWindowForRecentResults(duration_t interval)
   // call the reset method to populate the correct initial values
   // for the internal sample data
   //reset();
+}
+
+void
+MonitoredQuantity::getStats(Stats& s) const
+{
+  boost::mutex::scoped_lock results(_resultsMutex);
+  boost::mutex::scoped_lock accumulate(_accumulationMutex);
+
+  s.fullSampleCount = _fullSampleCount;
+  s.fullSampleRate = _fullSampleRate;
+  s.fullValueSum = _fullValueSum;
+  s.fullValueSumOfSquares = _fullValueSumOfSquares;
+  s.fullValueAverage = _fullValueAverage;
+  s.fullValueRMS = _fullValueRMS;
+  s.fullValueMin = _fullValueMin;
+  s.fullValueMax = _fullValueMax;
+  s.fullValueRate = _fullValueRate;
+  s.fullDuration = _fullDuration;
+
+  s.recentSampleCount = _recentSampleCount;
+  s.recentSampleRate = _recentSampleRate;
+  s.recentValueSum = _recentValueSum;
+  s.recentValueSumOfSquares = _recentValueSumOfSquares;
+  s.recentValueAverage = _recentValueAverage;
+  s.recentValueRMS = _recentValueRMS;
+  s.recentValueMin = _recentValueMin;
+  s.recentValueMax = _recentValueMax;
+  s.recentValueRate = _recentValueRate;
+  s.recentDuration = _recentDuration;
+
+  s.lastSampleValue = _lastSampleValue;
+  s.enabled = _enabled;
 }
 
 

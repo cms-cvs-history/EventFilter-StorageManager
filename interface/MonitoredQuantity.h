@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.13 2009/03/30 14:40:49 paterno Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.14 2009/03/30 19:11:32 paterno Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -6,6 +6,7 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 #include <vector>
+#include <math.h>
 
 #include "EventFilter/StorageManager/interface/Utils.h"
 
@@ -18,14 +19,16 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/03/30 14:40:49 $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/03/30 19:11:32 $
    */
 
   class MonitoredQuantity
   {
     
   public:
+    class Stats;
+
     enum DataSetType { FULL = 0,      // the full data set (all samples)
                        RECENT = 1 };  // recent data only
 
@@ -48,73 +51,73 @@ namespace stor
      */
     void addSample(const uint32_t value = 1);
 
-    /**
-     * Returns the number of samples stored in the monitor.
-     */
-    long long getSampleCount(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the number of samples stored in the monitor.
+//      */
+//     long long getSampleCount(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the rate of samples stored in the monitor
-     * (number of samples divided by duration).  The units of the
-     * return value are samples per second.
-     */
-    double getSampleRate(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the rate of samples stored in the monitor
+//      * (number of samples divided by duration).  The units of the
+//      * return value are samples per second.
+//      */
+//     double getSampleRate(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the latency of samples stored in the monitor
-     * (duration divided by number of samples).  The units of the
-     * return value are microsecond per sample.
-     */
-    double getSampleLatency(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the latency of samples stored in the monitor
+//      * (duration divided by number of samples).  The units of the
+//      * return value are microsecond per sample.
+//      */
+//     double getSampleLatency(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the sum of all sample values stored in the monitor.
-     */
-    double getValueSum(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the sum of all sample values stored in the monitor.
+//      */
+//     double getValueSum(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the average value of the samples that have been stored in
-     * the monitor or 0.0 if no samples have been added.
-     */
-    double getValueAverage(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the average value of the samples that have been stored in
+//      * the monitor or 0.0 if no samples have been added.
+//      */
+//     double getValueAverage(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the RMS of the sample values that have been stored in
-     * the monitor or 0.0 if no samples have been added.
-     */
-    double getValueRMS(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the RMS of the sample values that have been stored in
+//      * the monitor or 0.0 if no samples have been added.
+//      */
+//     double getValueRMS(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the minimum sample value that has been stored in
-     * the monitor.
-     */
-    double getValueMin(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the minimum sample value that has been stored in
+//      * the monitor.
+//      */
+//     double getValueMin(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the maximum sample value that has been stored in
-     * the monitor.
-     */
-    double getValueMax(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the maximum sample value that has been stored in
+//      * the monitor.
+//      */
+//     double getValueMax(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the sample value rate (the sum of all sample values stored
-     * in the monitor divided by the duration) or 0.0 if no samples have been
-     * stored.  The units of the return
-     * value are [the units of the sample values] per second (e.g. MByte/sec).
-     */
-    double getValueRate(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the sample value rate (the sum of all sample values stored
+//      * in the monitor divided by the duration) or 0.0 if no samples have been
+//      * stored.  The units of the return
+//      * value are [the units of the sample values] per second (e.g. MByte/sec).
+//      */
+//     double getValueRate(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the amount of time (seconds) that this monitor instance has
-     * been processing values starting with the time of the first sample
-     * or 0.0 if no samples have been stored in the monitor.
-     */
-    double getDuration(DataSetType dataSet = FULL) const;
+//     /**
+//      * Returns the amount of time (seconds) that this monitor instance has
+//      * been processing values starting with the time of the first sample
+//      * or 0.0 if no samples have been stored in the monitor.
+//      */
+//     double getDuration(DataSetType dataSet = FULL) const;
 
-    /**
-     * Returns the value of the last added sample
-     */
-    double getLastSampleValue() const {return _lastSampleValue;}
+//     /**
+//      * Returns the value of the last added sample
+//      */
+//     double getLastSampleValue() const {return _lastSampleValue;}
 
     /**
      * Forces a calculation of the statistics for the monitored quantity.
@@ -152,7 +155,7 @@ namespace stor
     /**
      * Tests whether the monitor is currently enabled.
      */
-    bool isEnabled() const {return _enabled;}
+//     bool isEnabled() const {return _enabled;}
 
     /**
      * Returns the length of the time window that has been specified
@@ -165,6 +168,11 @@ namespace stor
     utils::duration_t getTimeWindowForRecentResults() const {
       return _intervalForRecentStats;
     }
+
+    /**
+       Write all our collected statistics into the given Stats struct.
+     */
+    void getStats(Stats& stats) const;
 
   private:
 
@@ -183,7 +191,7 @@ namespace stor
     double _workingValueSumOfSquares;
     double _workingValueMin;
     double _workingValueMax;
-    boost::mutex _accumulationMutex;
+    mutable boost::mutex _accumulationMutex;
 
     int _binCount;
     int _workingBinId;
@@ -220,7 +228,49 @@ namespace stor
 
     bool _enabled;
     utils::duration_t _intervalForRecentStats;  // seconds
+  };
 
+  struct MonitoredQuantity::Stats
+  {
+    long long fullSampleCount;
+    double fullSampleRate;
+    double fullValueSum;
+    double fullValueSumOfSquares;
+    double fullValueAverage;
+    double fullValueRMS;
+    double fullValueMin;
+    double fullValueMax;
+    double fullValueRate;
+    double fullSampleLatency;
+    utils::duration_t fullDuration;
+
+    long long recentSampleCount;
+    double recentSampleRate;
+    double recentValueSum;
+    double recentValueSumOfSquares;
+    double recentValueAverage;
+    double recentValueRMS;
+    double recentValueMin;
+    double recentValueMax;
+    double recentValueRate;
+    double recentSampleLatency;
+    utils::duration_t recentDuration;
+
+    double lastSampleValue;
+    bool   enabled;
+
+    long long getSampleCount(DataSetType t = FULL) const { return t == RECENT ? recentSampleCount : fullSampleCount; }
+    double getValueSum(DataSetType t = FULL) const { return t == RECENT ? recentValueSum : fullValueSum; }
+    double getValueAverage(DataSetType t = FULL) const { return t == RECENT ? recentValueAverage : fullValueAverage; }
+    double getValueRate(DataSetType t = FULL) const { return t== RECENT ? recentValueRate : fullValueRate; }
+    double getValueRMS(DataSetType t = FULL) const { return t == RECENT ? recentValueRMS : fullValueRMS; }
+    double getValueMin(DataSetType t = FULL) const { return t == RECENT ? recentValueMin : fullValueMin; }
+    double getValueMax(DataSetType t = FULL) const { return t == RECENT ? recentValueMax : fullValueMax; }
+    utils::duration_t getDuration(DataSetType t = FULL) const { return t == RECENT ? recentDuration : fullDuration; }
+    double getSampleRate(DataSetType t = FULL) const { return t == RECENT ? recentSampleRate : fullSampleRate; }
+    double getSampleLatency(DataSetType t = FULL) const { double v=getSampleRate(t); return v  ? 1e6/v : INFINITY;}
+    double getLastSampleValue() const { return lastSampleValue; }
+    bool   isEnabled() const { return enabled; }
   };
 
 } // namespace stor

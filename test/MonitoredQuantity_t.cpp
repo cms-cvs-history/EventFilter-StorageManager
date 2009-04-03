@@ -94,61 +94,63 @@ void testMonitoredQuantity::testResults
 {
   // we don't expect an exact agreement due to rounding precision
   const double smallValue = 1e-05;;
+  MonitoredQuantity::Stats stats;
+  _quantity.getStats(stats);
 
-  CPPUNIT_ASSERT(_quantity.getSampleCount(type) == cycleCount * sampleCount);
+  CPPUNIT_ASSERT(stats.getSampleCount(type) == cycleCount * sampleCount);
   
   CPPUNIT_ASSERT(
     fabs(
-      _quantity.getValueSum(type) -
+      stats.getValueSum(type) -
       cycleCount * static_cast<double>(sampleCount)*(sampleCount+1)/2 * _multiplier
     ) < smallValue);
 
   CPPUNIT_ASSERT(
     fabs(
-      _quantity.getValueAverage(type) -
+      stats.getValueAverage(type) -
       ((cycleCount) ? static_cast<double>(sampleCount+1)/2 * _multiplier : 0)
     ) < smallValue);
 
-  CPPUNIT_ASSERT(_quantity.getValueMin(type) == 
+  CPPUNIT_ASSERT(stats.getValueMin(type) == 
     (cycleCount) ? _multiplier : 1e+9);
 
-  CPPUNIT_ASSERT(_quantity.getValueMax(type) == 
+  CPPUNIT_ASSERT(stats.getValueMax(type) == 
     (cycleCount) ? static_cast<double>(sampleCount)*_multiplier : 1e-9);
 
-  if (_quantity.getDuration(type) > 0)
+  if (stats.getDuration(type) > 0)
   {
     CPPUNIT_ASSERT(
       fabs(
-        _quantity.getSampleRate(type) -
-        cycleCount*sampleCount/_quantity.getDuration(type)
+        stats.getSampleRate(type) -
+        cycleCount*sampleCount/stats.getDuration(type)
       ) < smallValue);    
 
     CPPUNIT_ASSERT(
       fabs(
-        _quantity.getSampleLatency(type) -
-        1e6*_quantity.getDuration(type)/(cycleCount*sampleCount)
+        stats.getSampleLatency(type) -
+        1e6*stats.getDuration(type)/(cycleCount*sampleCount)
       ) < smallValue);    
 
     CPPUNIT_ASSERT(
       fabs(
-        _quantity.getValueRate(type) -
-        _quantity.getValueSum(type)/_quantity.getDuration(type)
+        stats.getValueRate(type) -
+        stats.getValueSum(type)/stats.getDuration(type)
       ) < smallValue);
   }
 
   if (sampleCount > 0)
   {
     unsigned long numEntries = cycleCount * sampleCount;
-    double rmsSquared = pow(_quantity.getValueRMS(type), 2);
+    double rmsSquared = pow(stats.getValueRMS(type), 2);
     double expectedSquare = squareSum/numEntries 
-      - pow(_quantity.getValueAverage(type),2);
+      - pow(stats.getValueAverage(type),2);
 
     double difference = rmsSquared - expectedSquare;
     std::cerr << "\n type " << type;
     std::cerr << "\n square sum " << squareSum;
     std::cerr << "\n cycle count " << cycleCount;
     std::cerr << "\n sample count " << sampleCount;
-    std::cerr << "\n RMS:        " << _quantity.getValueRMS(type);
+    std::cerr << "\n RMS:        " << stats.getValueRMS(type);
     std::cerr << "\n expected square: " << expectedSquare;
     std::cerr << "\n difference: " << difference;
 
@@ -157,8 +159,8 @@ void testMonitoredQuantity::testResults
     CPPUNIT_ASSERT(fabs(difference) < smallValue);
 //     CPPUNIT_ASSERT(
 //       fabs(
-//            _quantity.getValueRMS(type) -
-//            sqrt((squareSum/(cycleCount*sampleCount))-pow(_quantity.getValueAverage(type),2))
+//            stats.getValueRMS(type) -
+//            sqrt((squareSum/(cycleCount*sampleCount))-pow(stats.getValueAverage(type),2))
 //            ) < smallValue);
   }
 }
