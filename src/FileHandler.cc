@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.9 2009/04/01 14:44:01 biery Exp $
+// $Id: FileHandler.cc,v 1.1.2.10 2009/04/02 13:57:56 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -158,17 +158,13 @@ bool FileHandler::tooLarge(const unsigned long& dataSize)
 
 const int FileHandler::events() const
 {
-  // Fix me: do not call calculateStatistics() every time
-  _fileRecord->eventCount.calculateStatistics();
-  return _fileRecord->eventCount.getSampleCount();
+  return _fileRecord->eventCount;
 }
 
 
 const long long FileHandler::fileSize() const
 {
-  // Fix me: do not call calculateStatistics() every time
-  _fileRecord->fileSize.calculateStatistics();
-  return static_cast<long long>(_fileRecord->fileSize.getValueSum());
+  return _fileRecord->fileSize;
 }
 
 

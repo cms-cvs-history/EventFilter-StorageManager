@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.2 2009/03/27 01:31:09 biery Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.3 2009/04/03 12:35:56 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -12,7 +12,6 @@ using namespace stor;
 FilesMonitorCollection::FilesMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app, "Files")
 {
-
   putItemsIntoInfoSpace();
 }
 
@@ -21,6 +20,8 @@ FilesMonitorCollection::FileRecordPtr
 FilesMonitorCollection::getNewFileRecord(double timeWindowForRecentResults)
 {
   boost::shared_ptr<FileRecord> fileRecord(new FilesMonitorCollection::FileRecord());
+  fileRecord->fileSize = 0;
+  fileRecord->eventCount = 0;
   _fileRecords.push_back(fileRecord);
   return fileRecord;
 }
@@ -28,15 +29,7 @@ FilesMonitorCollection::getNewFileRecord(double timeWindowForRecentResults)
 
 void FilesMonitorCollection::do_calculateStatistics()
 {
-  for (
-    FileRecordList::iterator it = _fileRecords.begin(), itEnd = _fileRecords.end();
-    it != itEnd;
-    ++it
-  ) 
-  {
-    if ( (*it)->whyClosed == FileRecord::notClosed )
-      (*it)->fileSize.calculateStatistics();
-  }
+  // nothing to do
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.1.2.10 2009/04/01 14:24:05 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.1.2.11 2009/04/02 13:57:14 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
 #include <IOPool/Streamer/interface/EventMessage.h>
@@ -33,22 +33,15 @@ EventFileHandler::~EventFileHandler()
 
 void EventFileHandler::writeHeader(InitMsgSharedPtr view)
 {
-  // Fix me: use correct API:  _writer.doOutputHeader(view);
-  //_fileRecord->fileSize.addSample(view.size());
-  // Fix me: the header increments the event count
-
-#ifdef NEW_DW_TEST
   InitMsgView initView(&(*view)[0]);
   _writer.doOutputHeader(initView);
-  _fileRecord->fileSize.addSample(view->size());
+  _fileRecord->fileSize += view->size();
   _lastEntry = utils::getCurrentTime();
-#endif
 }
 
 
 void EventFileHandler::writeEvent(const I2OChain& event)
 {
-#ifdef NEW_DW_TEST
   edm::StreamerFileWriterEventParams evtParams;
 
   event.hltTriggerBits(evtParams.hltBits);
@@ -67,17 +60,16 @@ void EventFileHandler::writeEvent(const I2OChain& event)
       _writer.doOutputEventFragment(evtParams);
     }
 
-  _fileRecord->fileSize.addSample(static_cast<uint32_t>(event.totalDataSize()));
-  _fileRecord->eventCount.addSample(1);
+  _fileRecord->fileSize += event.totalDataSize();
+  ++_fileRecord->eventCount;
   _lastEntry = utils::getCurrentTime();
-#endif
 }
 
 
 void EventFileHandler::closeFile()
 {
   _writer.stop();
-  _fileRecord->fileSize.addSample(_writer.getStreamEOFSize());
+  _fileRecord->fileSize += _writer.getStreamEOFSize();
   setAdler(_writer.get_adler32_stream(), _writer.get_adler32_index());
   moveFileToClosed(true);
   writeToSummaryCatalog();

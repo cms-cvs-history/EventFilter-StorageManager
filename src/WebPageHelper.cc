@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.9 2009/04/03 10:58:47 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.10 2009/04/03 12:36:01 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -654,13 +654,11 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
   XHTMLMaker::AttrMap specialRowAttr;
   specialRowAttr[ "class" ] = "special";
 
-  XHTMLMaker::AttrMap tableLabelAttr;
-  tableLabelAttr[ "align" ] = "left";
-  tableLabelAttr[ "width" ] = "27%";
-
   XHTMLMaker::AttrMap tableValueAttr;
   tableValueAttr[ "align" ] = "right";
-  tableValueAttr[ "width" ] = "23%";
+
+  XHTMLMaker::AttrMap tableLabelAttr;
+  tableLabelAttr[ "align" ] = "center";
 
   XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
 
@@ -683,6 +681,14 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
 
   // File list
   unsigned int counter = fileRecords.size();
+  if (counter == 0)
+  {
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, colspanAttr);
+    maker.addText(tableDiv, "no files yet");
+    return;
+  }
+
   for (
     FilesMonitorCollection::FileRecordList::const_reverse_iterator 
       it = fileRecords.rbegin(), itEnd = fileRecords.rend();
@@ -692,15 +698,15 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
   {
     --counter;
     tableRow = maker.addNode("tr", table);
-    tableDiv = maker.addNode("td", tableRow);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addText(tableDiv, counter, 0);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, (*it)->completeFileName());
-    tableDiv = maker.addNode("td", tableRow);
-    maker.addText(tableDiv, (*it)->eventCount.getSampleCount(), 0);
-    tableDiv = maker.addNode("td", tableRow);
-    maker.addText(tableDiv, (*it)->fileSize.getValueSum(), 0);
-    tableDiv = maker.addNode("td", tableRow);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, (*it)->eventCount, 0);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, (*it)->fileSize, 0);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     maker.addText(tableDiv, (*it)->closingReason());
   }
 }
