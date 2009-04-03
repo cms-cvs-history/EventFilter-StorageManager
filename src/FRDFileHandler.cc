@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.cc,v 1.1.2.5 2009/03/20 15:16:57 mommsen Exp $
+// $Id: FRDFileHandler.cc,v 1.1.2.6 2009/03/20 17:54:30 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>
@@ -30,6 +30,7 @@ void FRDFileHandler::writeEvent(const I2OChain& chain)
   FRDEventMsgView view( (void *) chain.getBufferData() );
   _writer.doOutputEvent(view);
   _fileRecord->fileSize.addSample(view.size());
+  _fileRecord->eventCount.addSample(1);
   _lastEntry = utils::getCurrentTime();
 }
 
