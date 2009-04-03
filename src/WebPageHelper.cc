@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.10 2009/04/03 12:36:01 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.11 2009/04/03 13:36:37 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -680,8 +680,7 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
   maker.addText(tableDiv, "Closing reason");
 
   // File list
-  unsigned int counter = fileRecords.size();
-  if (counter == 0)
+  if (fileRecords.size() == 0)
   {
     tableRow = maker.addNode("tr", table);
     tableDiv = maker.addNode("td", tableRow, colspanAttr);
@@ -696,10 +695,9 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
     ++it
   ) 
   {
-    --counter;
     tableRow = maker.addNode("tr", table);
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-    maker.addText(tableDiv, counter, 0);
+    maker.addText(tableDiv, (*it)->entryCounter, 0);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, (*it)->completeFileName());
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);

@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.4 2009/04/03 12:35:20 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.5 2009/04/03 13:36:59 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/03 12:35:20 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/03 13:36:59 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -39,6 +39,7 @@ namespace stor {
         size
       };
 
+      uint32_t          entryCounter;       // file counter
       uint32_t          runNumber;          // run number
       uint32_t          lumiSection;        // luminosity section 
       std::string       streamLabel;        // datastream label
@@ -86,6 +87,8 @@ namespace stor {
 
     FileRecordList _fileRecords;
 
+    const unsigned int _maxFileEntries; // maximum number of files to remember
+    uint32_t _entryCounter;
 
     // InfoSpace items which were defined in the old SM
 

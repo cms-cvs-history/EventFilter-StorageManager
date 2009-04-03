@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.3 2009/04/03 12:35:56 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.4 2009/04/03 13:36:37 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -10,8 +10,12 @@
 using namespace stor;
 
 FilesMonitorCollection::FilesMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Files")
+MonitorCollection(app, "Files"),
+_maxFileEntries(250),
+_entryCounter(0)
 {
+  _fileRecords.reserve(_maxFileEntries);
+
   putItemsIntoInfoSpace();
 }
 
@@ -19,7 +23,13 @@ MonitorCollection(app, "Files")
 FilesMonitorCollection::FileRecordPtr
 FilesMonitorCollection::getNewFileRecord(double timeWindowForRecentResults)
 {
+  if (_fileRecords.size() >= _maxFileEntries)
+  {
+    _fileRecords.erase(_fileRecords.begin());
+  }
+
   boost::shared_ptr<FileRecord> fileRecord(new FilesMonitorCollection::FileRecord());
+  fileRecord->entryCounter = _entryCounter++;
   fileRecord->fileSize = 0;
   fileRecord->eventCount = 0;
   _fileRecords.push_back(fileRecord);
