@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.8 2009/03/20 21:30:06 biery Exp $
+// $Id: Exception.h,v 1.1.2.9 2009/03/27 01:26:58 biery Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -98,6 +98,10 @@ XCEPT_DEFINE_EXCEPTION(stor, FragmentProcessing)
  */
 XCEPT_DEFINE_EXCEPTION(stor, DiskWriting)
 
+/**
+ * Consumer registration exception
+ */
+XCEPT_DEFINE_EXCEPTION( stor, ConsumerRegistration )
 
 #endif // _storagemanager_Exception_h_
 

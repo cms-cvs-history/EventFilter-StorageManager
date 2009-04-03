@@ -1,7 +1,8 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.9 2009/04/03 13:40:51 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.10 2009/04/03 14:04:11 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/Exception.h"
 
 #include "xgi/Input.h"
 #include "xgi/exception/Exception.h"
@@ -45,14 +46,48 @@ namespace stor
         name = req.getConsumerName();
         pset_str = req.getRequestParameterSet();
       }
+    else
+      {
+        XCEPT_RAISE( stor::exception::ConsumerRegistration,
+                     "Bad request length" );
+      }
 
     const edm::ParameterSet pset( pset_str );
 
-    // TODO: hanlde exceptions, choose defaults
+    //
+    //// Check if HLT output module is there: ////
+    //
+
+    string sel_hlt_out = "";
+
+    try
+      {
+
+        sel_hlt_out =
+          pset.getUntrackedParameter<string>( "SelectHLTOutput", "" );
+
+        if( sel_hlt_out == "" )
+          {
+            sel_hlt_out = pset.getParameter<string>( "SelectHLTOutput" );
+          }
+
+      }
+    catch( xcept::Exception& e )
+      {
+        XCEPT_RETHROW( stor::exception::ConsumerRegistration,
+                       "No HLT output module specified",
+                       e );
+      }
+
+    if( sel_hlt_out == "" )
+      {
+        XCEPT_RAISE( stor::exception::ConsumerRegistration,
+                     "No HLT output module specified" );
+      }
+
+    // TODO: check tracked vs. untracked, verify defaults
     const double max_rate =
       pset.getUntrackedParameter<double>( "maxEventRequestRate", 1.0 );
-    const string sel_hlt_out =
-      pset.getUntrackedParameter<string>( "SelectHLTOutput", "none" );
     const EventConsumerRegistrationInfo::FilterList sel_events =
       pset.getParameter<Strings>( "SelectEvents" );
     const unsigned int max_conn_retr =
