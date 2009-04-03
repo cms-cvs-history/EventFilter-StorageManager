@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.14 2009/04/02 21:28:08 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.15 2009/04/02 23:18:47 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -118,8 +118,8 @@ void DiskWriter::writeNextEvent()
   }
   else
   {
-    _sharedResources->_diskWriterResources->setBusy(false);
     closeTimedOutFiles();
+    _sharedResources->_diskWriterResources->setBusy(false);
   }
 
   EvtStrConfigList* evtCfgList;
