@@ -1,9 +1,10 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.8 2009/04/03 12:30:45 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.9 2009/04/03 13:40:51 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
 #include "xgi/Input.h"
+#include "xgi/exception/Exception.h"
 
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
 
@@ -24,7 +25,11 @@ namespace stor
                                              unsigned int sts )
   {
 
-    // TODO: what if in = 0 ?
+    if( in == 0 )
+      {
+        XCEPT_RAISE( xgi::exception::Exception,
+                     "Null xgi::Input* in parseEventConsumerRegistration" );
+      }
 
     string name = "unknown";
     string pset_str = "<>";
