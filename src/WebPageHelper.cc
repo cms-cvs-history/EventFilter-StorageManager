@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.8 2009/03/02 18:08:22 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.9 2009/04/03 10:58:47 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -69,6 +69,7 @@ void WebPageHelper::filesWebPage
   XHTMLMaker::Node* body = 
     createWebPageBody(maker, statReporter->externallyVisibleState(), appDesc);
 
+  addDOMforFiles(maker, body, statReporter->getFilesMonitorCollection());  
 
   addDOMforSMLinks(maker, body, appDesc);
   
@@ -187,7 +188,11 @@ void WebPageHelper::addDOMforSMLinks
 
   linkAttr[ "href" ] = url + "/streameroutput";
   link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "Streamer Output Status web page");
+  maker.addText(link, "Old Streamer Output Status web page");
+
+  linkAttr[ "href" ] = url + "/fileStatistics";
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "File Statistics web page");
 
   maker.addNode("hr", parent);
 
@@ -628,6 +633,77 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
 
 }
 
+
+void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
+                                   XHTMLMaker::Node *parent,
+                                   FilesMonitorCollection const& fmc)
+{
+  FilesMonitorCollection::FileRecordList const& fileRecords =
+    fmc.getFileRecordsMQ();
+
+  XHTMLMaker::AttrMap tableAttr;
+  tableAttr[ "frame" ] = "void";
+  tableAttr[ "rules" ] = "group";
+  tableAttr[ "class" ] = "states";
+  tableAttr[ "cellpadding" ] = "2";
+  tableAttr[ "width" ] = "100%";
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "5";
+  
+  XHTMLMaker::AttrMap specialRowAttr;
+  specialRowAttr[ "class" ] = "special";
+
+  XHTMLMaker::AttrMap tableLabelAttr;
+  tableLabelAttr[ "align" ] = "left";
+  tableLabelAttr[ "width" ] = "27%";
+
+  XHTMLMaker::AttrMap tableValueAttr;
+  tableValueAttr[ "align" ] = "right";
+  tableValueAttr[ "width" ] = "23%";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "File Statistics (most recent first)");
+
+  // Header
+  tableRow = maker.addNode("tr", table, specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "#");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Pathname");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Event count");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Size (Bytes)");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Closing reason");
+
+  // File list
+  unsigned int counter = fileRecords.size();
+  for (
+    FilesMonitorCollection::FileRecordList::const_reverse_iterator 
+      it = fileRecords.rbegin(), itEnd = fileRecords.rend();
+    it != itEnd;
+    ++it
+  ) 
+  {
+    --counter;
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow);
+    maker.addText(tableDiv, counter, 0);
+    tableDiv = maker.addNode("td", tableRow);
+    maker.addText(tableDiv, (*it)->completeFileName());
+    tableDiv = maker.addNode("td", tableRow);
+    maker.addText(tableDiv, (*it)->eventCount.getSampleCount(), 0);
+    tableDiv = maker.addNode("td", tableRow);
+    maker.addText(tableDiv, (*it)->fileSize.getValueSum(), 0);
+    tableDiv = maker.addNode("td", tableRow);
+    maker.addText(tableDiv, (*it)->closingReason());
+  }
+}
 
 int WebPageHelper::getProcessCount(std::string processName)
 {

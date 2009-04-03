@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.7 2009/03/02 18:08:21 biery Exp $
+// $Id: WebPageHelper.h,v 1.1.2.8 2009/04/03 10:59:00 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -11,6 +11,7 @@
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
 
+#include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -22,9 +23,9 @@ namespace stor {
   /**
    * Helper class to handle web page requests
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/04/03 10:59:00 $
    */
   
   class WebPageHelper
@@ -89,14 +90,21 @@ namespace stor {
      */
     static void addDOMforFragmentMonitor(XHTMLMaker& maker,
                                          XHTMLMaker::Node *parent,
-                                         FragmentMonitorCollection const& fmc);
+                                         FragmentMonitorCollection const&);
 
     /**
      * Adds run monitoring statistics to the parent DOM element
      */
     static void addDOMforRunMonitor(XHTMLMaker& maker,
                                     XHTMLMaker::Node *parent,
-                                    RunMonitorCollection const& rmc);
+                                    RunMonitorCollection const&);
+
+    /**
+     * Adds files statistics to the parent DOM element
+     */
+    static void addDOMforFiles(XHTMLMaker& maker,
+                               XHTMLMaker::Node *parent,
+                               FilesMonitorCollection const&);
 
 
   private:

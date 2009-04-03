@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.67 2009/04/02 21:28:08 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.68 2009/04/03 10:58:46 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -118,7 +118,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   _wrapper_notifier( this ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.67 2009/04/02 21:28:08 biery Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.68 2009/04/03 10:58:46 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -190,6 +190,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
   xgi::bind(this,&StorageManager::streamerOutputWebPage,"streameroutput");
+  xgi::bind(this,&StorageManager::fileStatisticsWebPage,"fileStatistics");
   xgi::bind(this,&StorageManager::eventdataWebPage,     "geteventdata");
   xgi::bind(this,&StorageManager::headerdataWebPage,    "getregdata");
   xgi::bind(this,&StorageManager::consumerWebPage,      "registerConsumer");
@@ -536,7 +537,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 }
 
-//////////// *** Refactored default web page ///////////////////////////////////////////////
+//////////// *** Default web page ///////////////////////////////////////////////
 void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 throw (xgi::exception::Exception)
 {
@@ -1382,7 +1383,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-//////////// *** streamer file output web page //////////////////////////////////////////////////////////
+//////////// *** streamer file output web page ////////////////////////////////
 void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1476,6 +1477,37 @@ void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
+}
+
+void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the file statistics webpage";
+
+  try
+  {
+    WebPageHelper::filesWebPage(
+      out,
+      sharedResourcesPtr_->_statisticsReporter,
+      this->getApplicationDescriptor()
+    );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+
 }
 
 
