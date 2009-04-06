@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.11 2009/04/03 14:36:13 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.12 2009/04/06 13:28:42 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -78,17 +78,65 @@ namespace stor
                      "No HLT output module specified" );
       }
 
-    // TODO: check tracked vs. untracked, verify defaults
-    const double max_rate =
-      pset.getUntrackedParameter<double>( "maxEventRequestRate", 1.0 );
-    const EventConsumerRegistrationInfo::FilterList sel_events =
-      pset.getParameter<Strings>( "SelectEvents" );
-    const unsigned int max_conn_retr =
-      pset.getUntrackedParameter<int>( "maxConnectTries", 10 );
-    const unsigned int conn_retr_interval =
-      pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
-    const unsigned int hdr_retr_interval =
-      pset.getUntrackedParameter<int>( "headerRetryInterval", 5 );
+    // Maximum event rate:
+    double max_rate = 1.0;
+    try
+      {
+        max_rate = pset.getParameter<double>( "TrackedMaxRate" );
+      }
+    catch( xcept::Exception& e )
+      {
+        max_rate =
+          pset.getUntrackedParameter<double>( "maxEventRequestRate", 1.0 );
+      }
+
+    // Event filters:
+    EventConsumerRegistrationInfo::FilterList sel_events;
+    try
+      {
+        sel_events = pset.getParameter<Strings>( "TrackedEventSelection" );
+      }
+    catch( xcept::Exception& e )
+      {
+        pset.getParameter<Strings>( "SelectEvents" );
+      }
+
+    // Number of retries:
+    unsigned int max_conn_retr = 5;
+    try
+      {
+        max_conn_retr = pset.getParameter<int>( "TrackedMaxConnectTries" );
+      }
+    catch( xcept::Exception& e )
+      {
+        pset.getUntrackedParameter<int>( "maxConnectTries", 5 );
+      }
+
+    // Retry interval:
+    unsigned int conn_retr_interval = 10;
+    try
+      {
+        conn_retr_interval =
+          pset.getParameter<int>( "TrackedConnectTrySleepTime" );
+      }
+    catch( xcept::Exception& e )
+      {
+        conn_retr_interval =
+          pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
+      }
+
+    // Header retry interval:
+    unsigned int hdr_retr_interval = 5;
+    try
+      {
+        hdr_retr_interval =
+          pset.getParameter<int>( "TrackedHeaderRetryInterval" );
+      }
+    catch( xcept::Exception& e )
+      {
+        hdr_retr_interval =
+          pset.getUntrackedParameter<int>( "headerRetryInterval", 5 );
+      }
 
     ConsRegPtr cr( new EventConsumerRegistrationInfo( max_conn_retr,
                                                       conn_retr_interval,
