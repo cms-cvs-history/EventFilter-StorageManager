@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.1.2.5 2009/04/01 14:44:01 biery Exp $
+// $Id: StreamHandler.h,v 1.1.2.6 2009/04/06 13:35:59 mommsen Exp $
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
@@ -17,9 +17,9 @@ namespace stor {
   /**
    * Abstract class to handle one stream written to disk.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/01 14:44:01 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/04/06 13:35:59 $
    */
   
   class StreamHandler
@@ -55,8 +55,7 @@ namespace stor {
     /**
      * Return the stream label
      */
-    virtual const std::string streamLabel() const
-    { return "unknown"; }
+    virtual const std::string streamLabel() const = 0;
 
     /**
      * Return a new file handler for the provided event
