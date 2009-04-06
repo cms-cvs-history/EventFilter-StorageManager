@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.9 2009/03/30 14:40:08 paterno Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.10 2009/03/31 14:48:33 dshpakov Exp $
 
 #include <string>
 #include <sstream>
@@ -21,6 +21,7 @@ _app(app),
 _runMonCollection(app),
 _fragMonCollection(app),
 _filesMonCollection(app),
+_streamsMonCollection(app),
 _doMonitoring(true),
 _externallyVisibleState( "Halted" ),
 _xdaq_state_name( "Halted" )
