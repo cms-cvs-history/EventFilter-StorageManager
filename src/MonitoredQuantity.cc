@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.13 2009/03/31 10:29:57 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.14 2009/04/03 18:02:28 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -17,7 +17,7 @@ duration_t MonitoredQuantity::ExpectedCalculationInterval()
 }
 
 MonitoredQuantity::MonitoredQuantity(duration_t timeWindowForRecentResults):
-_lastSampleValue(0),
+_workingLastSampleValue(0),
 _enabled(true)
 {
   setNewTimeWindowForRecentResults(timeWindowForRecentResults);
@@ -40,7 +40,7 @@ void MonitoredQuantity::addSample(const double value)
   if (value < _workingValueMin) _workingValueMin = value;
   if (value > _workingValueMax) _workingValueMax = value;
 
-  _lastSampleValue = value;
+  _workingLastSampleValue = value;
 }
 
 void  MonitoredQuantity::addSample(const int value)
@@ -181,6 +181,7 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
   double latestValueMin;
   double latestValueMax;
   duration_t latestDuration;
+  double latestLastLatchedSampleValue;
   {
     boost::mutex::scoped_lock sl(_accumulationMutex);
 
@@ -190,6 +191,7 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     latestValueMin = _workingValueMin;
     latestValueMax = _workingValueMax;
     latestDuration = currentTime - _lastCalculationTime;
+    latestLastLatchedSampleValue = _workingLastSampleValue;
 
     _lastCalculationTime = currentTime;
     _workingSampleCount = 0;
@@ -197,11 +199,13 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     _workingValueSumOfSquares = 0.0;
     _workingValueMin =  INFINITY;
     _workingValueMax = -INFINITY;
+    _workingLastSampleValue = 0.0;
   }
 
   // lock out any interaction with the results while we update them
   {
     boost::mutex::scoped_lock sl(_resultsMutex);
+    _lastLatchedSampleValue = latestLastLatchedSampleValue;
 
     // we simply add the latest results to the full set
     _fullSampleCount += latestSampleCount;
@@ -419,7 +423,6 @@ void
 MonitoredQuantity::getStats(Stats& s) const
 {
   boost::mutex::scoped_lock results(_resultsMutex);
-  boost::mutex::scoped_lock accumulate(_accumulationMutex);
 
   s.fullSampleCount = _fullSampleCount;
   s.fullSampleRate = _fullSampleRate;
@@ -443,7 +446,7 @@ MonitoredQuantity::getStats(Stats& s) const
   s.recentValueRate = _recentValueRate;
   s.recentDuration = _recentDuration;
 
-  s.lastSampleValue = _lastSampleValue;
+  s.lastSampleValue = _lastLatchedSampleValue;
   s.enabled = _enabled;
 }
 

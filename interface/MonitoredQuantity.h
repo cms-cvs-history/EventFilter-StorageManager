@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.14 2009/03/30 19:11:32 paterno Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.15 2009/04/03 18:02:26 paterno Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -19,8 +19,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/03/30 19:11:32 $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/04/03 18:02:26 $
    */
 
   class MonitoredQuantity
@@ -191,6 +191,8 @@ namespace stor
     double _workingValueSumOfSquares;
     double _workingValueMin;
     double _workingValueMax;
+    double _workingLastSampleValue;
+
     mutable boost::mutex _accumulationMutex;
 
     int _binCount;
@@ -223,6 +225,7 @@ namespace stor
     double _recentValueMax;
     double _recentValueRate;
     utils::duration_t _recentDuration;
+    double _lastLatchedSampleValue;
 
     mutable boost::mutex _resultsMutex;
 
@@ -255,6 +258,7 @@ namespace stor
     double recentValueRate;
     double recentSampleLatency;
     utils::duration_t recentDuration;
+    double lastLatchedSampleValue;
 
     double lastSampleValue;
     bool   enabled;
