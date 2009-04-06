@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.42 2009/04/03 12:35:40 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.43 2009/04/03 20:01:25 biery Exp $
 */
 
 #include <string>
@@ -27,6 +27,7 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 #include "xdaq/Application.h"
@@ -124,9 +125,11 @@ namespace stor {
       {css_.css(in,out);}
     void storedDataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void newStoredDataWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void rbsenderWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void streamerOutputWebPage
+    void streamerOutputWebPage // obsolete
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void fileStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
@@ -252,6 +255,8 @@ namespace stor {
 
     // Notifier wrapper:
     WrapperNotifier _wrapper_notifier;
+
+    WebPageHelper _webPageHelper;
 
     std::string sm_cvs_version_;
 

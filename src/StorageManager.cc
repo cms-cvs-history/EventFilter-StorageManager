@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.69 2009/04/03 12:36:00 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.70 2009/04/03 20:01:26 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -10,9 +10,7 @@
 #include "EventFilter/StorageManager/interface/FUProxy.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -117,7 +115,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   closedFiles_(0), 
   openFiles_(0), 
   _wrapper_notifier( this ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.69 2009/04/03 12:36:00 mommsen Exp $ $Name: refdev01_scratch_branch $")
+  _webPageHelper( getApplicationDescriptor() ),
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.70 2009/04/03 20:01:26 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -186,6 +185,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
   xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
+  xgi::bind(this,&StorageManager::newStoredDataWebPage, "newStoredData");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
   xgi::bind(this,&StorageManager::streamerOutputWebPage,"streameroutput");
@@ -538,10 +538,9 @@ throw (xgi::exception::Exception)
   
   try
   {
-    WebPageHelper::defaultWebPage(
+    _webPageHelper.defaultWebPage(
       out,
       sharedResourcesPtr_,
-      this->getApplicationDescriptor(),
       pool_
     );
   }
@@ -564,6 +563,38 @@ throw (xgi::exception::Exception)
 
 
 //////////// *** Store data web page //////////////////////////////////////////////////////////
+void StorageManager::newStoredDataWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the stored data webpage";
+
+  try
+  {
+    _webPageHelper.storedDataWebPage(
+      out,
+      sharedResourcesPtr_->_statisticsReporter
+    );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+
+
+}
+
+
 void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -1479,10 +1510,9 @@ void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
 
   try
   {
-    WebPageHelper::filesWebPage(
+    _webPageHelper.filesWebPage(
       out,
-      sharedResourcesPtr_->_statisticsReporter,
-      this->getApplicationDescriptor()
+      sharedResourcesPtr_->_statisticsReporter
     );
   }
   catch(std::exception &e)
