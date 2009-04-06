@@ -1,18 +1,23 @@
-// $Id: StreamHandler.cc,v 1.1.2.5 2009/03/27 01:45:54 biery Exp $
+// $Id: StreamHandler.cc,v 1.1.2.6 2009/04/01 14:44:01 biery Exp $
 
 #include <sstream>
 #include <iomanip>
 
 #include "EventFilter/StorageManager/interface/StreamHandler.h"
+#include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
 
 
 using namespace stor;
 
 
 StreamHandler::StreamHandler(SharedResourcesPtr sharedResources) :
-_filesMonitorCollection(sharedResources->_statisticsReporter->getFilesMonitorCollection()),
+_statReporter(sharedResources->_statisticsReporter),
+_streamRecord(_statReporter->getStreamsMonitorCollection().getNewStreamRecord()),
 _diskWritingParams(sharedResources->_configuration->getDiskWritingParams())
-{}
+{
+  _streamRecord->streamName = streamLabel();
+}
 
 
 StreamHandler::~StreamHandler()
@@ -45,10 +50,11 @@ void StreamHandler::writeEvent(const I2OChain& event)
 {
   FileHandlerPtr handler = getFileHandler(event);
   handler->writeEvent(event);
+  _streamRecord->size.addSample(static_cast<double>(event.totalDataSize()) / (1024 * 1024));
 }
 
 
-StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& event)
+const StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& event)
 {
   for (
     FileHandlers::iterator it = _fileHandlers.begin(), itEnd = _fileHandlers.end();
@@ -73,10 +79,11 @@ StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& even
 }
 
 
-FilesMonitorCollection::FileRecordPtr StreamHandler::getNewFileRecord(const I2OChain& event)
+const FilesMonitorCollection::FileRecordPtr
+StreamHandler::getNewFileRecord(const I2OChain& event)
 {
   FilesMonitorCollection::FileRecordPtr fileRecord =
-    _filesMonitorCollection.getNewFileRecord();
+    _statReporter->getFilesMonitorCollection().getNewFileRecord();
   
   fileRecord->runNumber = event.runNumber();
   fileRecord->lumiSection = event.lumiSection();
@@ -90,13 +97,13 @@ FilesMonitorCollection::FileRecordPtr StreamHandler::getNewFileRecord(const I2OC
 }
 
 
-const std::string StreamHandler::getBaseFilePath(const uint32& runNumber)
+const std::string StreamHandler::getBaseFilePath(const uint32& runNumber) const
 {
   return _diskWritingParams._filePath + getFileSystem(runNumber);
 }
 
 
-const std::string StreamHandler::getFileSystem(const uint32& runNumber)
+const std::string StreamHandler::getFileSystem(const uint32& runNumber) const
 {
   // if the number of logical disks is not specified, don't
   // add a file system subdir to the path
@@ -119,7 +126,7 @@ const std::string StreamHandler::getCoreFileName
 (
   const uint32& runNumber,
   const uint32& lumiSection
-)
+) const
 {
   std::ostringstream coreFileName;
   coreFileName << _diskWritingParams._setupLabel
@@ -152,7 +159,7 @@ const unsigned int StreamHandler::getFileCounter(const std::string& coreFileName
 
 
 
-const long long StreamHandler::getMaxFileSize()
+const long long StreamHandler::getMaxFileSize() const
 {
   int maxFileSizeMB = _diskWritingParams._maxFileSizeMB > 0 ? 
     _diskWritingParams._maxFileSizeMB : getStreamMaxFileSize();

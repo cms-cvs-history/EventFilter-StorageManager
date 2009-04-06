@@ -1,12 +1,15 @@
-// $Id: StreamHandler.h,v 1.1.2.4 2009/03/20 17:53:54 mommsen Exp $
+// $Id: StreamHandler.h,v 1.1.2.5 2009/04/01 14:44:01 biery Exp $
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
 
+#include <boost/shared_ptr.hpp>
+
 #include "EventFilter/StorageManager/interface/FileHandler.h"
-#include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 
 
 namespace stor {
@@ -14,9 +17,9 @@ namespace stor {
   /**
    * Abstract class to handle one stream written to disk.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/20 17:53:54 $
+   * $Author: biery $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/01 14:44:01 $
    */
   
   class StreamHandler
@@ -52,27 +55,28 @@ namespace stor {
     /**
      * Return the stream label
      */
-    virtual std::string streamLabel() = 0;
+    virtual const std::string streamLabel() const
+    { return "unknown"; }
 
     /**
      * Return a new file handler for the provided event
      */    
-    virtual FileHandlerPtr newFileHandler(const I2OChain& event) = 0;
+    virtual const FileHandlerPtr newFileHandler(const I2OChain& event) = 0;
 
     /**
      * Return a new file record for the event
      */    
-    FilesMonitorCollection::FileRecordPtr getNewFileRecord(const I2OChain& event);
+    const FilesMonitorCollection::FileRecordPtr getNewFileRecord(const I2OChain& event);
 
     /**
      * Return the maximum file size for the stream in MB
      */
-    virtual const int getStreamMaxFileSize() = 0;
+    virtual const int getStreamMaxFileSize() const = 0;
 
     /**
      * Return the maximum file size in bytes
      */
-    const long long getMaxFileSize();
+    const long long getMaxFileSize() const;
 
 
   private:
@@ -80,28 +84,28 @@ namespace stor {
     /**
      * Get the file handler responsible for the event
      */    
-    FileHandlerPtr getFileHandler(const I2OChain& event);
+    const FileHandlerPtr getFileHandler(const I2OChain& event);
 
     /**
      * Return true if the file would become too large when
-     * adding dataSize MB (WHAT'S THE UNIT OF DATASIZE?)
+     * adding dataSize in Bytes
      */    
-    const bool fileTooLarge(const FileHandlerPtr, const unsigned long& dataSize);
+    const bool fileTooLarge(const FileHandlerPtr, const unsigned long& dataSize) const;
 
     /**
      * Get path w/o working directory
      */    
-    const std::string getBaseFilePath(const uint32& runNumber);
+    const std::string getBaseFilePath(const uint32& runNumber) const;
 
     /**
      * Get file system string
      */    
-    const std::string getFileSystem(const uint32& runNumber);
+    const std::string getFileSystem(const uint32& runNumber) const;
 
     /**
      * Get the core file name
      */    
-    const std::string getCoreFileName(const uint32& runNumber, const uint32& lumiSection);
+    const std::string getCoreFileName(const uint32& runNumber, const uint32& lumiSection) const;
     
     /**
      * Get the instance count of this core file name
@@ -111,7 +115,8 @@ namespace stor {
 
   protected:
 
-    FilesMonitorCollection& _filesMonitorCollection;
+    const StatisticsReporterPtr _statReporter;
+    const StreamsMonitorCollection::StreamRecordPtr _streamRecord;
     const DiskWritingParams _diskWritingParams;
 
     typedef std::vector<FileHandlerPtr> FileHandlers;
