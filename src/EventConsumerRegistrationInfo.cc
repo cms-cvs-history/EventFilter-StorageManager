@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.10 2009/04/03 14:04:11 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.11 2009/04/03 14:36:13 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -62,21 +62,14 @@ namespace stor
 
     try
       {
-
-        sel_hlt_out =
-          pset.getUntrackedParameter<string>( "SelectHLTOutput", "" );
-
-        if( sel_hlt_out == "" )
-          {
-            sel_hlt_out = pset.getParameter<string>( "SelectHLTOutput" );
-          }
-
+        // new-style consumer
+        sel_hlt_out = pset.getParameter<string>( "TrackedHLTOutMod" );
       }
     catch( xcept::Exception& e )
       {
-        XCEPT_RETHROW( stor::exception::ConsumerRegistration,
-                       "No HLT output module specified",
-                       e );
+        // old-style consumer or param not specified
+        sel_hlt_out =
+          pset.getUntrackedParameter<string>( "SelectHLTOutput", "" );
       }
 
     if( sel_hlt_out == "" )
