@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.6 2009/04/01 14:44:01 biery Exp $
+// $Id: StreamHandler.cc,v 1.1.2.7 2009/04/06 13:38:56 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -15,9 +15,7 @@ StreamHandler::StreamHandler(SharedResourcesPtr sharedResources) :
 _statReporter(sharedResources->_statisticsReporter),
 _streamRecord(_statReporter->getStreamsMonitorCollection().getNewStreamRecord()),
 _diskWritingParams(sharedResources->_configuration->getDiskWritingParams())
-{
-  _streamRecord->streamName = streamLabel();
-}
+{}
 
 
 StreamHandler::~StreamHandler()
@@ -50,7 +48,7 @@ void StreamHandler::writeEvent(const I2OChain& event)
 {
   FileHandlerPtr handler = getFileHandler(event);
   handler->writeEvent(event);
-  _streamRecord->size.addSample(static_cast<double>(event.totalDataSize()) / (1024 * 1024));
+  _streamRecord->addSizeInBytes(event.totalDataSize());
 }
 
 
@@ -92,7 +90,9 @@ StreamHandler::getNewFileRecord(const I2OChain& event)
   fileRecord->coreFileName = getCoreFileName(event.runNumber(), event.lumiSection());
   fileRecord->fileCounter = getFileCounter(fileRecord->coreFileName);
   fileRecord->whyClosed = FilesMonitorCollection::FileRecord::notClosed;
-  
+
+  _streamRecord->incrementFileCount();
+
   return fileRecord;
 }
 

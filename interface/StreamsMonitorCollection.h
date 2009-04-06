@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.1.2.6 2009/04/03 14:28:10 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.1.2.1 2009/04/06 13:38:33 mommsen Exp $
 
 #ifndef StorageManager_StreamsMonitorCollection_h
 #define StorageManager_StreamsMonitorCollection_h
@@ -12,6 +12,7 @@
 #include "xdata/UnsignedInteger32.h"
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 
 namespace stor {
@@ -20,18 +21,28 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/04/03 14:28:10 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/06 13:38:33 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
   {
+  private:
+
+    static MonitoredQuantity _allStreamsFileCount;
+    static MonitoredQuantity _allStreamsVolume;
+    static MonitoredQuantity _allStreamsBandwidth;
+
   public:
 
     struct StreamRecord
     {
-      std::string streamName;  // name of the stream
-      MonitoredQuantity size;  // data in MBytes stored in this stream
+      std::string streamName;       // name of the stream
+      MonitoredQuantity fileCount;  // number of files written for this stream
+      MonitoredQuantity volume;     // data in MBytes stored in this stream
+      MonitoredQuantity bandwidth;  // bandwidth in MBytes for this stream
+      void incrementFileCount();
+      void addSizeInBytes(double);
     };
 
     // We do not know how many streams there will be.
@@ -51,6 +62,28 @@ namespace stor {
       return _streamRecords;
     }
 
+    const MonitoredQuantity& getAllStreamsFileCountMQ() const {
+      return _allStreamsFileCount;
+    }
+    MonitoredQuantity& getAllStreamsFileCountMQ() {
+      return _allStreamsFileCount;
+    }
+
+    const MonitoredQuantity& getAllStreamsVolumeMQ() const {
+      return _allStreamsVolume;
+    }
+    MonitoredQuantity& getAllStreamsVolumeMQ() {
+      return _allStreamsVolume;
+    }
+
+    const MonitoredQuantity& getAllStreamsBandwidthMQ() const {
+      return _allStreamsBandwidth;
+    }
+    MonitoredQuantity& getAllStreamsBandwidthMQ() {
+      return _allStreamsBandwidth;
+    }
+
+
 
   private:
 
@@ -63,7 +96,7 @@ namespace stor {
     virtual void do_updateInfoSpace();
 
     StreamRecordList _streamRecords;
-
+    utils::duration_t _timeWindowForRecentResults;
 
     // InfoSpace items which were defined in the old SM
 

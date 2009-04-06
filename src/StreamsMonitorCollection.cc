@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.5 2009/04/03 14:27:59 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.1 2009/04/06 13:40:47 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -9,9 +9,20 @@
 
 using namespace stor;
 
+
+MonitoredQuantity StreamsMonitorCollection::_allStreamsFileCount;
+MonitoredQuantity StreamsMonitorCollection::_allStreamsVolume;
+MonitoredQuantity StreamsMonitorCollection::_allStreamsBandwidth;
+
+
 StreamsMonitorCollection::StreamsMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Streams")
+MonitorCollection(app, "Streams"),
+_timeWindowForRecentResults(300)
 {
+  _allStreamsFileCount.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
+  _allStreamsVolume.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
+  _allStreamsBandwidth.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
+
   putItemsIntoInfoSpace();
 }
 
@@ -20,6 +31,9 @@ const StreamsMonitorCollection::StreamRecordPtr
 StreamsMonitorCollection::getNewStreamRecord()
 {
   boost::shared_ptr<StreamRecord> streamRecord(new StreamsMonitorCollection::StreamRecord());
+  streamRecord->fileCount.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
+  streamRecord->volume.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
+  streamRecord->bandwidth.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   _streamRecords.push_back(streamRecord);
   return streamRecord;
 }
@@ -27,7 +41,27 @@ StreamsMonitorCollection::getNewStreamRecord()
 
 void StreamsMonitorCollection::do_calculateStatistics()
 {
-  // nothing to do
+  MonitoredQuantity::Stats stats;
+
+  for (
+    StreamRecordList::const_iterator 
+      it = _streamRecords.begin(), itEnd = _streamRecords.end();
+    it != itEnd;
+    ++it
+  ) 
+  {
+    (*it)->fileCount.calculateStatistics();
+    (*it)->volume.calculateStatistics();
+    (*it)->volume.getStats(stats);
+    (*it)->bandwidth.addSample(stats.getValueRate());
+    (*it)->bandwidth.calculateStatistics();
+  }
+
+  _allStreamsFileCount.calculateStatistics();
+  _allStreamsVolume.calculateStatistics();
+  _allStreamsVolume.getStats(stats);
+  _allStreamsBandwidth.addSample(stats.getValueRate());
+  _allStreamsBandwidth.calculateStatistics();
 }
 
 
@@ -69,6 +103,22 @@ void StreamsMonitorCollection::do_updateInfoSpace()
     XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
   }
 }
+
+
+void StreamsMonitorCollection::StreamRecord::incrementFileCount()
+{
+  fileCount.addSample(1);
+  _allStreamsFileCount.addSample(1);
+}
+
+
+void StreamsMonitorCollection::StreamRecord::addSizeInBytes(double size)
+{
+  size = size / (1024 * 1024);
+  volume.addSample(size);
+  _allStreamsVolume.addSample(size);
+}
+
 
 
 /// emacs configuration
