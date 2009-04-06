@@ -1,18 +1,36 @@
-// $Id: DiscardManager.cc,v 1.1.2.6 2009/03/02 17:44:46 paterno Exp $
+// $Id: DiscardManager.cc,v 1.1.2.1 2009/03/03 22:05:11 biery Exp $
 
 #include "EventFilter/StorageManager/interface/DiscardManager.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 
+#include "toolbox/mem/MemoryPoolFactory.h"
+
 using namespace stor;
 
 DiscardManager::DiscardManager(xdaq::ApplicationContext* ctx,
-                               xdaq::ApplicationDescriptor* desc,
-                               toolbox::mem::Pool* memPool):
+                               xdaq::ApplicationDescriptor* desc):
   _appContext(ctx),
-  _appDescriptor(desc),
-  _pool(memPool)
+  _appDescriptor(desc)
 {
+}
+
+void DiscardManager::configure()
+{
+  Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
+  for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
+    //std::cout << "POOL NAME2 = " << nameList[idx] << std::endl;
+    if (idx == 0 || nameList[idx].find("TCP") != std::string::npos) {
+      toolbox::net::URN poolURN(nameList[idx]);
+      toolbox::mem::Pool* thePool =
+        toolbox::mem::getMemoryPoolFactory()->findPool(poolURN);
+      if (thePool != 0) 
+        {
+          _pool = thePool;
+          _proxyCache.clear();
+        }
+    }
+  }
 }
 
 bool DiscardManager::sendDiscardMessage(I2OChain const& i2oMessage)

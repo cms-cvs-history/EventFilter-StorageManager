@@ -35,6 +35,9 @@ Ready::Ready( my_context c ): my_base(c)
       sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
       sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
     }
+
+  // configure the discard manager
+  sharedResources->_discardManager->configure();
 }
 
 Ready::~Ready()

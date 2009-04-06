@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.70 2009/04/03 20:01:26 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.71 2009/04/06 18:33:41 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -37,9 +37,6 @@
 #include "i2o/Method.h"
 #include "i2o/utils/AddressMap.h"
 
-#include "toolbox/mem/Pool.h"
-#include "toolbox/mem/Reference.h"
-#include "toolbox/mem/MemoryPoolFactory.h"
 #include "toolbox/task/WorkLoopFactory.h"
 
 #include "xcept/tools.h"
@@ -116,7 +113,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   openFiles_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.70 2009/04/03 20:01:26 biery Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.71 2009/04/06 18:33:41 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -235,6 +232,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesPtr_->_diskWriterResources.reset(new DiskWriterResources());
 
   sharedResourcesPtr_->_smRBSenderList = &smrbsenders_;
+
+  sharedResourcesPtr_->
+    _discardManager.reset(new DiscardManager(getApplicationContext(),
+                                             getApplicationDescriptor()));
 
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
@@ -3606,21 +3607,6 @@ void StorageManager::configureAction()
   sharedResourcesPtr_->_oldEventServer->
     setStreamSelectionTable(sharedResourcesPtr_->_serviceManager->
                             getStreamSelectionTable());
-
-  boost::shared_ptr<DiscardManager> discardMgr;
-  Strings nameList = toolbox::mem::getMemoryPoolFactory()->getMemoryPoolNames();
-  for (unsigned int idx = 0; idx < nameList.size(); ++idx) {
-    //std::cout << "POOL NAME2 = " << nameList[idx] << std::endl;
-    if (idx == 0 || nameList[idx].find("TCP") != std::string::npos) {
-      toolbox::net::URN poolURN(nameList[idx]);
-      toolbox::mem::Pool* thePool =
-        toolbox::mem::getMemoryPoolFactory()->findPool(poolURN);
-      discardMgr.reset(new DiscardManager(getApplicationContext(),
-                                          getApplicationDescriptor(),
-                                          thePool));
-    }
-  }
-  sharedResourcesPtr_->_discardManager = discardMgr;
 }
 
 

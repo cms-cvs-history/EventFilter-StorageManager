@@ -172,6 +172,9 @@ int main()
   MockApplicationStub* stub(new MockApplicationStub());
   MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
 
+  sr->_discardManager.reset(new DiscardManager(stub->getContext(),
+                                               stub->getDescriptor()));
+
   EventDistributor ed(sr);
 
   MockNotifier mn;
