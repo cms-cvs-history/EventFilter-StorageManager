@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.11 2009/04/02 13:56:48 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.12 2009/04/06 10:20:48 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/02 13:56:48 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/06 10:20:48 $
    */
 
   class FileHandler
@@ -144,22 +144,22 @@ namespace stor {
      * Check that the file size matches the given size.
      * Returns the actual size.
      */
-    size_t checkFileSizeMatch(const std::string& fileName, const size_t& size);
+    size_t checkFileSizeMatch(const std::string& fileName, const size_t& size) const;
 
     /**
      * Check that the 2 sizes agree
      */
-    bool sizeMismatch(const double& initialSize, const double& finalSize);
+    bool sizeMismatch(const double& initialSize, const double& finalSize) const;
 
     /**
      * Changes the file permissions to read-only
      */
-    void makeFileReadOnly(const std::string& fileName);
+    void makeFileReadOnly(const std::string& fileName) const;
 
     /**
      * Rename the file
      */
-    void renameFile(const std::string& openFileName, const std::string& closedFileName);
+    void renameFile(const std::string& openFileName, const std::string& closedFileName) const;
     
     /**
      * Check if all directories needed for the file output are available.

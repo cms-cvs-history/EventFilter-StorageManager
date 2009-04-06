@@ -1,4 +1,4 @@
-// $Id: FRDStreamHandler.h,v 1.1.2.1 2009/03/20 10:30:16 mommsen Exp $
+// $Id: FRDStreamHandler.h,v 1.1.2.2 2009/03/20 17:53:54 mommsen Exp $
 
 #ifndef StorageManager_FRDStreamHandler_h
 #define StorageManager_FRDStreamHandler_h
@@ -15,8 +15,8 @@ namespace stor {
    * Handle one FED Raw Data (error) event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/20 10:30:16 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/03/20 17:53:54 $
    */
   
   class FRDStreamHandler : public StreamHandler
@@ -35,18 +35,18 @@ namespace stor {
     /**
      * Return the stream label
      */
-    virtual std::string streamLabel()
+    virtual const std::string streamLabel() const
     { return _streamConfig.streamLabel(); }
 
     /**
      * Return a new file handler for the provided event
      */    
-    virtual FileHandlerPtr newFileHandler(const I2OChain& event);
+    virtual const FileHandlerPtr newFileHandler(const I2OChain& event);
 
     /**
      * Return the maximum file size for the stream in MB
      */
-    virtual const int getStreamMaxFileSize()
+    virtual const int getStreamMaxFileSize() const
     { return _streamConfig.maxFileSizeMB(); }
 
 

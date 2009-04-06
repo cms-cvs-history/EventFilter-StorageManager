@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.4 2009/04/03 13:36:37 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.5 2009/04/03 14:27:59 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -20,8 +20,8 @@ _entryCounter(0)
 }
 
 
-FilesMonitorCollection::FileRecordPtr
-FilesMonitorCollection::getNewFileRecord(double timeWindowForRecentResults)
+const FilesMonitorCollection::FileRecordPtr
+FilesMonitorCollection::getNewFileRecord()
 {
   if (_fileRecords.size() >= _maxFileEntries)
   {

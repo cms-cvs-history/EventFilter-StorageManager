@@ -1,4 +1,4 @@
-// $Id: EventStreamHandler.cc,v 1.1.2.2 2009/03/20 17:54:30 mommsen Exp $
+// $Id: EventStreamHandler.cc,v 1.1.2.3 2009/03/27 18:55:52 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventFileHandler.h"
 #include "EventFilter/StorageManager/interface/EventStreamHandler.h"
@@ -18,7 +18,8 @@ _initMsgCollection(sharedResources->_initMsgCollection)
 {}
 
 
-EventStreamHandler::FileHandlerPtr EventStreamHandler::newFileHandler(const I2OChain& event)
+const EventStreamHandler::FileHandlerPtr
+EventStreamHandler::newFileHandler(const I2OChain& event)
 {
   // the INIT message is not available when the EventStreamHandler is
   // constructed, so we need to fetch it when we first need a new file

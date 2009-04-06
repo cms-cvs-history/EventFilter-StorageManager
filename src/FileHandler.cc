@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.11 2009/04/03 13:36:37 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.12 2009/04/06 10:20:37 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -194,7 +194,7 @@ void FileHandler::moveFileToClosed(const bool& useIndexFile)
 }
 
 
-size_t FileHandler::checkFileSizeMatch(const string& fileName, const size_t& size)
+size_t FileHandler::checkFileSizeMatch(const string& fileName, const size_t& size) const
 {
   struct stat64 statBuff;
   int statStatus = stat64(fileName.c_str(), &statBuff);
@@ -215,7 +215,7 @@ size_t FileHandler::checkFileSizeMatch(const string& fileName, const size_t& siz
 }
 
 
-bool FileHandler::sizeMismatch(const double& initialSize, const double& finalSize)
+bool FileHandler::sizeMismatch(const double& initialSize, const double& finalSize) const
 {
   if (_diskWritingParams._exactFileSizeTest) {
     if (initialSize != finalSize) {
@@ -230,7 +230,7 @@ bool FileHandler::sizeMismatch(const double& initialSize, const double& finalSiz
 }
 
 
-void FileHandler::makeFileReadOnly(const string& fileName)
+void FileHandler::makeFileReadOnly(const string& fileName) const
 {
   int ronly  = chmod(fileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
   if (ronly != 0) {
@@ -241,7 +241,7 @@ void FileHandler::makeFileReadOnly(const string& fileName)
 }
 
 
-void FileHandler::renameFile(const string& openFileName, const string& closedFileName)
+void FileHandler::renameFile(const string& openFileName, const string& closedFileName) const
 {
   int result = rename( openFileName.c_str(), closedFileName.c_str() );
   if (result != 0) {

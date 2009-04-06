@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.5 2009/04/03 13:36:59 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.6 2009/04/03 14:28:10 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/03 13:36:59 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/04/03 14:28:10 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -65,7 +65,7 @@ namespace stor {
 
     explicit FilesMonitorCollection(xdaq::Application*);
 
-    FileRecordPtr getNewFileRecord(double timeWindowForRecentResults = 60);
+    const FileRecordPtr getNewFileRecord();
 
     const FileRecordList& getFileRecordsMQ() const {
       return _fileRecords;
