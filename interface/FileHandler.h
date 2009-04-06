@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.10 2009/04/01 14:44:01 biery Exp $
+// $Id: FileHandler.h,v 1.1.2.11 2009/04/02 13:56:48 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -19,9 +19,9 @@ namespace stor {
   /**
    * Abstract representation of a physical file
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/01 14:44:01 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/02 13:56:48 $
    */
 
   class FileHandler
@@ -45,13 +45,13 @@ namespace stor {
     /**
      * Returns true if the file has not seen any recent events
      */
-    bool tooOld(utils::time_point_t currentTime = utils::getCurrentTime());
+    virtual const bool tooOld(utils::time_point_t currentTime = utils::getCurrentTime());
 
     /**
      * Returns true if the additional data size would push the file size
      * beyond maxFileSize.
      */
-    bool tooLarge(const unsigned long& dataSize);
+    const bool tooLarge(const unsigned long& dataSize);
 
         
     /////////////////////////////

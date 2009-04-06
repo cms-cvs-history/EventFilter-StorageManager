@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.1.2.10 2009/04/02 13:57:56 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.11 2009/04/03 13:36:37 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
@@ -128,7 +128,7 @@ void FileHandler::insertFileInDatabase() const
 }
 
 
-bool FileHandler::tooOld(utils::time_point_t currentTime)
+const bool FileHandler::tooOld(utils::time_point_t currentTime)
 {
   if ((currentTime - _lastEntry) > _diskWritingParams._lumiSectionTimeOut)
   {
@@ -142,7 +142,7 @@ bool FileHandler::tooOld(utils::time_point_t currentTime)
 }
 
 
-bool FileHandler::tooLarge(const unsigned long& dataSize)
+const bool FileHandler::tooLarge(const unsigned long& dataSize)
 {
   if ( ((fileSize() + dataSize) > _maxFileSize) && (events() > 0) )
   {
