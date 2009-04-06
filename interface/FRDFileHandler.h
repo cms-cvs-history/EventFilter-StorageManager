@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.h,v 1.1.2.4 2009/03/20 10:30:16 mommsen Exp $
+// $Id: FRDFileHandler.h,v 1.1.2.5 2009/03/20 17:53:54 mommsen Exp $
 
 #ifndef StorageManager_FRDFileHandler_h
 #define StorageManager_FRDFileHandler_h
@@ -13,8 +13,8 @@ namespace stor {
    * FED Raw Data (FRD) format.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/20 10:30:16 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/20 17:53:54 $
    */
   
   class FRDFileHandler : public FileHandler
@@ -33,6 +33,12 @@ namespace stor {
      * Write the event contained in the I2OChain
      */
     virtual void writeEvent(const I2OChain&);
+
+    /**
+     * Error events are never too old
+     */
+    virtual const bool tooOld(utils::time_point_t currentTime = utils::getCurrentTime())
+    { return false; }
     
     //      void   report(std::ostream &os, int indentation) const;
     
