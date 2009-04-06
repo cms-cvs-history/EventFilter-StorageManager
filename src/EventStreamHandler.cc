@@ -1,4 +1,4 @@
-// $Id: EventStreamHandler.cc,v 1.1.2.3 2009/03/27 18:55:52 biery Exp $
+// $Id: EventStreamHandler.cc,v 1.1.2.4 2009/04/06 13:40:12 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventFileHandler.h"
 #include "EventFilter/StorageManager/interface/EventStreamHandler.h"
@@ -15,7 +15,9 @@ EventStreamHandler::EventStreamHandler
 StreamHandler(sharedResources),
 _streamConfig(streamConfig),
 _initMsgCollection(sharedResources->_initMsgCollection)
-{}
+{
+  _streamRecord->streamName = streamLabel();
+}
 
 
 const EventStreamHandler::FileHandlerPtr

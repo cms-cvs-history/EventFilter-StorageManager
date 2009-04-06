@@ -1,4 +1,4 @@
-// $Id: FRDStreamHandler.cc,v 1.1.2.2 2009/03/20 17:54:30 mommsen Exp $
+// $Id: FRDStreamHandler.cc,v 1.1.2.3 2009/04/06 13:40:12 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/FRDFileHandler.h"
 #include "EventFilter/StorageManager/interface/FRDStreamHandler.h"
@@ -14,7 +14,9 @@ FRDStreamHandler::FRDStreamHandler
 ):
 StreamHandler(sharedResources),
 _streamConfig(streamConfig)
-{}
+{
+  _streamRecord->streamName = streamLabel();
+}
 
 
 const FRDStreamHandler::FileHandlerPtr
