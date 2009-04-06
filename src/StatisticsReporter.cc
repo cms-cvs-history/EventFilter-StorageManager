@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.10 2009/03/31 14:48:33 dshpakov Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.11 2009/04/06 13:40:47 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -81,6 +81,7 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _runMonCollection.update();
     _fragMonCollection.update();
     _filesMonCollection.update();
+    _streamsMonCollection.update();
     reportStateName();
   }
   catch(xcept::Exception &e)
