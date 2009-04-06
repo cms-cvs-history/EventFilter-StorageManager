@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.8 2009/04/03 10:59:00 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.9 2009/04/03 12:35:40 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -16,6 +16,7 @@
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
+#include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 namespace stor {
@@ -24,39 +25,49 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/04/03 10:59:00 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/04/03 12:35:40 $
    */
   
   class WebPageHelper
   {
   public:
 
+    explicit WebPageHelper(xdaq::ApplicationDescriptor*);
+
+
     /**
-     * Generates the default monitoring webpage for the SM
+     * Generates the default monitoring webpage
      */
-    static void defaultWebPage
+    void defaultWebPage
     (
       xgi::Output*, 
       const SharedResourcesPtr,
-      xdaq::ApplicationDescriptor*,
       toolbox::mem::Pool*
     );
 
     /**
-     * Generates the files monitoring webpage for the SM
+     * Generates the output streams monitoring webpage
      */
-    static void filesWebPage
+    void storedDataWebPage
     (
       xgi::Output*,
-      const StatisticsReporterPtr,
-      xdaq::ApplicationDescriptor*
+      const StatisticsReporterPtr
+    );
+
+    /**
+     * Generates the files monitoring webpage
+     */
+    void filesWebPage
+    (
+      xgi::Output*,
+      const StatisticsReporterPtr
     );
 
     /**
      * Returns the number of instances for the given process name
      */
-    static int getProcessCount(std::string processName);
+    int getProcessCount(std::string processName);
 
 
   private:
@@ -64,20 +75,17 @@ namespace stor {
     /**
      * Returns the webpage body with the standard header as XHTML node
      */
-    static XHTMLMaker::Node* createWebPageBody(XHTMLMaker&,
-                                               const std::string stateName,
-                                               xdaq::ApplicationDescriptor*);
+    XHTMLMaker::Node* createWebPageBody(XHTMLMaker&, const std::string stateName);
 
     /**
      * Adds the links for the other SM webpages
      */
-    static void addDOMforSMLinks(XHTMLMaker&, XHTMLMaker::Node *parent,
-                                 xdaq::ApplicationDescriptor*);
+    void addDOMforSMLinks(XHTMLMaker&, XHTMLMaker::Node *parent);
 
     /**
      * Adds the resource table to the parent DOM element
      */
-    static void addDOMforResourceUsage
+    void addDOMforResourceUsage
     (
       XHTMLMaker&,
       XHTMLMaker::Node *parent,
@@ -88,28 +96,49 @@ namespace stor {
     /**
      * Adds fragment monitoring statistics to the parent DOM element
      */
-    static void addDOMforFragmentMonitor(XHTMLMaker& maker,
+    void addDOMforFragmentMonitor(XHTMLMaker& maker,
                                          XHTMLMaker::Node *parent,
                                          FragmentMonitorCollection const&);
 
     /**
      * Adds run monitoring statistics to the parent DOM element
      */
-    static void addDOMforRunMonitor(XHTMLMaker& maker,
+    void addDOMforRunMonitor(XHTMLMaker& maker,
                                     XHTMLMaker::Node *parent,
                                     RunMonitorCollection const&);
 
     /**
+     * Adds stored data statistics to the parent DOM element
+     */
+    void addDOMforStoredData(XHTMLMaker& maker,
+                                    XHTMLMaker::Node *parent,
+                                    StreamsMonitorCollection const&);
+
+    /**
      * Adds files statistics to the parent DOM element
      */
-    static void addDOMforFiles(XHTMLMaker& maker,
+    void addDOMforFiles(XHTMLMaker& maker,
                                XHTMLMaker::Node *parent,
                                FilesMonitorCollection const&);
 
+    /**
+     * List stream records statistics
+     */
+    void listStreamRecordsStats
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      StreamsMonitorCollection const&,
+      MonitoredQuantity::DataSetType
+    );
 
   private:
 
     static boost::mutex _xhtmlMakerMutex;
+    xdaq::ApplicationDescriptor* _appDescriptor;
+
+    XHTMLMaker::AttrMap _tableAttr;
+    XHTMLMaker::AttrMap _specialRowAttr;
 
   };
 

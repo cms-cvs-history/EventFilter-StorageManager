@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.13 2009/04/03 14:50:37 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.14 2009/04/03 19:04:07 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -15,12 +15,25 @@ using namespace stor;
 
 boost::mutex WebPageHelper::_xhtmlMakerMutex;
 
+WebPageHelper::WebPageHelper(xdaq::ApplicationDescriptor* appDesc) :
+_appDescriptor(appDesc)
+{
+  _tableAttr[ "frame" ] = "void";
+  _tableAttr[ "rules" ] = "group";
+  _tableAttr[ "class" ] = "states";
+  _tableAttr[ "cellspacing" ] = "0";
+  _tableAttr[ "cellpadding" ] = "2";
+  _tableAttr[ "width" ] = "100%";
+  
+  _specialRowAttr[ "class" ] = "special";
+
+}
+
 
 void WebPageHelper::defaultWebPage
 (
   xgi::Output *out, 
   const SharedResourcesPtr sharedResources,
-  xdaq::ApplicationDescriptor* appDesc,
   toolbox::mem::Pool *pool
 )
 {
@@ -32,7 +45,7 @@ void WebPageHelper::defaultWebPage
 
   // Create the body with the standard header
   XHTMLMaker::Node* body = createWebPageBody(maker,
-    statReporter->externallyVisibleState(), appDesc);
+    statReporter->externallyVisibleState());
 
   //TODO: Failed printout
 
@@ -47,18 +60,17 @@ void WebPageHelper::defaultWebPage
   addDOMforFragmentMonitor(maker, body,
                            statReporter->getFragmentMonitorCollection());
 
-  addDOMforSMLinks(maker, body, appDesc);
+  addDOMforSMLinks(maker, body);
   
   // Dump the webpage to the output stream
   maker.out(*out);
 }
 
 
-void WebPageHelper::filesWebPage
+void WebPageHelper::storedDataWebPage
 (
   xgi::Output *out,
-  const StatisticsReporterPtr statReporter,
-  xdaq::ApplicationDescriptor* appDesc
+  const StatisticsReporterPtr statReporter
 )
 {
   boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
@@ -67,11 +79,34 @@ void WebPageHelper::filesWebPage
   
   // Create the body with the standard header
   XHTMLMaker::Node* body = 
-    createWebPageBody(maker, statReporter->externallyVisibleState(), appDesc);
+    createWebPageBody(maker, statReporter->externallyVisibleState());
+
+  addDOMforStoredData(maker, body, statReporter->getStreamsMonitorCollection());  
+
+  addDOMforSMLinks(maker, body);
+  
+   // Dump the webpage to the output stream
+  maker.out(*out);
+}
+
+
+void WebPageHelper::filesWebPage
+(
+  xgi::Output *out,
+  const StatisticsReporterPtr statReporter
+)
+{
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+  
+  // Create the body with the standard header
+  XHTMLMaker::Node* body = 
+    createWebPageBody(maker, statReporter->externallyVisibleState());
 
   addDOMforFiles(maker, body, statReporter->getFilesMonitorCollection());  
 
-  addDOMforSMLinks(maker, body, appDesc);
+  addDOMforSMLinks(maker, body);
   
    // Dump the webpage to the output stream
   maker.out(*out);
@@ -81,17 +116,16 @@ void WebPageHelper::filesWebPage
 XHTMLMaker::Node* WebPageHelper::createWebPageBody
 (
   XHTMLMaker& maker,
-  const std::string stateName,
-  xdaq::ApplicationDescriptor* appDescriptor
+  const std::string stateName
 )
 {
   std::ostringstream title;
-  title << appDescriptor->getClassName()
-    << " instance " << appDescriptor->getInstance();
+  title << _appDescriptor->getClassName()
+    << " instance " << _appDescriptor->getInstance();
   XHTMLMaker::Node* body = maker.start(title.str());
   
   std::ostringstream stylesheetLink;
-  stylesheetLink << "/" << appDescriptor->getURN()
+  stylesheetLink << "/" << _appDescriptor->getURN()
     << "/styles.css";
   XHTMLMaker::AttrMap stylesheetAttr;
   stylesheetAttr[ "rel" ] = "stylesheet";
@@ -113,8 +147,8 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, tableDivAttr);
 
   XHTMLMaker::AttrMap smLinkAttr;
-  smLinkAttr[ "href" ] = appDescriptor->getContextDescriptor()->getURL()
-    + "/" + appDescriptor->getURN();
+  smLinkAttr[ "href" ] = _appDescriptor->getContextDescriptor()->getURL()
+    + "/" + _appDescriptor->getURN();
   XHTMLMaker::Node* smLink = maker.addNode("a", tableDiv, smLinkAttr);
   
   XHTMLMaker::AttrMap smImgAttr;
@@ -162,12 +196,11 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
 void WebPageHelper::addDOMforSMLinks
 (
   XHTMLMaker& maker,
-  XHTMLMaker::Node *parent,
-  xdaq::ApplicationDescriptor* appDescriptor
+  XHTMLMaker::Node *parent
 )
 {
-  std::string url = appDescriptor->getContextDescriptor()->getURL()
-    + "/" + appDescriptor->getURN();
+  std::string url = _appDescriptor->getContextDescriptor()->getURL()
+    + "/" + _appDescriptor->getURN();
 
   XHTMLMaker::AttrMap linkAttr;
   XHTMLMaker::Node *link;
@@ -177,6 +210,10 @@ void WebPageHelper::addDOMforSMLinks
   linkAttr[ "href" ] = url + "/storedData";
   link = maker.addNode("a", parent, linkAttr);
   maker.addText(link, "Stored data web page (remainder of old default web page)");
+
+  linkAttr[ "href" ] = url + "/newStoredData";
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "New Stored data web page");
 
   maker.addNode("hr", parent);
 
@@ -213,14 +250,6 @@ void WebPageHelper::addDOMforResourceUsage
   const DiskWritingParams dwParams
 )
 {
-  XHTMLMaker::AttrMap tableAttr;
-  tableAttr[ "frame" ] = "void";
-  tableAttr[ "rules" ] = "group";
-  tableAttr[ "class" ] = "states";
-  tableAttr[ "cellspacing" ] = "0";
-  tableAttr[ "cellpadding" ] = "0";
-  tableAttr[ "width" ] = "100%";
-  
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "2";
 
@@ -243,7 +272,7 @@ void WebPageHelper::addDOMforResourceUsage
   XHTMLMaker::AttrMap warningAttr = tableValueAttr;
   warningAttr[ "bgcolor" ] = "#EF5A10";
   
-  XHTMLMaker::Node* outerTable = maker.addNode("table", parent, tableAttr);
+  XHTMLMaker::Node* outerTable = maker.addNode("table", parent, _tableAttr);
   XHTMLMaker::Node* outerTableRow = maker.addNode("tr", outerTable);
   XHTMLMaker::Node* outerTableDiv = maker.addNode("th", outerTableRow, colspanAttr);
   maker.addText(outerTableDiv, "Resource Usage");
@@ -348,13 +377,6 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
   MonitoredQuantity::Stats dqmEventFragmentBandwidthStats;
   fmc.getDQMEventFragmentBandwidthMQ().getStats(dqmEventFragmentBandwidthStats);
 
-  XHTMLMaker::AttrMap tableAttr;
-  tableAttr[ "frame" ] = "void";
-  tableAttr[ "rules" ] = "group";
-  tableAttr[ "class" ] = "states";
-  tableAttr[ "cellpadding" ] = "2";
-  tableAttr[ "width" ] = "100%";
-
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "4";
 
@@ -362,7 +384,7 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
   tableValueAttr[ "align" ] = "right";
   tableValueAttr[ "width" ] = "23%";
 
-  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   // Received Data Statistics header
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
@@ -571,19 +593,9 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
   MonitoredQuantity::Stats lumiSectionsSeenStats;
   rmc.getLumiSectionsSeenMQ().getStats(lumiSectionsSeenStats);
 
-  XHTMLMaker::AttrMap tableAttr;
-  tableAttr[ "frame" ] = "void";
-  tableAttr[ "rules" ] = "group";
-  tableAttr[ "class" ] = "states";
-  tableAttr[ "cellpadding" ] = "2";
-  tableAttr[ "width" ] = "100%";
-
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "4";
   
-  XHTMLMaker::AttrMap specialRowAttr;
-  specialRowAttr[ "class" ] = "special";
-
   XHTMLMaker::AttrMap tableLabelAttr;
   tableLabelAttr[ "align" ] = "left";
   tableLabelAttr[ "width" ] = "27%";
@@ -592,7 +604,7 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
   tableValueAttr[ "align" ] = "right";
   tableValueAttr[ "width" ] = "23%";
 
-  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
   XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
@@ -610,7 +622,7 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
   maker.addText(tableDiv, lumiSectionsSeenStats.getLastSampleValue(), 0);
 
   // Total events received
-  tableRow = maker.addNode("tr", table, specialRowAttr);
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
   tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Events received (non-unique)");
   tableDiv = maker.addNode("td", tableRow, tableValueAttr);
@@ -634,6 +646,164 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
 }
 
 
+void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
+                                        XHTMLMaker::Node *parent,
+                                        StreamsMonitorCollection const& smc)
+{
+  MonitoredQuantity::Stats allStreamsVolumeStats;
+  smc.getAllStreamsVolumeMQ().getStats(allStreamsVolumeStats);
+
+  XHTMLMaker::AttrMap rowspanAttr;
+  rowspanAttr[ "rowspan" ] = "2";
+  rowspanAttr[ "valign" ] = "top";
+  
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "8";
+
+  XHTMLMaker::AttrMap bandwidthColspanAttr;
+  bandwidthColspanAttr[ "colspan" ] = "4";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Stored Data Statistics");
+
+  // Header
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+  maker.addText(tableDiv, "Stream");
+  tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+  maker.addText(tableDiv, "Files");
+  tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+  maker.addText(tableDiv, "Events");
+  tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+  maker.addText(tableDiv, "Events/s");
+  tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+  maker.addText(tableDiv, "Volume (MB)");
+  tableDiv = maker.addNode("th", tableRow, bandwidthColspanAttr);
+  maker.addText(tableDiv, "Bandwidth (MB/s)");
+
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "average");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "min");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "max");
+  
+  if (smc.getStreamRecordsMQ().size() == 0)
+  {
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, colspanAttr);
+    maker.addText(tableDiv, "no streams available yet");
+    return;
+  }
+  
+  // Mean performance
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  {
+    std::ostringstream tmpString;
+    tmpString << "Mean performance for " << std::fixed << std::setprecision(1) <<
+      allStreamsVolumeStats.getDuration() << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  listStreamRecordsStats(maker, table, smc, MonitoredQuantity::FULL);
+
+
+  // Recent performance
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  {
+    std::ostringstream tmpString;
+    tmpString << "Recent performance for the last " << std::fixed << std::setprecision(1) <<
+      allStreamsVolumeStats.getDuration(MonitoredQuantity::RECENT) << " s";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  listStreamRecordsStats(maker, table, smc, MonitoredQuantity::RECENT);
+
+}  
+
+void WebPageHelper::listStreamRecordsStats
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  StreamsMonitorCollection const& smc,
+  MonitoredQuantity::DataSetType dataSet
+)
+{
+  StreamsMonitorCollection::StreamRecordList const& streamRecords =
+    smc.getStreamRecordsMQ();
+  MonitoredQuantity::Stats allStreamsFileCountStats;
+  smc.getAllStreamsFileCountMQ().getStats(allStreamsFileCountStats);
+  MonitoredQuantity::Stats allStreamsVolumeStats;
+  smc.getAllStreamsVolumeMQ().getStats(allStreamsVolumeStats);
+  MonitoredQuantity::Stats allStreamsBandwidthStats;
+  smc.getAllStreamsBandwidthMQ().getStats(allStreamsBandwidthStats);
+ 
+  XHTMLMaker::Node *tableRow, *tableDiv;
+
+  XHTMLMaker::AttrMap tableValueAttr;
+  tableValueAttr[ "align" ] = "right";
+  tableValueAttr[ "width" ] = "11%";
+ 
+
+  for (
+    StreamsMonitorCollection::StreamRecordList::const_iterator 
+      it = streamRecords.begin(), itEnd = streamRecords.end();
+    it != itEnd;
+    ++it
+  ) 
+  {
+    MonitoredQuantity::Stats streamFileCountStats;
+    (*it)->fileCount.getStats(streamFileCountStats);
+    MonitoredQuantity::Stats streamVolumeStats;
+    (*it)->volume.getStats(streamVolumeStats);
+    MonitoredQuantity::Stats streamBandwidthStats;
+    (*it)->bandwidth.getStats(streamBandwidthStats);
+    
+    
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow);
+    maker.addText(tableDiv, (*it)->streamName);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamFileCountStats.getSampleCount(dataSet), 0);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamVolumeStats.getSampleCount(dataSet), 0);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamVolumeStats.getSampleRate(dataSet), 1);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamVolumeStats.getValueSum(dataSet), 1);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamBandwidthStats.getValueRate(dataSet));
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamBandwidthStats.getValueMin(dataSet));
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+    maker.addText(tableDiv, streamBandwidthStats.getValueMax(dataSet));
+  }
+  
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Total");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsFileCountStats.getSampleCount(dataSet), 0);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsVolumeStats.getSampleCount(dataSet), 0);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsVolumeStats.getSampleRate(dataSet), 1);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsVolumeStats.getValueSum(dataSet), 1);
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsBandwidthStats.getValueRate(dataSet));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsBandwidthStats.getValueMin(dataSet));
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, allStreamsBandwidthStats.getValueMax(dataSet));
+ 
+}
+
+
 void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
                                    XHTMLMaker::Node *parent,
                                    FilesMonitorCollection const& fmc)
@@ -641,33 +811,23 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
   FilesMonitorCollection::FileRecordList const& fileRecords =
     fmc.getFileRecordsMQ();
 
-  XHTMLMaker::AttrMap tableAttr;
-  tableAttr[ "frame" ] = "void";
-  tableAttr[ "rules" ] = "group";
-  tableAttr[ "class" ] = "states";
-  tableAttr[ "cellpadding" ] = "2";
-  tableAttr[ "width" ] = "100%";
-
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "5";
   
-  XHTMLMaker::AttrMap specialRowAttr;
-  specialRowAttr[ "class" ] = "special";
-
   XHTMLMaker::AttrMap tableValueAttr;
   tableValueAttr[ "align" ] = "right";
 
   XHTMLMaker::AttrMap tableLabelAttr;
   tableLabelAttr[ "align" ] = "center";
 
-  XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
   XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
   maker.addText(tableDiv, "File Statistics (most recent first)");
 
   // Header
-  tableRow = maker.addNode("tr", table, specialRowAttr);
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "#");
   tableDiv = maker.addNode("th", tableRow);
@@ -684,7 +844,7 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
   {
     tableRow = maker.addNode("tr", table);
     tableDiv = maker.addNode("td", tableRow, colspanAttr);
-    maker.addText(tableDiv, "no files yet");
+    maker.addText(tableDiv, "no files available yet");
     return;
   }
 
