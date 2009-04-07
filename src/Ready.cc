@@ -17,6 +17,18 @@ Ready::Ready( my_context c ): my_base(c)
   // update all configuration parameters
   sharedResources->_configuration->updateAllParams();
 
+  // configure the various queue sizes
+  QueueConfigurationParams queueParams =
+    sharedResources->_configuration->getQueueConfigurationParams();
+  sharedResources->_commandQueue->
+    set_capacity(queueParams._commandQueueSize);
+  sharedResources->_fragmentQueue->
+    set_capacity(queueParams._fragmentQueueSize);
+  sharedResources->_registrationQueue->
+    set_capacity(queueParams._registrationQueueSize);
+  sharedResources->_streamQueue->
+    set_capacity(queueParams._streamQueueSize);
+
   // convert the SM configuration string into ConfigInfo objects
   // and store them for later use
   DiskWritingParams dwParams =

@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.9 2009/03/31 11:31:54 dshpakov Exp $
+// $Id: Configuration.h,v 1.1.2.10 2009/04/01 20:02:18 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -81,6 +81,19 @@ namespace stor
   };
 
   /**
+   * Data structure to hold configuration parameters
+   * that are used for the various queues in the system.
+   */
+  struct QueueConfigurationParams
+  {
+    unsigned int _commandQueueSize;
+    unsigned int _dqmEventQueueSize;
+    unsigned int _fragmentQueueSize;
+    unsigned int _registrationQueueSize;
+    unsigned int _streamQueueSize;
+  };
+
+  /**
    * Free function to parse a storage manager configuration string
    * into the appropriate "configuration info" objects.
    */
@@ -93,9 +106,9 @@ namespace stor
    * and providing local copies of that information that are updated
    * only at requested times.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/03/31 11:31:54 $
+   * $Author: biery $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/01 20:02:18 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -128,16 +141,23 @@ namespace stor
     /**
      * Returns a copy of the DQM processing parameters.  These values
      * will be current as of the most recent global update of the local
-     * cache from the infospace (see the globalUpdate() method).
+     * cache from the infospace (see the updateAllParams() method).
      */
     struct DQMProcessingParams getDQMProcessingParams() const;
 
     /**
      * Returns a copy of the event serving parameters.  These values
      * will be current as of the most recent global update of the local
-     * cache from the infospace (see the globalUpdate() method).
+     * cache from the infospace (see the updateAllParams() method).
      */
     struct EventServingParams getEventServingParams() const;
+
+    /**
+     * Returns a copy of the queue configuration parameters.  These values
+     * will be current as of the most recent global update of the local
+     * cache from the infospace (see the updateAllParams() method).
+     */
+    struct QueueConfigurationParams getQueueConfigurationParams() const;
 
     /**
      * Updates the local copy of all configuration parameters from
@@ -203,19 +223,23 @@ namespace stor
     void setDiskWritingDefaults(unsigned long instanceNumber);
     void setDQMProcessingDefaults();
     void setEventServingDefaults();
+    void setQueueConfigurationDefaults();
 
     void setupDiskWritingInfoSpaceParams(xdata::InfoSpace* infoSpace);
     void setupDQMProcessingInfoSpaceParams(xdata::InfoSpace* infoSpace);
     void setupEventServingInfoSpaceParams(xdata::InfoSpace* infoSpace);
+    void setupQueueConfigurationInfoSpaceParams(xdata::InfoSpace* infoSpace);
 
     void updateLocalDiskWritingData();
     void updateLocalDQMProcessingData();
     void updateLocalEventServingData();
+    void updateLocalQueueConfigurationData();
     void updateLocalRunNumber();
 
     struct DiskWritingParams _diskWriteParamCopy;
     struct DQMProcessingParams _dqmParamCopy;
     struct EventServingParams _eventServeParamCopy;
+    struct QueueConfigurationParams _queueConfigParamCopy;
 
     mutable boost::mutex _generalMutex;
 
@@ -258,6 +282,12 @@ namespace stor
     xdata::Integer _readyTimeDQM;
     xdata::Boolean _useCompressionDQM;
     xdata::Integer _compressionLevelDQM;
+
+    xdata::UnsignedInteger32 _commandQueueSize;
+    xdata::UnsignedInteger32 _dqmEventQueueSize;
+    xdata::UnsignedInteger32 _fragmentQueueSize;
+    xdata::UnsignedInteger32 _registrationQueueSize;
+    xdata::UnsignedInteger32 _streamQueueSize;
 
 
     mutable boost::mutex _evtStrCfgMutex;

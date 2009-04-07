@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.16 2009/04/01 20:02:19 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.17 2009/04/07 14:19:04 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -22,10 +22,12 @@ namespace stor
     setDiskWritingDefaults(instanceNumber);
     setDQMProcessingDefaults();
     setEventServingDefaults();
+    setQueueConfigurationDefaults();
 
     setupDiskWritingInfoSpaceParams(infoSpace);
     setupDQMProcessingInfoSpaceParams(infoSpace);
     setupEventServingInfoSpaceParams(infoSpace);
+    setupQueueConfigurationInfoSpaceParams(infoSpace);
   }
 
   struct DiskWritingParams Configuration::getDiskWritingParams() const
@@ -47,12 +49,19 @@ namespace stor
     return _eventServeParamCopy;
   }
 
+  struct QueueConfigurationParams Configuration::getQueueConfigurationParams() const
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    return _queueConfigParamCopy;
+  }
+
   void Configuration::updateAllParams()
   {
     boost::mutex::scoped_lock sl(_generalMutex);
     updateLocalDiskWritingData();
     updateLocalDQMProcessingData();
     updateLocalEventServingData();
+    updateLocalQueueConfigurationData();
     updateLocalRunNumber();
   }
 
@@ -185,6 +194,15 @@ namespace stor
     _eventServeParamCopy._esSelectedHLTOutputModule = "out4DQM";
   }
 
+  void Configuration::setQueueConfigurationDefaults()
+  {
+    _queueConfigParamCopy._commandQueueSize = 128;
+    _queueConfigParamCopy._dqmEventQueueSize = 512;
+    _queueConfigParamCopy._fragmentQueueSize = 1024;
+    _queueConfigParamCopy._registrationQueueSize = 128;
+    _queueConfigParamCopy._streamQueueSize = 512;
+  }
+
   void Configuration::
   setupDiskWritingInfoSpaceParams(xdata::InfoSpace* infoSpace)
   {
@@ -289,6 +307,25 @@ namespace stor
                               &_esSelectedHLTOutputModule);
   }
 
+  void Configuration::
+  setupQueueConfigurationInfoSpaceParams(xdata::InfoSpace* infoSpace)
+  {
+    // copy the initial defaults to the xdata variables
+    _commandQueueSize = _queueConfigParamCopy._commandQueueSize;
+    _dqmEventQueueSize = _queueConfigParamCopy._dqmEventQueueSize;
+    _fragmentQueueSize = _queueConfigParamCopy._fragmentQueueSize;
+    _registrationQueueSize = _queueConfigParamCopy._registrationQueueSize;
+    _streamQueueSize = _queueConfigParamCopy._streamQueueSize;
+
+    // bind the local xdata variables to the infospace
+    infoSpace->fireItemAvailable("commandQueueSize", &_commandQueueSize);
+    infoSpace->fireItemAvailable("dqmEventQueueSize", &_dqmEventQueueSize);
+    infoSpace->fireItemAvailable("fragmentQueueSize", &_fragmentQueueSize);
+    infoSpace->fireItemAvailable("registrationQueueSize",
+                                 &_registrationQueueSize);
+    infoSpace->fireItemAvailable("streamQueueSize", &_streamQueueSize);
+  }
+
   void Configuration::updateLocalDiskWritingData()
   {
     evf::ParameterSetRetriever smpset(_streamConfiguration);
@@ -357,6 +394,15 @@ namespace stor
       {
         _eventServeParamCopy._DQMmaxESEventRate = 0.0;
       }
+  }
+
+  void Configuration::updateLocalQueueConfigurationData()
+  {
+    _queueConfigParamCopy._commandQueueSize = _commandQueueSize;
+    _queueConfigParamCopy._dqmEventQueueSize = _dqmEventQueueSize;
+    _queueConfigParamCopy._fragmentQueueSize = _fragmentQueueSize;
+    _queueConfigParamCopy._registrationQueueSize = _registrationQueueSize;
+    _queueConfigParamCopy._streamQueueSize = _streamQueueSize;
   }
 
   void Configuration::updateLocalRunNumber()

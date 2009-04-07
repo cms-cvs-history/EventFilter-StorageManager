@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.71 2009/04/06 18:33:41 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.72 2009/04/06 21:25:52 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -113,7 +113,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   openFiles_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.71 2009/04/06 18:33:41 mommsen Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.72 2009/04/06 21:25:52 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -218,15 +218,22 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
   sharedResourcesPtr_.reset(new SharedResources());
-  sharedResourcesPtr_->_commandQueue.reset(new CommandQueue(128));
-  sharedResourcesPtr_->_fragmentQueue.reset(new FragmentQueue(1024));
-  sharedResourcesPtr_->_streamQueue.reset(new StreamQueue(1024));
-  sharedResourcesPtr_->_registrationQueue.reset(new RegistrationQueue(128));
 
   unsigned long instance = getApplicationDescriptor()->getInstance();
-
   sharedResourcesPtr_->_configuration.reset(new Configuration(ispace,
                                                               instance));
+
+  QueueConfigurationParams queueParams =
+    sharedResourcesPtr_->_configuration->getQueueConfigurationParams();
+  sharedResourcesPtr_->_commandQueue.
+    reset(new CommandQueue(queueParams._commandQueueSize));
+  sharedResourcesPtr_->_fragmentQueue.
+    reset(new FragmentQueue(queueParams._fragmentQueueSize));
+  sharedResourcesPtr_->_registrationQueue.
+    reset(new RegistrationQueue(queueParams._registrationQueueSize));
+  sharedResourcesPtr_->_streamQueue.
+    reset(new StreamQueue(queueParams._streamQueueSize));
+
   sharedResourcesPtr_->_statisticsReporter.reset(new StatisticsReporter(this));
   sharedResourcesPtr_->_initMsgCollection.reset(new InitMsgCollection());
   sharedResourcesPtr_->_diskWriterResources.reset(new DiskWriterResources());
