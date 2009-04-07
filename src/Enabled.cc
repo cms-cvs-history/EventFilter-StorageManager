@@ -19,31 +19,28 @@ Enabled::Enabled( my_context c ): my_base(c)
   // clear the INIT message collection at begin run
   sharedResources->_initMsgCollection->clear();
 
-  if ( sharedResources->_configuration.get() != 0 )
-    {
-      // update the run-based configuration parameters
-      sharedResources->_configuration->updateRunParams();
+  // update the run-based configuration parameters
+  sharedResources->_configuration->updateRunParams();
 
-      // old disk writing begin-run processing
-      if ( sharedResources->_serviceManager.get() != 0 )
-        {
-          sharedResources->_serviceManager->start();
-        }
+  // old disk writing begin-run processing
+  if ( sharedResources->_serviceManager.get() != 0 )
+  {
+    sharedResources->_serviceManager->start();
+  }
 
-      // disk writer and event distributor begin-run processing
-      EvtStrConfigList evtCfgList = sharedResources->_configuration->
-        getCurrentEventStreamConfig();
-      ErrStrConfigList errCfgList = sharedResources->_configuration->
-        getCurrentErrorStreamConfig();
+  // disk writer and event distributor begin-run processing
+  EvtStrConfigList evtCfgList = sharedResources->_configuration->
+    getCurrentEventStreamConfig();
+  ErrStrConfigList errCfgList = sharedResources->_configuration->
+    getCurrentErrorStreamConfig();
 
-      sharedResources->_diskWriterResources->
-        requestStreamConfiguration(&evtCfgList, &errCfgList);
-      sharedResources->_diskWriterResources->waitForStreamConfiguration();
+  sharedResources->_diskWriterResources->
+    requestStreamConfiguration(&evtCfgList, &errCfgList);
+  sharedResources->_diskWriterResources->waitForStreamConfiguration();
 
-      EventDistributor* ed = outermost_context().getEventDistributor();
-      ed->registerEventStreams(evtCfgList);
-      ed->registerErrorStreams(errCfgList);
-    }
+  EventDistributor* ed = outermost_context().getEventDistributor();
+  ed->registerEventStreams(evtCfgList);
+  ed->registerErrorStreams(errCfgList);
 }
 
 Enabled::~Enabled()
