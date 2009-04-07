@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: MockApplication.h,v 1.1.2.1 2009/03/27 17:10:05 dshpakov Exp $
+// $Id: MockApplication.h,v 1.1.2.1 2009/03/31 19:22:08 mommsen Exp $
 
 #ifndef MOCKAPPLICATION_H
 #define MOCKAPPLICATION_H
@@ -17,6 +17,7 @@
 #include "xdaq/ApplicationStub.h"
 #include "xdaq/ContextDescriptor.h"
 #include "xdaq/exception/Exception.h"
+#include "xdata/InfoSpace.h"
 
 namespace stor
 {
@@ -34,22 +35,28 @@ namespace stor
         "MockApplication", 0, "UnitTests"
       )
     )
-    {}
+    {
+      _ispace = new xdata::InfoSpace("MockApplication");
+    }
 
-    virtual ~MockApplicationStub() {};
+    virtual ~MockApplicationStub()
+    {
+      delete _ispace;
+    }
 
     xdaq::ApplicationContext* getContext() { return _appContext; }
     xdaq::ApplicationDescriptor* getDescriptor() { return _appDescriptor; }
-    xdata::InfoSpace* getInfoSpace() { return NULL; }
-    
+    xdata::InfoSpace* getInfoSpace() { return _ispace; }
+
   private:
 
     Logger _logger;
     xdaq::ApplicationContext* _appContext;
     xdaq::ApplicationDescriptor* _appDescriptor;
+    xdata::InfoSpace* _ispace;
 
   };
-
+  
 
   class MockApplication : public xdaq::Application
   {
