@@ -175,6 +175,8 @@ int main()
   sr->_discardManager.reset(new DiscardManager(stub->getContext(),
                                                stub->getDescriptor()));
 
+  sr->_configuration.reset(new Configuration(stub->getInfoSpace(), 0));
+
   EventDistributor ed(sr);
 
   MockNotifier mn;
