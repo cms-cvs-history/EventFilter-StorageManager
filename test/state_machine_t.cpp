@@ -167,6 +167,7 @@ int main()
   sr->_dqmServiceManager.reset(new DQMServiceManager());
   sr->_commandQueue.reset(new CommandQueue(32));
   sr->_fragmentQueue.reset(new FragmentQueue(32));
+  sr->_registrationQueue.reset(new RegistrationQueue(32));
   sr->_streamQueue.reset(new StreamQueue(32));
 
   MockApplicationStub* stub(new MockApplicationStub());
