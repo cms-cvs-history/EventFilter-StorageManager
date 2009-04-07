@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.15 2009/03/31 11:31:55 dshpakov Exp $
+// $Id: Configuration.cc,v 1.1.2.16 2009/04/01 20:02:19 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -368,6 +368,8 @@ namespace stor
                                 EvtStrConfigList& evtCfgList,
                                 ErrStrConfigList& errCfgList)
   {
+    if (cfgString == "") return;
+
     PythonProcessDesc py_pdesc(cfgString.c_str());
     boost::shared_ptr<edm::ProcessDesc> pdesc = py_pdesc.processDesc();
     boost::shared_ptr<edm::ParameterSet> smPSet = pdesc->getProcessPSet();
