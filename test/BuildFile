@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.27 2009/03/24 15:49:25 paterno Exp $
+# $Id: BuildFile,v 1.30.16.28 2009/03/27 13:14:34 paterno Exp $
 
 <environment>
   <use name=boost>
@@ -107,6 +107,11 @@
   </bin>
 
   <bin file=Sleep_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+
+  <bin file=ConsumerID_t.cpp>
     <use name=cppunit>
   </bin>
 
