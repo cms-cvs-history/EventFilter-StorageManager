@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.10 2009/04/01 20:02:18 biery Exp $
+// $Id: Configuration.h,v 1.1.2.11 2009/04/07 17:56:40 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -94,6 +94,16 @@ namespace stor
   };
 
   /**
+   * Data structure to hold configuration parameters
+   * that are used by the various worker threads in the system.
+   */
+  struct WorkerThreadParams
+  {
+    double _FPdeqWaitTime;
+    double _DWdeqWaitTime;
+  };
+
+  /**
    * Free function to parse a storage manager configuration string
    * into the appropriate "configuration info" objects.
    */
@@ -107,8 +117,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/01 20:02:18 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/07 17:56:40 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -158,6 +168,13 @@ namespace stor
      * cache from the infospace (see the updateAllParams() method).
      */
     struct QueueConfigurationParams getQueueConfigurationParams() const;
+
+    /**
+     * Returns a copy of the worker thread parameters.  These values
+     * will be current as of the most recent global update of the local
+     * cache from the infospace (see the updateAllParams() method).
+     */
+    struct WorkerThreadParams getWorkerThreadParams() const;
 
     /**
      * Updates the local copy of all configuration parameters from
@@ -224,22 +241,26 @@ namespace stor
     void setDQMProcessingDefaults();
     void setEventServingDefaults();
     void setQueueConfigurationDefaults();
+    void setWorkerThreadDefaults();
 
     void setupDiskWritingInfoSpaceParams(xdata::InfoSpace* infoSpace);
     void setupDQMProcessingInfoSpaceParams(xdata::InfoSpace* infoSpace);
     void setupEventServingInfoSpaceParams(xdata::InfoSpace* infoSpace);
     void setupQueueConfigurationInfoSpaceParams(xdata::InfoSpace* infoSpace);
+    void setupWorkerThreadInfoSpaceParams(xdata::InfoSpace* infoSpace);
 
     void updateLocalDiskWritingData();
     void updateLocalDQMProcessingData();
     void updateLocalEventServingData();
     void updateLocalQueueConfigurationData();
+    void updateLocalWorkerThreadData();
     void updateLocalRunNumber();
 
     struct DiskWritingParams _diskWriteParamCopy;
     struct DQMProcessingParams _dqmParamCopy;
     struct EventServingParams _eventServeParamCopy;
     struct QueueConfigurationParams _queueConfigParamCopy;
+    struct WorkerThreadParams _workerThreadParamCopy;
 
     mutable boost::mutex _generalMutex;
 
@@ -288,6 +309,9 @@ namespace stor
     xdata::UnsignedInteger32 _fragmentQueueSize;
     xdata::UnsignedInteger32 _registrationQueueSize;
     xdata::UnsignedInteger32 _streamQueueSize;
+
+    xdata::Double _FPdeqWaitTime;
+    xdata::Double _DWdeqWaitTime;
 
 
     mutable boost::mutex _evtStrCfgMutex;

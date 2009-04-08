@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.17 2009/04/07 14:19:04 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.18 2009/04/07 17:56:40 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -23,11 +23,13 @@ namespace stor
     setDQMProcessingDefaults();
     setEventServingDefaults();
     setQueueConfigurationDefaults();
+    setWorkerThreadDefaults();
 
     setupDiskWritingInfoSpaceParams(infoSpace);
     setupDQMProcessingInfoSpaceParams(infoSpace);
     setupEventServingInfoSpaceParams(infoSpace);
     setupQueueConfigurationInfoSpaceParams(infoSpace);
+    setupWorkerThreadInfoSpaceParams(infoSpace);
   }
 
   struct DiskWritingParams Configuration::getDiskWritingParams() const
@@ -55,6 +57,12 @@ namespace stor
     return _queueConfigParamCopy;
   }
 
+  struct WorkerThreadParams Configuration::getWorkerThreadParams() const
+  {
+    boost::mutex::scoped_lock sl(_generalMutex);
+    return _workerThreadParamCopy;
+  }
+
   void Configuration::updateAllParams()
   {
     boost::mutex::scoped_lock sl(_generalMutex);
@@ -62,6 +70,7 @@ namespace stor
     updateLocalDQMProcessingData();
     updateLocalEventServingData();
     updateLocalQueueConfigurationData();
+    updateLocalWorkerThreadData();
     updateLocalRunNumber();
   }
 
@@ -203,6 +212,23 @@ namespace stor
     _queueConfigParamCopy._streamQueueSize = 512;
   }
 
+  void Configuration::setWorkerThreadDefaults()
+  {
+    // set defaults
+    _workerThreadParamCopy._FPdeqWaitTime = 0.25;
+    _workerThreadParamCopy._DWdeqWaitTime = 0.50;
+
+    // validate the defaults
+    // Currently, this consists of rounding up the values to next
+    // whole number since ConcurrentQueue::deq_timed_wait only takes
+    // integer values.  This can be removed once we switch to Boost 1.38
+    // and we get sub-second intervals.
+    _workerThreadParamCopy._FPdeqWaitTime =
+      ceil(_workerThreadParamCopy._FPdeqWaitTime);
+    _workerThreadParamCopy._DWdeqWaitTime =
+      ceil(_workerThreadParamCopy._DWdeqWaitTime);
+  }
+
   void Configuration::
   setupDiskWritingInfoSpaceParams(xdata::InfoSpace* infoSpace)
   {
@@ -326,6 +352,18 @@ namespace stor
     infoSpace->fireItemAvailable("streamQueueSize", &_streamQueueSize);
   }
 
+  void Configuration::
+  setupWorkerThreadInfoSpaceParams(xdata::InfoSpace* infoSpace)
+  {
+    // copy the initial defaults to the xdata variables
+    _FPdeqWaitTime = _workerThreadParamCopy._FPdeqWaitTime;
+    _DWdeqWaitTime = _workerThreadParamCopy._DWdeqWaitTime;
+
+    // bind the local xdata variables to the infospace
+    infoSpace->fireItemAvailable("FPdeqWaitTime", &_FPdeqWaitTime);
+    infoSpace->fireItemAvailable("DWdeqWaitTime", &_DWdeqWaitTime);
+  }
+
   void Configuration::updateLocalDiskWritingData()
   {
     evf::ParameterSetRetriever smpset(_streamConfiguration);
@@ -403,6 +441,22 @@ namespace stor
     _queueConfigParamCopy._fragmentQueueSize = _fragmentQueueSize;
     _queueConfigParamCopy._registrationQueueSize = _registrationQueueSize;
     _queueConfigParamCopy._streamQueueSize = _streamQueueSize;
+  }
+
+  void Configuration::updateLocalWorkerThreadData()
+  {
+    _workerThreadParamCopy._FPdeqWaitTime = _FPdeqWaitTime;
+    _workerThreadParamCopy._DWdeqWaitTime = _DWdeqWaitTime;
+
+    // validate the values
+    // Currently, this consists of rounding up the values to next
+    // whole number since ConcurrentQueue::deq_timed_wait only takes
+    // integer values.  This can be removed once we switch to Boost 1.38
+    // and we get sub-second intervals.
+    _workerThreadParamCopy._FPdeqWaitTime =
+      ceil(_workerThreadParamCopy._FPdeqWaitTime);
+    _workerThreadParamCopy._DWdeqWaitTime =
+      ceil(_workerThreadParamCopy._DWdeqWaitTime);
   }
 
   void Configuration::updateLocalRunNumber()
