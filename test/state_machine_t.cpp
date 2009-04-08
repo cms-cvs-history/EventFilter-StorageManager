@@ -177,6 +177,7 @@ int main()
                                                stub->getDescriptor()));
 
   sr->_configuration.reset(new Configuration(stub->getInfoSpace(), 0));
+  sr->_statisticsReporter.reset(new StatisticsReporter(app));
 
   EventDistributor ed(sr);
 
