@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.11 2009/04/06 13:40:47 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.12 2009/04/06 18:33:29 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -27,7 +27,19 @@ _externallyVisibleState( "Halted" ),
 _xdaq_state_name( "Halted" )
 {
   xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
-  ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
+
+  try
+  {
+    ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
+  }
+  catch(xdata::exception::Exception &e)
+  {
+    std::stringstream oss;
+    
+    oss << "Failed to put stateName into info space " << ispace->name();
+    
+    XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
+  }
 }
 
 
@@ -146,7 +158,7 @@ void StatisticsReporter::reportStateName()
 
   xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
 
-  const std::string emsg =
+  const std::string errorMsg =
     "Failed to update state name in infospace " + ispace->name();
 
   try
@@ -159,9 +171,18 @@ void StatisticsReporter::reportStateName()
   catch( ... )
     {
       ispace->unlock();
-      XCEPT_RAISE( stor::exception::Monitoring, emsg );
+      XCEPT_RAISE( stor::exception::Monitoring, errorMsg );
     }
 
+  try
+  {
+    // Notify the info space that the value has changed
+    ispace->fireItemValueChanged( "stateName", this );
+  }
+  catch (xdata::exception::Exception &e)
+  {
+    XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
+  }
 }
 
 
