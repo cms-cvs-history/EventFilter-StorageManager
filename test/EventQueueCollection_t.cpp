@@ -299,7 +299,7 @@ testEventQueueCollection::invalid_queueid()
 void
 testEventQueueCollection::clear_all_queues()
 {
-    CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
   EventQueueCollection coll;
   ConsumerID cid;
   QueueID q1 = coll.createQueue(++cid, DiscardNew);
@@ -322,6 +322,8 @@ testEventQueueCollection::clear_all_queues()
   CPPUNIT_ASSERT(!coll.empty(q2));
   CPPUNIT_ASSERT(!coll.empty(q3));
   CPPUNIT_ASSERT(!coll.empty(q4));
+
+  CPPUNIT_ASSERT(!coll.popEvent(cid).empty());
   
   coll.clearQueues();
   CPPUNIT_ASSERT(coll.size() == 4);
@@ -329,7 +331,7 @@ testEventQueueCollection::clear_all_queues()
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
   CPPUNIT_ASSERT(coll.empty(q4));
-    CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
 void

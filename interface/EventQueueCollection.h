@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.8 2009/03/26 01:53:18 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.9 2009/04/08 19:28:45 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/03/26 01:53:18 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/04/08 19:28:45 $
    */
   
   class EventQueueCollection
@@ -76,6 +76,13 @@ namespace stor {
     I2OChain popEvent(QueueID id);
 
     /**
+      Remove and return an event from the queue for the consumer with
+      the given ConsumerID. If there is no event in that queue, an
+      empty I2OChain is returned.
+     */
+    I2OChain popEvent(ConsumerID id);
+
+    /**
        Clear the queue with the given QueueID.
      */
     void clearQueue(QueueID id);
@@ -127,7 +134,8 @@ namespace stor {
 
     std::vector<expirable_discard_new_queue_ptr> _discard_new_queues;
     std::vector<expirable_discard_old_queue_ptr> _discard_old_queues;
-    std::map<ConsumerID, QueueID>                _queue_id_lookup;
+    typedef std::map<ConsumerID, QueueID>        map_type;
+    map_type                                     _queue_id_lookup;
     
 
     /*
