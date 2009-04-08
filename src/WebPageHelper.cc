@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.14 2009/04/03 19:04:07 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.15 2009/04/06 18:31:12 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -410,21 +410,21 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(1) <<
+    tmpString << std::fixed << std::setprecision(0) <<
       allFragmentSizeStats.getDuration(MonitoredQuantity::FULL) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(1) <<
+    tmpString << std::fixed << std::setprecision(0) <<
       eventFragmentSizeStats.getDuration(MonitoredQuantity::FULL) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(1) <<
+    tmpString << std::fixed << std::setprecision(0) <<
       dqmEventFragmentSizeStats.getDuration(MonitoredQuantity::FULL) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
@@ -492,21 +492,21 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(1) <<
+    tmpString << std::fixed << std::setprecision(0) <<
       allFragmentSizeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(1) <<
+    tmpString << std::fixed << std::setprecision(0) <<
       eventFragmentSizeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
   {
     tableDiv = maker.addNode("th", tableRow);
     std::ostringstream tmpString;
-    tmpString << std::fixed << std::setprecision(1) <<
+    tmpString << std::fixed << std::setprecision(0) <<
       dqmEventFragmentSizeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
@@ -705,7 +705,7 @@ void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
   tableDiv = maker.addNode("th", tableRow, colspanAttr);
   {
     std::ostringstream tmpString;
-    tmpString << "Mean performance for " << std::fixed << std::setprecision(1) <<
+    tmpString << "Mean performance for " << std::fixed << std::setprecision(0) <<
       allStreamsVolumeStats.getDuration() << " s";
     maker.addText(tableDiv, tmpString.str());
   }
@@ -717,7 +717,7 @@ void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
   tableDiv = maker.addNode("th", tableRow, colspanAttr);
   {
     std::ostringstream tmpString;
-    tmpString << "Recent performance for the last " << std::fixed << std::setprecision(1) <<
+    tmpString << "Recent performance for the last " << std::fixed << std::setprecision(0) <<
       allStreamsVolumeStats.getDuration(MonitoredQuantity::RECENT) << " s";
     maker.addText(tableDiv, tmpString.str());
   }
