@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.h,v 1.1.2.6 2009/03/02 18:08:21 biery Exp $
+// $Id: RunMonitorCollection.h,v 1.1.2.7 2009/03/18 09:13:14 mommsen Exp $
 
 #ifndef StorageManager_RunMonitorCollection_h
 #define StorageManager_RunMonitorCollection_h
@@ -14,9 +14,9 @@ namespace stor {
    * A collection of MonitoredQuantities related to events received
    * in the current run
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/03/18 09:13:14 $
    */
   
   class RunMonitorCollection : public MonitorCollection
@@ -71,6 +71,8 @@ namespace stor {
     virtual void do_calculateStatistics();
     
     virtual void do_updateInfoSpace();
+    
+    virtual void do_reset();
 
 
     // InfoSpace items which were defined in the old SM

@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.7 2009/03/18 09:13:05 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.8 2009/04/03 18:02:28 paterno Exp $
 
 #include <string>
 #include <sstream>
@@ -76,6 +76,15 @@ void RunMonitorCollection::do_updateInfoSpace()
   {
     XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
   }
+}
+
+
+void RunMonitorCollection::do_reset()
+{
+  _eventIDsReceived.reset();
+  _errorEventIDsReceived.reset();
+  _runNumbersSeen.reset();
+  _lumiSectionsSeen.reset();
 }
 
 

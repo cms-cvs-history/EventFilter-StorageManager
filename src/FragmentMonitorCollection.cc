@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.17 2009/03/18 09:13:05 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.18 2009/04/03 18:02:28 paterno Exp $
 
 #include <string>
 #include <sstream>
@@ -141,6 +141,18 @@ void FragmentMonitorCollection::do_updateInfoSpace()
   {
     XCEPT_RETHROW(stor::exception::Monitoring, errorMsg, e);
   }
+}
+
+
+void FragmentMonitorCollection::do_reset()
+{
+  _allFragmentSizes.reset();
+  _eventFragmentSizes.reset();
+  _dqmEventFragmentSizes.reset();
+
+  _allFragmentBandwidth.reset();
+  _eventFragmentBandwidth.reset();
+  _dqmEventFragmentBandwidth.reset();
 }
 
 

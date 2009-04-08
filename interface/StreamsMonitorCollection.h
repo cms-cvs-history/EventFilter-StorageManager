@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.1.2.1 2009/04/06 13:38:33 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.1.2.2 2009/04/06 18:29:51 mommsen Exp $
 
 #ifndef StorageManager_StreamsMonitorCollection_h
 #define StorageManager_StreamsMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/04/06 13:38:33 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/04/06 18:29:51 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -94,6 +94,8 @@ namespace stor {
     virtual void do_calculateStatistics();
     
     virtual void do_updateInfoSpace();
+
+    virtual void do_reset();
 
     StreamRecordList _streamRecords;
     utils::duration_t _timeWindowForRecentResults;

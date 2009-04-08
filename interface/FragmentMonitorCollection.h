@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.12 2009/03/02 18:08:21 biery Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.13 2009/03/18 09:13:14 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -14,9 +14,9 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities related to fragments
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/03/18 09:13:14 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -92,6 +92,8 @@ namespace stor {
     virtual void do_calculateStatistics();
     
     virtual void do_updateInfoSpace();
+    
+    virtual void do_reset();
 
 
     // InfoSpace items which were defined in the old SM

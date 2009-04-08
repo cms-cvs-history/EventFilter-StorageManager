@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.1.2.7 2009/02/18 08:26:54 mommsen Exp $
+// $Id: MonitorCollection.cc,v 1.1.2.8 2009/03/02 18:08:22 biery Exp $
 
 #include <sstream>
 
@@ -44,6 +44,14 @@ void MonitorCollection::updateInfoSpace()
   // do any operations that are common for all child classes
 
   do_updateInfoSpace();
+}
+
+
+void MonitorCollection::reset()
+{
+  // do any operations that are common for all child classes
+
+  do_reset();
 }
 
 

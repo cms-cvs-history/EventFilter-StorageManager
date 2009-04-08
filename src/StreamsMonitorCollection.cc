@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.1 2009/04/06 13:40:47 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.2 2009/04/06 18:31:40 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -102,6 +102,16 @@ void StreamsMonitorCollection::do_updateInfoSpace()
   {
     XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
   }
+}
+
+
+void StreamsMonitorCollection::do_reset()
+{
+  _streamRecords.clear();
+
+  _allStreamsFileCount.reset();
+  _allStreamsVolume.reset();
+  _allStreamsBandwidth.reset();
 }
 
 

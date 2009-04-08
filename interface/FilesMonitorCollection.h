@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.6 2009/04/03 14:28:10 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.7 2009/04/06 13:37:36 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/04/03 14:28:10 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/04/06 13:37:36 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -84,6 +84,8 @@ namespace stor {
     virtual void do_calculateStatistics();
     
     virtual void do_updateInfoSpace();
+    
+    virtual void do_reset();
 
     FileRecordList _fileRecords;
 

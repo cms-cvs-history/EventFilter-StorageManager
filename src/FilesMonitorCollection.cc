@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.5 2009/04/03 14:27:59 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.6 2009/04/06 13:40:12 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -80,6 +80,13 @@ void FilesMonitorCollection::do_updateInfoSpace()
   {
     XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
   }
+}
+
+
+void FilesMonitorCollection::do_reset()
+{
+  _fileRecords.clear();
+  _entryCounter = 0;
 }
 
 

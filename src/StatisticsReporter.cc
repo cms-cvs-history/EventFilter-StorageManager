@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.12 2009/04/06 18:33:29 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.13 2009/04/08 08:33:40 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -78,7 +78,7 @@ StatisticsReporter::~StatisticsReporter()
   _doMonitoring = false;
 
   // Cancel the workloop (will wait until the action has finished)
-  _monitorWL->cancel();
+  if ( _monitorWL && _monitorWL->isActive() ) _monitorWL->cancel();
 }
 
 
@@ -131,6 +131,16 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
 
   return _doMonitoring;
 }
+
+
+void StatisticsReporter::reset()
+{
+  _runMonCollection.reset();
+  _fragMonCollection.reset();
+  _filesMonCollection.reset();
+  _streamsMonCollection.reset();
+}
+
 
 /////////////////////////
 //// Set state name: ////

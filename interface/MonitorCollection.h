@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.9 2009/02/18 08:26:29 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.1.2.10 2009/03/02 18:08:21 biery Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -20,9 +20,9 @@ namespace stor {
   /**
    * An abstract collection of MonitoredQuantities
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/02/18 08:26:29 $
+   * $Author: biery $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/03/02 18:08:21 $
    */
   
   class MonitorCollection
@@ -54,12 +54,19 @@ namespace stor {
      */
     void updateInfoSpace();
 
+    /**
+     * Resets the monitored quantities
+     */
+    void reset();
+
 
   protected:
 
     virtual void do_calculateStatistics() = 0;
     
     virtual void do_updateInfoSpace() = 0;
+
+    virtual void do_reset() = 0;
 
 
     // Stuff dealing with info space
