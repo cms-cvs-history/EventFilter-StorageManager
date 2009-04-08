@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.20 2009/03/31 19:37:46 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.22 2009/04/01 14:39:03 mommsen Exp $
 
 #include <unistd.h>
 
@@ -17,7 +17,6 @@ FragmentProcessor::FragmentProcessor( SharedResourcesPtr sr,
   _fragmentStore(),
   _eventDistributor(sr),
   _wrapperNotifier( wn ),
-  _timeout(1),
   _actionIsActive(true),
   _fileCheckIntervalStart(time(0)),
   _fileCheckEventCounter(0)
@@ -26,6 +25,10 @@ FragmentProcessor::FragmentProcessor( SharedResourcesPtr sr,
                                          &_fragmentStore, &_wrapperNotifier,
                                          _sharedResources ) );
   _stateMachine->initiate();
+
+  WorkerThreadParams workerParams =
+    _sharedResources->_configuration->getWorkerThreadParams();
+  _timeout = (unsigned int) workerParams._FPdeqWaitTime;
 }
 
 FragmentProcessor::~FragmentProcessor()
@@ -112,10 +115,21 @@ void FragmentProcessor::processAllCommands()
 
   boost::shared_ptr<CommandQueue> cq = _sharedResources->_commandQueue;
   stor::event_ptr evt;
+  bool gotCommand = false;
 
   while( cq->deq_nowait( evt ) )
     {
+      gotCommand = true;
       _stateMachine->process_event( *evt );
+    }
+
+  // the timeout value may have changed if the transition was
+  // a Configuration transition, so check for a new value here
+  if (gotCommand)
+    {
+      WorkerThreadParams workerParams =
+        _sharedResources->_configuration->getWorkerThreadParams();
+      _timeout = (unsigned int) workerParams._FPdeqWaitTime;
     }
 
 }

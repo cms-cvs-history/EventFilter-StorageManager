@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.16 2009/03/31 19:39:10 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.18 2009/04/01 14:39:21 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -27,8 +27,8 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/03/31 19:39:10 $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/04/01 14:39:21 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -86,7 +86,7 @@ namespace stor {
     EventDistributor                   _eventDistributor;
     WrapperNotifier                    _wrapperNotifier;
 
-    const unsigned int                 _timeout; // Waiting time in microseconds.
+    unsigned int                       _timeout; // Waiting time in seconds.
     bool                               _actionIsActive;
 
     toolbox::task::WorkLoop*           _processWL;      
