@@ -49,15 +49,13 @@ void
 testConsumerID::invalid_id()
 {
   ConsumerID invalid;
-  invalid.value = 0;
   CPPUNIT_ASSERT(!invalid.isValid());
 }
 
 void 
 testConsumerID::valid_id()
 {
-  ConsumerID valid;
-  valid.value = 3;
+  ConsumerID valid(3);
   CPPUNIT_ASSERT(valid.isValid());
 }
 
@@ -65,8 +63,7 @@ void
 testConsumerID::output()
 {
   ostringstream out;
-  ConsumerID id;
-  id.value = 18;
+  ConsumerID id(18);
   out << id << endl;
   CPPUNIT_ASSERT(out.str() == "18\n");
 }
@@ -75,7 +72,6 @@ void
 testConsumerID::preincrement()
 {
   ConsumerID id;
-  id.value = 0;
   CPPUNIT_ASSERT((++id).value == 1);
   CPPUNIT_ASSERT(id.value == 1);
   CPPUNIT_ASSERT((++id).value == 2);
@@ -87,7 +83,6 @@ void
 testConsumerID::postincrement()
 {
   ConsumerID id;
-  id.value = 0;
   id++;
   CPPUNIT_ASSERT(id.value == 1);
   ConsumerID other = id++;

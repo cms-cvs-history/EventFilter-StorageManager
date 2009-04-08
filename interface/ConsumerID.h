@@ -1,5 +1,5 @@
 
-// $Id: ConsumerID.h,v 1.1.2.4 2009/03/13 21:16:32 paterno Exp $
+// $Id: ConsumerID.h,v 1.1.2.1 2009/04/08 17:08:13 paterno Exp $
 
 #ifndef StorageManager_ConsumerID_h
 #define StorageManager_ConsumerID_h
@@ -15,21 +15,16 @@ namespace stor {
    * Uniquely identifies a consumer.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/13 21:16:32 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/08 17:08:13 $
    */
 
   struct ConsumerID
   {
     unsigned int value;
 
-    /**
-       To keep this type 'trivial', we define no user-defined
-       constructors or destructor.
+    explicit ConsumerID(unsigned int id = 0) : value(id) { }
 
-       We might consider a default constructor that makes a ConsumerID
-       with value = 0.
-     */
 
     /**
        Return whether or not *this is a valid ConsumerID.
