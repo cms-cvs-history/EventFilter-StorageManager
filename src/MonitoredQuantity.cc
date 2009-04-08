@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.14 2009/04/03 18:02:28 paterno Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.15 2009/04/06 21:40:22 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -18,6 +18,7 @@ duration_t MonitoredQuantity::ExpectedCalculationInterval()
 
 MonitoredQuantity::MonitoredQuantity(duration_t timeWindowForRecentResults):
 _workingLastSampleValue(0),
+_lastLatchedSampleValue(0),
 _enabled(true)
 {
   setNewTimeWindowForRecentResults(timeWindowForRecentResults);
@@ -52,120 +53,6 @@ void  MonitoredQuantity::addSample(const uint32_t value)
 {
   addSample(static_cast<double>(value));
 }
-
-// long long MonitoredQuantity::getSampleCount(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentSampleCount;
-//   }
-//   else {
-//     return _fullSampleCount;
-//   }
-// }
-
-// double MonitoredQuantity::getSampleRate(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentSampleRate;
-//   }
-//   else {
-//     return _fullSampleRate;
-//   }
-// }
-
-// double MonitoredQuantity::getSampleLatency(DataSetType dataSet) const
-// {
-//   double value = getSampleRate(dataSet);
-//   return (value) ? 1e6/value : INFINITY;
-// }
-
-// double MonitoredQuantity::getValueSum(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentValueSum;
-//   }
-//   else {
-//     return _fullValueSum;
-//   }
-// }
-
-// double MonitoredQuantity::getValueAverage(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentValueAverage;
-//   }
-//   else {
-//     return _fullValueAverage;
-//   }
-// }
-
-// double MonitoredQuantity::getValueRMS(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentValueRMS;
-//   }
-//   else {
-//     return _fullValueRMS;
-//   }
-// }
-
-// double MonitoredQuantity::getValueMin(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentValueMin;
-//   }
-//   else {
-//     return _fullValueMin;
-//   }
-// }
-
-// double MonitoredQuantity::getValueMax(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentValueMax;
-//   }
-//   else {
-//     return _fullValueMax;
-//   }
-// }
-
-// double MonitoredQuantity::getValueRate(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentValueRate;
-//   }
-//   else {
-//     return _fullValueRate;
-//   }
-// }
-
-// double MonitoredQuantity::getDuration(DataSetType dataSet) const
-// {
-//   boost::mutex::scoped_lock sl(_resultsMutex);
-
-//   if (dataSet == RECENT) {
-//     return _recentDuration;
-//   }
-//   else {
-//     return _fullDuration;
-//   }
-// }
 
 void MonitoredQuantity::calculateStatistics(double currentTime)
 {
