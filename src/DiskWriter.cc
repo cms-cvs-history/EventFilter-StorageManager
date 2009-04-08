@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.15 2009/04/02 23:18:47 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.16 2009/04/03 08:24:11 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -14,10 +14,13 @@ using namespace stor;
 DiskWriter::DiskWriter(xdaq::Application *app, SharedResourcesPtr sr) :
 _app(app),
 _sharedResources(sr),
-_timeout(1),
 _lastFileTimeoutCheckTime(utils::getCurrentTime()),
 _actionIsActive(true)
-{}
+{
+  WorkerThreadParams workerParams =
+    _sharedResources->_configuration->getWorkerThreadParams();
+  _timeout = (unsigned int) workerParams._DWdeqWaitTime;
+}
 
 
 DiskWriter::~DiskWriter()
@@ -124,11 +127,13 @@ void DiskWriter::writeNextEvent()
 
   EvtStrConfigList* evtCfgList;
   ErrStrConfigList* errCfgList;
+  double newTimeoutValue;
   if (_sharedResources->_diskWriterResources->
-      streamConfigurationRequested(evtCfgList, errCfgList))
+      streamConfigurationRequested(evtCfgList, errCfgList, newTimeoutValue))
   {
     configureEventStreams(*evtCfgList);
     configureErrorStreams(*errCfgList);
+    _timeout = (unsigned int) newTimeoutValue;
     _sharedResources->_diskWriterResources->streamConfigurationDone();
   }
 

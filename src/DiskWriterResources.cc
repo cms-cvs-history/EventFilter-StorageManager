@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.cc,v 1.1.2.2 2009/04/02 23:14:30 biery Exp $
+// $Id: DiskWriterResources.cc,v 1.1.2.3 2009/04/03 14:41:22 biery Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
 
@@ -16,18 +16,21 @@ namespace stor
 
   void DiskWriterResources::
   requestStreamConfiguration(EvtStrConfigList* evtStrConfig,
-                             ErrStrConfigList* errStrConfig)
+                             ErrStrConfigList* errStrConfig,
+                             double timeoutValue)
   {
     boost::mutex::scoped_lock sl(_generalMutex);
 
     _requestedEventStreamConfig = evtStrConfig;
     _requestedErrorStreamConfig = errStrConfig;
+    _requestedTimeout = timeoutValue;
     _configurationIsNeeded = true;
   }
 
   bool DiskWriterResources::
   streamConfigurationRequested(EvtStrConfigList*& evtStrConfig,
-                               ErrStrConfigList*& errStrConfig)
+                               ErrStrConfigList*& errStrConfig,
+                               double& timeoutValue)
   {
     boost::mutex::scoped_lock sl(_generalMutex);
     if (! _configurationIsNeeded) {return false;}
@@ -35,6 +38,7 @@ namespace stor
     _configurationIsNeeded = false;
     evtStrConfig = _requestedEventStreamConfig;
     errStrConfig = _requestedErrorStreamConfig;
+    timeoutValue = _requestedTimeout;
     _configurationInProgress = true;
     return true;
   }

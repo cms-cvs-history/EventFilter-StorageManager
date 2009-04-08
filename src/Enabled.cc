@@ -37,8 +37,11 @@ Enabled::Enabled( my_context c ): my_base(c)
   ErrStrConfigList errCfgList = sharedResources->_configuration->
     getCurrentErrorStreamConfig();
 
+  WorkerThreadParams workerParams =
+    sharedResources->_configuration->getWorkerThreadParams();
   sharedResources->_diskWriterResources->
-    requestStreamConfiguration(&evtCfgList, &errCfgList);
+    requestStreamConfiguration(&evtCfgList, &errCfgList,
+                               workerParams._DWdeqWaitTime);
   sharedResources->_diskWriterResources->waitForStreamConfiguration();
 
   EventDistributor* ed = outermost_context().getEventDistributor();

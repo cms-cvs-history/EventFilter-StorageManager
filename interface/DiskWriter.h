@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.12 2009/04/02 21:28:08 biery Exp $
+// $Id: DiskWriter.h,v 1.1.2.13 2009/04/02 23:18:46 biery Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -27,8 +27,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: biery $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/04/02 21:28:08 $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/04/02 23:18:46 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -108,7 +108,7 @@ namespace stor {
     xdaq::Application* _app;
     SharedResourcesPtr _sharedResources;
 
-    const unsigned int _timeout; // Timeout in seconds on stream queue
+    unsigned int _timeout; // Timeout in seconds on stream queue
     utils::time_point_t _lastFileTimeoutCheckTime; // Last time we checked for time-out files
 
     typedef boost::shared_ptr<StreamHandler> StreamHandlerPtr;

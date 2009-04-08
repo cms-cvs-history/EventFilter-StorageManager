@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.1.2.2 2009/04/02 23:14:29 biery Exp $
+// $Id: DiskWriterResources.h,v 1.1.2.3 2009/04/03 14:41:21 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_DiskWriterResources_h
@@ -18,8 +18,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/02 23:14:29 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/03 14:41:21 $
    */
 
   class DiskWriterResources
@@ -38,15 +38,19 @@ namespace stor
 
     /**
      * Requests that the DiskWriter streams be configured with the
-     * specified configurations..
+     * specified configurations.  Also allows a new dequeue timeout
+     * value to be specified.
      */
-    void requestStreamConfiguration(EvtStrConfigList*, ErrStrConfigList*);
+    void requestStreamConfiguration(EvtStrConfigList*, ErrStrConfigList*,
+                                    double timeoutValue);
 
     /**
      * Checks if a request has been made to configure the DiskWriter
-     * streams *and* clears any pending request.
+     * streams *and* clears any pending request.  Supplies the new
+     * configurations and a new dequeue timeout value.
      */
-    bool streamConfigurationRequested(EvtStrConfigList*&, ErrStrConfigList*&);
+    bool streamConfigurationRequested(EvtStrConfigList*&, ErrStrConfigList*&,
+                                      double& timeoutValue);
 
     /**
      * Waits until a requested stream configuration has been completed.
@@ -109,6 +113,7 @@ namespace stor
 
     EvtStrConfigList* _requestedEventStreamConfig;
     ErrStrConfigList* _requestedErrorStreamConfig;
+    double _requestedTimeout;
 
     bool _configurationInProgress;
     boost::condition _configurationCondition;
