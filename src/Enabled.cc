@@ -16,6 +16,9 @@ Enabled::Enabled( my_context c ): my_base(c)
   SharedResourcesPtr sharedResources =
     outermost_context().getSharedResources();
 
+  // reset all statistics (needs to be done first)
+  sharedResources->_statisticsReporter->reset();
+
   // clear the INIT message collection at begin run
   sharedResources->_initMsgCollection->clear();
 
