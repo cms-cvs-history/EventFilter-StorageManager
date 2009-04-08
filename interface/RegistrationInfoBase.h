@@ -1,11 +1,12 @@
 // -*- c++ -*-
-// $Id: RegistrationInfoBase.h,v 1.1.2.3 2009/04/01 18:44:55 paterno Exp $
+// $Id: RegistrationInfoBase.h,v 1.1.2.4 2009/04/03 12:22:08 dshpakov Exp $
 
 #ifndef REGISTRATIONINFOBASE_H
 #define REGISTRATIONINFOBASE_H
 
 #include <string>
 
+#include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 
@@ -17,9 +18,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/01 18:44:55 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/03 12:22:08 $
    */
 
   class RegistrationInfoBase
@@ -57,6 +58,17 @@ namespace stor {
     std::string consumerName() const;
 
     /**
+       Returns the ID given to this consumer.
+     */
+
+    ConsumerID consumerID() const;
+
+    /**
+       Set the consumer ID.
+     */
+    void setConsumerID(ConsumerID id);
+
+    /**
        Returns the header retry interval specified by the consumer.
      */
     unsigned int headerRetryInterval() const;
@@ -70,6 +82,8 @@ namespace stor {
     virtual void do_registerMe(EventDistributor*) = 0;
     virtual QueueID do_queueId() const = 0;
     virtual std::string do_consumerName() const = 0;
+    virtual ConsumerID do_consumerID() const = 0;
+    virtual void do_setConsumerID(ConsumerID id) = 0;
     virtual unsigned int do_headerRetryInterval() const = 0;
     virtual double do_maxEventRequestRate() const = 0;
   };
@@ -96,6 +110,18 @@ namespace stor {
   std::string RegistrationInfoBase::consumerName() const
   {
     return do_consumerName();
+  }
+
+  inline
+  ConsumerID RegistrationInfoBase::consumerID() const
+  {
+    return do_consumerID();
+  }
+
+  inline
+  void RegistrationInfoBase::setConsumerID(ConsumerID id)
+  {
+    do_setConsumerID(id);
   }
 
   inline

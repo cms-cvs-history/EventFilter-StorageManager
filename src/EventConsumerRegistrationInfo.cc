@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.12 2009/04/06 13:28:42 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.13 2009/04/06 14:15:59 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -196,6 +196,18 @@ namespace stor
   EventConsumerRegistrationInfo::do_consumerName() const
   {
     return _common.consumerName;
+  }
+
+  ConsumerID
+  EventConsumerRegistrationInfo::do_consumerID() const
+  {
+    return _common.consumerId;
+  }
+
+  void
+  EventConsumerRegistrationInfo::do_setConsumerID(ConsumerID id)
+  {
+    _common.consumerId = id;
   }
 
   unsigned int

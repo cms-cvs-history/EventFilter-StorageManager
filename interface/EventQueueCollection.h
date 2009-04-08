@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.1.2.7 2009/03/26 01:27:50 paterno Exp $
+// $Id: EventQueueCollection.h,v 1.1.2.8 2009/03/26 01:53:18 paterno Exp $
 
 #ifndef StorageManager_EventQueueCollection_h
 #define StorageManager_EventQueueCollection_h
@@ -9,10 +9,11 @@
 #include "boost/shared_ptr.hpp"
 
 #include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
+#include "EventFilter/StorageManager/interface/ConsumerID.h"
+#include "EventFilter/StorageManager/interface/ExpirableEventQueue.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
-#include "EventFilter/StorageManager/interface/ExpirableEventQueue.h"
 
 namespace stor {
 
@@ -20,8 +21,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: paterno $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/03/26 01:27:50 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/03/26 01:53:18 $
    */
   
   class EventQueueCollection
@@ -45,7 +46,8 @@ namespace stor {
       maximum size. It returns a unique identifier to later identify
       requests originating from this consumer.
     */
-    QueueID createQueue(enquing_policy::PolicyTag policy,
+    QueueID createQueue(ConsumerID cid,
+                        enquing_policy::PolicyTag policy,
                         size_t max = std::numeric_limits<size_t>::max(),
                         utils::duration_t interval = 120.0,
                         utils::time_point_t now = utils::getCurrentTime());
@@ -117,11 +119,16 @@ namespace stor {
     typedef boost::mutex::scoped_lock write_lock_t;
     typedef boost::mutex  read_write_mutex;
 
+    // It is possible that one mutex would be better than these
+    // three. Only profiling the application will tell for sure.
     mutable read_write_mutex  _protect_discard_new_queues;
     mutable read_write_mutex  _protect_discard_old_queues;
+    mutable read_write_mutex  _protect_lookup;
 
     std::vector<expirable_discard_new_queue_ptr> _discard_new_queues;
     std::vector<expirable_discard_old_queue_ptr> _discard_old_queues;
+    std::map<ConsumerID, QueueID>                _queue_id_lookup;
+    
 
     /*
       These functions are declared private and not implemented to

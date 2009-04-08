@@ -1,6 +1,7 @@
 #include "Utilities/Testing/interface/CppUnit_testdriver.icpp"
 #include "cppunit/extensions/HelperMacros.h"
 
+#include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -16,6 +17,7 @@
 
 #include <algorithm>
 
+using stor::ConsumerID;
 using stor::EventQueueCollection;
 using stor::I2OChain;
 using stor::QueueID;
@@ -24,6 +26,8 @@ using stor::testhelper::outstanding_bytes;
 
 using stor::enquing_policy::DiscardOld;
 using stor::enquing_policy::DiscardNew;
+using stor::enquing_policy::FailIfFull;
+
 
 using std::binary_search;
 using std::sort;
@@ -77,25 +81,41 @@ testEventQueueCollection::create_queues()
 
   // Make sure that the different types of queue are both counted
   // correctly.
-  QueueID id1 = c.createQueue(DiscardNew, 10);
+  ConsumerID cid1;
+  cid1.value = 109;
+  QueueID id1 = c.createQueue(cid1, DiscardNew, 10);
   CPPUNIT_ASSERT(c.size() == 1);
   CPPUNIT_ASSERT(id1.policy() == DiscardNew);
   CPPUNIT_ASSERT(id1.index() == 0);
 
 
-  QueueID id2 = c.createQueue(DiscardOld, 20);
+  ConsumerID cid2;
+  cid2.value = 9234;
+  QueueID id2 = c.createQueue(cid2, DiscardOld, 20);
   CPPUNIT_ASSERT(c.size() == 2);
   CPPUNIT_ASSERT(id2.policy() == DiscardOld);
   CPPUNIT_ASSERT(id2.index() == 0);
 
-  QueueID id3 = c.createQueue(DiscardOld, 20);
+  ConsumerID cid3;
+  cid3.value = 2;
+  QueueID id3 = c.createQueue(cid3, DiscardOld, 20);
   CPPUNIT_ASSERT(c.size() == 3);
   CPPUNIT_ASSERT(id3.index() == 1);
 
   // Other policies should not allow creation
-  QueueID id4 = c.createQueue(stor::enquing_policy::FailIfFull, 1);
+  ConsumerID cid4;
+  cid4.value = 16;
+  QueueID id4 = c.createQueue(cid4, FailIfFull, 1);
   CPPUNIT_ASSERT(c.size() == 3);
   CPPUNIT_ASSERT(!id4.isValid());
+
+  // An invalid ConsumerID should not allow creation
+  ConsumerID invalid;
+  invalid.value = 0;
+  CPPUNIT_ASSERT(!invalid.isValid());
+  QueueID id5 = c.createQueue(invalid, FailIfFull);
+  CPPUNIT_ASSERT(c.size() == 3);
+  CPPUNIT_ASSERT(!id5.isValid());
 }
 
 void 
@@ -140,10 +160,12 @@ testEventQueueCollection::add_and_pop()
 void
 create_queues_helper(boost::shared_ptr<EventQueueCollection> pcoll)
 {
+  ConsumerID cid;
+  cid.value = 0;
   for (int i = 0; i < 1000; ++i)
     {
-      pcoll->createQueue(DiscardNew);
-      pcoll->createQueue(DiscardOld);
+      pcoll->createQueue(++cid, DiscardNew);
+      pcoll->createQueue(++cid, DiscardOld);
       ::usleep(2000); // 1000 microseconds
     }
 }
@@ -160,11 +182,12 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
   // them to fill rapidly.
   stor::utils::time_point_t now = stor::utils::getCurrentTime();
 
-  QueueID q1 = coll.createQueue(DiscardOld, 2, expiration_interval, now);
+  ConsumerID cid;
+  QueueID q1 = coll.createQueue(++cid, DiscardOld, 2, expiration_interval, now);
   CPPUNIT_ASSERT(q1.isValid());
-  QueueID q2 = coll.createQueue(DiscardNew, 2, expiration_interval, now);
+  QueueID q2 = coll.createQueue(++cid, DiscardNew, 2, expiration_interval, now);
   CPPUNIT_ASSERT(q2.isValid());
-  QueueID q3 = coll.createQueue(DiscardNew, 1, expiration_interval, now);
+  QueueID q3 = coll.createQueue(++cid, DiscardNew, 1, expiration_interval, now);
   CPPUNIT_ASSERT(q3.isValid());
 
   // Make some chains, tagging them, and inserting them into the
@@ -233,8 +256,8 @@ testEventQueueCollection::invalid_queueid()
   // Make sure none of the interface functions cause a failure. Many
   // do not return any status we can test; we just run the function
   // and observe that we do *not* crash or throw any exception.
-  QueueID id1(stor::enquing_policy::DiscardNew, 0);
-  QueueID id2(stor::enquing_policy::DiscardOld, 0);
+  QueueID id1(DiscardNew, 0);
+  QueueID id2(DiscardOld, 0);
 
   coll.setExpirationInterval(id1, 2.0);
   coll.setExpirationInterval(id2, 2.0);
@@ -278,10 +301,11 @@ testEventQueueCollection::clear_all_queues()
 {
     CPPUNIT_ASSERT(outstanding_bytes() == 0);
   EventQueueCollection coll;
-  QueueID q1 = coll.createQueue(DiscardNew);
-  QueueID q2 = coll.createQueue(DiscardOld);
-  QueueID q3 = coll.createQueue(DiscardOld);
-  QueueID q4 = coll.createQueue(DiscardNew);
+  ConsumerID cid;
+  QueueID q1 = coll.createQueue(++cid, DiscardNew);
+  QueueID q2 = coll.createQueue(++cid, DiscardOld);
+  QueueID q3 = coll.createQueue(++cid, DiscardOld);
+  QueueID q4 = coll.createQueue(++cid, DiscardNew);
   CPPUNIT_ASSERT(coll.size() == 4);
   
   for (int i = 0; i < 100; ++i)
@@ -312,10 +336,11 @@ void
 testEventQueueCollection::remove_all_queues()
 {
   EventQueueCollection coll;
-  QueueID q1 = coll.createQueue(DiscardNew);
-  QueueID q2 = coll.createQueue(DiscardOld);
-  QueueID q3 = coll.createQueue(DiscardOld);
-  QueueID q4 = coll.createQueue(DiscardNew);
+  ConsumerID cid;
+  QueueID q1 = coll.createQueue(++cid, DiscardNew);
+  QueueID q2 = coll.createQueue(++cid, DiscardOld);
+  QueueID q3 = coll.createQueue(++cid, DiscardOld);
+  QueueID q4 = coll.createQueue(++cid, DiscardNew);
 
   CPPUNIT_ASSERT(coll.size() == 4);
   coll.removeQueues();

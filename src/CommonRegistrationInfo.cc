@@ -11,7 +11,8 @@ namespace stor
     consumerName(name),
     headerRetryInterval(hri),
     maxEventRequestRate(merr),
-    queueId(id)
+    queueId(id),
+    consumerId(0)
   { }
 
   std::ostream& operator<< (std::ostream& os,
@@ -19,8 +20,9 @@ namespace stor
   {
     os << "EventConsumerRegistrationInfo:"
        << "\n Consumer name: " << ri.consumerName
+       << "\n Consumer id: " << ri.consumerId
        << "\n Header retry interval, seconds: " << ri.headerRetryInterval
-       << "\n Maximum event request rate, Hz: " << ri.maxEventRequestRate 
+       << "\n Maximum event request rate, Hz: " << ri.maxEventRequestRate
        << '\n';
     return os;
   }

@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: CommonRegistrationInfo.h,v 1.1.2.1 2009/04/01 18:44:55 paterno Exp $
+// $Id: CommonRegistrationInfo.h,v 1.1.2.2 2009/04/03 12:22:07 dshpakov Exp $
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
 #define EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -9,6 +9,7 @@
 #include <string>
 
 #include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/ConsumerID.h"
 
 namespace stor
 {
@@ -18,9 +19,9 @@ namespace stor
    * that don't have reason to do otherwise should include this as a
    * data member.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/04/01 18:44:55 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/04/03 12:22:07 $
    */
 
   struct CommonRegistrationInfo
@@ -34,6 +35,7 @@ namespace stor
     unsigned int  headerRetryInterval;
     double        maxEventRequestRate;
     QueueID       queueId;
+    ConsumerID    consumerId;
   };
 
   // If changing the print order of things in

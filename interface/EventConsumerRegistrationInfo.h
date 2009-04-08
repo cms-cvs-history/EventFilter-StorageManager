@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.11 2009/04/03 12:30:44 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.12 2009/04/03 13:40:51 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -25,8 +25,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/03 12:30:44 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/03 13:40:51 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -49,7 +49,6 @@ namespace stor
 
     ~EventConsumerRegistrationInfo();
 
-
     // Additional accessors:
     unsigned int maxConnectRetries() const { return _maxConnectRetries; }
     unsigned int connectRetryInterval() const { return _connectRetryInterval; }
@@ -65,6 +64,8 @@ namespace stor
     virtual void do_registerMe(EventDistributor*);
     virtual QueueID do_queueId() const;
     virtual std::string do_consumerName() const;
+    virtual ConsumerID   do_consumerID() const;
+    virtual void         do_setConsumerID(ConsumerID id);
     virtual unsigned int do_headerRetryInterval() const;
     virtual double       do_maxEventRequestRate() const;
 

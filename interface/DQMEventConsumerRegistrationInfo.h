@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.8 2009/04/01 18:44:55 paterno Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.1.2.9 2009/04/03 12:22:08 dshpakov Exp $
 
 #ifndef DQMEVENTCONSUMERREGISTRATIONINFO_H
 #define DQMEVENTCONSUMERREGISTRATIONINFO_H
@@ -15,9 +15,9 @@ namespace stor
   /**
    * Holds the registration information for a DQM event consumer.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/04/01 18:44:55 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/04/03 12:22:08 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -48,6 +48,8 @@ namespace stor
     virtual void do_registerMe(EventDistributor*);
     virtual QueueID do_queueId() const;
     virtual std::string do_consumerName() const;
+    virtual ConsumerID   do_consumerID() const;
+    virtual void         do_setConsumerID(ConsumerID id);
     virtual unsigned int do_headerRetryInterval() const;
     virtual double       do_maxEventRequestRate() const;
 

@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.2 2009/01/30 10:49:56 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.3 2009/03/12 03:46:18 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventProcessor.h"
 
@@ -28,7 +28,8 @@ QueueID DQMEventProcessor::registerDQMEventConsumer
   DQMEventConsumerRegistrationInfo const& ri
 )
 {
-  return _dqmEventConsumerQueueCollection.createQueue(ri.queuePolicy(),
+  return _dqmEventConsumerQueueCollection.createQueue(ri.consumerID(),
+                                                      ri.queuePolicy(),
                                                       ri.maxQueueSize());
 }
 

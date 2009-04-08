@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.8 2009/03/26 01:27:51 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.9 2009/03/26 01:53:18 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -34,8 +34,10 @@ namespace stor
   EventQueueCollection::EventQueueCollection() :
     _protect_discard_new_queues(),
     _protect_discard_old_queues(),
+    _protect_lookup(),
     _discard_new_queues(),
-    _discard_old_queues()
+    _discard_old_queues(),
+    _queue_id_lookup()
   { }
 
   void
@@ -96,12 +98,20 @@ namespace stor
   }
 
   QueueID 
-  EventQueueCollection::createQueue(enquing_policy::PolicyTag policy,
+  EventQueueCollection::createQueue(ConsumerID cid,
+                                    enquing_policy::PolicyTag policy,
 				    size_t max,
                                     utils::duration_t interval,
                                     utils::time_point_t now)
   {
     QueueID result;
+
+    // We don't proceed if the given ConsumerID is invalid, or if
+    // we've already seen that value before.
+    if (!cid.isValid()) return result;
+    write_lock_t lock_lookup(_protect_lookup);
+    if (_queue_id_lookup.find(cid) != _queue_id_lookup.end()) return result;
+
     if (policy == enquing_policy::DiscardNew)
       {
  	write_lock_t lock(_protect_discard_new_queues);
@@ -123,6 +133,7 @@ namespace stor
 			 _discard_old_queues.size()-1);
 
       }
+    _queue_id_lookup[cid] = result;
     return result;
   }
 
