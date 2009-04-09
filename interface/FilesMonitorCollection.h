@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.8 2009/04/08 09:34:41 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.9 2009/04/09 11:25:22 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <vector>
 
+#include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "xdata/String.h"
@@ -22,8 +23,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/04/08 09:34:41 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/04/09 11:25:22 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -72,9 +73,6 @@ namespace stor {
     const FileRecordList& getFileRecordsMQ() const {
       return _fileRecords;
     }
-    FileRecordList& getFileRecordsMQ() {
-      return _fileRecords;
-    }
 
 
   private:
@@ -90,6 +88,7 @@ namespace stor {
     virtual void do_reset();
 
     FileRecordList _fileRecords;
+    mutable boost::mutex _fileRecordsMutex;
 
     const unsigned int _maxFileEntries; // maximum number of files to remember
     uint32_t _entryCounter;

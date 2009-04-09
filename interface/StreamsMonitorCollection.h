@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.1.2.3 2009/04/08 09:34:41 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.1.2.4 2009/04/09 11:25:37 mommsen Exp $
 
 #ifndef StorageManager_StreamsMonitorCollection_h
 #define StorageManager_StreamsMonitorCollection_h
@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <vector>
 
+#include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "xdata/String.h"
@@ -23,8 +24,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/08 09:34:41 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/09 11:25:37 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -58,9 +59,6 @@ namespace stor {
     const StreamRecordPtr getNewStreamRecord();
 
     const StreamRecordList& getStreamRecordsMQ() const {
-      return _streamRecords;
-    }
-    StreamRecordList& getStreamRecordsMQ() {
       return _streamRecords;
     }
 
@@ -100,6 +98,8 @@ namespace stor {
     virtual void do_reset();
 
     StreamRecordList _streamRecords;
+    mutable boost::mutex _streamRecordsMutex;
+
     utils::duration_t _timeWindowForRecentResults;
 
     // InfoSpace items which were defined in the old SM

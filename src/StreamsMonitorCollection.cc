@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.3 2009/04/08 09:33:23 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.4 2009/04/09 11:26:13 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -35,6 +35,8 @@ _timeWindowForRecentResults(300)
 const StreamsMonitorCollection::StreamRecordPtr
 StreamsMonitorCollection::getNewStreamRecord()
 {
+  boost::mutex::scoped_lock sl(_streamRecordsMutex);
+  
   boost::shared_ptr<StreamRecord> streamRecord(new StreamsMonitorCollection::StreamRecord());
   streamRecord->fileCount.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   streamRecord->volume.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
@@ -47,6 +49,15 @@ StreamsMonitorCollection::getNewStreamRecord()
 void StreamsMonitorCollection::do_calculateStatistics()
 {
   MonitoredQuantity::Stats stats;
+
+  _allStreamsFileCount.calculateStatistics();
+  _allStreamsVolume.calculateStatistics();
+  _allStreamsVolume.getStats(stats);
+  _allStreamsBandwidth.addSample(stats.getValueRate());
+  _allStreamsBandwidth.calculateStatistics();
+
+
+  boost::mutex::scoped_lock sl(_streamRecordsMutex);
 
   for (
     StreamRecordList::const_iterator 
@@ -61,12 +72,6 @@ void StreamsMonitorCollection::do_calculateStatistics()
     (*it)->bandwidth.addSample(stats.getValueRate());
     (*it)->bandwidth.calculateStatistics();
   }
-
-  _allStreamsFileCount.calculateStatistics();
-  _allStreamsVolume.calculateStatistics();
-  _allStreamsVolume.getStats(stats);
-  _allStreamsBandwidth.addSample(stats.getValueRate());
-  _allStreamsBandwidth.calculateStatistics();
 }
 
 
@@ -112,11 +117,12 @@ void StreamsMonitorCollection::do_updateInfoSpace()
 
 void StreamsMonitorCollection::do_reset()
 {
-  _streamRecords.clear();
-
   _allStreamsFileCount.reset();
   _allStreamsVolume.reset();
   _allStreamsBandwidth.reset();
+
+  boost::mutex::scoped_lock sl(_streamRecordsMutex);
+  _streamRecords.clear();
 }
 
 

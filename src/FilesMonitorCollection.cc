@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.7 2009/04/08 09:33:22 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.8 2009/04/09 11:26:12 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -14,6 +14,7 @@ MonitorCollection(app, "Files"),
 _maxFileEntries(250),
 _entryCounter(0)
 {
+  boost::mutex::scoped_lock sl(_fileRecordsMutex);
   _fileRecords.reserve(_maxFileEntries);
 
   // These infospace items were defined in the old SM
@@ -30,6 +31,8 @@ _entryCounter(0)
 const FilesMonitorCollection::FileRecordPtr
 FilesMonitorCollection::getNewFileRecord()
 {
+  boost::mutex::scoped_lock sl(_fileRecordsMutex);
+
   if (_fileRecords.size() >= _maxFileEntries)
   {
     _fileRecords.erase(_fileRecords.begin());
@@ -92,6 +95,7 @@ void FilesMonitorCollection::do_updateInfoSpace()
 
 void FilesMonitorCollection::do_reset()
 {
+  boost::mutex::scoped_lock sl(_fileRecordsMutex);
   _fileRecords.clear();
   _entryCounter = 0;
 }
