@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.16 2009/04/06 21:40:21 paterno Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.17 2009/04/08 09:34:22 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -18,9 +18,9 @@ namespace stor
    * This class keeps track of statistics for a set of sample values 
    * and provides timing information on the samples.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/04/06 21:40:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.17 $
+   * $Date: 2009/04/08 09:34:22 $
    */
 
   class MonitoredQuantity
@@ -117,7 +117,6 @@ namespace stor
     void _reset_results();
 
     utils::time_point_t _lastCalculationTime;
-    double _lastSampleValue;
     long long _workingSampleCount;
     double _workingValueSum;
     double _workingValueSumOfSquares;

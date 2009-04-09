@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.16 2009/04/08 09:32:15 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.17 2009/04/09 11:26:12 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -17,8 +17,6 @@ duration_t MonitoredQuantity::ExpectedCalculationInterval()
 }
 
 MonitoredQuantity::MonitoredQuantity(duration_t timeWindowForRecentResults):
-_workingLastSampleValue(0),
-_lastLatchedSampleValue(0),
 _enabled(true)
 {
   setNewTimeWindowForRecentResults(timeWindowForRecentResults);
@@ -202,6 +200,7 @@ void MonitoredQuantity::_reset_accumulators()
   _workingValueSumOfSquares = 0.0;
   _workingValueMin =  INFINITY;
   _workingValueMax = -INFINITY;
+  _workingLastSampleValue = 0;
 }
 
 void MonitoredQuantity::_reset_results()
@@ -237,6 +236,7 @@ void MonitoredQuantity::_reset_results()
   _recentValueMax = -INFINITY;
   _recentValueRate = 0.0;
   _recentDuration = 0.0;
+  _lastLatchedSampleValue = 0.0;
 }
 
 void MonitoredQuantity::reset()
