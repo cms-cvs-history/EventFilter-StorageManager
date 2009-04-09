@@ -1,14 +1,16 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: RegistrationCollection.h,v 1.1.2.1 2009/04/08 20:37:12 dshpakov Exp $
 
 #ifndef REGISTRATIONCOLLECTION_H
 #define REGISTRATIONCOLLECTION_H
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
+#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 
-#include <map>
+#include <vector>
 #include <boost/thread/mutex.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace stor
 {
@@ -29,14 +31,16 @@ namespace stor
     ConsumerID getConsumerID();
 
     /**
-       Add consumer registration. Return false if no registration is allowed.
+       Add registration info. Return false if no registration is allowed.
     */
-    bool addRegistrationInfo( ConsumerID, stor::ConsRegPtr );
+    bool addRegistrationInfo( ConsumerID,
+			      boost::shared_ptr<RegistrationInfoBase> );
 
     /**
-       Get consumer registration. Return null if not there.
+       Get consumer registrations.
     */
-    stor::ConsRegPtr getConsumer( ConsumerID ) const;
+    typedef std::vector<stor::ConsRegPtr> ConsumerRegistrations;
+    void getEventConsumers( ConsumerRegistrations& );
 
     /**
        Enable registration.
@@ -56,9 +60,7 @@ namespace stor
 
     bool _registrationAllowed;
 
-    typedef std::map<ConsumerID,stor::ConsRegPtr>
-    ConsRegMap;
-    ConsRegMap _consumers;
+    ConsumerRegistrations _consumers;
 
   };
 

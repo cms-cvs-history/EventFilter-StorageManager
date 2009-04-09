@@ -1,6 +1,8 @@
-// $Id: $
+// $Id: RegistrationCollection.cc,v 1.1.2.1 2009/04/08 20:37:13 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
+
+#include <boost/pointer_cast.hpp>
 
 using namespace stor;
 
@@ -15,18 +17,27 @@ RegistrationCollection::~RegistrationCollection() {}
 
 ConsumerID RegistrationCollection::getConsumerID()
 {
+
   boost::mutex::scoped_lock sl( _lock );
+
+  if( !_registrationAllowed )
+    {
+      return ConsumerID(0);
+    }
+
   _nextConsumerID++;
   return _nextConsumerID;
+
 }
 
 bool
-RegistrationCollection::addRegistrationInfo( ConsumerID cid, ConsRegPtr ri )
+RegistrationCollection::addRegistrationInfo( ConsumerID cid,
+					     boost::shared_ptr<RegistrationInfoBase> ri )
 {
   boost::mutex::scoped_lock sl( _lock );
   if( _registrationAllowed )
     {
-      _consumers[ cid ] = ri;
+      _consumers.push_back( boost::dynamic_pointer_cast<EventConsumerRegistrationInfo>( ri ) );
       return true;
     }
   else
@@ -35,17 +46,13 @@ RegistrationCollection::addRegistrationInfo( ConsumerID cid, ConsRegPtr ri )
     }
 }
 
-ConsRegPtr RegistrationCollection::getConsumer( ConsumerID cid ) const
+void RegistrationCollection::getEventConsumers( ConsumerRegistrations& crs )
 {
   boost::mutex::scoped_lock sl( _lock );
-  ConsRegMap::const_iterator it = _consumers.find( cid );
-  if( it != _consumers.end() )
+  for( ConsumerRegistrations::const_iterator it = _consumers.begin();
+       it != _consumers.end(); ++it )
     {
-      return it->second;
-    }
-  else
-    {
-      return ConsRegPtr();
+      crs.push_back( *it );
     }
 }
 

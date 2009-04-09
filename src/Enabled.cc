@@ -47,12 +47,22 @@ Enabled::Enabled( my_context c ): my_base(c)
   EventDistributor* ed = outermost_context().getEventDistributor();
   ed->registerEventStreams(evtCfgList);
   ed->registerErrorStreams(errCfgList);
+
+  // Enable consumer registration:
+  sharedResources->_registrationCollection->enableConsumerRegistration();
+
 }
 
 Enabled::~Enabled()
 {
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
+
+  // Disable consumer registration:
+  if( outermost_context().getSharedResources()->_registrationCollection.get() != 0 )
+    {
+      outermost_context().getSharedResources()->_registrationCollection->disableConsumerRegistration();
+    }
 
   // Clear any fragments left in the fragment store
   outermost_context().getFragmentStore()->clear();
