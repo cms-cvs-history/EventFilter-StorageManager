@@ -58,33 +58,31 @@ Enabled::~Enabled()
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
 
+  SharedResourcesPtr sharedResources =
+    outermost_context().getSharedResources();
+
   // Disable consumer registration:
-  if( outermost_context().getSharedResources()->_registrationCollection.get() != 0 )
-    {
-      outermost_context().getSharedResources()->_registrationCollection->disableConsumerRegistration();
-    }
+  sharedResources->_registrationCollection->disableConsumerRegistration();
 
   // Clear any fragments left in the fragment store
   outermost_context().getFragmentStore()->clear();
 
   // disk writing end-run processing
-  if ( outermost_context().getSharedResources()->_serviceManager.get() != 0 )
+  if ( sharedResources->_serviceManager.get() != 0 )
     {
-      outermost_context().getSharedResources()->_serviceManager->stop();
+      sharedResources->_serviceManager->stop();
     }
 
   // DQM end-run processing
-  if ( outermost_context().getSharedResources()->_dqmServiceManager.get() != 0 )
+  if ( sharedResources->_dqmServiceManager.get() != 0 )
     {
-      outermost_context().getSharedResources()->_dqmServiceManager->stop();
+      sharedResources->_dqmServiceManager->stop();
     }
 
   // request that the streams that are currently configured in the disk
   // writer be destroyed (this has the side effect of closing files)
-  outermost_context().getSharedResources()->
-    _diskWriterResources->requestStreamDestruction();
-  outermost_context().getSharedResources()->
-    _diskWriterResources->waitForStreamDestruction();
+  sharedResources->_diskWriterResources->requestStreamDestruction();
+  sharedResources->_diskWriterResources->waitForStreamDestruction();
 
   // clear the stream selections in the event distributor
   outermost_context().getEventDistributor()->clearStreams();
