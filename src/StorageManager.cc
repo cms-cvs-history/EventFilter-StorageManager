@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.72 2009/04/06 21:25:52 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.73 2009/04/07 17:56:40 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -59,10 +59,10 @@
 #include <sys/statfs.h>
 #include "zlib.h"
 
-namespace stor {
-  extern bool getSMFC_exceptionStatus();
-  extern std::string getSMFC_reason4Exception();
-}
+// namespace stor {
+//   extern bool getSMFC_exceptionStatus();
+//   extern std::string getSMFC_reason4Exception();
+// }
 
 using namespace edm;
 using namespace std;
@@ -108,12 +108,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   ah_(0), 
   mybuffer_(7000000),
   connectedRBs_(0), 
-  storedEvents_(0), 
-  closedFiles_(0), 
-  openFiles_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.72 2009/04/06 21:25:52 biery Exp $ $Name: refdev01_scratch_branch $")
+  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.73 2009/04/07 17:56:40 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -124,18 +121,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
 
   ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
-  ispace->fireItemAvailable("storedEvents",  &storedEvents_);
-  ispace->fireItemAvailable("closedFiles",   &closedFiles_);
-  ispace->fireItemAvailable("openFiles",     &openFiles_);
-  ispace->fireItemAvailable("fileList",      &fileList_);
-  ispace->fireItemAvailable("eventsInFile",  &eventsInFile_);
-  ispace->fireItemAvailable("storedEventsInStream",  &storedEventsInStream_);
   ispace->fireItemAvailable("receivedEventsForOutMod",  &receivedEventsFromOutMod_);
-  ispace->fireItemAvailable("fileSize",      &fileSize_);
-  ispace->fireItemAvailable("namesOfStream",      &namesOfStream_);
   ispace->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
-
-  ispace->addItemRetrieveListener("closedFiles", this);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -181,11 +168,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
+  xgi::bind(this,&StorageManager::oldDefaultWebPage,    "oldDefault");
   xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
-  xgi::bind(this,&StorageManager::newStoredDataWebPage, "newStoredData");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
-  xgi::bind(this,&StorageManager::streamerOutputWebPage,"streameroutput");
   xgi::bind(this,&StorageManager::fileStatisticsWebPage,"fileStatistics");
   xgi::bind(this,&StorageManager::eventdataWebPage,     "geteventdata");
   xgi::bind(this,&StorageManager::headerdataWebPage,    "getregdata");
@@ -199,8 +185,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // for performance measurements
 
-  storedEventsInStream_.reserve(20);
-  storedEventsInStream_.clear();
   receivedEventsFromOutMod_.reserve(10);
   receivedEventsFromOutMod_.clear();
   receivedEventsMap_.clear();
@@ -571,7 +555,7 @@ throw (xgi::exception::Exception)
 
 
 //////////// *** Store data web page //////////////////////////////////////////////////////////
-void StorageManager::newStoredDataWebPage(xgi::Input *in, xgi::Output *out)
+void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   std::string errorMsg = "Failed to create the stored data webpage";
@@ -603,7 +587,7 @@ void StorageManager::newStoredDataWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
+void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   *out << "<html>"                                                   << endl;
@@ -723,190 +707,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
             *out << "</td>" << endl;
           *out << "</tr>" << endl;
         }
-        *out << "<tr><td bgcolor=\"#999933\" height=\"1\" colspan=\"7\"></td></tr>" << endl;
-
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Events Stored (updated every 10s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << storedEvents_ << endl;
-          *out << "</td>" << endl;
-          *out << "<td colspan=5>" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        xdata::Vector<xdata::String>::iterator ni(namesOfStream_.begin());
-        xdata::Vector<xdata::UnsignedInteger32>::iterator si(storedEventsInStream_.begin()), 
-          se(storedEventsInStream_.end());
-        for( ; si != se; ++si) {
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << "Events Stored for Stream " << ni->value_ << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << si->value_ << endl;
-            *out << "</td>" << endl;
-            *out << "<td colspan=5>" << endl;
-            *out << "</td>" << endl;
-            ++ni;
-          *out << "</tr>" << endl;
-        }
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=7>"                                       << endl;
-    *out << "      " << "Output Streams (updated only every 10 sec)"          << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr class=\"special\">"			       << endl;
-	*out << "<td >" << endl;
-	*out << "name" << endl;
-	*out << "</td>" << endl;
-	*out << "<td align=right>" << endl;
-	*out << "nfiles" << endl;
-	*out << "</td>" << endl;
-	*out << "<td align=right>" << endl;
-	*out << "nevents" << endl;
-	*out << "</td>" << endl;
-	*out << "<td align=right>" << endl;
-	*out << "size (kB)" << endl;
-	*out << "</td>" << endl;
-        *out << "<td colspan=3>" << endl;
-        *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-
-    for(ismap it = streams_.begin(); it != streams_.end(); ++it)
-      {
-        *out << "<tr>" << endl;
-	*out << "<td >" << endl;
-	*out << (*it).first << endl;
-	*out << "</td>" << endl;
-	*out << "<td align=right>" << endl;
-	*out << (*it).second.nclosedfiles_ << endl;
-	*out << "</td>" << endl;
-	*out << "<td align=right>" << endl;
-	*out << (*it).second.nevents_ << endl;
-	*out << "</td>" << endl;
-	*out << "<td align=right>" << endl;
-	*out << (*it).second.totSizeInkBytes_ << endl;
-	*out << "</td>" << endl;
-        *out << "<td colspan=3>" << endl;
-        *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-      }
     *out << "</table>" << endl;
-
-// statistics for stored data
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Stored Data Statistics (updated every 10s) "                    << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-
-        *out << "<tr>" << endl;
-        *out << "<th >" << endl;
-        *out << "Parameter" << endl;
-        *out << "</th>" << endl;
-        *out << "<th>" << endl;
-        *out << "Value" << endl;
-        *out << "</th>" << endl;
-        *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "(Non-unique) Events Stored" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_totalSamples_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-// performance statistics
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Statistics for last " << store_samples_ << " events" << " (and last " << store_period4samples_ << " sec)" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_instantBandwidth_ << " (" << store_instantBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Frames/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_instantRate_ << " (" << store_instantRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/frame)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_instantLatency_ << " (" << store_instantLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Maximum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_maxBandwidth_ << " (" << store_maxBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Minimum Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_minBandwidth_ << " (" << store_minBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-// mean performance statistics for whole run
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "Mean Performance for " << store_totalSamples_ << " (" << store_totalSamples2_ << ")" << " events, duration "
-         << store_duration_ << " (" << store_duration2_ << ")" << " seconds" << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Bandwidth (MB/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_meanBandwidth_ << " (" << store_meanBandwidth2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Rate (Frames/s)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_meanRate_ << " (" << store_meanRate2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Latency (us/frame)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_meanLatency_ << " (" << store_meanLatency2_ << ")" << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Total Volume Received (MB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=right>" << endl;
-          *out << store_receivedVolume_ << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-
-  *out << "</table>" << endl;
 
 // now for RB sender list statistics
   *out << "<hr/>"                                                    << endl;
@@ -1414,102 +1215,6 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</html>"                                                  << endl;
 }
 
-
-//////////// *** streamer file output web page ////////////////////////////////
-void StorageManager::streamerOutputWebPage(xgi::Input *in, xgi::Output *out)
-  throw (xgi::exception::Exception)
-{
-  *out << "<html>"                                                   << endl;
-  *out << "<head>"                                                   << endl;
-  *out << "<link type=\"text/css\" rel=\"stylesheet\"";
-  *out << " href=\"/" <<  getApplicationDescriptor()->getURN()
-       << "/styles.css\"/>"                   << endl;
-  *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
-       << getApplicationDescriptor()->getInstance()
-       << "</title>"     << endl;
-  *out << "</head><body>"                                            << endl;
-    *out << "<table border=\"0\" width=\"100%\">"                      << endl;
-    *out << "<tr>"                                                     << endl;
-    *out << "  <td align=\"left\">"                                    << endl;
-    *out << "    <img"                                                 << endl;
-    *out << "     align=\"middle\""                                    << endl;
-    *out << "     src=\"/rubuilder/fu/images/fu64x64.gif\""     << endl;
-    *out << "     alt=\"main\""                                        << endl;
-    *out << "     width=\"64\""                                        << endl;
-    *out << "     height=\"64\""                                       << endl;
-    *out << "     border=\"\"/>"                                       << endl;
-    *out << "    <b>"                                                  << endl;
-    *out << getApplicationDescriptor()->getClassName() << " instance "
-         << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << externallyVisibleState()                   << endl;
-    *out << "    </b>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "    <a href=\"/urn:xdaq-application:lid=3\">"             << endl;
-    *out << "      <img"                                               << endl;
-    *out << "       align=\"middle\""                                  << endl;
-    *out << "       src=\"/hyperdaq/images/HyperDAQ.jpg\""    << endl;
-    *out << "       alt=\"HyperDAQ\""                                  << endl;
-    *out << "       width=\"32\""                                      << endl;
-    *out << "       height=\"32\""                                      << endl;
-    *out << "       border=\"\"/>"                                     << endl;
-    *out << "    </a>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "    <a href=\"/" << getApplicationDescriptor()->getURN()
-         << "/debug\">"                   << endl;
-    *out << "      <img"                                               << endl;
-    *out << "       align=\"middle\""                                  << endl;
-    *out << "       src=\"/rubuilder/fu/images/debug32x32.gif\""       << endl;
-    *out << "       alt=\"debug\""                                     << endl;
-    *out << "       width=\"32\""                                      << endl;
-    *out << "       height=\"32\""                                     << endl;
-    *out << "       border=\"\"/>"                                     << endl;
-    *out << "    </a>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "</tr>"                                                    << endl;
-    if( externallyVisibleState() == "Failed")
-    {
-      *out << "<tr>"					     << endl;
-      *out << " <td>"					     << endl;
-      *out << "<textarea rows=" << 5 << " cols=60 scroll=yes";
-      *out << " readonly title=\"Reason For Failed\">"		     << endl;
-      *out << reasonForFailedState_                                  << endl;
-      *out << "</textarea>"                                          << endl;
-      *out << " </td>"					     << endl;
-      *out << "</tr>"					     << endl;
-    }
-    *out << "</table>"                                                 << endl;
-
-    *out << "<hr/>"                                                    << endl;
-
-    if(sharedResourcesPtr_->_serviceManager.get() != NULL &&
-       sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
-       sharedResourcesPtr_->_initMsgCollection->size() > 0) {
-      boost::mutex::scoped_lock sl(halt_lock_);
-      std::list<std::string>& files =
-        sharedResourcesPtr_->_serviceManager->get_filelist();
-      if(files.size() > 0 )
-        {
-          if(files.size() > 249 )
-            *out << "<P>250 last files (most recent first):</P>\n" << endl;
-          else 
-            *out << "<P>Files (most recent first):</P>\n" << endl;
-          *out << "<pre># pathname nevts size" << endl;
-          int c=0;
-          for(list<string>::reverse_iterator it = files.rbegin(); it != files.rend(); ++it) {
-            *out <<*it << endl;
-            ++c;
-            if(c>249) break;
-          }
-        }
-    }
-
-  *out << "</body>"                                                  << endl;
-  *out << "</html>"                                                  << endl;
-}
 
 void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
@@ -3432,9 +3137,6 @@ void StorageManager::setupFlashList()
   is->fireItemAvailable("url",                  &url_);
   // Body
   // should this be here also??
-  is->fireItemAvailable("storedEvents",         &storedEvents_);
-  is->fireItemAvailable("closedFiles",          &closedFiles_);
-  is->fireItemAvailable("namesOfStream",      &namesOfStream_);
   is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
   is->fireItemAvailable("storedVolume",         &storedVolume_);
   is->fireItemAvailable("memoryUsed",           &memoryUsed_);
@@ -3450,7 +3152,6 @@ void StorageManager::setupFlashList()
   // Body
   // should this be here also??
   //is->addItemRetrieveListener("storedEvents",         this);
-  is->addItemRetrieveListener("namesOfStream", this);
   is->addItemRetrieveListener("namesOfOutMod", this);
   is->addItemRetrieveListener("storedVolume",         this);
   is->addItemRetrieveListener("memoryUsed",           this);
@@ -3483,19 +3184,7 @@ void StorageManager::actionPerformed(xdata::Event& e)
       connectedRBs_   = smrbsenders_.size();
     else if (item == "memoryUsed")
       memoryUsed_     = pool_->getMemoryUsage().getUsed();
-    else if (item == "storedVolume")
-      storedVolume_   = store_receivedVolume_;
-    else if (item == "closedFiles") {
-        std::list<std::string>& files =
-          sharedResourcesPtr_->_serviceManager->get_filelist();
-        std::list<std::string>& currfiles =
-          sharedResourcesPtr_->_serviceManager->get_currfiles();
-        closedFiles_ = files.size() - currfiles.size();
-    } else if (item == "openFiles") {
-        std::list<std::string>& currfiles =
-          sharedResourcesPtr_->_serviceManager->get_currfiles();
-        openFiles_ = currfiles.size();
-    } else if (item == "receivedEventsFromOutMod" || item == "namesOfOutMod") {
+    else if (item == "receivedEventsFromOutMod" || item == "namesOfOutMod") {
       receivedEventsFromOutMod_.clear();
       namesOfOutMod_.clear();
 
@@ -3657,22 +3346,14 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
 
     smrbsenders_.clear();
     
-    fileList_.clear();
-    eventsInFile_.clear();
-    storedEventsInStream_.clear();
-    fileSize_.clear();
-    storedEvents_ = 0;
     storedVolume_ = 0;
     receivedEventsFromOutMod_.clear();
-    namesOfStream_.clear();
     namesOfOutMod_.clear();
     receivedEventsMap_.clear();
     avEventSizeMap_.clear();
     avCompressRatioMap_.clear();
     modId2ModOutMap_.clear();
     storedEventsMap_.clear();
-    closedFiles_  = 0;
-    openFiles_  = 0;
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
   }
@@ -3747,28 +3428,6 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
 
 void StorageManager::stopAction()
 {
-  // TODO - move this code so that it comes after files are closed
-  std::list<std::string>& files =
-    sharedResourcesPtr_->_serviceManager->get_filelist();
-  std::list<std::string>& currfiles =
-    sharedResourcesPtr_->_serviceManager->get_currfiles();
-  closedFiles_ = files.size() - currfiles.size();
-  openFiles_ = currfiles.size();
-
-  unsigned int totInFile = 0;
-  for(list<string>::const_iterator it = files.begin();
-      it != files.end(); ++it)
-  {
-      string name;
-      unsigned int nev;
-      unsigned long long size;
-      parseFileEntry((*it),name,nev,size);
-      fileList_.push_back(name);
-      eventsInFile_.push_back(nev);
-      totInFile += nev;
-      fileSize_.push_back((unsigned int) (size / 1048576));
-      FDEBUG(5) << name << " " << nev << " " << size << std::endl;
-  }
   receivedEventsFromOutMod_.clear();
   namesOfOutMod_.clear();
 
@@ -3784,17 +3443,7 @@ void StorageManager::stopAction()
       receivedEventsFromOutMod_.push_back(receivedEventsMap_[oi->second]);
       namesOfOutMod_.push_back(outputModuleLabel);
   }
-  storedEvents_ = 0;
-  storedEventsInStream_.clear();
-  // following is thread safe as size of all_storedEvents is fixed (number of streams)
-  std::vector<uint32> all_storedEvents =
-    sharedResourcesPtr_->_serviceManager->get_storedEvents();
-  for(std::vector<uint32>::iterator it = all_storedEvents.begin(), itEnd = all_storedEvents.end();
-      it != itEnd; ++it) {
-      storedEvents_ = storedEvents_ + (*it);
-      storedEventsInStream_.push_back(*it);
-  }
-  
+
   // should clear the event server(s) last event/queue
   if (sharedResourcesPtr_->_oldEventServer.get() != NULL)
   {
@@ -3886,14 +3535,14 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
   //      (in fact it will cause problems) so bail out !
   if(externallyVisibleState() == "Failed") return false;
   // @@EM Look for exceptions in the FragmentCollector thread, do a state transition if present
-  if(stor::getSMFC_exceptionStatus()) {
-    edm::LogError("StorageManager") << "Fatal BURP in FragmentCollector thread detected! \n"
-       << stor::getSMFC_reason4Exception();
+//   if(stor::getSMFC_exceptionStatus()) {
+//     edm::LogError("StorageManager") << "Fatal BURP in FragmentCollector thread detected! \n"
+//        << stor::getSMFC_reason4Exception();
 
-    reasonForFailedState_ = stor::getSMFC_reason4Exception();
-    LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-    return false; // stop monitoring workloop after going to failed state
-  }
+//     reasonForFailedState_ = stor::getSMFC_reason4Exception();
+//     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
+//     return false; // stop monitoring workloop after going to failed state
+//   }
 
   stor::utils::sleep(10.0);
   if(sharedResourcesPtr_->_serviceManager.get() != NULL &&
@@ -3908,29 +3557,6 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
       xdata::InfoSpace *is = xdata::InfoSpace::get(oss.str());  
       is->lock();
 
-      // now for separate stored events via monitoring loop (temporary solution?)
-      // following is thread safe as size of all_storedEvents is fixed (number of streams)
-      std::vector<uint32> all_storedEvents =
-        sharedResourcesPtr_->_serviceManager->get_storedEvents();
-      if(all_storedEvents.begin() != all_storedEvents.end())
-      {
-        // only reset if there are stored events otherwise on stop stats are reset to zero
-        // we want to keep them for retrieval
-        storedEvents_ = 0;
-        storedEventsInStream_.clear();
-        namesOfStream_.clear();
-        std::vector<std::string> all_storedNames = 
-          sharedResourcesPtr_->_serviceManager->get_storedNames();
-        for(std::vector<uint32>::iterator it = all_storedEvents.begin(), itEnd = all_storedEvents.end();
-            it != itEnd; ++it) {
-              storedEvents_ = storedEvents_ + (*it);
-              storedEventsInStream_.push_back(*it);
-        }
-        for(std::vector<std::string>::iterator it = all_storedNames.begin(), itEnd = all_storedNames.end();
-            it != itEnd; ++it) {
-              namesOfStream_.push_back(*it);
-        }
-      }
       boost::shared_ptr<stor::SMOnlyStats> stored_stats =
         sharedResourcesPtr_->_serviceManager->get_stats();
       store_samples_ = stored_stats->samples_;
@@ -3959,48 +3585,6 @@ bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
       storedVolume_   = store_receivedVolume_;
 
       // end temporary solution
-      
-      std::list<std::string>& files =
-        sharedResourcesPtr_->_serviceManager->get_filelist();
-
-      if(files.size()==0){is->unlock(); return true;}
-      if(streams_.size()==0) {
-	for(list<string>::const_iterator it = files.begin();
-	    it != files.end(); ++it)
-	  {
-	    string name;
-	    unsigned int nev;
-	    unsigned long long size;
-	    parseFileEntry((*it),name,nev,size);
-	    string sname = findStreamName(name);
-	    if(sname=="" || sname==name) continue;
-	    if(streams_.find(sname) == streams_.end())
-	      streams_.insert(pair<string,streammon>(sname,streammon()));
-	  }
-	
-      }
-      for(ismap it = streams_.begin(); it != streams_.end(); ++it)
-	{
-	  (*it).second.nclosedfiles_=0;
-	  (*it).second.nevents_ =0;
-	  (*it).second.totSizeInkBytes_=0;
-	}
-      
-      for(list<string>::const_iterator it = files.begin();
-	  it != files.end(); ++it)
-	{
-	  string name;
-	  unsigned int nev;
-	  unsigned long long size;
-	  parseFileEntry((*it),name,nev,size);
-	  string sname = findStreamName(name);
-	  if(sname=="" || sname==name) continue;
-	  if(streams_.find(sname) == streams_.end())
-	    streams_.insert(pair<string,streammon>(sname,streammon()));
-	  streams_[sname].nclosedfiles_++;
-	  streams_[sname].nevents_ += nev;
-	  streams_[sname].totSizeInkBytes_ += size >> 10;
-	}
       is->unlock();
     }
     

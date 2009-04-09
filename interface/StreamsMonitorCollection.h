@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.1.2.2 2009/04/06 18:29:51 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.1.2.3 2009/04/08 09:34:41 mommsen Exp $
 
 #ifndef StorageManager_StreamsMonitorCollection_h
 #define StorageManager_StreamsMonitorCollection_h
@@ -9,7 +9,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "xdata/String.h"
 #include "xdata/UnsignedInteger32.h"
+#include "xdata/Vector.h"
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
@@ -21,8 +23,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/06 18:29:51 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/08 09:34:41 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -101,7 +103,9 @@ namespace stor {
     utils::duration_t _timeWindowForRecentResults;
 
     // InfoSpace items which were defined in the old SM
-
+    xdata::UnsignedInteger32 _storedEvents;                        // number of events stored in all streams
+    xdata::Vector<xdata::String> _namesOfStream;                   // vector of stream names
+    xdata::Vector<xdata::UnsignedInteger32> _storedEventsInStream; // vector of events stored in stream N
 
   };
   

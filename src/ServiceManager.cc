@@ -1,8 +1,6 @@
-// $Id: ServiceManager.cc,v 1.18.6.7 2009/03/17 02:05:08 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.8 2009/03/17 14:39:16 biery Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
-#include <EventFilter/StorageManager/interface/EventStreamService.h>
-#include <EventFilter/StorageManager/interface/FRDStreamService.h>
 #include "FWCore/Framework/interface/EventSelector.h"
 #include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
 #include <FWCore/Utilities/interface/Exception.h>
@@ -15,10 +13,8 @@ using boost::shared_ptr;
 
 ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
   outModPSets_(0),
-  managedOutputs_(0),
   psetHLTOutputLabels_(0),
   outputModuleIds_(0),
-  storedEvents_(0),
   currentlumi_(0),
   timeouttime_(0),
   lasttimechecked_(0),
@@ -28,7 +24,6 @@ ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
   period4samples_(10),
   diskWritingParams_(dwParams)
 {
-  storedNames_.clear();
   collectStreamerPSets(dwParams._streamConfiguration);
   pmeter_ = new stor::SMPerformanceMeter();
   pmeter_->init(samples_, period4samples_);
@@ -37,10 +32,7 @@ ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
 
 ServiceManager::~ServiceManager()
 { 
-  managedOutputs_.clear();
   outputModuleIds_.clear();
-  storedEvents_.clear();
-  storedNames_.clear();
   delete pmeter_;
 }
 
@@ -52,10 +44,7 @@ void ServiceManager::start()
     psetHLTOutputLabels_.push_back(std::string());  // empty string
   }
 
-  managedOutputs_.clear();
   outputModuleIds_.clear();
-  storedEvents_.clear();
-  storedNames_.clear();
 
   currentlumi_ = 0;
   timeouttime_ = 0;
@@ -67,10 +56,6 @@ void ServiceManager::start()
 
 void ServiceManager::stop()
 {
-  for(StreamsIterator  it = managedOutputs_.begin(), itEnd = managedOutputs_.end();
-      it != itEnd; ++it) {
-      (*it)->stop();
-  }
 }
 
 
@@ -135,153 +120,7 @@ void ServiceManager::manageInitMsg(InitMsgView& view, stor::InitMsgCollection& i
           << errorString << std::endl;
       }
     }
-
-    // if the SM output PSet did specify an HLT output module...
-    else {
-
-      // if the HLT output module labels match...
-      if (inputOMLabel == requestedOMLabel) {
-
-        // if we haven't yet created the stream object, go ahead and do
-        // that using this INIT message
-        if (psetHLTOutputLabels_[psetIdx].empty()) {
-          createStreamNow = true;
-        }
-
-        // if we already created the stream object, we could complain,
-        // but won't (for now) so that this method can support multiple
-        // calls with the same INIT message
-        else {}
-      }
-
-      // if the HLT output module labels do not match, do nothing
-      else {}
-    }
-
-    if (createStreamNow) {
-      shared_ptr<StreamService> stream = shared_ptr<StreamService>(new EventStreamService((*it),view,diskWritingParams_));
-      managedOutputs_.push_back(stream);
-      outputModuleIds_.push_back(view.outputModuleId());
-      storedEvents_.push_back(0);
-      storedNames_.push_back(stream->getStreamLabel());
-      stream->report(cout,3);
-
-      psetHLTOutputLabels_[psetIdx] = inputOMLabel;
-    }
   }
-}
-
-void ServiceManager::manageEventMsg(EventMsgView& msg)
-{
-  int outputIdx = -1;
-  for(StreamsIterator it = managedOutputs_.begin(), itEnd = managedOutputs_.end(); it != itEnd; ++it) {
-    ++outputIdx;
-    if (msg.outModId() != outputModuleIds_[outputIdx])
-      continue;
-
-    bool thisEventAccepted = (*it)->nextEvent(msg.startAddress());
-    if (!thisEventAccepted)
-      continue;
-
-    ++storedEvents_[outputIdx];
-    pmeter_->addSample(msg.size());
-    if ((*it)->lumiSection() > currentlumi_) {
-      currentlumi_ = (*it)->lumiSection();
-      timeouttime_ = (*it)->getCurrentTime();
-    }
-  }
-}
-
-void ServiceManager::manageErrorEventMsg(FRDEventMsgView& msg)
-{
-  // if no error stream was configured, we can exit early
-  if (errorStreamPSetIndex_ < 0) return;
-
-  // create the error stream, if needed
-  if (! errorStreamCreated_) {
-    ParameterSet errorStreamPSet = outModPSets_.at(errorStreamPSetIndex_);
-
-    shared_ptr<StreamService> stream =
-      shared_ptr<StreamService>(new FRDStreamService(errorStreamPSet, diskWritingParams_));
-    managedOutputs_.push_back(stream);
-    outputModuleIds_.push_back(0xffffffff);
-    storedEvents_.push_back(0);
-    storedNames_.push_back(stream->getStreamLabel());
-    stream->report(cout,3);
-
-    psetHLTOutputLabels_[errorStreamPSetIndex_] = "ResourceBroker Error Output";
-
-    errorStreamCreated_ = true;
-  }
-
-  // process the event
-  int outputIdx = -1;
-  for(StreamsIterator strIter = managedOutputs_.begin(), strIterEnd = managedOutputs_.end(); strIter != strIterEnd; ++strIter) {
-    ++outputIdx;
-    std::string streamClassName = typeid(*(*strIter)).name();
-    if (streamClassName.find("FRDStreamService", 0) == string::npos)
-      continue;
-
-    bool thisEventAccepted = (*strIter)->nextEvent(msg.startAddress());
-    if (!thisEventAccepted)
-      continue;
-
-    ++storedEvents_[outputIdx];
-
-    // for now, we don't have any lumi section information in the
-    // FRDEvent messages, so we don't try to do any lumi-boundary processing
-  }
-}
-
-
-void ServiceManager::closeFilesIfNeeded()
-{
-  StreamsIterator itBeg = managedOutputs_.begin();
-  StreamsIterator itEnd = managedOutputs_.end();
-  for(StreamsIterator it = itBeg; it != itEnd; ++it) {
-    (*it)->closeTimedOutFiles();
-  }
-}
-
-//
-// *** get all files from all streams
-//
-std::list<std::string>& ServiceManager::get_filelist() 
-{ 
-  filelist_.clear();
-  for(StreamsIterator it = managedOutputs_.begin(), itEnd = managedOutputs_.end();
-      it != itEnd; ++it) {
-      std::list<std::string> sub_list = (*it)->getFileList();
-      if(sub_list.size() > 0)
-	filelist_.insert(filelist_.end(), sub_list.begin(), sub_list.end());
-  } 
-  return filelist_; 
-}
-
-
-//
-// *** get all current files from all streams
-//
-std::list<std::string>& ServiceManager::get_currfiles()
-{ 
-  currfiles_.clear();
-  for(StreamsIterator it = managedOutputs_.begin(), itEnd = managedOutputs_.end();
-      it != itEnd; ++it) {
-      std::list<std::string> sub_list = (*it)->getCurrentFileList();
-      if(sub_list.size() > 0)
-	currfiles_.insert(currfiles_.end(), sub_list.begin(), sub_list.end());
-  }
-  return currfiles_;  
-}
-
-//
-std::vector<uint32>& ServiceManager::get_storedEvents()
-{ 
-  return storedEvents_;  
-}
-std::vector<std::string>& ServiceManager::get_storedNames()
-{ 
-  return storedNames_;  
 }
 
 /**

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.43 2009/04/03 20:01:25 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.44 2009/04/06 18:30:56 mommsen Exp $
 */
 
 #include <string>
@@ -121,15 +121,13 @@ namespace stor {
 
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void oldDefaultWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
       {css_.css(in,out);}
     void storedDataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void newStoredDataWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void rbsenderWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void streamerOutputWebPage // obsolete
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void fileStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
@@ -174,12 +172,6 @@ namespace stor {
     SMFUSenderList smrbsenders_;
     xdata::UnsignedInteger32 connectedRBs_;
 
-    xdata::UnsignedInteger32 storedEvents_;
-    xdata::UnsignedInteger32 closedFiles_;
-    xdata::UnsignedInteger32 openFiles_;
-    xdata::Vector<xdata::String> fileList_;
-    xdata::Vector<xdata::UnsignedInteger32> eventsInFile_;
-    xdata::Vector<xdata::UnsignedInteger32> storedEventsInStream_;
     xdata::Vector<xdata::UnsignedInteger32> receivedEventsFromOutMod_;
     typedef std::map<std::string,uint32> countMap;
     typedef std::map<std::string, boost::shared_ptr<ForeverAverageCounter> > valueMap;
@@ -190,8 +182,6 @@ namespace stor {
     valueMap avCompressRatioMap_;
     idMap modId2ModOutMap_;
     countMap storedEventsMap_;
-    xdata::Vector<xdata::UnsignedInteger32> fileSize_;
-    xdata::Vector<xdata::String> namesOfStream_;
     xdata::Vector<xdata::String> namesOfOutMod_;
 
     // *** for stored data performance measurements
@@ -239,17 +229,6 @@ namespace stor {
 
     FragmentProcessor *fragmentProcessor_;
     DiskWriter *diskWriter_;
-
-    // @@EM parameters monitored by workloop (not in flashlist just yet) 
-    struct streammon{
-      int		nclosedfiles_;
-      int		nevents_;
-      int		totSizeInkBytes_;
-    };
-
-    typedef std::map<std::string,streammon> smap;
-    typedef std::map<std::string,streammon>::iterator ismap;
-    smap	 streams_;
 
     boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
 

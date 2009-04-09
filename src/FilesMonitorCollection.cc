@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.6 2009/04/06 13:40:12 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.7 2009/04/08 09:33:22 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -15,6 +15,13 @@ _maxFileEntries(250),
 _entryCounter(0)
 {
   _fileRecords.reserve(_maxFileEntries);
+
+  // These infospace items were defined in the old SM
+  _infoSpaceItems.push_back(std::make_pair("closedFiles", &_closedFiles));
+  _infoSpaceItems.push_back(std::make_pair("openFiles", &_openFiles));
+  _infoSpaceItems.push_back(std::make_pair("fileList", &_fileList));
+  _infoSpaceItems.push_back(std::make_pair("eventsInFile", &_eventsInFile));
+  _infoSpaceItems.push_back(std::make_pair("fileSize", &_fileSize));
 
   putItemsIntoInfoSpace();
 }

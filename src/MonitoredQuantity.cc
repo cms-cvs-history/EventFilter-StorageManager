@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.15 2009/04/06 21:40:22 paterno Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.16 2009/04/08 09:32:15 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -86,7 +86,6 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     _workingValueSumOfSquares = 0.0;
     _workingValueMin =  INFINITY;
     _workingValueMax = -INFINITY;
-    _workingLastSampleValue = 0.0;
   }
 
   // lock out any interaction with the results while we update them

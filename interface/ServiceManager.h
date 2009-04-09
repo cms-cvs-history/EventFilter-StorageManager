@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.13.6.4 2009/03/17 02:05:05 biery Exp $
+// $Id: ServiceManager.h,v 1.13.6.5 2009/03/17 14:39:15 biery Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
@@ -9,7 +9,6 @@
 #include "IOPool/Streamer/interface/EventMessage.h"
 #include "IOPool/Streamer/interface/FRDEventMessage.h"
 
-#include <EventFilter/StorageManager/interface/StreamService.h>
 #include <EventFilter/StorageManager/interface/InitMsgCollection.h>
 #include <EventFilter/StorageManager/interface/SMPerformanceMeter.h>
 #include <EventFilter/StorageManager/interface/Configuration.h>
@@ -22,10 +21,7 @@
 
 namespace edm 
 {
-  
-  typedef std::vector<boost::shared_ptr<StreamService> >            Streams;
-  typedef std::vector<boost::shared_ptr<StreamService> >::iterator  StreamsIterator;
-  
+   
   
   class ServiceManager {
     
@@ -39,16 +35,6 @@ namespace edm
     
     void manageInitMsg(InitMsgView& init_message, stor::InitMsgCollection& initMsgCollection);
 
-    void manageEventMsg(EventMsgView& msg);
-
-    void manageErrorEventMsg(FRDEventMsgView& msg);
-    
-    void closeFilesIfNeeded();
-
-    std::list<std::string>& get_filelist();
-    std::list<std::string>& get_currfiles();
-    std::vector<uint32>& get_storedEvents();
-    std::vector<std::string>& get_storedNames();
     boost::shared_ptr<stor::SMOnlyStats> get_stats();
 
     std::map<std::string, Strings> getStreamSelectionTable();
@@ -57,13 +43,10 @@ namespace edm
     void collectStreamerPSets(const std::string& config);        
     
     std::vector<ParameterSet>              outModPSets_;
-    Streams                                managedOutputs_;  
     std::list<std::string>                 filelist_;
     std::list<std::string>                 currfiles_;
     Strings                                psetHLTOutputLabels_;
     std::vector<uint32>                    outputModuleIds_;
-    std::vector<uint32>                    storedEvents_;
-    std::vector<std::string>               storedNames_;
     int                                    currentlumi_;
     double                                 timeouttime_;
     double                                 lasttimechecked_;

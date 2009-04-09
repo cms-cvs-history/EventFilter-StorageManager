@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.18 2009/04/01 14:39:21 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.19 2009/04/08 14:21:31 biery Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -26,9 +26,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.18 $
-   * $Date: 2009/04/01 14:39:21 $
+   * $Author: biery $
+   * $Revision: 1.1.2.19 $
+   * $Date: 2009/04/08 14:21:31 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -91,10 +91,6 @@ namespace stor {
 
     toolbox::task::WorkLoop*           _processWL;      
 
-    // temporary!
-    void closeDiskFilesIfNeeded();
-    size_t _fileCheckIntervalStart;
-    unsigned int _fileCheckEventCounter;
   };
   
 } // namespace stor

@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.7 2009/04/06 13:38:56 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.1.2.8 2009/04/06 18:31:40 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -130,7 +130,6 @@ const std::string StreamHandler::getCoreFileName
 {
   std::ostringstream coreFileName;
   coreFileName << _diskWritingParams._setupLabel
-               << "NEW" // KAB extremely temporary
     << "." << std::setfill('0') << std::setw(8) << runNumber
     << "." << std::setfill('0') << std::setw(4) << lumiSection
     << "." << streamLabel()

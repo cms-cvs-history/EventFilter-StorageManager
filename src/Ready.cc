@@ -36,10 +36,6 @@ Ready::Ready( my_context c ): my_base(c)
   EvtStrConfigList evtCfgList;
   ErrStrConfigList errCfgList;
 
-  // extremely temporary.  Once we remove the old disk writing code
-  // this sleep should be removed.
-  ::sleep(3);
-
   parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
                            errCfgList);
   sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);

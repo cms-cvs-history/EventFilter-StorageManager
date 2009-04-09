@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.15 2009/04/06 18:31:12 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.16 2009/04/08 09:32:36 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -207,11 +207,13 @@ void WebPageHelper::addDOMforSMLinks
 
   maker.addNode("hr", parent);
 
-  linkAttr[ "href" ] = url + "/storedData";
+  linkAttr[ "href" ] = url + "/oldDefault";
   link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "Stored data web page (remainder of old default web page)");
+  maker.addText(link, "Remainder of old default web page");
 
-  linkAttr[ "href" ] = url + "/newStoredData";
+  maker.addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/storedData";
   link = maker.addNode("a", parent, linkAttr);
   maker.addText(link, "New Stored data web page");
 
@@ -222,10 +224,6 @@ void WebPageHelper::addDOMforSMLinks
   maker.addText(link, "RB Sender list web page");
 
   maker.addNode("hr", parent);
-
-  linkAttr[ "href" ] = url + "/streameroutput";
-  link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "Old Streamer Output Status web page");
 
   linkAttr[ "href" ] = url + "/fileStatistics";
   link = maker.addNode("a", parent, linkAttr);

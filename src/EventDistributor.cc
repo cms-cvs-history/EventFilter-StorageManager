@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.35 2009/03/27 18:56:33 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.36 2009/04/03 13:36:37 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -66,7 +66,7 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
               }
           }
 
-        // temporary handling (until the DiskWriter is ready)
+        // temporary handling (until the new event server is ready)
         if ( _sharedResources->_serviceManager.get() != 0 )
           {
             _sharedResources->_serviceManager->
@@ -108,16 +108,12 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
               }
           }
 
-        // temporary handling (until the DiskWriter is ready)
-        if ( _sharedResources->_serviceManager.get() != 0 )
+        // temporary handling (until the new event server is ready)
+        if ( _sharedResources->_oldEventServer.get() != NULL )
           {
-            ioc.copyFragmentsIntoBuffer(_tempEventArea);
-            EventMsgView emsg(&_tempEventArea[0]);
-            _sharedResources->_serviceManager->manageEventMsg(emsg);
-            if ( _sharedResources->_oldEventServer.get() != NULL )
-              {
-                _sharedResources->_oldEventServer->processEvent(emsg);
-              }
+             ioc.copyFragmentsIntoBuffer(_tempEventArea);
+             EventMsgView emsg(&_tempEventArea[0]);
+            _sharedResources->_oldEventServer->processEvent(emsg);
           }
 
         break;
@@ -155,14 +151,6 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
               {
                 ioc.tagForStream( it->configInfo().streamId() );
               }
-          }
-
-        // temporary handling (until the DiskWriter is ready)
-        if ( _sharedResources->_serviceManager.get() != 0 )
-          {
-            ioc.copyFragmentsIntoBuffer(_tempEventArea);
-            FRDEventMsgView emsg(&_tempEventArea[0]);
-            _sharedResources->_serviceManager->manageErrorEventMsg(emsg);
           }
 
         break;

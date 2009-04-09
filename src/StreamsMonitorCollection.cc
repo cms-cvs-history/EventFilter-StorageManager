@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.2 2009/04/06 18:31:40 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.3 2009/04/08 09:33:23 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -22,6 +22,11 @@ _timeWindowForRecentResults(300)
   _allStreamsFileCount.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   _allStreamsVolume.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   _allStreamsBandwidth.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
+
+  // These infospace items were defined in the old SM
+  _infoSpaceItems.push_back(std::make_pair("storedEvents",  &_storedEvents));
+  _infoSpaceItems.push_back(std::make_pair("namesOfStream", &_namesOfStream));
+  _infoSpaceItems.push_back(std::make_pair("storedEventsInStream", &_storedEventsInStream));
 
   putItemsIntoInfoSpace();
 }

@@ -25,7 +25,7 @@ Enabled::Enabled( my_context c ): my_base(c)
   // update the run-based configuration parameters
   sharedResources->_configuration->updateRunParams();
 
-  // old disk writing begin-run processing
+  // old disk writing begin-run processing - still used for HLT output modules
   if ( sharedResources->_serviceManager.get() != 0 )
   {
     sharedResources->_serviceManager->start();
