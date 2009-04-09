@@ -8,7 +8,7 @@ int main()
     system("sleep 2 &");
 
     stor::MockApplicationStub* stub(new stor::MockApplicationStub());
-    stor::WebPageHelper helper(stub->getDescriptor());
+    stor::WebPageHelper helper(stub->getDescriptor(), "");
     int count = helper.getProcessCount("sleep");
 
     //std::cout << helper.getProcessCount("CopyWorker.pl") << std::endl;
