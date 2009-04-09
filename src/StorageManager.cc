@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.73 2009/04/07 17:56:40 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.74 2009/04/09 11:26:12 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -109,8 +109,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   connectedRBs_(0), 
   _wrapper_notifier( this ),
-  _webPageHelper( getApplicationDescriptor() ),
-  sm_cvs_version_("$Id: StorageManager.cc,v 1.92.4.73 2009/04/07 17:56:40 biery Exp $ $Name: refdev01_scratch_branch $")
+  _webPageHelper( getApplicationDescriptor(),
+    "$Id: StorageManager.cc,v 1.92.4.74 2009/04/09 11:26:12 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -778,13 +778,6 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "</th>" << endl;
     *out << "</tr>" << endl;
     *out << "<tr>" << endl;
-      *out << "<td >" << endl;
-      *out << "SM CVS Version" << endl;
-      *out << "</td>" << endl;
-      *out << "<td>" << endl;
-      *out << sm_cvs_version_ << endl;
-      *out << "</td>" << endl;
-    *out << "  </tr>" << endl;
     *out << "<tr class=\"special\">" << endl;
       *out << "<td colspan=2>" << endl;
       *out << "SM cfg string" << endl;

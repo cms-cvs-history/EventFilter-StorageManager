@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.9 2009/04/03 12:35:40 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.10 2009/04/06 18:29:08 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -25,15 +25,19 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/03 12:35:40 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/06 18:29:08 $
    */
   
   class WebPageHelper
   {
   public:
 
-    explicit WebPageHelper(xdaq::ApplicationDescriptor*);
+    WebPageHelper
+    (
+      xdaq::ApplicationDescriptor*,
+      const std::string SMversion
+    );
 
 
     /**
@@ -134,8 +138,13 @@ namespace stor {
 
   private:
 
+    //Prevent copying of the WebPageHelper
+    WebPageHelper(WebPageHelper const&);
+    WebPageHelper& operator=(WebPageHelper const&);
+
     static boost::mutex _xhtmlMakerMutex;
     xdaq::ApplicationDescriptor* _appDescriptor;
+    const std::string _smVersion;
 
     XHTMLMaker::AttrMap _tableAttr;
     XHTMLMaker::AttrMap _specialRowAttr;

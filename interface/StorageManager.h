@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.44 2009/04/06 18:30:56 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.45 2009/04/09 11:25:35 mommsen Exp $
 */
 
 #include <string>
@@ -236,8 +236,6 @@ namespace stor {
     WrapperNotifier _wrapper_notifier;
 
     WebPageHelper _webPageHelper;
-
-    std::string sm_cvs_version_;
 
     enum
     {

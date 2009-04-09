@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.16 2009/04/08 09:32:36 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.17 2009/04/09 11:26:13 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -15,8 +15,13 @@ using namespace stor;
 
 boost::mutex WebPageHelper::_xhtmlMakerMutex;
 
-WebPageHelper::WebPageHelper(xdaq::ApplicationDescriptor* appDesc) :
-_appDescriptor(appDesc)
+WebPageHelper::WebPageHelper
+(
+  xdaq::ApplicationDescriptor* appDesc,
+  const std::string SMversion
+) :
+_appDescriptor(appDesc),
+_smVersion(SMversion)
 {
   _tableAttr[ "frame" ] = "void";
   _tableAttr[ "rules" ] = "group";
@@ -159,17 +164,31 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   smImgAttr[ "height" ] = "64";
   smImgAttr[ "border" ] = "0";
   maker.addNode("img", smLink, smImgAttr);
-  
-  tableDivAttr[ "width" ] = "40%";
-  tableDiv = maker.addNode("td", tableRow, tableDivAttr);
-  XHTMLMaker::Node* header = maker.addNode("h3", tableDiv);
+
+  tableDiv = maker.addNode("td", tableRow);
+  tableAttr[ "cellspacing" ] = "1";
+  XHTMLMaker::Node* instanceTable = maker.addNode("table", tableDiv, tableAttr);
+  XHTMLMaker::Node* instanceTableRow = maker.addNode("tr", instanceTable);
+  tableDivAttr[ "width" ] = "60%";
+  XHTMLMaker::Node* instanceTableDiv = maker.addNode("td", instanceTableRow, tableDivAttr);
+  XHTMLMaker::AttrMap fontAttr;
+  fontAttr[ "size" ] = "+2";
+  XHTMLMaker::Node* header = maker.addNode("font", instanceTableDiv, fontAttr);
+  header = maker.addNode("b", header);
   maker.addText(header, title.str());
   
-  tableDivAttr[ "width" ] = "30%";
-  tableDiv = maker.addNode("td", tableRow, tableDivAttr);
-  header = maker.addNode("h3", tableDiv);
+  tableDivAttr[ "width" ] = "40%";
+  instanceTableDiv = maker.addNode("td", instanceTableRow, tableDivAttr);
+  header = maker.addNode("font", instanceTableDiv, fontAttr);
+  header = maker.addNode("b", header);
   maker.addText(header, stateName);
-  
+
+  instanceTableRow = maker.addNode("tr", instanceTable);
+  instanceTableDiv = maker.addNode("td", instanceTableRow);
+  fontAttr[ "size" ] = "-3";
+  XHTMLMaker::Node* version = maker.addNode("font", instanceTableDiv, fontAttr);
+  maker.addText(version, _smVersion);
+
   tableDivAttr[ "align" ] = "right";
   tableDivAttr[ "width" ] = "64";
   tableDiv = maker.addNode("td", tableRow, tableDivAttr);
