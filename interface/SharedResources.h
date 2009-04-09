@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.14 2009/04/03 20:01:25 biery Exp $
+// $Id: SharedResources.h,v 1.1.2.15 2009/04/08 20:43:01 dshpakov Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -28,9 +28,9 @@ namespace stor {
   /**
    * Container for shared resources.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/04/03 20:01:25 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/04/08 20:43:01 $
    */
 
   struct SharedResources
@@ -45,13 +45,11 @@ namespace stor {
 
     // other
     boost::shared_ptr<Configuration> _configuration;
+    boost::shared_ptr<DiscardManager> _discardManager;
     boost::shared_ptr<DiskWriterResources> _diskWriterResources;
+    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
     boost::shared_ptr<StatisticsReporter> _statisticsReporter;
     boost::shared_ptr<RegistrationCollection> _registrationCollection;
-
-    // temporary?
-    boost::shared_ptr<DiscardManager> _discardManager;
-    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
 
     // definitely temporary!
     boost::shared_ptr<EventServer> _oldEventServer;
