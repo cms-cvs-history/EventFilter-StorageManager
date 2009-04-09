@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.8 2009/04/09 11:26:12 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.9 2009/04/09 12:25:26 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -10,7 +10,7 @@
 using namespace stor;
 
 FilesMonitorCollection::FilesMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Files"),
+MonitorCollection(app),
 _maxFileEntries(250),
 _entryCounter(0)
 {
@@ -18,11 +18,11 @@ _entryCounter(0)
   _fileRecords.reserve(_maxFileEntries);
 
   // These infospace items were defined in the old SM
-  _infoSpaceItems.push_back(std::make_pair("closedFiles", &_closedFiles));
-  _infoSpaceItems.push_back(std::make_pair("openFiles", &_openFiles));
-  _infoSpaceItems.push_back(std::make_pair("fileList", &_fileList));
-  _infoSpaceItems.push_back(std::make_pair("eventsInFile", &_eventsInFile));
-  _infoSpaceItems.push_back(std::make_pair("fileSize", &_fileSize));
+  // _infoSpaceItems.push_back(std::make_pair("closedFiles", &_closedFiles));
+  // _infoSpaceItems.push_back(std::make_pair("openFiles", &_openFiles));
+  // _infoSpaceItems.push_back(std::make_pair("fileList", &_fileList));
+  // _infoSpaceItems.push_back(std::make_pair("eventsInFile", &_eventsInFile));
+  // _infoSpaceItems.push_back(std::make_pair("fileSize", &_fileSize));
 
   putItemsIntoInfoSpace();
 }
@@ -55,41 +55,7 @@ void FilesMonitorCollection::do_calculateStatistics()
 
 void FilesMonitorCollection::do_updateInfoSpace()
 {
-  std::string errorMsg =
-    "Failed to update values of items in info space " + _infoSpace->name();
-
-  // Lock the infospace to assure that all items are consistent
-  try
-  {
-    _infoSpace->lock();
-
-    _infoSpace->unlock();
-  }
-  catch(std::exception &e)
-  {
-    _infoSpace->unlock();
- 
-    errorMsg += ": ";
-    errorMsg += e.what();
-    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
-  }
-  catch (...)
-  {
-    _infoSpace->unlock();
- 
-    errorMsg += " : unknown exception";
-    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
-  }
-
-  try
-  {
-    // The fireItemGroupChanged locks the infospace
-    _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
-  }
-  catch (xdata::exception::Exception &e)
-  {
-    XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
-  }
+  // nothing to do
 }
 
 

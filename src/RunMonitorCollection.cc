@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.8 2009/04/03 18:02:28 paterno Exp $
+// $Id: RunMonitorCollection.cc,v 1.1.2.9 2009/04/08 09:33:23 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -10,11 +10,13 @@
 using namespace stor;
 
 RunMonitorCollection::RunMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Run")
+MonitorCollection(app)
 {
   _infoSpaceItems.push_back(std::make_pair("runNumber", &_runNumber));
-  _infoSpaceItems.push_back(std::make_pair("receivedEvents", &_receivedEvents));
-  _infoSpaceItems.push_back(std::make_pair("receivedErrorEvents", &_receivedErrorEvents));
+
+  // These infospace items were defined in the old SM
+  // _infoSpaceItems.push_back(std::make_pair("receivedEvents", &_receivedEvents));
+  // _infoSpaceItems.push_back(std::make_pair("receivedErrorEvents", &_receivedErrorEvents));
 
   putItemsIntoInfoSpace();
 }
@@ -43,11 +45,11 @@ void RunMonitorCollection::do_updateInfoSpace()
     _runNumbersSeen.getStats(stats);
     _runNumber = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(stats.getLastSampleValue()));
 
-    _eventIDsReceived.getStats(stats);
-    _receivedEvents = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
+    // _eventIDsReceived.getStats(stats);
+    // _receivedEvents = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
 
-    _errorEventIDsReceived.getStats(stats);
-    _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
+    // _errorEventIDsReceived.getStats(stats);
+    // _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
 
     _infoSpace->unlock();
   }

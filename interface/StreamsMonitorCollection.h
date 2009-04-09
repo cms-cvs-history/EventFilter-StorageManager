@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.1.2.4 2009/04/09 11:25:37 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.1.2.5 2009/04/09 12:25:26 mommsen Exp $
 
 #ifndef StorageManager_StreamsMonitorCollection_h
 #define StorageManager_StreamsMonitorCollection_h
@@ -10,6 +10,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "xdata/Double.h"
 #include "xdata/String.h"
 #include "xdata/UnsignedInteger32.h"
 #include "xdata/Vector.h"
@@ -24,8 +25,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/09 11:25:37 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/09 12:25:26 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -102,10 +103,12 @@ namespace stor {
 
     utils::duration_t _timeWindowForRecentResults;
 
+    xdata::UnsignedInteger32 _storedEvents;   // number of events stored in all streams
+    xdata::Double _storedVolume;              // total volume in MB stored on disk
+
     // InfoSpace items which were defined in the old SM
-    xdata::UnsignedInteger32 _storedEvents;                        // number of events stored in all streams
-    xdata::Vector<xdata::String> _namesOfStream;                   // vector of stream names
-    xdata::Vector<xdata::UnsignedInteger32> _storedEventsInStream; // vector of events stored in stream N
+    // xdata::Vector<xdata::String> _namesOfStream;                   // vector of stream names
+    // xdata::Vector<xdata::UnsignedInteger32> _storedEventsInStream; // vector of events stored in stream N
 
   };
   

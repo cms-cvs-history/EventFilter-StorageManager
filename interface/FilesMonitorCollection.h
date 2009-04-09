@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.1.2.9 2009/04/09 11:25:22 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.1.2.10 2009/04/09 12:25:26 mommsen Exp $
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -23,8 +23,8 @@ namespace stor {
    * A collection of MonitoredQuantities of open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/09 11:25:22 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/09 12:25:26 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -94,11 +94,11 @@ namespace stor {
     uint32_t _entryCounter;
 
     // InfoSpace items which were defined in the old SM
-    xdata::UnsignedInteger32 _closedFiles;                 // number of closed files
-    xdata::UnsignedInteger32 _openFiles;                   // number of open files
-    xdata::Vector<xdata::String> _fileList;                // list of file names
-    xdata::Vector<xdata::UnsignedInteger32> _eventsInFile; // number of events in file N
-    xdata::Vector<xdata::UnsignedInteger32> _fileSize;     // size in MB of file N
+    // xdata::UnsignedInteger32 _closedFiles;                 // number of closed files
+    // xdata::UnsignedInteger32 _openFiles;                   // number of open files
+    // xdata::Vector<xdata::String> _fileList;                // list of file names
+    // xdata::Vector<xdata::UnsignedInteger32> _eventsInFile; // number of events in file N
+    // xdata::Vector<xdata::UnsignedInteger32> _fileSize;     // size in MB of file N
 
   };
   

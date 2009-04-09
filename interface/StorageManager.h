@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.45 2009/04/09 11:25:35 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.46 2009/04/09 14:00:04 mommsen Exp $
 */
 
 #include <string>
@@ -33,12 +33,7 @@
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
 
-#include "xdata/String.h"
 #include "xdata/UnsignedInteger32.h"
-#include "xdata/Integer.h"
-#include "xdata/Double.h"
-#include "xdata/Boolean.h"
-#include "xdata/Vector.h"
 
 #include "xgi/exception/Exception.h"
 
@@ -89,13 +84,6 @@ namespace stor {
     xoap::MessageReference fsmCallback(xoap::MessageReference msg)
       throw (xoap::exception::Exception);
     */
-    // @@EM added monitoring workloop
-    void startMonitoringWorkLoop() throw (evf::Exception);
-    bool monitoring(toolbox::task::WorkLoop* wl);
-
-    // tests of new Monitor classes
-    void startNewMonitorWorkloop() throw (evf::Exception);
-    bool newMonitorAction(toolbox::task::WorkLoop* wl);
 
 ////////////////////////////////////////////////////////////////////////////////
    private:  
@@ -172,7 +160,6 @@ namespace stor {
     SMFUSenderList smrbsenders_;
     xdata::UnsignedInteger32 connectedRBs_;
 
-    xdata::Vector<xdata::UnsignedInteger32> receivedEventsFromOutMod_;
     typedef std::map<std::string,uint32> countMap;
     typedef std::map<std::string, boost::shared_ptr<ForeverAverageCounter> > valueMap;
     typedef std::map<uint32,std::string> idMap;
@@ -182,50 +169,6 @@ namespace stor {
     valueMap avCompressRatioMap_;
     idMap modId2ModOutMap_;
     countMap storedEventsMap_;
-    xdata::Vector<xdata::String> namesOfOutMod_;
-
-    // *** for stored data performance measurements
-    // *** measurements for last set of samples
-    xdata::UnsignedInteger32 store_samples_; // number of samples/frames per measurement
-    xdata::UnsignedInteger32 store_period4samples_; // time period per measurement
-    xdata::Double store_instantBandwidth_; // bandwidth in MB/s
-    xdata::Double store_instantRate_;      // number of frames/s
-    xdata::Double store_instantLatency_;   // micro-seconds/frame
-    xdata::Double store_maxBandwidth_;     // maximum bandwidth in MB/s
-    xdata::Double store_minBandwidth_;     // minimum bandwidth in MB/s
-    // *** measurements for last time period
-    xdata::Double store_instantBandwidth2_;// bandwidth in MB/s
-    xdata::Double store_instantRate2_;     // number of frames/s
-    xdata::Double store_instantLatency2_;  // micro-seconds/frame
-    xdata::Double store_maxBandwidth2_;    // maximum bandwidth in MB/s
-    xdata::Double store_minBandwidth2_;    // minimum bandwidth in MB/s
-
-    // *** measurements for all samples
-    xdata::Double store_duration_;         // time for run in seconds
-    xdata::UnsignedInteger32 store_totalSamples_; //number of samples/frames per measurement
-    xdata::Double store_meanBandwidth_;    // bandwidth in MB/s
-    xdata::Double store_meanRate_;         // number of frames/s
-    xdata::Double store_meanLatency_;      // micro-seconds/frame
-    xdata::Double store_receivedVolume_;   // total received data in MB
-
-    xdata::Double store_duration2_;         // time for run in seconds
-    xdata::UnsignedInteger32 store_totalSamples2_; //number of samples/frames per measurement
-    xdata::Double store_meanBandwidth2_;    // bandwidth in MB/s
-    xdata::Double store_meanRate2_;         // number of frames/s
-    xdata::Double store_meanLatency2_;      // micro-seconds/frame
-
-    // *** additional flashlist contents (rest was already there)
-    xdata::String            class_;
-    xdata::UnsignedInteger32 instance_;
-    xdata::String            url_;       
-
-    xdata::Double            storedVolume_;
-    xdata::UnsignedInteger32 memoryUsed_;
-    xdata::String            progressMarker_;
-
-    // @@EM workloop / action signature for monitoring
-    toolbox::task::WorkLoop         *wlMonitoring_;      
-    toolbox::task::ActionSignature  *asMonitoring_;
 
     FragmentProcessor *fragmentProcessor_;
     DiskWriter *diskWriter_;

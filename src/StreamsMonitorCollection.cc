@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.4 2009/04/09 11:26:13 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.5 2009/04/09 12:25:26 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -16,17 +16,19 @@ MonitoredQuantity StreamsMonitorCollection::_allStreamsBandwidth;
 
 
 StreamsMonitorCollection::StreamsMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Streams"),
+MonitorCollection(app),
 _timeWindowForRecentResults(300)
 {
   _allStreamsFileCount.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   _allStreamsVolume.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   _allStreamsBandwidth.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
 
-  // These infospace items were defined in the old SM
   _infoSpaceItems.push_back(std::make_pair("storedEvents",  &_storedEvents));
-  _infoSpaceItems.push_back(std::make_pair("namesOfStream", &_namesOfStream));
-  _infoSpaceItems.push_back(std::make_pair("storedEventsInStream", &_storedEventsInStream));
+  _infoSpaceItems.push_back(std::make_pair("storedVolume",  &_storedVolume));
+
+  // These infospace items were defined in the old SM
+  // _infoSpaceItems.push_back(std::make_pair("namesOfStream", &_namesOfStream));
+  // _infoSpaceItems.push_back(std::make_pair("storedEventsInStream", &_storedEventsInStream));
 
   putItemsIntoInfoSpace();
 }
@@ -80,10 +82,16 @@ void StreamsMonitorCollection::do_updateInfoSpace()
   std::string errorMsg =
     "Failed to update values of items in info space " + _infoSpace->name();
 
+  MonitoredQuantity::Stats allStreamsVolumeStats;
+  _allStreamsVolume.getStats(allStreamsVolumeStats);
+
   // Lock the infospace to assure that all items are consistent
   try
   {
     _infoSpace->lock();
+
+    _storedEvents = static_cast<xdata::UnsignedInteger32>(allStreamsVolumeStats.getSampleCount());
+    _storedVolume = static_cast<xdata::Double>(allStreamsVolumeStats.getValueSum());
 
     _infoSpace->unlock();
   }

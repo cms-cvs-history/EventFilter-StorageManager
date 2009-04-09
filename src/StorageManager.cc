@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.74 2009/04/09 11:26:12 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.75 2009/04/09 13:59:52 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,19 +110,13 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.74 2009/04/09 11:26:12 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.75 2009/04/09 13:59:52 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
   ah_   = new edm::AssertHandler();
 
   setupFlashList();
-
-  xdata::InfoSpace *ispace = getApplicationInfoSpace();
-
-  ispace->fireItemAvailable("connectedRBs",  &connectedRBs_);
-  ispace->fireItemAvailable("receivedEventsForOutMod",  &receivedEventsFromOutMod_);
-  ispace->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
 
   // Bind specific messages to functions
   i2o::bind(this,
@@ -185,8 +179,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // for performance measurements
 
-  receivedEventsFromOutMod_.reserve(10);
-  receivedEventsFromOutMod_.clear();
   receivedEventsMap_.clear();
   avEventSizeMap_.clear();
   avCompressRatioMap_.clear();
@@ -203,6 +195,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   sharedResourcesPtr_.reset(new SharedResources());
 
+  xdata::InfoSpace *ispace = getApplicationInfoSpace();
   unsigned long instance = getApplicationDescriptor()->getInstance();
   sharedResourcesPtr_->_configuration.reset(new Configuration(ispace,
                                                               instance));
@@ -3103,21 +3096,10 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::setupFlashList()
 {
   //----------------------------------------------------------------------------
-  // Setup the header variables
-  //----------------------------------------------------------------------------
-  class_    = getApplicationDescriptor()->getClassName();
-  instance_ = getApplicationDescriptor()->getInstance();
-  std::string url;
-  url       = getApplicationDescriptor()->getContextDescriptor()->getURL();
-  url      += "/";
-  url      += getApplicationDescriptor()->getURN();
-  url_      = url;
-
-  //----------------------------------------------------------------------------
   // Create/Retrieve an infospace which can be monitored
   //----------------------------------------------------------------------------
   std::ostringstream oss;
-  oss << "urn:xdaq-monitorable-" << class_.value_;
+  oss << "urn:xdaq-monitorable-" << getApplicationDescriptor()->getClassName();
   toolbox::net::URN urn = this->createQualifiedInfoSpace(oss.str());
   xdata::InfoSpace *is = xdata::getInfoSpaceFactory()->get(urn.toString());
 
@@ -3125,32 +3107,8 @@ void StorageManager::setupFlashList()
   // Publish monitor data in monitorable info space -- Head
   //----------------------------------------------------------------------------
 
-  is->fireItemAvailable("class",                &class_);
-  is->fireItemAvailable("instance",             &instance_);
-  is->fireItemAvailable("url",                  &url_);
-  // Body
-  // should this be here also??
-  is->fireItemAvailable("namesOfOutMod",      &namesOfOutMod_);
-  is->fireItemAvailable("storedVolume",         &storedVolume_);
-  is->fireItemAvailable("memoryUsed",           &memoryUsed_);
   //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
-
-  //----------------------------------------------------------------------------
-  // Attach listener to myCounter_ to detect retrieval event
-  //----------------------------------------------------------------------------
-  is->addItemRetrieveListener("class",                this);
-  is->addItemRetrieveListener("instance",             this);
-  is->addItemRetrieveListener("url",                  this);
-  // Body
-  // should this be here also??
-  //is->addItemRetrieveListener("storedEvents",         this);
-  is->addItemRetrieveListener("namesOfOutMod", this);
-  is->addItemRetrieveListener("storedVolume",         this);
-  is->addItemRetrieveListener("memoryUsed",           this);
-  //  is->addItemRetrieveListener("progressMarker",       this);
-  is->addItemRetrieveListener("connectedRBs",         this);
-  //----------------------------------------------------------------------------
 }
 
 
@@ -3167,34 +3125,17 @@ void StorageManager::actionPerformed(xdata::Event& e)
 
   if (e.type() == "ItemRetrieveEvent") {
     std::ostringstream oss;
-    oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
-    xdata::InfoSpace *is = xdata::InfoSpace::get(oss.str());
+    // Remi Apr 9, 2009: we construct here the wrong monitoring info space name
+    // oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
+    // xdata::InfoSpace *is = xdata::InfoSpace::get(oss.str());
 
-    is->lock();
+    // is->lock();
     std::string item = dynamic_cast<xdata::ItemRetrieveEvent&>(e).itemName();
     // Only update those locations which are not always up to date
     if      (item == "connectedRBs")
       connectedRBs_   = smrbsenders_.size();
-    else if (item == "memoryUsed")
-      memoryUsed_     = pool_->getMemoryUsage().getUsed();
-    else if (item == "receivedEventsFromOutMod" || item == "namesOfOutMod") {
-      receivedEventsFromOutMod_.clear();
-      namesOfOutMod_.clear();
 
-      boost::shared_ptr<InitMsgCollection> initMsgCollection =
-        sharedResourcesPtr_->_initMsgCollection;
-      idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
-      for( ; oi != oe; ++oi) {
-        std::string outputModuleLabel = oi->second;
-        if (initMsgCollection.get() != NULL &&
-            initMsgCollection->getOutputModuleName(oi->first) != "") {
-          outputModuleLabel = initMsgCollection->getOutputModuleName(oi->first);
-        }
-        receivedEventsFromOutMod_.push_back(receivedEventsMap_[oi->second]);
-        namesOfOutMod_.push_back(outputModuleLabel);
-      }
-    }
-    is->unlock();
+    // is->unlock();
   }
 }
 
@@ -3339,9 +3280,6 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
 
     smrbsenders_.clear();
     
-    storedVolume_ = 0;
-    receivedEventsFromOutMod_.clear();
-    namesOfOutMod_.clear();
     receivedEventsMap_.clear();
     avEventSizeMap_.clear();
     avCompressRatioMap_.clear();
@@ -3361,7 +3299,6 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
     return msg;
   }
-  startMonitoringWorkLoop();
   return msg;
 }
 
@@ -3421,22 +3358,6 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
 
 void StorageManager::stopAction()
 {
-  receivedEventsFromOutMod_.clear();
-  namesOfOutMod_.clear();
-
-  boost::shared_ptr<InitMsgCollection> initMsgCollection =
-    sharedResourcesPtr_->_initMsgCollection;
-  idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
-  for( ; oi != oe; ++oi) {
-      std::string outputModuleLabel = oi->second;
-      if (initMsgCollection.get() != NULL &&
-          initMsgCollection->getOutputModuleName(oi->first) != "") {
-        outputModuleLabel = initMsgCollection->getOutputModuleName(oi->first);
-      }
-      receivedEventsFromOutMod_.push_back(receivedEventsMap_[oi->second]);
-      namesOfOutMod_.push_back(outputModuleLabel);
-  }
-
   // should clear the event server(s) last event/queue
   if (sharedResourcesPtr_->_oldEventServer.get() != NULL)
   {
@@ -3502,90 +3423,6 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
     }
 }
 
-void StorageManager::startMonitoringWorkLoop() throw (evf::Exception)
-{
-  DiskWritingParams dwParams =
-    sharedResourcesPtr_->_configuration->getDiskWritingParams();
-  try {
-    wlMonitoring_=
-      toolbox::task::getWorkLoopFactory()->
-      getWorkLoop(dwParams._smInstanceString+"Monitoring", "waiting");
-    if (!wlMonitoring_->isActive()) wlMonitoring_->activate();
-    asMonitoring_ = toolbox::task::bind(this,&StorageManager::monitoring,
-                                        dwParams._smInstanceString+"Monitoring");
-    wlMonitoring_->submit(asMonitoring_);
-  }
-  catch (xcept::Exception& e) {
-    string msg = "Failed to start workloop 'Monitoring'.";
-    XCEPT_RETHROW(evf::Exception,msg,e);
-  }
-}
-
-
-bool StorageManager::monitoring(toolbox::task::WorkLoop* wl)
-{
-  // @@EM if state is already "failed" then no reason to firefailed again 
-  //      (in fact it will cause problems) so bail out !
-  if(externallyVisibleState() == "Failed") return false;
-  // @@EM Look for exceptions in the FragmentCollector thread, do a state transition if present
-//   if(stor::getSMFC_exceptionStatus()) {
-//     edm::LogError("StorageManager") << "Fatal BURP in FragmentCollector thread detected! \n"
-//        << stor::getSMFC_reason4Exception();
-
-//     reasonForFailedState_ = stor::getSMFC_reason4Exception();
-//     LOG4CPLUS_ERROR( getApplicationLogger(), reasonForFailedState_ );
-//     return false; // stop monitoring workloop after going to failed state
-//   }
-
-  stor::utils::sleep(10.0);
-  if(sharedResourcesPtr_->_serviceManager.get() != NULL &&
-     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
-     sharedResourcesPtr_->_initMsgCollection->size() > 0) {
-    boost::mutex::scoped_lock sl(halt_lock_);
-
-    {
-      // this is needed only if using flashlist infospace (not for the moment)
-      std::ostringstream oss;
-      oss << "urn:xdaq-monitorable:" << class_.value_ << ":" << instance_.value_;
-      xdata::InfoSpace *is = xdata::InfoSpace::get(oss.str());  
-      is->lock();
-
-      boost::shared_ptr<stor::SMOnlyStats> stored_stats =
-        sharedResourcesPtr_->_serviceManager->get_stats();
-      store_samples_ = stored_stats->samples_;
-      store_period4samples_ = stored_stats->period4samples_;
-      store_instantBandwidth_ = stored_stats->instantBandwidth_;
-      store_instantRate_ = stored_stats->instantRate_;
-      store_instantLatency_ = stored_stats->instantLatency_;
-      store_totalSamples_ = (unsigned long)stored_stats->totalSamples_;
-      store_duration_ = stored_stats->duration_;
-      store_meanBandwidth_ = stored_stats->meanBandwidth_;
-      store_meanRate_ = stored_stats->meanRate_;
-      store_meanLatency_ = stored_stats->meanLatency_;
-      store_maxBandwidth_ = stored_stats->maxBandwidth_;
-      store_minBandwidth_ = stored_stats->minBandwidth_;
-      store_instantBandwidth2_ = stored_stats->instantBandwidth2_;
-      store_instantRate2_ = stored_stats->instantRate2_;
-      store_instantLatency2_ = stored_stats->instantLatency2_;
-      store_totalSamples2_ = (unsigned long)stored_stats->totalSamples2_;
-      store_duration2_ = stored_stats->duration2_;
-      store_meanBandwidth2_ = stored_stats->meanBandwidth2_;
-      store_meanRate2_ = stored_stats->meanRate2_;
-      store_meanLatency2_ = stored_stats->meanLatency2_;
-      store_maxBandwidth2_ = stored_stats->maxBandwidth2_;
-      store_minBandwidth2_ = stored_stats->minBandwidth2_;
-      store_receivedVolume_ = stored_stats->receivedVolume_;
-      storedVolume_   = store_receivedVolume_;
-
-      // end temporary solution
-      is->unlock();
-    }
-    
-      
-  }
-    
-  return true;
-}
 
 /////////////////////////////////
 //// Get current state name: ////

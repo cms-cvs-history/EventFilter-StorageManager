@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.18 2009/04/03 18:02:28 paterno Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.19 2009/04/08 09:33:22 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -10,7 +10,7 @@
 using namespace stor;
 
 FragmentMonitorCollection::FragmentMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Fragment")
+MonitorCollection(app)
 {
   _allFragmentSizes.setNewTimeWindowForRecentResults(5);
   _allFragmentBandwidth.setNewTimeWindowForRecentResults(5);
@@ -19,25 +19,25 @@ MonitorCollection(app, "Fragment")
   _dqmEventFragmentSizes.setNewTimeWindowForRecentResults(300);
   _dqmEventFragmentBandwidth.setNewTimeWindowForRecentResults(300);
 
+  _infoSpaceItems.push_back(std::make_pair("receivedFrames", &_receivedFrames));
+  _infoSpaceItems.push_back(std::make_pair("instantBandwidth", &_instantBandwidth));
+  _infoSpaceItems.push_back(std::make_pair("instantRate", &_instantRate));
 
   // There infospace items were defined in the old SM
-  _infoSpaceItems.push_back(std::make_pair("duration", &_duration));
-  _infoSpaceItems.push_back(std::make_pair("receivedFrames", &_receivedFrames));
-  _infoSpaceItems.push_back(std::make_pair("totalSamples", &_totalSamples));
-  _infoSpaceItems.push_back(std::make_pair("dqmRecords", &_dqmRecords));
-  _infoSpaceItems.push_back(std::make_pair("meanBandwidth", &_meanBandwidth));
-  _infoSpaceItems.push_back(std::make_pair("meanLatency", &_meanLatency));
-  _infoSpaceItems.push_back(std::make_pair("meanRate", &_meanRate));
-  _infoSpaceItems.push_back(std::make_pair("receivedVolume", &_receivedVolume));
-  _infoSpaceItems.push_back(std::make_pair("receivedPeriod4Stats", &_receivedPeriod4Stats));
-  _infoSpaceItems.push_back(std::make_pair("receivedSamples4Stats", &_receivedSamples4Stats));
-  _infoSpaceItems.push_back(std::make_pair("instantBandwidth", &_instantBandwidth));
-  _infoSpaceItems.push_back(std::make_pair("instantLatency", &_instantLatency));
-  _infoSpaceItems.push_back(std::make_pair("instantRate", &_instantRate));
-  _infoSpaceItems.push_back(std::make_pair("maxBandwidth", &_maxBandwidth));
-  _infoSpaceItems.push_back(std::make_pair("minBandwidth", &_minBandwidth));
-  _infoSpaceItems.push_back(std::make_pair("receivedDQMPeriod4Stats", &_receivedDQMPeriod4Stats));
-  _infoSpaceItems.push_back(std::make_pair("receivedDQMSamples4Stats", &_receivedDQMSamples4Stats));
+  // _infoSpaceItems.push_back(std::make_pair("duration", &_duration));
+  // _infoSpaceItems.push_back(std::make_pair("totalSamples", &_totalSamples));
+  // _infoSpaceItems.push_back(std::make_pair("dqmRecords", &_dqmRecords));
+  // _infoSpaceItems.push_back(std::make_pair("meanBandwidth", &_meanBandwidth));
+  // _infoSpaceItems.push_back(std::make_pair("meanLatency", &_meanLatency));
+  // _infoSpaceItems.push_back(std::make_pair("meanRate", &_meanRate));
+  // _infoSpaceItems.push_back(std::make_pair("receivedVolume", &_receivedVolume));
+  // _infoSpaceItems.push_back(std::make_pair("receivedPeriod4Stats", &_receivedPeriod4Stats));
+  // _infoSpaceItems.push_back(std::make_pair("receivedSamples4Stats", &_receivedSamples4Stats));
+  // _infoSpaceItems.push_back(std::make_pair("instantLatency", &_instantLatency));
+  // _infoSpaceItems.push_back(std::make_pair("maxBandwidth", &_maxBandwidth));
+  // _infoSpaceItems.push_back(std::make_pair("minBandwidth", &_minBandwidth));
+  // _infoSpaceItems.push_back(std::make_pair("receivedDQMPeriod4Stats", &_receivedDQMPeriod4Stats));
+  // _infoSpaceItems.push_back(std::make_pair("receivedDQMSamples4Stats", &_receivedDQMSamples4Stats));
 
   putItemsIntoInfoSpace();
 }
@@ -89,30 +89,29 @@ void FragmentMonitorCollection::do_updateInfoSpace()
     MonitoredQuantity::Stats stats;
 
     _allFragmentSizes.getStats(stats);
-    _duration       = static_cast<xdata::Double>(stats.getDuration());
+    // _duration       = static_cast<xdata::Double>(stats.getDuration());
     _receivedFrames = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
-    _meanRate       = static_cast<xdata::Double>(stats.getSampleRate());
-    _meanLatency    = static_cast<xdata::Double>(stats.getSampleLatency());
-    _receivedVolume = static_cast<xdata::Double>(stats.getValueSum());
-    _receivedPeriod4Stats  = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int> (stats.getDuration(MonitoredQuantity::RECENT)));
-    _receivedSamples4Stats = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount(MonitoredQuantity::RECENT));
+    // _meanRate       = static_cast<xdata::Double>(stats.getSampleRate());
+    // _meanLatency    = static_cast<xdata::Double>(stats.getSampleLatency());
+    // _receivedVolume = static_cast<xdata::Double>(stats.getValueSum());
+    // _receivedPeriod4Stats  = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int> (stats.getDuration(MonitoredQuantity::RECENT)));
+    // _receivedSamples4Stats = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount(MonitoredQuantity::RECENT));
     _instantRate           = static_cast<xdata::Double>(stats.getSampleRate(MonitoredQuantity::RECENT));
-    _instantLatency        = static_cast<xdata::Double>(stats.getSampleLatency(MonitoredQuantity::RECENT));
+    // _instantLatency        = static_cast<xdata::Double>(stats.getSampleLatency(MonitoredQuantity::RECENT));
 
 
-    _totalSamples   = _receivedFrames;
-    _dqmEventFragmentSizes.getStats(stats);
-    _dqmRecords               = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
-    _receivedDQMPeriod4Stats  = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(stats.getDuration(MonitoredQuantity::RECENT)));
-    _receivedDQMSamples4Stats = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount(MonitoredQuantity::RECENT));
+    // _totalSamples   = _receivedFrames;
+    // _dqmEventFragmentSizes.getStats(stats);
+    // _dqmRecords               = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
+    // _receivedDQMPeriod4Stats  = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(stats.getDuration(MonitoredQuantity::RECENT)));
+    // _receivedDQMSamples4Stats = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount(MonitoredQuantity::RECENT));
 
     
     _allFragmentBandwidth.getStats(stats);
-    _meanBandwidth    = static_cast<xdata::Double>(stats.getValueRate());
+    // _meanBandwidth    = static_cast<xdata::Double>(stats.getValueRate());
     _instantBandwidth = static_cast<xdata::Double>(stats.getValueRate(MonitoredQuantity::RECENT));
-    _maxBandwidth     = static_cast<xdata::Double>(stats.getValueMax(MonitoredQuantity::RECENT));
-    _minBandwidth     = static_cast<xdata::Double>(stats.getValueMin(MonitoredQuantity::RECENT));
-
+    // _maxBandwidth     = static_cast<xdata::Double>(stats.getValueMax(MonitoredQuantity::RECENT));
+    // _minBandwidth     = static_cast<xdata::Double>(stats.getValueMin(MonitoredQuantity::RECENT));
 
     _infoSpace->unlock();
   }

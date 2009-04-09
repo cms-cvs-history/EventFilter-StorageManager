@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.10 2009/03/02 18:08:21 biery Exp $
+// $Id: MonitorCollection.h,v 1.1.2.11 2009/04/08 09:34:41 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -20,20 +20,16 @@ namespace stor {
   /**
    * An abstract collection of MonitoredQuantities
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/08 09:34:41 $
    */
   
   class MonitorCollection
   {
   public:
 
-    MonitorCollection
-    (
-      xdaq::Application*,
-      const std::string infoSpaceName
-    );
+    explicit MonitorCollection(xdaq::Application*);
 
     // A pure virtual destructor results in a missing symbol
     virtual ~MonitorCollection() {};

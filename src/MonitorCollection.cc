@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.1.2.8 2009/03/02 18:08:22 biery Exp $
+// $Id: MonitorCollection.cc,v 1.1.2.9 2009/04/08 09:33:23 mommsen Exp $
 
 #include <sstream>
 
@@ -11,17 +11,38 @@
 using namespace stor;
 
 
-MonitorCollection::MonitorCollection
-(
-  xdaq::Application *app,
-  const std::string infoSpaceName
-)
+MonitorCollection::MonitorCollection(xdaq::Application *app)
 {
-  // Get the infospace
-  toolbox::net::URN urn = 
-    app->createQualifiedInfoSpace(infoSpaceName);
-  _infoSpace = xdata::getInfoSpaceFactory()->get(urn.toString());
+  // Create an infospace which can be monitored.
+  // The naming follows the old SM scheme.
+  // In future, the instance number should be included.
 
+  std::ostringstream oss;
+  oss << "urn:xdaq-monitorable-" << app->getApplicationDescriptor()->getClassName();
+  
+  std::string errorMsg =
+    "Failed to create monitoring info space " + oss.str();
+
+  try
+  {
+    toolbox::net::URN urn = app->createQualifiedInfoSpace(oss.str());
+    xdata::getInfoSpaceFactory()->lock();
+    _infoSpace = xdata::getInfoSpaceFactory()->get(urn.toString());
+    xdata::getInfoSpaceFactory()->unlock();
+  }
+  catch(xdata::exception::Exception &e)
+  {
+    xdata::getInfoSpaceFactory()->unlock();
+ 
+    XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
+  }
+  catch (...)
+  {
+    xdata::getInfoSpaceFactory()->unlock();
+ 
+    errorMsg += " : unknown exception";
+    XCEPT_RAISE(stor::exception::Infospace, errorMsg);
+  }
 }
 
 void MonitorCollection::update()
