@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.75 2009/04/09 13:59:52 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.76 2009/04/09 17:00:35 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.75 2009/04/09 13:59:52 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.76 2009/04/09 17:00:35 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -220,6 +220,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   sharedResourcesPtr_->
     _discardManager.reset(new DiscardManager(getApplicationContext(),
                                              getApplicationDescriptor()));
+
+  sharedResourcesPtr_->_registrationCollection.reset( new RegistrationCollection() );
 
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
