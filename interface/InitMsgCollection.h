@@ -6,7 +6,7 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output streams.
  *
- * $Id: InitMsgCollection.h,v 1.4.12.2 2009/02/23 17:12:00 biery Exp $
+ * $Id: InitMsgCollection.h,v 1.4.12.3 2009/04/10 11:26:59 dshpakov Exp $
  */
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -39,6 +39,7 @@ namespace stor
     InitMsgSharedPtr getFullCollection() { return serializedFullSet_; }
 
     bool registerConsumer( ConsumerID cid, const std::string& hltModule );
+    InitMsgSharedPtr getElementForConsumer( ConsumerID cid );
 
     void clear();
     int size();
@@ -56,9 +57,10 @@ namespace stor
     InitMsgSharedPtr serializedFullSet_;
 
     std::map<uint32, std::string> outModNameTable_;
-
     boost::mutex listLock_;
 
+    std::map<ConsumerID, std::string> consumerOutputModuleMap_;
+    boost::mutex consumerMapLock_;
   };
 }
 
