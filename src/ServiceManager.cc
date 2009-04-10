@@ -1,4 +1,4 @@
-// $Id: ServiceManager.cc,v 1.18.6.8 2009/03/17 14:39:16 biery Exp $
+// $Id: ServiceManager.cc,v 1.18.6.9 2009/04/09 11:26:12 mommsen Exp $
 
 #include <EventFilter/StorageManager/interface/ServiceManager.h>
 #include "FWCore/Framework/interface/EventSelector.h"
@@ -13,8 +13,6 @@ using boost::shared_ptr;
 
 ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
   outModPSets_(0),
-  psetHLTOutputLabels_(0),
-  outputModuleIds_(0),
   currentlumi_(0),
   timeouttime_(0),
   lasttimechecked_(0),
@@ -32,20 +30,12 @@ ServiceManager::ServiceManager(stor::DiskWritingParams dwParams):
 
 ServiceManager::~ServiceManager()
 { 
-  outputModuleIds_.clear();
   delete pmeter_;
 }
 
 
 void ServiceManager::start()
 {
-  psetHLTOutputLabels_.clear();
-  for (unsigned int idx = 0; idx < outModPSets_.size(); idx++) {
-    psetHLTOutputLabels_.push_back(std::string());  // empty string
-  }
-
-  outputModuleIds_.clear();
-
   currentlumi_ = 0;
   timeouttime_ = 0;
   lasttimechecked_ = 0;
@@ -58,70 +48,6 @@ void ServiceManager::stop()
 {
 }
 
-
-void ServiceManager::manageInitMsg(InitMsgView& view, stor::InitMsgCollection& initMsgCollection)
-{
-  std::string inputOMLabel = view.outputModuleLabel();
-  int psetIdx = -1;
-  for(std::vector<ParameterSet>::iterator it = outModPSets_.begin(), itEnd = outModPSets_.end();
-      it != itEnd; ++it) {
-    ++psetIdx;
-    bool createStreamNow = false;
-
-    // if this ParameterSet corresponds to the error stream, skip over it
-    // since the error stream doesn't use the INIT messages.
-    if (psetIdx == errorStreamPSetIndex_) continue;
-
-    // test if this INIT message is the right one for this output module
-    // (that is, whether the HLT output module specified in the 
-    // SM output module SelectHLTOutput parameter matches the HLT output
-    // module in the INIT message)
-
-    // fetch the SelectHLTOutput parameter from the SM output PSet
-    std::string requestedOMLabel =
-      it->getUntrackedParameter<std::string>("SelectHLTOutput", std::string());
-
-    // if the SM output PSet didn't specify an HLT output module...
-    //
-    // (Note that the SelectHLTOutput parameter is optional.  If it is not
-    // specified, we create the stream using the first INIT message that
-    // we receive.  However, if we get multiple, different, INIT messages,
-    // we complain loudly.
-    // By allowing it to be optional, though, we provide some level
-    // of backward compatibility - setups that only have one HLT output
-    // module aren't forced to add this parameter.)
-    if (requestedOMLabel.empty()) {
-
-      // if we haven't yet created the stream object, go ahead and do
-      // that using this INIT message
-      if (psetHLTOutputLabels_[psetIdx].empty()) {
-        createStreamNow = true;
-      }
-
-      // if we already created the stream object and this is a different
-      // INIT message than what we used to create it, we need to complain
-      // because SM output PSets are required to have a SelectHLTOutput
-      // parameter in the presence of multiple INIT messages (multiple
-      // HLT output modules)
-      else if (inputOMLabel != psetHLTOutputLabels_[psetIdx]) {
-        std::string errorString;
-        errorString.append("ERROR: The configuration for Stream ");
-        errorString.append((*it).getParameter<string> ("streamLabel"));
-        errorString.append(" does not specify an HLT output module.\n");
-        errorString.append("Please specify one of the HLT output modules ");
-        errorString.append("listed below as the SelectHLTOutput parameter ");
-        errorString.append("in the EventStreamFileWriter configuration ");
-        errorString.append("for Stream ");
-        errorString.append((*it).getParameter<string> ("streamLabel"));
-        errorString.append(".\n");
-        errorString.append(initMsgCollection.getSelectionHelpString());
-        errorString.append("\n");
-        throw cms::Exception("ServiceManager","manageInitMsg")
-          << errorString << std::endl;
-      }
-    }
-  }
-}
 
 /**
  * Returns a map of the trigger selection strings for each output stream.
@@ -187,13 +113,11 @@ void ServiceManager::collectStreamerPSets(const std::string& config)
 	       std::string mod_type = aModInEndPathPset.getParameter<std::string> ("@module_type");
 	       if (mod_type == "EventStreamFileWriter") {
 		 outModPSets_.push_back(aModInEndPathPset);
-                 psetHLTOutputLabels_.push_back(std::string());  // empty string
                }
                else if (mod_type == "ErrorStreamFileWriter" ||
                         mod_type == "FRDStreamFileWriter") {
                  errorStreamPSetIndex_ = outModPSets_.size();
                  outModPSets_.push_back(aModInEndPathPset);
-                 psetHLTOutputLabels_.push_back(std::string());  // empty string
                }
 	   }
        }

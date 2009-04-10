@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.36 2009/04/03 13:36:37 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.37 2009/04/09 11:26:11 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -67,11 +67,6 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
           }
 
         // temporary handling (until the new event server is ready)
-        if ( _sharedResources->_serviceManager.get() != 0 )
-          {
-            _sharedResources->_serviceManager->
-              manageInitMsg(imv, *(_sharedResources->_initMsgCollection));
-          }
         if ( _sharedResources->_smRBSenderList != 0 )
           {
             FragKey fragKey = ioc.fragmentKey();

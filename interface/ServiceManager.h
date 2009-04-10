@@ -1,7 +1,7 @@
 #ifndef _SERVICEMANAGER_H_
 #define _SERVICEMANAGER_H_
 
-// $Id: ServiceManager.h,v 1.13.6.5 2009/03/17 14:39:15 biery Exp $
+// $Id: ServiceManager.h,v 1.13.6.6 2009/04/09 11:25:35 mommsen Exp $
 
 #include "FWCore/ParameterSet/interface/ProcessDesc.h"
 
@@ -33,8 +33,6 @@ namespace edm
     void start(); 
     void stop(); 
     
-    void manageInitMsg(InitMsgView& init_message, stor::InitMsgCollection& initMsgCollection);
-
     boost::shared_ptr<stor::SMOnlyStats> get_stats();
 
     std::map<std::string, Strings> getStreamSelectionTable();
@@ -45,8 +43,6 @@ namespace edm
     std::vector<ParameterSet>              outModPSets_;
     std::list<std::string>                 filelist_;
     std::list<std::string>                 currfiles_;
-    Strings                                psetHLTOutputLabels_;
-    std::vector<uint32>                    outputModuleIds_;
     int                                    currentlumi_;
     double                                 timeouttime_;
     double                                 lasttimechecked_;
