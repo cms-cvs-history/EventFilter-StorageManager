@@ -1,10 +1,11 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.13 2009/04/06 14:15:59 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.14 2009/04/08 19:28:45 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 
 #include "xgi/Input.h"
+#include "xgi/Output.h"
 #include "xgi/exception/Exception.h"
 
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
@@ -21,9 +22,11 @@ using namespace std;
 namespace stor
 {
 
-  // Create consumer registration info (free function):
+  ////////////////////////////////////////////////////////////
+  //// Create consumer registration info (free function): ////
+  ////////////////////////////////////////////////////////////
   ConsRegPtr parseEventConsumerRegistration( xgi::Input* in,
-                                             unsigned int sts )
+                                             utils::duration_t sts )
   {
 
     if( in == 0 )
@@ -150,6 +153,72 @@ namespace stor
 
   }
 
+  //////////////////////////////////////////////
+  //// Send ID to consumer (free function): ////
+  //////////////////////////////////////////////
+  void writeEventConsumerRegistration( xgi::Output* out, ConsumerID cid )
+  {
+
+    // TODO: figure out a better way...
+    const int buff_size = 1000;
+    std::vector<unsigned char> buff;
+    buff.resize( buff_size );
+
+    ConsRegResponseBuilder rb( &buff[0], buff.capacity(), 0, cid.value );
+    ConsRegResponseView rv( &buff[0] );
+    const unsigned int len = rv.size();
+
+    out->getHTTPResponseHeader().addHeader( "Content-Type",
+                                            "application/octet-stream" );
+    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
+                                            "binary" );
+    out->write( (char*)(&buff[0]), len );
+
+  }
+
+  ////////////////////////////////////////////////////////
+  //// Tell consumer we're not ready (free function): ////
+  ////////////////////////////////////////////////////////
+  void writeNotReady( xgi::Output* out )
+  {
+
+    // TODO: figure out a better way...
+    const int buff_size = 1000;
+    std::vector<unsigned char> buff;
+    buff.resize( buff_size );
+
+    ConsRegResponseBuilder rb( &buff[0], buff.capacity(),
+                               ConsRegResponseBuilder::ES_NOT_READY, 0 );
+    ConsRegResponseView rv( &buff[0] );
+    const unsigned int len = rv.size();
+
+    out->getHTTPResponseHeader().addHeader( "Content-Type",
+                                            "application/octet-stream" );
+    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
+                                            "binary" );
+    out->write( (char*)(&buff[0]), len );
+
+  }
+
+  ////////////////////////////////////////////////////////
+  //// Send empty buffer to consumer (free function): ////
+  ////////////////////////////////////////////////////////
+  void writeEmptyBuffer( xgi::Output* out )
+  {
+
+    std::vector<unsigned char> buff;
+    buff.resize(1);
+
+    ConsRegResponseView rv( &buff[0] );
+
+    out->getHTTPResponseHeader().addHeader( "Content-Type",
+                                            "application/octet-stream" );
+    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
+                                            "binary" );
+    out->write( (char*)(&buff[0]), 0 );
+
+  }
+
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
   ( unsigned int maxConnectRetries,
     unsigned int connectRetryInterval, // seconds
@@ -158,7 +227,7 @@ namespace stor
     double maxEventRequestRate, // Hz
     const FilterList& selEvents,
     const string& selHLTOut,
-    unsigned int secondsToStale ):
+    utils::duration_t secondsToStale ):
     _common( consumerName, headerRetryInterval, 
              maxEventRequestRate, QueueID() ),
     _maxConnectRetries( maxConnectRetries ),

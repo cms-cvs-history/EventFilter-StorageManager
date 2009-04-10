@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.76 2009/04/09 17:00:35 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.77 2009/04/09 18:22:52 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -11,6 +11,7 @@
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -110,7 +111,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.76 2009/04/09 17:00:35 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.77 2009/04/09 18:22:52 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -222,6 +223,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                                              getApplicationDescriptor()));
 
   sharedResourcesPtr_->_registrationCollection.reset( new RegistrationCollection() );
+  sharedResourcesPtr_->_eventConsumerQueueCollection.reset( new EventQueueCollection() );
 
   // Start the workloops
   // TODO: add try/catch block and handle exceptions
@@ -3444,6 +3446,87 @@ unsigned int StorageManager::getRunNumber() const
   if( !sharedResourcesPtr_ ) return 0;
   if( !sharedResourcesPtr_->_configuration ) return 0;
   return sharedResourcesPtr_->_configuration->getRunNumber();
+}
+
+/////////////////////////////////////////////
+//// New consumer registration callback: ////
+/////////////////////////////////////////////
+void
+StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
+  throw( xgi::exception::Exception )
+{
+
+  // Get consumer ID if registration is allowed:
+  ConsumerID cid = sharedResourcesPtr_->_registrationCollection->getConsumerID();
+  if( cid == ConsumerID() )
+    {
+      writeNotReady( out );
+      return;
+    }
+
+  const utils::duration_t secs2stale =
+    sharedResourcesPtr_->_configuration->getEventServingParams()._activeConsumerTimeout;
+
+  // Create registration info and set consumer ID:
+  stor::ConsRegPtr reginfo = parseEventConsumerRegistration( in, secs2stale );
+  reginfo->setConsumerID( cid );
+
+  // Create queue and set queue ID:
+  const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
+  const size_t maxsize = std::numeric_limits<size_t>::max();
+  QueueID qid =
+    sharedResourcesPtr_->_eventConsumerQueueCollection->createQueue( cid,
+                                                                     policy,
+                                                                     maxsize,
+                                                                     secs2stale );
+  reginfo->setQueueID( qid );
+
+  // Register consumer with InitMsgCollection:
+  bool reg_ok =
+    sharedResourcesPtr_->_initMsgCollection->registerConsumer( cid,
+                                                               reginfo->selHLTOut() );
+  if( !reg_ok )
+    {
+      writeNotReady( out );
+      return;
+    }
+
+  // Add registration to collection:
+  bool add_ok = 
+    sharedResourcesPtr_->_registrationCollection->addRegistrationInfo( cid,
+                                                                       reginfo );
+  if( !add_ok )
+    {
+      writeNotReady( out );
+      return;
+    }
+
+  // Put registration on the queue:
+  sharedResourcesPtr_->_registrationQueue->enq_wait( reginfo );
+
+  // Reply to consumer:
+  writeEventConsumerRegistration( out, cid );
+
+}
+
+///////////////////////////////////////
+//// New consumer header callback: ////
+///////////////////////////////////////
+void
+StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
+  throw( xgi::exception::Exception )
+{
+
+}
+
+//////////////////////////////////////
+//// New consumer event callback: ////
+//////////////////////////////////////
+void
+StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
+  throw( xgi::exception::Exception )
+{
+
 }
 
 //////////////////////////////////////////////////////////////////////////

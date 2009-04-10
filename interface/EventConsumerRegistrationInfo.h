@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.12 2009/04/03 13:40:51 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.13 2009/04/08 19:28:44 paterno Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -13,10 +13,12 @@
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 namespace xgi
 {
   class Input;
+  class Output;
 }
 
 namespace stor
@@ -24,9 +26,9 @@ namespace stor
   /**
    * Holds the registration information from a event consumer.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/04/03 13:40:51 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/04/08 19:28:44 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -45,7 +47,7 @@ namespace stor
 				   double maxEventRequestRate, // Hz
 				   const FilterList& selEvents,
 				   const std::string& selHLTOut,
-				   unsigned int secondsToStale );
+				   utils::duration_t secondsToStale );
 
     ~EventConsumerRegistrationInfo();
 
@@ -54,7 +56,7 @@ namespace stor
     unsigned int connectRetryInterval() const { return _connectRetryInterval; }
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
-    unsigned int secondsToStale() const { return _secondsToStale; }
+    utils::duration_t secondsToStale() const { return _secondsToStale; }
     bool isProxyServer() const { return _isProxy; }
 
     // Output:
@@ -80,7 +82,7 @@ namespace stor
     unsigned int     _connectRetryInterval;
     FilterList       _selEvents;
     std::string      _selHLTOut;
-    unsigned long    _secondsToStale;
+    utils::duration_t _secondsToStale;
     bool             _isProxy;
 
   };
@@ -102,7 +104,22 @@ namespace stor
      Parse consumer registration request (free function):
   */
   ConsRegPtr parseEventConsumerRegistration( xgi::Input* in,
-					     unsigned int secondsToStale );
+					     utils::duration_t secondsToStale );
+
+  /**
+     Send ID to consumer (free function):
+  */
+  void writeEventConsumerRegistration( xgi::Output*, ConsumerID );
+
+  /**
+     Tell consumer we're not ready (free function):
+  */
+  void writeNotReady( xgi::Output* );
+
+  /**
+     Send empty buffer to consumer (free function):
+  */
+  void writeEmptyBuffer( xgi::Output* );
 
 } // namespace stor
 

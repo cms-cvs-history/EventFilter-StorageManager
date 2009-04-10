@@ -3,7 +3,7 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output disk files.
  *
- * $Id: InitMsgCollection.cc,v 1.5.12.3 2009/02/24 22:49:02 biery Exp $
+ * $Id: InitMsgCollection.cc,v 1.5.12.4 2009/02/25 04:01:49 biery Exp $
  */
 
 #include "DataFormats/Streamer/interface/StreamedProducts.h"
@@ -355,4 +355,13 @@ void InitMsgCollection::add(InitMsgView const& initMsgView)
   std::copy(initMsgView.startAddress(),
             initMsgView.startAddress()+initMsgView.size(),
             copyPtr);
+}
+
+////////////////////////////
+//// Register consumer: ////
+////////////////////////////
+bool InitMsgCollection::registerConsumer( ConsumerID cid, const std::string& hltModule )
+{
+  // TODO ...
+  return true;
 }

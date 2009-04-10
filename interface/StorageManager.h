@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.46 2009/04/09 14:00:04 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.47 2009/04/09 17:00:59 mommsen Exp $
 */
 
 #include <string>
@@ -133,6 +133,15 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void DQMconsumerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+
+    // New consumer handling methods. Will replace consumerWebPage,
+    // headerdataWebPage, and eventdataWebPage.
+    void processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+    void processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+    void processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
 
     std::string findStreamName(const std::string &in) const;
 	
