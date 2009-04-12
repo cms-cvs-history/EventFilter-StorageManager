@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.13 2009/04/08 19:28:44 paterno Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.14 2009/04/10 11:26:59 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -26,9 +26,9 @@ namespace stor
   /**
    * Holds the registration information from a event consumer.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/04/08 19:28:44 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/04/10 11:26:59 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -120,6 +120,11 @@ namespace stor
      Send empty buffer to consumer (free function):
   */
   void writeEmptyBuffer( xgi::Output* );
+
+  /**
+     Write headers (free function):
+  */
+  void writeHTTPHeaders( xgi::Output* );
 
 } // namespace stor
 

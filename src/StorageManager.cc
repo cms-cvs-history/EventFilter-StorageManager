@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.77 2009/04/09 18:22:52 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.78 2009/04/10 11:27:02 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -111,7 +111,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.77 2009/04/09 18:22:52 dshpakov Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.78 2009/04/10 11:27:02 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3458,7 +3458,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
   // Get consumer ID if registration is allowed:
   ConsumerID cid = sharedResourcesPtr_->_registrationCollection->getConsumerID();
-  if( cid == ConsumerID() )
+  if( !cid.isValid() )
     {
       writeNotReady( out );
       return;
@@ -3473,12 +3473,19 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
   // Create queue and set queue ID:
   const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
-  const size_t maxsize = std::numeric_limits<size_t>::max();
+  const size_t qsize =
+    sharedResourcesPtr_->_configuration->getEventServingParams()._consumerQueueSize;
   QueueID qid =
     sharedResourcesPtr_->_eventConsumerQueueCollection->createQueue( cid,
                                                                      policy,
-                                                                     maxsize,
+                                                                     qsize,
                                                                      secs2stale );
+  if( !qid.isValid() )
+    {
+      writeNotReady( out );
+      return;
+    }
+
   reginfo->setQueueID( qid );
 
   // Register consumer with InitMsgCollection:

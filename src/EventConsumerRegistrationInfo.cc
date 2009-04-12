@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.14 2009/04/08 19:28:45 paterno Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.15 2009/04/10 11:27:02 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -153,25 +153,31 @@ namespace stor
 
   }
 
+  /////////////////////////////////////////////
+  //// Write HTTP headers (free function): ////
+  /////////////////////////////////////////////
+  void writeHTTPHeaders( xgi::Output* out )
+  {
+    out->getHTTPResponseHeader().addHeader( "Content-Type",
+                                            "application/octet-stream" );
+    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
+                                            "binary" );
+  }
+
   //////////////////////////////////////////////
   //// Send ID to consumer (free function): ////
   //////////////////////////////////////////////
   void writeEventConsumerRegistration( xgi::Output* out, ConsumerID cid )
   {
 
-    // TODO: figure out a better way...
     const int buff_size = 1000;
-    std::vector<unsigned char> buff;
-    buff.resize( buff_size );
+    std::vector<unsigned char> buff( buff_size );
 
     ConsRegResponseBuilder rb( &buff[0], buff.capacity(), 0, cid.value );
     ConsRegResponseView rv( &buff[0] );
     const unsigned int len = rv.size();
 
-    out->getHTTPResponseHeader().addHeader( "Content-Type",
-                                            "application/octet-stream" );
-    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
-                                            "binary" );
+    writeHTTPHeaders( out );
     out->write( (char*)(&buff[0]), len );
 
   }
@@ -182,20 +188,15 @@ namespace stor
   void writeNotReady( xgi::Output* out )
   {
 
-    // TODO: figure out a better way...
     const int buff_size = 1000;
-    std::vector<unsigned char> buff;
-    buff.resize( buff_size );
+    std::vector<unsigned char> buff( buff_size );
 
     ConsRegResponseBuilder rb( &buff[0], buff.capacity(),
                                ConsRegResponseBuilder::ES_NOT_READY, 0 );
     ConsRegResponseView rv( &buff[0] );
     const unsigned int len = rv.size();
 
-    out->getHTTPResponseHeader().addHeader( "Content-Type",
-                                            "application/octet-stream" );
-    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
-                                            "binary" );
+    writeHTTPHeaders( out );
     out->write( (char*)(&buff[0]), len );
 
   }
@@ -205,18 +206,9 @@ namespace stor
   ////////////////////////////////////////////////////////
   void writeEmptyBuffer( xgi::Output* out )
   {
-
-    std::vector<unsigned char> buff;
-    buff.resize(1);
-
-    ConsRegResponseView rv( &buff[0] );
-
-    out->getHTTPResponseHeader().addHeader( "Content-Type",
-                                            "application/octet-stream" );
-    out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
-                                            "binary" );
-    out->write( (char*)(&buff[0]), 0 );
-
+    char buff;
+    writeHTTPHeaders( out );
+    out->write( &buff, 0 );
   }
 
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
