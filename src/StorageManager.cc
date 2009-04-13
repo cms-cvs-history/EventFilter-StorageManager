@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.79 2009/04/12 15:37:09 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.80 2009/04/13 08:51:19 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.79 2009/04/12 15:37:09 dshpakov Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.80 2009/04/13 08:51:19 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3477,7 +3477,40 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
     sharedResourcesPtr_->_configuration->getEventServingParams()._activeConsumerTimeout;
 
   // Create registration info and set consumer ID:
-  stor::ConsRegPtr reginfo = parseEventConsumerRegistration( in, secs2stale );
+  stor::ConsRegPtr reginfo;
+  try
+    {
+      reginfo = parseEventConsumerRegistration( in, secs2stale );
+    }
+  catch ( edm::Exception& excpt )
+    {
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                      "Error parsing an event consumer registration request:"
+                      << excpt.what());
+
+      writeNotReady( out );
+      return;
+    }
+  catch ( xcept::Exception& excpt )
+    {
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                      "Error parsing an event consumer registration request:"
+                      << excpt.what());
+
+      writeNotReady( out );
+      return;
+    }
+  catch ( ... )
+    {
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                      "Error parsing an event consumer registration request.");
+
+      writeNotReady( out );
+      return;
+    }
   reginfo->setConsumerID( cid );
 
   // Create queue and set queue ID:
