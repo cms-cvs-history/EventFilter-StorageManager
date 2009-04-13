@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: ConsumerUtils.cc,v 1.1.2.1 2009/04/13 08:51:18 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -64,7 +64,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
       // new-style consumer
       sel_hlt_out = pset.getParameter<std::string>( "TrackedHLTOutMod" );
     }
-  catch( xcept::Exception& e )
+  catch( edm::Exception& e )
     {
       // old-style consumer or param not specified
       sel_hlt_out =
@@ -83,7 +83,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
     {
       max_rate = pset.getParameter<double>( "TrackedMaxRate" );
     }
-  catch( xcept::Exception& e )
+  catch( edm::Exception& e )
     {
       max_rate =
 	pset.getUntrackedParameter<double>( "maxEventRequestRate", 1.0 );
@@ -95,9 +95,15 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
     {
       sel_events = pset.getParameter<Strings>( "TrackedEventSelection" );
     }
-  catch( xcept::Exception& e )
+  catch( edm::Exception& e )
     {
-      pset.getParameter<Strings>( "SelectEvents" );
+      edm::ParameterSet tmpPSet1 =
+        pset.getUntrackedParameter<edm::ParameterSet>( "SelectEvents",
+                                                       edm::ParameterSet() );
+      if ( ! tmpPSet1.empty() )
+        {
+          sel_events = tmpPSet1.getParameter<Strings>( "SelectEvents" );
+        }
     }
 
   // Number of retries:
@@ -106,7 +112,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
     {
       max_conn_retr = pset.getParameter<int>( "TrackedMaxConnectTries" );
     }
-  catch( xcept::Exception& e )
+  catch( edm::Exception& e )
     {
       pset.getUntrackedParameter<int>( "maxConnectTries", 5 );
     }
@@ -118,7 +124,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
       conn_retr_interval =
 	pset.getParameter<int>( "TrackedConnectTrySleepTime" );
     }
-  catch( xcept::Exception& e )
+  catch( edm::Exception& e )
     {
       conn_retr_interval =
 	pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
@@ -131,7 +137,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
       hdr_retr_interval =
 	pset.getParameter<int>( "TrackedHeaderRetryInterval" );
     }
-  catch( xcept::Exception& e )
+  catch( edm::Exception& e )
     {
       hdr_retr_interval =
 	pset.getUntrackedParameter<int>( "headerRetryInterval", 5 );
