@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.5 2009/04/09 12:25:26 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.6 2009/04/09 17:00:35 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -8,11 +8,6 @@
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
 
 using namespace stor;
-
-
-MonitoredQuantity StreamsMonitorCollection::_allStreamsFileCount;
-MonitoredQuantity StreamsMonitorCollection::_allStreamsVolume;
-MonitoredQuantity StreamsMonitorCollection::_allStreamsBandwidth;
 
 
 StreamsMonitorCollection::StreamsMonitorCollection(xdaq::Application *app) :
@@ -39,7 +34,7 @@ StreamsMonitorCollection::getNewStreamRecord()
 {
   boost::mutex::scoped_lock sl(_streamRecordsMutex);
   
-  boost::shared_ptr<StreamRecord> streamRecord(new StreamsMonitorCollection::StreamRecord());
+  boost::shared_ptr<StreamRecord> streamRecord(new StreamsMonitorCollection::StreamRecord(this));
   streamRecord->fileCount.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   streamRecord->volume.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
   streamRecord->bandwidth.setNewTimeWindowForRecentResults(_timeWindowForRecentResults);
@@ -137,7 +132,7 @@ void StreamsMonitorCollection::do_reset()
 void StreamsMonitorCollection::StreamRecord::incrementFileCount()
 {
   fileCount.addSample(1);
-  _allStreamsFileCount.addSample(1);
+  parentCollection->_allStreamsFileCount.addSample(1);
 }
 
 
@@ -145,7 +140,7 @@ void StreamsMonitorCollection::StreamRecord::addSizeInBytes(double size)
 {
   size = size / (1024 * 1024);
   volume.addSample(size);
-  _allStreamsVolume.addSample(size);
+  parentCollection->_allStreamsVolume.addSample(size);
 }
 
 

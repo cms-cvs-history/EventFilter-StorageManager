@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.1.2.5 2009/04/09 12:25:26 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.1.2.6 2009/04/09 17:00:59 mommsen Exp $
 
 #ifndef StorageManager_StreamsMonitorCollection_h
 #define StorageManager_StreamsMonitorCollection_h
@@ -25,17 +25,17 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/09 12:25:26 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/04/09 17:00:59 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
   {
   private:
 
-    static MonitoredQuantity _allStreamsFileCount;
-    static MonitoredQuantity _allStreamsVolume;
-    static MonitoredQuantity _allStreamsBandwidth;
+    MonitoredQuantity _allStreamsFileCount;
+    MonitoredQuantity _allStreamsVolume;
+    MonitoredQuantity _allStreamsBandwidth;
 
   public:
 
@@ -47,6 +47,10 @@ namespace stor {
       MonitoredQuantity bandwidth;  // bandwidth in MBytes for this stream
       void incrementFileCount();
       void addSizeInBytes(double);
+      StreamsMonitorCollection* parentCollection;
+
+      StreamRecord(StreamsMonitorCollection* coll):
+        parentCollection(coll) {}
     };
 
     // We do not know how many streams there will be.
