@@ -1,9 +1,8 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.14 2009/04/10 11:26:59 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.15 2009/04/12 15:37:09 dshpakov Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
-
 
 #include <iosfwd>
 #include <string>
@@ -27,8 +26,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/04/10 11:26:59 $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/04/12 15:37:09 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -97,34 +96,6 @@ namespace stor
   {
     return ri.write(os);
   }
-
-  typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
-
-  /**
-     Parse consumer registration request (free function):
-  */
-  ConsRegPtr parseEventConsumerRegistration( xgi::Input* in,
-					     utils::duration_t secondsToStale );
-
-  /**
-     Send ID to consumer (free function):
-  */
-  void writeEventConsumerRegistration( xgi::Output*, ConsumerID );
-
-  /**
-     Tell consumer we're not ready (free function):
-  */
-  void writeNotReady( xgi::Output* );
-
-  /**
-     Send empty buffer to consumer (free function):
-  */
-  void writeEmptyBuffer( xgi::Output* );
-
-  /**
-     Write headers (free function):
-  */
-  void writeHTTPHeaders( xgi::Output* );
 
 } // namespace stor
 

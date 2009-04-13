@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: RegistrationCollection.h,v 1.1.2.1 2009/04/08 20:37:12 dshpakov Exp $
+// $Id: RegistrationCollection.h,v 1.1.2.2 2009/04/09 13:52:14 dshpakov Exp $
 
 #ifndef REGISTRATIONCOLLECTION_H
 #define REGISTRATIONCOLLECTION_H
@@ -7,6 +7,7 @@
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 
 #include <vector>
 #include <boost/thread/mutex.hpp>

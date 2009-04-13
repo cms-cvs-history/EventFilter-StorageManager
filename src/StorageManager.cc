@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.78 2009/04/10 11:27:02 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.79 2009/04/12 15:37:09 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
+#include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -111,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.78 2009/04/10 11:27:02 dshpakov Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.79 2009/04/12 15:37:09 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -168,9 +169,17 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
   xgi::bind(this,&StorageManager::fileStatisticsWebPage,"fileStatistics");
+
+  // Old consumer bindings:
   xgi::bind(this,&StorageManager::eventdataWebPage,     "geteventdata");
   xgi::bind(this,&StorageManager::headerdataWebPage,    "getregdata");
   xgi::bind(this,&StorageManager::consumerWebPage,      "registerConsumer");
+
+  // New consumer bindings:
+  //xgi::bind( this, &StorageManager::processConsumerRegistrationRequest, "registerConsumer" );
+  //xgi::bind( this, &StorageManager::processConsumerHeaderRequest, "getregdata" );
+  //xgi::bind( this, &StorageManager::processConsumerEventRequest, "geteventdata" );
+
   xgi::bind(this,&StorageManager::consumerListWebPage,  "consumerList");
   xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
   xgi::bind(this,&StorageManager::DQMconsumerWebPage,   "registerDQMConsumer");
@@ -3524,6 +3533,23 @@ StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
 
+  ConsumerID cid = getConsumerID( in );
+  if( !cid.isValid() )
+    {
+      writeEmptyBuffer( out );
+      return;
+    }
+
+  InitMsgSharedPtr payload =
+    sharedResourcesPtr_->_initMsgCollection->getElementForConsumer( cid );
+  if( payload.get() == NULL )
+    {
+      writeEmptyBuffer( out );
+      return;
+    }
+
+  writeConsumerHeader( out, payload );
+
 }
 
 //////////////////////////////////////
@@ -3533,6 +3559,23 @@ void
 StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
+
+  ConsumerID cid = getConsumerID( in );
+  if( !cid.isValid() )
+    {
+      writeEmptyBuffer( out );
+      return;
+    }
+
+  I2OChain evt =
+    sharedResourcesPtr_->_eventConsumerQueueCollection->popEvent( cid );
+  if( evt.faulty() )
+    {
+      writeEmptyBuffer( out );
+      return;
+    }
+
+  writeConsumerEvent( out, evt );
 
 }
 
