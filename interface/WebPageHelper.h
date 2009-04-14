@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.10 2009/04/06 18:29:08 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.11 2009/04/09 14:00:04 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -25,8 +25,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/06 18:29:08 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/09 14:00:04 $
    */
   
   class WebPageHelper
@@ -56,7 +56,7 @@ namespace stor {
     void storedDataWebPage
     (
       xgi::Output*,
-      const StatisticsReporterPtr
+      const SharedResourcesPtr
     );
 
     /**
@@ -65,7 +65,7 @@ namespace stor {
     void filesWebPage
     (
       xgi::Output*,
-      const StatisticsReporterPtr
+      const SharedResourcesPtr
     );
 
     /**
@@ -94,36 +94,58 @@ namespace stor {
       XHTMLMaker&,
       XHTMLMaker::Node *parent,
       toolbox::mem::Pool*,
-      const DiskWritingParams
+      DiskWritingParams const&
     );
 
     /**
      * Adds fragment monitoring statistics to the parent DOM element
      */
-    void addDOMforFragmentMonitor(XHTMLMaker& maker,
-                                         XHTMLMaker::Node *parent,
-                                         FragmentMonitorCollection const&);
+    void addDOMforFragmentMonitor
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      FragmentMonitorCollection const&
+    );
 
     /**
      * Adds run monitoring statistics to the parent DOM element
      */
-    void addDOMforRunMonitor(XHTMLMaker& maker,
-                                    XHTMLMaker::Node *parent,
-                                    RunMonitorCollection const&);
+    void addDOMforRunMonitor
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      RunMonitorCollection const&
+    );
 
     /**
      * Adds stored data statistics to the parent DOM element
      */
-    void addDOMforStoredData(XHTMLMaker& maker,
-                                    XHTMLMaker::Node *parent,
-                                    StreamsMonitorCollection const&);
+    void addDOMforStoredData
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      StreamsMonitorCollection const&
+    );
+
+    /**
+     * Adds the SM config string to the parent DOM element
+     */
+    void addDOMforConfigString
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DiskWritingParams const&
+    );
 
     /**
      * Adds files statistics to the parent DOM element
      */
-    void addDOMforFiles(XHTMLMaker& maker,
-                               XHTMLMaker::Node *parent,
-                               FilesMonitorCollection const&);
+    void addDOMforFiles
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      FilesMonitorCollection const&
+    );
 
     /**
      * List stream records statistics
