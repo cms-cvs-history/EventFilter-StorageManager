@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.9 2009/04/06 13:38:33 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.10 2009/04/08 09:34:42 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -27,8 +27,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/06 13:38:33 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/08 09:34:42 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -105,6 +105,9 @@ namespace stor {
     // State name for infospace updates:
     xdata::String _xdaq_state_name;
     void reportStateName();
+
+    // Unused status string from old SM
+    xdata::String _progressMarker;
 
   };
 

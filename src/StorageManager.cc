@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.81 2009/04/13 18:48:09 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.82 2009/04/14 10:48:52 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.81 2009/04/13 18:48:09 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.82 2009/04/14 10:48:52 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3081,7 +3081,6 @@ void StorageManager::setupFlashList()
   // Publish monitor data in monitorable info space -- Head
   //----------------------------------------------------------------------------
 
-  //  is->fireItemAvailable("progressMarker",       &progressMarker_);
   is->fireItemAvailable("connectedRBs",         &connectedRBs_);
 }
 

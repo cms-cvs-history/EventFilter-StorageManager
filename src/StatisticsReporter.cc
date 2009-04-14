@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.13 2009/04/08 08:33:40 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.14 2009/04/08 09:33:23 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -24,13 +24,15 @@ _filesMonCollection(app),
 _streamsMonCollection(app),
 _doMonitoring(true),
 _externallyVisibleState( "Halted" ),
-_xdaq_state_name( "Halted" )
+_xdaq_state_name( "Halted" ),
+_progressMarker( "unused" )
 {
   xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
 
   try
   {
     ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
+    ispace->fireItemAvailable( "progressMarker", &_progressMarker );
   }
   catch(xdata::exception::Exception &e)
   {
