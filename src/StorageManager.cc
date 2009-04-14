@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.80 2009/04/13 08:51:19 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.81 2009/04/13 18:48:09 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.80 2009/04/13 08:51:19 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.81 2009/04/13 18:48:09 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -570,7 +570,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   {
     _webPageHelper.storedDataWebPage(
       out,
-      sharedResourcesPtr_->_statisticsReporter
+      sharedResourcesPtr_
     );
   }
   catch(std::exception &e)
@@ -762,45 +762,6 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << endl;
         *out << "  </tr>" << endl;
 
-  *out << "</table>" << endl;
-
-  DiskWritingParams dwParams =
-    sharedResourcesPtr_->_configuration->getDiskWritingParams();
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "SM Configuration Information "                << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-
-    *out << "<tr>" << endl;
-    *out << "<th >" << endl;
-    *out << "Parameter" << endl;
-    *out << "</th>" << endl;
-    *out << "<th>" << endl;
-    *out << "Value" << endl;
-    *out << "</th>" << endl;
-    *out << "</tr>" << endl;
-    *out << "<tr>" << endl;
-    *out << "<tr class=\"special\">" << endl;
-      *out << "<td colspan=2>" << endl;
-      *out << "SM cfg string" << endl;
-      *out << "</td>" << endl;
-    *out << "  </tr>" << endl;
-    *out << "<tr>"					     << endl;
-      *out << " <td colspan=2>"				     << endl;
-      *out << "<textarea rows=" << 10 << " cols=100 scroll=yes";
-      *out << " readonly title=\"SM config\">"		     << endl;
-      *out << dwParams._streamConfiguration                  << endl;
-      *out << "</textarea>"                                  << endl;
-      *out << " </td>"					     << endl;
-    *out << "</tr>"					     << endl;
-
-  *out << "</table>" << endl;
-
-  *out << "  </td>"                                                  << endl;
   *out << "</table>"                                                 << endl;
   //---- separate pages for RB senders and Streamer Output
   *out << "<hr/>"                                                 << endl;
@@ -1224,7 +1185,7 @@ void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
   {
     _webPageHelper.filesWebPage(
       out,
-      sharedResourcesPtr_->_statisticsReporter
+      sharedResourcesPtr_
     );
   }
   catch(std::exception &e)

@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.17 2009/04/09 11:26:13 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.18 2009/04/09 13:59:53 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -75,19 +75,25 @@ void WebPageHelper::defaultWebPage
 void WebPageHelper::storedDataWebPage
 (
   xgi::Output *out,
-  const StatisticsReporterPtr statReporter
+  const SharedResourcesPtr sharedResources
 )
 {
   boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
   XHTMLMonitor theMonitor;
   XHTMLMaker maker;
   
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
+  
   // Create the body with the standard header
   XHTMLMaker::Node* body = 
     createWebPageBody(maker, statReporter->externallyVisibleState());
 
-  addDOMforStoredData(maker, body, statReporter->getStreamsMonitorCollection());  
+  addDOMforStoredData(maker, body, statReporter->getStreamsMonitorCollection());
 
+  maker.addNode("hr", body);
+
+  addDOMforConfigString(maker, body, sharedResources->_configuration->getDiskWritingParams());  
+  
   addDOMforSMLinks(maker, body);
   
    // Dump the webpage to the output stream
@@ -98,12 +104,14 @@ void WebPageHelper::storedDataWebPage
 void WebPageHelper::filesWebPage
 (
   xgi::Output *out,
-  const StatisticsReporterPtr statReporter
+  const SharedResourcesPtr sharedResources
 )
 {
   boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
   XHTMLMonitor theMonitor;
   XHTMLMaker maker;
+  
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
   
   // Create the body with the standard header
   XHTMLMaker::Node* body = 
@@ -264,7 +272,7 @@ void WebPageHelper::addDOMforResourceUsage
   XHTMLMaker& maker,
   XHTMLMaker::Node *parent,
   toolbox::mem::Pool *pool,
-  const DiskWritingParams dwParams
+  DiskWritingParams const& dwParams
 )
 {
   XHTMLMaker::AttrMap colspanAttr;
@@ -375,10 +383,12 @@ void WebPageHelper::addDOMforResourceUsage
 }
 
 
-void WebPageHelper::
-addDOMforFragmentMonitor(XHTMLMaker& maker,
-                         XHTMLMaker::Node *parent,
-                         FragmentMonitorCollection const& fmc)
+void WebPageHelper::addDOMforFragmentMonitor
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
+  FragmentMonitorCollection const& fmc
+)
 {
   MonitoredQuantity::Stats allFragmentSizeStats;
   fmc.getAllFragmentSizeMQ().getStats(allFragmentSizeStats);
@@ -597,9 +607,12 @@ addDOMforFragmentMonitor(XHTMLMaker& maker,
 }
 
 
-void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
-                                        XHTMLMaker::Node *parent,
-                                        RunMonitorCollection const& rmc)
+void WebPageHelper::addDOMforRunMonitor
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
+  RunMonitorCollection const& rmc
+)
 {
   MonitoredQuantity::Stats eventIDsReceivedStats;
   rmc.getEventIDsReceivedMQ().getStats(eventIDsReceivedStats);
@@ -663,9 +676,12 @@ void WebPageHelper::addDOMforRunMonitor(XHTMLMaker& maker,
 }
 
 
-void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
-                                        XHTMLMaker::Node *parent,
-                                        StreamsMonitorCollection const& smc)
+void WebPageHelper::addDOMforStoredData
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
+  StreamsMonitorCollection const& smc
+)
 {
   MonitoredQuantity::Stats allStreamsVolumeStats;
   smc.getAllStreamsVolumeMQ().getStats(allStreamsVolumeStats);
@@ -716,7 +732,6 @@ void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
     maker.addText(tableDiv, "no streams available yet");
     return;
   }
-  
   // Mean performance
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("th", tableRow, colspanAttr);
@@ -727,8 +742,8 @@ void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
     maker.addText(tableDiv, tmpString.str());
   }
   listStreamRecordsStats(maker, table, smc, MonitoredQuantity::FULL);
-
-
+  
+  
   // Recent performance
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("th", tableRow, colspanAttr);
@@ -739,8 +754,32 @@ void WebPageHelper::addDOMforStoredData(XHTMLMaker& maker,
     maker.addText(tableDiv, tmpString.str());
   }
   listStreamRecordsStats(maker, table, smc, MonitoredQuantity::RECENT);
+}
 
+
+void WebPageHelper::addDOMforConfigString
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
+  DiskWritingParams const& dwParams
+)
+{
+  XHTMLMaker::Node* table = maker.addNode("table", parent);
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _specialRowAttr);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "SM Configuration");
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow);
+  XHTMLMaker::AttrMap textareaAttr;
+  textareaAttr[ "rows" ] = "10";
+  textareaAttr[ "cols" ] = "100";
+  textareaAttr[ "scroll" ] = "yes";
+  textareaAttr[ "readonly" ];
+  textareaAttr[ "title" ] = "SM config";
+  XHTMLMaker::Node* textarea = maker.addNode("textarea", tableDiv, textareaAttr);
+  maker.addText(textarea, dwParams._streamConfiguration);
 }  
+
 
 void WebPageHelper::listStreamRecordsStats
 (
