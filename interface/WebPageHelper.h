@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.11 2009/04/09 14:00:04 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.12 2009/04/14 10:48:15 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -17,6 +17,7 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
 
 namespace stor {
@@ -25,8 +26,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/09 14:00:04 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/14 10:48:15 $
    */
   
   class WebPageHelper
@@ -155,8 +156,107 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       StreamsMonitorCollection const&,
-      MonitoredQuantity::DataSetType
+      const MonitoredQuantity::DataSetType
     );
+
+    /**
+     * Add statistics for received fragments
+     */
+    void addFragmentStats
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add header with integration duration
+     */
+    void addDurationToTableHead
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *tableRow,
+      const utils::duration_t
+    );
+    
+    /**
+     * Add a table row for number of fragment frames received
+     */
+    void addRowForFramesReceived
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for fragment bandwidth
+     */
+    void addRowForBandwidth
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for fragment rate
+     */
+    void addRowForRate
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for fragment latency
+     */
+    void addRowForLatency
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for total fragment volume received
+     */
+    void addRowForTotalVolume
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for maximum fragment bandwidth
+     */
+    void addRowForMaxBandwidth
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for minimum fragment bandwidth
+     */
+    void addRowForMinBandwidth
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      FragmentMonitorCollection::FragmentStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
 
   private:
 
@@ -169,6 +269,8 @@ namespace stor {
     const std::string _smVersion;
 
     XHTMLMaker::AttrMap _tableAttr;
+    XHTMLMaker::AttrMap _tableLabelAttr;
+    XHTMLMaker::AttrMap _tableValueAttr;
     XHTMLMaker::AttrMap _specialRowAttr;
 
   };
