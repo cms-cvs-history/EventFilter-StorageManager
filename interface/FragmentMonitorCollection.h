@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.14 2009/04/08 09:34:41 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.1.2.15 2009/04/09 17:00:58 mommsen Exp $
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/04/08 09:34:41 $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/04/09 17:00:58 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -33,6 +33,17 @@ namespace stor {
 
 
   public:
+
+    struct FragmentStats
+    {
+      MonitoredQuantity::Stats allFragmentSizeStats;
+      MonitoredQuantity::Stats eventFragmentSizeStats;
+      MonitoredQuantity::Stats dqmEventFragmentSizeStats;
+      
+      MonitoredQuantity::Stats allFragmentBandwidthStats;
+      MonitoredQuantity::Stats eventFragmentBandwidthStats;
+      MonitoredQuantity::Stats dqmEventFragmentBandwidthStats;
+    };
 
     explicit FragmentMonitorCollection(xdaq::Application*);
 
@@ -81,6 +92,11 @@ namespace stor {
     MonitoredQuantity& getDQMEventFragmentBandwidthMQ() {
       return _dqmEventFragmentBandwidth;
     }
+
+   /**
+    * Write all our collected statistics into the given Stats struct.
+    */
+    void getStats(FragmentStats& stats) const;
 
 
   private:

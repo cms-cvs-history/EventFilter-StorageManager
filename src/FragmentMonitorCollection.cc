@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.19 2009/04/08 09:33:22 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.20 2009/04/09 17:00:35 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -42,17 +42,31 @@ MonitorCollection(app)
   putItemsIntoInfoSpace();
 }
 
-void FragmentMonitorCollection::addEventFragmentSample(const double bytecount) {
+void FragmentMonitorCollection::addEventFragmentSample(const double bytecount)
+{
   double mbytes = bytecount / 0x100000;
   _allFragmentSizes.addSample(mbytes);
   _eventFragmentSizes.addSample(mbytes);
 }
 
 
-void FragmentMonitorCollection::addDQMEventFragmentSample(const double bytecount) {
+void FragmentMonitorCollection::addDQMEventFragmentSample(const double bytecount)
+{
   double mbytes = bytecount / 0x100000;
   _allFragmentSizes.addSample(mbytes);
   _dqmEventFragmentSizes.addSample(mbytes);
+}
+
+
+void FragmentMonitorCollection::getStats(FragmentStats& stats) const
+{
+  getAllFragmentSizeMQ().getStats(stats.allFragmentSizeStats);
+  getEventFragmentSizeMQ().getStats(stats.eventFragmentSizeStats);
+  getDQMEventFragmentSizeMQ().getStats(stats.dqmEventFragmentSizeStats);
+
+  getAllFragmentBandwidthMQ().getStats(stats.allFragmentBandwidthStats);
+  getEventFragmentBandwidthMQ().getStats(stats.eventFragmentBandwidthStats);
+  getDQMEventFragmentBandwidthMQ().getStats(stats.dqmEventFragmentBandwidthStats);
 }
 
 
