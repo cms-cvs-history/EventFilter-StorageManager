@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.47 2009/04/09 17:00:59 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.48 2009/04/10 11:27:02 dshpakov Exp $
 */
 
 #include <string>
@@ -27,6 +27,7 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
+#include "EventFilter/StorageManager/interface/DQMEventProcessor.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
@@ -156,7 +157,7 @@ namespace stor {
   
     boost::mutex                           halt_lock_;
 
-    SharedResourcesPtr sharedResourcesPtr_;
+    SharedResourcesPtr _sharedResources;
 
     evf::Css css_;
     int pool_is_set_;
@@ -179,8 +180,9 @@ namespace stor {
     idMap modId2ModOutMap_;
     countMap storedEventsMap_;
 
-    FragmentProcessor *fragmentProcessor_;
-    DiskWriter *diskWriter_;
+    FragmentProcessor *_fragmentProcessor;
+    DiskWriter *_diskWriter;
+    DQMEventProcessor *_dqmEventProcessor;
 
     boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
 
