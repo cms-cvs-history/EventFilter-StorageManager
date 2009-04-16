@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.2 2009/04/09 13:52:14 dshpakov Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.3 2009/04/16 10:30:37 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -70,6 +70,17 @@ void RegistrationCollection::disableConsumerRegistration()
 
 bool RegistrationCollection::isProxy( ConsumerID cid ) const
 {
-  // TODO
+  // Ugly. Should probably switch to a map.
+  for( ConsumerRegistrations::const_iterator it = _consumers.begin();
+       it != _consumers.end(); ++it )
+    {
+      if( (*it)->consumerID() == cid )
+	{
+	  if( (*it)->isProxyServer() )
+	    {
+	      return true;
+	    }
+	}
+    }
   return false;
 }
