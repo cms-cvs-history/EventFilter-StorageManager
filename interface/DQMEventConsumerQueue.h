@@ -1,10 +1,10 @@
-// $Id: DQMEventConsumerQueue.h,v 1.1.2.2 2009/01/20 10:54:04 mommsen Exp $
+// $Id: DQMEventConsumerQueue.h,v 1.1.2.1 2009/01/30 10:49:40 mommsen Exp $
 
 #ifndef StorageManager_DQMEventConsumerQueue_h
 #define StorageManager_DQMEventConsumerQueue_h
 
-#include "EventFilter/StorageManager/interface/Queue.h"
-
+#include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 namespace stor {
 
@@ -12,23 +12,12 @@ namespace stor {
    * Queue holding I2OChains of complete DQM events (histograms) 
    * waiting to be served over HTTP to a DQM event consumer
    *
-   * $Author:$
-   * $Revision:$
-   * $Date:$
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/01/30 10:49:40 $
    */
-  
-  class DQMEventConsumerQueue : public Queue
-  {
-  public:
-    
-    DQMEventConsumerQueue();
-    
-    ~DQMEventConsumerQueue();
-    
-    
-  private:
-    
-  };
+
+  typedef ConcurrentQueue<I2OChain> DQMEventConsumerQueue;  
   
 } // namespace stor
 
