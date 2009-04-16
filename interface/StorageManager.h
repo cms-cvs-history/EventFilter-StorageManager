@@ -152,6 +152,9 @@ namespace stor {
     // Get current state name:
     std::string externallyVisibleState() const;
 
+    // instantiate the plugin manager, not referenced here after!
+    edm::AssertHandler _ah;
+
     SharedResourcesPtr _sharedResources;
 
     evf::Css css_;
