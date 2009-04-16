@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.16 2009/04/09 16:02:25 biery Exp $
+// $Id: SharedResources.h,v 1.1.2.17 2009/04/10 11:27:01 dshpakov Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -29,9 +29,9 @@ namespace stor {
   /**
    * Container for shared resources.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/04/09 16:02:25 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.17 $
+   * $Date: 2009/04/10 11:27:01 $
    */
 
   struct SharedResources
@@ -44,6 +44,7 @@ namespace stor {
     boost::shared_ptr<StreamQueue> _streamQueue;
     boost::shared_ptr<RegistrationQueue> _registrationQueue;
     boost::shared_ptr<EventQueueCollection> _eventConsumerQueueCollection;
+    boost::shared_ptr<EventQueueCollection> _dqmEventConsumerQueueCollection;
 
     // other
     boost::shared_ptr<Configuration> _configuration;
