@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.82 2009/04/14 10:48:52 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.83 2009/04/14 13:43:10 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.82 2009/04/14 10:48:52 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.83 2009/04/14 13:43:10 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3533,8 +3533,20 @@ StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
       return;
     }
 
-  InitMsgSharedPtr payload =
-    sharedResourcesPtr_->_initMsgCollection->getElementForConsumer( cid );
+  // Check if proxy:
+  bool is_proxy = 
+    sharedResourcesPtr_->_registrationCollection->isProxy( cid );
+
+  InitMsgSharedPtr payload;
+  if( is_proxy )
+    {
+      payload = sharedResourcesPtr_->_initMsgCollection->getFullCollection();
+    }
+  else
+    {
+      payload = sharedResourcesPtr_->_initMsgCollection->getElementForConsumer( cid );
+    }
+
   if( payload.get() == NULL )
     {
       writeEmptyBuffer( out );

@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.2 2009/04/13 18:45:43 biery Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.3 2009/04/16 10:09:00 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -283,8 +283,8 @@ void stor::writeConsumerEvent( xgi::Output* out, const I2OChain& evt )
   const unsigned int nfrags = evt.fragmentCount();
   for ( unsigned int i = 0; i < nfrags; ++i )
    {
-     const unsigned int len = evt.dataSize( idx );
-     unsigned char* location = evt.dataLocation( idx );
+     const unsigned int len = evt.dataSize( i );
+     unsigned char* location = evt.dataLocation( i );
      out->write( (char*)location, len );
    } 
 
