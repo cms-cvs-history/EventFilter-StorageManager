@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.83 2009/04/14 13:43:10 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.84 2009/04/16 10:30:37 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -13,6 +13,7 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
+#include "EventFilter/StorageManager/interface/Exception.h"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 #include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
@@ -112,7 +113,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.83 2009/04/14 13:43:10 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.84 2009/04/16 10:30:37 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -203,55 +204,89 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // set application icon for hyperdaq
   getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
 
-  sharedResourcesPtr_.reset(new SharedResources());
+  _sharedResources.reset(new SharedResources());
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
   unsigned long instance = getApplicationDescriptor()->getInstance();
-  sharedResourcesPtr_->_configuration.reset(new Configuration(ispace,
+  _sharedResources->_configuration.reset(new Configuration(ispace,
                                                               instance));
 
   QueueConfigurationParams queueParams =
-    sharedResourcesPtr_->_configuration->getQueueConfigurationParams();
-  sharedResourcesPtr_->_commandQueue.
+    _sharedResources->_configuration->getQueueConfigurationParams();
+  _sharedResources->_commandQueue.
     reset(new CommandQueue(queueParams._commandQueueSize));
-  sharedResourcesPtr_->_fragmentQueue.
+  _sharedResources->_fragmentQueue.
     reset(new FragmentQueue(queueParams._fragmentQueueSize));
-  sharedResourcesPtr_->_registrationQueue.
+  _sharedResources->_registrationQueue.
     reset(new RegistrationQueue(queueParams._registrationQueueSize));
-  sharedResourcesPtr_->_streamQueue.
+  _sharedResources->_streamQueue.
     reset(new StreamQueue(queueParams._streamQueueSize));
 
-  sharedResourcesPtr_->_statisticsReporter.reset(new StatisticsReporter(this));
-  sharedResourcesPtr_->_initMsgCollection.reset(new InitMsgCollection());
-  sharedResourcesPtr_->_diskWriterResources.reset(new DiskWriterResources());
+  _sharedResources->_statisticsReporter.reset(new StatisticsReporter(this));
+  _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
+  _sharedResources->_diskWriterResources.reset(new DiskWriterResources());
 
-  sharedResourcesPtr_->_smRBSenderList = &smrbsenders_;
+  _sharedResources->_smRBSenderList = &smrbsenders_;
 
-  sharedResourcesPtr_->
+  _sharedResources->
     _discardManager.reset(new DiscardManager(getApplicationContext(),
                                              getApplicationDescriptor()));
 
-  sharedResourcesPtr_->_registrationCollection.reset( new RegistrationCollection() );
-  sharedResourcesPtr_->_eventConsumerQueueCollection.reset( new EventQueueCollection() );
+  _sharedResources->_registrationCollection.reset( new RegistrationCollection() );
+  _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection() );
+  _sharedResources->_dqmEventConsumerQueueCollection.reset( new EventQueueCollection() );
+
+  // Main worker threads
+  _fragmentProcessor = new FragmentProcessor( this, _sharedResources,
+                                              _wrapper_notifier );
+  _diskWriter = new DiskWriter(this, _sharedResources);
+  _dqmEventProcessor = new DQMEventProcessor(this, _sharedResources);
 
   // Start the workloops
-  // TODO: add try/catch block and handle exceptions
-  sharedResourcesPtr_->_statisticsReporter->startWorkLoop();
+  try
+  {
+    _sharedResources->_statisticsReporter->startWorkLoop("theStatisticsReporter");
+    _fragmentProcessor->startWorkLoop("theFragmentProcessor");
+    _diskWriter->startWorkLoop("theDiskWriter");
+    _dqmEventProcessor->startWorkLoop("theDQMEventProcessor");
+  }
+  catch(xcept::Exception &e)
+  {
+    LOG4CPLUS_FATAL(getApplicationLogger(),
+      e.what() << xcept::stdformat_exception_history(e));
 
-  fragmentProcessor_ = new FragmentProcessor( sharedResourcesPtr_,
-                                              _wrapper_notifier );
-  fragmentProcessor_->startWorkLoop(utils::getIdentifier(getApplicationDescriptor()));
-
-  diskWriter_ = new DiskWriter(this, sharedResourcesPtr_);
-  diskWriter_->startWorkLoop();
+    notifyQualified("fatal", e);
+    _sharedResources->moveToFailedState();
+  }
+  catch(std::exception &e)
+  {
+    LOG4CPLUS_FATAL(getApplicationLogger(),
+      e.what());
+    
+    XCEPT_DECLARE(stor::exception::Exception,
+      sentinelException, e.what());
+    notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
+  }
+  catch(...)
+  {
+    std::string errorMsg = "Unknown exception when starting the workloops.";
+    LOG4CPLUS_FATAL(getApplicationLogger(),
+      errorMsg);
+    
+    XCEPT_DECLARE(stor::exception::Exception,
+      sentinelException, errorMsg);
+    notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
+  }
 
 }
 
 StorageManager::~StorageManager()
 {
   delete ah_;
-  delete fragmentProcessor_;
-  delete diskWriter_;
+  delete _fragmentProcessor;
+  delete _diskWriter;
 }
 
 xoap::MessageReference
@@ -273,7 +308,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
@@ -315,7 +350,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -332,8 +367,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  RunMonitorCollection& runMonCollection = sharedResourcesPtr_->_statisticsReporter->getRunMonitorCollection();
-  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
+  RunMonitorCollection& runMonCollection = _sharedResources->_statisticsReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -415,7 +450,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -432,8 +467,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  RunMonitorCollection& runMonCollection = sharedResourcesPtr_->_statisticsReporter->getRunMonitorCollection();
-  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
+  RunMonitorCollection& runMonCollection = _sharedResources->_statisticsReporter->getRunMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -471,7 +506,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -488,7 +523,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  FragmentMonitorCollection& fragMonCollection = sharedResourcesPtr_->_statisticsReporter->getFragmentMonitorCollection();
+  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -520,7 +555,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   }
 
   I2OChain i2oChain(ref);
-  sharedResourcesPtr_->_fragmentQueue->enq_wait(i2oChain);
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
   // for bandwidth performance measurements
   unsigned long actualFrameSize =
@@ -538,7 +573,7 @@ throw (xgi::exception::Exception)
   {
     _webPageHelper.defaultWebPage(
       out,
-      sharedResourcesPtr_,
+      _sharedResources,
       pool_
     );
   }
@@ -570,7 +605,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   {
     _webPageHelper.storedDataWebPage(
       out,
-      sharedResourcesPtr_
+      _sharedResources
     );
   }
   catch(std::exception &e)
@@ -680,7 +715,7 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
         boost::shared_ptr<InitMsgCollection> initMsgCollection =
-          sharedResourcesPtr_->_initMsgCollection;
+          _sharedResources->_initMsgCollection;
         idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
         for( ; oi != oe; ++oi) {
           std::string outputModuleLabel = oi->second;
@@ -1185,7 +1220,7 @@ void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
   {
     _webPageHelper.filesWebPage(
       out,
-      sharedResourcesPtr_
+      _sharedResources
     );
   }
   catch(std::exception &e)
@@ -1240,11 +1275,11 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(externallyVisibleState() == "Enabled" &&
-     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
-     sharedResourcesPtr_->_initMsgCollection->size() > 0)
+     _sharedResources->_initMsgCollection.get() != NULL &&
+     _sharedResources->_initMsgCollection->size() > 0)
   {
     boost::shared_ptr<EventServer> eventServer =
-      sharedResourcesPtr_->_oldEventServer;
+      _sharedResources->_oldEventServer;
     if (eventServer.get() != NULL)
     {
       // if we've stored a "registry warning" in the consumer pipe, send
@@ -1269,7 +1304,7 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
       // that new INIT message(s) are available
       else if (consPtr.get() != NULL && consPtr->isProxyServer() &&
                consumerInitMsgCount >= 0 &&
-               sharedResourcesPtr_->_initMsgCollection->size() > consumerInitMsgCount)
+               _sharedResources->_initMsgCollection->size() > consumerInitMsgCount)
       {
         OtherMessageBuilder othermsg(&mybuffer_[0],
                                      Header::NEW_INIT_AVAILABLE);
@@ -1348,13 +1383,13 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
   // first test if StorageManager is in Enabled state and registry is filled
   // this must be the case for valid data to be present
   if(externallyVisibleState() == "Enabled" &&
-     sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
-     sharedResourcesPtr_->_initMsgCollection->size() > 0)
+     _sharedResources->_initMsgCollection.get() != NULL &&
+     _sharedResources->_initMsgCollection->size() > 0)
     {
       std::string errorString;
       InitMsgSharedPtr serializedProds;
       boost::shared_ptr<EventServer> eventServer =
-        sharedResourcesPtr_->_oldEventServer;
+        _sharedResources->_oldEventServer;
       if (eventServer.get() != NULL)
       {
         boost::shared_ptr<ConsumerPipe> consPtr =
@@ -1366,7 +1401,7 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
           // picture to consumers
           boost::mutex::scoped_lock sl(consumerInitMsgLock_);
           boost::shared_ptr<InitMsgCollection> initMsgCollection =
-            sharedResourcesPtr_->_initMsgCollection;
+            _sharedResources->_initMsgCollection;
           try
           {
             if (consPtr->isProxyServer())
@@ -1490,7 +1525,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
     out->write(buffer,strlen(buffer));
 
     boost::shared_ptr<EventServer> eventServer =
-      sharedResourcesPtr_->_oldEventServer;
+      _sharedResources->_oldEventServer;
     if (eventServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
@@ -1547,7 +1582,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
       }
     }
     boost::shared_ptr<DQMEventServer> dqmServer =
-      sharedResourcesPtr_->_oldDQMEventServer;
+      _sharedResources->_oldDQMEventServer;
     if (dqmServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
@@ -1698,14 +1733,14 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
   *out << "</table>"                                                 << endl;
 
   EventServingParams esParams =
-    sharedResourcesPtr_->_configuration->getEventServingParams();
+    _sharedResources->_configuration->getEventServingParams();
 
   if(externallyVisibleState() == "Enabled")
   {
     boost::shared_ptr<EventServer> eventServer =
-      sharedResourcesPtr_->_oldEventServer;
+      _sharedResources->_oldEventServer;
     boost::shared_ptr<InitMsgCollection> initMsgCollection =
-      sharedResourcesPtr_->_initMsgCollection;
+      _sharedResources->_initMsgCollection;
     if (eventServer.get() != NULL && initMsgCollection.get() != NULL)
     {
       if (initMsgCollection->size() > 0)
@@ -2676,11 +2711,11 @@ void StorageManager::eventServerWebPage(xgi::Input *in, xgi::Output *out)
            << std::endl;
     }
 
-    if(sharedResourcesPtr_->_initMsgCollection.get() != NULL &&
-       sharedResourcesPtr_->_initMsgCollection->size() > 0)
+    if(_sharedResources->_initMsgCollection.get() != NULL &&
+       _sharedResources->_initMsgCollection->size() > 0)
     {
       boost::shared_ptr<InitMsgCollection> initMsgCollection =
-        sharedResourcesPtr_->_initMsgCollection;
+        _sharedResources->_initMsgCollection;
       *out << "<h3>HLT Trigger Paths:</h3>" << std::endl;
       *out << "<table border=\"1\" width=\"100%\">" << std::endl;
 
@@ -2766,7 +2801,7 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   // fetch the event server
   // (it and/or the job controller may not have been created yet)
   boost::shared_ptr<EventServer> eventServer =
-    sharedResourcesPtr_->_oldEventServer;
+    _sharedResources->_oldEventServer;
 
   // if no event server, tell the consumer that we're not ready
   if (eventServer.get() == NULL)
@@ -2846,7 +2881,7 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
                                                          std::string());
 
     EventServingParams esParams =
-      sharedResourcesPtr_->_configuration->getEventServingParams();
+      _sharedResources->_configuration->getEventServingParams();
 
     // create the local consumer interface and add it to the event server
     boost::shared_ptr<ConsumerPipe>
@@ -2924,7 +2959,7 @@ void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
   if(externallyVisibleState() == "Enabled" && consumerId != 0)
   {
     boost::shared_ptr<DQMEventServer> eventServer =
-      sharedResourcesPtr_->_oldDQMEventServer;
+      _sharedResources->_oldDQMEventServer;
     if (eventServer.get() != NULL)
     {
       boost::shared_ptr< std::vector<char> > bufPtr =
@@ -2999,7 +3034,7 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     // (it and/or the job controller may not have been created yet
     //  if not in the enabled state)
     boost::shared_ptr<DQMEventServer> eventServer =
-      sharedResourcesPtr_->_oldDQMEventServer;
+      _sharedResources->_oldDQMEventServer;
 
     // if no event server, tell the consumer that we're not ready
     if (eventServer.get() == NULL)
@@ -3014,7 +3049,7 @@ void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
     else
     {
       EventServingParams esParams =
-        sharedResourcesPtr_->_configuration->getEventServingParams();
+        _sharedResources->_configuration->getEventServingParams();
 
       // create the local consumer interface and add it to the event server
       boost::shared_ptr<DQMConsumerPipe>
@@ -3094,7 +3129,7 @@ void StorageManager::actionPerformed(xdata::Event& e)
   if (externallyVisibleState()=="halting") {return;}
   // paranoia - also return if serviceManager ptr is null.  Although, to do
   // this right, we would need a lock
-  if (sharedResourcesPtr_->_serviceManager.get() == 0) {return;}
+  if (_sharedResources->_serviceManager.get() == 0) {return;}
 
   if (e.type() == "ItemRetrieveEvent") {
     std::ostringstream oss;
@@ -3145,7 +3180,7 @@ xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
 
-    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
+    _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
 
     configureAction();
 
@@ -3179,13 +3214,13 @@ xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
 void StorageManager::configureAction()
 {
 
-  sharedResourcesPtr_->_configuration->updateAllParams();
+  _sharedResources->_configuration->updateAllParams();
   DiskWritingParams dwParams =
-    sharedResourcesPtr_->_configuration->getDiskWritingParams();
+    _sharedResources->_configuration->getDiskWritingParams();
   DQMProcessingParams dqmParams =
-    sharedResourcesPtr_->_configuration->getDQMProcessingParams();
+    _sharedResources->_configuration->getDQMProcessingParams();
   EventServingParams esParams =
-    sharedResourcesPtr_->_configuration->getEventServingParams();
+    _sharedResources->_configuration->getEventServingParams();
 
   if(!edmplugin::PluginManager::isAvailable()) {
     edmplugin::PluginManager::configure(edmplugin::standard::config());
@@ -3195,20 +3230,20 @@ void StorageManager::configureAction()
   checkDirectoryOK(dwParams._filePath);
   if((bool)dqmParams._archiveDQM) checkDirectoryOK(dqmParams._filePrefixDQM);
 
-  sharedResourcesPtr_->_oldEventServer.
+  _sharedResources->_oldEventServer.
     reset(new EventServer(esParams._maxESEventRate, esParams._maxESDataRate,
                           esParams._esSelectedHLTOutputModule));
-  sharedResourcesPtr_->_oldDQMEventServer.
+  _sharedResources->_oldDQMEventServer.
     reset(new DQMEventServer(esParams._DQMmaxESEventRate));
 
-  sharedResourcesPtr_->_serviceManager.reset(new ServiceManager(dwParams));
-  sharedResourcesPtr_->_dqmServiceManager.reset(new DQMServiceManager());
-  sharedResourcesPtr_->_dqmServiceManager->setParameters(dqmParams);
-  sharedResourcesPtr_->_dqmServiceManager->
-    setDQMEventServer(sharedResourcesPtr_->_oldDQMEventServer);
+  _sharedResources->_serviceManager.reset(new ServiceManager(dwParams));
+  _sharedResources->_dqmServiceManager.reset(new DQMServiceManager());
+  _sharedResources->_dqmServiceManager->setParameters(dqmParams);
+  _sharedResources->_dqmServiceManager->
+    setDQMEventServer(_sharedResources->_oldDQMEventServer);
 
-  sharedResourcesPtr_->_oldEventServer->
-    setStreamSelectionTable(sharedResourcesPtr_->_serviceManager->
+  _sharedResources->_oldEventServer->
+    setStreamSelectionTable(_sharedResources->_serviceManager->
                             getStreamSelectionTable());
 }
 
@@ -3216,10 +3251,10 @@ void StorageManager::configureAction()
 xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
 {
-  if (sharedResourcesPtr_->_configuration->streamConfigurationHasChanged()) {
+  if (_sharedResources->_configuration->streamConfigurationHasChanged()) {
     try {
       LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
-      sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
+      _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
       this->haltAction();
       this->configureAction();
       LOG4CPLUS_INFO(getApplicationLogger(),"Finished re-configuring!");
@@ -3249,7 +3284,7 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start enabling ...");
 
-    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
+    _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
 
     smrbsenders_.clear();
     
@@ -3281,7 +3316,7 @@ xoap::MessageReference StorageManager::stopping( xoap::MessageReference msg )
 {
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start stopping ...");
-    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
+    _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
     stopAction();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished stopping!");
@@ -3308,7 +3343,7 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
   try {
     LOG4CPLUS_INFO(getApplicationLogger(),"Start halting ...");
 
-    sharedResourcesPtr_->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
+    _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
 
     haltAction();
     
@@ -3332,13 +3367,13 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
 void StorageManager::stopAction()
 {
   // should clear the event server(s) last event/queue
-  if (sharedResourcesPtr_->_oldEventServer.get() != NULL)
+  if (_sharedResources->_oldEventServer.get() != NULL)
   {
-    sharedResourcesPtr_->_oldEventServer->clearQueue();
+    _sharedResources->_oldEventServer->clearQueue();
   }
-  if (sharedResourcesPtr_->_oldDQMEventServer.get() != NULL)
+  if (_sharedResources->_oldDQMEventServer.get() != NULL)
   {
-    sharedResourcesPtr_->_oldDQMEventServer->clearQueue();
+    _sharedResources->_oldDQMEventServer->clearQueue();
   }
 }
 
@@ -3402,9 +3437,9 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
 /////////////////////////////////
 std::string StorageManager::externallyVisibleState() const
 {
-  if( !sharedResourcesPtr_ ) return "Halted";
-  if( !sharedResourcesPtr_->_statisticsReporter ) return "Halted";
-  return sharedResourcesPtr_->_statisticsReporter->externallyVisibleState();
+  if( !_sharedResources ) return "Halted";
+  if( !_sharedResources->_statisticsReporter ) return "Halted";
+  return _sharedResources->_statisticsReporter->externallyVisibleState();
 }
 
 ////////////////////////////////////////////
@@ -3412,9 +3447,9 @@ std::string StorageManager::externallyVisibleState() const
 ////////////////////////////////////////////
 unsigned int StorageManager::getRunNumber() const
 {
-  if( !sharedResourcesPtr_ ) return 0;
-  if( !sharedResourcesPtr_->_configuration ) return 0;
-  return sharedResourcesPtr_->_configuration->getRunNumber();
+  if( !_sharedResources ) return 0;
+  if( !_sharedResources->_configuration ) return 0;
+  return _sharedResources->_configuration->getRunNumber();
 }
 
 /////////////////////////////////////////////
@@ -3426,7 +3461,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 {
 
   // Get consumer ID if registration is allowed:
-  ConsumerID cid = sharedResourcesPtr_->_registrationCollection->getConsumerID();
+  ConsumerID cid = _sharedResources->_registrationCollection->getConsumerID();
   if( !cid.isValid() )
     {
       writeNotReady( out );
@@ -3434,7 +3469,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
     }
 
   const utils::duration_t secs2stale =
-    sharedResourcesPtr_->_configuration->getEventServingParams()._activeConsumerTimeout;
+    _sharedResources->_configuration->getEventServingParams()._activeConsumerTimeout;
 
   // Create registration info and set consumer ID:
   stor::ConsRegPtr reginfo;
@@ -3476,9 +3511,9 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
   // Create queue and set queue ID:
   const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
   const size_t qsize =
-    sharedResourcesPtr_->_configuration->getEventServingParams()._consumerQueueSize;
+    _sharedResources->_configuration->getEventServingParams()._consumerQueueSize;
   QueueID qid =
-    sharedResourcesPtr_->_eventConsumerQueueCollection->createQueue( cid,
+    _sharedResources->_eventConsumerQueueCollection->createQueue( cid,
                                                                      policy,
                                                                      qsize,
                                                                      secs2stale );
@@ -3492,7 +3527,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
   // Register consumer with InitMsgCollection:
   bool reg_ok =
-    sharedResourcesPtr_->_initMsgCollection->registerConsumer( cid,
+    _sharedResources->_initMsgCollection->registerConsumer( cid,
                                                                reginfo->selHLTOut() );
   if( !reg_ok )
     {
@@ -3502,7 +3537,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
   // Add registration to collection:
   bool add_ok = 
-    sharedResourcesPtr_->_registrationCollection->addRegistrationInfo( cid,
+    _sharedResources->_registrationCollection->addRegistrationInfo( cid,
                                                                        reginfo );
   if( !add_ok )
     {
@@ -3511,7 +3546,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
     }
 
   // Put registration on the queue:
-  sharedResourcesPtr_->_registrationQueue->enq_wait( reginfo );
+  _sharedResources->_registrationQueue->enq_wait( reginfo );
 
   // Reply to consumer:
   writeEventConsumerRegistration( out, cid );
@@ -3535,16 +3570,16 @@ StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
 
   // Check if proxy:
   bool is_proxy = 
-    sharedResourcesPtr_->_registrationCollection->isProxy( cid );
+    _sharedResources->_registrationCollection->isProxy( cid );
 
   InitMsgSharedPtr payload;
   if( is_proxy )
     {
-      payload = sharedResourcesPtr_->_initMsgCollection->getFullCollection();
+      payload = _sharedResources->_initMsgCollection->getFullCollection();
     }
   else
     {
-      payload = sharedResourcesPtr_->_initMsgCollection->getElementForConsumer( cid );
+      payload = _sharedResources->_initMsgCollection->getElementForConsumer( cid );
     }
 
   if( payload.get() == NULL )
@@ -3573,7 +3608,7 @@ StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
     }
 
   I2OChain evt =
-    sharedResourcesPtr_->_eventConsumerQueueCollection->popEvent( cid );
+    _sharedResources->_eventConsumerQueueCollection->popEvent( cid );
   if( evt.faulty() )
     {
       writeEmptyBuffer( out );
