@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.1 2009/04/13 08:51:18 dshpakov Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.2 2009/04/13 18:45:43 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -277,7 +277,15 @@ void stor::writeConsumerHeader( xgi::Output* out, InitMsgSharedPtr ptr )
 ///////////////////////
 void stor::writeConsumerEvent( xgi::Output* out, const I2OChain& evt )
 {
-  const unsigned int len = evt.totalDataSize();
+
   writeHTTPHeaders( out );
-  out->write( (char*)evt.getBufferData(), len );
+
+  const unsigned int nfrags = evt.fragmentCount();
+  for ( unsigned int i = 0; i < nfrags; ++i )
+   {
+     const unsigned int len = evt.dataSize( idx );
+     unsigned char* location = evt.dataLocation( idx );
+     out->write( (char*)location, len );
+   } 
+
 }
