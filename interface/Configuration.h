@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.11 2009/04/07 17:56:40 biery Exp $
+// $Id: Configuration.h,v 1.1.2.12 2009/04/08 13:25:38 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -101,6 +101,7 @@ namespace stor
   {
     double _FPdeqWaitTime;
     double _DWdeqWaitTime;
+    double _DQMEPdeqWaitTime;
   };
 
   /**
@@ -117,8 +118,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/07 17:56:40 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/08 13:25:38 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -312,6 +313,7 @@ namespace stor
 
     xdata::Double _FPdeqWaitTime;
     xdata::Double _DWdeqWaitTime;
+    xdata::Double _DQMEPdeqWaitTime;
 
 
     mutable boost::mutex _evtStrCfgMutex;
