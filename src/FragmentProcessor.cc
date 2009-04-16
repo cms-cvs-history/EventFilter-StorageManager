@@ -1,22 +1,24 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.23 2009/04/08 14:21:31 biery Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.24 2009/04/09 11:26:12 mommsen Exp $
 
 #include <unistd.h>
 
 #include "toolbox/task/WorkLoopFactory.h"
+#include "xcept/tools.h"
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
-#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 using namespace stor;
 
 
-FragmentProcessor::FragmentProcessor( SharedResourcesPtr sr,
+FragmentProcessor::FragmentProcessor( xdaq::Application *app,
+                                      SharedResourcesPtr sr,
                                       WrapperNotifier& wn ) :
+  _app(app),
   _sharedResources(sr),
+  _wrapperNotifier( wn ),
   _fragmentStore(),
   _eventDistributor(sr),
-  _wrapperNotifier( wn ),
   _actionIsActive(true)
 {
   _stateMachine.reset( new StateMachine( &_eventDistributor,
@@ -31,21 +33,27 @@ FragmentProcessor::FragmentProcessor( SharedResourcesPtr sr,
 
 FragmentProcessor::~FragmentProcessor()
 {
+  // Stop the activity
+  _actionIsActive = false;
+
+  // Cancel the workloop (will wait until the action has finished)
+  _processWL->cancel();
 }
 
-void FragmentProcessor::startWorkLoop(std::string applicationIdentifier)
+void FragmentProcessor::startWorkLoop(std::string workloopName)
 {
   try
     {
+      std::string identifier = utils::getIdentifier(_app->getApplicationDescriptor());
+
       _processWL = toolbox::task::getWorkLoopFactory()->
-        getWorkLoop( applicationIdentifier + "FragmentProcessor",
-                     "waiting" );
+        getWorkLoop( identifier + workloopName, "waiting" );
 
       if ( ! _processWL->isActive() )
         {
           toolbox::task::ActionSignature* processAction = 
             toolbox::task::bind(this, &FragmentProcessor::processMessages, 
-                                applicationIdentifier + "ProcessMessages");
+                                identifier + "ProcessMessages");
           _processWL->submit(processAction);
 
           _processWL->activate();
@@ -60,9 +68,53 @@ void FragmentProcessor::startWorkLoop(std::string applicationIdentifier)
 
 bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
 {
-  processAllCommands();
-  processAllRegistrations();
-  processOneFragmentIfPossible();
+  std::string errorMsg;
+
+  try
+  {
+    errorMsg = "Failed to process state machine events: ";
+    processAllCommands();
+    
+    errorMsg = "Failed to process consumer registrations: ";
+    processAllRegistrations();
+    
+    errorMsg = "Failed to process an event fragment: ";
+    processOneFragmentIfPossible();
+  }
+  catch(xcept::Exception &e)
+  {
+    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
+      errorMsg << xcept::stdformat_exception_history(e));
+
+    XCEPT_DECLARE_NESTED(stor::exception::FragmentProcessing,
+      sentinelException, errorMsg, e);
+    _app->notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += e.what();
+
+    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
+      errorMsg);
+    
+    XCEPT_DECLARE(stor::exception::FragmentProcessing,
+      sentinelException, errorMsg);
+    _app->notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
+  }
+  catch(...)
+  {
+    errorMsg += "Unknown exception";
+
+    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
+      errorMsg);
+    
+    XCEPT_DECLARE(stor::exception::FragmentProcessing,
+      sentinelException, errorMsg);
+    _app->notifyQualified("fatal", sentinelException);
+    _sharedResources->moveToFailedState();
+  }
 
   return _actionIsActive;
 }
@@ -87,12 +139,6 @@ void FragmentProcessor::processOneFragment()
     {
       _stateMachine->getCurrentState().noFragmentToProcess();  
     }
-}
-
-
-void FragmentProcessor::updateStatistics()
-{
-
 }
 
 

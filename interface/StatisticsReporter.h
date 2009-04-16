@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.10 2009/04/08 09:34:42 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.11 2009/04/14 13:42:50 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -27,8 +27,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/08 09:34:42 $
+   * $Revision: 1.1.2.11 $
+   * $Date: 2009/04/14 13:42:50 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -75,7 +75,7 @@ namespace stor {
     /**
      * Create and start the monitoring workloop
      */
-    void startWorkLoop();
+    void startWorkLoop(std::string workloopName);
 
     /**
      * Reset all monitored quantities

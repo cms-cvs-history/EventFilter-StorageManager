@@ -1,10 +1,11 @@
-// $Id: FragmentProcessor.h,v 1.1.2.19 2009/04/08 14:21:31 biery Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.20 2009/04/09 11:25:27 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
+#include "xdaq/Application.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -26,16 +27,16 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.19 $
-   * $Date: 2009/04/08 14:21:31 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.20 $
+   * $Date: 2009/04/09 11:25:27 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor( SharedResourcesPtr sr, WrapperNotifier& wn );
+    FragmentProcessor( xdaq::Application *app, SharedResourcesPtr sr, WrapperNotifier& wn );
 
     ~FragmentProcessor();
     
@@ -47,14 +48,9 @@ namespace stor {
     bool processMessages(toolbox::task::WorkLoop*);
 
     /**
-     * Updates the statistics of processed fragments
-     */
-    void updateStatistics();
-
-    /**
      * Create and start the fragment processing workloop
      */
-    void startWorkLoop(std::string applicationIdentifier);
+    void startWorkLoop(std::string workloopName);
 
 
   private:
@@ -80,11 +76,12 @@ namespace stor {
      */
     void processOneFragment();
 
+    xdaq::Application*                 _app;
     SharedResourcesPtr                 _sharedResources;
+    WrapperNotifier                    _wrapperNotifier;
     boost::shared_ptr<StateMachine>    _stateMachine;
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;
-    WrapperNotifier                    _wrapperNotifier;
 
     unsigned int                       _timeout; // Waiting time in seconds.
     bool                               _actionIsActive;

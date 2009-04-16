@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.14 2009/04/08 09:33:23 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.15 2009/04/14 13:43:10 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -45,7 +45,7 @@ _progressMarker( "unused" )
 }
 
 
-void StatisticsReporter::startWorkLoop()
+void StatisticsReporter::startWorkLoop(std::string workloopName)
 {
   try
   {
@@ -53,8 +53,7 @@ void StatisticsReporter::startWorkLoop()
 
     _monitorWL=
       toolbox::task::getWorkLoopFactory()->getWorkLoop(
-        identifier + "StatisticsReporter",
-        "waiting");
+        identifier + workloopName, "waiting");
 
     if ( ! _monitorWL->isActive() )
     {

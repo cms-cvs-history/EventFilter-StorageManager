@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.1.2.13 2009/04/02 23:18:46 biery Exp $
+// $Id: DiskWriter.h,v 1.1.2.14 2009/04/08 16:25:58 biery Exp $
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -9,6 +9,7 @@
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
+#include "xdaq/Application.h"
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
@@ -27,8 +28,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: biery $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/04/02 23:18:46 $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/04/08 16:25:58 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -50,7 +51,7 @@ namespace stor {
     /**
      * Creates and starts the disk writing workloop
      */
-    void startWorkLoop();
+    void startWorkLoop(std::string workloopName);
 
 
   private:

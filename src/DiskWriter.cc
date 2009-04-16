@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.16 2009/04/03 08:24:11 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.17 2009/04/08 16:25:59 biery Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -33,15 +33,14 @@ DiskWriter::~DiskWriter()
 }
 
 
-void DiskWriter::startWorkLoop()
+void DiskWriter::startWorkLoop(std::string workloopName)
 {
   try
   {
     std::string identifier = utils::getIdentifier(_app->getApplicationDescriptor());
     
     _writingWL = toolbox::task::getWorkLoopFactory()->
-      getWorkLoop( identifier + "DiskWriter",
-        "waiting" );
+      getWorkLoop( identifier + workloopName, "waiting" );
     
     if ( ! _writingWL->isActive() )
     {
