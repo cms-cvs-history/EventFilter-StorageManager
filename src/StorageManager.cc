@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.84 2009/04/16 10:30:37 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.85 2009/04/16 12:58:05 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -108,16 +108,13 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   throw (xdaq::exception::Exception) :
   xdaq::Application(s),
   reasonForFailedState_(),
-  ah_(0), 
   mybuffer_(7000000),
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.84 2009/04/16 10:30:37 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.85 2009/04/16 12:58:05 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
-
-  ah_   = new edm::AssertHandler();
 
   setupFlashList();
 
@@ -194,7 +191,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   avEventSizeMap_.clear();
   avCompressRatioMap_.clear();
   modId2ModOutMap_.clear();
-  storedEventsMap_.clear();
 
   // need the line below so that deserializeRegistry can run
   // in order to compare two registries (cannot compare byte-for-byte) (if we keep this)
@@ -284,7 +280,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
 StorageManager::~StorageManager()
 {
-  delete ah_;
   delete _fragmentProcessor;
   delete _diskWriter;
 }
@@ -3292,7 +3287,6 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
     avEventSizeMap_.clear();
     avCompressRatioMap_.clear();
     modId2ModOutMap_.clear();
-    storedEventsMap_.clear();
 
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
   }

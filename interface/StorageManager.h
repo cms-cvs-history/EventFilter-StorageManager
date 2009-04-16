@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.48 2009/04/10 11:27:02 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.49 2009/04/16 12:56:00 mommsen Exp $
 */
 
 #include <string>
@@ -152,11 +152,6 @@ namespace stor {
     // Get current state name:
     std::string externallyVisibleState() const;
 
-    edm::AssertHandler *ah_;
-    edm::service::MessageServicePresence theMessageServicePresence;
-  
-    boost::mutex                           halt_lock_;
-
     SharedResourcesPtr _sharedResources;
 
     evf::Css css_;
@@ -178,24 +173,15 @@ namespace stor {
     valueMap avEventSizeMap_;
     valueMap avCompressRatioMap_;
     idMap modId2ModOutMap_;
-    countMap storedEventsMap_;
 
     FragmentProcessor *_fragmentProcessor;
     DiskWriter *_diskWriter;
     DQMEventProcessor *_dqmEventProcessor;
 
-    boost::mutex rblist_lock_;  // quick (temporary) fix for registration problem
-
     // Notifier wrapper:
     WrapperNotifier _wrapper_notifier;
 
     WebPageHelper _webPageHelper;
-
-    enum
-    {
-      DEFAULT_PURGE_TIME = 120,
-      DEFAULT_READY_TIME = 30
-    };
 
   }; 
 } 
