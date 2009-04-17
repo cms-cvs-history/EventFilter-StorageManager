@@ -9,7 +9,7 @@ with the specified releases:
 
 CMSSW_3_0_0_pre9:
  - EventFilter/StorageManager refdev01_scratch_branch
- - EventFilter/SMProxyServer V01-08-09
+ - EventFilter/SMProxyServer V01-08-11
  - EventFilter/ResourceBroker V00-12-02
  - IOPool/Streamer V05-06-08-03
  - EventFilter/AutoBU CMSSW_3_0_0_pre9
@@ -21,7 +21,7 @@ CMSSW_3_0_0_pre5:
  - EventFilter/StorageManager refdev01_scratch_branch
  - EventFilter/ResourceBroker V00-12-02
  - IOPool/Streamer V05-06-02-03
- - EventFilter/SMProxyServer V01-08-09
+ - EventFilter/SMProxyServer V01-08-11
  - EventFilter/AutoBU CMSSW_3_0_0_pre5
  - EventFilter/Processor CMSSW_3_0_0_pre5
 (Run EventFilter/StorageManager/test/demoSystem/bin/applyDevelopmentPatches.pl
@@ -34,7 +34,7 @@ package, please use the following tags with the specified releases:
 
 CMSSW_3_0_0_pre9:
  - EventFilter/StorageManager refdev01_intg_branch
- - EventFilter/SMProxyServer V01-08-09
+ - EventFilter/SMProxyServer V01-08-11
  - EventFilter/ResourceBroker V00-12-02
  - IOPool/Streamer V05-06-08-03
  - EventFilter/AutoBU CMSSW_3_0_0_pre9
