@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.cc,v 1.1.2.10 2009/04/08 19:28:45 paterno Exp $
+// $Id: EventQueueCollection.cc,v 1.1.2.11 2009/04/08 22:32:34 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -209,29 +209,32 @@ namespace stor
       if (i == _queue_id_lookup.end()) return result;
       id = i->second;
     }
-    switch (id.policy()) 
-      {
-      case enquing_policy::DiscardNew:
-        {
-          read_lock_t lock(_protect_discard_new_queues);
-          if (id.index() < _discard_new_queues.size())
-            _discard_new_queues[id.index()]->deq_nowait(result);
-          break;
-        }
-      case enquing_policy::DiscardOld:
-        {
-          read_lock_t lock(_protect_discard_old_queues);
-          if (id.index() < _discard_old_queues.size())
-            _discard_old_queues[id.index()]->deq_nowait(result);
-          break;
-        }
-      default:
-        {
-          throw_unknown_queueid(id);
-          // does not return, no break needed
-        }
-      }
-    return result;        
+    return popEvent(id);
+//     This code is duplicated from popEvent(QueueID)
+//
+//     switch (id.policy()) 
+//       {
+//       case enquing_policy::DiscardNew:
+//         {
+//           read_lock_t lock(_protect_discard_new_queues);
+//           if (id.index() < _discard_new_queues.size())
+//             _discard_new_queues[id.index()]->deq_nowait(result);
+//           break;
+//         }
+//       case enquing_policy::DiscardOld:
+//         {
+//           read_lock_t lock(_protect_discard_old_queues);
+//           if (id.index() < _discard_old_queues.size())
+//             _discard_old_queues[id.index()]->deq_nowait(result);
+//           break;
+//         }
+//       default:
+//         {
+//           throw_unknown_queueid(id);
+//           // does not return, no break needed
+//         }
+//       }
+//     return result;        
   }
 
 
