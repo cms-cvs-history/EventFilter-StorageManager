@@ -213,54 +213,6 @@ if ($doDefaults || defined($opt_b)) {
 }
 
 # ************************************************************
-# Allow the storage manager configuration to have no end path.
-# ************************************************************
-if (defined($opt_s)) {
-
-  my $inputFile = "EventFilter/StorageManager/src/ServiceManager.cc";
-  my $outputFile = "${inputFile}.modified";
-
-  open FILEIN, $inputFile or die "Unable to open input file $inputFile\n.";
-  open FILEOUT, ">$outputFile" or die "Unable to open output file $outputFile\n";
-
-  my $threeLineWindow = "";
-  while (my $line = <FILEIN>) {
-    chomp $line;
-
-    # update the multi-line "window" with this new line
-    if ($threeLineWindow =~ m/(.*)\n(.*)\n(.*)/) {
-      $threeLineWindow = $2 . "\n" . $3;
-    }
-    $threeLineWindow .= "\n" . $line;
-    #print STDOUT "========================================\n";
-    #print STDOUT "$threeLineWindow\n";
-
-    # comment out the endpath check
-    if ($threeLineWindow =~ m/if\s*\(\s*allEndPaths\.empty\s*\(\s*\)\s*\)/s) {
-      $line = "// TEMPORARY HACK FOR A STORAGE MANAGER DEVELOPMENT " .
-        "SYSTEM\n//" . $line;
-    }
-
-    # write the input line to the output file
-    print FILEOUT "$line\n";
-  }
-
-  close FILEIN;
-  close FILEOUT;
-
-  rename $inputFile, "${inputFile}.orig";
-  rename $outputFile, $inputFile;
-
-  print STDOUT "\n";
-  print STDOUT "============================================================\n";
-  print STDOUT " Modification made to ${inputFile}:\n";
-  print STDOUT "============================================================\n";
-  my $result=`diff $inputFile ${inputFile}.orig`;
-  print STDOUT "$result";
-
-}
-
-# ************************************************************
 # Skip over the checking of file paths in the storage manager.
 # ************************************************************
 if (defined($opt_s)) {

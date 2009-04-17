@@ -25,12 +25,6 @@ Enabled::Enabled( my_context c ): my_base(c)
   // update the run-based configuration parameters
   sharedResources->_configuration->updateRunParams();
 
-  // old disk writing begin-run processing - still used for HLT output modules
-  if ( sharedResources->_serviceManager.get() != 0 )
-  {
-    sharedResources->_serviceManager->start();
-  }
-
   // disk writer and event distributor begin-run processing
   EvtStrConfigList evtCfgList = sharedResources->_configuration->
     getCurrentEventStreamConfig();
@@ -66,12 +60,6 @@ Enabled::~Enabled()
 
   // Clear any fragments left in the fragment store
   outermost_context().getFragmentStore()->clear();
-
-  // disk writing end-run processing
-  if ( sharedResources->_serviceManager.get() != 0 )
-    {
-      sharedResources->_serviceManager->stop();
-    }
 
   // DQM end-run processing
   if ( sharedResources->_dqmServiceManager.get() != 0 )

@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.87 2009/04/17 10:42:49 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.88 2009/04/17 20:24:57 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.83 2009/04/14 13:43:10 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.88 2009/04/17 20:24:57 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3112,9 +3112,6 @@ void StorageManager::actionPerformed(xdata::Event& e)
   // of un-initialized variables.
   if (externallyVisibleState()=="Halted") {return;}
   if (externallyVisibleState()=="halting") {return;}
-  // paranoia - also return if serviceManager ptr is null.  Although, to do
-  // this right, we would need a lock
-  if (_sharedResources->_serviceManager.get() == 0) {return;}
 
   if (e.type() == "ItemRetrieveEvent") {
     std::ostringstream oss;
@@ -3221,7 +3218,6 @@ void StorageManager::configureAction()
   _sharedResources->_oldDQMEventServer.
     reset(new DQMEventServer(esParams._DQMmaxESEventRate));
 
-  _sharedResources->_serviceManager.reset(new ServiceManager(dwParams));
   _sharedResources->_dqmServiceManager.reset(new DQMServiceManager());
   _sharedResources->_dqmServiceManager->setParameters(dqmParams);
   _sharedResources->_dqmServiceManager->
