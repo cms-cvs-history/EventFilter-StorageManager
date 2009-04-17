@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.86 2009/04/16 13:19:30 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.87 2009/04/17 10:42:49 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.86 2009/04/16 13:19:30 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.83 2009/04/14 13:43:10 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -2812,11 +2812,6 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
   }
   else
   {
-    // resize the local buffer, if needed, to handle a full response message
-    int mapStringSize = eventServer->getSelectionTableStringSize();
-    responseSize += (int) (2.5 * mapStringSize);
-    if (mybuffer_.capacity() < responseSize) mybuffer_.resize(responseSize);
-
     // fetch the event selection request from the consumer request
     edm::ParameterSet requestParamSet(consumerRequest);
 
@@ -2864,8 +2859,6 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 
     Strings selectionRequest =
       EventSelector::getEventSelectionVString(requestParamSet);
-    Strings modifiedRequest =
-      eventServer->updateTriggerSelectionForStreams(selectionRequest);
 
     // pull the rate request out of the consumer parameter set, too
     double maxEventRequestRate =
@@ -2885,7 +2878,7 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
       consPtr(new ConsumerPipe(consumerName, consumerPriority,
                                (int)esParams._activeConsumerTimeout,
                                (int)esParams._idleConsumerTimeout,
-                               modifiedRequest, maxEventRequestRate,
+                               selectionRequest, maxEventRequestRate,
                                hltOMLabel,
                                consumerHost,
                                esParams._consumerQueueSize));
@@ -2898,11 +2891,6 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
     // build the registration response into the message buffer
     ConsRegResponseBuilder respMsg(&mybuffer_[0], mybuffer_.capacity(),
                                    0, consPtr->getConsumerId());
-
-    // add the stream selection table to the proxy server response
-    if (consPtr->isProxyServer()) {
-      respMsg.setStreamSelectionTable(eventServer->getStreamSelectionTable());
-    }
 
     // debug message so that compiler thinks respMsg is used
     FDEBUG(20) << "Registration response size =  " <<
@@ -3238,10 +3226,6 @@ void StorageManager::configureAction()
   _sharedResources->_dqmServiceManager->setParameters(dqmParams);
   _sharedResources->_dqmServiceManager->
     setDQMEventServer(_sharedResources->_oldDQMEventServer);
-
-  _sharedResources->_oldEventServer->
-    setStreamSelectionTable(_sharedResources->_serviceManager->
-                            getStreamSelectionTable());
 }
 
 
