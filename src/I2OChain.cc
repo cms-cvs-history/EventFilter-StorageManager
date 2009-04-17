@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.35 2009/03/19 15:11:27 mommsen Exp $
+// $Id: I2OChain.cc,v 1.1.2.36 2009/03/24 14:18:11 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -40,6 +40,7 @@ namespace stor
                                DUPLICATE_FRAGMENT = 0x40,
                                INCOMPLETE_MESSAGE = 0x80,
                                EXTERNALLY_REQUESTED = 0x10000 };
+
 
     public:
       explicit ChainData(toolbox::mem::Reference* pRef);
@@ -85,6 +86,7 @@ namespace stor
       uint32 lumiSection() const;
 
       std::string topFolderName() const;
+      DQMKey dqmKey() const;
 
       uint32 hltTriggerCount() const;
       void hltTriggerBits(std::vector<unsigned char>& bitList) const;
@@ -147,6 +149,7 @@ namespace stor
       virtual void do_l1TriggerNames(Strings& nameList) const;
 
       virtual std::string do_topFolderName() const;
+      virtual DQMKey do_dqmKey() const;
 
       virtual uint32 do_hltTriggerCount() const;
       virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
@@ -649,6 +652,11 @@ namespace stor
       return do_topFolderName();
     }
 
+    inline DQMKey ChainData::dqmKey() const
+    {
+      return do_dqmKey();
+    }
+
     inline void ChainData::hltTriggerNames(Strings& nameList) const
     {
       do_hltTriggerNames(nameList);
@@ -845,6 +853,14 @@ namespace stor
     {
       std::stringstream msg;
       msg << "A top folder name is only available from a valid, ";
+      msg << "complete DQM event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline DQMKey ChainData::do_dqmKey() const
+    {
+      std::stringstream msg;
+      msg << "The DQM key is only available from a valid, ";
       msg << "complete DQM event message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
@@ -1376,6 +1392,7 @@ namespace stor
       unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       std::string do_topFolderName() const;
+      DQMKey do_dqmKey() const;
 
     private:
 
@@ -1387,6 +1404,7 @@ namespace stor
       mutable unsigned long _headerSize;
       mutable unsigned char* _headerLocation;
       mutable std::string _topFolderName;
+      mutable DQMKey _dqmKey;
 
     };
 
@@ -1431,6 +1449,26 @@ namespace stor
         }
 
       return _topFolderName;
+
+    }
+
+    inline DQMKey DQMEventMsgData::do_dqmKey() const
+    {
+
+      if( !_headerFieldsCached )
+        {
+          cacheHeaderFields();
+        }
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "The DQM key can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      return _dqmKey;
 
     }
 
@@ -1526,6 +1564,10 @@ namespace stor
       _headerSize = msgView->headerSize();
       _headerLocation = msgView->startAddress();
       _topFolderName = msgView->topFolderName();
+
+      _dqmKey.runNumber = msgView->runNumber();
+      _dqmKey.lumiSection = msgView->lumiSection();
+      _dqmKey.updateNumber = msgView->updateNumber();
 
       _headerFieldsCached = true;
 
@@ -2096,6 +2138,16 @@ namespace stor
                      "The top folder name can not be determined from an empty I2OChain." );
       }
     return _data->topFolderName();
+  }
+
+  DQMKey I2OChain::dqmKey() const
+  {
+    if( !_data )
+      {
+        XCEPT_RAISE( stor::exception::I2OChain,
+                     "The DQM key can not be determined from an empty I2OChain." );
+      }
+    return _data->dqmKey();
   }
 
   uint32 I2OChain::outputModuleId() const

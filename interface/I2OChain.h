@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.29 2009/03/17 19:56:23 biery Exp $
+// $Id: I2OChain.h,v 1.1.2.30 2009/03/19 15:10:43 mommsen Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -12,6 +12,7 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
+#include "EventFilter/StorageManager/interface/DQMKey.h"
 
 namespace toolbox
 {
@@ -30,9 +31,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.29 $
-   * $Date: 2009/03/17 19:56:23 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.30 $
+   * $Date: 2009/03/19 15:10:43 $
    */
 
 
@@ -408,6 +409,14 @@ namespace stor {
        an exception is thrown.
      */
     std::string topFolderName() const;
+
+    /**
+       Returns the DQM key constructed from the message, if and
+       only if, the message is a DQM event message.  Otherwise,
+       an exception is thrown. The DQM key uniquely identifies
+       DQM events to be collated.
+     */
+    DQMKey dqmKey() const;
 
     /**
        Copies the HLT trigger names into the specified vector, if and
