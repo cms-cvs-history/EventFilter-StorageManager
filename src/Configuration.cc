@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.18 2009/04/07 17:56:40 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.19 2009/04/08 13:25:39 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -217,6 +217,7 @@ namespace stor
     // set defaults
     _workerThreadParamCopy._FPdeqWaitTime = 0.25;
     _workerThreadParamCopy._DWdeqWaitTime = 0.50;
+    _workerThreadParamCopy._DQMEPdeqWaitTime = 0.50;
 
     // validate the defaults
     // Currently, this consists of rounding up the values to next
@@ -227,6 +228,8 @@ namespace stor
       ceil(_workerThreadParamCopy._FPdeqWaitTime);
     _workerThreadParamCopy._DWdeqWaitTime =
       ceil(_workerThreadParamCopy._DWdeqWaitTime);
+    _workerThreadParamCopy._DQMEPdeqWaitTime =
+      ceil(_workerThreadParamCopy._DQMEPdeqWaitTime);
   }
 
   void Configuration::
@@ -358,10 +361,12 @@ namespace stor
     // copy the initial defaults to the xdata variables
     _FPdeqWaitTime = _workerThreadParamCopy._FPdeqWaitTime;
     _DWdeqWaitTime = _workerThreadParamCopy._DWdeqWaitTime;
+    _DQMEPdeqWaitTime = _workerThreadParamCopy._DQMEPdeqWaitTime;
 
     // bind the local xdata variables to the infospace
     infoSpace->fireItemAvailable("FPdeqWaitTime", &_FPdeqWaitTime);
     infoSpace->fireItemAvailable("DWdeqWaitTime", &_DWdeqWaitTime);
+    infoSpace->fireItemAvailable("DQMEPdeqWaitTime", &_DQMEPdeqWaitTime);
   }
 
   void Configuration::updateLocalDiskWritingData()
@@ -447,6 +452,7 @@ namespace stor
   {
     _workerThreadParamCopy._FPdeqWaitTime = _FPdeqWaitTime;
     _workerThreadParamCopy._DWdeqWaitTime = _DWdeqWaitTime;
+    _workerThreadParamCopy._DQMEPdeqWaitTime = _DQMEPdeqWaitTime;
 
     // validate the values
     // Currently, this consists of rounding up the values to next
@@ -457,6 +463,8 @@ namespace stor
       ceil(_workerThreadParamCopy._FPdeqWaitTime);
     _workerThreadParamCopy._DWdeqWaitTime =
       ceil(_workerThreadParamCopy._DWdeqWaitTime);
+    _workerThreadParamCopy._DQMEPdeqWaitTime =
+      ceil(_workerThreadParamCopy._DQMEPdeqWaitTime);
   }
 
   void Configuration::updateLocalRunNumber()
