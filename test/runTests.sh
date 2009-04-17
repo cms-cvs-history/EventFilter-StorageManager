@@ -13,6 +13,7 @@ tests="\
  EventQueueCollection_t\
  EventStreamConfigurationInfo_t\
  ExpirableEventQueue_t\
+ ExpirableQueue_t\
  FragmentStore_t\
  I2OChain_t\
  MemoryChainDuplicate_t\
