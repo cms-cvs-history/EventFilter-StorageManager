@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.85 2009/04/16 12:58:05 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.86 2009/04/16 13:19:30 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.85 2009/04/16 12:58:05 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.86 2009/04/16 13:19:30 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -217,6 +217,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
     reset(new RegistrationQueue(queueParams._registrationQueueSize));
   _sharedResources->_streamQueue.
     reset(new StreamQueue(queueParams._streamQueueSize));
+  _sharedResources->_dqmEventQueue.
+    reset(new DQMEventQueue(queueParams._dqmEventQueueSize));
 
   _sharedResources->_statisticsReporter.reset(new StatisticsReporter(this));
   _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
@@ -230,7 +232,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   _sharedResources->_registrationCollection.reset( new RegistrationCollection() );
   _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection() );
-  _sharedResources->_dqmEventConsumerQueueCollection.reset( new EventQueueCollection() );
+  _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection() );
 
   // Main worker threads
   _fragmentProcessor = new FragmentProcessor( this, _sharedResources,

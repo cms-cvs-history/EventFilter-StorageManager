@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.5 2009/03/12 03:46:17 paterno Exp $
+// $Id: DQMEventProcessor.h,v 1.1.2.6 2009/04/16 12:57:04 mommsen Exp $
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/DQMEventStore.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
@@ -25,9 +26,9 @@ namespace stor {
    * Depending on the configuration, it also writes the histograms
    * to disk every N lumi-sections.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/12 03:46:17 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/04/16 12:57:04 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class
@@ -76,11 +77,16 @@ namespace stor {
     DQMEventProcessor& operator=(DQMEventProcessor const&);
 
     /**
-     * Pops the next DQM event from the DQMEventQueue, processes it,
-     * and puts it in the appropriate DQMConsumerQueues when the
-     * lumi-section has finished.
+     * Pops the next DQM event from the DQMEventQueue and
+     * adds it to the DQMStore
      */    
     void processNextDQMEvent();
+
+    /**
+     * Retrieves the next available complete DQMRecord
+     * adds it to the relevant consumer queues
+     */    
+    void processNextCompletedDQMRecord();
 
 
     xdaq::Application*        _app;
@@ -90,6 +96,8 @@ namespace stor {
     bool                      _actionIsActive;
 
     toolbox::task::WorkLoop*  _processWL;      
+
+    DQMEventStore             _dqmEventStore;
 
   };
   
