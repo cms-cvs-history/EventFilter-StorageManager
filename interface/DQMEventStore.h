@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.8 2009/02/20 20:54:52 biery Exp $
+// $Id: DQMEventStore.h,v 1.1.2.1 2009/04/17 10:41:59 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -7,7 +7,9 @@
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 
-#include "EventFilter/StorageManager/interface/DQMRecord.h"
+#include "EventFilter/StorageManager/interface/Configuration.h"
+#include "EventFilter/StorageManager/interface/DQMKey.h"
+#include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
 
@@ -16,35 +18,35 @@ namespace stor {
   /**
    * Stores and collates DQM events
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/02/20 20:54:52 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/17 10:41:59 $
    */
   
   class DQMEventStore
   {
   public:
     
-    DQMEventStore() {};
+    explicit DQMEventStore(DQMProcessingParams const&);
 
     /**
      * Adds the DQM event found in the I2OChain to
-     * the store. If a matching DQMRecord is found,
+     * the store. If a matching DQMEventRecord is found,
      * the histograms are added unless collateDQM is false.
      */
-    void addDQMEvent(I2OChain const&);
+    void addDQMEvent(I2OChain&);
 
 
     /**
-     * Returns true if there is a complete DQMRecord
+     * Returns true if there is a complete DQMEventRecord
      * ready to be served to consumers. In this case
-     * DQMRecord& holds this record.
+     * DQMEventRecord& holds this record.
      */
-    bool getCompletedDQMRecordIfAvailable(DQMRecord&);
+    bool getCompletedDQMEventRecordIfAvailable(DQMEventRecord&);
 
 
     /**
-     * Clears all DQMRecords hold by the DQM store
+     * Clears all DQMEventRecords hold by the DQM store
      */
     void clear()
     { _store.clear(); }
@@ -63,9 +65,17 @@ namespace stor {
     DQMEventStore(DQMEventStore const&);
     DQMEventStore& operator=(DQMEventStore const&);
 
-    typedef std::map<int, int> fragmentMap;
-    fragmentMap _store;
+    DQMEventRecord makeDQMEventRecord(I2OChain const&);
+
+    boost::shared_ptr<DQMEventMsgView> getDQMEventView(I2OChain const&);
+
+
+    const DQMProcessingParams& _dqmParams;
+
+    typedef std::map<DQMKey, DQMEventRecord> DQMEventRecordMap;
+    DQMEventRecordMap _store;
     
+   std::vector<unsigned char> _tempEventArea;
     
   };
   

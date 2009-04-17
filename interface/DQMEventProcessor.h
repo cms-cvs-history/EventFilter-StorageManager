@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.6 2009/04/16 12:57:04 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.1.2.7 2009/04/17 10:41:58 mommsen Exp $
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -27,8 +27,8 @@ namespace stor {
    * to disk every N lumi-sections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/04/16 12:57:04 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/04/17 10:41:58 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class
@@ -83,10 +83,10 @@ namespace stor {
     void processNextDQMEvent();
 
     /**
-     * Retrieves the next available complete DQMRecord
+     * Retrieves the next available complete DQMEventRecord
      * adds it to the relevant consumer queues
      */    
-    void processNextCompletedDQMRecord();
+    void processNextCompletedDQMEventRecord();
 
 
     xdaq::Application*        _app;

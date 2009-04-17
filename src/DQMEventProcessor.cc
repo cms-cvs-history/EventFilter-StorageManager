@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.5 2009/04/16 12:58:43 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.6 2009/04/17 10:42:49 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -12,7 +12,8 @@ using namespace stor;
 DQMEventProcessor::DQMEventProcessor(xdaq::Application *app, SharedResourcesPtr sr) :
 _app(app),
 _sharedResources(sr),
-_actionIsActive(true)
+_actionIsActive(true),
+_dqmEventStore(sr->_configuration->getDQMProcessingParams())
 {
   WorkerThreadParams workerParams =
     _sharedResources->_configuration->getWorkerThreadParams();
@@ -106,23 +107,20 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
 
 void DQMEventProcessor::processNextDQMEvent()
 {
-  const DQMProcessingParams dqmParams =
-    _sharedResources->_configuration->getDQMProcessingParams();
-
   I2OChain dqmEvent;
   boost::shared_ptr<DQMEventQueue> eq = _sharedResources->_dqmEventQueue;
   if (eq->deq_timed_wait(dqmEvent, _timeout))
   {
     _dqmEventStore.addDQMEvent(dqmEvent);
   }
-  processNextCompletedDQMRecord();
+  processNextCompletedDQMEventRecord();
 }
 
 
-void DQMEventProcessor::processNextCompletedDQMRecord()
+void DQMEventProcessor::processNextCompletedDQMEventRecord()
 {
-  DQMRecord dqmRecord;
-  if ( _dqmEventStore.getCompletedDQMRecordIfAvailable(dqmRecord) )
+  DQMEventRecord dqmRecord;
+  if ( _dqmEventStore.getCompletedDQMEventRecordIfAvailable(dqmRecord) )
   {
     _sharedResources->
       _dqmEventConsumerQueueCollection->addEvent(dqmRecord);
