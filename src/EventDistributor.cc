@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.37 2009/04/09 11:26:11 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.38 2009/04/10 14:16:59 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -36,6 +36,11 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
   if( ioc.isTaggedForAnyStream() )
     {
       _sharedResources->_streamQueue->enq_wait( ioc );
+    }
+
+  if( ioc.isTaggedForAnyEventConsumer() )
+    {
+      _sharedResources->_eventConsumerQueueCollection->addEvent( ioc );
     }
 
 }
