@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.30 2009/04/10 19:19:01 biery Exp $
+# $Id: BuildFile,v 1.30.16.31 2009/04/17 10:44:10 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -64,19 +64,12 @@
   </bin>
 
 
-  <bin file=SyncQueue_t.cpp>
-    <use name=cppunit>
-  </bin>
-
   <bin file=CommandQueue_t.cpp>
     <use name=cppunit>
   </bin>
 
   <bin file=MonitoredQuantity_t.cpp>
     <use name=cppunit>
-  </bin>
-
-  <bin file=test_condition.cpp>
   </bin>
 
   <bin file=ConcurrentQueue_t.cpp>
@@ -99,10 +92,6 @@
   </bin>
 
   <bin file=InitMsgCollection_t.cpp>
-    <use name=cppunit>
-  </bin>
-
-  <bin file=ExpirableEventQueue_t.cpp>
     <use name=cppunit>
   </bin>
 

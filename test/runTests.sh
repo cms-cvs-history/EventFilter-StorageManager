@@ -12,7 +12,6 @@ tests="\
  EventDistributor_t\
  EventQueueCollection_t\
  EventStreamConfigurationInfo_t\
- ExpirableEventQueue_t\
  ExpirableQueue_t\
  FragmentStore_t\
  I2OChain_t\
@@ -22,8 +21,6 @@ tests="\
  QueueID_t\
  Sleep_t \
  state_machine_t\
- SyncQueue_t\
- test_condition\
  workloop_t\
  xhtmlmaker_t"
 
