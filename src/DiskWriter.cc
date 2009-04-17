@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.17 2009/04/08 16:25:59 biery Exp $
+// $Id: DiskWriter.cc,v 1.1.2.18 2009/04/16 12:58:30 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -185,7 +185,7 @@ void DiskWriter::closeTimedOutFiles()
 
 bool DiskWriter::timeToCheckForFileTimeOut()
 {
-  DiskWritingParams dwParams =
+  const DiskWritingParams dwParams =
     _sharedResources->_configuration->getDiskWritingParams();
   utils::time_point_t now = utils::getCurrentTime();
   return ((now - _lastFileTimeoutCheckTime) > dwParams._fileClosingTestInterval);
