@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.88 2009/04/17 20:24:57 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.89 2009/04/17 21:18:25 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.88 2009/04/17 20:24:57 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.89 2009/04/17 21:18:25 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -169,14 +169,14 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::fileStatisticsWebPage,"fileStatistics");
 
   // Old consumer bindings:
-  xgi::bind(this,&StorageManager::eventdataWebPage,     "geteventdata");
-  xgi::bind(this,&StorageManager::headerdataWebPage,    "getregdata");
-  xgi::bind(this,&StorageManager::consumerWebPage,      "registerConsumer");
+  //xgi::bind(this,&StorageManager::eventdataWebPage,     "geteventdata");
+  //xgi::bind(this,&StorageManager::headerdataWebPage,    "getregdata");
+  //xgi::bind(this,&StorageManager::consumerWebPage,      "registerConsumer");
 
   // New consumer bindings:
-  //xgi::bind( this, &StorageManager::processConsumerRegistrationRequest, "registerConsumer" );
-  //xgi::bind( this, &StorageManager::processConsumerHeaderRequest, "getregdata" );
-  //xgi::bind( this, &StorageManager::processConsumerEventRequest, "geteventdata" );
+  xgi::bind( this, &StorageManager::processConsumerRegistrationRequest, "registerConsumer" );
+  xgi::bind( this, &StorageManager::processConsumerHeaderRequest, "getregdata" );
+  xgi::bind( this, &StorageManager::processConsumerEventRequest, "geteventdata" );
 
   xgi::bind(this,&StorageManager::consumerListWebPage,  "consumerList");
   xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
