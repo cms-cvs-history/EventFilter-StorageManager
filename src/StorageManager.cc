@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.89 2009/04/17 21:18:25 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.90 2009/04/20 15:10:26 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.89 2009/04/17 21:18:25 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.90 2009/04/20 15:10:26 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3544,19 +3544,11 @@ StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
       return;
     }
 
-  // Check if proxy:
-  bool is_proxy = 
-    _sharedResources->_registrationCollection->isProxy( cid );
-
-  InitMsgSharedPtr payload;
-  if( is_proxy )
-    {
-      payload = _sharedResources->_initMsgCollection->getFullCollection();
-    }
-  else
-    {
-      payload = _sharedResources->_initMsgCollection->getElementForConsumer( cid );
-    }
+  // 20-Apr-2009, KAB - treat the proxy server like any other consumer. If
+  // and when we need to support multiple HLT output modules with the proxy
+  // server, then we can go back to sending the full InitMsgCollection.
+  InitMsgSharedPtr payload =
+    _sharedResources->_initMsgCollection->getElementForConsumer( cid );
 
   if( payload.get() == NULL )
     {
