@@ -49,22 +49,29 @@ public:
 
 private:
   std::string getSampleStreamConfig();
+  void initEventDistributor();
 
   boost::shared_ptr<SharedResources> _sharedResources;
   boost::shared_ptr<EventDistributor> _eventDistributor;
 };
 
-
-void testEventDistributor::testInitMessages()
+void testEventDistributor::initEventDistributor()
 {
   if (_eventDistributor.get() == 0)
     {
       _sharedResources.reset(new SharedResources());
       _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
       _sharedResources->_streamQueue.reset(new StreamQueue(1024));
+      _sharedResources->_eventConsumerQueueCollection.reset(new EventQueueCollection());
       _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
     }
+}
+
+
+void testEventDistributor::testInitMessages()
+{
+  initEventDistributor();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
@@ -161,14 +168,7 @@ void testEventDistributor::testInitMessages()
 
 void testEventDistributor::testStreamSelection()
 {
-  if (_eventDistributor.get() == 0)
-    {
-      _sharedResources.reset(new SharedResources());
-      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
-      _sharedResources->_smRBSenderList = 0;
-      _eventDistributor.reset(new EventDistributor(_sharedResources));
-    }
+  initEventDistributor();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
@@ -341,14 +341,7 @@ void testEventDistributor::testStreamSelection()
 
 void testEventDistributor::testConsumerSelection()
 {
-  if (_eventDistributor.get() == 0)
-    {
-      _sharedResources.reset(new SharedResources());
-      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
-      _sharedResources->_smRBSenderList = 0;
-      _eventDistributor.reset(new EventDistributor(_sharedResources));
-    }
+  initEventDistributor();
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -645,15 +638,7 @@ void testEventDistributor::testDQMMessages()
   //
   //// Copied and pasted from methods for other message types: ////
   //
-
-  if (_eventDistributor.get() == 0)
-    {
-      _sharedResources.reset(new SharedResources());
-      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
-      _sharedResources->_smRBSenderList = 0;
-      _eventDistributor.reset(new EventDistributor(_sharedResources));
-    }
+  initEventDistributor();
 
   //
   //// DQM-specific stuff: ////
