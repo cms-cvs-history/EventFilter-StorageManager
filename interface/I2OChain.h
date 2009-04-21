@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.30 2009/03/19 15:10:43 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.31 2009/04/17 17:27:36 mommsen Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -32,8 +32,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.30 $
-   * $Date: 2009/03/19 15:10:43 $
+   * $Revision: 1.1.2.31 $
+   * $Date: 2009/04/17 17:27:36 $
    */
 
 
@@ -298,6 +298,22 @@ namespace stor {
     std::string hltClassName() const;
 
     /**
+       Returns the filter unit process ID from the contained message.
+       If no valid process ID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int fuProcessId() const;
+
+    /**
+       Returns the filter unit GUID from the contained message.
+       If no valid GUID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int fuGuid() const;
+
+    /**
        Returns the fragment key for the chain.  The fragment key
        is the entity that uniquely identifies all of the fragments
        from a particular event.
@@ -468,6 +484,13 @@ namespace stor {
        Otherwise an exception is thrown.
      */
     uint32 lumiSection() const;
+
+    /**
+       Returns the event number of the message, if and only if, the 
+       message is an Event or ErrorEvent message. 
+       Otherwise an exception is thrown.
+     */
+    uint32 eventNumber() const;
 
   private:
 

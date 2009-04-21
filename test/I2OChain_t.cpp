@@ -111,6 +111,8 @@ testI2OChain::default_chain()
   CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
   CPPUNIT_ASSERT(frag.fragmentCount() == 0);
   CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+  CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+  CPPUNIT_ASSERT(frag.fuGuid() == 0);
   CPPUNIT_ASSERT(frag.creationTime() == -1);
   CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
   //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
@@ -128,6 +130,8 @@ testI2OChain::null_reference()
   CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
   CPPUNIT_ASSERT(frag.fragmentCount() == 0);
   CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+  CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+  CPPUNIT_ASSERT(frag.fuGuid() == 0);
   CPPUNIT_ASSERT(frag.creationTime() == -1);
   CPPUNIT_ASSERT(frag.lastFragmentTime() == -1);
   //CPPUNIT_ASSERT(!frag.getTotalDataSize() == 0);
@@ -152,6 +156,8 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -333,6 +339,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -345,6 +353,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -357,6 +367,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   {
@@ -368,6 +380,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -380,6 +394,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::INVALID);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -392,6 +408,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::ERROR_EVENT);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -404,6 +422,8 @@ testI2OChain::invalid_fragment()
     CPPUNIT_ASSERT(frag.messageCode() == Header::ERROR_EVENT);
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
     CPPUNIT_ASSERT(frag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(frag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(frag.fuGuid() == 0);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -437,6 +457,9 @@ testI2OChain::populate_i2o_header()
     CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value2);
     CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value3);
     CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value4);
+    CPPUNIT_ASSERT(initMsgFrag.rbBufferId() == 2);
+    CPPUNIT_ASSERT(initMsgFrag.fuProcessId() == value3);
+    CPPUNIT_ASSERT(initMsgFrag.fuGuid() == value4);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -474,6 +497,9 @@ testI2OChain::copy_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
+      CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == 2);
+      CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == value4);
+      CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == value5);
     }
 
     {
@@ -485,6 +511,9 @@ testI2OChain::copy_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
+      CPPUNIT_ASSERT(copy.rbBufferId() == 2);
+      CPPUNIT_ASSERT(copy.fuProcessId() == value4);
+      CPPUNIT_ASSERT(copy.fuGuid() == value5);
     }
 
     {
@@ -528,6 +557,9 @@ testI2OChain::assign_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
+      CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == 2);
+      CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == value4);
+      CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == value5);
     }
 
     {
@@ -539,6 +571,9 @@ testI2OChain::assign_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
+      CPPUNIT_ASSERT(copy.rbBufferId() == 2);
+      CPPUNIT_ASSERT(copy.fuProcessId() == value4);
+      CPPUNIT_ASSERT(copy.fuGuid() == value5);
     }
 
     {
@@ -594,6 +629,9 @@ testI2OChain::swap_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
+      CPPUNIT_ASSERT(frag1.rbBufferId() == 2);
+      CPPUNIT_ASSERT(frag1.fuProcessId() == value4);
+      CPPUNIT_ASSERT(frag1.fuGuid() == value5);
     }
 
     {
@@ -605,6 +643,9 @@ testI2OChain::swap_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value1);
+      CPPUNIT_ASSERT(frag2.rbBufferId() == 3);
+      CPPUNIT_ASSERT(frag2.fuProcessId() == value2);
+      CPPUNIT_ASSERT(frag2.fuGuid() == value1);
     }
 
     std::swap(frag1, frag2);
@@ -618,6 +659,9 @@ testI2OChain::swap_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value1);
+      CPPUNIT_ASSERT(frag1.rbBufferId() == 3);
+      CPPUNIT_ASSERT(frag1.fuProcessId() == value2);
+      CPPUNIT_ASSERT(frag1.fuGuid() == value1);
     }
 
     {
@@ -629,6 +673,9 @@ testI2OChain::swap_with_valid_header()
       CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
       CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
       CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
+      CPPUNIT_ASSERT(frag2.rbBufferId() == 2);
+      CPPUNIT_ASSERT(frag2.fuProcessId() == value4);
+      CPPUNIT_ASSERT(frag2.fuGuid() == value5);
     }
 
     {
@@ -669,6 +716,9 @@ testI2OChain::release_with_valid_header()
     CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value2);
     CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value3);
     CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value4);
+    CPPUNIT_ASSERT(initMsgFrag.rbBufferId() == 2);
+    CPPUNIT_ASSERT(initMsgFrag.fuProcessId() == value3);
+    CPPUNIT_ASSERT(initMsgFrag.fuGuid() == value4);
 
     initMsgFrag.release();
     CPPUNIT_ASSERT(initMsgFrag.messageCode() == 0);
@@ -681,6 +731,9 @@ testI2OChain::release_with_valid_header()
     CPPUNIT_ASSERT(fragmentKey.secondaryId_ == 0);
     CPPUNIT_ASSERT(fragmentKey.originatorPid_ == 0);
     CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == 0);
+    CPPUNIT_ASSERT(initMsgFrag.rbBufferId() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.fuProcessId() == 0);
+    CPPUNIT_ASSERT(initMsgFrag.fuGuid() == 0);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -1557,6 +1610,9 @@ testI2OChain::multipart_msg_header()
     CPPUNIT_ASSERT(initMsgFrag.hltTid() == value6);
     CPPUNIT_ASSERT(initMsgFrag.hltURL() == hltURL);
     CPPUNIT_ASSERT(initMsgFrag.hltClassName() == hltClass);
+    CPPUNIT_ASSERT(initMsgFrag.rbBufferId() == 2);
+    CPPUNIT_ASSERT(initMsgFrag.fuProcessId() == value2);
+    CPPUNIT_ASSERT(initMsgFrag.fuGuid() == value3);
 
 
     stor::I2OChain initMsgFrag2;
@@ -1625,6 +1681,9 @@ testI2OChain::multipart_msg_header()
     CPPUNIT_ASSERT(initMsgFrag.hltInstance() == value4);
     CPPUNIT_ASSERT(initMsgFrag.hltClassName() ==
                    hltClass.substr(0, MAX_I2O_SM_URLCHARS));
+    CPPUNIT_ASSERT(initMsgFrag.rbBufferId() == 2);
+    CPPUNIT_ASSERT(initMsgFrag.fuProcessId() == value2);
+    CPPUNIT_ASSERT(initMsgFrag.fuGuid() == value3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -1698,6 +1757,10 @@ testI2OChain::init_msg_header()
 
     CPPUNIT_ASSERT(initMsgFrag.outputModuleLabel() == outputModuleLabel);
     CPPUNIT_ASSERT(initMsgFrag.outputModuleId() == outputModuleId);
+
+    CPPUNIT_ASSERT(initMsgFrag.rbBufferId() == 2);
+    CPPUNIT_ASSERT(initMsgFrag.fuProcessId() == value2);
+    CPPUNIT_ASSERT(initMsgFrag.fuGuid() == value3);
 
     Strings outNames;
     outNames.clear();
@@ -1783,6 +1846,7 @@ testI2OChain::event_msg_header()
     CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
     CPPUNIT_ASSERT(eventMsgFrag.runNumber() == runNumber);
     CPPUNIT_ASSERT(eventMsgFrag.lumiSection() == lumiNumber);
+    CPPUNIT_ASSERT(eventMsgFrag.eventNumber() == eventNumber);
 
     stor::FragKey fragmentKey = eventMsgFrag.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
@@ -1794,6 +1858,10 @@ testI2OChain::event_msg_header()
 
     CPPUNIT_ASSERT(eventMsgFrag.outputModuleId() == outputModuleId);
     CPPUNIT_ASSERT(eventMsgFrag.hltTriggerCount() == hltBitCount);
+
+    CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == 3);
+    CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == value2);
+    CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == value3);
 
     std::vector<unsigned char> hltBits2;
     CPPUNIT_ASSERT(hltBits2.size() == 0);
@@ -1873,10 +1941,15 @@ testI2OChain::error_event_msg_header()
     CPPUNIT_ASSERT(errorMsgFrag.messageCode() == Header::ERROR_EVENT);
     CPPUNIT_ASSERT(errorMsgFrag.runNumber() == runNumber);
     CPPUNIT_ASSERT(errorMsgFrag.lumiSection() == lumiNumber);
+    CPPUNIT_ASSERT(errorMsgFrag.eventNumber() == eventNumber);
 
     CPPUNIT_ASSERT(errorMsgFrag.headerSize() == sizeof(FRDEventHeader_V2));
     CPPUNIT_ASSERT(errorMsgFrag.headerLocation() ==
                    errorMsgFrag.dataLocation(0));
+
+    CPPUNIT_ASSERT(errorMsgFrag.rbBufferId() == 3);
+    CPPUNIT_ASSERT(errorMsgFrag.fuProcessId() == value2);
+    CPPUNIT_ASSERT(errorMsgFrag.fuGuid() == value3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -2283,6 +2356,7 @@ testI2OChain::split_event_header()
     CPPUNIT_ASSERT(eventMsgChain.messageCode() == Header::EVENT);
     CPPUNIT_ASSERT(eventMsgChain.runNumber() == runNumber);
     CPPUNIT_ASSERT(eventMsgChain.lumiSection() == lumiNumber);
+    CPPUNIT_ASSERT(eventMsgChain.eventNumber() == eventNumber);
 
     stor::FragKey fragmentKey = eventMsgChain.fragmentKey();
     CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);

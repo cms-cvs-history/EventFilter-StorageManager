@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.36 2009/03/24 14:18:11 biery Exp $
+// $Id: I2OChain.cc,v 1.1.2.37 2009/04/17 17:28:34 mommsen Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -62,6 +62,8 @@ namespace stor
       unsigned int hltLocalId() const {return _hltLocalId;}
       unsigned int hltInstance() const {return _hltInstance;}
       unsigned int hltTid() const {return _hltTid;}
+      unsigned int fuProcessId() const {return _fuProcessId;}
+      unsigned int fuGuid() const {return _fuGuid;}
       double creationTime() const {return _creationTime;}
       double lastFragmentTime() const {return _lastFragmentTime;}
       unsigned long totalDataSize() const;
@@ -84,6 +86,7 @@ namespace stor
 
       uint32 runNumber() const;
       uint32 lumiSection() const;
+      uint32 eventNumber() const;
 
       std::string topFolderName() const;
       DQMKey dqmKey() const;
@@ -120,6 +123,8 @@ namespace stor
       unsigned int _hltLocalId;
       unsigned int _hltInstance;
       unsigned int _hltTid;
+      unsigned int _fuProcessId;
+      unsigned int _fuGuid;
 
       double _creationTime;
       double _lastFragmentTime;
@@ -156,6 +161,7 @@ namespace stor
 
       virtual uint32 do_runNumber() const;
       virtual uint32 do_lumiSection() const;
+      virtual uint32 do_eventNumber() const;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -174,6 +180,8 @@ namespace stor
       _hltLocalId(0),
       _hltInstance(0),
       _hltTid(0),
+      _fuProcessId(0),
+      _fuGuid(0),
       _creationTime(-1),
       _lastFragmentTime(-1)
     {
@@ -693,6 +701,11 @@ namespace stor
       return do_lumiSection();
     }
 
+    inline uint32 ChainData::eventNumber() const
+    {
+      return do_eventNumber();
+    }
+
     inline void ChainData::tagForStream(StreamID streamId)
     {
       _streamTags.push_back(streamId);
@@ -922,6 +935,14 @@ namespace stor
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
+    inline uint32 ChainData::do_eventNumber() const
+    {
+      std::stringstream msg;
+      msg << "An event number is only available from a valid, ";
+      msg << "complete EVENT or ERROR_EVENT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
 
     class InitMsgData : public ChainData
     {
@@ -1100,6 +1121,8 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
 
@@ -1164,6 +1187,7 @@ namespace stor
       void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
       uint32 do_runNumber() const;
       uint32 do_lumiSection() const;
+      uint32 do_eventNumber() const;
 
     private:
       void parseI2OHeader();
@@ -1178,6 +1202,7 @@ namespace stor
       mutable std::vector<unsigned char> _hltTriggerBits;
       mutable uint32 _runNumber;
       mutable uint32 _lumiSection;
+      mutable uint32 _eventNumber;
     };
 
     inline EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
@@ -1310,6 +1335,20 @@ namespace stor
       return _lumiSection;
     }
 
+    uint32 EventMsgData::do_eventNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An event number can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _eventNumber;
+    }
+
     inline void EventMsgData::parseI2OHeader()
     {
       if (parsable())
@@ -1327,6 +1366,8 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
 
@@ -1377,6 +1418,7 @@ namespace stor
 
       _runNumber = msgView->run();
       _lumiSection = msgView->lumi();
+      _eventNumber = msgView->event();
 
       _headerFieldsCached = true;
     }
@@ -1526,6 +1568,8 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
 
@@ -1585,6 +1629,7 @@ namespace stor
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_runNumber() const;
       uint32 do_lumiSection() const;
+      uint32 do_eventNumber() const;
 
     private:
       void parseI2OHeader();
@@ -1595,6 +1640,7 @@ namespace stor
       mutable unsigned char* _headerLocation;
       mutable uint32 _runNumber;
       mutable uint32 _lumiSection;
+      mutable uint32 _eventNumber;
     };
 
     inline ErrorEventMsgData::ErrorEventMsgData(toolbox::mem::Reference* pRef) :
@@ -1684,6 +1730,20 @@ namespace stor
       return _lumiSection;
     }
 
+    uint32 ErrorEventMsgData::do_eventNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An event number can not be determined from a ";
+          msg << "faulty or incomplete ErrorEvent message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _eventNumber;
+    }
+
     inline void ErrorEventMsgData::parseI2OHeader()
     {
       if (parsable())
@@ -1701,6 +1761,8 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
 
@@ -1740,6 +1802,7 @@ namespace stor
 
       _runNumber = msgView->run();
       _lumiSection = msgView->lumi();
+      _eventNumber = msgView->event();
 
       _headerFieldsCached = true;
     }
@@ -1967,6 +2030,18 @@ namespace stor
   {
     if (!_data) return "";
     return _data->hltClassName();
+  }
+
+  unsigned int I2OChain::fuProcessId() const
+  {
+    if (!_data) return 0;
+    return _data->fuProcessId();
+  }
+
+  unsigned int I2OChain::fuGuid() const
+  {
+    if (!_data) return 0;
+    return _data->fuGuid();
   }
 
   FragKey I2OChain::fragmentKey() const
@@ -2228,6 +2303,16 @@ namespace stor
           "The luminosity section can not be determined from an empty I2OChain.");
       }
     return _data->lumiSection();
+  }
+
+  uint32 I2OChain::eventNumber() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The event number can not be determined from an empty I2OChain.");
+      }
+    return _data->eventNumber();
   }
 
 } // namespace stor
