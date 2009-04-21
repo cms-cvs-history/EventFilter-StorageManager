@@ -1,4 +1,4 @@
-// $Id: DQMKey.h,v 1.1.2.1 2009/03/01 20:36:29 biery Exp $
+// $Id: DQMKey.h,v 1.1.2.1 2009/04/17 17:27:14 mommsen Exp $
 
 #ifndef StorageManager_DQMKey_h
 #define StorageManager_DQMKey_h
@@ -10,16 +10,16 @@ namespace stor {
   /**
    * Definition of the DQMKey used in the storage manager
    *
-   * $Author: biery $
+   * $Author: mommsen $
    * $Revision: 1.1.2.1 $
-   * $Date: 2009/03/01 20:36:29 $
+   * $Date: 2009/04/17 17:27:14 $
    */
   
   struct DQMKey
   {
-    uint32 runNumber;
-    uint32 lumiSection;
-    uint32 updateNumber;
+    uint32_t runNumber;
+    uint32_t lumiSection;
+    uint32_t updateNumber;
 
     bool operator<(DQMKey const& other) const;
     bool operator==(DQMKey const& other) const;
