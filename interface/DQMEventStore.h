@@ -1,9 +1,12 @@
-// $Id: DQMEventStore.h,v 1.1.2.1 2009/04/17 10:41:59 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.2 2009/04/17 17:28:24 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
 
 #include <map>
+#include <stack>
+
+#include "boost/shared_ptr.hpp"
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 
@@ -19,8 +22,8 @@ namespace stor {
    * Stores and collates DQM events
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/04/17 10:41:59 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/04/17 17:28:24 $
    */
   
   class DQMEventStore
@@ -40,23 +43,23 @@ namespace stor {
     /**
      * Returns true if there is a complete DQMEventRecord
      * ready to be served to consumers. In this case
-     * DQMEventRecord& holds this record.
+     * DQMEventRecord::Entry holds this record.
      */
-    bool getCompletedDQMEventRecordIfAvailable(DQMEventRecord&);
+    bool getCompletedDQMEventRecordIfAvailable(DQMEventRecord::Entry&);
 
 
     /**
      * Clears all DQMEventRecords hold by the DQM store
      */
     void clear()
-    { _store.clear(); }
+    { _store.clear(); } // need to clear stack
 
 
     /**
-     * Checks if the DQM store is empty
+     * Checks if the DQM event store is empty
      */
     bool empty()
-    { return _store.empty(); }
+    { return ( _store.empty() && _recordsReadyToServe.empty() ); }
 
     
   private:
@@ -65,15 +68,24 @@ namespace stor {
     DQMEventStore(DQMEventStore const&);
     DQMEventStore& operator=(DQMEventStore const&);
 
-    DQMEventRecord makeDQMEventRecord(I2OChain const&);
+    void addDQMEventToStore(I2OChain const&);
+
+    void addDQMEventToReadyToServe(I2OChain const&);
+
+    void addNextAvailableDQMGroupToReadyToServe(const std::string groupName);
+
+    DQMEventRecordPtr makeDQMEventRecord(I2OChain const&);
 
     boost::shared_ptr<DQMEventMsgView> getDQMEventView(I2OChain const&);
 
+    DQMEventRecordPtr getNewestReadyDQMEventRecord(const std::string groupName);
 
     const DQMProcessingParams& _dqmParams;
 
-    typedef std::map<DQMKey, DQMEventRecord> DQMEventRecordMap;
+    typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
     DQMEventRecordMap _store;
+    // Always serve the freshest records
+    std::stack<DQMEventRecordPtr> _recordsReadyToServe;
     
    std::vector<unsigned char> _tempEventArea;
     

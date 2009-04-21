@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.6 2009/04/17 10:42:49 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.7 2009/04/17 17:28:47 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -119,7 +119,7 @@ void DQMEventProcessor::processNextDQMEvent()
 
 void DQMEventProcessor::processNextCompletedDQMEventRecord()
 {
-  DQMEventRecord dqmRecord;
+  DQMEventRecord::Entry dqmRecord;
   if ( _dqmEventStore.getCompletedDQMEventRecordIfAvailable(dqmRecord) )
   {
     _sharedResources->
