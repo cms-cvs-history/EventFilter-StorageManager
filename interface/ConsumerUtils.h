@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: ConsumerUtils.h,v 1.1.2.1 2009/04/13 08:51:18 dshpakov Exp $
 
 /**
    Free helper functions for handling consumer header and event
@@ -47,6 +47,11 @@ namespace stor
      Send empty buffer to consumer:
   */
   void writeEmptyBuffer( xgi::Output* );
+
+  /**
+     Send a "done" message to consumer:
+  */
+  void writeDone( xgi::Output* );
 
   /**
      Write HTTP headers:

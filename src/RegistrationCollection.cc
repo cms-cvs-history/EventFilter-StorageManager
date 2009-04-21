@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.3 2009/04/16 10:30:37 dshpakov Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.4 2009/04/16 10:42:21 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -66,6 +66,12 @@ void RegistrationCollection::disableConsumerRegistration()
 {
   boost::mutex::scoped_lock sl( _lock );
   _registrationAllowed = false;
+}
+
+bool RegistrationCollection::registrationIsAllowed()
+{
+  boost::mutex::scoped_lock sl( _lock );
+  return _registrationAllowed;
 }
 
 bool RegistrationCollection::isProxy( ConsumerID cid ) const

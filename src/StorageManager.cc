@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.91 2009/04/20 16:14:22 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.92 2009/04/21 19:20:24 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.91 2009/04/20 16:14:22 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.92 2009/04/21 19:20:24 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3636,6 +3636,12 @@ StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   if( !cid.isValid() )
     {
       writeEmptyBuffer( out );
+      return;
+    }
+
+  if ( !_sharedResources->_registrationCollection->registrationIsAllowed() )
+    {
+      writeDone( out );
       return;
     }
 

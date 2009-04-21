@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.3 2009/04/16 10:09:00 dshpakov Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.4 2009/04/16 10:30:37 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -211,6 +211,23 @@ void stor::writeEmptyBuffer( xgi::Output* out )
   char buff;
   writeHTTPHeaders( out );
   out->write( &buff, 0 );
+}
+
+///////////////////////////////////////////
+//// Tell consumer that run has ended: ////
+///////////////////////////////////////////
+void stor::writeDone( xgi::Output* out )
+{
+
+  const int buff_size = 1000;
+  std::vector<unsigned char> buff( buff_size );
+
+  OtherMessageBuilder omb( &buff[0], Header::DONE );
+  const unsigned int len = omb.size();
+
+  writeHTTPHeaders( out );
+  out->write( (char*)(&buff[0]), len );
+
 }
 
 //////////////////////////////////////////////////
