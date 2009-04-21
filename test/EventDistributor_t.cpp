@@ -10,6 +10,7 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
+#include "EventFilter/StorageManager/test/MockApplication.h"
 
 #include "DataFormats/Common/interface/HLTenums.h"
 #include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
@@ -65,6 +66,10 @@ void testEventDistributor::initEventDistributor()
       _sharedResources->_eventConsumerQueueCollection.reset(new EventQueueCollection());
       _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
+
+      MockApplicationStub* stub(new MockApplicationStub());
+      MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
+      _sharedResources->_statisticsReporter.reset(new StatisticsReporter(app));
     }
 }
 
