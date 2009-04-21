@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.90 2009/04/20 15:10:26 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.91 2009/04/20 16:14:22 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.90 2009/04/20 15:10:26 dshpakov Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.91 2009/04/20 16:14:22 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -746,6 +746,70 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</tr>" << endl;
         }
     *out << "</table>" << endl;
+
+
+  DataSenderMonitorCollection const& dataSenderMonCollection =
+    _sharedResources->_statisticsReporter->getDataSenderMonitorCollection();
+  DataSenderMonitorCollection::OutputModuleResultsList resultsList =
+    dataSenderMonCollection.getTopLevelOutputModuleResults();
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">"     << endl;
+  *out << "<colgroup> <colgroup align=\"right\">"			 << endl;
+    *out << "  <tr>"						 	 << endl;
+    *out << "    <th colspan=7>"					 << endl;
+    *out << "      " << "Storage Manager Statistics"			 << endl;
+    *out << "    </th>"							 << endl;
+    *out << "  </tr>"							 << endl;
+        *out << "<tr class=\"special\">" << endl;
+          *out << "<td >" << endl;
+          *out << "Output Module" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=center>" << endl;
+          *out << "Events" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=center>" << endl;
+          *out << "Size (MB)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=center>" << endl;
+          *out << "Size/Evt (KB)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=center>" << endl;
+          *out << "RMS (KB)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=center>" << endl;
+          *out << "Min (KB)" << endl;
+          *out << "</td>" << endl;
+          *out << "<td align=center>" << endl;
+          *out << "Max (KB)" << endl;
+          *out << "</td>" << endl;
+        *out << "</tr>" << endl;
+        for (unsigned int idx = 0; idx < resultsList.size(); ++idx) {
+          std::string outputModuleLabel = resultsList[idx].name;
+          *out << "<tr>" << endl;
+            *out << "<td >" << endl;
+            *out << outputModuleLabel << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << resultsList[idx].eventStats.getSampleCount() << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << resultsList[idx].eventStats.getValueSum()/(double)0x100000 << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << resultsList[idx].eventStats.getValueAverage()/(double)0x400 << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << resultsList[idx].eventStats.getValueRMS()/(double)0x400 << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << resultsList[idx].eventStats.getValueMin()/(double)0x400 << endl;
+            *out << "</td>" << endl;
+            *out << "<td align=right>" << endl;
+            *out << resultsList[idx].eventStats.getValueMax()/(double)0x400 << endl;
+            *out << "</td>" << endl;
+          *out << "</tr>" << endl;
+        }
+    *out << "</table>" << endl;
+
 
 // now for RB sender list statistics
   *out << "<hr/>"                                                    << endl;

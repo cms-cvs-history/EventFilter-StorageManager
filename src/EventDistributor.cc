@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.38 2009/04/10 14:16:59 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.39 2009/04/17 22:05:10 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -71,6 +71,10 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
               }
           }
 
+        DataSenderMonitorCollection& dataSenderMonColl = _sharedResources->
+          _statisticsReporter->getDataSenderMonitorCollection();
+        dataSenderMonColl.addInitSample(ioc);
+
         // temporary handling (until the new event server is ready)
         if ( _sharedResources->_smRBSenderList != 0 )
           {
@@ -107,6 +111,10 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
                 ioc.tagForEventConsumer( it->queueId() );
               }
           }
+
+        DataSenderMonitorCollection& dataSenderMonColl = _sharedResources->
+          _statisticsReporter->getDataSenderMonitorCollection();
+        dataSenderMonColl.addEventSample(ioc);
 
         // temporary handling (until the new event server is ready)
         if ( _sharedResources->_oldEventServer.get() != NULL )

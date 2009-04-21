@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.11 2009/04/14 13:42:50 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.12 2009/04/16 12:55:02 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -8,6 +8,7 @@
 #include "xdaq/Application.h"
 #include "xdata/String.h"
 
+#include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
@@ -27,8 +28,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/14 13:42:50 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/16 12:55:02 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -68,6 +69,13 @@ namespace stor {
     { return _streamsMonCollection; }
 
 
+    const DataSenderMonitorCollection& getDataSenderMonitorCollection() const
+    { return _dataSenderMonCollection; }
+
+    DataSenderMonitorCollection& getDataSenderMonitorCollection()
+    { return _dataSenderMonCollection; }
+
+
     // Current state name:
     const std::string& externallyVisibleState() const;
     void setExternallyVisibleState( const std::string& );
@@ -96,6 +104,7 @@ namespace stor {
     FragmentMonitorCollection _fragMonCollection;
     FilesMonitorCollection _filesMonCollection;
     StreamsMonitorCollection _streamsMonCollection;
+    DataSenderMonitorCollection _dataSenderMonCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 
