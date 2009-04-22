@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.93 2009/04/21 21:23:05 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.94 2009/04/22 13:58:31 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.93 2009/04/21 21:23:05 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.94 2009/04/22 13:58:31 dshpakov Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -291,6 +291,7 @@ StorageManager::~StorageManager()
 {
   delete _fragmentProcessor;
   delete _diskWriter;
+  delete _dqmEventProcessor;
 }
 
 xoap::MessageReference
