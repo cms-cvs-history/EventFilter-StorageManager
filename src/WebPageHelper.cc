@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.20 2009/04/14 12:50:10 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.21 2009/04/22 13:58:33 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -9,6 +9,7 @@
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
+#include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
 using namespace stor;
 
@@ -136,19 +137,66 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
                                         const SharedResourcesPtr resPtr )
 {
 
+  // Get lock, initialize maker:
   boost::mutex::scoped_lock lock( _xhtmlMakerMutex );
   XHTMLMonitor theMonitor;
   XHTMLMaker maker;
 
-  StatisticsReporterPtr stat_reporter = resPtr->_statisticsReporter;
-
+  // Make header:
   XHTMLMaker::Node* body =
-    createWebPageBody( maker, stat_reporter->externallyVisibleState() );
+    createWebPageBody( maker, resPtr->_statisticsReporter->externallyVisibleState() );
 
+  // Title:
   XHTMLMaker::AttrMap title_attr;
   title_attr[ "style" ] = "text-align:center;font-weight:bold";
   XHTMLMaker::Node* title = maker.addNode( "p", body, title_attr );
   maker.addText( title, "Consumer Statistics" );
+
+  //
+  //// Consumer summary table: ////
+  //
+
+  XHTMLMaker::AttrMap table_attr;
+  table_attr[ "cellspacing" ] = "5";
+  XHTMLMaker::Node* cs_table = maker.addNode( "table", body, table_attr );
+  XHTMLMaker::Node* cs_tbody = maker.addNode( "tbody", cs_table );
+  XHTMLMaker::Node* cs_top_row = maker.addNode( "tr", cs_tbody );
+
+  // Cell titles:
+  XHTMLMaker::Node* cs_th_name = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_name, "Name" );
+  XHTMLMaker::Node* cs_th_id = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_id, "ID" );
+  XHTMLMaker::Node* cs_th_hlt = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_hlt, "HLT Output Module" );
+
+  boost::shared_ptr<RegistrationCollection> rc = resPtr->_registrationCollection;
+  RegistrationCollection::ConsumerRegistrations regs;
+  rc->getEventConsumers( regs );
+
+  // Loop over consumers:
+  for( RegistrationCollection::ConsumerRegistrations::const_iterator it = regs.begin();
+       it != regs.end(); ++it )
+    {
+
+      // Row:
+      XHTMLMaker::Node* cs_tr = maker.addNode( "tr", cs_tbody );
+
+      // Name:
+      XHTMLMaker::Node* cs_td_name = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_name, (*it)->consumerName() );
+
+      // ID:
+      std::ostringstream cid_oss;
+      cid_oss << (*it)->consumerID();
+      XHTMLMaker::Node* cs_td_id = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_id, cid_oss.str() );
+
+      // HLT output module:
+      XHTMLMaker::Node* cs_td_hlt = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_hlt, (*it)->selHLTOut() );
+
+    }
 
   // Link to the old EventServer page:
   maker.addNode( "hr", body );
@@ -157,6 +205,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   XHTMLMaker::Node* old_page = maker.addNode( "a", body, old_page_attr );
   maker.addText( old_page, "Old Event Server Page" );
 
+  // Write it:
   maker.out( *out );
 
 }
