@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.19 2009/04/14 10:48:52 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.20 2009/04/14 12:50:10 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -126,6 +126,48 @@ void WebPageHelper::filesWebPage
   
    // Dump the webpage to the output stream
   maker.out(*out);
+}
+
+
+//////////////////////////////
+//// Consumer statistics: ////
+//////////////////////////////
+void WebPageHelper::consumerStatistics( xgi::Output* out,
+                                        const SharedResourcesPtr resPtr )
+{
+
+  boost::mutex::scoped_lock lock( _xhtmlMakerMutex );
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+
+  StatisticsReporterPtr stat_reporter = resPtr->_statisticsReporter;
+
+  XHTMLMaker::Node* body =
+    createWebPageBody( maker, stat_reporter->externallyVisibleState() );
+
+  XHTMLMaker::AttrMap title_attr;
+  title_attr[ "style" ] = "text-align:center;font-weight:bold";
+  XHTMLMaker::Node* title = maker.addNode( "p", body, title_attr );
+  maker.addText( title, "Consumer Statistics" );
+
+  // Link to the old EventServer page:
+  maker.addNode( "hr", body );
+  XHTMLMaker::AttrMap old_page_attr;
+  old_page_attr[ "href" ] = baseURL() + "/EventServerStats?update=off";
+  XHTMLMaker::Node* old_page = maker.addNode( "a", body, old_page_attr );
+  maker.addText( old_page, "Old Event Server Page" );
+
+  maker.out( *out );
+
+}
+
+
+///////////////////////
+//// Get base URL: ////
+///////////////////////
+std::string WebPageHelper::baseURL() const
+{
+  return _appDescriptor->getContextDescriptor()->getURL() + "/" + _appDescriptor->getURN();
 }
 
 
@@ -261,9 +303,9 @@ void WebPageHelper::addDOMforSMLinks
 
   maker.addNode("hr", parent);
 
-  linkAttr[ "href" ] = url + "/EventServerStats?update=off";
+  linkAttr[ "href" ] = url + "/consumerStatistics";
   link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "Event Server Statistics");
+  maker.addText(link, "Consumer Statistics");
 
   maker.addNode("hr", parent);
 

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.49 2009/04/16 12:56:00 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.51 2009/04/16 13:42:59 mommsen Exp $
 */
 
 #include <string>
@@ -142,6 +142,11 @@ namespace stor {
     void processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
     void processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+
+    // New consumer statistics web page. Will replace
+    // eventServerWebPage.
+    void consumerStatisticsPage( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
 
     std::string findStreamName(const std::string &in) const;

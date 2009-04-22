@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.92 2009/04/21 19:20:24 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.93 2009/04/21 21:23:05 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.92 2009/04/21 19:20:24 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.93 2009/04/21 21:23:05 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -181,7 +181,14 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::consumerListWebPage,  "consumerList");
   xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
   xgi::bind(this,&StorageManager::DQMconsumerWebPage,   "registerDQMConsumer");
+
+  // Old consumer statistics page binding:
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
+
+  // New consumer statistics page bingding:
+  xgi::bind( this, &StorageManager::consumerStatisticsPage,
+             "consumerStatistics" );
+
   pool_is_set_    = 0;
   pool_           = 0;
 
@@ -621,6 +628,38 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
     XCEPT_RAISE(xgi::exception::Exception, errorMsg);
   }
 
+
+}
+
+///////////////////////////////////
+//// Consumer statistics page: ////
+///////////////////////////////////
+void StorageManager::consumerStatisticsPage( xgi::Input* in,
+                                             xgi::Output* out )
+  throw( xgi::exception::Exception )
+{
+
+  std::string err_msg =
+    "Failed to create consumer statistics page";
+
+  try
+  {
+    _webPageHelper.consumerStatistics( out,
+                                       _sharedResources );
+  }
+  catch( std::exception &e )
+  {
+    err_msg += ": ";
+    err_msg += e.what();
+    LOG4CPLUS_ERROR( getApplicationLogger(), err_msg );
+    XCEPT_RAISE( xgi::exception::Exception, err_msg );
+  }
+  catch(...)
+  {
+    err_msg += ": Unknown exception";
+    LOG4CPLUS_ERROR( getApplicationLogger(), err_msg );
+    XCEPT_RAISE( xgi::exception::Exception, err_msg );
+  }
 
 }
 

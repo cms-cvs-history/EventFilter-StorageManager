@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.12 2009/04/14 10:48:15 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.13 2009/04/14 12:50:20 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -26,8 +26,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/04/14 10:48:15 $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/04/14 12:50:20 $
    */
   
   class WebPageHelper
@@ -75,7 +75,18 @@ namespace stor {
     int getProcessCount(std::string processName);
 
 
+    /**
+       Generates consumer statistics page
+    */
+    void consumerStatistics( xgi::Output*,
+                             const SharedResourcesPtr );
+
   private:
+
+    /**
+      Get base url
+    */
+    std::string baseURL() const;
 
     /**
      * Returns the webpage body with the standard header as XHTML node
