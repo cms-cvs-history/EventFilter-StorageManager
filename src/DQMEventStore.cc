@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.cc,v 1.1.2.2 2009/04/17 17:28:47 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.1.2.3 2009/04/21 10:23:40 mommsen Exp $
 
 #include "TTimeStamp.h"
 
@@ -30,11 +30,8 @@ bool DQMEventStore::getCompletedDQMEventRecordIfAvailable(DQMEventRecord::Entry&
 {
   if ( _recordsReadyToServe.empty() ) return false;
 
-  DQMEventRecordPtr record = 
-    _recordsReadyToServe.top();
+  entry = _recordsReadyToServe.top();
   _recordsReadyToServe.pop();
-
-  entry = record->getEntry();
 
   return true;
 }
@@ -72,7 +69,7 @@ void DQMEventStore::addDQMEventToReadyToServe(I2OChain const& dqmEvent)
   DQMEventRecordPtr record =
     makeDQMEventRecord(dqmEvent);
 
-  _recordsReadyToServe.push(record);
+  _recordsReadyToServe.push( record->getEntry( dqmEvent.topFolderName() ) );
 }
 
 
@@ -82,7 +79,7 @@ void DQMEventStore::addNextAvailableDQMGroupToReadyToServe(const std::string gro
   
   if ( record )
   {
-    _recordsReadyToServe.push(record);
+    _recordsReadyToServe.push( record->getEntry(groupName) );
   }
 }
 
@@ -128,13 +125,15 @@ DQMEventStore::getNewestReadyDQMEventRecord(const std::string groupName)
     if ( group && group->isReady( now.GetSec() ) )
     {
       TTimeStamp *groupTime = group->getLastUpdate();
-      if ( ( groupTime ) && ( groupTime->GetSec() > maxTime ) )
+      if ( ( groupTime->GetSec() > maxTime ) &&
+        ( ! group->wasServedSinceUpdate() ) )
       {
         maxTime = groupTime->GetSec();
         readyRecord = it->second;
       }
     }
   }
+  readyRecord->getDQMGroup(groupName)->setServedSinceUpdate();
   
   return readyRecord;  
 }

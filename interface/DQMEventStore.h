@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.2 2009/04/17 17:28:24 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.3 2009/04/21 10:23:17 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -22,8 +22,8 @@ namespace stor {
    * Stores and collates DQM events
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/17 17:28:24 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/21 10:23:17 $
    */
   
   class DQMEventStore
@@ -85,7 +85,7 @@ namespace stor {
     typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
     DQMEventRecordMap _store;
     // Always serve the freshest records
-    std::stack<DQMEventRecordPtr> _recordsReadyToServe;
+    std::stack<DQMEventRecord::Entry> _recordsReadyToServe;
     
    std::vector<unsigned char> _tempEventArea;
     

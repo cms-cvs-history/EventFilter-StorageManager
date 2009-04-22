@@ -1,9 +1,10 @@
-// $Id: DQMEventRecord.cc,v 1.1.2.1 2009/04/17 17:28:56 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.1.2.2 2009/04/21 10:23:40 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 
 #include "IOPool/Streamer/interface/DQMEventMessage.h"
 #include "IOPool/Streamer/interface/StreamDQMDeserializer.h"
+#include "IOPool/Streamer/interface/StreamDQMSerializer.h"
 
 
 using namespace stor;
@@ -18,11 +19,14 @@ DQMInstance(
   dqmKey.runNumber, dqmKey.lumiSection, dqmKey.updateNumber, 
   static_cast<int>(dqmParams._purgeTimeDQM),
   static_cast<int>(dqmParams._readyTimeDQM)
-)
+),
+_dqmParams(dqmParams)
 {}
 
 void DQMEventRecord::addDQMEventView(boost::shared_ptr<DQMEventMsgView> view)
 {
+  _releaseTag = view->releaseTag();
+
   edm::StreamDQMDeserializer deserializer;
   std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
     deserializer.deserializeDQMEvent(*view);
@@ -52,6 +56,88 @@ void DQMEventRecord::addDQMEventView(boost::shared_ptr<DQMEventMsgView> view)
   }
 }
 
+
+DQMEventRecord::Entry DQMEventRecord::getEntry(const std::string groupName)
+{
+  _entry.dqmEventView = serializeDQMEvent(groupName);
+  return _entry;
+}
+
+
+boost::shared_ptr<DQMEventMsgView>
+DQMEventRecord::serializeDQMEvent(const std::string groupName)
+{
+  // Package list of TObjects into a DQMEvent::TObjectTable
+  DQMEvent::TObjectTable table;
+  DQMGroup *group = getDQMGroup(groupName);
+
+  int subFolderSize = 0;
+  for ( std::map<std::string, DQMFolder *>::iterator i1 = 
+          group->dqmFolders_.begin(); i1 != group->dqmFolders_.end(); ++i1)
+  {
+    std::string folderName = i1->first;
+    DQMFolder * folder = i1->second;
+    for ( std::map<std::string, TObject *>::iterator i2 = 
+            folder->dqmObjects_.begin(); i2!=folder->dqmObjects_.end(); ++i2)
+    {
+      std::string objectName = i2->first;
+      TObject *object = i2->second;
+      if ( object != NULL ) 
+      { 
+        if ( table.count(folderName) == 0 )
+        {
+          std::vector<TObject *> newObjectVector;
+          table[folderName] = newObjectVector;
+          subFolderSize += 2*sizeof(uint32) + folderName.length();
+        }
+        std::vector<TObject *> &objectVector = table[folderName];
+        objectVector.push_back(object);
+      }
+    }
+  }
+  
+  edm::StreamDQMSerializer serializer;
+  serializer.serializeDQMEvent(table,
+    _dqmParams._useCompressionDQM,
+    _dqmParams._compressionLevelDQM);
+
+  // Add space for header
+  unsigned int sourceSize = serializer.currentSpaceUsed();
+  unsigned int totalSize  = sourceSize 
+    + sizeof(DQMEventHeader)
+    + 12*sizeof(uint32)
+    + _releaseTag.length()
+    + groupName.length()
+    + subFolderSize;
+  unsigned char * buffer = (unsigned char *)malloc(totalSize);
+  
+  edm::Timestamp zeit( ( (unsigned long long)group->getLastUpdate()->GetSec() << 32 ) |
+    ( group->getLastUpdate()->GetNanoSec()));
+  
+  DQMEventMsgBuilder builder(
+    (void *)&buffer[0], 
+    totalSize,
+    getRunNumber(),
+    group->getLastEvent(),
+    zeit,
+    getLumiSection(),
+    getInstance(),
+    _releaseTag,
+    groupName,
+    table
+  ); 
+  unsigned char * source = serializer.bufferPointer();
+  std::copy(source,source+sourceSize, builder.eventAddress());
+  builder.setEventLength(sourceSize);
+  if ( _dqmParams._useCompressionDQM ) 
+  {
+    builder.setCompressionFlag(serializer.currentEventSize());
+  }
+  boost::shared_ptr<DQMEventMsgView> view( new DQMEventMsgView(&buffer[0]) );
+  free(buffer);
+
+  return view;
+}
 
 /// emacs configuration
 /// Local Variables: -

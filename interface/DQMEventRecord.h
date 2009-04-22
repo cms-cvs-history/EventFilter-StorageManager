@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.h,v 1.1.2.1 2009/04/17 17:28:24 mommsen Exp $
+// $Id: DQMEventRecord.h,v 1.1.2.2 2009/04/21 10:23:17 mommsen Exp $
 
 #ifndef StorageManager_DQMEventRecord_h
 #define StorageManager_DQMEventRecord_h
@@ -21,8 +21,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/04/17 17:28:24 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/04/21 10:23:17 $
    */
 
   class DQMEventRecord : public DQMInstance
@@ -61,15 +61,23 @@ namespace stor {
     void addDQMEventView(boost::shared_ptr<DQMEventMsgView>);
 
     /**
-     * Returns the entry
+     * Populates the dqmEventView with the requested group and returns the entry
      */
-    DQMEventRecord::Entry getEntry()
-    { return _entry; }
+    DQMEventRecord::Entry getEntry(const std::string groupName);
 
 
   private:
 
+    /**
+     * Serialize the histograms for the group hold in DQMInstance
+     */
+    boost::shared_ptr<DQMEventMsgView> serializeDQMEvent(const std::string groupName);
+
+    const DQMProcessingParams& _dqmParams;
+
     Entry _entry;
+
+    std::string _releaseTag;
 
   };
 
