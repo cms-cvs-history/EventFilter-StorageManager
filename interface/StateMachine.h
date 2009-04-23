@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: StateMachine.h,v 1.1.2.24 2009/04/03 12:49:16 dshpakov Exp $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
@@ -316,8 +316,7 @@ namespace stor
     bool allQueuesAndWorkersAreEmpty() const;
     void processStaleFragments() const;
 
-    bool _doDraining;
-
+    mutable bool _firstEndOfRunRequest;
   };
 
 } // end namespace stor

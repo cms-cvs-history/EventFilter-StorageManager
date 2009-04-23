@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.19 2009/04/17 10:41:59 mommsen Exp $
+// $Id: SharedResources.h,v 1.1.2.20 2009/04/17 21:18:25 biery Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -9,6 +9,7 @@
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DiscardManager.h"
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
+#include "EventFilter/StorageManager/interface/DQMEventProcessorResources.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
@@ -29,9 +30,9 @@ namespace stor {
   /**
    * Container for shared resources.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.19 $
-   * $Date: 2009/04/17 10:41:59 $
+   * $Author: biery $
+   * $Revision: 1.1.2.20 $
+   * $Date: 2009/04/17 21:18:25 $
    */
 
   struct SharedResources
@@ -50,6 +51,7 @@ namespace stor {
     boost::shared_ptr<Configuration> _configuration;
     boost::shared_ptr<DiscardManager> _discardManager;
     boost::shared_ptr<DiskWriterResources> _diskWriterResources;
+    boost::shared_ptr<DQMEventProcessorResources> _dqmEventProcessorResources;
     boost::shared_ptr<InitMsgCollection> _initMsgCollection;
     boost::shared_ptr<StatisticsReporter> _statisticsReporter;
     boost::shared_ptr<RegistrationCollection> _registrationCollection;
