@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.3 2009/04/21 10:23:17 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.4 2009/04/22 15:35:01 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -22,15 +22,15 @@ namespace stor {
    * Stores and collates DQM events
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/21 10:23:17 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/22 15:35:01 $
    */
   
   class DQMEventStore
   {
   public:
     
-    explicit DQMEventStore(DQMProcessingParams const&);
+    explicit DQMEventStore(const DQMProcessingParams);
 
     /**
      * Adds the DQM event found in the I2OChain to
@@ -47,6 +47,10 @@ namespace stor {
      */
     bool getCompletedDQMEventRecordIfAvailable(DQMEventRecord::Entry&);
 
+    /**
+     * Writes and purges all DQMEventRecords hold by the store
+     */
+    void writeAndPurgeAllDQMInstances();
 
     /**
      * Clears all DQMEventRecords hold by the DQM store
@@ -80,7 +84,10 @@ namespace stor {
 
     DQMEventRecordPtr getNewestReadyDQMEventRecord(const std::string groupName);
 
-    const DQMProcessingParams& _dqmParams;
+    void writeAndPurgeStaleDQMInstances();
+
+
+    const DQMProcessingParams _dqmParams;
 
     typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
     DQMEventRecordMap _store;

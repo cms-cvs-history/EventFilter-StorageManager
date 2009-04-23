@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.h,v 1.1.2.2 2009/04/21 10:23:17 mommsen Exp $
+// $Id: DQMEventRecord.h,v 1.1.2.3 2009/04/22 15:35:01 mommsen Exp $
 
 #ifndef StorageManager_DQMEventRecord_h
 #define StorageManager_DQMEventRecord_h
@@ -21,8 +21,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/21 10:23:17 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/22 15:35:01 $
    */
 
   class DQMEventRecord : public DQMInstance
@@ -43,8 +43,8 @@ namespace stor {
 
     DQMEventRecord
     (
-      DQMKey const&,
-      DQMProcessingParams const&
+      const DQMKey,
+      const DQMProcessingParams
     );
 
     /**
@@ -73,7 +73,7 @@ namespace stor {
      */
     boost::shared_ptr<DQMEventMsgView> serializeDQMEvent(const std::string groupName);
 
-    const DQMProcessingParams& _dqmParams;
+    const DQMProcessingParams _dqmParams;
 
     Entry _entry;
 
