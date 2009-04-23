@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: StateMachine.cc,v 1.1.2.19 2009/04/03 12:49:16 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
@@ -42,6 +42,7 @@ string StateMachine::getCurrentStateName() const
 void StateMachine::updateHistory( const TransitionRecord& tr )
 {
   _history.push_back( tr );
+  cout << tr << endl;
 }
 
 void StateMachine::dumpHistory( ostream& os ) const

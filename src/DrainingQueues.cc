@@ -11,7 +11,8 @@
 using namespace std;
 using namespace stor;
 
-DrainingQueues::DrainingQueues( my_context c ): my_base(c)
+DrainingQueues::DrainingQueues( my_context c ): my_base(c),
+_firstEndOfRunRequest(true)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
@@ -63,10 +64,19 @@ DrainingQueues::allQueuesAndWorkersAreEmpty() const
 
   if ( sharedResources->_diskWriterResources->isBusy() ) return false;
   
-  //  if ( ! sharedResources->_dqmEventQueue->empty() ) return false;
+  if ( ! sharedResources->_dqmEventQueue->empty() ) return false;
 
-  //DQMEventProcessor *dqmEP = outermost_context.getDQMEventProcessor();
-  //if ( ! dqmEP->empty() ) return false;
+  // No more DQM events are arriving, request to close files, but only once
+  if ( _firstEndOfRunRequest )
+  {
+    sharedResources->_dqmEventProcessorResources->requestEndOfRun();
+    _firstEndOfRunRequest = false;
+  }
+
+  // We do not want to wait here for the request to be completed as
+  // the draining queue activity needs to be interruptable.
+  // Thus only query if the request has been fulfilled.
+  if ( ! sharedResources->_dqmEventProcessorResources->isEndOfRunDone() ) return false;
 
   return true;
 }

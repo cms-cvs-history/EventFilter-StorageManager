@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.94 2009/04/22 13:58:31 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.95 2009/04/22 15:36:59 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.94 2009/04/22 13:58:31 dshpakov Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.95 2009/04/22 15:36:59 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -230,6 +230,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _sharedResources->_statisticsReporter.reset(new StatisticsReporter(this));
   _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
   _sharedResources->_diskWriterResources.reset(new DiskWriterResources());
+  _sharedResources->_dqmEventProcessorResources.reset(new DQMEventProcessorResources());
 
   _sharedResources->_smRBSenderList = &smrbsenders_;
 

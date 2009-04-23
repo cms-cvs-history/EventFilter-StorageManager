@@ -1,4 +1,4 @@
-// $Id: $
+// $Id: Enabled.cc,v 1.1.2.33 2009/04/23 11:46:42 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -27,7 +27,7 @@ Enabled::Enabled( my_context c ): my_base(c)
   // update the run-based configuration parameters
   sharedResources->_configuration->updateRunParams();
 
-  // disk writer and event distributor begin-run processing
+  // disk writer and (dqm) event distributors begin-run processing
   EvtStrConfigList evtCfgList = sharedResources->_configuration->
     getCurrentEventStreamConfig();
   ErrStrConfigList errCfgList = sharedResources->_configuration->
@@ -38,7 +38,13 @@ Enabled::Enabled( my_context c ): my_base(c)
   sharedResources->_diskWriterResources->
     requestStreamConfiguration(&evtCfgList, &errCfgList,
                                workerParams._DWdeqWaitTime);
+  sharedResources->_dqmEventProcessorResources->
+    requestConfiguration(
+      sharedResources->_configuration->getDQMProcessingParams(),
+      workerParams._DQMEPdeqWaitTime);
+
   sharedResources->_diskWriterResources->waitForStreamConfiguration();
+  sharedResources->_dqmEventProcessorResources->waitForConfiguration();
 
   EventDistributor* ed = outermost_context().getEventDistributor();
   ed->registerEventStreams(evtCfgList);
@@ -48,6 +54,7 @@ Enabled::Enabled( my_context c ): my_base(c)
   sharedResources->_registrationCollection->clearRegistrations();
   ed->clearStreams();
   sharedResources->_eventConsumerQueueCollection->removeQueues();
+  sharedResources->_dqmEventConsumerQueueCollection->removeQueues();
 
   // Enable consumer registration:
   sharedResources->_registrationCollection->enableConsumerRegistration();
@@ -77,7 +84,14 @@ Enabled::~Enabled()
   // request that the streams that are currently configured in the disk
   // writer be destroyed (this has the side effect of closing files)
   sharedResources->_diskWriterResources->requestStreamDestruction();
+
+  // request that the DQM event store is cleared
+  // if draining queues has succeeded, the store is already empty
+  sharedResources->_dqmEventProcessorResources->requestStoreDestruction();
+
+  // wait for the requests to be fulfilled
   sharedResources->_diskWriterResources->waitForStreamDestruction();
+  sharedResources->_dqmEventProcessorResources->waitForStoreDestruction();
 
   // clear the stream selections in the event distributor
   outermost_context().getEventDistributor()->clearStreams();

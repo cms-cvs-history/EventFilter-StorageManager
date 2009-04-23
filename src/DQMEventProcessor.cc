@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.8 2009/04/21 10:23:40 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.9 2009/04/23 13:26:43 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -12,12 +12,11 @@ using namespace stor;
 DQMEventProcessor::DQMEventProcessor(xdaq::Application *app, SharedResourcesPtr sr) :
 _app(app),
 _sharedResources(sr),
-_actionIsActive(true),
-_dqmEventStore(sr->_configuration->getDQMProcessingParams())
+_actionIsActive(true)
 {
   WorkerThreadParams workerParams =
     _sharedResources->_configuration->getWorkerThreadParams();
-  _timeout = (unsigned int) workerParams._DQMEPdeqWaitTime;
+  _timeout = static_cast<unsigned int>(workerParams._DQMEPdeqWaitTime);
 }
 
 
@@ -113,17 +112,42 @@ void DQMEventProcessor::processNextDQMEvent()
   {
     _dqmEventStore.addDQMEvent(dqmEvent);
   }
-  processCompletedDQMEventRecords();
+
+  processCompleteDQMEventRecords();
+
+  DQMProcessingParams dqmParams;
+  double newTimeoutValue;
+  if (_sharedResources->_dqmEventProcessorResources->
+    configurationRequested(dqmParams, newTimeoutValue))
+  {
+    _timeout = static_cast<unsigned int>(newTimeoutValue);
+    _dqmEventStore.setParameters(dqmParams);
+    _sharedResources->_dqmEventProcessorResources->configurationDone();
+  }
+
+  if (_sharedResources->_dqmEventProcessorResources->
+      endOfRunRequested())
+  {
+    endOfRun();
+    _sharedResources->_dqmEventProcessorResources->endOfRunDone();
+  }
+
+  if (_sharedResources->_dqmEventProcessorResources->
+      storeDestructionRequested())
+  {
+    _dqmEventStore.clear();
+    _sharedResources->_dqmEventProcessorResources->storeDestructionDone();
+  }
 }
 
-void DQMEventProcessor::stop()
+void DQMEventProcessor::endOfRun()
 {
   _dqmEventStore.writeAndPurgeAllDQMInstances();
-  processCompletedDQMEventRecords();
+  processCompleteDQMEventRecords();
 }
 
 
-void DQMEventProcessor::processCompletedDQMEventRecords()
+void DQMEventProcessor::processCompleteDQMEventRecords()
 {
   DQMEventRecord::Entry dqmRecord;
   while ( _dqmEventStore.getCompletedDQMEventRecordIfAvailable(dqmRecord) )
@@ -131,18 +155,6 @@ void DQMEventProcessor::processCompletedDQMEventRecords()
     _sharedResources->
       _dqmEventConsumerQueueCollection->addEvent(dqmRecord);
   }
-}
-
-
-QueueID DQMEventProcessor::registerDQMEventConsumer
-(
-  DQMEventConsumerRegistrationInfo const& ri
-)
-{
-  return _sharedResources->
-    _dqmEventConsumerQueueCollection->createQueue(ri.consumerID(),
-                                                  ri.queuePolicy(),
-                                                  ri.maxQueueSize());
 }
 
 
