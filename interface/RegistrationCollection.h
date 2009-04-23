@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: RegistrationCollection.h,v 1.1.2.4 2009/04/16 10:30:36 dshpakov Exp $
+// $Id: RegistrationCollection.h,v 1.1.2.5 2009/04/21 21:23:05 biery Exp $
 
 #ifndef REGISTRATIONCOLLECTION_H
 #define REGISTRATIONCOLLECTION_H
@@ -54,9 +54,14 @@ namespace stor
     void disableConsumerRegistration();
 
     /**
+       Clear registrations.
+    */
+    void clearRegistrations();
+
+    /**
        Test if registration is allowed.
     */
-    bool registrationIsAllowed();
+    bool registrationIsAllowed() const;
 
     /**
        Test if consumer is a proxy.

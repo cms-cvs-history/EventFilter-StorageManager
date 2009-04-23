@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.4 2009/04/16 10:42:21 dshpakov Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.5 2009/04/21 21:23:05 biery Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -68,7 +68,13 @@ void RegistrationCollection::disableConsumerRegistration()
   _registrationAllowed = false;
 }
 
-bool RegistrationCollection::registrationIsAllowed()
+void RegistrationCollection::clearRegistrations()
+{
+  boost::mutex::scoped_lock sl( _lock );
+  _consumers.clear();
+}
+
+bool RegistrationCollection::registrationIsAllowed() const
 {
   boost::mutex::scoped_lock sl( _lock );
   return _registrationAllowed;

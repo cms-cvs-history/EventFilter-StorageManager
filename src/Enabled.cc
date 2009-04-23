@@ -1,3 +1,5 @@
+// $Id: $
+
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
@@ -41,6 +43,11 @@ Enabled::Enabled( my_context c ): my_base(c)
   EventDistributor* ed = outermost_context().getEventDistributor();
   ed->registerEventStreams(evtCfgList);
   ed->registerErrorStreams(errCfgList);
+
+  // Clear old consumer registrations:
+  sharedResources->_registrationCollection->clearRegistrations();
+  ed->clearStreams();
+  sharedResources->_eventConsumerQueueCollection->removeQueues();
 
   // Enable consumer registration:
   sharedResources->_registrationCollection->enableConsumerRegistration();
