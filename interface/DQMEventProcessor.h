@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.8 2009/04/17 17:28:23 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.1.2.9 2009/04/23 13:19:00 mommsen Exp $
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -27,8 +27,8 @@ namespace stor {
    * to disk every N lumi-sections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/04/17 17:28:23 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/04/23 13:19:00 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class
@@ -52,23 +52,6 @@ namespace stor {
      */
     void startWorkLoop(std::string workloopName);
 
-    /**
-     * Register a new DQM event consumer
-     */
-    QueueID registerDQMEventConsumer
-    (
-     DQMEventConsumerRegistrationInfo const&
-    );
-
-    /**
-     * Create a new DQM event selector
-     */
-    void makeDQMEventSelector
-    (
-      QueueID,
-      DQMEventConsumerRegistrationInfo const&
-    );
-
 
   private:
 
@@ -86,13 +69,13 @@ namespace stor {
      * Retrieves all available complete DQMEventRecord
      * adds it to the consumer queues
      */    
-    void processCompletedDQMEventRecords();
+    void processCompleteDQMEventRecords();
 
     /**
-     * Write all data to disk if needed, purge instancesm
+     * Write all data to disk if needed, purge instances,
      * and process all completed DQM records
      */    
-    void stop();
+    void endOfRun();
 
 
     xdaq::Application*        _app;
