@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.cc,v 1.1.2.4 2009/04/22 15:38:18 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.1.2.5 2009/04/23 13:27:04 mommsen Exp $
 
 #include "TTimeStamp.h"
 
@@ -8,10 +8,18 @@
 using namespace stor;
 
 
-DQMEventStore::DQMEventStore(const DQMProcessingParams dqmParams) :
-_dqmParams(dqmParams)
-{}
+void DQMEventStore::clear()
+{
+  _store.clear();
+  while ( ! _recordsReadyToServe.empty() )
+    _recordsReadyToServe.pop();
+}
 
+void DQMEventStore::setParameters(const DQMProcessingParams& dqmParams)
+{
+  clear();
+  _dqmParams = dqmParams;
+}
 
 void DQMEventStore::addDQMEvent(I2OChain& dqmEvent)
 {
@@ -78,7 +86,8 @@ void DQMEventStore::addNextAvailableDQMGroupToReadyToServe(const std::string gro
   DQMEventRecordPtr record = getNewestReadyDQMEventRecord(groupName);
   
   if ( record )
-  {
+  {  
+    record->getDQMGroup(groupName)->setServedSinceUpdate();
     _recordsReadyToServe.push( record->getEntry(groupName) );
   }
 }
@@ -133,7 +142,6 @@ DQMEventStore::getNewestReadyDQMEventRecord(const std::string groupName)
       }
     }
   }
-  readyRecord->getDQMGroup(groupName)->setServedSinceUpdate();
   
   return readyRecord;  
 }

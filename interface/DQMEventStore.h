@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.4 2009/04/22 15:35:01 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.5 2009/04/23 13:19:38 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -22,15 +22,25 @@ namespace stor {
    * Stores and collates DQM events
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/22 15:35:01 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/23 13:19:38 $
    */
   
   class DQMEventStore
   {
   public:
     
-    explicit DQMEventStore(const DQMProcessingParams);
+    DQMEventStore()
+    {};
+
+    ~DQMEventStore() 
+    { clear(); }
+
+    /**
+     * Set the DQMProcessingParams to be used.
+     * This clears everything in the store.
+     */
+    void setParameters(const DQMProcessingParams&);
 
     /**
      * Adds the DQM event found in the I2OChain to
@@ -38,7 +48,6 @@ namespace stor {
      * the histograms are added unless collateDQM is false.
      */
     void addDQMEvent(I2OChain&);
-
 
     /**
      * Returns true if there is a complete DQMEventRecord
@@ -55,9 +64,7 @@ namespace stor {
     /**
      * Clears all DQMEventRecords hold by the DQM store
      */
-    void clear()
-    { _store.clear(); } // need to clear stack
-
+    void clear();
 
     /**
      * Checks if the DQM event store is empty
@@ -87,7 +94,7 @@ namespace stor {
     void writeAndPurgeStaleDQMInstances();
 
 
-    const DQMProcessingParams _dqmParams;
+    DQMProcessingParams _dqmParams;
 
     typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
     DQMEventRecordMap _store;
