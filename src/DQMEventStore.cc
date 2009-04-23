@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.cc,v 1.1.2.3 2009/04/21 10:23:40 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.1.2.4 2009/04/22 15:38:18 mommsen Exp $
 
 #include "TTimeStamp.h"
 
@@ -8,7 +8,7 @@
 using namespace stor;
 
 
-DQMEventStore::DQMEventStore(DQMProcessingParams const& dqmParams) :
+DQMEventStore::DQMEventStore(const DQMProcessingParams dqmParams) :
 _dqmParams(dqmParams)
 {}
 
@@ -57,7 +57,7 @@ void DQMEventStore::addDQMEventToStore(I2OChain const& dqmEvent)
     _store.insert(pos, DQMEventRecordMap::value_type(newKey, record));
     
     // At this point, purge old instances from the list
-    // writeAndPurgeDQMInstances(false);
+    writeAndPurgeStaleDQMInstances();
   }
 
   addNextAvailableDQMGroupToReadyToServe( dqmEvent.topFolderName() );
@@ -137,6 +137,56 @@ DQMEventStore::getNewestReadyDQMEventRecord(const std::string groupName)
   
   return readyRecord;  
 }
+
+
+void DQMEventStore::writeAndPurgeStaleDQMInstances()
+{
+  TTimeStamp now;
+  now.Set();
+  
+  for (DQMEventRecordMap::iterator it = _store.begin(),
+         itEnd = _store.end();
+       it != itEnd; )
+  {
+    if ( it->second->isStale( now.GetSec() ) )
+    {
+      if ( _dqmParams._archiveDQM && it->second->isReady( now.GetSec() ) &&
+        (_dqmParams._archiveIntervalDQM > 0 &&
+          (it->second->getLumiSection() % 
+            static_cast<int>(_dqmParams._archiveIntervalDQM)) == 0) )
+      {
+        // The instance is written to file when it is ready and intermediate
+        // histograms are written and the lumi section matches the
+        // one-in-N archival interval
+        it->second->writeFile(_dqmParams._filePrefixDQM, false);
+      }
+      _store.erase(it++);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+}
+
+
+void DQMEventStore::writeAndPurgeAllDQMInstances()
+{
+  TTimeStamp now;
+  now.Set();
+  
+  for (DQMEventRecordMap::iterator it = _store.begin(),
+         itEnd = _store.end();
+       it != itEnd; )
+  {
+    if ( _dqmParams._archiveDQM && it->second->isReady( now.GetSec() ) )
+    {
+      it->second->writeFile(_dqmParams._filePrefixDQM, true);
+    }
+    _store.erase(it++);
+  }
+}
+
 
 
 /// emacs configuration

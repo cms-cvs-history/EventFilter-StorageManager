@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.cc,v 1.1.2.2 2009/04/21 10:23:40 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.1.2.3 2009/04/22 15:38:18 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 
@@ -12,8 +12,8 @@ using namespace stor;
 
 DQMEventRecord::DQMEventRecord
 (
-  DQMKey const& dqmKey,
-  DQMProcessingParams const& dqmParams
+  DQMKey const dqmKey,
+  DQMProcessingParams const dqmParams
 ) :
 DQMInstance(
   dqmKey.runNumber, dqmKey.lumiSection, dqmKey.updateNumber, 
