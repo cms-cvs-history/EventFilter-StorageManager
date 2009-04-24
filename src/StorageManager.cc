@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.95 2009/04/22 15:36:59 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.96 2009/04/23 19:19:49 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.95 2009/04/22 15:36:59 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.96 2009/04/23 19:19:49 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3554,37 +3554,41 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
   // Create registration info and set consumer ID:
   stor::ConsRegPtr reginfo;
+  std::string msg;
   try
     {
       reginfo = parseEventConsumerRegistration( in, secs2stale );
     }
   catch ( edm::Exception& excpt )
     {
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                      "Error parsing an event consumer registration request:"
-                      << excpt.what());
+      msg.append( "Error parsing an event consumer registration request: " );
+      msg.append( excpt.what() );
 
-      writeNotReady( out );
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), msg);
+
+      writeErrorString( out, msg );
       return;
     }
   catch ( xcept::Exception& excpt )
     {
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                      "Error parsing an event consumer registration request:"
-                      << excpt.what());
+      msg.append( "Error parsing an event consumer registration request: " );
+      msg.append( excpt.what() );
 
-      writeNotReady( out );
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), msg);
+
+      writeErrorString( out, msg );
       return;
     }
   catch ( ... )
     {
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                      "Error parsing an event consumer registration request.");
+      msg.append( "Error parsing an event consumer registration request." );
 
-      writeNotReady( out );
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), msg);
+
+      writeErrorString( out, msg );
       return;
     }
   reginfo->setConsumerID( cid );
