@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.5 2009/04/23 13:19:38 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.6 2009/04/23 19:16:17 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -22,8 +22,8 @@ namespace stor {
    * Stores and collates DQM events
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/23 13:19:38 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/04/23 19:16:17 $
    */
   
   class DQMEventStore
@@ -40,14 +40,14 @@ namespace stor {
      * Set the DQMProcessingParams to be used.
      * This clears everything in the store.
      */
-    void setParameters(const DQMProcessingParams&);
+    void setParameters(DQMProcessingParams const&);
 
     /**
      * Adds the DQM event found in the I2OChain to
      * the store. If a matching DQMEventRecord is found,
      * the histograms are added unless collateDQM is false.
      */
-    void addDQMEvent(I2OChain&);
+    void addDQMEvent(I2OChain const&);
 
     /**
      * Returns true if there is a complete DQMEventRecord
@@ -89,9 +89,11 @@ namespace stor {
 
     boost::shared_ptr<DQMEventMsgView> getDQMEventView(I2OChain const&);
 
-    DQMEventRecordPtr getNewestReadyDQMEventRecord(const std::string groupName);
+    DQMEventRecordPtr getNewestReadyDQMEventRecord(const std::string groupName) const;
 
     void writeAndPurgeStaleDQMInstances();
+
+    void writeLatestReadyDQMInstance() const;
 
 
     DQMProcessingParams _dqmParams;
@@ -101,7 +103,7 @@ namespace stor {
     // Always serve the freshest records
     std::stack<DQMEventRecord::Entry> _recordsReadyToServe;
     
-   std::vector<unsigned char> _tempEventArea;
+    std::vector<unsigned char> _tempEventArea;
     
   };
   
