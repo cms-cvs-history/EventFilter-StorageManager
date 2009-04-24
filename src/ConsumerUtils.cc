@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.5 2009/04/21 21:23:05 biery Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.6 2009/04/24 21:06:23 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -240,7 +240,7 @@ void stor::writeErrorString( xgi::Output* out, std::string errorString )
   std::vector<unsigned char> buff( buff_size );
 
   const char *errorBytes = errorString.c_str();
-  for (unsigned int i=0; i<buff_size; ++i) buff[i]=errorBytes[i];
+  for (int i=0; i<buff_size; ++i) buff[i]=errorBytes[i];
 
   writeHTTPHeaders( out );
   out->write( (char*)(&buff[0]), buff_size );
