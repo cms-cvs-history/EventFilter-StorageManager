@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.cc,v 1.1.2.5 2009/04/23 13:27:04 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.1.2.6 2009/04/23 19:18:28 mommsen Exp $
 
 #include "TTimeStamp.h"
 
@@ -15,22 +15,18 @@ void DQMEventStore::clear()
     _recordsReadyToServe.pop();
 }
 
-void DQMEventStore::setParameters(const DQMProcessingParams& dqmParams)
+void DQMEventStore::setParameters(DQMProcessingParams const& dqmParams)
 {
   clear();
   _dqmParams = dqmParams;
 }
 
-void DQMEventStore::addDQMEvent(I2OChain& dqmEvent)
+void DQMEventStore::addDQMEvent(I2OChain const& dqmEvent)
 {
   if ( _dqmParams._collateDQM )
     addDQMEventToStore(dqmEvent);
   else
     addDQMEventToReadyToServe(dqmEvent);
-
-  // At this point all required data has been copied.
-  // Thus release the I2O buffers.
-  dqmEvent.release();
 }
 
 
@@ -118,7 +114,7 @@ DQMEventStore::getDQMEventView(I2OChain const& dqmEvent)
 
 
 DQMEventRecordPtr
-DQMEventStore::getNewestReadyDQMEventRecord(const std::string groupName)
+DQMEventStore::getNewestReadyDQMEventRecord(const std::string groupName) const
 {
   DQMEventRecordPtr readyRecord;
   TTimeStamp now;
@@ -180,18 +176,30 @@ void DQMEventStore::writeAndPurgeStaleDQMInstances()
 
 void DQMEventStore::writeAndPurgeAllDQMInstances()
 {
+  if ( _dqmParams._archiveDQM )
+    writeLatestReadyDQMInstance();
+
+  _store.clear();
+}
+
+
+void DQMEventStore::writeLatestReadyDQMInstance() const
+{
   TTimeStamp now;
   now.Set();
   
-  for (DQMEventRecordMap::iterator it = _store.begin(),
-         itEnd = _store.end();
-       it != itEnd; )
+  // Iterate over map in reverse sense. Thus, we encounter the
+  // newest instance first
+  DQMEventRecordMap::const_reverse_iterator it = _store.rbegin(),
+    itEnd = _store.rend();
+  while ( it != itEnd )
   {
-    if ( _dqmParams._archiveDQM && it->second->isReady( now.GetSec() ) )
+    if ( it->second->isReady( now.GetSec() ) )
     {
       it->second->writeFile(_dqmParams._filePrefixDQM, true);
+      break;
     }
-    _store.erase(it++);
+    ++it;
   }
 }
 
