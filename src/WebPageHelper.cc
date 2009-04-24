@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.21 2009/04/22 13:58:33 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.22 2009/04/22 14:48:07 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -163,12 +163,16 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   XHTMLMaker::Node* cs_top_row = maker.addNode( "tr", cs_tbody );
 
   // Cell titles:
-  XHTMLMaker::Node* cs_th_name = maker.addNode( "th", cs_top_row );
-  maker.addText( cs_th_name, "Name" );
   XHTMLMaker::Node* cs_th_id = maker.addNode( "th", cs_top_row );
   maker.addText( cs_th_id, "ID" );
+  XHTMLMaker::Node* cs_th_name = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_name, "Name" );
+  XHTMLMaker::Node* cs_th_status = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_status, "Status" );
   XHTMLMaker::Node* cs_th_hlt = maker.addNode( "th", cs_top_row );
   maker.addText( cs_th_hlt, "HLT Output Module" );
+  XHTMLMaker::Node* cs_th_filters = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_filters, "Filters" );
 
   boost::shared_ptr<RegistrationCollection> rc = resPtr->_registrationCollection;
   RegistrationCollection::ConsumerRegistrations regs;
@@ -182,19 +186,40 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       // Row:
       XHTMLMaker::Node* cs_tr = maker.addNode( "tr", cs_tbody );
 
-      // Name:
-      XHTMLMaker::Node* cs_td_name = maker.addNode( "td", cs_tr );
-      maker.addText( cs_td_name, (*it)->consumerName() );
-
       // ID:
       std::ostringstream cid_oss;
       cid_oss << (*it)->consumerID();
       XHTMLMaker::Node* cs_td_id = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_id, cid_oss.str() );
 
+      // Name:
+      XHTMLMaker::Node* cs_td_name = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_name, (*it)->consumerName() );
+
+      // Status. TODO...
+      XHTMLMaker::AttrMap status_attr;
+      status_attr[ "style" ] = "color:green";
+      XHTMLMaker::Node* cs_td_status = maker.addNode( "td", cs_tr, status_attr );
+      maker.addText( cs_td_status, "Active" );
+
       // HLT output module:
       XHTMLMaker::Node* cs_td_hlt = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_hlt, (*it)->selHLTOut() );
+
+      // Filter list:
+      std::string fl_str;
+      const EventConsumerRegistrationInfo::FilterList fl = (*it)->selEvents();
+      for( EventConsumerRegistrationInfo::FilterList::const_iterator lit = fl.begin();
+           lit != fl.end(); ++lit )
+        {
+          if( lit != fl.begin() )
+            {
+              fl_str += "&nbsp;&nbsp;";
+            }
+          fl_str += *lit;
+        }
+      XHTMLMaker::Node* cs_td_filters = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_filters, fl_str );
 
     }
 
