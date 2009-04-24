@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.23 2009/04/24 13:08:36 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.24 2009/04/24 14:19:43 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -197,7 +197,10 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
 
       // Name:
       XHTMLMaker::Node* cs_td_name = maker.addNode( "td", cs_tr );
-      maker.addText( cs_td_name, (*it)->consumerName() );
+      if ( (*it)->isProxyServer() )
+        maker.addText( cs_td_name, "Proxy Server" );
+      else
+        maker.addText( cs_td_name, (*it)->consumerName() );
 
       // Status. TODO...
       XHTMLMaker::AttrMap status_attr;
