@@ -1,4 +1,4 @@
-// $Id: Enabled.cc,v 1.1.2.33 2009/04/23 11:46:42 dshpakov Exp $
+// $Id: Enabled.cc,v 1.1.2.34 2009/04/23 19:19:49 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -52,7 +52,7 @@ Enabled::Enabled( my_context c ): my_base(c)
 
   // Clear old consumer registrations:
   sharedResources->_registrationCollection->clearRegistrations();
-  ed->clearStreams();
+  ed->clearConsumers();
   sharedResources->_eventConsumerQueueCollection->removeQueues();
   sharedResources->_dqmEventConsumerQueueCollection->removeQueues();
 
