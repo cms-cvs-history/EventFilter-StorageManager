@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: ConsumerUtils.h,v 1.1.2.1 2009/04/13 08:51:18 dshpakov Exp $
+// $Id: ConsumerUtils.h,v 1.1.2.2 2009/04/21 21:23:05 biery Exp $
 
 /**
    Free helper functions for handling consumer header and event
@@ -52,6 +52,11 @@ namespace stor
      Send a "done" message to consumer:
   */
   void writeDone( xgi::Output* );
+
+  /**
+     Send an error message to consumer:
+  */
+  void writeErrorString( xgi::Output*, std::string );
 
   /**
      Write HTTP headers:

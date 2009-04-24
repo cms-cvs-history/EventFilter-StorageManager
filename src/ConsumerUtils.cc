@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.4 2009/04/16 10:30:37 dshpakov Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.5 2009/04/21 21:23:05 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -229,6 +229,24 @@ void stor::writeDone( xgi::Output* out )
   out->write( (char*)(&buff[0]), len );
 
 }
+
+/////////////////////////////////////////
+//// Send error message to consumer: ////
+/////////////////////////////////////////
+void stor::writeErrorString( xgi::Output* out, std::string errorString )
+{
+
+  const int buff_size = errorString.size();
+  std::vector<unsigned char> buff( buff_size );
+
+  const char *errorBytes = errorString.c_str();
+  for (unsigned int i=0; i<buff_size; ++i) buff[i]=errorBytes[i];
+
+  writeHTTPHeaders( out );
+  out->write( (char*)(&buff[0]), buff_size );
+
+}
+
 
 //////////////////////////////////////////////////
 //// Extract consumer ID from header request: ////
