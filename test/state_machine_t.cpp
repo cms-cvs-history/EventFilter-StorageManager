@@ -15,6 +15,7 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/test/MockApplication.h"
 #include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
+#include "EventFilter/StorageManager/test/MockDQMEventProcessorResources.h"
 #include "EventFilter/StorageManager/test/MockNotifier.h"
 
 using namespace std;
@@ -164,11 +165,15 @@ int main()
   sr.reset(new SharedResources());
   sr->_initMsgCollection.reset(new InitMsgCollection());
   sr->_diskWriterResources.reset(new MockDiskWriterResources());
+  sr->_dqmEventProcessorResources.reset(new MockDQMEventProcessorResources());
   sr->_dqmServiceManager.reset(new DQMServiceManager());
   sr->_commandQueue.reset(new CommandQueue(32));
   sr->_fragmentQueue.reset(new FragmentQueue(32));
   sr->_registrationQueue.reset(new RegistrationQueue(32));
   sr->_streamQueue.reset(new StreamQueue(32));
+  sr->_dqmEventQueue.reset(new DQMEventQueue(32));
+  sr->_eventConsumerQueueCollection.reset(new EventQueueCollection());
+  sr->_dqmEventConsumerQueueCollection.reset(new DQMEventQueueCollection());
 
   MockApplicationStub* stub(new MockApplicationStub());
   MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
