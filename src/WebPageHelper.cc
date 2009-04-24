@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.22 2009/04/22 14:48:07 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.23 2009/04/24 13:08:36 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -158,6 +158,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
 
   XHTMLMaker::AttrMap table_attr;
   table_attr[ "cellspacing" ] = "5";
+  table_attr[ "border" ] = "1";
   XHTMLMaker::Node* cs_table = maker.addNode( "table", body, table_attr );
   XHTMLMaker::Node* cs_tbody = maker.addNode( "tbody", cs_table );
   XHTMLMaker::Node* cs_top_row = maker.addNode( "tr", cs_tbody );
@@ -173,6 +174,8 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   maker.addText( cs_th_hlt, "HLT Output Module" );
   XHTMLMaker::Node* cs_th_filters = maker.addNode( "th", cs_top_row );
   maker.addText( cs_th_filters, "Filters" );
+  XHTMLMaker::Node* cs_th_policy = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_policy, "Enquing Policy" );
 
   boost::shared_ptr<RegistrationCollection> rc = resPtr->_registrationCollection;
   RegistrationCollection::ConsumerRegistrations regs;
@@ -220,6 +223,12 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
         }
       XHTMLMaker::Node* cs_td_filters = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_filters, fl_str );
+
+      // Policy:
+      std::ostringstream policy_oss;
+      policy_oss << (*it)->queuePolicy();
+      XHTMLMaker::Node* cs_td_policy = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_policy, policy_oss.str() );
 
     }
 
