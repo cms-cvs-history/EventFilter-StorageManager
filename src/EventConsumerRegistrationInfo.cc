@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.16 2009/04/12 15:37:09 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.17 2009/04/13 08:51:19 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -30,7 +30,10 @@ namespace stor
     _selHLTOut( selHLTOut ),
     _secondsToStale( secondsToStale )
   {
-    if( consumerName == "SMProxyServer" )
+    if( consumerName == "SMProxyServer" ||
+        ( consumerName.find( "urn" ) != std::string::npos &&
+          consumerName.find( "xdaq" ) != std::string::npos &&
+          consumerName.find( "pushEventData" ) != std::string::npos ) )
       {
         _isProxy = true;
       }
