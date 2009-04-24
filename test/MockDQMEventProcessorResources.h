@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: MockDQMEventProcessorResources.h,v 1.1.2.1 2009/04/03 14:41:22 biery Exp $
+// $Id: MockDQMEventProcessorResources.h,v 1.1.2.1 2009/04/24 18:30:23 biery Exp $
 
 #ifndef MOCKDQMEVENTPROCESSORRESOURCES_H
 #define MOCKDQMEVENTPROCESSORRESOURCES_H
@@ -23,6 +23,8 @@ namespace stor
     void waitForStoreDestruction() { return; }
 
     void waitForEndOfRun() { return; }
+
+    bool isEndOfRunDone() { return true; }
 
   };
 

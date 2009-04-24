@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessorResources.h,v 1.1.2.4 2009/04/08 16:25:58 biery Exp $
+// $Id: DQMEventProcessorResources.h,v 1.1.2.1 2009/04/23 19:17:56 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_DQMEventProcessorResources_h
@@ -16,9 +16,9 @@ namespace stor
    * Container class for resources that are needed by the DQMEventProcessor
    * and need to be accessed from multiple threads.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/08 16:25:58 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/23 19:17:56 $
    */
 
   class DQMEventProcessorResources
@@ -98,7 +98,7 @@ namespace stor
     /**
      * Returns true if a requested end-of-run processing has been done.
      */
-    bool isEndOfRunDone();
+    virtual bool isEndOfRunDone();
 
     /**
      * Indicates that the stream destruction operation is done.
