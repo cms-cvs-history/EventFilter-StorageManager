@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.1.2.20 2009/04/09 17:00:35 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.1.2.21 2009/04/14 12:49:35 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -78,15 +78,21 @@ void FragmentMonitorCollection::do_calculateStatistics()
 
   MonitoredQuantity::Stats stats;
   _allFragmentSizes.getStats(stats);
-  _allFragmentBandwidth.addSample(stats.getValueRate());
+  if (stats.getSampleCount() > 0) {
+    _allFragmentBandwidth.addSample(stats.getLastValueRate());
+  }
   _allFragmentBandwidth.calculateStatistics();
 
   _eventFragmentSizes.getStats(stats);
-  _eventFragmentBandwidth.addSample(stats.getValueRate());
+  if (stats.getSampleCount() > 0) {
+    _eventFragmentBandwidth.addSample(stats.getLastValueRate());
+  }
   _eventFragmentBandwidth.calculateStatistics();
 
   _dqmEventFragmentSizes.getStats(stats);
-  _dqmEventFragmentBandwidth.addSample(stats.getValueRate());
+  if (stats.getSampleCount() > 0) {
+    _dqmEventFragmentBandwidth.addSample(stats.getLastValueRate());
+  }
   _dqmEventFragmentBandwidth.calculateStatistics();
 }
 

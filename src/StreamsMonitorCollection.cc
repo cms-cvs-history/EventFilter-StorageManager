@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.1.2.6 2009/04/09 17:00:35 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.1.2.7 2009/04/13 14:52:54 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -50,7 +50,10 @@ void StreamsMonitorCollection::do_calculateStatistics()
   _allStreamsFileCount.calculateStatistics();
   _allStreamsVolume.calculateStatistics();
   _allStreamsVolume.getStats(stats);
-  _allStreamsBandwidth.addSample(stats.getValueRate());
+  bool samplingHasStarted = (stats.getSampleCount() > 0);
+  if (samplingHasStarted) {
+    _allStreamsBandwidth.addSample(stats.getLastValueRate());
+  }
   _allStreamsBandwidth.calculateStatistics();
 
 
@@ -66,7 +69,9 @@ void StreamsMonitorCollection::do_calculateStatistics()
     (*it)->fileCount.calculateStatistics();
     (*it)->volume.calculateStatistics();
     (*it)->volume.getStats(stats);
-    (*it)->bandwidth.addSample(stats.getValueRate());
+    if (samplingHasStarted) {
+      (*it)->bandwidth.addSample(stats.getLastValueRate());
+    }
     (*it)->bandwidth.calculateStatistics();
   }
 }
