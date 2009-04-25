@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.17 2009/04/08 09:34:22 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.18 2009/04/09 12:14:26 mommsen Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -19,8 +19,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.17 $
-   * $Date: 2009/04/08 09:34:22 $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/04/09 12:14:26 $
    */
 
   class MonitoredQuantity
@@ -157,6 +157,7 @@ namespace stor
     double _recentValueRate;
     utils::duration_t _recentDuration;
     double _lastLatchedSampleValue;
+    double _lastLatchedValueRate;
 
     mutable boost::mutex _resultsMutex;
 
@@ -189,9 +190,9 @@ namespace stor
     double recentValueRate;
     double recentSampleLatency;
     utils::duration_t recentDuration;
-    double lastLatchedSampleValue;
 
     double lastSampleValue;
+    double lastValueRate;
     bool   enabled;
 
     long long getSampleCount(DataSetType t = FULL) const { return t == RECENT ? recentSampleCount : fullSampleCount; }
@@ -205,6 +206,7 @@ namespace stor
     double getSampleRate(DataSetType t = FULL) const { return t == RECENT ? recentSampleRate : fullSampleRate; }
     double getSampleLatency(DataSetType t = FULL) const { double v=getSampleRate(t); return v  ? 1e6/v : INFINITY;}
     double getLastSampleValue() const { return lastSampleValue; }
+    double getLastValueRate() const { return lastValueRate; }
     bool   isEnabled() const { return enabled; }
   };
 

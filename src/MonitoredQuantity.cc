@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.1.2.17 2009/04/09 11:26:12 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.1.2.18 2009/04/09 12:14:26 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 
@@ -107,6 +107,13 @@ void MonitoredQuantity::calculateStatistics(double currentTime)
     _binValueMin[_workingBinId] = latestValueMin;
     _binValueMax[_workingBinId] = latestValueMax;
     _binDuration[_workingBinId] = latestDuration;
+
+    if (latestDuration > 0.0) {
+      _lastLatchedValueRate = latestValueSum / latestDuration;
+    }
+    else {
+      _lastLatchedValueRate = 0.0;
+    }
 
     _recentSampleCount = 0;
     _recentValueSum = 0.0;
@@ -237,6 +244,7 @@ void MonitoredQuantity::_reset_results()
   _recentValueRate = 0.0;
   _recentDuration = 0.0;
   _lastLatchedSampleValue = 0.0;
+  _lastLatchedValueRate = 0.0;
 }
 
 void MonitoredQuantity::reset()
@@ -333,6 +341,7 @@ MonitoredQuantity::getStats(Stats& s) const
   s.recentDuration = _recentDuration;
 
   s.lastSampleValue = _lastLatchedSampleValue;
+  s.lastValueRate = _lastLatchedValueRate;
   s.enabled = _enabled;
 }
 
