@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.1.2.3 2009/04/01 18:44:56 paterno Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.1.2.4 2009/04/03 12:22:09 dshpakov Exp $
 
 #include <iostream>
 
@@ -21,10 +21,10 @@ int main()
   ECRI ecri( 1,
 	     1,
 	     "Test Consumer",
-	     3,
-	     10.,
 	     fl,
 	     "out4DQM",
+             id1.index(),
+             id1.policy(),
 	     10 );
   ecri.setQueueID( id1 );
 	     
