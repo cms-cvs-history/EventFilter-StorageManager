@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: CommonRegistrationInfo.h,v 1.1.2.2 2009/04/03 12:22:07 dshpakov Exp $
+// $Id: CommonRegistrationInfo.h,v 1.1.2.3 2009/04/08 19:28:44 paterno Exp $
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
 #define EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -10,6 +9,7 @@
 
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 namespace stor
 {
@@ -19,23 +19,27 @@ namespace stor
    * that don't have reason to do otherwise should include this as a
    * data member.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/03 12:22:07 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/08 19:28:44 $
    */
 
   struct CommonRegistrationInfo
   {
-    CommonRegistrationInfo( std::string const& consumerName,
-			    unsigned int headerRetryInterval,
-			    double maxEventRequestRate,
-			    QueueID queueID );
+    CommonRegistrationInfo
+    (
+      const std::string& consumerName,
+      const size_t& queueSize,
+      const enquing_policy::PolicyTag& queuePolicy,
+      const utils::duration_t& secondsToStale
+    );
 
-    std::string   consumerName;
-    unsigned int  headerRetryInterval;
-    double        maxEventRequestRate;
-    QueueID       queueId;
-    ConsumerID    consumerId;
+    const std::string                _consumerName;
+    const size_t                     _queueSize;
+    const enquing_policy::PolicyTag  _queuePolicy;
+    const utils::duration_t          _secondsToStale;
+    QueueID                          _queueId;
+    ConsumerID                       _consumerId;
   };
 
   // If changing the print order of things in
@@ -43,9 +47,17 @@ namespace stor
   // be used to implement EventConsumerRegistrationInfo::write()
 
   std::ostream& operator<<(std::ostream& os, 
-			   CommonRegistrationInfo const& ri);
+                           CommonRegistrationInfo const& ri);
 
   
 } // namespace stor
 
 #endif
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
