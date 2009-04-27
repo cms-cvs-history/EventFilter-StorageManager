@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: ConsumerUtils.h,v 1.1.2.2 2009/04/21 21:23:05 biery Exp $
+// $Id: ConsumerUtils.h,v 1.1.2.3 2009/04/24 21:06:12 biery Exp $
 
 /**
    Free helper functions for handling consumer header and event
@@ -10,9 +9,13 @@
 #define CONSUMERUTILS_H
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
+#include "EventFilter/StorageManager/interface/DQMEventRecord.h"
+#include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -26,17 +29,28 @@ namespace stor
 {
 
   typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
+  typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMConsRegPtr;
 
   /**
      Parse consumer registration request:
   */
   ConsRegPtr parseEventConsumerRegistration( xgi::Input* in,
-					     utils::duration_t secondsToStale );
+                                             size_t queueSize,
+                                             enquing_policy::PolicyTag queuePolicy,
+                                             utils::duration_t secondsToStale );
+
+  /**
+     Parse DQM consumer registration request:
+  */
+  DQMConsRegPtr parseDQMEventConsumerRegistration( xgi::Input* in,
+                                                   size_t queueSize,
+                                                   enquing_policy::PolicyTag queuePolicy,
+                                                   utils::duration_t secondsToStale );
 
   /**
      Send ID to consumer:
   */
-  void writeEventConsumerRegistration( xgi::Output*, ConsumerID );
+  void writeConsumerRegistration( xgi::Output*, ConsumerID );
 
   /**
      Tell consumer we're not ready:
@@ -78,6 +92,19 @@ namespace stor
   */
   void writeConsumerEvent( xgi::Output*, const I2OChain& );
 
+  /**
+     Send DQM event to DQM consumer:
+  */
+  void writeDQMConsumerEvent( xgi::Output*, const DQMEventRecord::Entry& );
+
 }
 
 #endif
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
