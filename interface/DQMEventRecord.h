@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.h,v 1.1.2.3 2009/04/22 15:35:01 mommsen Exp $
+// $Id: DQMEventRecord.h,v 1.1.2.4 2009/04/23 13:19:38 mommsen Exp $
 
 #ifndef StorageManager_DQMEventRecord_h
 #define StorageManager_DQMEventRecord_h
@@ -21,8 +21,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/22 15:35:01 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/23 13:19:38 $
    */
 
   class DQMEventRecord : public DQMInstance
@@ -37,6 +37,9 @@ namespace stor {
 
       std::vector<QueueID> getEventConsumerTags() const
       { return dqmConsumers; }
+
+      bool isValid() const
+      { return ( dqmEventView != 0 ); }
     };
 
   public:
