@@ -1,6 +1,7 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.6 2009/04/24 21:06:23 biery Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.7 2009/04/24 21:30:48 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
+#include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 
@@ -15,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 using namespace stor;
 
@@ -22,13 +24,15 @@ using namespace stor;
 //// Create consumer registration info: ////
 ////////////////////////////////////////////
 ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
-						 utils::duration_t sts )
+                                                 size_t queueSize,
+                                                 enquing_policy::PolicyTag queuePolicy,
+                                                 utils::duration_t secondsToStale )
 {
 
   if( in == 0 )
     {
       XCEPT_RAISE( xgi::exception::Exception,
-		   "Null xgi::Input* in parseEventConsumerRegistration" );
+                   "Null xgi::Input* in parseEventConsumerRegistration" );
     }
 
   std::string name = "unknown";
@@ -48,7 +52,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
   else
     {
       XCEPT_RAISE( stor::exception::ConsumerRegistration,
-		   "Bad request length" );
+                   "Bad request length" );
     }
 
   const edm::ParameterSet pset( pset_str );
@@ -68,25 +72,13 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
     {
       // old-style consumer or param not specified
       sel_hlt_out =
-	pset.getUntrackedParameter<std::string>( "SelectHLTOutput", "" );
+        pset.getUntrackedParameter<std::string>( "SelectHLTOutput", "" );
     }
 
   if( sel_hlt_out == "" )
     {
       XCEPT_RAISE( stor::exception::ConsumerRegistration,
-		   "No HLT output module specified" );
-    }
-
-  // Maximum event rate:
-  double max_rate = 1.0;
-  try
-    {
-      max_rate = pset.getParameter<double>( "TrackedMaxRate" );
-    }
-  catch( edm::Exception& e )
-    {
-      max_rate =
-	pset.getUntrackedParameter<double>( "maxEventRequestRate", 1.0 );
+                   "No HLT output module specified" );
     }
 
   // Event filters:
@@ -122,35 +114,63 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
   try
     {
       conn_retr_interval =
-	pset.getParameter<int>( "TrackedConnectTrySleepTime" );
+        pset.getParameter<int>( "TrackedConnectTrySleepTime" );
     }
   catch( edm::Exception& e )
     {
       conn_retr_interval =
-	pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
-    }
-
-  // Header retry interval:
-  unsigned int hdr_retr_interval = 5;
-  try
-    {
-      hdr_retr_interval =
-	pset.getParameter<int>( "TrackedHeaderRetryInterval" );
-    }
-  catch( edm::Exception& e )
-    {
-      hdr_retr_interval =
-	pset.getUntrackedParameter<int>( "headerRetryInterval", 5 );
+        pset.getUntrackedParameter<int>( "connectTrySleepTime", 10 );
     }
 
   ConsRegPtr cr( new EventConsumerRegistrationInfo( max_conn_retr,
-						    conn_retr_interval,
-						    name,
-						    hdr_retr_interval,
-						    max_rate,
-						    sel_events,
-						    sel_hlt_out,
-						    sts ) );
+                                                    conn_retr_interval,
+                                                    name,
+                                                    sel_events,
+                                                    sel_hlt_out,
+                                                    queueSize,
+                                                    queuePolicy,
+                                                    secondsToStale ) );
+  return cr;
+
+}
+
+////////////////////////////////////////////////
+//// Create DQM consumer registration info: ////
+////////////////////////////////////////////////
+DQMConsRegPtr stor::parseDQMEventConsumerRegistration( xgi::Input* in,
+                                                       size_t queueSize,
+                                                       enquing_policy::PolicyTag queuePolicy,
+                                                       utils::duration_t secondsToStale )
+{
+
+  if( in == 0 )
+    {
+      XCEPT_RAISE( xgi::exception::Exception,
+                   "Null xgi::Input* in parseDQMEventConsumerRegistration" );
+    }
+  
+  std::string consumerName = "None provided";
+  std::string consumerTopFolderName = "*";
+
+  // read the consumer registration message from the http input stream
+  std::string lengthString = in->getenv("CONTENT_LENGTH");
+  unsigned int contentLength = std::atol(lengthString.c_str());
+  if (contentLength > 0)
+  {
+    std::auto_ptr< std::vector<char> > bufPtr(new std::vector<char>(contentLength));
+    in->read(&(*bufPtr)[0], contentLength);
+    ConsRegRequestView requestMessage(&(*bufPtr)[0]);
+    consumerName = requestMessage.getConsumerName();
+    // for DQM consumers top folder name is stored in the "parameteSet"
+    std::string reqFolder = requestMessage.getRequestParameterSet();
+    if (reqFolder.size() >= 1) consumerTopFolderName = reqFolder;
+  }
+
+  DQMConsRegPtr cr( new DQMEventConsumerRegistrationInfo( consumerName,
+                                                          consumerTopFolderName, 
+                                                          queueSize,
+                                                          queuePolicy,
+                                                          secondsToStale ) );
   return cr;
 
 }
@@ -161,15 +181,15 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
 void stor::writeHTTPHeaders( xgi::Output* out )
 {
   out->getHTTPResponseHeader().addHeader( "Content-Type",
-					  "application/octet-stream" );
+                                          "application/octet-stream" );
   out->getHTTPResponseHeader().addHeader( "Content-Transfer-Encoding",
-					  "binary" );
+                                          "binary" );
 }
 
 //////////////////////////////
 //// Send ID to consumer: ////
 //////////////////////////////
-void stor::writeEventConsumerRegistration( xgi::Output* out, ConsumerID cid )
+void stor::writeConsumerRegistration( xgi::Output* out, ConsumerID cid )
 {
 
   const int buff_size = 1000;
@@ -194,7 +214,7 @@ void stor::writeNotReady( xgi::Output* out )
   std::vector<unsigned char> buff( buff_size );
 
   ConsRegResponseBuilder rb( &buff[0], buff.capacity(),
-			     ConsRegResponseBuilder::ES_NOT_READY, 0 );
+                             ConsRegResponseBuilder::ES_NOT_READY, 0 );
   ConsRegResponseView rv( &buff[0] );
   const unsigned int len = rv.size();
 
@@ -257,7 +277,7 @@ ConsumerID stor::getConsumerID( xgi::Input* in )
   if( in == 0 )
     {          
       XCEPT_RAISE( xgi::exception::Exception,
-		   "Null xgi::Input* in getConsumerID" );
+                   "Null xgi::Input* in getConsumerID" );
     }
 
   const std::string l_str = in->getenv( "CONTENT_LENGTH" );
@@ -271,21 +291,22 @@ ConsumerID stor::getConsumerID( xgi::Input* in )
       in->read( &(*buf)[0], l );
       OtherMessageView req( &(*buf)[0] );
       if( req.code() == Header::HEADER_REQUEST ||
-	  req.code() == Header::EVENT_REQUEST )
-	{
-	  uint8* ptr = req.msgBody();
-	  cid_int = convert32( ptr );
-	}
+          req.code() == Header::EVENT_REQUEST ||
+          req.code() == Header::DQMEVENT_REQUEST )
+        {
+          uint8* ptr = req.msgBody();
+          cid_int = convert32( ptr );
+        }
       else
-	{
-	  XCEPT_RAISE( stor::exception::Exception,
-		       "Bad request code in getConsumerID" );
-	}
+        {
+          XCEPT_RAISE( stor::exception::Exception,
+                       "Bad request code in getConsumerID" );
+        }
     }
   else
     {
       XCEPT_RAISE( stor::exception::Exception,
-		   "Bad request length in getConsumerID" );
+                   "Bad request length in getConsumerID" );
     }
 
   return ConsumerID( cid_int );
@@ -307,9 +328,9 @@ void stor::writeConsumerHeader( xgi::Output* out, InitMsgSharedPtr ptr )
   out->write( (char*)(&buff[0]), len );
 }
 
-///////////////////////
+//////////////////////
 //// Write event: ////
-///////////////////////
+//////////////////////
 void stor::writeConsumerEvent( xgi::Output* out, const I2OChain& evt )
 {
 
@@ -324,3 +345,25 @@ void stor::writeConsumerEvent( xgi::Output* out, const I2OChain& evt )
    } 
 
 }
+
+//////////////////////////
+//// Write DQM event: ////
+//////////////////////////
+void stor::writeDQMConsumerEvent( xgi::Output* out, const DQMEventRecord::Entry& dqmRecord )
+{
+
+  writeHTTPHeaders( out );
+
+  const unsigned int len = dqmRecord.dqmEventView->size();
+  unsigned char* location = dqmRecord.dqmEventView->startAddress();
+  out->write( (char*)location, len );
+
+}
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
