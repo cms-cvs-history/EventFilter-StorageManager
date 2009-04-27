@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.16 2009/04/13 08:51:18 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.17 2009/04/27 13:47:39 mommsen Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -19,9 +19,9 @@ namespace stor
   /**
    * Holds the registration information from a event consumer.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/04/13 08:51:18 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.17 $
+   * $Date: 2009/04/27 13:47:39 $
    */
 
   class EventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -77,6 +77,9 @@ namespace stor
     bool             _isProxy;
 
   };
+
+  typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
+
 
   /**
      Print the given EventConsumerRegistrationInfo to the given

@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.1.2.3 2009/04/24 21:06:12 biery Exp $
+// $Id: ConsumerUtils.h,v 1.1.2.4 2009/04/27 13:45:58 mommsen Exp $
 
 /**
    Free helper functions for handling consumer header and event
@@ -27,9 +27,6 @@ namespace xgi
 
 namespace stor
 {
-
-  typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
-  typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMConsRegPtr;
 
   /**
      Parse consumer registration request:

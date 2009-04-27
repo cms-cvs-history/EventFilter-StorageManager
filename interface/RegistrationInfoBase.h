@@ -1,9 +1,11 @@
-// $Id: RegistrationInfoBase.h,v 1.1.2.5 2009/04/08 19:28:45 paterno Exp $
+// $Id: RegistrationInfoBase.h,v 1.1.2.6 2009/04/27 13:50:23 mommsen Exp $
 
 #ifndef REGISTRATIONINFOBASE_H
 #define REGISTRATIONINFOBASE_H
 
 #include <string>
+
+#include <boost/shared_ptr.hpp>
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -18,9 +20,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/08 19:28:45 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/04/27 13:50:23 $
    */
 
   class RegistrationInfoBase
@@ -94,6 +96,8 @@ namespace stor {
     virtual enquing_policy::PolicyTag do_queuePolicy() const = 0;
     virtual utils::duration_t do_secondsToStale() const = 0;
   };
+
+  typedef boost::shared_ptr<stor::RegistrationInfoBase> RegPtr;
 
   inline
   void RegistrationInfoBase::registerMe(EventDistributor* dist)
