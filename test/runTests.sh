@@ -8,6 +8,7 @@ tests="\
  CommandQueue_t\
  ConcurrentQueue_t\
  DQMEventConsumerRegistrationInfo_t\
+ EnquingPolicyTag_t\
  EventConsumerRegistrationInfo_t\
  EventDistributor_t\
  EventQueueCollection_t\
