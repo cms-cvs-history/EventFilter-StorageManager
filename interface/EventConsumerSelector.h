@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerSelector.h,v 1.1.2.2 2009/03/10 20:39:43 biery Exp $
+// $Id: EventConsumerSelector.h,v 1.1.2.3 2009/03/10 21:19:38 biery Exp $
 
 #ifndef EVENTCONSUMERSELECTOR_H
 #define EVENTCONSUMERSELECTOR_H
@@ -18,8 +18,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/03/10 20:39:43 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/03/10 21:19:38 $
    */
 
   class EventConsumerSelector
@@ -33,6 +33,7 @@ namespace stor {
      */
     EventConsumerSelector( const EventConsumerRegistrationInfo& configInfo ):
       _initialized( false ),
+      _stale( false ),
       _outputModuleId( 0 ),
       _outputModuleLabel( configInfo.selHLTOut() ),
       _eventSelectionStrings( configInfo.selEvents() ),
@@ -67,9 +68,25 @@ namespace stor {
      */
     bool isInitialized() const { return _initialized; }
 
+    /**
+       Check if stale:
+    */
+    bool isStale() const { return _stale; }
+
+    /**
+       Mark as stale:
+    */
+    void markAsStale() { _stale = true; }
+
+    /**
+       Mark as active:
+    */
+    void markAsActive() { _stale = false; }
+
   private:
 
     bool _initialized;
+    bool _stale;
     unsigned int _outputModuleId;
     std::string _outputModuleLabel;
     Strings _eventSelectionStrings;
