@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: RegistrationInfoBase.h,v 1.1.2.4 2009/04/03 12:22:08 dshpakov Exp $
+// $Id: RegistrationInfoBase.h,v 1.1.2.5 2009/04/08 19:28:45 paterno Exp $
 
 #ifndef REGISTRATIONINFOBASE_H
 #define REGISTRATIONINFOBASE_H
@@ -9,6 +8,7 @@
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 namespace stor {
 
@@ -18,9 +18,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/03 12:22:08 $
+   * $Author: paterno $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/08 19:28:45 $
    */
 
   class RegistrationInfoBase
@@ -44,7 +44,12 @@ namespace stor {
      * Returns the ID of the queue corresponding to this consumer
      * registration.
      */
-   QueueID queueId() const;
+    QueueID queueId() const;
+    
+    /**
+       Set the consumer ID.
+     */
+    void setQueueID(QueueID const& id);
 
     /**
      * Returns the enquing policy requested by the consumer
@@ -60,32 +65,34 @@ namespace stor {
     /**
        Returns the ID given to this consumer.
      */
-
-    ConsumerID consumerID() const;
+    ConsumerID consumerId() const;
 
     /**
        Set the consumer ID.
      */
-    void setConsumerID(ConsumerID id);
+    void setConsumerID(const ConsumerID& id);
 
     /**
-       Returns the header retry interval specified by the consumer.
+       Returns the queue Size
      */
-    unsigned int headerRetryInterval() const;
+    size_t queueSize() const;
 
     /**
-       Return the maximum event request rate (in Hz).
-    */
-    double maxEventRequestRate() const;
+       Returns the time until the queue becomes stale
+     */
+    utils::duration_t secondsToStale() const;
+
 
   private:
     virtual void do_registerMe(EventDistributor*) = 0;
     virtual QueueID do_queueId() const = 0;
+    virtual void do_setQueueID(QueueID const& id) = 0;
     virtual std::string do_consumerName() const = 0;
-    virtual ConsumerID do_consumerID() const = 0;
-    virtual void do_setConsumerID(ConsumerID id) = 0;
-    virtual unsigned int do_headerRetryInterval() const = 0;
-    virtual double do_maxEventRequestRate() const = 0;
+    virtual ConsumerID do_consumerId() const = 0;
+    virtual void do_setConsumerID(ConsumerID const& id) = 0;
+    virtual size_t do_queueSize() const = 0;
+    virtual enquing_policy::PolicyTag do_queuePolicy() const = 0;
+    virtual utils::duration_t do_secondsToStale() const = 0;
   };
 
   inline
@@ -101,9 +108,15 @@ namespace stor {
   }
 
   inline
+  void RegistrationInfoBase::setQueueID(QueueID const& id)
+  {
+    do_setQueueID(id);
+  }
+
+  inline
   enquing_policy::PolicyTag RegistrationInfoBase::queuePolicy() const
   {
-    return do_queueId().policy();
+    return do_queuePolicy();
   }
 
   inline
@@ -113,29 +126,37 @@ namespace stor {
   }
 
   inline
-  ConsumerID RegistrationInfoBase::consumerID() const
+  ConsumerID RegistrationInfoBase::consumerId() const
   {
-    return do_consumerID();
+    return do_consumerId();
   }
 
   inline
-  void RegistrationInfoBase::setConsumerID(ConsumerID id)
+  void RegistrationInfoBase::setConsumerID(ConsumerID const& id)
   {
     do_setConsumerID(id);
   }
 
   inline
-  unsigned int RegistrationInfoBase::headerRetryInterval() const
+  size_t RegistrationInfoBase::queueSize() const
   {
-    return do_headerRetryInterval();
+    return do_queueSize();
   }
 
   inline
-  double RegistrationInfoBase::maxEventRequestRate() const
+  utils::duration_t RegistrationInfoBase::secondsToStale() const
   {
-    return do_maxEventRequestRate();
+    return do_secondsToStale();
   }
 
 } // namespace stor
 
 #endif
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
