@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.97 2009/04/24 21:08:06 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.98 2009/04/27 13:54:32 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.97 2009/04/24 21:08:06 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.98 2009/04/27 13:54:32 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3557,47 +3557,54 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
   const utils::duration_t secs2stale =
     _sharedResources->_configuration->getEventServingParams()._activeConsumerTimeout;
-
-  // Create registration info and set consumer ID:
-  stor::ConsRegPtr reginfo;
-  std::string msg;
   const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
   const size_t qsize =
     _sharedResources->_configuration->getEventServingParams()._consumerQueueSize;
+
+  // Create registration info and set consumer ID:
+  stor::ConsRegPtr reginfo;
+  std::string errorMsg = "Error parsing an event consumer registration request";
   try
     {
       reginfo = parseEventConsumerRegistration( in, qsize, policy, secs2stale );
     }
   catch ( edm::Exception& excpt )
     {
-      msg.append( "Error parsing an event consumer registration request: " );
-      msg.append( excpt.what() );
+      errorMsg.append( ": " );
+      errorMsg.append( excpt.what() );
 
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(), msg);
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
 
-      writeErrorString( out, msg );
+      XCEPT_DECLARE(stor::exception::ConsumerRegistration,
+      sentinelException, errorMsg);
+      notifyQualified("error", sentinelException);
+
+      writeErrorString( out, errorMsg );
       return;
     }
   catch ( xcept::Exception& excpt )
     {
-      msg.append( "Error parsing an event consumer registration request: " );
-      msg.append( excpt.what() );
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+        errorMsg << xcept::stdformat_exception_history(excpt));
 
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(), msg);
+      XCEPT_DECLARE_NESTED(stor::exception::ConsumerRegistration,
+      sentinelException, errorMsg, excpt);
+      notifyQualified("error", sentinelException);
 
-      writeErrorString( out, msg );
+      writeErrorString( out, errorMsg );
       return;
     }
   catch ( ... )
     {
-      msg.append( "Error parsing an event consumer registration request." );
+      errorMsg.append( ": unknown exception" );
 
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(), msg);
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
 
-      writeErrorString( out, msg );
+      XCEPT_DECLARE(stor::exception::ConsumerRegistration,
+      sentinelException, errorMsg);
+      notifyQualified("error", sentinelException);
+
+      writeErrorString( out, errorMsg );
       return;
     }
   reginfo->setConsumerID( cid );
@@ -3732,37 +3739,48 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
 
   // Create registration info and set consumer ID:
   stor::DQMConsRegPtr dqmreginfo;
+  std::string errorMsg = "Error parsing a DQM event consumer registration request";
   try
     {
       dqmreginfo = parseDQMEventConsumerRegistration( in, qsize, policy, secs2stale );
     }
   catch ( edm::Exception& excpt )
     {
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                      "Error parsing a DQM event consumer registration request:"
-                      << excpt.what());
+      errorMsg.append( ": " );
+      errorMsg.append( excpt.what() );
 
-      writeNotReady( out );
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
+
+      XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
+      sentinelException, errorMsg);
+      notifyQualified("error", sentinelException);
+
+      writeErrorString( out, errorMsg );
       return;
     }
   catch ( xcept::Exception& excpt )
     {
-      // send Sentinel error instead??
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                      "Error parsing a DQM event consumer registration request:"
-                      << excpt.what());
+        errorMsg << xcept::stdformat_exception_history(excpt));
 
-      writeNotReady( out );
+      XCEPT_DECLARE_NESTED(stor::exception::DQMConsumerRegistration,
+      sentinelException, errorMsg, excpt);
+      notifyQualified("error", sentinelException);
+
+      writeErrorString( out, errorMsg );
       return;
     }
   catch ( ... )
     {
-      // send Sentinel error instead??
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                      "Error parsing a DQM event consumer registration request.");
+      errorMsg.append( ": unknown exception" );
 
-      writeNotReady( out );
+      LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
+
+      XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
+      sentinelException, errorMsg);
+      notifyQualified("error", sentinelException);
+
+      writeErrorString( out, errorMsg );
       return;
     }
   dqmreginfo->setConsumerID( cid );
