@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: RegistrationCollection.h,v 1.1.2.5 2009/04/21 21:23:05 biery Exp $
+// $Id: RegistrationCollection.h,v 1.1.2.6 2009/04/23 11:46:41 dshpakov Exp $
 
 #ifndef REGISTRATIONCOLLECTION_H
 #define REGISTRATIONCOLLECTION_H
@@ -7,9 +6,11 @@
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
-#include "EventFilter/StorageManager/interface/ConsumerUtils.h"
+#include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 
 #include <vector>
+#include <map>
+
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -34,14 +35,19 @@ namespace stor
     /**
        Add registration info. Return false if no registration is allowed.
     */
-    bool addRegistrationInfo( ConsumerID,
-			      boost::shared_ptr<RegistrationInfoBase> );
+    bool addRegistrationInfo( ConsumerID, RegPtr );
 
     /**
-       Get consumer registrations.
+       Get event consumer registrations.
     */
     typedef std::vector<stor::ConsRegPtr> ConsumerRegistrations;
     void getEventConsumers( ConsumerRegistrations& );
+
+    /**
+       Get DQM event consumer registrations.
+    */
+    typedef std::vector<stor::DQMConsRegPtr> DQMConsumerRegistrations;
+    void getDQMEventConsumers( DQMConsumerRegistrations& );
 
     /**
        Enable registration.
@@ -75,11 +81,20 @@ namespace stor
     ConsumerID _nextConsumerID;
 
     bool _registrationAllowed;
-
-    ConsumerRegistrations _consumers;
+      
+    typedef std::map<ConsumerID, RegPtr> RegistrationMap;
+    RegistrationMap _consumers;
 
   };
 
 } // namespace stor
 
 #endif
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.6 2009/04/23 11:46:42 dshpakov Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.7 2009/04/27 13:55:49 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -31,13 +31,20 @@ ConsumerID RegistrationCollection::getConsumerID()
 }
 
 bool
-RegistrationCollection::addRegistrationInfo( ConsumerID cid,
-					     boost::shared_ptr<RegistrationInfoBase> ri )
+RegistrationCollection::addRegistrationInfo( ConsumerID cid, RegPtr ri)
 {
   boost::mutex::scoped_lock sl( _lock );
   if( _registrationAllowed )
     {
-      _consumers.push_back( boost::dynamic_pointer_cast<EventConsumerRegistrationInfo>( ri ) );
+      RegistrationMap::iterator pos = _consumers.lower_bound(cid);
+
+      if ( pos != _consumers.end() )
+      {
+        // The given ConsumerID already exists.
+        return false;
+      }
+
+      _consumers.insert( pos, RegistrationMap::value_type(cid, ri) );
       return true;
     }
   else
@@ -49,22 +56,38 @@ RegistrationCollection::addRegistrationInfo( ConsumerID cid,
 void RegistrationCollection::getEventConsumers( ConsumerRegistrations& crs )
 {
   boost::mutex::scoped_lock sl( _lock );
-  for( ConsumerRegistrations::const_iterator it = _consumers.begin();
+  for( RegistrationMap::const_iterator it = _consumers.begin();
        it != _consumers.end(); ++it )
     {
-      crs.push_back( *it );
+      ConsRegPtr eventConsumer =
+        boost::dynamic_pointer_cast<EventConsumerRegistrationInfo>( it->second );
+      if ( eventConsumer )
+        crs.push_back( eventConsumer );
+    }
+}
+
+void RegistrationCollection::getDQMEventConsumers( DQMConsumerRegistrations& crs )
+{
+  boost::mutex::scoped_lock sl( _lock );
+  for( RegistrationMap::const_iterator it = _consumers.begin();
+       it != _consumers.end(); ++it )
+    {
+      DQMConsRegPtr dqmEventConsumer =
+        boost::dynamic_pointer_cast<DQMEventConsumerRegistrationInfo>( it->second );
+      if ( dqmEventConsumer )
+        crs.push_back( dqmEventConsumer );
     }
 }
 
 void RegistrationCollection::enableConsumerRegistration()
 {
-  boost::mutex::scoped_lock sl( _lock );
+  //boost::mutex::scoped_lock sl( _lock );
   _registrationAllowed = true;
 }
 
 void RegistrationCollection::disableConsumerRegistration()
 {
-  boost::mutex::scoped_lock sl( _lock );
+  //boost::mutex::scoped_lock sl( _lock );
   _registrationAllowed = false;
 }
 
@@ -76,23 +99,29 @@ void RegistrationCollection::clearRegistrations()
 
 bool RegistrationCollection::registrationIsAllowed() const
 {
-  boost::mutex::scoped_lock sl( _lock );
+  //boost::mutex::scoped_lock sl( _lock );
   return _registrationAllowed;
 }
 
 bool RegistrationCollection::isProxy( ConsumerID cid ) const
 {
-  // Ugly. Should probably switch to a map.
-  for( ConsumerRegistrations::const_iterator it = _consumers.begin();
-       it != _consumers.end(); ++it )
-    {
-      if( (*it)->consumerId() == cid )
-	{
-	  if( (*it)->isProxyServer() )
-	    {
-	      return true;
-	    }
-	}
-    }
-  return false;
+  boost::mutex::scoped_lock sl( _lock );
+
+  RegistrationMap::const_iterator pos = _consumers.lower_bound(cid);
+
+  if ( pos == _consumers.end() ) return false;
+
+  ConsRegPtr eventConsumer =
+    boost::dynamic_pointer_cast<EventConsumerRegistrationInfo>( pos->second );
+  if ( ! eventConsumer ) return false;
+
+  return eventConsumer->isProxyServer();
 }
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
