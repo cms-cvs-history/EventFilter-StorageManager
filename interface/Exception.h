@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.10 2009/04/03 14:36:13 dshpakov Exp $
+// $Id: Exception.h,v 1.1.2.11 2009/04/16 12:55:20 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -107,6 +107,11 @@ XCEPT_DEFINE_EXCEPTION(stor, DiskWriting)
  * Consumer registration exception
  */
 XCEPT_DEFINE_EXCEPTION( stor, ConsumerRegistration )
+
+/**
+ * DQM consumer registration exception
+ */
+XCEPT_DEFINE_EXCEPTION( stor, DQMConsumerRegistration )
 
 #endif // _storagemanager_Exception_h_
 
