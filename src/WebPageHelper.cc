@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.24 2009/04/24 14:19:43 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.25 2009/04/24 21:05:25 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -191,7 +191,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
 
       // ID:
       std::ostringstream cid_oss;
-      cid_oss << (*it)->consumerID();
+      cid_oss << (*it)->consumerId();
       XHTMLMaker::Node* cs_td_id = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_id, cid_oss.str() );
 

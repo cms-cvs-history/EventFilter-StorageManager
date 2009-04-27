@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.5 2009/04/21 21:23:05 biery Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.6 2009/04/23 11:46:42 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -86,7 +86,7 @@ bool RegistrationCollection::isProxy( ConsumerID cid ) const
   for( ConsumerRegistrations::const_iterator it = _consumers.begin();
        it != _consumers.end(); ++it )
     {
-      if( (*it)->consumerID() == cid )
+      if( (*it)->consumerId() == cid )
 	{
 	  if( (*it)->isProxyServer() )
 	    {
