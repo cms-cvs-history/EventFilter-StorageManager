@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.24 2009/03/20 10:28:19 mommsen Exp $
+// $Id: EventDistributor.h,v 1.1.2.25 2009/03/26 15:35:46 biery Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -28,9 +28,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.24 $
-   * $Date: 2009/03/20 10:28:19 $
+   * $Author: biery $
+   * $Revision: 1.1.2.25 $
+   * $Date: 2009/03/26 15:35:46 $
    */
 
   class EventDistributor
@@ -106,6 +106,8 @@ namespace stor {
   private:
 
     void tagCompleteEventForQueues( I2OChain& );
+
+    void checkForStaleConsumers();
 
     EventQueueCollection _eventConsumerQueueCollection;
     EventQueueCollection _DQMQueueCollection;

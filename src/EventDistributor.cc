@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.40 2009/04/21 19:20:24 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.41 2009/04/23 13:24:42 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -41,6 +41,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
   if( ioc.isTaggedForAnyEventConsumer() )
     {
       _sharedResources->_eventConsumerQueueCollection->addEvent( ioc );
+      checkForStaleConsumers();
     }
 
 }
@@ -288,6 +289,34 @@ unsigned int EventDistributor::initializedConsumerCount() const
   return counter;
 }
 
+
+void EventDistributor::checkForStaleConsumers()
+{
+
+  std::vector<QueueID> stale_qs;
+  _sharedResources->_eventConsumerQueueCollection->clearStaleQueues( stale_qs );
+
+  // Double linear search, should try to optimize...
+  for( ConsSelList::iterator i = _eventConsumerSelectors.begin();
+           i != _eventConsumerSelectors.end(); ++i )
+    {
+
+      // First, assume the consumer is active. If we find its queue in
+      // the stale list, we'll mark it stale in the inner loop.
+      i->markAsActive();
+
+      for( std::vector<QueueID>::const_iterator j = stale_qs.begin();
+           j != stale_qs.end(); ++j )
+        {
+          if( i->queueId() == *j )
+            {
+              i->markAsStale();
+            }
+        }
+
+    }
+
+}
 
 /// emacs configuration
 /// Local Variables: -
