@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.98 2009/04/27 13:54:32 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.99 2009/04/27 14:44:36 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.98 2009/04/27 13:54:32 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.99 2009/04/27 14:44:36 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3712,7 +3712,6 @@ StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
     }
 
   writeConsumerEvent( out, evt );
-
 }
 
 /////////////////////////////////////////////////
@@ -3814,7 +3813,6 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
 
   // Reply to consumer:
   writeConsumerRegistration( out, cid );
-
 }
 
 //////////////////////////////////////////
@@ -3841,8 +3839,10 @@ StorageManager::processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out
   DQMEventRecord::Entry dqmRecord =
     _sharedResources->_dqmEventConsumerQueueCollection->popEvent( cid );
 
-  writeDQMConsumerEvent( out, dqmRecord );
-
+  if ( dqmRecord.isValid() )
+    writeDQMConsumerEvent( out, dqmRecord );
+  else
+    writeEmptyBuffer( out );
 }
 
 
