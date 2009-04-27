@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.96 2009/04/23 19:19:49 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.97 2009/04/24 21:08:06 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -76,7 +76,7 @@ namespace
 {
   void
   parseFileEntry(const std::string &in, 
-		 std::string &out, unsigned int &nev, unsigned long long &sz)
+                 std::string &out, unsigned int &nev, unsigned long long &sz)
   {
     unsigned int no;
     stringstream pippo;
@@ -95,10 +95,10 @@ namespace
     int retVal = stat64(path.c_str(), &buf);
     if(retVal !=0 )
       {
-	edm::LogError("StorageManager") << "Directory or file " << path
-					<< " does not exist. Error=" << errno ;
-	throw cms::Exception("StorageManager","checkDirectoryOK")
-	  << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
+        edm::LogError("StorageManager") << "Directory or file " << path
+                                        << " does not exist. Error=" << errno ;
+        throw cms::Exception("StorageManager","checkDirectoryOK")
+          << "Directory or file " << path << " does not exist. Error=" << errno << std::endl;
       }
   }
 }
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.96 2009/04/23 19:19:49 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.97 2009/04/24 21:08:06 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -179,8 +179,14 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind( this, &StorageManager::processConsumerEventRequest, "geteventdata" );
 
   xgi::bind(this,&StorageManager::consumerListWebPage,  "consumerList");
+
+#ifdef SM_NEW_DQM
+  xgi::bind(this,&StorageManager::processDQMConsumerRegistrationRequest, "registerDQMConsumer");
+  xgi::bind(this,&StorageManager::processDQMConsumerEventRequest, "getDQMeventdata");
+#else
   xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
   xgi::bind(this,&StorageManager::DQMconsumerWebPage,   "registerDQMConsumer");
+#endif
 
   // Old consumer statistics page binding:
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
@@ -381,15 +387,15 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   I2O_SM_DATA_MESSAGE_FRAME *msg    =
     (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
   FDEBUG(10)   << "StorageManager: Received data message from HLT at " << msg->hltURL 
-	       << " application " << msg->hltClassName << " id " << msg->hltLocalId
-	       << " instance " << msg->hltInstance << " tid " << msg->hltTid
-	       << " rbBufferID " << msg->rbBufferID << " outModID " << msg->outModID
+               << " application " << msg->hltClassName << " id " << msg->hltLocalId
+               << " instance " << msg->hltInstance << " tid " << msg->hltTid
+               << " rbBufferID " << msg->rbBufferID << " outModID " << msg->outModID
                << " fuProcID " << msg->fuProcID  << " fuGUID 0x" << std::hex
                << msg->fuGUID << std::dec << std::endl;
   FDEBUG(10)   << "                 for run " << msg->runID << " event " << msg->eventID
-	       << " total frames = " << msg->numFrames << std::endl;
+               << " total frames = " << msg->numFrames << std::endl;
   FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
-	       << msg->numFrames-1 << std::endl;
+               << msg->numFrames-1 << std::endl;
   
   int len = msg->dataSize;
 
@@ -414,7 +420,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   if(msg->runID != getRunNumber())
     {
       LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
-		      << msg->runID << " From " << msg->hltURL
+                      << msg->runID << " From " << msg->hltURL
                       << " Different from Run Number from configuration = " << getRunNumber());
     }
 
@@ -481,15 +487,15 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   I2O_SM_DATA_MESSAGE_FRAME *msg    =
     (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
   FDEBUG(10)   << "StorageManager: Received error data message from HLT at " << msg->hltURL 
-	       << " application " << msg->hltClassName << " id " << msg->hltLocalId
-	       << " instance " << msg->hltInstance << " tid " << msg->hltTid
+               << " application " << msg->hltClassName << " id " << msg->hltLocalId
+               << " instance " << msg->hltInstance << " tid " << msg->hltTid
                << " rbBufferID " << msg->rbBufferID << " outModID " << msg->outModID
                << " fuProcID " << msg->fuProcID  << " fuGUID 0x" << std::hex
                << msg->fuGUID << std::dec << std::endl;
   FDEBUG(10)   << "                 for run " << msg->runID << " event " << msg->eventID
-	       << " total frames = " << msg->numFrames << std::endl;
+               << " total frames = " << msg->numFrames << std::endl;
   FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
-	       << msg->numFrames-1 << std::endl;
+               << msg->numFrames-1 << std::endl;
   
   int len = msg->dataSize;
 
@@ -683,7 +689,7 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "  <td align=\"left\">"                                    << endl;
     *out << "    <img"                                                 << endl;
     *out << "     align=\"middle\""                                    << endl;
-    *out << "     src=\"/evf/images/smicon.jpg\""		       << endl;
+    *out << "     src=\"/evf/images/smicon.jpg\""                      << endl;
     *out << "     alt=\"main\""                                        << endl;
     *out << "     width=\"64\""                                        << endl;
     *out << "     height=\"64\""                                       << endl;
@@ -710,25 +716,25 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
     *out << "</tr>"                                                    << endl;
     if( externallyVisibleState() == "Failed")
     {
-      *out << "<tr>"					     << endl;
-      *out << " <td>"					     << endl;
+      *out << "<tr>"                                         << endl;
+      *out << " <td>"                                        << endl;
       *out << "<textarea rows=" << 5 << " cols=60 scroll=yes";
-      *out << " readonly title=\"Reason For Failed\">"		     << endl;
+      *out << " readonly title=\"Reason For Failed\">"               << endl;
       *out << reasonForFailedState_                                  << endl;
       *out << "</textarea>"                                          << endl;
-      *out << " </td>"					     << endl;
-      *out << "</tr>"					     << endl;
+      *out << " </td>"                                       << endl;
+      *out << "</tr>"                                        << endl;
     }
     *out << "</table>"                                                 << endl;
 
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\""	 << endl;
+  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\""      << endl;
   *out << " readonly title=\"Note: parts of this info updates every 10 sec !!!\">"<< endl;
-  *out << "<colgroup> <colgroup align=\"right\">"			 << endl;
-    *out << "  <tr>"						 	 << endl;
-    *out << "    <th colspan=7>"					 << endl;
-    *out << "      " << "Storage Manager Statistics"			 << endl;
-    *out << "    </th>"							 << endl;
-    *out << "  </tr>"							 << endl;
+  *out << "<colgroup> <colgroup align=\"right\">"                        << endl;
+    *out << "  <tr>"                                                     << endl;
+    *out << "    <th colspan=7>"                                         << endl;
+    *out << "      " << "Storage Manager Statistics"                     << endl;
+    *out << "    </th>"                                                  << endl;
+    *out << "  </tr>"                                                    << endl;
         *out << "<tr class=\"special\">" << endl;
           *out << "<td >" << endl;
           *out << "Output Module" << endl;
@@ -794,12 +800,12 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
   DataSenderMonitorCollection::OutputModuleResultsList resultsList =
     dataSenderMonCollection.getTopLevelOutputModuleResults();
   *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">"     << endl;
-  *out << "<colgroup> <colgroup align=\"right\">"			 << endl;
-    *out << "  <tr>"						 	 << endl;
-    *out << "    <th colspan=7>"					 << endl;
-    *out << "      " << "Storage Manager Statistics"			 << endl;
-    *out << "    </th>"							 << endl;
-    *out << "  </tr>"							 << endl;
+  *out << "<colgroup> <colgroup align=\"right\">"                        << endl;
+    *out << "  <tr>"                                                     << endl;
+    *out << "    <th colspan=7>"                                         << endl;
+    *out << "      " << "Storage Manager Statistics"                     << endl;
+    *out << "    </th>"                                                  << endl;
+    *out << "  </tr>"                                                    << endl;
         *out << "<tr class=\"special\">" << endl;
           *out << "<td >" << endl;
           *out << "Output Module" << endl;
@@ -985,14 +991,14 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
     *out << "</tr>"                                                    << endl;
     if( externallyVisibleState() == "Failed")
     {
-      *out << "<tr>"					     << endl;
-      *out << " <td>"					     << endl;
+      *out << "<tr>"                                         << endl;
+      *out << " <td>"                                        << endl;
       *out << "<textarea rows=" << 5 << " cols=60 scroll=yes";
-      *out << " readonly title=\"Reason For Failed\">"		     << endl;
+      *out << " readonly title=\"Reason For Failed\">"               << endl;
       *out << reasonForFailedState_                                  << endl;
       *out << "</textarea>"                                          << endl;
-      *out << " </td>"					     << endl;
-      *out << "</tr>"					     << endl;
+      *out << " </td>"                                       << endl;
+      *out << "</tr>"                                        << endl;
     }
     *out << "</table>"                                                 << endl;
 
@@ -1363,15 +1369,15 @@ void StorageManager::eventdataWebPage(xgi::Input *in, xgi::Output *out)
       in->read(&(*bufPtr)[0], contentLength);
       OtherMessageView requestMessage(&(*bufPtr)[0]);
       if (requestMessage.code() == Header::EVENT_REQUEST)
-	{
-	  uint8 *bodyPtr = requestMessage.msgBody();
-	  consumerId = convert32(bodyPtr);
+        {
+          uint8 *bodyPtr = requestMessage.msgBody();
+          consumerId = convert32(bodyPtr);
           if (requestMessage.bodySize() >= (2 * sizeof(char_uint32)))
             {
               bodyPtr += sizeof(char_uint32);
               consumerInitMsgCount = convert32(bodyPtr);
             }
-	}
+        }
     }
 
   // first test if StorageManager is in Enabled state and registry is filled
@@ -1618,7 +1624,7 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
 
   out->getHTTPResponseHeader().addHeader("Content-Type", "application/xml");
   sprintf(buffer,
-	  "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<Monitor>\n");
+          "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<Monitor>\n");
   out->write(buffer,strlen(buffer));
 
   if(externallyVisibleState() == "Enabled")
@@ -1631,56 +1637,56 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
     if (eventServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
-	eventServer->getConsumerTable();
+        eventServer->getConsumerTable();
       std::map< uint32, boost::shared_ptr<ConsumerPipe> >::const_iterator 
-	consumerIter;
+        consumerIter;
       for (consumerIter = consumerTable.begin();
-	   consumerIter != consumerTable.end();
-	   ++consumerIter)
+           consumerIter != consumerTable.end();
+           ++consumerIter)
       {
-	boost::shared_ptr<ConsumerPipe> consumerPipe = consumerIter->second;
-	sprintf(buffer, "<Consumer>\n");
-	out->write(buffer,strlen(buffer));
+        boost::shared_ptr<ConsumerPipe> consumerPipe = consumerIter->second;
+        sprintf(buffer, "<Consumer>\n");
+        out->write(buffer,strlen(buffer));
 
-	if (consumerPipe->isProxyServer()) {
-	  sprintf(buffer, "<Name>Proxy Server</Name>\n");
-	}
-	else {
-	  sprintf(buffer, "<Name>%s</Name>\n",
-	          consumerPipe->getConsumerName().c_str());
-	}
-	out->write(buffer,strlen(buffer));
+        if (consumerPipe->isProxyServer()) {
+          sprintf(buffer, "<Name>Proxy Server</Name>\n");
+        }
+        else {
+          sprintf(buffer, "<Name>%s</Name>\n",
+                  consumerPipe->getConsumerName().c_str());
+        }
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<ID>%d</ID>\n", consumerPipe->getConsumerId());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<ID>%d</ID>\n", consumerPipe->getConsumerId());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Time>%d</Time>\n", 
-		(int)consumerPipe->getLastEventRequestTime());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Time>%d</Time>\n", 
+                (int)consumerPipe->getLastEventRequestTime());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Host>%s</Host>\n", 
-		consumerPipe->getHostName().c_str());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Host>%s</Host>\n", 
+                consumerPipe->getHostName().c_str());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Events>%d</Events>\n", consumerPipe->getEvents());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Events>%d</Events>\n", consumerPipe->getEvents());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Failed>%d</Failed>\n", 
-		consumerPipe->getPushEventFailures());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Failed>%d</Failed>\n", 
+                consumerPipe->getPushEventFailures());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Idle>%d</Idle>\n", consumerPipe->isIdle());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Idle>%d</Idle>\n", consumerPipe->isIdle());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
-		consumerPipe->isDisconnected());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
+                consumerPipe->isDisconnected());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Ready>%d</Ready>\n", consumerPipe->isReadyForEvent());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Ready>%d</Ready>\n", consumerPipe->isReadyForEvent());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "</Consumer>\n");
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "</Consumer>\n");
+        out->write(buffer,strlen(buffer));
       }
     }
     boost::shared_ptr<DQMEventServer> dqmServer =
@@ -1688,56 +1694,56 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
     if (dqmServer.get() != NULL)
     {
       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
-	dqmServer->getConsumerTable();
+        dqmServer->getConsumerTable();
       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> >::const_iterator 
-	dqmIter;
+        dqmIter;
       for (dqmIter = dqmTable.begin();
-	   dqmIter != dqmTable.end();
-	   ++dqmIter)
+           dqmIter != dqmTable.end();
+           ++dqmIter)
       {
-	boost::shared_ptr<DQMConsumerPipe> dqmPipe = dqmIter->second;
-	sprintf(buffer, "<DQMConsumer>\n");
-	out->write(buffer,strlen(buffer));
+        boost::shared_ptr<DQMConsumerPipe> dqmPipe = dqmIter->second;
+        sprintf(buffer, "<DQMConsumer>\n");
+        out->write(buffer,strlen(buffer));
 
-	if (dqmPipe->isProxyServer()) {
-	  sprintf(buffer, "<Name>Proxy Server</Name>\n");
-	}
-	else {
-	  sprintf(buffer, "<Name>%s</Name>\n",
-	          dqmPipe->getConsumerName().c_str());
-	}
-	out->write(buffer,strlen(buffer));
+        if (dqmPipe->isProxyServer()) {
+          sprintf(buffer, "<Name>Proxy Server</Name>\n");
+        }
+        else {
+          sprintf(buffer, "<Name>%s</Name>\n",
+                  dqmPipe->getConsumerName().c_str());
+        }
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<ID>%d</ID>\n", dqmPipe->getConsumerId());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<ID>%d</ID>\n", dqmPipe->getConsumerId());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Time>%d</Time>\n", 
-		(int)dqmPipe->getLastEventRequestTime());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Time>%d</Time>\n", 
+                (int)dqmPipe->getLastEventRequestTime());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Host>%s</Host>\n", 
-		dqmPipe->getHostName().c_str());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Host>%s</Host>\n", 
+                dqmPipe->getHostName().c_str());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Events>%d</Events>\n", dqmPipe->getEvents());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Events>%d</Events>\n", dqmPipe->getEvents());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Failed>%d</Failed>\n", 
-		dqmPipe->getPushEventFailures());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Failed>%d</Failed>\n", 
+                dqmPipe->getPushEventFailures());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Idle>%d</Idle>\n", dqmPipe->isIdle());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Idle>%d</Idle>\n", dqmPipe->isIdle());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
-		dqmPipe->isDisconnected());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
+                dqmPipe->isDisconnected());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "<Ready>%d</Ready>\n", dqmPipe->isReadyForEvent());
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "<Ready>%d</Ready>\n", dqmPipe->isReadyForEvent());
+        out->write(buffer,strlen(buffer));
 
-	sprintf(buffer, "</DQMConsumer>\n");
-	out->write(buffer,strlen(buffer));
+        sprintf(buffer, "</DQMConsumer>\n");
+        out->write(buffer,strlen(buffer));
       }
     }
     sprintf(buffer, "</ConsumerList>\n");
@@ -3246,14 +3252,14 @@ std::string StorageManager::findStreamName(const std::string &in) const
       //cout << " storageManager is at " << t << endl;
       b = in.rfind(".",t-2);
       if(b!=string::npos) 
-	{
-	  //cout << "looking for substring " << t-b-2 << "long" <<endl;
-	  //cout << " stream name should be at " << b+1 << endl;
-	  //cout << " will return name " << string(in.substr(b+1,t-b-2)) << endl;
-	  return string(in.substr(b+1,t-b-2));
-	}
+        {
+          //cout << "looking for substring " << t-b-2 << "long" <<endl;
+          //cout << " stream name should be at " << b+1 << endl;
+          //cout << " will return name " << string(in.substr(b+1,t-b-2)) << endl;
+          return string(in.substr(b+1,t-b-2));
+        }
       else
-	cout << " stream name is lost " << endl;
+        cout << " stream name is lost " << endl;
     }
   else
     cout << " storageManager is not found " << endl;
@@ -3476,16 +3482,16 @@ xoap::MessageReference StorageManager::fsmCallback(xoap::MessageReference msg)
 
 ////////////////////////////////////////////////////////////////////////////////
 void StorageManager::sendDiscardMessage(unsigned int    rbBufferID, 
-					unsigned int    hltInstance,
-					unsigned int    msgType,
-					string          hltClassName)
+                                        unsigned int    hltInstance,
+                                        unsigned int    msgType,
+                                        string          hltClassName)
 {
   /*
   std::cout << "sendDiscardMessage ... " 
-	    << rbBufferID     << "  "
-	    << hltInstance    << "  "
-	    << msgType        << "  "
-	    << hltClassName   << std::endl;
+            << rbBufferID     << "  "
+            << hltInstance    << "  "
+            << msgType        << "  "
+            << hltClassName   << std::endl;
   */
     
   set<xdaq::ApplicationDescriptor*> setOfRBs=
@@ -3493,22 +3499,22 @@ void StorageManager::sendDiscardMessage(unsigned int    rbBufferID,
     getApplicationDescriptors(hltClassName.c_str());
   
   for (set<xdaq::ApplicationDescriptor*>::iterator 
-	 it=setOfRBs.begin();it!=setOfRBs.end();++it)
+         it=setOfRBs.begin();it!=setOfRBs.end();++it)
     {
       if ((*it)->getInstance()==hltInstance)
-	{
-	  
-	  stor::FUProxy* proxy =  new stor::FUProxy(getApplicationDescriptor(),
-						    *it,
-						    getApplicationContext(),
-						    pool_);
-	  if ( msgType == I2O_FU_DATA_DISCARD )
-	    proxy -> sendDataDiscard(rbBufferID);	
-	  else if ( msgType == I2O_FU_DQM_DISCARD )
-	    proxy -> sendDQMDiscard(rbBufferID);
-	  else assert("Unknown discard message type" == 0);
-	  delete proxy;
-	}
+        {
+          
+          stor::FUProxy* proxy =  new stor::FUProxy(getApplicationDescriptor(),
+                                                    *it,
+                                                    getApplicationContext(),
+                                                    pool_);
+          if ( msgType == I2O_FU_DATA_DISCARD )
+            proxy -> sendDataDiscard(rbBufferID);       
+          else if ( msgType == I2O_FU_DQM_DISCARD )
+            proxy -> sendDQMDiscard(rbBufferID);
+          else assert("Unknown discard message type" == 0);
+          delete proxy;
+        }
     }
 }
 
@@ -3555,9 +3561,12 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
   // Create registration info and set consumer ID:
   stor::ConsRegPtr reginfo;
   std::string msg;
+  const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
+  const size_t qsize =
+    _sharedResources->_configuration->getEventServingParams()._consumerQueueSize;
   try
     {
-      reginfo = parseEventConsumerRegistration( in, secs2stale );
+      reginfo = parseEventConsumerRegistration( in, qsize, policy, secs2stale );
     }
   catch ( edm::Exception& excpt )
     {
@@ -3594,14 +3603,11 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
   reginfo->setConsumerID( cid );
 
   // Create queue and set queue ID:
-  const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
-  const size_t qsize =
-    _sharedResources->_configuration->getEventServingParams()._consumerQueueSize;
   QueueID qid =
     _sharedResources->_eventConsumerQueueCollection->createQueue( cid,
-                                                                     policy,
-                                                                     qsize,
-                                                                     secs2stale );
+                                                                  policy,
+                                                                  qsize,
+                                                                  secs2stale );
   if( !qid.isValid() )
     {
       writeNotReady( out );
@@ -3613,7 +3619,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
   // Register consumer with InitMsgCollection:
   bool reg_ok =
     _sharedResources->_initMsgCollection->registerConsumer( cid,
-                                                               reginfo->selHLTOut() );
+                                                            reginfo->selHLTOut() );
   if( !reg_ok )
     {
       writeNotReady( out );
@@ -3623,7 +3629,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
   // Add registration to collection:
   bool add_ok = 
     _sharedResources->_registrationCollection->addRegistrationInfo( cid,
-                                                                       reginfo );
+                                                                    reginfo );
   if( !add_ok )
     {
       writeNotReady( out );
@@ -3634,7 +3640,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
   _sharedResources->_registrationQueue->enq_wait( reginfo );
 
   // Reply to consumer:
-  writeEventConsumerRegistration( out, cid );
+  writeConsumerRegistration( out, cid );
 
 }
 
@@ -3701,6 +3707,126 @@ StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   writeConsumerEvent( out, evt );
 
 }
+
+/////////////////////////////////////////////////
+//// New DQM consumer registration callback: ////
+/////////////////////////////////////////////////
+void
+StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
+  throw( xgi::exception::Exception )
+{
+
+  // Get consumer ID if registration is allowed:
+  ConsumerID cid = _sharedResources->_registrationCollection->getConsumerID();
+  if( !cid.isValid() )
+    {
+      writeNotReady( out );
+      return;
+    }
+
+  const utils::duration_t secs2stale =
+    _sharedResources->_configuration->getEventServingParams()._DQMactiveConsumerTimeout;
+  const enquing_policy::PolicyTag policy = enquing_policy::DiscardOld;
+  const size_t qsize =
+    _sharedResources->_configuration->getEventServingParams()._consumerQueueSize;
+
+  // Create registration info and set consumer ID:
+  stor::DQMConsRegPtr dqmreginfo;
+  try
+    {
+      dqmreginfo = parseDQMEventConsumerRegistration( in, qsize, policy, secs2stale );
+    }
+  catch ( edm::Exception& excpt )
+    {
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                      "Error parsing a DQM event consumer registration request:"
+                      << excpt.what());
+
+      writeNotReady( out );
+      return;
+    }
+  catch ( xcept::Exception& excpt )
+    {
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                      "Error parsing a DQM event consumer registration request:"
+                      << excpt.what());
+
+      writeNotReady( out );
+      return;
+    }
+  catch ( ... )
+    {
+      // send Sentinel error instead??
+      LOG4CPLUS_ERROR(this->getApplicationLogger(),
+                      "Error parsing a DQM event consumer registration request.");
+
+      writeNotReady( out );
+      return;
+    }
+  dqmreginfo->setConsumerID( cid );
+
+  // Create queue and set queue ID:
+  QueueID qid =
+    _sharedResources->_dqmEventConsumerQueueCollection->createQueue( cid,
+                                                                     policy,
+                                                                     qsize,
+                                                                     secs2stale );
+  if( !qid.isValid() )
+    {
+      writeNotReady( out );
+      return;
+    }
+
+  dqmreginfo->setQueueID( qid );
+
+  // Add registration to collection:
+  bool add_ok = 
+    _sharedResources->_registrationCollection->addRegistrationInfo( cid,
+                                                                    dqmreginfo );
+  if( !add_ok )
+    {
+      writeNotReady( out );
+      return;
+    }
+
+  // Put registration on the queue:
+  _sharedResources->_registrationQueue->enq_wait( dqmreginfo );
+
+  // Reply to consumer:
+  writeConsumerRegistration( out, cid );
+
+}
+
+//////////////////////////////////////////
+//// New DQM consumer event callback: ////
+//////////////////////////////////////////
+void
+StorageManager::processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out )
+  throw( xgi::exception::Exception )
+{
+
+  ConsumerID cid = getConsumerID( in );
+  if( !cid.isValid() )
+    {
+      writeEmptyBuffer( out );
+      return;
+    }
+
+  if ( !_sharedResources->_registrationCollection->registrationIsAllowed() )
+    {
+      writeDone( out );
+      return;
+    }
+
+  DQMEventRecord::Entry dqmRecord =
+    _sharedResources->_dqmEventConsumerQueueCollection->popEvent( cid );
+
+  writeDQMConsumerEvent( out, dqmRecord );
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // *** Provides factory method for the instantiation of SM applications //
