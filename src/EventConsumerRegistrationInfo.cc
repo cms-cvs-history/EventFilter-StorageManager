@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.17 2009/04/13 08:51:19 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.18 2009/04/24 21:04:38 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -14,21 +14,19 @@ namespace stor
 {
 
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
-  ( unsigned int maxConnectRetries,
-    unsigned int connectRetryInterval, // seconds
+  ( const unsigned int& maxConnectRetries,
+    const unsigned int& connectRetryInterval, // seconds
     const string& consumerName,
-    unsigned int headerRetryInterval, // seconds
-    double maxEventRequestRate, // Hz
     const FilterList& selEvents,
     const string& selHLTOut,
-    utils::duration_t secondsToStale ):
-    _common( consumerName, headerRetryInterval, 
-             maxEventRequestRate, QueueID() ),
-    _maxConnectRetries( maxConnectRetries ),
-    _connectRetryInterval( connectRetryInterval ),
-    _selEvents( selEvents ),
-    _selHLTOut( selHLTOut ),
-    _secondsToStale( secondsToStale )
+    const size_t& queueSize,
+    const enquing_policy::PolicyTag& queuePolicy,
+    const utils::duration_t& secondsToStale ) :
+  _common( consumerName, queueSize, queuePolicy, secondsToStale ),
+  _maxConnectRetries( maxConnectRetries ),
+  _connectRetryInterval( connectRetryInterval ),
+  _selEvents( selEvents ),
+  _selHLTOut( selHLTOut )
   {
     if( consumerName == "SMProxyServer" ||
         ( consumerName.find( "urn" ) != std::string::npos &&
@@ -55,54 +53,63 @@ namespace stor
   QueueID
   EventConsumerRegistrationInfo::do_queueId() const
   {
-    return _common.queueId;
+    return _common._queueId;
+  }
+
+  void
+  EventConsumerRegistrationInfo::do_setQueueID(QueueID const& id)
+  {
+    _common._queueId = id;
   }
 
   string
   EventConsumerRegistrationInfo::do_consumerName() const
   {
-    return _common.consumerName;
+    return _common._consumerName;
   }
 
   ConsumerID
-  EventConsumerRegistrationInfo::do_consumerID() const
+  EventConsumerRegistrationInfo::do_consumerId() const
   {
-    return _common.consumerId;
+    return _common._consumerId;
   }
 
   void
-  EventConsumerRegistrationInfo::do_setConsumerID(ConsumerID id)
+  EventConsumerRegistrationInfo::do_setConsumerID(ConsumerID const& id)
   {
-    _common.consumerId = id;
+    _common._consumerId = id;
   }
 
-  unsigned int
-  EventConsumerRegistrationInfo::do_headerRetryInterval() const
+  size_t
+  EventConsumerRegistrationInfo::do_queueSize() const
   {
-    return _common.headerRetryInterval;
+    return _common._queueSize;
   }
 
-  double
-  EventConsumerRegistrationInfo::do_maxEventRequestRate() const
+  enquing_policy::PolicyTag
+  EventConsumerRegistrationInfo::do_queuePolicy() const
   {
-    return _common.maxEventRequestRate;
+    return _common._queuePolicy;
   }
+
+  utils::duration_t
+  EventConsumerRegistrationInfo::do_secondsToStale() const
+  {
+    return _common._secondsToStale;
+  }
+
 
   ostream& 
   EventConsumerRegistrationInfo::write(ostream& os) const
   {
-    os << "EventConsumerRegistrationInfo:" << '\n'
-       << " Maximum number of connection attempts: "
-       << _maxConnectRetries << '\n'
-       << " Connection retry interval, seconds: "
-       << _connectRetryInterval << '\n'
-       << " Consumer name: " << _common.consumerName << '\n'
-       << " Header retry interval, seconds: "
-       << _common.headerRetryInterval << '\n'
-       << " Maximum event request rate, Hz: "
-       << _common.maxEventRequestRate << '\n'
-       << " HLT output: " << _selHLTOut << '\n'
-       << " Event filters:";
+    os << "EventConsumerRegistrationInfo:"
+       << _common
+       << "\n Maximum number of connection attempts: "
+       << _maxConnectRetries
+       << "\n Connection retry interval, seconds: "
+       << _connectRetryInterval
+       << "\n HLT output: " << _selHLTOut
+       << "\n Event filters:\n";
 
     copy(_selEvents.begin(), 
          _selEvents.end(),
@@ -112,8 +119,7 @@ namespace stor
     //       {
     //         os << '\n' << "  " << _selEvents[i];
     //       }
-    os << " Stale event timeout (seconds): " << _secondsToStale << '\n'
-       << " Enquing policy: " << queuePolicy();
+
     return os;
   }
 

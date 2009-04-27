@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.6 2009/04/03 12:22:08 dshpakov Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.7 2009/04/08 19:28:45 paterno Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -10,15 +10,12 @@ namespace stor
 
   DQMEventConsumerRegistrationInfo::DQMEventConsumerRegistrationInfo
   ( const std::string& consumerName,
-    unsigned int headerRetryInterval,// seconds
-    double maxEventRequestRate, // Hz
     const string& topLevelFolderName,
-    QueueID queueId,
-    size_t maxQueueSize ) :
-    _common( consumerName, headerRetryInterval, 
-	     maxEventRequestRate, queueId ),
-    _topLevelFolderName( topLevelFolderName ),
-    _maxQueueSize( maxQueueSize )
+    const size_t& queueSize,
+    const enquing_policy::PolicyTag& queuePolicy,
+    const utils::duration_t& secondsToStale ) :
+  _common( consumerName, queueSize, queuePolicy, secondsToStale),
+  _topLevelFolderName( topLevelFolderName )
   { }
 
   DQMEventConsumerRegistrationInfo::~DQMEventConsumerRegistrationInfo() 
@@ -33,51 +30,65 @@ namespace stor
   QueueID
   DQMEventConsumerRegistrationInfo::do_queueId() const
   {
-    return _common.queueId;
+    return _common._queueId;
+  }
+
+  void
+  DQMEventConsumerRegistrationInfo::do_setQueueID(QueueID const& id)
+  {
+    _common._queueId = id;
   }
 
   string
   DQMEventConsumerRegistrationInfo::do_consumerName() const
   {
-    return _common.consumerName;
+    return _common._consumerName;
   }
 
   ConsumerID
-  DQMEventConsumerRegistrationInfo::do_consumerID() const
+  DQMEventConsumerRegistrationInfo::do_consumerId() const
   {
-    return _common.consumerId;
+    return _common._consumerId;
   }
 
   void
-  DQMEventConsumerRegistrationInfo::do_setConsumerID(ConsumerID id)
+  DQMEventConsumerRegistrationInfo::do_setConsumerID(ConsumerID const& id)
   {
-    _common.consumerId = id;
+    _common._consumerId = id;
   }
 
-  unsigned int
-  DQMEventConsumerRegistrationInfo::do_headerRetryInterval() const
+  size_t
+  DQMEventConsumerRegistrationInfo::do_queueSize() const
   {
-    return _common.headerRetryInterval;
+    return _common._queueSize;
   }
 
-  double
-  DQMEventConsumerRegistrationInfo::do_maxEventRequestRate() const
+  enquing_policy::PolicyTag
+  DQMEventConsumerRegistrationInfo::do_queuePolicy() const
   {
-    return _common.maxEventRequestRate;
+    return _common._queuePolicy;
+  }
+
+  utils::duration_t
+  DQMEventConsumerRegistrationInfo::do_secondsToStale() const
+  {
+    return _common._secondsToStale;
   }
 
   ostream&
   DQMEventConsumerRegistrationInfo::write(ostream& os) const
   {
     os << "DQMEventConsumerRegistrationInfo:"
-       << "\n Consumer name: " << _common.consumerName
-       << "\n Header retry interval, seconds: "
-       << _common.headerRetryInterval
-       << "\n Maximum event request rate, Hz: "
-       << _common.maxEventRequestRate
-       << "\n Top folder name: " << _topLevelFolderName
-       << "\n Queue Id: " << _common.queueId;
+       << _common
+       << "\n Top folder name: " << _topLevelFolderName;
     return os;
   }
 
 } // namespace stor
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
