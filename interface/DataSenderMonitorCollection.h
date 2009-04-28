@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.6 2009/04/09 17:00:59 mommsen Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.1 2009/04/21 19:20:23 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
@@ -19,9 +19,9 @@ namespace stor {
    * A collection of MonitoredQuantities to track received fragments
    * and events by their source (resource broker, filter unit, etc.)
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/04/09 17:00:59 $
+   * $Author: biery $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/04/21 19:20:23 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -167,7 +167,25 @@ namespace stor {
       unsigned int id;
       MonitoredQuantity::Stats eventStats;
     };
-    typedef std::vector<OutputModuleResult> OutputModuleResultsList;
+    typedef std::vector< boost::shared_ptr<OutputModuleResult> >
+      OutputModuleResultsList;
+
+    /**
+     * Results for a given resource broker.
+     */
+    typedef long long LocalResourceBrokerID_t;
+    struct ResourceBrokerResult
+    {
+      std::string url;
+      unsigned int tid;
+      unsigned int filterUnitCount;
+      unsigned int initMsgCount;
+      unsigned int lastEventNumber;
+      MonitoredQuantity::Stats eventStats;
+      LocalResourceBrokerID_t localRBID;
+    };
+    typedef std::vector< boost::shared_ptr<ResourceBrokerResult> >
+      ResourceBrokerResultsList;
 
 
     /**
@@ -195,6 +213,11 @@ namespace stor {
      */
     OutputModuleResultsList getTopLevelOutputModuleResults() const;
 
+    /**
+     * Fetches the resource broker overview statistics.
+     */
+    ResourceBrokerResultsList getResourceBrokerOverviewResults() const;
+
   private:
 
     //Prevent copying of the DataSenderMonitorCollection
@@ -207,6 +230,9 @@ namespace stor {
 
     virtual void do_reset();
 
+    time_t _creationTime;
+    OutputModuleRecordMap _outputModuleMap;
+
     bool getAllNeededPointers(I2OChain const& i2oChain,
                               RBRecordPtr& rbRecordPtr,
                               FURecordPtr& fuRecordPtr,
@@ -214,7 +240,11 @@ namespace stor {
                               OutModRecordPtr& rbSpecificOutModPtr,
                               OutModRecordPtr& fuSpecificOutModPtr);
 
+    std::map<ResourceBrokerKey, LocalResourceBrokerID_t> _localResourceBrokerIDs;
+    std::map<LocalResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
+
     RBRecordPtr getResourceBrokerRecord(ResourceBrokerKey const&);
+    LocalResourceBrokerID_t getLocalResourceBrokerID(ResourceBrokerKey const&);
 
     FURecordPtr getFilterUnitRecord(RBRecordPtr&, FilterUnitKey const&);
 
@@ -222,9 +252,6 @@ namespace stor {
                                           OutputModuleKey const&);
 
     void calcStatsForOutputModules(OutputModuleRecordMap& outputModuleMap);
-
-    std::map<ResourceBrokerKey, RBRecordPtr> _resourceBrokerMap;
-    OutputModuleRecordMap _outputModuleMap;
 
     mutable boost::mutex _collectionsMutex;
 

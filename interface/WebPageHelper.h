@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.13 2009/04/14 12:50:20 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.14 2009/04/22 13:58:24 dshpakov Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -25,9 +25,9 @@ namespace stor {
   /**
    * Helper class to handle web page requests
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/04/14 12:50:20 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/04/22 13:58:24 $
    */
   
   class WebPageHelper
@@ -80,6 +80,19 @@ namespace stor {
     */
     void consumerStatistics( xgi::Output*,
                              const SharedResourcesPtr );
+
+    /**
+       Generates the data sender web page for all resource brokers
+    */
+    void resourceBrokerOverview( xgi::Output*,
+                                 const SharedResourcesPtr );
+
+    /**
+       Generates the data sender web page for a specific resource broker
+    */
+    void resourceBrokerDetail( xgi::Output*,
+                               const SharedResourcesPtr,
+                               long long );
 
   private:
 
@@ -266,6 +279,26 @@ namespace stor {
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Adds output module statistics to the parent DOM element
+     */
+    void addDOMforOutputModules
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DataSenderMonitorCollection const&
+    );
+
+    /**
+     * Adds data sender statistics to the parent DOM element
+     */
+    void addDOMforResourceBrokers
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DataSenderMonitorCollection const&
     );
 
 

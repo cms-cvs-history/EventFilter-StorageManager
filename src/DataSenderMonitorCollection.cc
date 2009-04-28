@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.6 2009/04/09 17:00:35 mommsen Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.1 2009/04/21 19:20:24 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -13,6 +13,7 @@ using namespace stor;
 DataSenderMonitorCollection::DataSenderMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app)
 {
+  _creationTime = time(0);
 }
 
 
@@ -128,10 +129,37 @@ DataSenderMonitorCollection::getTopLevelOutputModuleResults() const
   for (omMapIter = _outputModuleMap.begin(); omMapIter != omMapEnd; ++omMapIter)
     {
       OutModRecordPtr outModRecordPtr = omMapIter->second;
-      OutputModuleResult result;
-      result.name = outModRecordPtr->name;
-      result.id = outModRecordPtr->id;
-      outModRecordPtr->eventSize.getStats(result.eventStats);
+      boost::shared_ptr<OutputModuleResult> result(new OutputModuleResult());
+      result->name = outModRecordPtr->name;
+      result->id = outModRecordPtr->id;
+      outModRecordPtr->eventSize.getStats(result->eventStats);
+      resultsList.push_back(result);
+    }
+
+  return resultsList;
+}
+
+
+DataSenderMonitorCollection::ResourceBrokerResultsList
+DataSenderMonitorCollection::getResourceBrokerOverviewResults() const
+{
+  boost::mutex::scoped_lock sl(_collectionsMutex);
+  ResourceBrokerResultsList resultsList;
+
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapIter;
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapEnd =
+    _resourceBrokerMap.end();
+  for (rbMapIter = _resourceBrokerMap.begin(); rbMapIter != rbMapEnd; ++rbMapIter)
+    {
+      RBRecordPtr rbRecordPtr = rbMapIter->second;
+      boost::shared_ptr<ResourceBrokerResult> result(new ResourceBrokerResult());
+      result->url = rbRecordPtr->key.hltURL;
+      result->tid = rbRecordPtr->key.hltTid;
+      result->filterUnitCount = rbRecordPtr->filterUnitMap.size();
+      result->initMsgCount = rbRecordPtr->initMsgCount;
+      result->lastEventNumber = rbRecordPtr->lastEventNumber;
+      rbRecordPtr->eventSize.getStats(result->eventStats);
+      result->localRBID = rbMapIter->first;
       resultsList.push_back(result);
     }
 
@@ -143,12 +171,13 @@ void DataSenderMonitorCollection::do_calculateStatistics()
 {
   boost::mutex::scoped_lock sl(_collectionsMutex);
 
-  std::map<ResourceBrokerKey, RBRecordPtr>::const_iterator rbMapIter;
-  std::map<ResourceBrokerKey, RBRecordPtr>::const_iterator rbMapEnd =
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapIter;
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapEnd =
     _resourceBrokerMap.end();
   for (rbMapIter=_resourceBrokerMap.begin(); rbMapIter!=rbMapEnd; ++rbMapIter)
     {
       RBRecordPtr rbRecordPtr = rbMapIter->second;
+      rbRecordPtr->eventSize.calculateStatistics();
       calcStatsForOutputModules(rbRecordPtr->outputModuleMap);
 
       std::map<FilterUnitKey, FURecordPtr>::const_iterator fuMapIter;
@@ -158,6 +187,7 @@ void DataSenderMonitorCollection::do_calculateStatistics()
            fuMapIter != fuMapEnd; ++fuMapIter)
         {
           FURecordPtr fuRecordPtr = fuMapIter->second;
+          fuRecordPtr->eventSize.calculateStatistics();
           calcStatsForOutputModules(fuRecordPtr->outputModuleMap);
         }
     }
@@ -208,22 +238,43 @@ bool DSMC::getAllNeededPointers(I2OChain const& i2oChain,
   return true;
 }
 
+
 DSMC::RBRecordPtr
 DSMC::getResourceBrokerRecord(DSMC::ResourceBrokerKey const& rbKey)
 {
   RBRecordPtr rbRecordPtr;
-  std::map<ResourceBrokerKey, RBRecordPtr>::const_iterator rbMapIter;
-  rbMapIter = _resourceBrokerMap.find(rbKey);
+  LocalResourceBrokerID_t localRBID = getLocalResourceBrokerID(rbKey);
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapIter;
+  rbMapIter = _resourceBrokerMap.find(localRBID);
   if (rbMapIter == _resourceBrokerMap.end())
     {
       rbRecordPtr.reset(new ResourceBrokerRecord(rbKey));
-      _resourceBrokerMap[rbKey] = rbRecordPtr;
+      _resourceBrokerMap[localRBID] = rbRecordPtr;
     }
   else
     {
       rbRecordPtr = rbMapIter->second;
     }
   return rbRecordPtr;
+}
+
+
+DSMC::LocalResourceBrokerID_t
+DSMC::getLocalResourceBrokerID(DSMC::ResourceBrokerKey const& rbKey)
+{
+  LocalResourceBrokerID_t localID;
+  std::map<ResourceBrokerKey, LocalResourceBrokerID_t>::const_iterator rbMapIter;
+  rbMapIter = _localResourceBrokerIDs.find(rbKey);
+  if (rbMapIter == _localResourceBrokerIDs.end())
+    {
+      localID = _creationTime + 1 + _localResourceBrokerIDs.size();
+      _localResourceBrokerIDs[rbKey] = localID;
+    }
+  else
+    {
+      localID = rbMapIter->second;
+    }
+  return localID;
 }
 
 

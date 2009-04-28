@@ -1,10 +1,12 @@
-// $Id: WebPageHelper.cc,v 1.1.2.25 2009/04/24 21:05:25 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.26 2009/04/27 13:53:19 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
 #include <sys/statfs.h>
+
+#include "boost/lexical_cast.hpp"
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
@@ -248,6 +250,61 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
 }
 
 
+void WebPageHelper::resourceBrokerOverview
+(
+  xgi::Output *out,
+  const SharedResourcesPtr sharedResources
+)
+{
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+  
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
+  
+  // Create the body with the standard header
+  XHTMLMaker::Node* body = 
+    createWebPageBody(maker, statReporter->externallyVisibleState());
+
+  addDOMforOutputModules(maker, body,
+                         statReporter->getDataSenderMonitorCollection());  
+
+  maker.addNode("hr", body);
+
+  addDOMforResourceBrokers(maker, body,
+                           statReporter->getDataSenderMonitorCollection());  
+
+  addDOMforSMLinks(maker, body);
+  
+   // Dump the webpage to the output stream
+  maker.out(*out);
+}
+
+
+void WebPageHelper::resourceBrokerDetail
+(
+  xgi::Output *out,
+  const SharedResourcesPtr sharedResources,
+  long long localRBID
+)
+{
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+  
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
+  
+  // Create the body with the standard header
+  XHTMLMaker::Node* body = 
+    createWebPageBody(maker, statReporter->externallyVisibleState());
+
+  addDOMforSMLinks(maker, body);
+  
+   // Dump the webpage to the output stream
+  maker.out(*out);
+}
+
+
 ///////////////////////
 //// Get base URL: ////
 ///////////////////////
@@ -380,6 +437,12 @@ void WebPageHelper::addDOMforSMLinks
   linkAttr[ "href" ] = url + "/rbsenderlist";
   link = maker.addNode("a", parent, linkAttr);
   maker.addText(link, "RB Sender list web page");
+
+  maker.addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/oldrbsenderlist";
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "Old RB Sender list web page");
 
   maker.addNode("hr", parent);
 
@@ -1063,6 +1126,155 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
     maker.addText(tableDiv, (*it)->fileSize, 0);
     tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     maker.addText(tableDiv, (*it)->closingReason());
+  }
+}
+
+
+void WebPageHelper::addDOMforOutputModules(XHTMLMaker& maker,
+                                           XHTMLMaker::Node *parent,
+                                           DataSenderMonitorCollection const& dsmc)
+{
+  DataSenderMonitorCollection::OutputModuleResultsList omResultsList =
+    dsmc.getTopLevelOutputModuleResults();
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "7";
+  
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "align" ] = "center";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Received Data Statistics (by output module)");
+
+  // Header
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Output Module");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Events");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Size (MB)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Size/Evt (KB)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "RMS (KB)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Min (KB)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Max (KB)");
+
+  if (omResultsList.size() == 0)
+  {
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, colspanAttr);
+    maker.addText(tableDiv, "no output modules are available yet");
+    return;
+  }
+  else
+  {
+    for (unsigned int idx = 0; idx < omResultsList.size(); ++idx)
+    {
+      std::string outputModuleLabel = omResultsList[idx]->name;
+
+      tableRow = maker.addNode("tr", table);
+      tableDiv = maker.addNode("td", tableRow);
+      maker.addText(tableDiv, outputModuleLabel);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, omResultsList[idx]->eventStats.getSampleCount(), 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv,
+                    omResultsList[idx]->eventStats.getValueSum()/(double)0x100000);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv,
+                    omResultsList[idx]->eventStats.getValueAverage()/(double)0x400);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv,
+                    omResultsList[idx]->eventStats.getValueRMS()/(double)0x400);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv,
+                    omResultsList[idx]->eventStats.getValueMin()/(double)0x400);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv,
+                    omResultsList[idx]->eventStats.getValueMax()/(double)0x400);
+    }
+  }
+}
+
+
+void WebPageHelper::
+addDOMforResourceBrokers(XHTMLMaker& maker,
+                         XHTMLMaker::Node *parent,
+                         DataSenderMonitorCollection const& dsmc)
+{
+  DataSenderMonitorCollection::ResourceBrokerResultsList rbResultsList =
+    dsmc.getResourceBrokerOverviewResults();
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "7";
+  
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "align" ] = "center";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Data Sender Overview");
+
+  // Header
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Resource Broker URL");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "RB TID");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# of FUs");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# of INIT messages");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# of events");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Recent event rate (Hz)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last event number received");
+
+  if (rbResultsList.size() == 0)
+  {
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, colspanAttr);
+    maker.addText(tableDiv, "no data senders have registered yet");
+    return;
+  }
+  else
+  {
+    for (unsigned int idx = 0; idx < rbResultsList.size(); ++idx)
+    {
+      tableRow = maker.addNode("tr", table);
+
+      tableDiv = maker.addNode("td", tableRow);
+      XHTMLMaker::AttrMap linkAttr;
+      linkAttr[ "href" ] = baseURL() + "/rbsenderdetail?id=" +
+        boost::lexical_cast<std::string>(rbResultsList[idx]->localRBID);
+      XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
+      maker.addText(link, rbResultsList[idx]->url);
+
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, rbResultsList[idx]->tid, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, rbResultsList[idx]->filterUnitCount, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, rbResultsList[idx]->initMsgCount, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, rbResultsList[idx]->eventStats.getSampleCount(), 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, rbResultsList[idx]->eventStats.
+                    getSampleRate(MonitoredQuantity::RECENT));
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, rbResultsList[idx]->lastEventNumber, 0);
+    }
   }
 }
 

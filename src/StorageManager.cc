@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.99 2009/04/27 14:44:36 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.100 2009/04/27 16:58:37 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.99 2009/04/27 14:44:36 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.100 2009/04/27 16:58:37 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -166,6 +166,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
+  xgi::bind(this,&StorageManager::oldrbsenderWebPage,   "oldrbsenderlist");
+  xgi::bind(this,&StorageManager::rbsenderDetailWebPage,"rbsenderdetail");
   xgi::bind(this,&StorageManager::fileStatisticsWebPage,"fileStatistics");
 
   // Old consumer bindings:
@@ -830,28 +832,28 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
           *out << "</td>" << endl;
         *out << "</tr>" << endl;
         for (unsigned int idx = 0; idx < resultsList.size(); ++idx) {
-          std::string outputModuleLabel = resultsList[idx].name;
+          std::string outputModuleLabel = resultsList[idx]->name;
           *out << "<tr>" << endl;
             *out << "<td >" << endl;
             *out << outputModuleLabel << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << resultsList[idx].eventStats.getSampleCount() << endl;
+            *out << resultsList[idx]->eventStats.getSampleCount() << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << resultsList[idx].eventStats.getValueSum()/(double)0x100000 << endl;
+            *out << resultsList[idx]->eventStats.getValueSum()/(double)0x100000 << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << resultsList[idx].eventStats.getValueAverage()/(double)0x400 << endl;
+            *out << resultsList[idx]->eventStats.getValueAverage()/(double)0x400 << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << resultsList[idx].eventStats.getValueRMS()/(double)0x400 << endl;
+            *out << resultsList[idx]->eventStats.getValueRMS()/(double)0x400 << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << resultsList[idx].eventStats.getValueMin()/(double)0x400 << endl;
+            *out << resultsList[idx]->eventStats.getValueMin()/(double)0x400 << endl;
             *out << "</td>" << endl;
             *out << "<td align=right>" << endl;
-            *out << resultsList[idx].eventStats.getValueMax()/(double)0x400 << endl;
+            *out << resultsList[idx]->eventStats.getValueMax()/(double)0x400 << endl;
             *out << "</td>" << endl;
           *out << "</tr>" << endl;
         }
@@ -916,6 +918,9 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
   *out << "<a href=\"" << url << "/" << urn << "/rbsenderlist" << "\">" 
        << "RB Sender list web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
+  *out << "<a href=\"" << url << "/" << urn << "/oldrbsenderlist" << "\">" 
+       << "Old RB Sender list web page" << "</a>" << endl;
+  *out << "<hr/>"                                                 << endl;
   *out << "<a href=\"" << url << "/" << urn << "/streameroutput" << "\">" 
        << "Streamer Output Status web page" << "</a>" << endl;
   *out << "<hr/>"                                                 << endl;
@@ -934,8 +939,36 @@ void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
 }
 
 
-//////////// *** rbsender web page //////////////////////////////////////////////////////////
 void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the data sender webpage";
+
+  try
+  {
+    _webPageHelper.resourceBrokerOverview(out, _sharedResources);
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+
+}
+
+
+//////////// *** rbsender web page //////////////////////////////////////////////////////////
+void StorageManager::oldrbsenderWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
   *out << "<html>"                                                   << endl;
@@ -1316,6 +1349,43 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
 
   *out << "</body>"                                                  << endl;
   *out << "</html>"                                                  << endl;
+}
+
+
+void StorageManager::rbsenderDetailWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the data sender webpage";
+
+  try
+  {
+    long long localRBID = 0;
+    cgicc::Cgicc cgiWrapper(in);
+    cgicc::const_form_iterator updateRef = cgiWrapper.getElement("id");
+    if (updateRef != cgiWrapper.getElements().end())
+    {
+      std::string idString = updateRef->getValue();
+      localRBID = boost::lexical_cast<long long>(idString);
+    }
+
+    _webPageHelper.resourceBrokerDetail(out, _sharedResources, localRBID);
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+
 }
 
 
