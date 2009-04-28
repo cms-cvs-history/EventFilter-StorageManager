@@ -9,18 +9,8 @@
 using namespace std;
 using namespace stor;
 
-unsigned int Processing::_counter = 0;
-
 Processing::Processing( my_context c ): my_base(c)
 {
-
-  ++_counter;
-  if( _counter > 4 )
-    {
-      cerr << "Error: " << stateName() << " state created too many times" << endl;
-      post_event( Fail() );
-      return;
-    }
 
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );

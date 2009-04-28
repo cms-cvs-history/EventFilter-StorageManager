@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: StateMachine.h,v 1.1.2.24 2009/04/03 12:49:16 dshpakov Exp $
+// $Id: StateMachine.h,v 1.1.2.25 2009/04/23 19:17:56 mommsen Exp $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
@@ -295,8 +295,6 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_processI2OFragment( I2OChain& frag ) const;
     virtual void do_noFragmentToProcess() const;
-
-    static unsigned int _counter;
 
   };
 
