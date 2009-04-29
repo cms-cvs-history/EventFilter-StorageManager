@@ -1,10 +1,12 @@
 // -*- c++ -*-
-// $Id: $
+// $Id: ConsumerMonitorCollection.h,v 1.1.2.1 2009/04/28 14:39:50 dshpakov Exp $
 
 #ifndef CONSUMERMONITORCOLLECTION
 #define CONSUMERMONITORCOLLECTION
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
+
+#include <boost/thread/mutex.hpp>
 
 #include <map>
 
@@ -55,6 +57,8 @@ namespace stor
 
     ConsStatMap _qmap; // queued
     ConsStatMap _smap; // served
+
+    mutable boost::mutex _mutex;
 
   };
 
