@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.h,v 1.1.2.4 2009/04/23 13:19:38 mommsen Exp $
+// $Id: DQMEventRecord.h,v 1.1.2.5 2009/04/27 16:55:41 mommsen Exp $
 
 #ifndef StorageManager_DQMEventRecord_h
 #define StorageManager_DQMEventRecord_h
@@ -21,8 +21,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/23 13:19:38 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/27 16:55:41 $
    */
 
   class DQMEventRecord : public DQMInstance
@@ -30,18 +30,49 @@ namespace stor {
 
   public:
 
-    struct Entry
+    struct GroupRecord
     {
-      std::vector<QueueID> dqmConsumers;
-      boost::shared_ptr<DQMEventMsgView> dqmEventView;
-
+      struct Entry
+      {
+        std::vector<unsigned char> buffer;
+        std::vector<QueueID> dqmConsumers;
+      };
+      
+      GroupRecord() :
+      _entry(new Entry) {};
+      
+      /**
+       * Get the list of DQM event consumers this
+       * DQM event group should be served to.
+       */
       std::vector<QueueID> getEventConsumerTags() const
-      { return dqmConsumers; }
+       { return _entry->dqmConsumers; }
 
+      /**
+       * Returns the DQM event message view for this group
+       */
+      DQMEventMsgView getDQMEventMsgView()
+      { return DQMEventMsgView(&_entry->buffer[0]); }
+
+      /**
+       * Returns true if there is a DQM event message view available
+       */
       bool isValid() const
-      { return ( dqmEventView != 0 ); }
-    };
+      { return ( !_entry->buffer.empty() ); }
 
+      /**
+       * Returns the size of the stored event msg view in bytes
+       */
+      size_t size() const
+      { return _entry->buffer.size(); }
+
+      // We use here a shared_ptr to avoid copying the whole
+      // buffer each time the event record is handed on
+      boost::shared_ptr<Entry> _entry;
+      
+    };
+    
+    
   public:
 
     DQMEventRecord
@@ -55,31 +86,25 @@ namespace stor {
      * DQM event should be served to.
      */
     void setEventConsumerTags(std::vector<QueueID> dqmConsumers)
-    { _entry.dqmConsumers = dqmConsumers; }
+    { _dqmConsumers = dqmConsumers; }
 
     /**
      * Adds the DQMEventMsgView. Collates the histograms with the existing
      * DQMEventMsgView if there is one.
      */
-    void addDQMEventView(boost::shared_ptr<DQMEventMsgView>);
+    void addDQMEventView(DQMEventMsgView const&);
 
     /**
-     * Populates the dqmEventView with the requested group and returns the entry
+     * Populates the dqmEventView with the requested group and returns the group
      */
-    DQMEventRecord::Entry getEntry(const std::string groupName);
+    GroupRecord populateAndGetGroup(const std::string groupName);
 
 
   private:
 
-    /**
-     * Serialize the histograms for the group hold in DQMInstance
-     */
-    boost::shared_ptr<DQMEventMsgView> serializeDQMEvent(const std::string groupName);
-
     const DQMProcessingParams _dqmParams;
 
-    Entry _entry;
-
+    std::vector<QueueID> _dqmConsumers;
     std::string _releaseTag;
 
   };

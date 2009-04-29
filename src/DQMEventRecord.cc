@@ -1,10 +1,12 @@
-// $Id: DQMEventRecord.cc,v 1.1.2.3 2009/04/22 15:38:18 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.1.2.4 2009/04/23 13:27:04 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 
 #include "IOPool/Streamer/interface/DQMEventMessage.h"
 #include "IOPool/Streamer/interface/StreamDQMDeserializer.h"
 #include "IOPool/Streamer/interface/StreamDQMSerializer.h"
+
+#include "TROOT.h"
 
 
 using namespace stor;
@@ -21,15 +23,17 @@ DQMInstance(
   static_cast<int>(dqmParams._readyTimeDQM)
 ),
 _dqmParams(dqmParams)
-{}
-
-void DQMEventRecord::addDQMEventView(boost::shared_ptr<DQMEventMsgView> view)
 {
-  _releaseTag = view->releaseTag();
+  gROOT->SetBatch(kTRUE);
+}
+
+void DQMEventRecord::addDQMEventView(DQMEventMsgView const& view)
+{
+  _releaseTag = view.releaseTag();
 
   edm::StreamDQMDeserializer deserializer;
   std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
-    deserializer.deserializeDQMEvent(*view);
+    deserializer.deserializeDQMEvent(view);
 
   DQMEvent::TObjectTable::const_iterator toIter;
   for (
@@ -46,10 +50,10 @@ void DQMEventRecord::addDQMEventView(boost::shared_ptr<DQMEventMsgView> view)
     {
       TObject *object = toList[tdx];
       updateObject(
-        view->topFolderName(),
+        view.topFolderName(),
         subFolderName,
         object,
-        view->eventNumberAtUpdate()
+        view.eventNumberAtUpdate()
       );
       delete(object);
     }
@@ -57,16 +61,11 @@ void DQMEventRecord::addDQMEventView(boost::shared_ptr<DQMEventMsgView> view)
 }
 
 
-DQMEventRecord::Entry DQMEventRecord::getEntry(const std::string groupName)
+DQMEventRecord::GroupRecord DQMEventRecord::populateAndGetGroup(const std::string groupName)
 {
-  _entry.dqmEventView = serializeDQMEvent(groupName);
-  return _entry;
-}
+  DQMEventRecord::GroupRecord groupRecord;
+  groupRecord._entry->dqmConsumers = _dqmConsumers;
 
-
-boost::shared_ptr<DQMEventMsgView>
-DQMEventRecord::serializeDQMEvent(const std::string groupName)
-{
   // Package list of TObjects into a DQMEvent::TObjectTable
   DQMEvent::TObjectTable table;
   DQMGroup *group = getDQMGroup(groupName);
@@ -109,13 +108,13 @@ DQMEventRecord::serializeDQMEvent(const std::string groupName)
     + _releaseTag.length()
     + groupName.length()
     + subFolderSize;
-  unsigned char * buffer = (unsigned char *)malloc(totalSize);
+  groupRecord._entry->buffer.resize(totalSize);
   
   edm::Timestamp zeit( ( (unsigned long long)group->getLastUpdate()->GetSec() << 32 ) |
     ( group->getLastUpdate()->GetNanoSec()));
   
   DQMEventMsgBuilder builder(
-    (void *)&buffer[0], 
+    (void *)&(groupRecord._entry->buffer[0]), 
     totalSize,
     getRunNumber(),
     group->getLastEvent(),
@@ -133,10 +132,8 @@ DQMEventRecord::serializeDQMEvent(const std::string groupName)
   {
     builder.setCompressionFlag(serializer.currentEventSize());
   }
-  boost::shared_ptr<DQMEventMsgView> view( new DQMEventMsgView(&buffer[0]) );
-  free(buffer);
 
-  return view;
+  return groupRecord;
 }
 
 /// emacs configuration
