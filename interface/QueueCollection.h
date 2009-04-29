@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.1.2.10 2009/04/08 22:32:34 paterno Exp $
+// $Id: QueueCollection.h,v 1.1.2.4 2009/04/17 10:39:28 mommsen Exp $
 
 #ifndef StorageManager_QueueCollection_h
 #define StorageManager_QueueCollection_h
@@ -19,6 +19,7 @@
 #include "EventFilter/StorageManager/interface/ExpirableQueue.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
+#include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 
 
 namespace stor {
@@ -31,9 +32,9 @@ namespace stor {
    * returning a std::vector<QueueID> which gives the list
    * of QueueIDs of queues the class should be added.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/04/08 22:32:34 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/17 10:39:28 $
    */
 
   template <class T>
@@ -123,6 +124,11 @@ namespace stor {
      */
     void clearStaleQueues(std::vector<QueueID>& stale_queues);
 
+    /**
+       Get consumer monitor collection
+    */
+    boost::shared_ptr<ConsumerMonitorCollection> consumerMonitorCollection();
+
   private:
     typedef ExpirableQueue<T, RejectNewest<T> > expirable_discard_new_queue_t;
     typedef ExpirableQueue<T, KeepNewest<T> > expirable_discard_old_queue_t;
@@ -148,7 +154,8 @@ namespace stor {
     std::vector<expirable_discard_old_queue_ptr> _discard_old_queues;
     typedef std::map<ConsumerID, QueueID>        map_type;
     map_type                                     _queue_id_lookup;
-    
+
+    boost::shared_ptr<ConsumerMonitorCollection> _consumer_collection;
 
     /*
       These functions are declared private and not implemented to
@@ -194,7 +201,8 @@ namespace stor {
     _protect_lookup(),
     _discard_new_queues(),
     _discard_old_queues(),
-    _queue_id_lookup()
+    _queue_id_lookup(),
+    _consumer_collection( new ConsumerMonitorCollection() )
   { }
 
   template <class T>
@@ -529,6 +537,14 @@ namespace stor {
           // does not return, no break needed
         }
       }
+  }
+
+
+  template <class T>
+  boost::shared_ptr<ConsumerMonitorCollection>
+  QueueCollection<T>::consumerMonitorCollection()
+  {
+    return _consumer_collection;
   }
   
 } // namespace stor
