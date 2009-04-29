@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.9 2009/04/23 13:26:43 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.10 2009/04/23 19:19:49 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -149,11 +149,11 @@ void DQMEventProcessor::endOfRun()
 
 void DQMEventProcessor::processCompleteDQMEventRecords()
 {
-  DQMEventRecord::Entry dqmRecord;
-  while ( _dqmEventStore.getCompletedDQMEventRecordIfAvailable(dqmRecord) )
+  DQMEventRecord::GroupRecord dqmRecordEntry;
+  while ( _dqmEventStore.getCompletedDQMGroupRecordIfAvailable(dqmRecordEntry) )
   {
     _sharedResources->
-      _dqmEventConsumerQueueCollection->addEvent(dqmRecord);
+      _dqmEventConsumerQueueCollection->addEvent(dqmRecordEntry);
   }
 }
 

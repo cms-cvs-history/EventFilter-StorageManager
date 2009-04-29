@@ -1,5 +1,6 @@
-// $Id: DQMEventStore.cc,v 1.1.2.6 2009/04/23 19:18:28 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.1.2.7 2009/04/24 10:52:56 mommsen Exp $
 
+#include "TROOT.h"
 #include "TTimeStamp.h"
 
 #include "EventFilter/StorageManager/interface/DQMEventStore.h"
@@ -7,6 +8,16 @@
 
 using namespace stor;
 
+
+DQMEventStore::DQMEventStore()
+{
+  gROOT->SetBatch(kTRUE);
+}
+
+DQMEventStore::~DQMEventStore()
+{
+  clear();
+}
 
 void DQMEventStore::clear()
 {
@@ -30,7 +41,10 @@ void DQMEventStore::addDQMEvent(I2OChain const& dqmEvent)
 }
 
 
-bool DQMEventStore::getCompletedDQMEventRecordIfAvailable(DQMEventRecord::Entry& entry)
+bool DQMEventStore::getCompletedDQMGroupRecordIfAvailable
+(
+  DQMEventRecord::GroupRecord& entry
+)
 {
   if ( _recordsReadyToServe.empty() ) return false;
 
@@ -73,7 +87,9 @@ void DQMEventStore::addDQMEventToReadyToServe(I2OChain const& dqmEvent)
   DQMEventRecordPtr record =
     makeDQMEventRecord(dqmEvent);
 
-  _recordsReadyToServe.push( record->getEntry( dqmEvent.topFolderName() ) );
+  _recordsReadyToServe.push(
+    record->populateAndGetGroup( dqmEvent.topFolderName() )
+  );
 }
 
 
@@ -84,7 +100,9 @@ void DQMEventStore::addNextAvailableDQMGroupToReadyToServe(const std::string gro
   if ( record )
   {  
     record->getDQMGroup(groupName)->setServedSinceUpdate();
-    _recordsReadyToServe.push( record->getEntry(groupName) );
+    _recordsReadyToServe.push(
+      record->populateAndGetGroup( groupName )
+    );
   }
 }
 
@@ -102,13 +120,10 @@ DQMEventStore::makeDQMEventRecord(I2OChain const& dqmEvent)
 }
 
 
-boost::shared_ptr<DQMEventMsgView>
-DQMEventStore::getDQMEventView(I2OChain const& dqmEvent)
+DQMEventMsgView DQMEventStore::getDQMEventView(I2OChain const& dqmEvent)
 {
   dqmEvent.copyFragmentsIntoBuffer(_tempEventArea);
-  boost::shared_ptr<DQMEventMsgView>
-    view( new DQMEventMsgView(&_tempEventArea[0]) );
-  return view;
+  return DQMEventMsgView(&_tempEventArea[0]);
 }
 
 

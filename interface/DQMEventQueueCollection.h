@@ -1,4 +1,4 @@
-// $Id: DQMEventQueueCollection.h,v 1.1.2.2 2009/04/17 17:28:23 mommsen Exp $
+// $Id: DQMEventQueueCollection.h,v 1.1.2.3 2009/04/21 10:23:17 mommsen Exp $
 
 #ifndef StorageManager_DQMEventQueueCollection_h
 #define StorageManager_DQMEventQueueCollection_h
@@ -12,11 +12,11 @@ namespace stor {
    * A collection of ConcurrentQueue<DQMEventRecord>.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/17 17:28:23 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/21 10:23:17 $
    */
 
-  typedef QueueCollection<DQMEventRecord::Entry> DQMEventQueueCollection;
+  typedef QueueCollection<DQMEventRecord::GroupRecord> DQMEventQueueCollection;
   
 } // namespace stor
 

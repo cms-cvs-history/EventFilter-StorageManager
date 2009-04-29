@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.6 2009/04/23 19:16:17 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.7 2009/04/24 10:52:03 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -20,21 +20,22 @@ namespace stor {
   
   /**
    * Stores and collates DQM events
+   * Note that this code is not thread safe as it uses a
+   * class wide temporary buffer to convert I2OChains
+   * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/04/23 19:16:17 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/04/24 10:52:03 $
    */
   
   class DQMEventStore
   {
   public:
     
-    DQMEventStore()
-    {};
+    DQMEventStore();
 
-    ~DQMEventStore() 
-    { clear(); }
+    ~DQMEventStore();
 
     /**
      * Set the DQMProcessingParams to be used.
@@ -50,11 +51,11 @@ namespace stor {
     void addDQMEvent(I2OChain const&);
 
     /**
-     * Returns true if there is a complete DQMEventRecord
+     * Returns true if there is a complete group
      * ready to be served to consumers. In this case
-     * DQMEventRecord::Entry holds this record.
+     * DQMEventRecord::GroupRecord holds this record.
      */
-    bool getCompletedDQMEventRecordIfAvailable(DQMEventRecord::Entry&);
+    bool getCompletedDQMGroupRecordIfAvailable(DQMEventRecord::GroupRecord&);
 
     /**
      * Writes and purges all DQMEventRecords hold by the store
@@ -87,7 +88,7 @@ namespace stor {
 
     DQMEventRecordPtr makeDQMEventRecord(I2OChain const&);
 
-    boost::shared_ptr<DQMEventMsgView> getDQMEventView(I2OChain const&);
+    DQMEventMsgView getDQMEventView(I2OChain const&);
 
     DQMEventRecordPtr getNewestReadyDQMEventRecord(const std::string groupName) const;
 
@@ -100,8 +101,8 @@ namespace stor {
 
     typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
     DQMEventRecordMap _store;
-    // Always serve the freshest records
-    std::stack<DQMEventRecord::Entry> _recordsReadyToServe;
+    // Always serve the freshest record entry
+    std::stack<DQMEventRecord::GroupRecord> _recordsReadyToServe;
     
     std::vector<unsigned char> _tempEventArea;
     
