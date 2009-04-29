@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.1.2.4 2009/04/27 13:45:58 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.1.2.5 2009/04/27 17:00:18 mommsen Exp $
 
 /**
    Free helper functions for handling consumer header and event
@@ -9,13 +9,14 @@
 #define CONSUMERUTILS_H
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
-#include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
+
+#include "IOPool/Streamer/interface/DQMEventMessage.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -92,7 +93,7 @@ namespace stor
   /**
      Send DQM event to DQM consumer:
   */
-  void writeDQMConsumerEvent( xgi::Output*, const DQMEventRecord::Entry& );
+  void writeDQMConsumerEvent( xgi::Output*, const DQMEventMsgView& );
 
 }
 

@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.7 2009/04/24 21:30:48 biery Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.8 2009/04/27 13:55:03 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -349,13 +349,13 @@ void stor::writeConsumerEvent( xgi::Output* out, const I2OChain& evt )
 //////////////////////////
 //// Write DQM event: ////
 //////////////////////////
-void stor::writeDQMConsumerEvent( xgi::Output* out, const DQMEventRecord::Entry& dqmRecord )
+void stor::writeDQMConsumerEvent( xgi::Output* out, const DQMEventMsgView& view )
 {
 
   writeHTTPHeaders( out );
 
-  const unsigned int len = dqmRecord.dqmEventView->size();
-  unsigned char* location = dqmRecord.dqmEventView->startAddress();
+  const unsigned int len = view.size();
+  unsigned char* location = view.startAddress();
   out->write( (char*)location, len );
 
 }

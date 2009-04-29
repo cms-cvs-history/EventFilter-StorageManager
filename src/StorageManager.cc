@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.100 2009/04/27 16:58:37 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.101 2009/04/28 18:30:28 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.100 2009/04/27 16:58:37 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.101 2009/04/28 18:30:28 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -3906,11 +3906,11 @@ StorageManager::processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out
       return;
     }
 
-  DQMEventRecord::Entry dqmRecord =
+  DQMEventRecord::GroupRecord dqmGroupRecord =
     _sharedResources->_dqmEventConsumerQueueCollection->popEvent( cid );
 
-  if ( dqmRecord.isValid() )
-    writeDQMConsumerEvent( out, dqmRecord );
+  if ( dqmGroupRecord.isValid() )
+    writeDQMConsumerEvent( out, dqmGroupRecord.getDQMEventMsgView() );
   else
     writeEmptyBuffer( out );
 }
