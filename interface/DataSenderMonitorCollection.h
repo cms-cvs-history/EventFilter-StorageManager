@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.1 2009/04/21 19:20:23 biery Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.2 2009/04/28 18:30:15 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: biery $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/04/21 19:20:23 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/04/28 18:30:15 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -165,6 +165,7 @@ namespace stor {
     {
       std::string name;
       unsigned int id;
+      unsigned int initMsgSize;
       MonitoredQuantity::Stats eventStats;
     };
     typedef std::vector< boost::shared_ptr<OutputModuleResult> >
@@ -176,16 +177,18 @@ namespace stor {
     typedef long long LocalResourceBrokerID_t;
     struct ResourceBrokerResult
     {
-      std::string url;
-      unsigned int tid;
+      ResourceBrokerKey key;
       unsigned int filterUnitCount;
       unsigned int initMsgCount;
       unsigned int lastEventNumber;
       MonitoredQuantity::Stats eventStats;
       LocalResourceBrokerID_t localRBID;
+
+      explicit ResourceBrokerResult(ResourceBrokerKey const& rbKey):
+        key(rbKey) {}
     };
-    typedef std::vector< boost::shared_ptr<ResourceBrokerResult> >
-      ResourceBrokerResultsList;
+    typedef boost::shared_ptr<ResourceBrokerResult> RBResultPtr;
+    typedef std::vector<RBResultPtr> ResourceBrokerResultsList;
 
 
     /**
@@ -216,7 +219,17 @@ namespace stor {
     /**
      * Fetches the resource broker overview statistics.
      */
-    ResourceBrokerResultsList getResourceBrokerOverviewResults() const;
+    ResourceBrokerResultsList getAllResourceBrokerResults() const;
+
+    /**
+     * Fetches statistics for a specific resource broker.
+     */
+    RBResultPtr getOneResourceBrokerResult(LocalResourceBrokerID_t) const;
+
+    /**
+     * Fetches the output module statistics for a specific resource broker.
+     */
+    OutputModuleResultsList getOutputModuleResultsForRB(LocalResourceBrokerID_t localRBID) const;
 
   private:
 

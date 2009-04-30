@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.14 2009/04/22 13:58:24 dshpakov Exp $
+// $Id: WebPageHelper.h,v 1.1.2.15 2009/04/28 18:30:16 biery Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -25,9 +25,9 @@ namespace stor {
   /**
    * Helper class to handle web page requests
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/04/22 13:58:24 $
+   * $Author: biery $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/04/28 18:30:16 $
    */
   
   class WebPageHelper
@@ -282,9 +282,9 @@ namespace stor {
     );
 
     /**
-     * Adds output module statistics to the parent DOM element
+     * Adds top-level output module statistics to the parent DOM element
      */
-    void addDOMforOutputModules
+    void addOutputModuleStatistics
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
@@ -292,12 +292,47 @@ namespace stor {
     );
 
     /**
-     * Adds data sender statistics to the parent DOM element
+     * Adds output module statistics from the specified resource
+     * broker to the parent DOM element
      */
-    void addDOMforResourceBrokers
+    void addOutputModuleStatistics
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
+      long long localRBID,
+      DataSenderMonitorCollection const&
+    );
+
+    /**
+     * Adds output module statistics to the parent DOM element
+     */
+    void addOutputModuleStatistics
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DataSenderMonitorCollection::OutputModuleResultsList const&
+    );
+
+    /**
+     * Adds the list of data senders (resource brokers) to the
+     * parent DOM element
+     */
+    void addResourceBrokerList
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DataSenderMonitorCollection const&
+    );
+
+    /**
+     * Adds information about a specific resource broker to the
+     * parent DOM element
+     */
+    void addResourceBrokerDetails
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      long long localRBID,
       DataSenderMonitorCollection const&
     );
 

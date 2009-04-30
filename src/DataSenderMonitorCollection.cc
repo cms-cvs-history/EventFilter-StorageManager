@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.1 2009/04/21 19:20:24 biery Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.2 2009/04/28 18:30:28 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -132,6 +132,7 @@ DataSenderMonitorCollection::getTopLevelOutputModuleResults() const
       boost::shared_ptr<OutputModuleResult> result(new OutputModuleResult());
       result->name = outModRecordPtr->name;
       result->id = outModRecordPtr->id;
+      result->initMsgSize = outModRecordPtr->initMsgSize;
       outModRecordPtr->eventSize.getStats(result->eventStats);
       resultsList.push_back(result);
     }
@@ -141,7 +142,7 @@ DataSenderMonitorCollection::getTopLevelOutputModuleResults() const
 
 
 DataSenderMonitorCollection::ResourceBrokerResultsList
-DataSenderMonitorCollection::getResourceBrokerOverviewResults() const
+DataSenderMonitorCollection::getAllResourceBrokerResults() const
 {
   boost::mutex::scoped_lock sl(_collectionsMutex);
   ResourceBrokerResultsList resultsList;
@@ -152,15 +153,68 @@ DataSenderMonitorCollection::getResourceBrokerOverviewResults() const
   for (rbMapIter = _resourceBrokerMap.begin(); rbMapIter != rbMapEnd; ++rbMapIter)
     {
       RBRecordPtr rbRecordPtr = rbMapIter->second;
-      boost::shared_ptr<ResourceBrokerResult> result(new ResourceBrokerResult());
-      result->url = rbRecordPtr->key.hltURL;
-      result->tid = rbRecordPtr->key.hltTid;
+      RBResultPtr result(new ResourceBrokerResult(rbRecordPtr->key));
       result->filterUnitCount = rbRecordPtr->filterUnitMap.size();
       result->initMsgCount = rbRecordPtr->initMsgCount;
       result->lastEventNumber = rbRecordPtr->lastEventNumber;
       rbRecordPtr->eventSize.getStats(result->eventStats);
       result->localRBID = rbMapIter->first;
       resultsList.push_back(result);
+    }
+
+  return resultsList;
+}
+
+
+DataSenderMonitorCollection::RBResultPtr
+DataSenderMonitorCollection::getOneResourceBrokerResult(LocalResourceBrokerID_t localRBID) const
+{
+  boost::mutex::scoped_lock sl(_collectionsMutex);
+  RBResultPtr result;
+
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapIter;
+  rbMapIter = _resourceBrokerMap.find(localRBID);
+  if (rbMapIter != _resourceBrokerMap.end())
+    {
+      RBRecordPtr rbRecordPtr = rbMapIter->second;
+      result.reset(new ResourceBrokerResult(rbRecordPtr->key));
+      result->filterUnitCount = rbRecordPtr->filterUnitMap.size();
+      result->initMsgCount = rbRecordPtr->initMsgCount;
+      result->lastEventNumber = rbRecordPtr->lastEventNumber;
+      rbRecordPtr->eventSize.getStats(result->eventStats);
+      result->localRBID = rbMapIter->first;
+    }
+
+  return result;
+}
+
+
+DataSenderMonitorCollection::OutputModuleResultsList
+DataSenderMonitorCollection::getOutputModuleResultsForRB(LocalResourceBrokerID_t localRBID) const
+{
+  boost::mutex::scoped_lock sl(_collectionsMutex);
+  OutputModuleResultsList resultsList;
+
+  std::map<LocalResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapIter;
+  rbMapIter = _resourceBrokerMap.find(localRBID);
+  if (rbMapIter != _resourceBrokerMap.end())
+    {
+      RBRecordPtr rbRecordPtr = rbMapIter->second;
+      OutputModuleRecordMap::const_iterator omMapIter;
+      OutputModuleRecordMap::const_iterator omMapEnd =
+        rbRecordPtr->outputModuleMap.end();
+      for (omMapIter = rbRecordPtr->outputModuleMap.begin();
+           omMapIter != omMapEnd; ++omMapIter)
+        {
+          OutModRecordPtr outModRecordPtr = omMapIter->second;
+          boost::shared_ptr<OutputModuleResult> result(new OutputModuleResult());
+          result->name = outModRecordPtr->name;
+          result->id = outModRecordPtr->id;
+          // factor out this copying !!!
+          result->initMsgSize = outModRecordPtr->initMsgSize;
+          outModRecordPtr->eventSize.getStats(result->eventStats);
+          resultsList.push_back(result);
+        }
     }
 
   return resultsList;
