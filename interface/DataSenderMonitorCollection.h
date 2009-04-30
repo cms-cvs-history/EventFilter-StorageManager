@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.2 2009/04/28 18:30:15 biery Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.3 2009/04/30 16:57:43 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/28 18:30:15 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/04/30 16:57:43 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -174,7 +174,7 @@ namespace stor {
     /**
      * Results for a given resource broker.
      */
-    typedef long long LocalResourceBrokerID_t;
+    typedef long long UniqueResourceBrokerID_t;
     struct ResourceBrokerResult
     {
       ResourceBrokerKey key;
@@ -182,7 +182,7 @@ namespace stor {
       unsigned int initMsgCount;
       unsigned int lastEventNumber;
       MonitoredQuantity::Stats eventStats;
-      LocalResourceBrokerID_t localRBID;
+      UniqueResourceBrokerID_t uniqueRBID;
 
       explicit ResourceBrokerResult(ResourceBrokerKey const& rbKey):
         key(rbKey) {}
@@ -224,12 +224,12 @@ namespace stor {
     /**
      * Fetches statistics for a specific resource broker.
      */
-    RBResultPtr getOneResourceBrokerResult(LocalResourceBrokerID_t) const;
+    RBResultPtr getOneResourceBrokerResult(UniqueResourceBrokerID_t) const;
 
     /**
      * Fetches the output module statistics for a specific resource broker.
      */
-    OutputModuleResultsList getOutputModuleResultsForRB(LocalResourceBrokerID_t localRBID) const;
+    OutputModuleResultsList getOutputModuleResultsForRB(UniqueResourceBrokerID_t uniqueRBID) const;
 
   private:
 
@@ -243,7 +243,6 @@ namespace stor {
 
     virtual void do_reset();
 
-    time_t _creationTime;
     OutputModuleRecordMap _outputModuleMap;
 
     bool getAllNeededPointers(I2OChain const& i2oChain,
@@ -253,16 +252,20 @@ namespace stor {
                               OutModRecordPtr& rbSpecificOutModPtr,
                               OutModRecordPtr& fuSpecificOutModPtr);
 
-    std::map<ResourceBrokerKey, LocalResourceBrokerID_t> _localResourceBrokerIDs;
-    std::map<LocalResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
+    std::map<ResourceBrokerKey, UniqueResourceBrokerID_t> _resourceBrokerIDs;
+    std::map<UniqueResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
 
     RBRecordPtr getResourceBrokerRecord(ResourceBrokerKey const&);
-    LocalResourceBrokerID_t getLocalResourceBrokerID(ResourceBrokerKey const&);
+    UniqueResourceBrokerID_t getUniqueResourceBrokerID(ResourceBrokerKey const&);
 
     FURecordPtr getFilterUnitRecord(RBRecordPtr&, FilterUnitKey const&);
 
     OutModRecordPtr getOutputModuleRecord(OutputModuleRecordMap&,
                                           OutputModuleKey const&);
+
+    OutputModuleResultsList buildOutputModuleResults(OutputModuleRecordMap const&) const;
+
+    RBResultPtr buildResourceBrokerResult(RBRecordPtr const&) const;
 
     void calcStatsForOutputModules(OutputModuleRecordMap& outputModuleMap);
 

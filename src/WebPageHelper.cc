@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.27 2009/04/28 18:30:28 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.28 2009/04/30 16:57:44 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -285,7 +285,7 @@ void WebPageHelper::resourceBrokerDetail
 (
   xgi::Output *out,
   const SharedResourcesPtr sharedResources,
-  long long localRBID
+  long long uniqueRBID
 )
 {
   boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
@@ -298,10 +298,10 @@ void WebPageHelper::resourceBrokerDetail
   XHTMLMaker::Node* body = 
     createWebPageBody(maker, statReporter->externallyVisibleState());
 
-  addResourceBrokerDetails(maker, body, localRBID,
+  addResourceBrokerDetails(maker, body, uniqueRBID,
                            statReporter->getDataSenderMonitorCollection());  
 
-  addOutputModuleStatistics(maker, body, localRBID,
+  addOutputModuleStatistics(maker, body, uniqueRBID,
                             statReporter->getDataSenderMonitorCollection());  
 
   addDOMforSMLinks(maker, body);
@@ -1149,11 +1149,11 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
 
 void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
                                               XHTMLMaker::Node *parent,
-                                              long long localRBID,
+                                              long long uniqueRBID,
                                DataSenderMonitorCollection const& dsmc)
 {
   DataSenderMonitorCollection::OutputModuleResultsList resultsList =
-    dsmc.getOutputModuleResultsForRB(localRBID);
+    dsmc.getOutputModuleResultsForRB(uniqueRBID);
 
   addOutputModuleStatistics(maker, parent, resultsList);
 }
@@ -1292,7 +1292,7 @@ void WebPageHelper::addResourceBrokerList(XHTMLMaker& maker,
       tableDiv = maker.addNode("td", tableRow);
       XHTMLMaker::AttrMap linkAttr;
       linkAttr[ "href" ] = baseURL() + "/rbsenderdetail?id=" +
-        boost::lexical_cast<std::string>(rbResultsList[idx]->localRBID);
+        boost::lexical_cast<std::string>(rbResultsList[idx]->uniqueRBID);
       XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
       maker.addText(link, rbResultsList[idx]->key.hltURL);
 
@@ -1316,16 +1316,15 @@ void WebPageHelper::addResourceBrokerList(XHTMLMaker& maker,
 
 void WebPageHelper::addResourceBrokerDetails(XHTMLMaker& maker,
                                              XHTMLMaker::Node *parent,
-                                             long long localRBID,
+                                             long long uniqueRBID,
                               DataSenderMonitorCollection const& dsmc)
 {
   DataSenderMonitorCollection::RBResultPtr rbResultPtr =
-    dsmc.getOneResourceBrokerResult(localRBID);
+    dsmc.getOneResourceBrokerResult(uniqueRBID);
 
   if (rbResultPtr.get() == 0)
   {
-    maker.addText(parent, "The requested resource broker page is not longer available.");
-    maker.addText(parent, "Please reload the main resource broker list and re-select the resource broker of interest.");
+    maker.addText(parent, "The requested resource broker page is not currently available.");
     return;
   }
 
