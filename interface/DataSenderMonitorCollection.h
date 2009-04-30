@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.3 2009/04/30 16:57:43 biery Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.4 2009/04/30 20:19:04 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: biery $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/30 16:57:43 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/30 20:19:04 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -190,6 +190,22 @@ namespace stor {
     typedef boost::shared_ptr<ResourceBrokerResult> RBResultPtr;
     typedef std::vector<RBResultPtr> ResourceBrokerResultsList;
 
+    /**
+     * Results for a given filter unit
+     */
+    struct FilterUnitResult
+    {
+      FilterUnitKey key;
+      unsigned int initMsgCount;
+      unsigned int lastEventNumber;
+      MonitoredQuantity::Stats eventStats;
+
+      explicit FilterUnitResult(FilterUnitKey const& rbKey):
+        key(rbKey) {}
+    };
+    typedef boost::shared_ptr<FilterUnitResult> FUResultPtr;
+    typedef std::vector<FUResultPtr> FilterUnitResultsList;
+
 
     /**
      * Constructor.
@@ -230,6 +246,11 @@ namespace stor {
      * Fetches the output module statistics for a specific resource broker.
      */
     OutputModuleResultsList getOutputModuleResultsForRB(UniqueResourceBrokerID_t uniqueRBID) const;
+
+    /**
+     * Fetches the filter unit results for a specific resource broker.
+     */
+    FilterUnitResultsList getFilterUnitResultsForRB(UniqueResourceBrokerID_t uniqueRBID) const;
 
   private:
 

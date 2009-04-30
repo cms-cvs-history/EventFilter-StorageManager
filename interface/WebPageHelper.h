@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.15 2009/04/28 18:30:16 biery Exp $
+// $Id: WebPageHelper.h,v 1.1.2.16 2009/04/30 16:57:43 biery Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -26,8 +26,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: biery $
-   * $Revision: 1.1.2.15 $
-   * $Date: 2009/04/28 18:30:16 $
+   * $Revision: 1.1.2.16 $
+   * $Date: 2009/04/30 16:57:43 $
    */
   
   class WebPageHelper
@@ -299,7 +299,7 @@ namespace stor {
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
-      long long localRBID,
+      long long uniqueRBID,
       DataSenderMonitorCollection const&
     );
 
@@ -332,10 +332,21 @@ namespace stor {
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
-      long long localRBID,
+      long long uniqueRBID,
       DataSenderMonitorCollection const&
     );
 
+    /**
+     * Adds information about the filter units for a specific
+     * resource broker to the parent DOM element
+     */
+    void addFilterUnitList
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      long long uniqueRBID,
+      DataSenderMonitorCollection const&
+    );
 
   private:
 

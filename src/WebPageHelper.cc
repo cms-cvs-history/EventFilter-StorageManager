@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.28 2009/04/30 16:57:44 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.29 2009/04/30 20:19:04 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -303,6 +303,9 @@ void WebPageHelper::resourceBrokerDetail
 
   addOutputModuleStatistics(maker, body, uniqueRBID,
                             statReporter->getDataSenderMonitorCollection());  
+
+  addFilterUnitList(maker, body, uniqueRBID,
+                    statReporter->getDataSenderMonitorCollection());  
 
   addDOMforSMLinks(maker, body);
   
@@ -1201,7 +1204,7 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
 
     tableRow = maker.addNode("tr", table);
     tableDiv = maker.addNode("td", tableRow, messageAttr);
-    maker.addText(tableDiv, "No output modules are available yet,");
+    maker.addText(tableDiv, "No output modules are available yet.");
     return;
   }
   else
@@ -1418,6 +1421,75 @@ void WebPageHelper::addResourceBrokerDetails(XHTMLMaker& maker,
   maker.addText(tableDiv, tmpText);
   tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
   maker.addText(tableDiv, rbResultPtr->eventStats.fullSampleRate);
+}
+
+
+void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
+                                      XHTMLMaker::Node *parent,
+                                      long long uniqueRBID,
+                                      DataSenderMonitorCollection const& dsmc)
+{
+  DataSenderMonitorCollection::FilterUnitResultsList fuResultsList =
+    dsmc.getFilterUnitResultsForRB(uniqueRBID);
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "6";
+
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "align" ] = "center";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Filter Units");
+
+  // Header
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Process ID");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "GUID");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# of INIT messages");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# of events");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Recent event rate (Hz)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last event number received");
+
+  if (fuResultsList.size() == 0)
+  {
+    XHTMLMaker::AttrMap messageAttr = colspanAttr;
+    messageAttr[ "align" ] = "center";
+
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, messageAttr);
+    maker.addText(tableDiv, "No filter units have registered yet.");
+    return;
+  }
+  else
+  {
+    for (unsigned int idx = 0; idx < fuResultsList.size(); ++idx)
+    {
+      tableRow = maker.addNode("tr", table);
+
+      tableDiv = maker.addNode("td", tableRow);
+      maker.addText(tableDiv, fuResultsList[idx]->key.fuProcessId, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, fuResultsList[idx]->key.fuGuid, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, fuResultsList[idx]->initMsgCount, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, fuResultsList[idx]->eventStats.getSampleCount(), 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, fuResultsList[idx]->eventStats.
+                    getSampleRate(MonitoredQuantity::RECENT));
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, fuResultsList[idx]->lastEventNumber, 0);
+    }
+  }
 }
 
 

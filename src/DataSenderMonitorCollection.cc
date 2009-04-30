@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.3 2009/04/30 16:57:44 biery Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.4 2009/04/30 20:19:04 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -181,6 +181,36 @@ DataSenderMonitorCollection::getOutputModuleResultsForRB(UniqueResourceBrokerID_
     {
       RBRecordPtr rbRecordPtr = rbMapIter->second;
       resultsList = buildOutputModuleResults(rbRecordPtr->outputModuleMap);
+    }
+
+  return resultsList;
+}
+
+
+DataSenderMonitorCollection::FilterUnitResultsList
+DataSenderMonitorCollection::getFilterUnitResultsForRB(UniqueResourceBrokerID_t uniqueRBID) const
+{
+  boost::mutex::scoped_lock sl(_collectionsMutex);
+  FilterUnitResultsList resultsList;
+
+  std::map<UniqueResourceBrokerID_t, RBRecordPtr>::const_iterator rbMapIter;
+  rbMapIter = _resourceBrokerMap.find(uniqueRBID);
+  if (rbMapIter != _resourceBrokerMap.end())
+    {
+      RBRecordPtr rbRecordPtr = rbMapIter->second;
+      std::map<FilterUnitKey, FURecordPtr>::const_iterator fuMapIter;
+      std::map<FilterUnitKey, FURecordPtr>::const_iterator fuMapEnd =
+        rbRecordPtr->filterUnitMap.end();        
+      for (fuMapIter = rbRecordPtr->filterUnitMap.begin();
+           fuMapIter != fuMapEnd; ++fuMapIter)
+        {
+          FURecordPtr fuRecordPtr = fuMapIter->second;
+          FUResultPtr result(new FilterUnitResult(fuRecordPtr->key));
+          result->initMsgCount = fuRecordPtr->initMsgCount;
+          result->lastEventNumber = fuRecordPtr->lastEventNumber;
+          fuRecordPtr->eventSize.getStats(result->eventStats);
+          resultsList.push_back(result);
+        }
     }
 
   return resultsList;
