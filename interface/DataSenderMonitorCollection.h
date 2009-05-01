@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.4 2009/04/30 20:19:04 biery Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.5 2009/04/30 21:05:12 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
@@ -20,8 +20,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: biery $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/30 20:19:04 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/30 21:05:12 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -113,8 +113,7 @@ namespace stor {
       std::string name;
       unsigned int id;
       unsigned int initMsgSize;
-      unsigned int runNumber;
-      MonitoredQuantity fragmentSize;
+      //MonitoredQuantity fragmentSize;
       MonitoredQuantity eventSize;
     };
     typedef boost::shared_ptr<OutputModuleRecord> OutModRecordPtr;
@@ -129,6 +128,7 @@ namespace stor {
       OutputModuleRecordMap outputModuleMap;
       MonitoredQuantity eventSize;
       unsigned int initMsgCount;
+      unsigned int lastRunNumber;
       unsigned int lastEventNumber;
 
       explicit FilterUnitRecord(FilterUnitKey fuKey) :
@@ -148,6 +148,7 @@ namespace stor {
       OutputModuleRecordMap outputModuleMap;
       MonitoredQuantity eventSize;
       unsigned int initMsgCount;
+      unsigned int lastRunNumber;
       unsigned int lastEventNumber;
 
       explicit ResourceBrokerRecord(ResourceBrokerKey rbKey) :
@@ -180,6 +181,7 @@ namespace stor {
       ResourceBrokerKey key;
       unsigned int filterUnitCount;
       unsigned int initMsgCount;
+      unsigned int lastRunNumber;
       unsigned int lastEventNumber;
       MonitoredQuantity::Stats eventStats;
       UniqueResourceBrokerID_t uniqueRBID;
@@ -197,6 +199,7 @@ namespace stor {
     {
       FilterUnitKey key;
       unsigned int initMsgCount;
+      unsigned int lastRunNumber;
       unsigned int lastEventNumber;
       MonitoredQuantity::Stats eventStats;
 

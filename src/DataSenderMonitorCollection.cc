@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.4 2009/04/30 20:19:04 biery Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.5 2009/04/30 21:05:12 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -41,9 +41,9 @@ void DataSenderMonitorCollection::addFragmentSample(I2OChain const& i2oChain)
   }
 
   // accumulate the data of interest
-  topLevelOutModPtr->fragmentSize.addSample(fragmentSize);
-  rbSpecificOutModPtr->fragmentSize.addSample(fragmentSize);
-  fuSpecificOutModPtr->fragmentSize.addSample(fragmentSize);
+  //topLevelOutModPtr->fragmentSize.addSample(fragmentSize);
+  //rbSpecificOutModPtr->fragmentSize.addSample(fragmentSize);
+  //fuSpecificOutModPtr->fragmentSize.addSample(fragmentSize);
 }
 
 
@@ -105,17 +105,16 @@ void DataSenderMonitorCollection::addEventSample(I2OChain const& i2oChain)
   }
 
   // accumulate the data of interest
-  topLevelOutModPtr->runNumber = runNumber;
   topLevelOutModPtr->eventSize.addSample(eventSize);
 
+  rbRecordPtr->lastRunNumber = runNumber;
   rbRecordPtr->lastEventNumber = eventNumber;
   rbRecordPtr->eventSize.addSample(eventSize);
-  rbSpecificOutModPtr->runNumber = i2oChain.runNumber();
   rbSpecificOutModPtr->eventSize.addSample(eventSize);
 
+  fuRecordPtr->lastRunNumber = runNumber;
   fuRecordPtr->lastEventNumber = eventNumber;
   fuRecordPtr->eventSize.addSample(eventSize);
-  fuSpecificOutModPtr->runNumber = i2oChain.runNumber();
   fuSpecificOutModPtr->eventSize.addSample(eventSize);
 }
 
@@ -207,6 +206,7 @@ DataSenderMonitorCollection::getFilterUnitResultsForRB(UniqueResourceBrokerID_t 
           FURecordPtr fuRecordPtr = fuMapIter->second;
           FUResultPtr result(new FilterUnitResult(fuRecordPtr->key));
           result->initMsgCount = fuRecordPtr->initMsgCount;
+          result->lastRunNumber = fuRecordPtr->lastRunNumber;
           result->lastEventNumber = fuRecordPtr->lastEventNumber;
           fuRecordPtr->eventSize.getStats(result->eventStats);
           resultsList.push_back(result);
@@ -370,7 +370,6 @@ DSMC::getOutputModuleRecord(OutputModuleRecordMap& outModMap,
       outModRecordPtr->name = "Unknown";
       outModRecordPtr->id = outModKey;
       outModRecordPtr->initMsgSize = 0;
-      outModRecordPtr->runNumber = 0;
 
       outModMap[outModKey] = outModRecordPtr;
     }
@@ -411,6 +410,7 @@ DSMC::buildResourceBrokerResult(DSMC::RBRecordPtr const& rbRecordPtr) const
 
   result->filterUnitCount = rbRecordPtr->filterUnitMap.size();
   result->initMsgCount = rbRecordPtr->initMsgCount;
+  result->lastRunNumber = rbRecordPtr->lastRunNumber;
   result->lastEventNumber = rbRecordPtr->lastEventNumber;
   rbRecordPtr->eventSize.getStats(result->eventStats);
 
@@ -426,7 +426,7 @@ void DSMC::calcStatsForOutputModules(DSMC::OutputModuleRecordMap& outputModuleMa
     {
       OutModRecordPtr outModRecordPtr = omMapIter->second;
 
-      outModRecordPtr->fragmentSize.calculateStatistics();
+      //outModRecordPtr->fragmentSize.calculateStatistics();
       outModRecordPtr->eventSize.calculateStatistics();
     }
 }
