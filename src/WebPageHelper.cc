@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.30 2009/04/30 21:05:12 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.31 2009/05/01 19:45:39 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -266,8 +266,8 @@ void WebPageHelper::resourceBrokerOverview
   XHTMLMaker::Node* body = 
     createWebPageBody(maker, statReporter->externallyVisibleState());
 
-  addOutputModuleStatistics(maker, body,
-                            statReporter->getDataSenderMonitorCollection());  
+  addOutputModuleTables(maker, body,
+                        statReporter->getDataSenderMonitorCollection());  
 
   maker.addNode("hr", body);
 
@@ -1133,13 +1133,14 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
 }
 
 
-void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
-                                              XHTMLMaker::Node *parent,
-                               DataSenderMonitorCollection const& dsmc)
+void WebPageHelper::addOutputModuleTables(XHTMLMaker& maker,
+                                          XHTMLMaker::Node *parent,
+                           DataSenderMonitorCollection const& dsmc)
 {
   DataSenderMonitorCollection::OutputModuleResultsList resultsList =
     dsmc.getTopLevelOutputModuleResults();
 
+  addOutputModuleSummary(maker, parent, resultsList);
   addOutputModuleStatistics(maker, parent, resultsList);
 }
 
@@ -1161,7 +1162,7 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
     DataSenderMonitorCollection::OutputModuleResultsList const& resultsList)
 {
   XHTMLMaker::AttrMap colspanAttr;
-  colspanAttr[ "colspan" ] = "8";
+  colspanAttr[ "colspan" ] = "7";
 
   XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
   tableLabelAttr[ "align" ] = "center";
@@ -1188,8 +1189,6 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
   maker.addText(tableDiv, "Min (KB)");
   tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Max (KB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
-  maker.addText(tableDiv, "Header Size (bytes)");
 
   if (resultsList.size() == 0)
   {
@@ -1227,6 +1226,55 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
       tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
       maker.addText(tableDiv,
                     resultsList[idx]->eventStats.getValueMax()/(double)0x400);
+    }
+  }
+}
+
+
+void WebPageHelper::addOutputModuleSummary(XHTMLMaker& maker,
+                                           XHTMLMaker::Node *parent,
+    DataSenderMonitorCollection::OutputModuleResultsList const& resultsList)
+{
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "3";
+
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "align" ] = "center";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Output Module Summary");
+
+  // Header
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Name");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "ID");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Header Size (bytes)");
+
+  if (resultsList.size() == 0)
+  {
+    XHTMLMaker::AttrMap messageAttr = colspanAttr;
+    messageAttr[ "align" ] = "center";
+
+    tableRow = maker.addNode("tr", table);
+    tableDiv = maker.addNode("td", tableRow, messageAttr);
+    maker.addText(tableDiv, "No output modules are available yet.");
+    return;
+  }
+  else
+  {
+    for (unsigned int idx = 0; idx < resultsList.size(); ++idx)
+    {
+      tableRow = maker.addNode("tr", table);
+      tableDiv = maker.addNode("td", tableRow);
+      maker.addText(tableDiv, resultsList[idx]->name);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, resultsList[idx]->id, 0);
       tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
       maker.addText(tableDiv, resultsList[idx]->initMsgSize, 0);
     }
@@ -1400,6 +1448,12 @@ void WebPageHelper::addResourceBrokerDetails(XHTMLMaker& maker,
 
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+  maker.addText(tableDiv, "Last Run Number Received");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, rbResultPtr->lastRunNumber, 0);
+
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
   tmpDuration = static_cast<int>(rbResultPtr->eventStats.recentDuration);
   tmpText =  "Recent (" + boost::lexical_cast<std::string>(tmpDuration) +
     " sec) Event Rate (Hz)";
@@ -1427,7 +1481,7 @@ void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
     dsmc.getFilterUnitResultsForRB(uniqueRBID);
 
   XHTMLMaker::AttrMap colspanAttr;
-  colspanAttr[ "colspan" ] = "6";
+  colspanAttr[ "colspan" ] = "7";
 
   XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
   tableLabelAttr[ "align" ] = "center";
@@ -1452,6 +1506,8 @@ void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
   maker.addText(tableDiv, "Recent event rate (Hz)");
   tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Last event number received");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Last run number received");
 
   if (fuResultsList.size() == 0)
   {
@@ -1482,6 +1538,8 @@ void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
                     getSampleRate(MonitoredQuantity::RECENT));
       tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
       maker.addText(tableDiv, fuResultsList[idx]->lastEventNumber, 0);
+      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      maker.addText(tableDiv, fuResultsList[idx]->lastRunNumber, 0);
     }
   }
 }

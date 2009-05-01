@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.16 2009/04/30 16:57:43 biery Exp $
+// $Id: WebPageHelper.h,v 1.1.2.17 2009/04/30 21:05:12 biery Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -26,8 +26,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: biery $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/04/30 16:57:43 $
+   * $Revision: 1.1.2.17 $
+   * $Date: 2009/04/30 21:05:12 $
    */
   
   class WebPageHelper
@@ -284,7 +284,7 @@ namespace stor {
     /**
      * Adds top-level output module statistics to the parent DOM element
      */
-    void addOutputModuleStatistics
+    void addOutputModuleTables
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
@@ -307,6 +307,16 @@ namespace stor {
      * Adds output module statistics to the parent DOM element
      */
     void addOutputModuleStatistics
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DataSenderMonitorCollection::OutputModuleResultsList const&
+    );
+
+    /**
+     * Adds output module summary information to the parent DOM element
+     */
+    void addOutputModuleSummary
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
