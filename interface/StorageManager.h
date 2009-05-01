@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.53 2009/04/27 13:51:20 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.54 2009/04/28 18:30:16 biery Exp $
 */
 
 #include <string>
@@ -110,8 +110,6 @@ namespace stor {
 
     void defaultWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void oldDefaultWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
       {css_.css(in,out);}
     void storedDataWebPage
@@ -180,15 +178,6 @@ namespace stor {
 
     SMFUSenderList smrbsenders_;
     xdata::UnsignedInteger32 connectedRBs_;
-
-    typedef std::map<std::string,uint32> countMap;
-    typedef std::map<std::string, boost::shared_ptr<ForeverAverageCounter> > valueMap;
-    typedef std::map<uint32,std::string> idMap;
-    typedef std::map<uint32,std::string>::iterator idMap_iter;
-    countMap receivedEventsMap_;
-    valueMap avEventSizeMap_;
-    valueMap avCompressRatioMap_;
-    idMap modId2ModOutMap_;
 
     FragmentProcessor *_fragmentProcessor;
     DiskWriter *_diskWriter;

@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.101 2009/04/28 18:30:28 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.102 2009/04/29 16:31:44 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.101 2009/04/28 18:30:28 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.102 2009/04/29 16:31:44 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -162,7 +162,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   // Bind web interface
   xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
-  xgi::bind(this,&StorageManager::oldDefaultWebPage,    "oldDefault");
   xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
   xgi::bind(this,&StorageManager::css,                  "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
@@ -199,13 +198,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   pool_is_set_    = 0;
   pool_           = 0;
-
-  // for performance measurements
-
-  receivedEventsMap_.clear();
-  avEventSizeMap_.clear();
-  avCompressRatioMap_.clear();
-  modId2ModOutMap_.clear();
 
   // need the line below so that deserializeRegistry can run
   // in order to compare two registries (cannot compare byte-for-byte) (if we keep this)
@@ -349,20 +341,6 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // add this output module to the monitoring
-  bool alreadyStoredOutMod = false;
-  uint32 moduleId = msg->outModID;
-  std::string dmoduleLabel("ID_" + boost::lexical_cast<std::string>(msg->outModID));
-  if(modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) alreadyStoredOutMod = true;
-  if(!alreadyStoredOutMod) {
-    modId2ModOutMap_.insert(std::make_pair(moduleId,dmoduleLabel));
-    receivedEventsMap_.insert(std::make_pair(dmoduleLabel,0));
-    avEventSizeMap_.insert(std::make_pair(dmoduleLabel,
-      boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-    avCompressRatioMap_.insert(std::make_pair(dmoduleLabel,
-      boost::shared_ptr<ForeverAverageCounter>(new ForeverAverageCounter()) ));
-  }
-
   I2OChain i2oChain(ref);
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
@@ -438,22 +416,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   if(status == 1) {
     runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
     runMonCollection.getEventIDsReceivedMQ().addSample(msg->eventID);
-
-    uint32 moduleId = msg->outModID;
-    if (modId2ModOutMap_.find(moduleId) != modId2ModOutMap_.end()) {
-      std::string moduleLabel = modId2ModOutMap_[moduleId];
-      ++(receivedEventsMap_[moduleLabel]);
-      avEventSizeMap_[moduleLabel]->addSample((double)msg->originalSize);
-      // TODO: get the uncompressed size to find compression ratio for stats
-    }
-    else {
-      LOG4CPLUS_WARN(this->getApplicationLogger(),
-                     "StorageManager::receiveDataMessage: "
-                     << "Unable to find output module label when "
-                     << "accumulating statistics for event "
-                     << msg->eventID << ", output module "
-                     << msg->outModID << ".");
-    }
   }
   if(status == -1) {
     LOG4CPLUS_ERROR(this->getApplicationLogger(),
@@ -671,271 +633,6 @@ void StorageManager::consumerStatisticsPage( xgi::Input* in,
     XCEPT_RAISE( xgi::exception::Exception, err_msg );
   }
 
-}
-
-
-void StorageManager::oldDefaultWebPage(xgi::Input *in, xgi::Output *out)
-  throw (xgi::exception::Exception)
-{
-  *out << "<html>"                                                   << endl;
-  *out << "<head>"                                                   << endl;
-  *out << "<link type=\"text/css\" rel=\"stylesheet\"";
-  *out << " href=\"/" <<  getApplicationDescriptor()->getURN()
-       << "/styles.css\"/>"                   << endl;
-  *out << "<title>" << getApplicationDescriptor()->getClassName() << " instance "
-       << getApplicationDescriptor()->getInstance()
-       << "</title>"     << endl;
-  *out << "</head><body>"                                            << endl;
-    *out << "<table border=\"0\" width=\"100%\">"                      << endl;
-    *out << "<tr>"                                                     << endl;
-    *out << "  <td align=\"left\">"                                    << endl;
-    *out << "    <img"                                                 << endl;
-    *out << "     align=\"middle\""                                    << endl;
-    *out << "     src=\"/evf/images/smicon.jpg\""                      << endl;
-    *out << "     alt=\"main\""                                        << endl;
-    *out << "     width=\"64\""                                        << endl;
-    *out << "     height=\"64\""                                       << endl;
-    *out << "     border=\"\"/>"                                       << endl;
-    *out << "    <b>"                                                  << endl;
-    *out << getApplicationDescriptor()->getClassName() << " instance "
-         << getApplicationDescriptor()->getInstance()                  << endl;
-    *out << "      " << externallyVisibleState()                   << endl;
-    *out << "    </b>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "    <a href=\"/urn:xdaq-application:lid=3\">"             << endl;
-    *out << "      <img"                                               << endl;
-    *out << "       align=\"middle\""                                  << endl;
-    *out << "       src=\"/hyperdaq/images/HyperDAQ.jpg\""    << endl;
-    *out << "       alt=\"HyperDAQ\""                                  << endl;
-    *out << "       width=\"32\""                                      << endl;
-    *out << "       height=\"32\""                                      << endl;
-    *out << "       border=\"\"/>"                                     << endl;
-    *out << "    </a>"                                                 << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "  <td width=\"32\">"                                      << endl;
-    *out << "  </td>"                                                  << endl;
-    *out << "</tr>"                                                    << endl;
-    if( externallyVisibleState() == "Failed")
-    {
-      *out << "<tr>"                                         << endl;
-      *out << " <td>"                                        << endl;
-      *out << "<textarea rows=" << 5 << " cols=60 scroll=yes";
-      *out << " readonly title=\"Reason For Failed\">"               << endl;
-      *out << reasonForFailedState_                                  << endl;
-      *out << "</textarea>"                                          << endl;
-      *out << " </td>"                                       << endl;
-      *out << "</tr>"                                        << endl;
-    }
-    *out << "</table>"                                                 << endl;
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\""      << endl;
-  *out << " readonly title=\"Note: parts of this info updates every 10 sec !!!\">"<< endl;
-  *out << "<colgroup> <colgroup align=\"right\">"                        << endl;
-    *out << "  <tr>"                                                     << endl;
-    *out << "    <th colspan=7>"                                         << endl;
-    *out << "      " << "Storage Manager Statistics"                     << endl;
-    *out << "    </th>"                                                  << endl;
-    *out << "  </tr>"                                                    << endl;
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Output Module" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Events" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Size (MB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Size/Evt (KB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "RMS (KB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Min (KB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Max (KB)" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        boost::shared_ptr<InitMsgCollection> initMsgCollection =
-          _sharedResources->_initMsgCollection;
-        idMap_iter oi(modId2ModOutMap_.begin()), oe(modId2ModOutMap_.end());
-        for( ; oi != oe; ++oi) {
-          std::string outputModuleLabel = oi->second;
-          if (initMsgCollection.get() != NULL &&
-              initMsgCollection->getOutputModuleName(oi->first) != "") {
-            outputModuleLabel = initMsgCollection->getOutputModuleName(oi->first);
-          }
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << outputModuleLabel << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            //*out << receivedEventsMap_[oi->second] << endl;
-            *out << receivedEventsMap_[oi->second] << " (" << avEventSizeMap_[oi->second]->getSampleCount() << ") "<< endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << avEventSizeMap_[oi->second]->getValueSum()/(double)0x100000 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << avEventSizeMap_[oi->second]->getValueAverage()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << avEventSizeMap_[oi->second]->getValueRMS()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << avEventSizeMap_[oi->second]->getValueMin()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << avEventSizeMap_[oi->second]->getValueMax()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-          *out << "</tr>" << endl;
-        }
-    *out << "</table>" << endl;
-
-
-  DataSenderMonitorCollection const& dataSenderMonCollection =
-    _sharedResources->_statisticsReporter->getDataSenderMonitorCollection();
-  DataSenderMonitorCollection::OutputModuleResultsList resultsList =
-    dataSenderMonCollection.getTopLevelOutputModuleResults();
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">"     << endl;
-  *out << "<colgroup> <colgroup align=\"right\">"                        << endl;
-    *out << "  <tr>"                                                     << endl;
-    *out << "    <th colspan=7>"                                         << endl;
-    *out << "      " << "Storage Manager Statistics"                     << endl;
-    *out << "    </th>"                                                  << endl;
-    *out << "  </tr>"                                                    << endl;
-        *out << "<tr class=\"special\">" << endl;
-          *out << "<td >" << endl;
-          *out << "Output Module" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Events" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Size (MB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Size/Evt (KB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "RMS (KB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Min (KB)" << endl;
-          *out << "</td>" << endl;
-          *out << "<td align=center>" << endl;
-          *out << "Max (KB)" << endl;
-          *out << "</td>" << endl;
-        *out << "</tr>" << endl;
-        for (unsigned int idx = 0; idx < resultsList.size(); ++idx) {
-          std::string outputModuleLabel = resultsList[idx]->name;
-          *out << "<tr>" << endl;
-            *out << "<td >" << endl;
-            *out << outputModuleLabel << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << resultsList[idx]->eventStats.getSampleCount() << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << resultsList[idx]->eventStats.getValueSum()/(double)0x100000 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << resultsList[idx]->eventStats.getValueAverage()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << resultsList[idx]->eventStats.getValueRMS()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << resultsList[idx]->eventStats.getValueMin()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-            *out << "<td align=right>" << endl;
-            *out << resultsList[idx]->eventStats.getValueMax()/(double)0x400 << endl;
-            *out << "</td>" << endl;
-          *out << "</tr>" << endl;
-        }
-    *out << "</table>" << endl;
-
-
-// now for RB sender list statistics
-  *out << "<hr/>"                                                    << endl;
-  *out << "<table>"                                                  << endl;
-  *out << "<tr valign=\"top\">"                                      << endl;
-  *out << "  <td>"                                                   << endl;
-
-  *out << "<table frame=\"void\" rules=\"groups\" class=\"states\">" << endl;
-  *out << "<colgroup> <colgroup align=\"rigth\">"                    << endl;
-    *out << "  <tr>"                                                   << endl;
-    *out << "    <th colspan=2>"                                       << endl;
-    *out << "      " << "RB Sender Information"                            << endl;
-    *out << "    </th>"                                                << endl;
-    *out << "  </tr>"                                                  << endl;
-
-    *out << "<tr>" << endl;
-    *out << "<th >" << endl;
-    *out << "Parameter" << endl;
-    *out << "</th>" << endl;
-    *out << "<th>" << endl;
-    *out << "Value" << endl;
-    *out << "</th>" << endl;
-    *out << "</tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Number of RB Senders" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << smrbsenders_.numberOfRB() << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Number of OM per FU" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << smrbsenders_.numberOfOM() << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-        *out << "<tr>" << endl;
-          *out << "<td >" << endl;
-          *out << "Sanity check number in sender list" << endl;
-          *out << "</td>" << endl;
-          *out << "<td>" << endl;
-          *out << smrbsenders_.size() << endl;
-          *out << "</td>" << endl;
-        *out << "  </tr>" << endl;
-
-  *out << "</table>"                                                 << endl;
-  //---- separate pages for RB senders and Streamer Output
-  *out << "<hr/>"                                                 << endl;
-  std::string url = getApplicationDescriptor()->getContextDescriptor()->getURL();
-  std::string urn = getApplicationDescriptor()->getURN();
-  *out << "<a href=\"" << url << "/" << urn << "\">" 
-       << "New default web page" << "</a>" << endl;
-  *out << "<hr/>"                                                 << endl;
-  *out << "<a href=\"" << url << "/" << urn << "/rbsenderlist" << "\">" 
-       << "RB Sender list web page" << "</a>" << endl;
-  *out << "<hr/>"                                                 << endl;
-  *out << "<a href=\"" << url << "/" << urn << "/oldrbsenderlist" << "\">" 
-       << "Old RB Sender list web page" << "</a>" << endl;
-  *out << "<hr/>"                                                 << endl;
-  *out << "<a href=\"" << url << "/" << urn << "/streameroutput" << "\">" 
-       << "Streamer Output Status web page" << "</a>" << endl;
-  *out << "<hr/>"                                                 << endl;
-  *out << "<a href=\"" << url << "/" << urn << "/EventServerStats?update=off"
-       << "\">Event Server Statistics" << "</a>" << endl;
-  /* --- leave these here to debug event server problems
-  *out << "<a href=\"" << url << "/" << urn << "/geteventdata" << "\">" 
-       << "Get an event via a web page" << "</a>" << endl;
-  *out << "<hr/>"                                                 << endl;
-  *out << "<a href=\"" << url << "/" << urn << "/getregdata" << "\">" 
-       << "Get a header via a web page" << "</a>" << endl;
-  */
-
-  *out << "</body>"                                                  << endl;
-  *out << "</html>"                                                  << endl;
 }
 
 
@@ -3446,11 +3143,6 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
 
     smrbsenders_.clear();
     
-    receivedEventsMap_.clear();
-    avEventSizeMap_.clear();
-    avCompressRatioMap_.clear();
-    modId2ModOutMap_.clear();
-
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
   }
   catch (xcept::Exception &e) {

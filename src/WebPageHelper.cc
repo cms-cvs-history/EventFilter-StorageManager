@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.29 2009/04/30 20:19:04 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.30 2009/04/30 21:05:12 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -428,12 +428,6 @@ void WebPageHelper::addDOMforSMLinks
 
   XHTMLMaker::AttrMap linkAttr;
   XHTMLMaker::Node *link;
-
-  maker.addNode("hr", parent);
-
-  linkAttr[ "href" ] = url + "/oldDefault";
-  link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "Remainder of old default web page");
 
   maker.addNode("hr", parent);
 
