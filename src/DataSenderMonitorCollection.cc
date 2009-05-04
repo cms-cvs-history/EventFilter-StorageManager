@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.5 2009/04/30 21:05:12 biery Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.6 2009/05/01 21:10:37 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -27,7 +27,7 @@ void DataSenderMonitorCollection::addFragmentSample(I2OChain const& i2oChain)
   if (i2oChain.fragmentCount() != 1) {return;}
 
   // fetch basic data from the I2OChain
-  double fragmentSize = static_cast<double>(i2oChain.totalDataSize());
+  //double fragmentSize = static_cast<double>(i2oChain.totalDataSize());
 
   // look up the monitoring records that we need
   RBRecordPtr rbRecordPtr;
