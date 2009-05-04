@@ -98,7 +98,7 @@ void testEventDistributor::testInitMessages()
 
   // *** first INIT message ***
 
-  Reference* ref = allocate_frame_with_init_msg("out4DQM");
+  Reference* ref = allocate_frame_with_init_msg("hltOutputDQM");
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
@@ -365,7 +365,7 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("b");
     QueueID queueId(enquing_policy::DiscardOld, 1);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        5, 5, "Test Consumer", selections, "out4DQM",
+        5, 5, "Test Consumer", selections, "hltOutputDQM",
         queueId.index(), queueId.policy(), 120));
     consInfo->setQueueID( queueId );
 
@@ -378,7 +378,7 @@ void testEventDistributor::testConsumerSelection()
 
   // *** INIT message ***
 
-  Reference* ref = allocate_frame_with_init_msg("out4DQM");
+  Reference* ref = allocate_frame_with_init_msg("hltOutputDQM");
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
@@ -395,7 +395,7 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("d");
     QueueID queueId(enquing_policy::DiscardNew, 2);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        5, 5, "Test Consumer", selections, "out4DQM", 
+        5, 5, "Test Consumer", selections, "hltOutputDQM", 
         queueId.index(), queueId.policy(), 120));
     consInfo->setQueueID( queueId );
 
@@ -417,7 +417,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 0, edm::hlt::Pass);
   set_trigger_bit(hltBits, 2, edm::hlt::Pass);
 
-  ref = allocate_frame_with_event_msg("out4DQM", hltBits, hltBitCount,
+  ref = allocate_frame_with_event_msg("hltOutputDQM", hltBits, hltBitCount,
                                       eventNumber);
   stor::I2OChain eventMsgFrag(ref);
   CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
@@ -446,7 +446,7 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("a");
     QueueID queueId(enquing_policy::DiscardOld, 3);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        5, 5, "Test Consumer", selections, "out4DQM",
+        5, 5, "Test Consumer", selections, "hltOutputDQM",
         queueId.index(), queueId.policy(), 120));
     consInfo->setQueueID( queueId );
     consInfo->registerMe(&(*_eventDistributor));
@@ -462,7 +462,7 @@ void testEventDistributor::testConsumerSelection()
     selections.push_back("d");
     QueueID queueId(enquing_policy::DiscardNew, 4);
     consInfo.reset(new EventConsumerRegistrationInfo(
-        5, 5, "Test Consumer", selections, "out4DQM",
+        5, 5, "Test Consumer", selections, "hltOutputDQM",
         queueId.index(), queueId.policy(), 120));
     consInfo->setQueueID( queueId );
 
@@ -481,7 +481,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 4, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("out4DQM", hltBits, hltBitCount,
+  ref = allocate_frame_with_event_msg("hltOutputDQM", hltBits, hltBitCount,
                                       eventNumber);
   stor::I2OChain eventMsgFrag2(ref);
   CPPUNIT_ASSERT(eventMsgFrag2.messageCode() == Header::EVENT);
@@ -507,7 +507,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 7, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("out4DQM", hltBits, hltBitCount,
+  ref = allocate_frame_with_event_msg("hltOutputDQM", hltBits, hltBitCount,
                                       eventNumber);
   stor::I2OChain eventMsgFrag3(ref);
   CPPUNIT_ASSERT(eventMsgFrag3.messageCode() == Header::EVENT);
@@ -607,7 +607,7 @@ std::string testEventDistributor::getSampleStreamConfig()
   msg << "process.out1 = cms.OutputModule(\"EventStreamFileWriter\"," << std::endl;
   msg << "                                streamLabel = cms.string('A')," << std::endl;
   msg << "                                maxSize = cms.int32(20)," << std::endl;
-  msg << "                                SelectHLTOutput = cms.untracked.string('out4DQM')" << std::endl;
+  msg << "                                SelectHLTOutput = cms.untracked.string('hltOutputDQM')" << std::endl;
   msg << "                                )" << std::endl;
 
   msg << "process.out2 = cms.OutputModule(\"EventStreamFileWriter\"," << std::endl;

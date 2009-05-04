@@ -42,13 +42,13 @@ void testInitMsgCollection::testAdditions()
   std::vector<unsigned char> tmpBuff;
 
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("out4DQM").get() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("hltOutputDQM").get() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("HLTDEBUG").get() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("CALIB").get() == 0);
 
   // *** first INIT message ***
 
-  Reference* ref = allocate_frame_with_init_msg("out4DQM");
+  Reference* ref = allocate_frame_with_init_msg("hltOutputDQM");
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
@@ -57,7 +57,7 @@ void testInitMsgCollection::testAdditions()
   _initMsgCollection->addIfUnique(view);
 
   CPPUNIT_ASSERT(_initMsgCollection->size() == 1);
-  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("out4DQM").get() != 0);
+  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("hltOutputDQM").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("HLTDEBUG").get() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("CALIB").get() == 0);
 
@@ -72,7 +72,7 @@ void testInitMsgCollection::testAdditions()
   _initMsgCollection->addIfUnique(view2);
 
   CPPUNIT_ASSERT(_initMsgCollection->size() == 2);
-  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("out4DQM").get() != 0);
+  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("hltOutputDQM").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("HLTDEBUG").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("CALIB").get() == 0);
 
@@ -87,7 +87,7 @@ void testInitMsgCollection::testAdditions()
   _initMsgCollection->addIfUnique(view3);
 
   CPPUNIT_ASSERT(_initMsgCollection->size() == 3);
-  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("out4DQM").get() != 0);
+  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("hltOutputDQM").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("HLTDEBUG").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("CALIB").get() != 0);
 
@@ -102,7 +102,7 @@ void testInitMsgCollection::testAdditions()
   _initMsgCollection->addIfUnique(view4);
 
   CPPUNIT_ASSERT(_initMsgCollection->size() == 3);
-  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("out4DQM").get() != 0);
+  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("hltOutputDQM").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("HLTDEBUG").get() != 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("CALIB").get() != 0);
 
@@ -111,7 +111,7 @@ void testInitMsgCollection::testAdditions()
   _initMsgCollection->clear();
 
   CPPUNIT_ASSERT(_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("out4DQM").get() == 0);
+  CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("hltOutputDQM").get() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("HLTDEBUG").get() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForOutputModule("CALIB").get() == 0);
 }
@@ -138,9 +138,9 @@ void testInitMsgCollection::testConsumers()
   CPPUNIT_ASSERT(_initMsgCollection->getElementForConsumer(id3).get() == 0);
   CPPUNIT_ASSERT(_initMsgCollection->getElementForConsumer(id4).get() == 0);
 
-  CPPUNIT_ASSERT(! _initMsgCollection->registerConsumer(id0, "out4DQM"));
+  CPPUNIT_ASSERT(! _initMsgCollection->registerConsumer(id0, "hltOutputDQM"));
   CPPUNIT_ASSERT(! _initMsgCollection->registerConsumer(id1, ""));
-  CPPUNIT_ASSERT(_initMsgCollection->registerConsumer(id1, "out4DQM"));
+  CPPUNIT_ASSERT(_initMsgCollection->registerConsumer(id1, "hltOutputDQM"));
   CPPUNIT_ASSERT(_initMsgCollection->registerConsumer(id2, "HLTDEBUG"));
   CPPUNIT_ASSERT(_initMsgCollection->registerConsumer(id3, "HLTDEBUG"));
   CPPUNIT_ASSERT(_initMsgCollection->registerConsumer(id4, "CALIB"));
@@ -153,7 +153,7 @@ void testInitMsgCollection::testConsumers()
 
   // *** first INIT message ***
 
-  Reference* ref = allocate_frame_with_init_msg("out4DQM");
+  Reference* ref = allocate_frame_with_init_msg("hltOutputDQM");
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
@@ -215,7 +215,7 @@ void testInitMsgCollection::testConsumers()
 
   // *** new first INIT message ***
 
-  ref = allocate_frame_with_init_msg("out4DQM");
+  ref = allocate_frame_with_init_msg("hltOutputDQM");
   stor::I2OChain initMsgFrag4(ref);
   CPPUNIT_ASSERT(initMsgFrag4.messageCode() == Header::INIT);
 

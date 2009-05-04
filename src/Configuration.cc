@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.19 2009/04/08 13:25:39 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.20 2009/04/17 10:42:40 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -200,7 +200,7 @@ namespace stor
     _eventServeParamCopy._DQMactiveConsumerTimeout = 60.0;  // seconds
     _eventServeParamCopy._DQMidleConsumerTimeout = 120.0;  // seconds
     _eventServeParamCopy._DQMconsumerQueueSize = 15;
-    _eventServeParamCopy._esSelectedHLTOutputModule = "out4DQM";
+    _eventServeParamCopy._esSelectedHLTOutputModule = "hltOutputDQM";
   }
 
   void Configuration::setQueueConfigurationDefaults()

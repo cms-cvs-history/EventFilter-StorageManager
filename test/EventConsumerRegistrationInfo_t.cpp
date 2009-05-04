@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.1.2.4 2009/04/03 12:22:09 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.1.2.5 2009/04/27 14:00:26 mommsen Exp $
 
 #include <iostream>
 
@@ -22,7 +22,7 @@ int main()
 	     1,
 	     "Test Consumer",
 	     fl,
-	     "out4DQM",
+	     "hltOutputDQM",
              id1.index(),
              id1.policy(),
 	     10 );
