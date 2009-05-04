@@ -92,7 +92,7 @@ cvs co -r $tagName IOPool/Streamer
 if [ "$tagName" == "CMSSW_3_0_0_pre9" ]
 then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -dR -r V01-08-11 EventFilter/SMProxyServer
+  cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
   cvs update -dR -r V05-06-08-03 IOPool/Streamer
 fi
@@ -101,7 +101,7 @@ fi
 if [ "$tagName" == "CMSSW_3_0_0_pre5" ]
 then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -dR -r V01-08-11 EventFilter/SMProxyServer
+  cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
   cvs update -dR -r V05-06-02-03 IOPool/Streamer
 fi
