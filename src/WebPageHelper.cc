@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.32 2009/05/01 21:12:02 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.33 2009/05/04 16:48:28 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -466,12 +466,6 @@ void WebPageHelper::addDOMforSMLinks
   linkAttr[ "href" ] = url + "/rbsenderlist";
   link = maker.addNode("a", parent, linkAttr);
   maker.addText(link, "RB Sender list web page");
-
-  maker.addNode("hr", parent);
-
-  linkAttr[ "href" ] = url + "/oldrbsenderlist";
-  link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "Old RB Sender list web page");
 
   maker.addNode("hr", parent);
 
