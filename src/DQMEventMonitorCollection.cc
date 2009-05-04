@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.cc,v 1.1.2.22 2009/04/25 20:43:58 biery Exp $
+// $Id: DQMEventMonitorCollection.cc,v 1.1.2.1 2009/05/04 12:36:17 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -18,7 +18,9 @@ MonitorCollection(app)
   _dqmEventBandwidth.setNewTimeWindowForRecentResults(300);
   _servedDQMEventBandwidth.setNewTimeWindowForRecentResults(300);
   _writtenDQMEventBandwidth.setNewTimeWindowForRecentResults(300);
+  _numberOfGroups.setNewTimeWindowForRecentResults(300);
   _numberOfUpdates.setNewTimeWindowForRecentResults(300);
+  _numberOfWrittenGroups.setNewTimeWindowForRecentResults(300);
 
   putItemsIntoInfoSpace();
 }
@@ -34,7 +36,9 @@ void DQMEventMonitorCollection::getStats(DQMEventStats& stats) const
   getServedDQMEventBandwidthMQ().getStats(stats.servedDQMEventBandwidthStats);
   getWrittenDQMEventBandwidthMQ().getStats(stats.writtenDQMEventBandwidthStats);
 
+  getNumberOfGroupsMQ().getStats(stats.numberOfGroupsStats);
   getNumberOfUpdatesMQ().getStats(stats.numberOfUpdatesStats);
+  getNumberOfWrittenGroupsMQ().getStats(stats.numberOfWrittenGroupsStats);
 }
 
 
@@ -63,7 +67,9 @@ void DQMEventMonitorCollection::do_calculateStatistics()
   }
   _writtenDQMEventBandwidth.calculateStatistics();
 
+  _numberOfGroups.calculateStatistics();
   _numberOfUpdates.calculateStatistics();
+  _numberOfWrittenGroups.calculateStatistics();
 }
 
 
@@ -83,7 +89,9 @@ void DQMEventMonitorCollection::do_reset()
   _servedDQMEventBandwidth.reset();
   _writtenDQMEventBandwidth.reset();
 
+  _numberOfGroups.reset();
   _numberOfUpdates.reset();
+  _numberOfWrittenGroups.reset();
 }
 
 

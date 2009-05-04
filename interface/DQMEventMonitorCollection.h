@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.h,v 1.1.2.16 2009/04/14 12:50:30 mommsen Exp $
+// $Id: DQMEventMonitorCollection.h,v 1.1.2.1 2009/05/04 12:35:32 mommsen Exp $
 
 #ifndef StorageManager_DQMEventMonitorCollection_h
 #define StorageManager_DQMEventMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/04/14 12:50:30 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/05/04 12:35:32 $
    */
   
   class DQMEventMonitorCollection : public MonitorCollection
@@ -31,7 +31,9 @@ namespace stor {
     MonitoredQuantity _servedDQMEventBandwidth;
     MonitoredQuantity _writtenDQMEventBandwidth;
 
+    MonitoredQuantity _numberOfGroups;
     MonitoredQuantity _numberOfUpdates;
+    MonitoredQuantity _numberOfWrittenGroups;
 
 
   public:
@@ -46,7 +48,9 @@ namespace stor {
       MonitoredQuantity::Stats servedDQMEventBandwidthStats;  //MB/s
       MonitoredQuantity::Stats writtenDQMEventBandwidthStats; //MB/s
 
-      MonitoredQuantity::Stats numberOfUpdatesStats; // number of received updates per DQMKey
+      MonitoredQuantity::Stats numberOfGroupsStats; // number of groups
+      MonitoredQuantity::Stats numberOfUpdatesStats; // number of received updates per group and DQMKey
+      MonitoredQuantity::Stats numberOfWrittenGroupsStats; // number of groups written to disk
     };
 
     explicit DQMEventMonitorCollection(xdaq::Application*);
@@ -93,11 +97,25 @@ namespace stor {
       return _writtenDQMEventBandwidth;
     }
 
+    const MonitoredQuantity& getNumberOfGroupsMQ() const {
+      return _numberOfGroups;
+    }
+    MonitoredQuantity& getNumberOfGroupsMQ() {
+      return _numberOfGroups;
+    }
+
     const MonitoredQuantity& getNumberOfUpdatesMQ() const {
       return _numberOfUpdates;
     }
     MonitoredQuantity& getNumberOfUpdatesMQ() {
       return _numberOfUpdates;
+    }
+
+    const MonitoredQuantity& getNumberOfWrittenGroupsMQ() const {
+      return _numberOfWrittenGroups;
+    }
+    MonitoredQuantity& getNumberOfWrittenGroupsMQ() {
+      return _numberOfWrittenGroups;
     }
 
    /**
