@@ -12,7 +12,7 @@ process.source = cms.Source("EventStreamHttpReader",
                             headerRetryInterval = cms.untracked.int32(3),
                             maxEventRequestRate = cms.untracked.double(10.0),
                             SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('*DQM') ),
-                            SelectHLTOutput = cms.untracked.string('out4DQM'),
+                            SelectHLTOutput = cms.untracked.string('hltOutputDQM'),
                             maxConnectTries = cms.untracked.int32(1)
                             )
 

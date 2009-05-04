@@ -7,7 +7,7 @@ process.source = cms.Source("FragmentInput")
 process.out1 = cms.OutputModule("EventStreamFileWriter",
                                 streamLabel = cms.string('A'),
                                 maxSize = cms.int32(20),
-                                SelectHLTOutput = cms.untracked.string('out4DQM')
+                                SelectHLTOutput = cms.untracked.string('hltOutputDQM')
                                 )
 
 process.out2 = cms.OutputModule("EventStreamFileWriter",
