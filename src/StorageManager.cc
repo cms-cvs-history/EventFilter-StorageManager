@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.104 2009/05/04 16:48:28 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.105 2009/05/04 17:56:41 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -111,7 +111,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.104 2009/05/04 16:48:28 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.105 2009/05/04 17:56:41 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -227,8 +227,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
   _sharedResources->_diskWriterResources.reset(new DiskWriterResources());
   _sharedResources->_dqmEventProcessorResources.reset(new DQMEventProcessorResources());
-
-  _sharedResources->_smRBSenderList = &smrbsenders_;
 
   _sharedResources->
     _discardManager.reset(new DiscardManager(getApplicationContext(),
@@ -399,26 +397,8 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                       << " Different from Run Number from configuration = " << getRunNumber());
     }
 
-  // for data sender list update
-  // msg->frameCount start from 0, but in EventMsg header it starts from 1!
-  bool isLocal = false;
-  int status = 
-    smrbsenders_.updateSender4data(&msg->hltURL[0], &msg->hltClassName[0],
-                                   msg->hltLocalId, msg->hltInstance, msg->hltTid,
-                                   msg->runID, msg->eventID, msg->frameCount+1, msg->numFrames,
-                                   msg->originalSize, isLocal, msg->outModID);
-
-  if(status == 1) {
-    runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
-    runMonCollection.getEventIDsReceivedMQ().addSample(msg->eventID);
-  }
-  if(status == -1) {
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                    "updateSender4data: Cannot find RB in Data Sender list!"
-                    << " With URL "
-                    << msg->hltURL << " class " << msg->hltClassName  << " instance "
-                    << msg->hltInstance << " Tid " << msg->hltTid);
-  }
+  runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
+  runMonCollection.getEventIDsReceivedMQ().addSample(msg->eventID);
 
   I2OChain i2oChain(ref);
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
@@ -470,9 +450,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     return;
   }
 
-  // all access to the I2O message must happen before sending the fragment
-  // to the fragment queue to avoid a race condition in which the buffer
-  // is release before we finish here
   runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
   runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
@@ -2734,8 +2711,6 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
 
     _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
 
-    smrbsenders_.clear();
-    
     LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
   }
   catch (xcept::Exception &e) {

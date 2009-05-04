@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.41 2009/04/23 13:24:42 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.42 2009/04/27 11:05:17 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -75,19 +75,6 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
         DataSenderMonitorCollection& dataSenderMonColl = _sharedResources->
           _statisticsReporter->getDataSenderMonitorCollection();
         dataSenderMonColl.addInitSample(ioc);
-
-        // temporary handling (until the new event server is ready)
-        if ( _sharedResources->_smRBSenderList != 0 )
-          {
-            FragKey fragKey = ioc.fragmentKey();
-            _sharedResources->_smRBSenderList->
-              registerDataSender(ioc.hltURL().c_str(), ioc.hltClassName().c_str(),
-                                 ioc.hltLocalId(), ioc.hltInstance(), ioc.hltTid(),
-                                 ioc.fragmentCount()-1, ioc.fragmentCount(), imv.size(),
-                                 imv.outputModuleLabel(), imv.outputModuleId(),
-                                 fragKey.originatorPid_);
-          }
-
 
         break;
       }

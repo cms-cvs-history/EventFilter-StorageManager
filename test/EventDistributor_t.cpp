@@ -65,7 +65,6 @@ void testEventDistributor::initEventDistributor()
       _sharedResources->_streamQueue.reset(new StreamQueue(1024));
       _sharedResources->_eventConsumerQueueCollection.reset(new EventQueueCollection());
       _sharedResources->_dqmEventQueue.reset(new DQMEventQueue(1024));
-      _sharedResources->_smRBSenderList = 0;
       _eventDistributor.reset(new EventDistributor(_sharedResources));
 
       MockApplicationStub* stub(new MockApplicationStub());

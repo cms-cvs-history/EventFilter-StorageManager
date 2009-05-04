@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.20 2009/04/17 21:18:25 biery Exp $
+// $Id: SharedResources.h,v 1.1.2.21 2009/04/23 19:17:56 mommsen Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -22,7 +22,6 @@
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
 #include "EventFilter/StorageManager/interface/DQMEventServer.h"
-#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
 #include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 
 namespace stor {
@@ -30,9 +29,9 @@ namespace stor {
   /**
    * Container for shared resources.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.20 $
-   * $Date: 2009/04/17 21:18:25 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.21 $
+   * $Date: 2009/04/23 19:17:56 $
    */
 
   struct SharedResources
@@ -59,7 +58,6 @@ namespace stor {
     // definitely temporary!
     boost::shared_ptr<EventServer> _oldEventServer;
     boost::shared_ptr<DQMEventServer> _oldDQMEventServer;
-    SMFUSenderList* _smRBSenderList;
     boost::shared_ptr<stor::DQMServiceManager> _dqmServiceManager;
 
     /**
