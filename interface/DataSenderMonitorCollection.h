@@ -1,9 +1,11 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.5 2009/04/30 21:05:12 biery Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.6 2009/05/01 21:10:37 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
 
 #include <map>
+
+#include "xdata/UnsignedInteger32.h"
 
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
@@ -12,7 +14,6 @@
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 
-
 namespace stor {
 
   /**
@@ -20,8 +21,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/30 21:05:12 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/05/01 21:10:37 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -267,17 +268,12 @@ namespace stor {
 
     virtual void do_reset();
 
-    OutputModuleRecordMap _outputModuleMap;
-
     bool getAllNeededPointers(I2OChain const& i2oChain,
                               RBRecordPtr& rbRecordPtr,
                               FURecordPtr& fuRecordPtr,
                               OutModRecordPtr& topLevelOutModPtr,
                               OutModRecordPtr& rbSpecificOutModPtr,
                               OutModRecordPtr& fuSpecificOutModPtr);
-
-    std::map<ResourceBrokerKey, UniqueResourceBrokerID_t> _resourceBrokerIDs;
-    std::map<UniqueResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
 
     RBRecordPtr getResourceBrokerRecord(ResourceBrokerKey const&);
     UniqueResourceBrokerID_t getUniqueResourceBrokerID(ResourceBrokerKey const&);
@@ -294,6 +290,13 @@ namespace stor {
     void calcStatsForOutputModules(OutputModuleRecordMap& outputModuleMap);
 
     mutable boost::mutex _collectionsMutex;
+
+    xdata::UnsignedInteger32 _connectedRBs;
+
+    OutputModuleRecordMap _outputModuleMap;
+
+    std::map<ResourceBrokerKey, UniqueResourceBrokerID_t> _resourceBrokerIDs;
+    std::map<UniqueResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
 
   };
   

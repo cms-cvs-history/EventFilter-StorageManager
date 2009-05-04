@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.6 2009/05/01 21:10:37 biery Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.7 2009/05/04 14:50:04 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -14,8 +14,12 @@ using namespace stor;
 
 
 DataSenderMonitorCollection::DataSenderMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app)
+MonitorCollection(app),
+_connectedRBs(0)
 {
+  _infoSpaceItems.push_back(std::make_pair("connectedRBs", &_connectedRBs));
+
+  putItemsIntoInfoSpace();
 }
 
 
@@ -248,6 +252,45 @@ void DataSenderMonitorCollection::do_calculateStatistics()
 
 void DataSenderMonitorCollection::do_updateInfoSpace()
 {
+  boost::mutex::scoped_lock sl(_collectionsMutex);
+
+  std::string errorMsg =
+    "Failed to update values of items in info space " + _infoSpace->name();
+
+  // Lock the infospace to assure that all items are consistent
+  try
+  {
+    _infoSpace->lock();
+
+    _connectedRBs = static_cast<xdata::UnsignedInteger32>(_resourceBrokerMap.size());
+
+    _infoSpace->unlock();
+  }
+  catch(std::exception &e)
+  {
+    _infoSpace->unlock();
+ 
+    errorMsg += ": ";
+    errorMsg += e.what();
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
+  }
+  catch (...)
+  {
+    _infoSpace->unlock();
+ 
+    errorMsg += " : unknown exception";
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
+  }
+
+  try
+  {
+    // The fireItemGroupChanged locks the infospace
+    _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
+  }
+  catch (xdata::exception::Exception &e)
+  {
+    XCEPT_RETHROW(stor::exception::Monitoring, errorMsg, e);
+  }
 }
 
 
@@ -255,6 +298,7 @@ void DataSenderMonitorCollection::do_reset()
 {
   boost::mutex::scoped_lock sl(_collectionsMutex);
 
+  _connectedRBs = 0;
   _resourceBrokerMap.clear();
   _outputModuleMap.clear();
 }
