@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.33 2009/05/04 16:48:28 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.34 2009/05/04 17:51:38 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -1550,7 +1550,11 @@ void WebPageHelper::addResourceBrokerDetails(XHTMLMaker& maker,
   tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
   maker.addText(tableDiv, "URL");
   tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-  maker.addText(tableDiv, rbResultPtr->key.hltURL);
+  XHTMLMaker::AttrMap linkAttr;
+  linkAttr[ "href" ] = rbResultPtr->key.hltURL + "/urn:xdaq-application:lid=" +
+    boost::lexical_cast<std::string>(rbResultPtr->key.hltLocalId);
+  XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
+  maker.addText(link, rbResultPtr->key.hltURL);
 
   tableRow = maker.addNode("tr", table);
   tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
