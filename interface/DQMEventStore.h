@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.1.2.7 2009/04/24 10:52:03 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.1.2.8 2009/04/29 16:30:46 mommsen Exp $
 
 #ifndef StorageManager_DQMEventStore_h
 #define StorageManager_DQMEventStore_h
@@ -12,6 +12,7 @@
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DQMKey.h"
+#include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 
@@ -25,15 +26,15 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/04/24 10:52:03 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/04/29 16:30:46 $
    */
   
   class DQMEventStore
   {
   public:
     
-    DQMEventStore();
+    explicit DQMEventStore(DQMEventMonitorCollection&);
 
     ~DQMEventStore();
 
@@ -98,6 +99,7 @@ namespace stor {
 
 
     DQMProcessingParams _dqmParams;
+    DQMEventMonitorCollection& _dqmEventMonColl;
 
     typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
     DQMEventRecordMap _store;

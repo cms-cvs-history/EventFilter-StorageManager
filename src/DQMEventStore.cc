@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.cc,v 1.1.2.7 2009/04/24 10:52:56 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.1.2.8 2009/04/29 16:32:13 mommsen Exp $
 
 #include "TROOT.h"
 #include "TTimeStamp.h"
@@ -9,7 +9,8 @@
 using namespace stor;
 
 
-DQMEventStore::DQMEventStore()
+DQMEventStore::DQMEventStore(DQMEventMonitorCollection& dqmEventMonColl) :
+_dqmEventMonColl(dqmEventMonColl)
 {
   gROOT->SetBatch(kTRUE);
 }
@@ -111,7 +112,7 @@ DQMEventRecordPtr
 DQMEventStore::makeDQMEventRecord(I2OChain const& dqmEvent)
 {
   DQMEventRecordPtr record(
-    new DQMEventRecord(dqmEvent.dqmKey(), _dqmParams) 
+    new DQMEventRecord(dqmEvent.dqmKey(), _dqmParams, _dqmEventMonColl) 
   );
   record->setEventConsumerTags( dqmEvent.getDQMEventConsumerTags() );
   record->addDQMEventView( getDQMEventView(dqmEvent) );
