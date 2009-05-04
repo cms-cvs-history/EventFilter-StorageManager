@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.31 2009/05/01 19:45:39 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.32 2009/05/01 21:12:02 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -314,6 +314,32 @@ void WebPageHelper::resourceBrokerDetail
 }
 
 
+void WebPageHelper::dqmEventWebPage
+(
+  xgi::Output *out,
+  const SharedResourcesPtr sharedResources
+)
+{
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+  
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
+  
+  // Create the body with the standard header
+  XHTMLMaker::Node* body = 
+    createWebPageBody(maker, statReporter->externallyVisibleState());
+
+  addDOMforProcessedDQMEvents(maker, body, statReporter->getDQMEventMonitorCollection());  
+  addDOMforDQMEventStatistics(maker, body, statReporter->getDQMEventMonitorCollection());  
+
+  addDOMforSMLinks(maker, body);
+  
+   // Dump the webpage to the output stream
+  maker.out(*out);
+}
+
+
 ///////////////////////
 //// Get base URL: ////
 ///////////////////////
@@ -433,7 +459,7 @@ void WebPageHelper::addDOMforSMLinks
 
   linkAttr[ "href" ] = url + "/storedData";
   link = maker.addNode("a", parent, linkAttr);
-  maker.addText(link, "New Stored data web page");
+  maker.addText(link, "Stored data web page");
 
   maker.addNode("hr", parent);
 
@@ -458,6 +484,12 @@ void WebPageHelper::addDOMforSMLinks
   linkAttr[ "href" ] = url + "/consumerStatistics";
   link = maker.addNode("a", parent, linkAttr);
   maker.addText(link, "Consumer Statistics");
+
+  maker.addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/dqmEventStatistics";
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "DQM event processor statistics");
 
   maker.addNode("hr", parent);
 
@@ -667,7 +699,7 @@ void WebPageHelper::addDurationToTableHead
   std::ostringstream tmpString;
   tmpString << std::fixed << std::setprecision(0) <<
       duration << " s";
-    maker.addText(tableDiv, tmpString.str());
+  maker.addText(tableDiv, tmpString.str());
 }
 
 
@@ -1133,6 +1165,128 @@ void WebPageHelper::addDOMforFiles(XHTMLMaker& maker,
 }
 
 
+void WebPageHelper::addDOMforProcessedDQMEvents(XHTMLMaker& maker,
+                                                XHTMLMaker::Node *parent,
+                                                DQMEventMonitorCollection const& dmc)
+{
+  DQMEventMonitorCollection::DQMEventStats stats;
+  dmc.getStats(stats);
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "4";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  // Received Data Statistics header
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Processed DQM events");
+
+  // Parameter/Value header
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Parameter");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Received");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Served to consumers");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Written to disk");
+
+  addDQMEventStats(maker, table, stats,  MonitoredQuantity::FULL);
+
+  addDQMEventStats(maker, table, stats,  MonitoredQuantity::RECENT);
+}
+
+
+void WebPageHelper::addDOMforDQMEventStatistics(XHTMLMaker& maker,
+                                                XHTMLMaker::Node *parent,
+                                                DQMEventMonitorCollection const& dmc)
+{
+  DQMEventMonitorCollection::DQMEventStats stats;
+  dmc.getStats(stats);
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "3";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  // Received Data Statistics header
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "DQM Event Statistics");
+
+  // Parameter/Value header
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Parameter");
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << "Mean (" <<
+      std::fixed << std::setprecision(0) <<
+      stats.dqmEventSizeStats.getDuration(MonitoredQuantity::FULL) <<
+      " s)";
+    maker.addText(tableDiv, tmpString.str());
+  }
+  {
+    tableDiv = maker.addNode("th", tableRow);
+    std::ostringstream tmpString;
+    tmpString << "Recent (" <<
+      std::fixed << std::setprecision(0) <<
+      stats.dqmEventSizeStats.getDuration(MonitoredQuantity::RECENT) <<
+      " s)";
+    maker.addText(tableDiv, tmpString.str());
+  }
+
+
+  // DQM events received 
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+  maker.addText(tableDiv, "DQM events received");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.dqmEventSizeStats.getSampleCount(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.dqmEventSizeStats.getSampleCount(MonitoredQuantity::RECENT));
+
+  // Average updates/group
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+  maker.addText(tableDiv, "Updates/group (average)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueAverage(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueAverage(MonitoredQuantity::RECENT));
+
+  // Min updates/group
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+  maker.addText(tableDiv, "Updates/group (min)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueMin(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueMin(MonitoredQuantity::RECENT));
+
+  // Max updates/group
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+  maker.addText(tableDiv, "Updates/group (max)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueMax(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueMax(MonitoredQuantity::RECENT));
+
+  // RMS updates/group
+  tableRow = maker.addNode("tr", table);
+  tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+  maker.addText(tableDiv, "Updates/group (RMS)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueRMS(MonitoredQuantity::FULL));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfUpdatesStats.getValueRMS(MonitoredQuantity::RECENT));
+}
+
+
 void WebPageHelper::addOutputModuleTables(XHTMLMaker& maker,
                                           XHTMLMaker::Node *parent,
                            DataSenderMonitorCollection const& dsmc)
@@ -1542,6 +1696,143 @@ void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
       maker.addText(tableDiv, fuResultsList[idx]->lastRunNumber, 0);
     }
   }
+}
+
+
+void WebPageHelper::addDQMEventStats
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  DQMEventMonitorCollection::DQMEventStats const& stats,
+  const MonitoredQuantity::DataSetType dataSet
+)
+{
+  // Mean performance header
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow);
+  if ( dataSet == MonitoredQuantity::FULL )
+    maker.addText(tableDiv, "Mean performance for");
+  else
+    maker.addText(tableDiv, "Recent performance for last");
+
+  addDurationToTableHead(maker, tableRow,
+    stats.dqmEventSizeStats.getDuration(dataSet));
+  addDurationToTableHead(maker, tableRow,
+    stats.servedDQMEventSizeStats.getDuration(dataSet));
+  addDurationToTableHead(maker, tableRow,
+    stats.writtenDQMEventSizeStats.getDuration(dataSet));
+
+  addRowForDQMEventsProcessed(maker, table, stats, dataSet);
+  addRowForDQMEventBandwidth(maker, table, stats, dataSet);
+  if ( dataSet == MonitoredQuantity::FULL )
+  {
+    addRowForTotalDQMEventVolume(maker, table, stats, dataSet);
+  }
+  else
+  {
+    addRowForMaxDQMEventBandwidth(maker, table, stats, dataSet);
+    addRowForMinDQMEventBandwidth(maker, table, stats, dataSet);
+  }
+}
+
+
+void WebPageHelper::addRowForDQMEventsProcessed
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  DQMEventMonitorCollection::DQMEventStats const& stats,
+  const MonitoredQuantity::DataSetType dataSet
+)
+{
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "DQM groups");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfGroupsStats.getValueSum(dataSet), 0);
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.servedDQMEventSizeStats.getSampleCount(dataSet), 0);
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfWrittenGroupsStats.getValueSum(dataSet), 0);
+}
+
+
+void WebPageHelper::addRowForDQMEventBandwidth
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  DQMEventMonitorCollection::DQMEventStats const& stats,
+  const MonitoredQuantity::DataSetType dataSet
+)
+{
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.dqmEventSizeStats.getValueRate(dataSet));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.servedDQMEventSizeStats.getValueRate(dataSet));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.writtenDQMEventSizeStats.getValueRate(dataSet));
+}
+
+
+void WebPageHelper::addRowForTotalDQMEventVolume
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  DQMEventMonitorCollection::DQMEventStats const& stats,
+  const MonitoredQuantity::DataSetType dataSet
+)
+{
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Total volume processed (MB)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.dqmEventSizeStats.getValueSum(dataSet), 3);
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.servedDQMEventSizeStats.getValueSum(dataSet), 3);
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.writtenDQMEventSizeStats.getValueSum(dataSet), 3);
+}
+
+
+void WebPageHelper::addRowForMaxDQMEventBandwidth
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  DQMEventMonitorCollection::DQMEventStats const& stats,
+  const MonitoredQuantity::DataSetType dataSet
+)
+{
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Maximum Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.dqmEventBandwidthStats.getValueMax(dataSet));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.servedDQMEventBandwidthStats.getValueMax(dataSet));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.writtenDQMEventBandwidthStats.getValueMax(dataSet));
+}
+
+
+void WebPageHelper::addRowForMinDQMEventBandwidth
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  DQMEventMonitorCollection::DQMEventStats const& stats,
+  const MonitoredQuantity::DataSetType dataSet
+)
+{
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
+  maker.addText(tableDiv, "Minimum Bandwidth (MB/s)");
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.dqmEventBandwidthStats.getValueMin(dataSet));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.servedDQMEventBandwidthStats.getValueMin(dataSet));
+  tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+  maker.addText(tableDiv, stats.writtenDQMEventBandwidthStats.getValueMin(dataSet));
 }
 
 

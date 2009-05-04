@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.17 2009/04/30 21:05:12 biery Exp $
+// $Id: WebPageHelper.h,v 1.1.2.18 2009/05/01 21:12:01 biery Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -11,6 +11,7 @@
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
 
+#include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
@@ -26,8 +27,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: biery $
-   * $Revision: 1.1.2.17 $
-   * $Date: 2009/04/30 21:05:12 $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/05/01 21:12:01 $
    */
   
   class WebPageHelper
@@ -93,6 +94,16 @@ namespace stor {
     void resourceBrokerDetail( xgi::Output*,
                                const SharedResourcesPtr,
                                long long );
+
+    /**
+     * Generates the DQM event processor monitoring webpage
+     */
+    void dqmEventWebPage
+    (
+      xgi::Output*,
+      const SharedResourcesPtr
+    );
+
 
   private:
 
@@ -170,6 +181,26 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
       FilesMonitorCollection const&
+    );
+
+    /**
+     * Adds DQM event processor statistics to the parent DOM element
+     */
+    void addDOMforProcessedDQMEvents
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DQMEventMonitorCollection const&
+    );
+
+    /**
+     * Adds statistics for the DQM events to the parent DOM element
+     */
+    void addDOMforDQMEventStatistics
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      DQMEventMonitorCollection const&
     );
 
     /**
@@ -357,6 +388,73 @@ namespace stor {
       long long uniqueRBID,
       DataSenderMonitorCollection const&
     );
+
+    /**
+     * Add statistics for processed DQM events
+     */
+    void addDQMEventStats
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      DQMEventMonitorCollection::DQMEventStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+    
+    /**
+     * Add a table row for number of DQM events processed
+     */
+    void addRowForDQMEventsProcessed
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      DQMEventMonitorCollection::DQMEventStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for DQM event bandwidth
+     */
+    void addRowForDQMEventBandwidth
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      DQMEventMonitorCollection::DQMEventStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for total fragment volume received
+     */
+    void addRowForTotalDQMEventVolume
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      DQMEventMonitorCollection::DQMEventStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for maximum fragment bandwidth
+     */
+    void addRowForMaxDQMEventBandwidth
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      DQMEventMonitorCollection::DQMEventStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
+    /**
+     * Add a table row for minimum fragment bandwidth
+     */
+    void addRowForMinDQMEventBandwidth
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      DQMEventMonitorCollection::DQMEventStats const&,
+      const MonitoredQuantity::DataSetType dataSet
+    );
+
 
   private:
 

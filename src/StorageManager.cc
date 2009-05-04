@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.102 2009/04/29 16:31:44 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.103 2009/05/01 19:45:39 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -112,7 +112,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   connectedRBs_(0), 
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.102 2009/04/29 16:31:44 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.103 2009/05/01 19:45:39 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -161,13 +161,14 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
               XDAQ_NS_URI );
 
   // Bind web interface
-  xgi::bind(this,&StorageManager::defaultWebPage,       "Default");
-  xgi::bind(this,&StorageManager::storedDataWebPage,    "storedData");
-  xgi::bind(this,&StorageManager::css,                  "styles.css");
-  xgi::bind(this,&StorageManager::rbsenderWebPage,      "rbsenderlist");
-  xgi::bind(this,&StorageManager::oldrbsenderWebPage,   "oldrbsenderlist");
-  xgi::bind(this,&StorageManager::rbsenderDetailWebPage,"rbsenderdetail");
-  xgi::bind(this,&StorageManager::fileStatisticsWebPage,"fileStatistics");
+  xgi::bind(this,&StorageManager::defaultWebPage,           "Default");
+  xgi::bind(this,&StorageManager::storedDataWebPage,        "storedData");
+  xgi::bind(this,&StorageManager::css,                      "styles.css");
+  xgi::bind(this,&StorageManager::rbsenderWebPage,          "rbsenderlist");
+  xgi::bind(this,&StorageManager::oldrbsenderWebPage,       "oldrbsenderlist");
+  xgi::bind(this,&StorageManager::rbsenderDetailWebPage,    "rbsenderdetail");
+  xgi::bind(this,&StorageManager::fileStatisticsWebPage,    "fileStatistics");
+  xgi::bind(this,&StorageManager::dqmEventStatisticsWebPage,"dqmEventStatistics");
 
   // Old consumer bindings:
   //xgi::bind(this,&StorageManager::eventdataWebPage,     "geteventdata");
@@ -1094,6 +1095,37 @@ void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
   try
   {
     _webPageHelper.filesWebPage(
+      out,
+      _sharedResources
+    );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+
+}
+
+
+void StorageManager::dqmEventStatisticsWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the DQM event statistics webpage";
+
+  try
+  {
+    _webPageHelper.dqmEventWebPage(
       out,
       _sharedResources
     );

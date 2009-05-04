@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.54 2009/04/28 18:30:16 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.55 2009/05/01 19:45:38 biery Exp $
 */
 
 #include <string>
@@ -135,6 +135,8 @@ namespace stor {
     void DQMeventdataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void DQMconsumerWebPage
+      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    void dqmEventStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
 
     // New consumer handling methods. Will replace consumerWebPage,
