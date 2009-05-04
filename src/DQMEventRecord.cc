@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.cc,v 1.1.2.5 2009/04/29 16:31:51 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.1.2.6 2009/05/04 12:35:56 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 
@@ -24,7 +24,8 @@ DQMInstance(
   static_cast<int>(dqmParams._readyTimeDQM)
 ),
 _dqmParams(dqmParams),
-_dqmEventMonColl(dqmEventMonColl)
+_dqmEventMonColl(dqmEventMonColl),
+_updateCount(0)
 {
   gROOT->SetBatch(kTRUE);
 }
@@ -32,13 +33,18 @@ _dqmEventMonColl(dqmEventMonColl)
 
 DQMEventRecord::~DQMEventRecord()
 {
-  _dqmEventMonColl.getNumberOfUpdatesMQ().addSample( nUpdates_ );
+  _dqmEventMonColl.getNumberOfUpdatesMQ().addSample( 
+    static_cast<double>(_updateCount) / dqmGroups_.size()
+  );
 }
 
 
 void DQMEventRecord::addDQMEventView(DQMEventMsgView const& view)
 {
   _releaseTag = view.releaseTag();
+  if ( dqmGroups_[view.topFolderName()] == 0 )
+    _dqmEventMonColl.getNumberOfGroupsMQ().addSample(1);
+  ++_updateCount;
 
   edm::StreamDQMDeserializer deserializer;
   std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
@@ -77,6 +83,7 @@ double DQMEventRecord::writeFile(std::string filePrefix, bool endRunFlag)
   double size =
     DQMInstance::writeFile(filePrefix, endRunFlag);
   _dqmEventMonColl.getWrittenDQMEventSizeMQ().addSample( size / 0x100000 );
+  _dqmEventMonColl.getNumberOfWrittenGroupsMQ().addSample( dqmGroups_.size() );
   return size;
 }
 
