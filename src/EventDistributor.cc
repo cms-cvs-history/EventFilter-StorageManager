@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.42 2009/04/27 11:05:17 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.43 2009/05/04 18:19:07 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -100,6 +100,11 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
               }
           }
 
+        RunMonitorCollection& runMonCollection = _sharedResources->
+          _statisticsReporter->getRunMonitorCollection();
+        runMonCollection.getRunNumbersSeenMQ().addSample(ioc.runNumber());
+        runMonCollection.getEventIDsReceivedMQ().addSample(ioc.eventNumber());
+
         DataSenderMonitorCollection& dataSenderMonColl = _sharedResources->
           _statisticsReporter->getDataSenderMonitorCollection();
         dataSenderMonColl.addEventSample(ioc);
@@ -156,6 +161,11 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
                 ioc.tagForStream( it->configInfo().streamId() );
               }
           }
+
+        RunMonitorCollection& runMonCollection = _sharedResources->
+          _statisticsReporter->getRunMonitorCollection();
+        runMonCollection.getRunNumbersSeenMQ().addSample(ioc.runNumber());
+        runMonCollection.getErrorEventIDsReceivedMQ().addSample(ioc.eventNumber());
 
         break;
       }

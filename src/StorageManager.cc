@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.105 2009/05/04 17:56:41 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.106 2009/05/04 18:19:07 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -8,7 +8,6 @@
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "EventFilter/StorageManager/interface/FUProxy.h"
-#include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -111,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.105 2009/05/04 17:56:41 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.106 2009/05/04 18:19:07 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -352,7 +351,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  RunMonitorCollection& runMonCollection = _sharedResources->_statisticsReporter->getRunMonitorCollection();
   FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
@@ -397,9 +395,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                       << " Different from Run Number from configuration = " << getRunNumber());
     }
 
-  runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
-  runMonCollection.getEventIDsReceivedMQ().addSample(msg->eventID);
-
   I2OChain i2oChain(ref);
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
@@ -418,7 +413,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  RunMonitorCollection& runMonCollection = _sharedResources->_statisticsReporter->getRunMonitorCollection();
   FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
@@ -449,9 +443,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-
-  runMonCollection.getRunNumbersSeenMQ().addSample(msg->runID);
-  runMonCollection.getErrorEventIDsReceivedMQ().addSample(msg->eventID);
 
   I2OChain i2oChain(ref);
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
