@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.cc,v 1.1.2.4 2009/04/23 13:27:04 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.1.2.5 2009/04/29 16:31:51 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 
@@ -15,17 +15,26 @@ using namespace stor;
 DQMEventRecord::DQMEventRecord
 (
   DQMKey const dqmKey,
-  DQMProcessingParams const dqmParams
+  DQMProcessingParams const dqmParams,
+  DQMEventMonitorCollection& dqmEventMonColl
 ) :
 DQMInstance(
   dqmKey.runNumber, dqmKey.lumiSection, dqmKey.updateNumber, 
   static_cast<int>(dqmParams._purgeTimeDQM),
   static_cast<int>(dqmParams._readyTimeDQM)
 ),
-_dqmParams(dqmParams)
+_dqmParams(dqmParams),
+_dqmEventMonColl(dqmEventMonColl)
 {
   gROOT->SetBatch(kTRUE);
 }
+
+
+DQMEventRecord::~DQMEventRecord()
+{
+  _dqmEventMonColl.getNumberOfUpdatesMQ().addSample( nUpdates_ );
+}
+
 
 void DQMEventRecord::addDQMEventView(DQMEventMsgView const& view)
 {
@@ -58,8 +67,18 @@ void DQMEventRecord::addDQMEventView(DQMEventMsgView const& view)
       delete(object);
     }
   }
+  _dqmEventMonColl.getDQMEventSizeMQ().addSample(
+    static_cast<double>(view.size()) / 0x100000
+  );
 }
 
+double DQMEventRecord::writeFile(std::string filePrefix, bool endRunFlag)
+{
+  double size =
+    DQMInstance::writeFile(filePrefix, endRunFlag);
+  _dqmEventMonColl.getWrittenDQMEventSizeMQ().addSample( size / 0x100000 );
+  return size;
+}
 
 DQMEventRecord::GroupRecord DQMEventRecord::populateAndGetGroup(const std::string groupName)
 {
@@ -132,6 +151,10 @@ DQMEventRecord::GroupRecord DQMEventRecord::populateAndGetGroup(const std::strin
   {
     builder.setCompressionFlag(serializer.currentEventSize());
   }
+
+  _dqmEventMonColl.getServedDQMEventSizeMQ().addSample(
+    static_cast<double>(groupRecord.size()) / 0x100000
+  );
 
   return groupRecord;
 }
