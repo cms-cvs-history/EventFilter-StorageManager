@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.55 2009/05/01 19:45:38 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.56 2009/05/04 16:48:09 mommsen Exp $
 */
 
 #include <string>
@@ -54,8 +54,7 @@ namespace xgi {
 
 namespace stor {
 
-  class StorageManager: public xdaq::Application, 
-                        public xdata::ActionListener
+  class StorageManager: public xdaq::Application
   {
    public:
     StorageManager(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
@@ -65,10 +64,6 @@ namespace stor {
     // *** Updates the exported parameters
     xoap::MessageReference ParameterGet(xoap::MessageReference message)
     throw (xoap::exception::Exception);
-
-    // *** Anything to do with the flash list
-    void setupFlashList();
-    void actionPerformed(xdata::Event& e);
 
     // *** Callbacks to be executed during transitional states
     xoap::MessageReference configuring( xoap::MessageReference )
@@ -115,8 +110,6 @@ namespace stor {
     void storedDataWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void rbsenderWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void oldrbsenderWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void rbsenderDetailWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
@@ -179,7 +172,6 @@ namespace stor {
     boost::mutex consumerInitMsgLock_;
 
     SMFUSenderList smrbsenders_;
-    xdata::UnsignedInteger32 connectedRBs_;
 
     FragmentProcessor *_fragmentProcessor;
     DiskWriter *_diskWriter;
