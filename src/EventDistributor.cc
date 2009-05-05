@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.43 2009/05/04 18:19:07 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.44 2009/05/04 18:29:22 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -131,21 +131,10 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
               }
           }
 
-#ifdef SM_NEW_DQM
-        // Put this here or in EventDistributor::addEventToRelevantQueues?
-
-        // pass any DQM event to the DQM event processor, as it might write 
+        // Pass any DQM event to the DQM event processor, as it might write 
         // DQM histograms to disk which are not requested by any consumer
+        // Put this here or in EventDistributor::addEventToRelevantQueues?
         _sharedResources->_dqmEventQueue->enq_nowait( ioc );
-#else
-        // temporary handling (until the DQMProcessor comes online)
-        if ( _sharedResources->_dqmServiceManager.get() != 0 )
-          {
-            ioc.copyFragmentsIntoBuffer(_tempEventArea);
-            DQMEventMsgView dqmEventView(&_tempEventArea[0]);
-            _sharedResources->_dqmServiceManager->manageDQMEventMsg(dqmEventView);
-          }
-#endif
 
         break;
       }

@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.106 2009/05/04 18:19:07 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.107 2009/05/04 18:29:22 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.106 2009/05/04 18:19:07 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.107 2009/05/04 18:29:22 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -177,13 +177,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   xgi::bind(this,&StorageManager::consumerListWebPage,  "consumerList");
 
-#ifdef SM_NEW_DQM
   xgi::bind(this,&StorageManager::processDQMConsumerRegistrationRequest, "registerDQMConsumer");
   xgi::bind(this,&StorageManager::processDQMConsumerEventRequest, "getDQMeventdata");
-#else
-  xgi::bind(this,&StorageManager::DQMeventdataWebPage,  "getDQMeventdata");
-  xgi::bind(this,&StorageManager::DQMconsumerWebPage,   "registerDQMConsumer");
-#endif
 
   // Old consumer statistics page binding:
   xgi::bind(this,&StorageManager::eventServerWebPage,   "EventServerStats");
@@ -462,44 +457,12 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     pool_is_set_ = 1;
   }
 
-  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
-
-  I2O_MESSAGE_FRAME         *stdMsg =
-    (I2O_MESSAGE_FRAME*)ref->getDataLocation();
-  I2O_SM_DQM_MESSAGE_FRAME *msg    =
-    (I2O_SM_DQM_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10) << "StorageManager: Received DQM message from HLT at " << msg->hltURL 
-             << " application " << msg->hltClassName << " id " << msg->hltLocalId
-             << " instance " << msg->hltInstance << " tid " << msg->hltTid
-             << " rbBufferID " << msg->rbBufferID << " folderID " << msg->folderID
-             << " fuProcID " << msg->fuProcID  << " fuGUID 0x" << std::hex
-            << msg->fuGUID << std::dec << std::endl;
-  FDEBUG(10) << "                 for run " << msg->runID << " eventATUpdate = " << msg->eventAtUpdateID
-             << " total frames = " << msg->numFrames << std::endl;
-  FDEBUG(10) << "StorageManager: Frame " << msg->frameCount << " of " 
-             << msg->numFrames-1 << std::endl;
-  int len = msg->dataSize;
-  FDEBUG(10) << "StorageManager: received DQM frame size = " << len << std::endl;
-
-  // check the storage Manager is in the Ready state first!
-  if(externallyVisibleState() != "Enabled")
-  {
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                       "Received DQM message but not in Enabled state! Current state = "
-                       << externallyVisibleState() << " DQMMessage from" << msg->hltURL
-                       << " application " << msg->hltClassName);
-    // just release the memory at least - is that what we want to do?
-    ref->release();
-    return;
-  }
+  FragmentMonitorCollection& fragMonCollection =
+    _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2OChain i2oChain(ref);
+  fragMonCollection.addDQMEventFragmentSample( i2oChain.totalDataSize() );
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-  // for bandwidth performance measurements
-  unsigned long actualFrameSize =
-    (unsigned long)sizeof(I2O_SM_DQM_MESSAGE_FRAME) + len;
-  fragMonCollection.addDQMEventFragmentSample(actualFrameSize);
 }
 
 //////////// *** Default web page ///////////////////////////////////////////////
@@ -996,137 +959,141 @@ void StorageManager::headerdataWebPage(xgi::Input *in, xgi::Output *out)
 void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
-  char buffer[65536];
+// Remi Mommsen, May 5, 2009:
+// It is not clear at the moment if this XML monitoring is still useful
+// for the web-based monitoring. Need to be clarified with William Badgett <badgett@fnal.gov>
 
-  out->getHTTPResponseHeader().addHeader("Content-Type", "application/xml");
-  sprintf(buffer,
-          "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<Monitor>\n");
-  out->write(buffer,strlen(buffer));
+//   char buffer[65536];
 
-  if(externallyVisibleState() == "Enabled")
-  {
-    sprintf(buffer, "<ConsumerList>\n");
-    out->write(buffer,strlen(buffer));
+//   out->getHTTPResponseHeader().addHeader("Content-Type", "application/xml");
+//   sprintf(buffer,
+//           "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<Monitor>\n");
+//   out->write(buffer,strlen(buffer));
 
-    boost::shared_ptr<EventServer> eventServer =
-      _sharedResources->_oldEventServer;
-    if (eventServer.get() != NULL)
-    {
-      std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
-        eventServer->getConsumerTable();
-      std::map< uint32, boost::shared_ptr<ConsumerPipe> >::const_iterator 
-        consumerIter;
-      for (consumerIter = consumerTable.begin();
-           consumerIter != consumerTable.end();
-           ++consumerIter)
-      {
-        boost::shared_ptr<ConsumerPipe> consumerPipe = consumerIter->second;
-        sprintf(buffer, "<Consumer>\n");
-        out->write(buffer,strlen(buffer));
+//   if(externallyVisibleState() == "Enabled")
+//   {
+//     sprintf(buffer, "<ConsumerList>\n");
+//     out->write(buffer,strlen(buffer));
 
-        if (consumerPipe->isProxyServer()) {
-          sprintf(buffer, "<Name>Proxy Server</Name>\n");
-        }
-        else {
-          sprintf(buffer, "<Name>%s</Name>\n",
-                  consumerPipe->getConsumerName().c_str());
-        }
-        out->write(buffer,strlen(buffer));
+//     boost::shared_ptr<EventServer> eventServer =
+//       _sharedResources->_oldEventServer;
+//     if (eventServer.get() != NULL)
+//     {
+//       std::map< uint32, boost::shared_ptr<ConsumerPipe> > consumerTable = 
+//         eventServer->getConsumerTable();
+//       std::map< uint32, boost::shared_ptr<ConsumerPipe> >::const_iterator 
+//         consumerIter;
+//       for (consumerIter = consumerTable.begin();
+//            consumerIter != consumerTable.end();
+//            ++consumerIter)
+//       {
+//         boost::shared_ptr<ConsumerPipe> consumerPipe = consumerIter->second;
+//         sprintf(buffer, "<Consumer>\n");
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<ID>%d</ID>\n", consumerPipe->getConsumerId());
-        out->write(buffer,strlen(buffer));
+//         if (consumerPipe->isProxyServer()) {
+//           sprintf(buffer, "<Name>Proxy Server</Name>\n");
+//         }
+//         else {
+//           sprintf(buffer, "<Name>%s</Name>\n",
+//                   consumerPipe->getConsumerName().c_str());
+//         }
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Time>%d</Time>\n", 
-                (int)consumerPipe->getLastEventRequestTime());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<ID>%d</ID>\n", consumerPipe->getConsumerId());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Host>%s</Host>\n", 
-                consumerPipe->getHostName().c_str());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Time>%d</Time>\n", 
+//                 (int)consumerPipe->getLastEventRequestTime());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Events>%d</Events>\n", consumerPipe->getEvents());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Host>%s</Host>\n", 
+//                 consumerPipe->getHostName().c_str());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Failed>%d</Failed>\n", 
-                consumerPipe->getPushEventFailures());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Events>%d</Events>\n", consumerPipe->getEvents());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Idle>%d</Idle>\n", consumerPipe->isIdle());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Failed>%d</Failed>\n", 
+//                 consumerPipe->getPushEventFailures());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
-                consumerPipe->isDisconnected());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Idle>%d</Idle>\n", consumerPipe->isIdle());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Ready>%d</Ready>\n", consumerPipe->isReadyForEvent());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
+//                 consumerPipe->isDisconnected());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "</Consumer>\n");
-        out->write(buffer,strlen(buffer));
-      }
-    }
-    boost::shared_ptr<DQMEventServer> dqmServer =
-      _sharedResources->_oldDQMEventServer;
-    if (dqmServer.get() != NULL)
-    {
-      std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
-        dqmServer->getConsumerTable();
-      std::map< uint32, boost::shared_ptr<DQMConsumerPipe> >::const_iterator 
-        dqmIter;
-      for (dqmIter = dqmTable.begin();
-           dqmIter != dqmTable.end();
-           ++dqmIter)
-      {
-        boost::shared_ptr<DQMConsumerPipe> dqmPipe = dqmIter->second;
-        sprintf(buffer, "<DQMConsumer>\n");
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Ready>%d</Ready>\n", consumerPipe->isReadyForEvent());
+//         out->write(buffer,strlen(buffer));
 
-        if (dqmPipe->isProxyServer()) {
-          sprintf(buffer, "<Name>Proxy Server</Name>\n");
-        }
-        else {
-          sprintf(buffer, "<Name>%s</Name>\n",
-                  dqmPipe->getConsumerName().c_str());
-        }
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "</Consumer>\n");
+//         out->write(buffer,strlen(buffer));
+//       }
+//     }
+//     boost::shared_ptr<DQMEventServer> dqmServer =
+//       _sharedResources->_oldDQMEventServer;
+//     if (dqmServer.get() != NULL)
+//     {
+//       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> > dqmTable = 
+//         dqmServer->getConsumerTable();
+//       std::map< uint32, boost::shared_ptr<DQMConsumerPipe> >::const_iterator 
+//         dqmIter;
+//       for (dqmIter = dqmTable.begin();
+//            dqmIter != dqmTable.end();
+//            ++dqmIter)
+//       {
+//         boost::shared_ptr<DQMConsumerPipe> dqmPipe = dqmIter->second;
+//         sprintf(buffer, "<DQMConsumer>\n");
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<ID>%d</ID>\n", dqmPipe->getConsumerId());
-        out->write(buffer,strlen(buffer));
+//         if (dqmPipe->isProxyServer()) {
+//           sprintf(buffer, "<Name>Proxy Server</Name>\n");
+//         }
+//         else {
+//           sprintf(buffer, "<Name>%s</Name>\n",
+//                   dqmPipe->getConsumerName().c_str());
+//         }
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Time>%d</Time>\n", 
-                (int)dqmPipe->getLastEventRequestTime());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<ID>%d</ID>\n", dqmPipe->getConsumerId());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Host>%s</Host>\n", 
-                dqmPipe->getHostName().c_str());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Time>%d</Time>\n", 
+//                 (int)dqmPipe->getLastEventRequestTime());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Events>%d</Events>\n", dqmPipe->getEvents());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Host>%s</Host>\n", 
+//                 dqmPipe->getHostName().c_str());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Failed>%d</Failed>\n", 
-                dqmPipe->getPushEventFailures());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Events>%d</Events>\n", dqmPipe->getEvents());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Idle>%d</Idle>\n", dqmPipe->isIdle());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Failed>%d</Failed>\n", 
+//                 dqmPipe->getPushEventFailures());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
-                dqmPipe->isDisconnected());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Idle>%d</Idle>\n", dqmPipe->isIdle());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "<Ready>%d</Ready>\n", dqmPipe->isReadyForEvent());
-        out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Disconnected>%d</Disconnected>\n", 
+//                 dqmPipe->isDisconnected());
+//         out->write(buffer,strlen(buffer));
 
-        sprintf(buffer, "</DQMConsumer>\n");
-        out->write(buffer,strlen(buffer));
-      }
-    }
-    sprintf(buffer, "</ConsumerList>\n");
-    out->write(buffer,strlen(buffer));
-  }
-  sprintf(buffer, "</Monitor>");
-  out->write(buffer,strlen(buffer));
+//         sprintf(buffer, "<Ready>%d</Ready>\n", dqmPipe->isReadyForEvent());
+//         out->write(buffer,strlen(buffer));
+
+//         sprintf(buffer, "</DQMConsumer>\n");
+//         out->write(buffer,strlen(buffer));
+//       }
+//     }
+//     sprintf(buffer, "</ConsumerList>\n");
+//     out->write(buffer,strlen(buffer));
+//   }
+//   sprintf(buffer, "</Monitor>");
+//   out->write(buffer,strlen(buffer));
 }
 
 //////////////////// event server statistics web page //////////////////
@@ -2402,198 +2369,6 @@ void StorageManager::consumerWebPage(xgi::Input *in, xgi::Output *out)
 
 }
 
-//////////// *** get DQMevent data web page //////////////////////////////////////////////////////////
-void StorageManager::DQMeventdataWebPage(xgi::Input *in, xgi::Output *out)
-  throw (xgi::exception::Exception)
-{
-  // default the message length to zero
-  int len=0;
-
-  // determine the consumer ID from the event request
-  // message, if it is available.
-  unsigned int consumerId = 0;
-  std::string lengthString = in->getenv("CONTENT_LENGTH");
-  unsigned int contentLength = std::atol(lengthString.c_str());
-  if (contentLength > 0) 
-  {
-    auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
-    in->read(&(*bufPtr)[0], contentLength);
-    OtherMessageView requestMessage(&(*bufPtr)[0]);
-    if (requestMessage.code() == Header::DQMEVENT_REQUEST)
-    {
-      uint8 *bodyPtr = requestMessage.msgBody();
-      consumerId = convert32(bodyPtr);
-    }
-  }
-  
-  // first test if StorageManager is in Enabled state and this is a valid request
-  // there must also be DQM data available
-  if(externallyVisibleState() == "Enabled" && consumerId != 0)
-  {
-    boost::shared_ptr<DQMEventServer> eventServer =
-      _sharedResources->_oldDQMEventServer;
-    if (eventServer.get() != NULL)
-    {
-      boost::shared_ptr< std::vector<char> > bufPtr =
-        eventServer->getDQMEvent(consumerId);
-      if (bufPtr.get() != NULL)
-      {
-        DQMEventMsgView msgView(&(*bufPtr)[0]);
-
-        // what if mybuffer_ is used in multiple threads? Can it happen?
-        unsigned char* from = msgView.startAddress();
-        unsigned int dsize = msgView.size();
-        if(mybuffer_.capacity() < dsize) mybuffer_.resize(dsize);
-        unsigned char* pos = (unsigned char*) &mybuffer_[0];
-
-        copy(from,from+dsize,pos);
-        len = dsize;
-        FDEBUG(10) << "sending update at event " << msgView.eventNumberAtUpdate() << std::endl;
-      }
-    }
-    
-    // check if zero length is sent when there is no valid data
-    // i.e. on getDQMEvent, can already send zero length if request is invalid
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write((char*) &mybuffer_[0],len);
-  } // else send DONE as reponse (could be end of a run)
-  else
-  {
-    // not an event request or not in enabled state, just send DONE message
-    OtherMessageBuilder othermsg(&mybuffer_[0],Header::DONE);
-    len = othermsg.size();
-      
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write((char*) &mybuffer_[0],len);
-  }
-  
-}
-
-////////////////////////////// DQM consumer registration web page ////////////////////////////
-void StorageManager::DQMconsumerWebPage(xgi::Input *in, xgi::Output *out)
-  throw (xgi::exception::Exception)
-{
-  if(externallyVisibleState() == "Enabled")
-  { // We need to be in the enabled state
-
-    std::string consumerName = "None provided";
-    std::string consumerPriority = "normal";
-    std::string consumerRequest = "*";
-    std::string consumerHost = in->getenv("REMOTE_HOST");
-
-    // read the consumer registration message from the http input stream
-    std::string lengthString = in->getenv("CONTENT_LENGTH");
-    unsigned int contentLength = std::atol(lengthString.c_str());
-    if (contentLength > 0)
-    {
-      auto_ptr< vector<char> > bufPtr(new vector<char>(contentLength));
-      in->read(&(*bufPtr)[0], contentLength);
-      ConsRegRequestView requestMessage(&(*bufPtr)[0]);
-      consumerName = requestMessage.getConsumerName();
-      consumerPriority = requestMessage.getConsumerPriority();
-      // for DQM consumers top folder name is stored in the "parameteSet"
-      std::string reqFolder = requestMessage.getRequestParameterSet();
-      if (reqFolder.size() >= 1) consumerRequest = reqFolder;
-    }
-
-    // create the buffer to hold the registration reply message
-    const int BUFFER_SIZE = 100;
-    char msgBuff[BUFFER_SIZE];
-
-    // fetch the DQMevent server
-    // (it and/or the job controller may not have been created yet
-    //  if not in the enabled state)
-    boost::shared_ptr<DQMEventServer> eventServer =
-      _sharedResources->_oldDQMEventServer;
-
-    // if no event server, tell the consumer that we're not ready
-    if (eventServer.get() == NULL)
-    {
-      // build the registration response into the message buffer
-      ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
-                                     ConsRegResponseBuilder::ES_NOT_READY, 0);
-      // debug message so that compiler thinks respMsg is used
-      FDEBUG(20) << "Registration response size =  " <<
-        respMsg.size() << std::endl;
-    }
-    else
-    {
-      EventServingParams esParams =
-        _sharedResources->_configuration->getEventServingParams();
-
-      // create the local consumer interface and add it to the event server
-      boost::shared_ptr<DQMConsumerPipe>
-        consPtr(new DQMConsumerPipe(consumerName, consumerPriority,
-                                    (int)esParams._DQMactiveConsumerTimeout,
-                                    (int)esParams._DQMidleConsumerTimeout,
-                                    consumerRequest, consumerHost,
-                                    esParams._DQMconsumerQueueSize));
-      eventServer->addConsumer(consPtr);
-      // over-ride pushmode if not set in StorageManager
-      if((consumerPriority.compare("PushMode") == 0) &&
-         !esParams._pushmode2proxy)
-          consPtr->setPushMode(false);
-
-      // initialize it straight away (should later pass in the folder name to
-      // optionally change the selection on a register?
-      consPtr->initializeSelection();
-
-      // build the registration response into the message buffer
-      ConsRegResponseBuilder respMsg(msgBuff, BUFFER_SIZE,
-                                     0, consPtr->getConsumerId());
-      // debug message so that compiler thinks respMsg is used
-      FDEBUG(20) << "Registration response size =  " <<
-        respMsg.size() << std::endl;
-    }
-
-    // send the response
-    ConsRegResponseView responseMessage(msgBuff);
-    unsigned int len = responseMessage.size();
-    if(mybuffer_.capacity() < len) mybuffer_.resize(len);
-    for (unsigned int i=0; i<len; ++i) mybuffer_[i]=msgBuff[i];
-
-    out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-    out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-    out->write((char*) &mybuffer_[0],len);
-
-  } else { // is this the right thing to send?
-   // In wrong state for this message - return zero length stream, should return Msg NOTREADY
-   int len = 0;
-   out->getHTTPResponseHeader().addHeader("Content-Type", "application/octet-stream");
-   out->getHTTPResponseHeader().addHeader("Content-Transfer-Encoding", "binary");
-   out->write((char*) &mybuffer_[0],len);
-  }
-
-}
-
-
-std::string StorageManager::findStreamName(const std::string &in) const
-{
-  //cout << "in findStreamName with string " << in << endl;
-  string::size_type t = in.find("storageManager");
-
-  string::size_type b;
-  if(t != string::npos)
-    {
-      //cout << " storageManager is at " << t << endl;
-      b = in.rfind(".",t-2);
-      if(b!=string::npos) 
-        {
-          //cout << "looking for substring " << t-b-2 << "long" <<endl;
-          //cout << " stream name should be at " << b+1 << endl;
-          //cout << " will return name " << string(in.substr(b+1,t-b-2)) << endl;
-          return string(in.substr(b+1,t-b-2));
-        }
-      else
-        cout << " stream name is lost " << endl;
-    }
-  else
-    cout << " storageManager is not found " << endl;
-  return in;
-}
-
 
 xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
@@ -2654,13 +2429,6 @@ void StorageManager::configureAction()
   _sharedResources->_oldEventServer.
     reset(new EventServer(esParams._maxESEventRate, esParams._maxESDataRate,
                           esParams._esSelectedHLTOutputModule));
-  _sharedResources->_oldDQMEventServer.
-    reset(new DQMEventServer(esParams._DQMmaxESEventRate));
-
-  _sharedResources->_dqmServiceManager.reset(new DQMServiceManager());
-  _sharedResources->_dqmServiceManager->setParameters(dqmParams);
-  _sharedResources->_dqmServiceManager->
-    setDQMEventServer(_sharedResources->_oldDQMEventServer);
 }
 
 
@@ -2778,10 +2546,6 @@ void StorageManager::stopAction()
   if (_sharedResources->_oldEventServer.get() != NULL)
   {
     _sharedResources->_oldEventServer->clearQueue();
-  }
-  if (_sharedResources->_oldDQMEventServer.get() != NULL)
-  {
-    _sharedResources->_oldDQMEventServer->clearQueue();
   }
 }
 

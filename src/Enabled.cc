@@ -1,4 +1,4 @@
-// $Id: Enabled.cc,v 1.1.2.34 2009/04/23 19:19:49 mommsen Exp $
+// $Id: Enabled.cc,v 1.1.2.35 2009/04/24 21:49:48 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -74,12 +74,6 @@ Enabled::~Enabled()
 
   // Clear any fragments left in the fragment store
   outermost_context().getFragmentStore()->clear();
-
-  // DQM end-run processing
-  if ( sharedResources->_dqmServiceManager.get() != 0 )
-    {
-      sharedResources->_dqmServiceManager->stop();
-    }
 
   // request that the streams that are currently configured in the disk
   // writer be destroyed (this has the side effect of closing files)
