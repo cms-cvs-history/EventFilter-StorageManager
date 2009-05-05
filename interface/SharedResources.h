@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.1.2.21 2009/04/23 19:17:56 mommsen Exp $
+// $Id: SharedResources.h,v 1.1.2.22 2009/05/04 18:19:07 biery Exp $
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
@@ -11,27 +11,25 @@
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
 #include "EventFilter/StorageManager/interface/DQMEventProcessorResources.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueue.h"
+#include "EventFilter/StorageManager/interface/DQMEventQueueCollection.h"
+#include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 #include "EventFilter/StorageManager/interface/RegistrationQueue.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
-#include "EventFilter/StorageManager/interface/RegistrationCollection.h"
-#include "EventFilter/StorageManager/interface/EventQueueCollection.h"
-#include "EventFilter/StorageManager/interface/DQMEventQueueCollection.h"
 
 #include "EventFilter/StorageManager/interface/EventServer.h"
-#include "EventFilter/StorageManager/interface/DQMEventServer.h"
-#include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 
 namespace stor {
 
   /**
    * Container for shared resources.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.21 $
-   * $Date: 2009/04/23 19:17:56 $
+   * $Author: biery $
+   * $Revision: 1.1.2.22 $
+   * $Date: 2009/05/04 18:19:07 $
    */
 
   struct SharedResources
@@ -57,8 +55,6 @@ namespace stor {
 
     // definitely temporary!
     boost::shared_ptr<EventServer> _oldEventServer;
-    boost::shared_ptr<DQMEventServer> _oldDQMEventServer;
-    boost::shared_ptr<stor::DQMServiceManager> _dqmServiceManager;
 
     /**
      * Add a Failed state-machine event to the command queue

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.56 2009/05/04 16:48:09 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.57 2009/05/04 17:56:38 biery Exp $
 */
 
 #include <string>
@@ -125,10 +125,6 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void eventServerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void DQMeventdataWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void DQMconsumerWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void dqmEventStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
 
@@ -150,8 +146,6 @@ namespace stor {
     void consumerStatisticsPage( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
 
-    std::string findStreamName(const std::string &in) const;
-	
     // *** state machine related
     std::string       reasonForFailedState_;
 
