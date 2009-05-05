@@ -14,7 +14,10 @@
  * Initial Implementation based on Kurt's EventServer
  * we can think about a common class later...
  *
- * $Id: DQMEventServer.h,v 1.3 2007/11/09 23:08:34 badgett Exp $
+ * $Id: DQMEventServer.h,v 1.3.18.1 2009/03/03 18:28:55 paterno Exp $
+ *
+ * Note: this class is no longer used in the StorageManager, but is still
+ * required by the SMProxyServer (Remi Mommsen, May 5, 2009)
  */
 
 #include <sys/time.h>

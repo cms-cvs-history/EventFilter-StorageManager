@@ -3,7 +3,10 @@
 //
 // (W.Badgett)
 //
-// $Id: DQMServiceManager.cc,v 1.6.12.1 2008/12/22 19:18:00 biery Exp $
+// $Id: DQMServiceManager.cc,v 1.6.12.2 2009/03/18 17:33:45 biery Exp $
+//
+// Note: this class is no longer used in the StorageManager, but is still
+// required by the SMProxyServer (Remi Mommsen, May 5, 2009)
 //
 
 #include "FWCore/Utilities/interface/DebugMacros.h"

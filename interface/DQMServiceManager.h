@@ -1,7 +1,10 @@
 #ifndef _DQMSERVICEMANAGER_H_
 #define _DQMSERVICEMANAGER_H_
 
-// $Id: DQMServiceManager.h,v 1.4.12.1 2008/12/22 19:17:59 biery Exp $
+// Note: this class is no longer used in the StorageManager, but is still
+// required by the SMProxyServer (Remi Mommsen, May 5, 2009)
+//
+// $Id: DQMServiceManager.h,v 1.4.12.2 2009/03/18 17:33:44 biery Exp $
 
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
