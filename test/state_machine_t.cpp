@@ -25,7 +25,7 @@ using boost::shared_ptr;
 
 // Typedefs:
 typedef map< string, shared_ptr<event_base> > EventMap;
-typedef list<string> EventList;
+typedef vector<string> EventList;
 typedef vector<TransitionRecord> TransitionList;
 
 /////////////////////////////////////////////////////////////////////
@@ -66,9 +66,9 @@ void checkState( const StateMachine& machine,
     }
 }
 
-/////////////////////////////////////////////////////////
-//// Check if every signal on the list gets ignored: ////
-/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+//// Check if every signal not on the list gets ignored: ////
+/////////////////////////////////////////////////////////////
 void checkSignals( StateMachine& m,
 		   const EventList& elist,
 		   const string& expected )
@@ -81,22 +81,22 @@ void checkSignals( StateMachine& m,
   emap[ "Halt" ] = shared_ptr<event_base>( new Halt() );
   emap[ "Reconfigure" ] = shared_ptr<event_base>( new Reconfigure() );
   emap[ "EmergencyStop" ] = shared_ptr<event_base>( new EmergencyStop() );
+  emap[ "QueuesEmpty" ] = shared_ptr<event_base>( new QueuesEmpty() );
   emap[ "StopDone" ] = shared_ptr<event_base>( new StopDone() );
+  emap[ "HaltDone" ] = shared_ptr<event_base>( new HaltDone() );
+  emap[ "StartRun" ] = shared_ptr<event_base>( new StartRun() );
+  emap[ "EndRun" ] = shared_ptr<event_base>( new EndRun() );
   emap[ "Fail" ] = shared_ptr<event_base>( new Fail() );
 
-  for( EventList::const_iterator i = elist.begin(); i != elist.end(); ++i )
-    {
-
-      EventMap::const_iterator j = emap.find( *i );
-      if( j == emap.end() )
-	{
-	  cerr << "Cannot find event " << *i << " in event map" << endl;
-	  exit(2);
-	}
-      processEvent( m, j->second );
-      checkState( m, expected );
-    }
-
+  for ( EventMap::const_iterator it = emap.begin(), itEnd = emap.end();
+        it != itEnd; ++it )
+  {
+      if ( std::find( elist.begin(), elist.end(), it->first ) == elist.end() )
+      {
+          processEvent( m, it->second );
+          checkState( m, expected );
+      }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -203,10 +203,8 @@ int main()
   cout << "**** Testing illegal signals in Halted state ****" << endl;
 
   elist.clear();
-  elist.push_back( "Stop" );
-  elist.push_back( "Halt" );
-  elist.push_back( "EmergencyStop" );
-  elist.push_back( "StopDone" );
+  elist.push_back( "Configure" );
+  elist.push_back( "Fail" );
 
   checkSignals( m, elist, "Halted" );
 
@@ -221,9 +219,10 @@ int main()
   cout << "**** Testing illegal signals in Stopped state ****" << endl;
 
   elist.clear();
-  elist.push_back( "Stop" );
-  elist.push_back( "EmergencyStop" );
-  elist.push_back( "StopDone" );
+  elist.push_back( "Reconfigure" );
+  elist.push_back( "Enable" );
+  elist.push_back( "Halt" );
+  elist.push_back( "Fail" );
 
   checkSignals( m, elist, "Stopped" );
 
@@ -238,15 +237,15 @@ int main()
   cout << "**** Testing illegal signals in Processing state ****" << endl;
 
   elist.clear();
-  elist.push_back( "StopDone" );
-  elist.push_back( "Enable" );
-  elist.push_back( "Configure" );
-  elist.push_back( "Reconfigure" );
+  elist.push_back( "Halt" );
+  elist.push_back( "Stop" );
+  elist.push_back( "EmergencyStop" );
+  elist.push_back( "Fail" );
 
   checkSignals( m, elist, "Processing" );
 
   //
-  //// Make sure it goes through DrainingQueues: ////
+  //// Make sure Stopping goes through the right sequence: ////
   //
 
   m.clearHistory();
@@ -254,14 +253,60 @@ int main()
   processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
 
-  cout << "**** Testing if DrainingQueues is entered and exited on Stop ****" << endl;
+  cout << "**** Testing if Stopping goes through the right sequence ****" << endl;
 
   TransitionList steps;
   steps.push_back( TransitionRecord( "Processing", false ) );
   steps.push_back( TransitionRecord( "DrainingQueues", true ) );
   steps.push_back( TransitionRecord( "DrainingQueues", false ) );
+  steps.push_back( TransitionRecord( "FinishingDQM", true ) );
+  steps.push_back( TransitionRecord( "FinishingDQM", false ) );
+  steps.push_back( TransitionRecord( "Running", false ) );
+  steps.push_back( TransitionRecord( "Stopping", true ) );
+  steps.push_back( TransitionRecord( "Stopping", false ) );
   steps.push_back( TransitionRecord( "Enabled", false ) );
   steps.push_back( TransitionRecord( "Stopped", true ) );
+  checkHistory( m, steps );
+
+  //
+  //// Make sure Enable does the right sequence
+  //
+
+  m.clearHistory();
+  stMachEvent.reset( new Enable() );
+  processEvent( m, stMachEvent );
+  checkState( m, "Processing" );
+
+  cout << "**** Testing if Enable does the right sequence ****" << endl;
+
+  steps.clear();
+  steps.push_back( TransitionRecord( "Stopped", false ) );
+  steps.push_back( TransitionRecord( "Enabled", true ) );
+  steps.push_back( TransitionRecord( "Starting", true ) );
+  steps.push_back( TransitionRecord( "Starting", false ) );
+  steps.push_back( TransitionRecord( "Running", true ) );
+  steps.push_back( TransitionRecord( "Processing", true ) );
+  checkHistory( m, steps );
+
+  //
+  //// Make sure Halt does the right sequence
+  //
+
+  m.clearHistory();
+  stMachEvent.reset( new Halt() );
+  processEvent( m, stMachEvent );
+  checkState( m, "Halted" );
+
+  cout << "**** Testing if Halt does the right sequence ****" << endl;
+
+  steps.clear();
+  steps.push_back( TransitionRecord( "Processing", false ) );
+  steps.push_back( TransitionRecord( "Running", false ) );
+  steps.push_back( TransitionRecord( "Halting", true ) );
+  steps.push_back( TransitionRecord( "Halting", false ) );
+  steps.push_back( TransitionRecord( "Enabled", false ) );
+  steps.push_back( TransitionRecord( "Ready", false ) );
+  steps.push_back( TransitionRecord( "Halted", true ) );
   checkHistory( m, steps );
 
   //
@@ -269,6 +314,9 @@ int main()
   //
 
   m.clearHistory();
+  stMachEvent.reset( new Configure() );
+  processEvent( m, stMachEvent );
+  checkState( m, "Stopped" );
   stMachEvent.reset( new Reconfigure() );
   processEvent( m, stMachEvent );
   checkState( m, "Stopped" );
@@ -276,9 +324,35 @@ int main()
   cout << "**** Testing if Reconfigure triggers the right sequence ****" << endl;
 
   steps.clear();
+  steps.push_back( TransitionRecord( "Halted", false ) );
+  steps.push_back( TransitionRecord( "Ready", true ) );
+  steps.push_back( TransitionRecord( "Stopped", true ) );
   steps.push_back( TransitionRecord( "Stopped", false ) );
   steps.push_back( TransitionRecord( "Ready", false ) );
   steps.push_back( TransitionRecord( "Ready", true ) );
+  steps.push_back( TransitionRecord( "Stopped", true ) );
+  checkHistory( m, steps );
+
+  //
+  //// Check EmergencyStop: ////
+  //
+  stMachEvent.reset( new Enable() );
+  processEvent( m, stMachEvent );
+  checkState( m, "Processing" );
+
+  m.clearHistory();
+  stMachEvent.reset( new EmergencyStop() );
+  processEvent( m, stMachEvent );
+  checkState( m, "Stopped" );
+
+  cout << "**** Testing if EmergencyStop triggers the right sequence ****" << endl;
+
+  steps.clear();
+  steps.push_back( TransitionRecord( "Processing", false ) );
+  steps.push_back( TransitionRecord( "Running", false ) );
+  steps.push_back( TransitionRecord( "Stopping", true ) );
+  steps.push_back( TransitionRecord( "Stopping", false ) );
+  steps.push_back( TransitionRecord( "Enabled", false ) );
   steps.push_back( TransitionRecord( "Stopped", true ) );
   checkHistory( m, steps );
 
@@ -293,14 +367,6 @@ int main()
   cout << "**** Making sure no signal changes Failed state ****" << endl;
 
   elist.clear();
-  elist.push_back( "StopDone" );
-  elist.push_back( "Enable" );
-  elist.push_back( "Configure" );
-  elist.push_back( "Reconfigure" );
-  elist.push_back( "Stop" );
-  elist.push_back( "EmergencyStop" );
-  elist.push_back( "Halt" );
-  elist.push_back( "Fail" );
 
   checkSignals( m, elist, "Failed" );
 
