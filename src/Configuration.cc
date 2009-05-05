@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.20 2009/04/17 10:42:40 mommsen Exp $
+// $Id: Configuration.cc,v 1.1.2.21 2009/05/04 20:46:20 biery Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -119,25 +119,25 @@ namespace stor
       }
   }
 
-  void Configuration::setCurrentEventStreamConfig(EvtStrConfigList cfgList)
+  void Configuration::setCurrentEventStreamConfig(EvtStrConfigListPtr cfgList)
   {
     boost::mutex::scoped_lock sl(_evtStrCfgMutex);
     _currentEventStreamConfig = cfgList;
   }
 
-  void Configuration::setCurrentErrorStreamConfig(ErrStrConfigList cfgList)
+  void Configuration::setCurrentErrorStreamConfig(ErrStrConfigListPtr cfgList)
   {
     boost::mutex::scoped_lock sl(_errStrCfgMutex);
     _currentErrorStreamConfig = cfgList;
   }
 
-  EvtStrConfigList Configuration::getCurrentEventStreamConfig() const
+  EvtStrConfigListPtr Configuration::getCurrentEventStreamConfig() const
   {
     boost::mutex::scoped_lock sl(_evtStrCfgMutex);
     return _currentEventStreamConfig;
   }
 
-  ErrStrConfigList Configuration::getCurrentErrorStreamConfig() const
+  ErrStrConfigListPtr Configuration::getCurrentErrorStreamConfig() const
   {
     boost::mutex::scoped_lock sl(_errStrCfgMutex);
     return _currentErrorStreamConfig;
@@ -473,8 +473,8 @@ namespace stor
   }
 
   void parseStreamConfiguration(std::string cfgString,
-                                EvtStrConfigList& evtCfgList,
-                                ErrStrConfigList& errCfgList)
+                                EvtStrConfigListPtr evtCfgList,
+                                ErrStrConfigListPtr errCfgList)
   {
     if (cfgString == "") return;
 
@@ -526,7 +526,7 @@ namespace stor
                                                  compressionLevel,
                                                  maxEventSize);
             cfgInfo.setStreamId(++streamId);
-            evtCfgList.push_back(cfgInfo);
+            evtCfgList->push_back(cfgInfo);
           }
           else if (mod_type == "ErrorStreamFileWriter" ||
                    mod_type == "FRDStreamFileWriter") {
@@ -538,7 +538,7 @@ namespace stor
             ErrorStreamConfigurationInfo cfgInfo(streamLabel,
                                                  maxFileSizeMB);
             cfgInfo.setStreamId(++streamId);
-            errCfgList.push_back(cfgInfo);
+            errCfgList->push_back(cfgInfo);
           }
         }
       }

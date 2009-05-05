@@ -1,10 +1,11 @@
-// -*- c++ -*-
-// $Id: ErrorStreamConfigurationInfo.h,v 1.1.2.2 2009/03/20 17:53:01 mommsen Exp $
+// $Id: ErrorStreamConfigurationInfo.h,v 1.1.2.3 2009/03/26 15:35:46 biery Exp $
 
 #ifndef ERRORSTREAMCONFIGURATIONINFO_H
 #define ERRORSTREAMCONFIGURATIONINFO_H
 
 #include "EventFilter/StorageManager/interface/StreamID.h"
+
+#include <boost/shared_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -52,7 +53,15 @@ namespace stor
   };
 
   typedef std::vector<ErrorStreamConfigurationInfo> ErrStrConfigList;
-
+  typedef boost::shared_ptr<ErrStrConfigList> ErrStrConfigListPtr;
 }
 
 #endif
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
+

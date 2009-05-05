@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.18 2009/04/16 12:58:30 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.19 2009/04/17 09:18:43 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -124,14 +124,14 @@ void DiskWriter::writeNextEvent()
     _sharedResources->_diskWriterResources->setBusy(false);
   }
 
-  EvtStrConfigList* evtCfgList;
-  ErrStrConfigList* errCfgList;
+  EvtStrConfigListPtr evtCfgList;
+  ErrStrConfigListPtr errCfgList;
   double newTimeoutValue;
   if (_sharedResources->_diskWriterResources->
       streamConfigurationRequested(evtCfgList, errCfgList, newTimeoutValue))
   {
-    configureEventStreams(*evtCfgList);
-    configureErrorStreams(*errCfgList);
+    configureEventStreams(evtCfgList);
+    configureErrorStreams(errCfgList);
     _timeout = (unsigned int) newTimeoutValue;
     _sharedResources->_diskWriterResources->streamConfigurationDone();
   }
@@ -192,11 +192,11 @@ bool DiskWriter::timeToCheckForFileTimeOut()
 }
 
 
-void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
+void DiskWriter::configureEventStreams(EvtStrConfigListPtr cfgList)
 {
   for (
-    EvtStrConfigList::iterator it = cfgList.begin(),
-      itEnd = cfgList.end();
+    EvtStrConfigList::iterator it = cfgList->begin(),
+      itEnd = cfgList->end();
     it != itEnd;
     ++it
   ) 
@@ -206,11 +206,11 @@ void DiskWriter::configureEventStreams(EvtStrConfigList& cfgList)
 }
 
 
-void DiskWriter::configureErrorStreams(ErrStrConfigList& cfgList)
+void DiskWriter::configureErrorStreams(ErrStrConfigListPtr cfgList)
 {
   for (
-    ErrStrConfigList::iterator it = cfgList.begin(),
-      itEnd = cfgList.end();
+    ErrStrConfigList::iterator it = cfgList->begin(),
+      itEnd = cfgList->end();
     it != itEnd;
     ++it
   ) 

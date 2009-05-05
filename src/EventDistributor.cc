@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.44 2009/05/04 18:29:22 biery Exp $
+// $Id: EventDistributor.cc,v 1.1.2.45 2009/05/05 10:40:39 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -202,18 +202,18 @@ void EventDistributor::registerDQMEventConsumer( DQMRegPtr ptr )
   _DQMSelectors.push_back( DQMEventSelector( *ptr ) );
 }
 
-void EventDistributor::registerEventStreams( const EvtStrConfigList& cl )
+void EventDistributor::registerEventStreams( const EvtStrConfigListPtr cl )
 {
-  for( EvtStrConfigList::const_iterator it = cl.begin(); it != cl.end(); ++it )
+  for( EvtStrConfigList::const_iterator it = cl->begin(); it != cl->end(); ++it )
     {
       _eventStreamSelectors.push_back( EventStreamSelector( *it ) );
     }
 }
 
 
-void EventDistributor::registerErrorStreams( const ErrStrConfigList& cl )
+void EventDistributor::registerErrorStreams( const ErrStrConfigListPtr cl )
 {
-  for( ErrStrConfigList::const_iterator it = cl.begin(); it != cl.end(); ++it )
+  for( ErrStrConfigList::const_iterator it = cl->begin(); it != cl->end(); ++it )
     {
       _errorStreamSelectors.push_back( ErrorStreamSelector( *it ) );
     }

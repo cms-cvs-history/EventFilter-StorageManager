@@ -1,10 +1,11 @@
-// -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.7 2009/03/20 17:53:01 mommsen Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.1.2.8 2009/03/26 15:35:46 biery Exp $
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
 
 #include "EventFilter/StorageManager/interface/StreamID.h"
+
+#include <boost/shared_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -72,7 +73,15 @@ namespace stor
   };
 
   typedef std::vector<EventStreamConfigurationInfo> EvtStrConfigList;
+  typedef boost::shared_ptr<EvtStrConfigList> EvtStrConfigListPtr;
 
 }
 
 #endif
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.1.2.3 2009/04/03 14:41:21 biery Exp $
+// $Id: DiskWriterResources.h,v 1.1.2.4 2009/04/08 16:25:58 biery Exp $
 
 
 #ifndef EventFilter_StorageManager_DiskWriterResources_h
@@ -18,8 +18,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/04/03 14:41:21 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/08 16:25:58 $
    */
 
   class DiskWriterResources
@@ -41,7 +41,7 @@ namespace stor
      * specified configurations.  Also allows a new dequeue timeout
      * value to be specified.
      */
-    void requestStreamConfiguration(EvtStrConfigList*, ErrStrConfigList*,
+    void requestStreamConfiguration(EvtStrConfigListPtr, ErrStrConfigListPtr,
                                     double timeoutValue);
 
     /**
@@ -49,7 +49,7 @@ namespace stor
      * streams *and* clears any pending request.  Supplies the new
      * configurations and a new dequeue timeout value.
      */
-    bool streamConfigurationRequested(EvtStrConfigList*&, ErrStrConfigList*&,
+    bool streamConfigurationRequested(EvtStrConfigListPtr&, ErrStrConfigListPtr&,
                                       double& timeoutValue);
 
     /**
@@ -111,8 +111,8 @@ namespace stor
     bool _fileClosingTestIsNeeded;
     bool _diskWriterIsBusy;
 
-    EvtStrConfigList* _requestedEventStreamConfig;
-    ErrStrConfigList* _requestedErrorStreamConfig;
+    EvtStrConfigListPtr _requestedEventStreamConfig;
+    ErrStrConfigListPtr _requestedErrorStreamConfig;
     double _requestedTimeout;
 
     bool _configurationInProgress;

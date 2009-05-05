@@ -86,8 +86,8 @@ void testEventDistributor::testInitMessages()
 
   // *** specify configuration ***
 
-  EvtStrConfigList evtCfgList;
-  ErrStrConfigList errCfgList;
+  EvtStrConfigListPtr evtCfgList(new EvtStrConfigList);
+  ErrStrConfigListPtr errCfgList(new ErrStrConfigList);
   parseStreamConfiguration(getSampleStreamConfig(), evtCfgList, errCfgList);
   _eventDistributor->registerEventStreams(evtCfgList);
   _eventDistributor->registerErrorStreams(errCfgList);
@@ -183,8 +183,8 @@ void testEventDistributor::testStreamSelection()
 
   // *** specify configuration ***
 
-  EvtStrConfigList evtCfgList;
-  ErrStrConfigList errCfgList;
+  EvtStrConfigListPtr evtCfgList(new EvtStrConfigList);
+  ErrStrConfigListPtr errCfgList(new ErrStrConfigList);
   parseStreamConfiguration(getSampleStreamConfig(), evtCfgList, errCfgList);
   _eventDistributor->registerEventStreams(evtCfgList);
   _eventDistributor->registerErrorStreams(errCfgList);
