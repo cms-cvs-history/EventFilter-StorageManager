@@ -42,7 +42,6 @@ namespace stor {
             sr.reset(new SharedResources());
             sr->_initMsgCollection.reset(new InitMsgCollection());
             sr->_diskWriterResources.reset(new MockDiskWriterResources());
-            sr->_dqmServiceManager.reset(new DQMServiceManager());
             sr->_commandQueue.reset(new CommandQueue(32));
             sr->_fragmentQueue.reset(new FragmentQueue(32));
             sr->_streamQueue.reset(new StreamQueue(32));

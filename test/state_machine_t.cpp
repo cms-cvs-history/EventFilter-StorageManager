@@ -7,7 +7,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
-#include "EventFilter/StorageManager/interface/DQMServiceManager.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -166,7 +165,6 @@ int main()
   sr->_initMsgCollection.reset(new InitMsgCollection());
   sr->_diskWriterResources.reset(new MockDiskWriterResources());
   sr->_dqmEventProcessorResources.reset(new MockDQMEventProcessorResources());
-  sr->_dqmServiceManager.reset(new DQMServiceManager());
   sr->_commandQueue.reset(new CommandQueue(32));
   sr->_fragmentQueue.reset(new FragmentQueue(32));
   sr->_registrationQueue.reset(new RegistrationQueue(32));
