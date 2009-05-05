@@ -1,9 +1,8 @@
-// $Id: Enabled.cc,v 1.1.2.35 2009/04/24 21:49:48 biery Exp $
+// $Id: Enabled.cc,v 1.1.2.36 2009/05/05 10:40:39 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
-#include "EventFilter/StorageManager/interface/FragmentStore.h"
-#include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
 
@@ -26,39 +25,6 @@ Enabled::Enabled( my_context c ): my_base(c)
 
   // update the run-based configuration parameters
   sharedResources->_configuration->updateRunParams();
-
-  // disk writer and (dqm) event distributors begin-run processing
-  EvtStrConfigList evtCfgList = sharedResources->_configuration->
-    getCurrentEventStreamConfig();
-  ErrStrConfigList errCfgList = sharedResources->_configuration->
-    getCurrentErrorStreamConfig();
-
-  WorkerThreadParams workerParams =
-    sharedResources->_configuration->getWorkerThreadParams();
-  sharedResources->_diskWriterResources->
-    requestStreamConfiguration(&evtCfgList, &errCfgList,
-                               workerParams._DWdeqWaitTime);
-  sharedResources->_dqmEventProcessorResources->
-    requestConfiguration(
-      sharedResources->_configuration->getDQMProcessingParams(),
-      workerParams._DQMEPdeqWaitTime);
-
-  sharedResources->_diskWriterResources->waitForStreamConfiguration();
-  sharedResources->_dqmEventProcessorResources->waitForConfiguration();
-
-  EventDistributor* ed = outermost_context().getEventDistributor();
-  ed->registerEventStreams(evtCfgList);
-  ed->registerErrorStreams(errCfgList);
-
-  // Clear old consumer registrations:
-  sharedResources->_registrationCollection->clearRegistrations();
-  ed->clearConsumers();
-  sharedResources->_eventConsumerQueueCollection->removeQueues();
-  sharedResources->_dqmEventConsumerQueueCollection->removeQueues();
-
-  // Enable consumer registration:
-  sharedResources->_registrationCollection->enableConsumerRegistration();
-
 }
 
 Enabled::~Enabled()
@@ -66,30 +32,8 @@ Enabled::~Enabled()
   TransitionRecord tr( stateName(), false );
   outermost_context().updateHistory( tr );
 
-  SharedResourcesPtr sharedResources =
-    outermost_context().getSharedResources();
-
-  // Disable consumer registration:
-  sharedResources->_registrationCollection->disableConsumerRegistration();
-
-  // Clear any fragments left in the fragment store
-  outermost_context().getFragmentStore()->clear();
-
-  // request that the streams that are currently configured in the disk
-  // writer be destroyed (this has the side effect of closing files)
-  sharedResources->_diskWriterResources->requestStreamDestruction();
-
-  // request that the DQM event store is cleared
-  // if draining queues has succeeded, the store is already empty
-  sharedResources->_dqmEventProcessorResources->requestStoreDestruction();
-
-  // wait for the requests to be fulfilled
-  sharedResources->_diskWriterResources->waitForStreamDestruction();
-  sharedResources->_dqmEventProcessorResources->waitForStoreDestruction();
-
   // clear the stream selections in the event distributor
   outermost_context().getEventDistributor()->clearStreams();
-
 }
 
 string Enabled::do_stateName() const

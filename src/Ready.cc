@@ -1,3 +1,8 @@
+// $Id: StateMachine.h,v 1.1.2.26 2009/04/28 18:16:41 biery Exp $
+
+#include "EventFilter/StorageManager/interface/Configuration.h"
+#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
@@ -33,8 +38,8 @@ Ready::Ready( my_context c ): my_base(c)
   // and store them for later use
   DiskWritingParams dwParams =
     sharedResources->_configuration->getDiskWritingParams();
-  EvtStrConfigList evtCfgList;
-  ErrStrConfigList errCfgList;
+  EvtStrConfigListPtr evtCfgList(new EvtStrConfigList);
+  ErrStrConfigListPtr errCfgList(new ErrStrConfigList);
 
   parseStreamConfiguration(dwParams._streamConfiguration, evtCfgList,
                            errCfgList);
@@ -56,10 +61,6 @@ string Ready::do_stateName() const
   return string( "Ready" );
 }
 
-// void Ready::handleI2OEventMessage() const
-// {
-//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-// }
 
 /// emacs configuration
 /// Local Variables: -

@@ -1,7 +1,10 @@
+// $Id: Enabled.cc,v 1.1.2.36 2009/05/05 10:40:39 mommsen Exp $
+
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/Notifier.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -30,7 +33,12 @@ string Processing::do_stateName() const
   return string( "Processing" );
 }
 
-void Processing::logStopDoneRequest( const StopDone& request )
+void Processing::logQueuesEmptyRequest( const QueuesEmpty& request )
+{
+  outermost_context().unconsumed_event( request );
+}
+
+void Processing::logEndRunRequest( const EndRun& request )
 {
   outermost_context().unconsumed_event( request );
 }
@@ -38,8 +46,6 @@ void Processing::logStopDoneRequest( const StopDone& request )
 void
 Processing::do_processI2OFragment( I2OChain& frag ) const
 {
-  //std::cout << stateName() << "::processI2OFragment()" << std::endl;
-
   static unsigned int noFragmentCount;
 
   bool completed = outermost_context().getFragmentStore()->addFragment(frag);

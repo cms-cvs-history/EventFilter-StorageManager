@@ -1,17 +1,15 @@
-// $Id: StateMachine.cc,v 1.1.2.19 2009/04/03 12:49:16 dshpakov Exp $
+// $Id: StateMachine.cc,v 1.1.2.20 2009/04/23 19:19:49 mommsen Exp $
 
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/Notifier.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <typeinfo>
 
 using namespace stor;
 using namespace std;
-
-// void StateMachine::handleI2OEventMessage()
-// {
-//   const Operations& ref = state_cast<Operations const&>();
-//   ref.handleI2OEventMessage();
-// }
 
 StateMachine::StateMachine
 ( 

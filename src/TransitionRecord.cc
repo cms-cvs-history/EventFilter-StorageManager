@@ -1,3 +1,5 @@
+// $Id: StateMachine.cc,v 1.1.2.20 2009/04/23 19:19:49 mommsen Exp $
+
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -35,3 +37,11 @@ std::ostream& stor::operator << ( std::ostream& os,
   return os;
 
 }
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

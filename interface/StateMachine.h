@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: StateMachine.h,v 1.1.2.25 2009/04/23 19:17:56 mommsen Exp $
+// $Id: StateMachine.h,v 1.1.2.26 2009/04/28 18:16:41 biery Exp $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
@@ -35,14 +34,27 @@ namespace stor
   //// Forward declarations of state classes: ////
   ////////////////////////////////////////////////
 
+  // Outer states:
   class Failed;
   class Normal;
+
+  // Inner states of Normal:
   class Halted;
   class Ready;
   class Stopped;
   class Enabled;
+
+  // Inner states of Enabled:
+  class Starting;
+  class Stopping;
+  class Halting;
+  class Running;
+
+  // Inner states of Running:
   class Processing;
   class DrainingQueues;
+  class FinishingDQM;
+
 
   ////////////////////////////
   //// Transition events: ////
@@ -55,7 +67,11 @@ namespace stor
   class Fail : public bsc::event<Fail> {};
   class Reconfigure : public bsc::event<Reconfigure> {};
   class EmergencyStop : public bsc::event<EmergencyStop> {};
+  class QueuesEmpty : public bsc::event<QueuesEmpty> {};
+  class StartRun : public bsc::event<StartRun> {};
+  class EndRun : public bsc::event<EndRun> {};
   class StopDone : public bsc::event<StopDone> {};
+  class HaltDone : public bsc::event<HaltDone> {};
 
   ////////////////////////////////////////////////////////
   //// Operations -- abstract base for state classes: ////
@@ -254,17 +270,18 @@ namespace stor
   };
 
   // Enabled:
-  class Enabled: public bsc::state<Enabled,Ready,Processing>, public Operations
+  class Enabled: public bsc::state<Enabled,Ready,Starting>, public Operations
   {
 
   public:
 
     void logReconfigureRequest( const Reconfigure& request );
 
-    typedef bsc::transition<EmergencyStop,Stopped> ET;
+    //    typedef bsc::transition<EmergencyStop,Stopped> ET;
     typedef bsc::transition<StopDone,Stopped> DT;
+    typedef bsc::transition<HaltDone,Halted> HT;
     typedef bsc::in_state_reaction<Reconfigure,Enabled,&Enabled::logReconfigureRequest> RecfgIR;
-    typedef boost::mpl::list<ET,DT,RecfgIR> reactions;
+    typedef boost::mpl::list<DT,HT,RecfgIR> reactions;
 
     Enabled( my_context );
     virtual ~Enabled();
@@ -275,17 +292,119 @@ namespace stor
 
   };
 
-  // Processing:
-  class Processing: public bsc::state<Processing,Enabled>, public Operations
+  // Starting:
+  class Starting: public bsc::state<Starting,Enabled>, public Operations
+  {
+
+  public:
+
+    void logStopDoneRequest( const StopDone& request );
+    void logHaltDoneRequest( const HaltDone& request );
+
+    typedef bsc::transition<StartRun,Running> ST;
+    typedef bsc::transition<EmergencyStop,Stopping> ET;
+    typedef bsc::in_state_reaction<StopDone,Starting,&Starting::logStopDoneRequest> StopDoneIR;
+    typedef bsc::in_state_reaction<HaltDone,Starting,&Starting::logHaltDoneRequest> HaltDoneIR;
+    typedef boost::mpl::list<ST,ET,StopDoneIR,HaltDoneIR> reactions;
+
+    Starting( my_context );
+    virtual ~Starting();
+
+  private:
+
+    virtual std::string do_stateName() const;
+    virtual void do_noFragmentToProcess() const;
+
+    bool workerThreadsConfigured() const;
+
+  };
+
+  // Stopping:
+  class Stopping: public bsc::state<Stopping,Enabled>, public Operations
+  {
+
+  public:
+
+    void logHaltDoneRequest( const HaltDone& request );
+
+    typedef bsc::transition<StopDone,Stopped> ST;
+    typedef bsc::in_state_reaction<HaltDone,Stopping,&Stopping::logHaltDoneRequest> HaltDoneIR;
+    typedef boost::mpl::list<ST,HaltDoneIR> reactions;
+
+    Stopping( my_context );
+    virtual ~Stopping();
+
+  private:
+
+    virtual std::string do_stateName() const;
+    virtual void do_noFragmentToProcess() const;
+
+    bool destructionIsDone() const;
+
+  };
+
+  // Halting:
+  class Halting: public bsc::state<Halting,Enabled>, public Operations
   {
 
   public:
 
     void logStopDoneRequest( const StopDone& request );
 
+    typedef bsc::transition<HaltDone,Halted> HT;
+    typedef bsc::in_state_reaction<StopDone,Halting,&Halting::logStopDoneRequest> StopDoneIR;
+    typedef boost::mpl::list<HT,StopDoneIR> reactions;
+
+    Halting( my_context );
+    virtual ~Halting();
+
+  private:
+
+    virtual std::string do_stateName() const;
+    virtual void do_noFragmentToProcess() const;
+
+    bool destructionIsDone() const;
+
+  };
+
+  // Running:
+  class Running: public bsc::state<Running,Enabled,Processing>, public Operations
+  {
+
+  public:
+
+    void logStopDoneRequest( const StopDone& request );
+    void logHaltDoneRequest( const HaltDone& request );
+
+    typedef bsc::transition<EndRun,Stopping> ET;
+    typedef bsc::transition<EmergencyStop,Stopping> EST;
+    typedef bsc::transition<Halt,Halting> HT;
+    typedef bsc::in_state_reaction<StopDone,Running,&Running::logStopDoneRequest> StopDoneIR;
+    typedef bsc::in_state_reaction<HaltDone,Running,&Running::logHaltDoneRequest> HaltDoneIR;
+    typedef boost::mpl::list<ET,EST,HT,StopDoneIR,HaltDoneIR> reactions;
+
+    Running( my_context );
+    virtual ~Running();
+
+  private:
+
+    virtual std::string do_stateName() const;
+
+  };
+
+  // Processing:
+  class Processing: public bsc::state<Processing,Running>, public Operations
+  {
+
+  public:
+
+    void logQueuesEmptyRequest( const QueuesEmpty& request );
+    void logEndRunRequest( const EndRun& request );
+
     typedef bsc::transition<Stop,DrainingQueues> DT;
-    typedef bsc::in_state_reaction<StopDone,Processing,&Processing::logStopDoneRequest> StopDoneIR;
-    typedef boost::mpl::list<DT,StopDoneIR> reactions;
+    typedef bsc::in_state_reaction<QueuesEmpty,Processing,&Processing::logQueuesEmptyRequest> QueuesEmptyIR;
+    typedef bsc::in_state_reaction<EndRun,Processing,&Processing::logEndRunRequest> EndRunIR;
+    typedef boost::mpl::list<DT,QueuesEmptyIR,EndRunIR> reactions;
 
     Processing( my_context );
     virtual ~Processing();
@@ -299,10 +418,18 @@ namespace stor
   };
 
   // DrainingQueues:
-  class DrainingQueues: public bsc::state<DrainingQueues,Enabled>, public Operations
+  class DrainingQueues: public bsc::state<DrainingQueues,Running>, public Operations
   {
 
   public:
+
+    void logStopRequest( const Stop& request );
+    void logEndRunRequest( const EndRun& request );
+
+    typedef bsc::transition<QueuesEmpty,FinishingDQM> FT;
+    typedef bsc::in_state_reaction<Stop,DrainingQueues,&DrainingQueues::logStopRequest> StopIR;
+    typedef bsc::in_state_reaction<EndRun,DrainingQueues,&DrainingQueues::logEndRunRequest> EndRunIR;
+    typedef boost::mpl::list<FT,StopIR,EndRunIR> reactions;
 
     DrainingQueues( my_context );
     virtual ~DrainingQueues();
@@ -313,8 +440,31 @@ namespace stor
 
     bool allQueuesAndWorkersAreEmpty() const;
     void processStaleFragments() const;
+  };
 
-    mutable bool _firstEndOfRunRequest;
+  // FinishingDQM:
+  class FinishingDQM: public bsc::state<FinishingDQM,Running>, public Operations
+  {
+
+  public:
+
+    void logStopRequest( const Stop& request );
+    void logQueuesEmptyRequest( const QueuesEmpty& request );
+
+    typedef bsc::in_state_reaction<Stop,FinishingDQM,&FinishingDQM::logStopRequest> StopIR;
+    typedef bsc::in_state_reaction<QueuesEmpty,FinishingDQM,&FinishingDQM::logQueuesEmptyRequest> QueuesEmptyIR;
+    typedef boost::mpl::list<StopIR,QueuesEmptyIR> reactions;
+
+    FinishingDQM( my_context );
+    virtual ~FinishingDQM();
+
+  private:
+
+    virtual std::string do_stateName() const;
+    virtual void do_noFragmentToProcess() const;
+
+    bool endOfRunProcessingIsDone() const;
+
   };
 
 } // end namespace stor
