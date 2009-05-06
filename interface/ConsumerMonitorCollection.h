@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: ConsumerMonitorCollection.h,v 1.1.2.2 2009/04/29 11:51:26 dshpakov Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.1.2.3 2009/05/06 09:23:26 dshpakov Exp $
 
 #ifndef CONSUMERMONITORCOLLECTION
 #define CONSUMERMONITORCOLLECTION
@@ -54,10 +54,6 @@ namespace stor
     void clearConsumers();
 
   private:
-
-    // Stolen from other MonitorCollection's (to prevent copying):
-    ConsumerMonitorCollection( const ConsumerMonitorCollection& );
-    ConsumerMonitorCollection& operator = ( const ConsumerMonitorCollection& );
 
     typedef std::map< ConsumerID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
 

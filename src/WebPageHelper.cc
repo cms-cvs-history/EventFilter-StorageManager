@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.34 2009/05/04 17:51:38 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.35 2009/05/04 18:59:36 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
+#include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 
 using namespace stor;
 
@@ -178,10 +179,16 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   maker.addText( cs_th_filters, "Filters" );
   XHTMLMaker::Node* cs_th_policy = maker.addNode( "th", cs_top_row );
   maker.addText( cs_th_policy, "Enquing Policy" );
+  XHTMLMaker::Node* cs_th_queued = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_queued, "Events Queued" );
+  XHTMLMaker::Node* cs_th_served = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_served, "Events Served" );
 
   boost::shared_ptr<RegistrationCollection> rc = resPtr->_registrationCollection;
   RegistrationCollection::ConsumerRegistrations regs;
   rc->getEventConsumers( regs );
+
+  ConsumerMonitorCollection& cc = resPtr->_statisticsReporter->getConsumerMonitorCollection();
 
   // Loop over consumers:
   for( RegistrationCollection::ConsumerRegistrations::const_iterator it = regs.begin();
@@ -234,6 +241,36 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       policy_oss << (*it)->queuePolicy();
       XHTMLMaker::Node* cs_td_policy = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_policy, policy_oss.str() );
+
+      // Events queued:
+      std::ostringstream eq_oss;
+      MonitoredQuantity::Stats eq_stats;
+      bool eq_found = cc.getQueued( (*it)->consumerId(), eq_stats );
+      if( eq_found )
+        {
+          eq_oss << eq_stats.getSampleCount();
+        }
+      else
+        {
+          eq_oss << "Not found";
+        }
+      XHTMLMaker::Node* cs_td_eq = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_eq, eq_oss.str() );
+
+      // Events served:
+      std::ostringstream es_oss;
+      MonitoredQuantity::Stats es_stats;
+      bool es_found = cc.getServed( (*it)->consumerId(), es_stats );
+      if( es_found )
+        {
+          es_oss << es_stats.getSampleCount();
+        }
+      else
+        {
+          es_oss << "Not found";
+        }
+      XHTMLMaker::Node* cs_td_es = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_es, es_oss.str() );
 
     }
 

@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.13 2009/04/21 19:20:23 biery Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.14 2009/05/04 12:35:32 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -14,6 +14,7 @@
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
@@ -28,9 +29,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/04/21 19:20:23 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/05/04 12:35:32 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -84,6 +85,16 @@ namespace stor {
     { return _dqmEventMonCollection; }
 
 
+    const ConsumerMonitorCollection& getConsumerMonitorCollection() const
+    {
+      return _consumerMonitorCollection;
+    }
+
+    ConsumerMonitorCollection& getConsumerMonitorCollection()
+    {
+      return _consumerMonitorCollection;
+    }
+
     // Current state name:
     const std::string& externallyVisibleState() const;
     void setExternallyVisibleState( const std::string& );
@@ -114,6 +125,7 @@ namespace stor {
     StreamsMonitorCollection _streamsMonCollection;
     DataSenderMonitorCollection _dataSenderMonCollection;
     DQMEventMonitorCollection _dqmEventMonCollection;
+    ConsumerMonitorCollection _consumerMonitorCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 
