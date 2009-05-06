@@ -1,8 +1,13 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.1.2.2 2009/04/29 11:51:26 dshpakov Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.1.2.3 2009/05/06 09:23:26 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 
 using namespace stor;
+
+
+ConsumerMonitorCollection::ConsumerMonitorCollection( xdaq::Application* xapp ):
+  MonitorCollection( xapp )
+{}
 
 
 void ConsumerMonitorCollection::addQueuedEventSample( ConsumerID cid,
@@ -73,3 +78,8 @@ void ConsumerMonitorCollection::clearConsumers()
   _qmap.clear();
   _smap.clear();
 }
+
+
+void ConsumerMonitorCollection::do_calculateStatistics() {}
+void ConsumerMonitorCollection::do_reset() {}
+void ConsumerMonitorCollection::do_updateInfoSpace() {}

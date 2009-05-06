@@ -1,11 +1,12 @@
 // -*- c++ -*-
-// $Id: ConsumerMonitorCollection.h,v 1.1.2.3 2009/05/06 09:23:26 dshpakov Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.1.2.4 2009/05/06 10:05:46 dshpakov Exp $
 
 #ifndef CONSUMERMONITORCOLLECTION
 #define CONSUMERMONITORCOLLECTION
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
+#include "EventFilter/StorageManager/interface/MonitorCollection.h"
 
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
@@ -15,13 +16,12 @@
 namespace stor
 {
 
-  class ConsumerMonitorCollection
+  class ConsumerMonitorCollection: public MonitorCollection
   {
 
   public:
 
-    ConsumerMonitorCollection() {}
-    ~ConsumerMonitorCollection() {}
+    explicit ConsumerMonitorCollection( xdaq::Application* );
 
     /**
        Add queued sample
@@ -54,6 +54,14 @@ namespace stor
     void clearConsumers();
 
   private:
+
+    // Prevent copying:
+    ConsumerMonitorCollection( const ConsumerMonitorCollection& );
+    ConsumerMonitorCollection& operator = ( const ConsumerMonitorCollection& );
+
+    virtual void do_calculateStatistics();
+    virtual void do_reset();
+    virtual void do_updateInfoSpace();
 
     typedef std::map< ConsumerID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
 

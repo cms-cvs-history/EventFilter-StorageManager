@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.18 2009/04/21 19:34:49 biery Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.19 2009/05/04 12:36:18 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -24,6 +24,7 @@ _filesMonCollection(app),
 _streamsMonCollection(app),
 _dataSenderMonCollection(app),
 _dqmEventMonCollection(app),
+_consumerMonitorCollection(app),
 _monitorWL(0),
 _doMonitoring(true),
 _externallyVisibleState( "Halted" ),
@@ -100,6 +101,7 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _streamsMonCollection.update();
     _dataSenderMonCollection.update();
     _dqmEventMonCollection.update();
+    _consumerMonitorCollection.update();
     reportStateName();
   }
   catch(xcept::Exception &e)
@@ -147,6 +149,7 @@ void StatisticsReporter::reset()
   _streamsMonCollection.reset();
   _dataSenderMonCollection.reset();
   _dqmEventMonCollection.reset();
+  _consumerMonitorCollection.reset();
 }
 
 
