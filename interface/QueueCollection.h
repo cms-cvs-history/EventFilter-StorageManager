@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.1.2.4 2009/04/17 10:39:28 mommsen Exp $
+// $Id: QueueCollection.h,v 1.1.2.5 2009/04/29 12:17:35 dshpakov Exp $
 
 #ifndef StorageManager_QueueCollection_h
 #define StorageManager_QueueCollection_h
@@ -32,9 +32,9 @@ namespace stor {
    * returning a std::vector<QueueID> which gives the list
    * of QueueIDs of queues the class should be added.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/17 10:39:28 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/04/29 12:17:35 $
    */
 
   template <class T>
@@ -155,8 +155,6 @@ namespace stor {
     typedef std::map<ConsumerID, QueueID>        map_type;
     map_type                                     _queue_id_lookup;
 
-    boost::shared_ptr<ConsumerMonitorCollection> _consumer_collection;
-
     /*
       These functions are declared private and not implemented to
       prevent their use.
@@ -201,8 +199,7 @@ namespace stor {
     _protect_lookup(),
     _discard_new_queues(),
     _discard_old_queues(),
-    _queue_id_lookup(),
-    _consumer_collection( new ConsumerMonitorCollection() )
+    _queue_id_lookup()
   { }
 
   template <class T>
@@ -537,14 +534,6 @@ namespace stor {
           // does not return, no break needed
         }
       }
-  }
-
-
-  template <class T>
-  boost::shared_ptr<ConsumerMonitorCollection>
-  QueueCollection<T>::consumerMonitorCollection()
-  {
-    return _consumer_collection;
   }
   
 } // namespace stor
