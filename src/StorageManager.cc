@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.107 2009/05/04 18:29:22 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.108 2009/05/05 10:40:40 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.107 2009/05/04 18:29:22 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.108 2009/05/05 10:40:40 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -294,14 +294,32 @@ StorageManager::ParameterGet(xoap::MessageReference message)
 ////////// *** I2O frame call back functions /////////////////////////////////////////////
 void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 {
+  I2OChain i2oChain(ref);
+
+  // Set the I2O message pool pointer. Only done for init messages.
+  ResourceMonitorCollection& resourceMonCollection =
+    _sharedResources->_statisticsReporter->getResourceMonitorCollection();
+  resourceMonCollection.setMemoryPoolPointer( ref->getBuffer()->getPool() );
+
+  FragmentMonitorCollection& fragMonCollection =
+    _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
+  fragMonCollection.getAllFragmentSizeMQ().addSample( 
+    static_cast<double>( i2oChain.totalDataSize() ) / 0x100000
+  );
+
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
+
+
+  ////////////////////
+  // old code below can be removed once new event server is ready
+  ////////////////////
+
   // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
-
-  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
@@ -314,8 +332,6 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
              << msg->fuGUID << std::dec << std::endl;
   FDEBUG(10) << "StorageManager: registry size " << msg->dataSize << "\n";
 
-  int len = msg->dataSize;
-
   // *** check the Storage Manager is in the Ready or Enabled state first!
   if( externallyVisibleState() != "Enabled" && externallyVisibleState() != "Ready" )
   {
@@ -327,26 +343,29 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-
-  I2OChain i2oChain(ref);
-  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-  // for bandwidth performance measurements
-  unsigned long actualFrameSize =
-    (unsigned long)sizeof(I2O_SM_PREAMBLE_MESSAGE_FRAME) + len;
-  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 {
+  I2OChain i2oChain(ref);
+
+  FragmentMonitorCollection& fragMonCollection =
+    _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
+  fragMonCollection.addEventFragmentSample( i2oChain.totalDataSize() );
+
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
+
+
+  ////////////////////
+  // old code below can be removed once new event server is ready
+  ////////////////////
+
   // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
-
-  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -363,8 +382,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
                << msg->numFrames-1 << std::endl;
   
-  int len = msg->dataSize;
-
   // check the storage Manager is in the Ready state first!
   if( externallyVisibleState() != "Enabled")
   {
@@ -389,26 +406,29 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
                       << msg->runID << " From " << msg->hltURL
                       << " Different from Run Number from configuration = " << getRunNumber());
     }
-
-  I2OChain i2oChain(ref);
-  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-  // for bandwidth performance measurements
-  unsigned long actualFrameSize =
-    (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME) + len;
-  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
 {
+  I2OChain i2oChain(ref);
+
+  FragmentMonitorCollection& fragMonCollection =
+    _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
+  fragMonCollection.addEventFragmentSample( i2oChain.totalDataSize() );
+
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
+
+
+  ////////////////////
+  // old code below can be removed once new event server is ready
+  ////////////////////
+
   // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
-
-  FragmentMonitorCollection& fragMonCollection = _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -425,8 +445,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
                << msg->numFrames-1 << std::endl;
   
-  int len = msg->dataSize;
-
   // check the storage Manager is in the Ready state first!
   if(externallyVisibleState() != "Enabled")
   {
@@ -438,31 +456,25 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     ref->release();
     return;
   }
-
-  I2OChain i2oChain(ref);
-  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-  // for bandwidth performance measurements
-  unsigned long actualFrameSize =
-    (unsigned long)sizeof(I2O_SM_DATA_MESSAGE_FRAME) + len;
-  fragMonCollection.addEventFragmentSample(actualFrameSize);
 }
 
 void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 {
+  I2OChain i2oChain(ref);
+
+  FragmentMonitorCollection& fragMonCollection =
+    _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
+  fragMonCollection.addDQMEventFragmentSample( i2oChain.totalDataSize() );
+
+  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
+
+  // to be removed once pool_ is no longer used in WebPageHelper
   // get the memory pool pointer for statistics if not already set
   if(pool_is_set_ == 0)
   {
     pool_ = ref->getBuffer()->getPool();
     pool_is_set_ = 1;
   }
-
-  FragmentMonitorCollection& fragMonCollection =
-    _sharedResources->_statisticsReporter->getFragmentMonitorCollection();
-
-  I2OChain i2oChain(ref);
-  fragMonCollection.addDQMEventFragmentSample( i2oChain.totalDataSize() );
-  _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 }
 
 //////////// *** Default web page ///////////////////////////////////////////////
