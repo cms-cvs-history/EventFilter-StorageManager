@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.1.2.13 2009/04/16 12:56:38 mommsen Exp $
+// $Id: Configuration.h,v 1.1.2.14 2009/05/05 20:11:44 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_Configuration_h
@@ -32,7 +32,7 @@ namespace stor
     std::string _setupLabel;
     int _nLogicalDisk;
     int _maxFileSizeMB;
-    double _highWaterMark;  // not actually used for anything, KAB 16-Mar-09
+    double _highWaterMark;
     utils::duration_t _lumiSectionTimeOut;
     utils::duration_t _fileClosingTestInterval;
     bool _exactFileSizeTest;
@@ -118,8 +118,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.13 $
-   * $Date: 2009/04/16 12:56:38 $
+   * $Revision: 1.1.2.14 $
+   * $Date: 2009/05/05 20:11:44 $
    */
 
   class Configuration : public xdata::ActionListener

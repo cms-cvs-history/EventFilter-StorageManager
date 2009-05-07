@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.14 2009/05/04 12:35:32 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.15 2009/05/06 10:05:46 dshpakov Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/ResourceMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -29,9 +30,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.14 $
-   * $Date: 2009/05/04 12:35:32 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.15 $
+   * $Date: 2009/05/06 10:05:46 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -85,6 +86,13 @@ namespace stor {
     { return _dqmEventMonCollection; }
 
 
+    const ResourceMonitorCollection& getResourceMonitorCollection() const
+    { return _resourceMonCollection; }
+
+    ResourceMonitorCollection& getResourceMonitorCollection()
+    { return _resourceMonCollection; }
+
+
     const ConsumerMonitorCollection& getConsumerMonitorCollection() const
     {
       return _consumerMonitorCollection;
@@ -125,6 +133,7 @@ namespace stor {
     StreamsMonitorCollection _streamsMonCollection;
     DataSenderMonitorCollection _dataSenderMonCollection;
     DQMEventMonitorCollection _dqmEventMonCollection;
+    ResourceMonitorCollection _resourceMonCollection;
     ConsumerMonitorCollection _consumerMonitorCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;

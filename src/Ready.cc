@@ -1,4 +1,4 @@
-// $Id: StateMachine.h,v 1.1.2.26 2009/04/28 18:16:41 biery Exp $
+// $Id: Ready.cc,v 1.1.2.18 2009/05/05 20:13:25 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
@@ -45,6 +45,11 @@ Ready::Ready( my_context c ): my_base(c)
                            errCfgList);
   sharedResources->_configuration->setCurrentEventStreamConfig(evtCfgList);
   sharedResources->_configuration->setCurrentErrorStreamConfig(errCfgList);
+
+  // configure the disk monitoring
+  ResourceMonitorCollection& rmc =
+    sharedResources->_statisticsReporter->getResourceMonitorCollection();
+  rmc.configureDisks(dwParams);
 
   // configure the discard manager
   sharedResources->_discardManager->configure();

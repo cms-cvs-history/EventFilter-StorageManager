@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.18 2009/05/01 21:12:01 biery Exp $
+// $Id: WebPageHelper.h,v 1.1.2.19 2009/05/04 16:48:09 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -14,6 +14,7 @@
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/ResourceMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
@@ -26,9 +27,9 @@ namespace stor {
   /**
    * Helper class to handle web page requests
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.18 $
-   * $Date: 2009/05/01 21:12:01 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.19 $
+   * $Date: 2009/05/04 16:48:09 $
    */
   
   class WebPageHelper
@@ -129,6 +130,7 @@ namespace stor {
     (
       XHTMLMaker&,
       XHTMLMaker::Node *parent,
+      ResourceMonitorCollection const&,
       toolbox::mem::Pool*,
       DiskWritingParams const&
     );
@@ -467,6 +469,7 @@ namespace stor {
     const std::string _smVersion;
 
     XHTMLMaker::AttrMap _tableAttr;
+    XHTMLMaker::AttrMap _rowAttr;
     XHTMLMaker::AttrMap _tableLabelAttr;
     XHTMLMaker::AttrMap _tableValueAttr;
     XHTMLMaker::AttrMap _specialRowAttr;
