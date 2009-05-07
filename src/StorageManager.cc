@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.109 2009/05/07 10:45:14 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.110 2009/05/07 13:09:13 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.109 2009/05/07 10:45:14 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.110 2009/05/07 13:09:13 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -186,9 +186,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   // New consumer statistics page bingding:
   xgi::bind( this, &StorageManager::consumerStatisticsPage,
              "consumerStatistics" );
-
-  pool_is_set_    = 0;
-  pool_           = 0;
 
   // need the line below so that deserializeRegistry can run
   // in order to compare two registries (cannot compare byte-for-byte) (if we keep this)
@@ -314,13 +311,6 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   // old code below can be removed once new event server is ready
   ////////////////////
 
-  // get the memory pool pointer for statistics if not already set
-  if(pool_is_set_ == 0)
-  {
-    pool_ = ref->getBuffer()->getPool();
-    pool_is_set_ = 1;
-  }
-
   I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
   I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
 
@@ -359,13 +349,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   ////////////////////
   // old code below can be removed once new event server is ready
   ////////////////////
-
-  // get the memory pool pointer for statistics if not already set
-  if(pool_is_set_ == 0)
-  {
-    pool_ = ref->getBuffer()->getPool();
-    pool_is_set_ = 1;
-  }
 
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
@@ -423,13 +406,6 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   // old code below can be removed once new event server is ready
   ////////////////////
 
-  // get the memory pool pointer for statistics if not already set
-  if(pool_is_set_ == 0)
-  {
-    pool_ = ref->getBuffer()->getPool();
-    pool_is_set_ = 1;
-  }
-
   I2O_MESSAGE_FRAME         *stdMsg =
     (I2O_MESSAGE_FRAME*)ref->getDataLocation();
   I2O_SM_DATA_MESSAGE_FRAME *msg    =
@@ -467,14 +443,6 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   fragMonCollection.addDQMEventFragmentSample( i2oChain.totalDataSize() );
 
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-  // to be removed once pool_ is no longer used in WebPageHelper
-  // get the memory pool pointer for statistics if not already set
-  if(pool_is_set_ == 0)
-  {
-    pool_ = ref->getBuffer()->getPool();
-    pool_is_set_ = 1;
-  }
 }
 
 //////////// *** Default web page ///////////////////////////////////////////////
@@ -2563,55 +2531,6 @@ void StorageManager::stopAction()
 void StorageManager::haltAction()
 {
   stopAction();
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-/*
-xoap::MessageReference StorageManager::fsmCallback(xoap::MessageReference msg)
-  throw (xoap::exception::Exception)
-{
-  return fsm_.commandCallback(msg);
-}
-*/
-
-////////////////////////////////////////////////////////////////////////////////
-void StorageManager::sendDiscardMessage(unsigned int    rbBufferID, 
-                                        unsigned int    hltInstance,
-                                        unsigned int    msgType,
-                                        string          hltClassName)
-{
-  /*
-  std::cout << "sendDiscardMessage ... " 
-            << rbBufferID     << "  "
-            << hltInstance    << "  "
-            << msgType        << "  "
-            << hltClassName   << std::endl;
-  */
-    
-  set<xdaq::ApplicationDescriptor*> setOfRBs=
-    getApplicationContext()->getDefaultZone()->
-    getApplicationDescriptors(hltClassName.c_str());
-  
-  for (set<xdaq::ApplicationDescriptor*>::iterator 
-         it=setOfRBs.begin();it!=setOfRBs.end();++it)
-    {
-      if ((*it)->getInstance()==hltInstance)
-        {
-          
-          stor::FUProxy* proxy =  new stor::FUProxy(getApplicationDescriptor(),
-                                                    *it,
-                                                    getApplicationContext(),
-                                                    pool_);
-          if ( msgType == I2O_FU_DATA_DISCARD )
-            proxy -> sendDataDiscard(rbBufferID);       
-          else if ( msgType == I2O_FU_DQM_DISCARD )
-            proxy -> sendDQMDiscard(rbBufferID);
-          else assert("Unknown discard message type" == 0);
-          delete proxy;
-        }
-    }
 }
 
 

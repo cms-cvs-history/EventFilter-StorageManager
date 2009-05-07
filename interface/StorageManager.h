@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.57 2009/05/04 17:56:38 biery Exp $
+   $Id: StorageManager.h,v 1.45.6.58 2009/05/05 10:39:50 mommsen Exp $
 */
 
 #include <string>
@@ -92,11 +92,6 @@ namespace stor {
     void receiveErrorDataMessage(toolbox::mem::Reference *ref);
     void receiveDQMMessage(toolbox::mem::Reference *ref);
 
-    void sendDiscardMessage(unsigned int, 
-			    unsigned int, 
-			    unsigned int, 
-			    std::string);
-
     void configureAction();
     void stopAction();
     void haltAction();
@@ -158,8 +153,6 @@ namespace stor {
     SharedResourcesPtr _sharedResources;
 
     evf::Css css_;
-    int pool_is_set_;
-    toolbox::mem::Pool *pool_;
 
     // added for Event Server
     std::vector<unsigned char> mybuffer_; //temporary buffer instead of using stack
