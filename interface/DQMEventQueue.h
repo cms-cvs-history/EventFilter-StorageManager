@@ -1,4 +1,4 @@
-// $Id: DQMEventQueue.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id: DQMEventQueue.h,v 1.1.2.4 2009/04/16 10:51:10 mommsen Exp $
 
 #ifndef StorageManager_DQMEventQueue_h
 #define StorageManager_DQMEventQueue_h
@@ -13,11 +13,11 @@ namespace stor {
    * waiting to be processed by the DQMEventProcessor
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/16 10:51:10 $
    */
 
-  typedef ConcurrentQueue<I2OChain> DQMEventQueue;  
+  typedef ConcurrentQueue< I2OChain, RejectNewest<I2OChain> > DQMEventQueue;  
   
 } // namespace stor
 
