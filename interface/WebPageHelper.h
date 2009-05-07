@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.19 2009/05/04 16:48:09 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.20 2009/05/07 10:47:49 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -28,8 +28,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.19 $
-   * $Date: 2009/05/04 16:48:09 $
+   * $Revision: 1.1.2.20 $
+   * $Date: 2009/05/07 10:47:49 $
    */
   
   class WebPageHelper
@@ -49,8 +49,7 @@ namespace stor {
     void defaultWebPage
     (
       xgi::Output*, 
-      const SharedResourcesPtr,
-      toolbox::mem::Pool*
+      const SharedResourcesPtr
     );
 
     /**
@@ -70,12 +69,6 @@ namespace stor {
       xgi::Output*,
       const SharedResourcesPtr
     );
-
-    /**
-     * Returns the number of instances for the given process name
-     */
-    int getProcessCount(std::string processName);
-
 
     /**
        Generates consumer statistics page
@@ -130,9 +123,7 @@ namespace stor {
     (
       XHTMLMaker&,
       XHTMLMaker::Node *parent,
-      ResourceMonitorCollection const&,
-      toolbox::mem::Pool*,
-      DiskWritingParams const&
+      ResourceMonitorCollection const&
     );
 
     /**
@@ -224,7 +215,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -245,7 +236,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -256,7 +247,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -267,7 +258,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -278,7 +269,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -289,7 +280,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -300,7 +291,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -311,7 +302,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       FragmentMonitorCollection::FragmentStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -399,7 +390,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
     
     /**
@@ -410,7 +401,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -421,7 +412,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -432,7 +423,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -443,7 +434,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
 
     /**
@@ -454,8 +445,49 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *table,
       DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType dataSet
+      const MonitoredQuantity::DataSetType
     );
+
+    /**
+     * Add a table for resource usage
+     */
+    void addTableForResourceUsages
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      ResourceMonitorCollection::Stats const&
+    );
+
+    /**
+     * Add a table row for memory usage
+     */
+    void addRowsForMemoryUsage
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      ResourceMonitorCollection::Stats const&
+    );
+
+    /**
+     * Add a table row for copy/inject workers
+     */
+    void addRowsForWorkers
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *table,
+      ResourceMonitorCollection::Stats const&
+    );
+
+    /**
+     * Add a table for disk usage
+     */
+    void addTableForDiskUsages
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      ResourceMonitorCollection::Stats const&
+    );
+
 
 
   private:
