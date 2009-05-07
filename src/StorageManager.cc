@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.108 2009/05/05 10:40:40 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.109 2009/05/07 10:45:14 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.108 2009/05/05 10:40:40 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.109 2009/05/07 10:45:14 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -487,8 +487,7 @@ throw (xgi::exception::Exception)
   {
     _webPageHelper.defaultWebPage(
       out,
-      _sharedResources,
-      pool_
+      _sharedResources
     );
   }
   catch(std::exception &e)

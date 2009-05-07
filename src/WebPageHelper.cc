@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.36 2009/05/06 10:05:46 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.37 2009/05/07 10:47:05 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -49,8 +49,7 @@ _smVersion(SMversion)
 void WebPageHelper::defaultWebPage
 (
   xgi::Output *out, 
-  const SharedResourcesPtr sharedResources,
-  toolbox::mem::Pool *pool
+  const SharedResourcesPtr sharedResources
 )
 {
   boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
@@ -70,8 +69,7 @@ void WebPageHelper::defaultWebPage
   
   // Resource usage
   addDOMforResourceUsage(maker, body, 
-    statReporter->getResourceMonitorCollection(),
-    pool, sharedResources->_configuration->getDiskWritingParams());
+    statReporter->getResourceMonitorCollection());
   
   // Add the received data statistics table
   addDOMforFragmentMonitor(maker, body,
@@ -536,9 +534,7 @@ void WebPageHelper::addDOMforResourceUsage
 (
   XHTMLMaker& maker,
   XHTMLMaker::Node *parent,
-  ResourceMonitorCollection const& rmc,
-  toolbox::mem::Pool *pool,
-  DiskWritingParams const& dwParams
+  ResourceMonitorCollection const& rmc
 )
 {
   ResourceMonitorCollection::Stats stats;
@@ -550,45 +546,54 @@ void WebPageHelper::addDOMforResourceUsage
   XHTMLMaker::AttrMap halfWidthAttr;
   halfWidthAttr[ "width" ] = "50%";
   
-  XHTMLMaker::AttrMap innerTableAttr = _tableAttr;
-  //  innerTableAttr[ "width" ] = "100%";
-  //  innerTableAttr[ "cellpadding" ] = "2";
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Resource Usage");
+  
+  tableRow = maker.addNode("tr", table, _rowAttr);
+
+  tableDiv = maker.addNode("td", tableRow, halfWidthAttr);
+  addTableForResourceUsages(maker, tableDiv, stats);
+
+  tableDiv = maker.addNode("td", tableRow, halfWidthAttr);
+  addTableForDiskUsages(maker, tableDiv, stats);
+}
+
+
+void WebPageHelper::addTableForResourceUsages
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
+  ResourceMonitorCollection::Stats const& stats
+)
+{
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+  
+  addRowsForMemoryUsage(maker, table, stats);
+  addRowsForWorkers(maker, table, stats);
+}
+
+   
+void WebPageHelper::addRowsForMemoryUsage
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  ResourceMonitorCollection::Stats const& stats
+)
+{
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "2";
 
   XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "width" ] = "45%";
-  
+  tableLabelAttr[ "width" ] = "54%";
+
   XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
-  tableValueAttr[ "width" ] = "55%";
-  
-  XHTMLMaker::AttrMap warningAttr = _rowAttr;
-  warningAttr[ "bgcolor" ] = "#EF5A10";
-  
-  XHTMLMaker::Node* outerTable = maker.addNode("table", parent, _tableAttr);
-  XHTMLMaker::Node* outerTableRow = maker.addNode("tr", outerTable, _rowAttr);
-  XHTMLMaker::Node* outerTableDiv = maker.addNode("th", outerTableRow, colspanAttr);
-  maker.addText(outerTableDiv, "Resource Usage");
-  
-  outerTableRow = maker.addNode("tr", outerTable, _rowAttr);
-  outerTableDiv = maker.addNode("td", outerTableRow, halfWidthAttr);
-  XHTMLMaker::Node* table = maker.addNode("table", outerTableDiv, innerTableAttr);
-  
+  tableValueAttr[ "width" ] = "46%";
+
   // Memory pool usage
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
   XHTMLMaker::Node* tableDiv;
-  if (pool)
-  {
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-    maker.addText(tableDiv, "Memory pool used (bytes)");
-    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-    maker.addText(tableDiv, pool->getMemoryUsage().getUsed(), 0);
-  }
-  else
-  {
-    tableDiv = maker.addNode("td", tableRow, colspanAttr);
-    maker.addText(tableDiv, "Memory pool pointer not yet available");
-  }
-  // Memory pool usage
-  tableRow = maker.addNode("tr", table, _rowAttr);
   if ( stats.poolUsageStats.getSampleCount() > 0 )
   {
     tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
@@ -601,47 +606,61 @@ void WebPageHelper::addDOMforResourceUsage
     tableDiv = maker.addNode("td", tableRow, colspanAttr);
     maker.addText(tableDiv, "Memory pool pointer not yet available");
   }
+}
+
+ 
+void WebPageHelper::addRowsForWorkers
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *table,
+  ResourceMonitorCollection::Stats const& stats
+)
+{
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "width" ] = "54%";
+
+  XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+  tableValueAttr[ "width" ] = "46%";
+
+  // # copy worker
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# CopyWorker");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfCopyWorkersStats.getLastSampleValue(), 0);
   
+  // # inject worker
+  tableRow = maker.addNode("tr", table, _rowAttr);
+  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "# InjectWorker");
+  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+  maker.addText(tableDiv, stats.numberOfInjectWorkersStats.getLastSampleValue(), 0);
+}
+
+
+void WebPageHelper::addTableForDiskUsages
+(
+  XHTMLMaker& maker,
+  XHTMLMaker::Node *parent,
+  ResourceMonitorCollection::Stats const& stats
+)
+{
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "2";
   
-  // Disk usage
-  int nLogicalDisk = dwParams._nLogicalDisk;
-  unsigned int nD = nLogicalDisk ? nLogicalDisk : 1;
-  for(unsigned int i=0;i<nD;++i) {
-    std::string path(dwParams._filePath);
-    if(nLogicalDisk>0) {
-      std::ostringstream oss;
-      oss << "/" << std::setfill('0') << std::setw(2) << i; 
-      path += oss.str();
-    }
-    struct statfs64 buf;
-    int retVal = statfs64(path.c_str(), &buf);
-    double btotal = 0;
-    double bfree = 0;
-    unsigned int used = 0;
-    if(retVal==0) {
-      unsigned int blksize = buf.f_bsize;
-      btotal = buf.f_blocks * blksize / 1024 / 1024 /1024;
-      bfree  = buf.f_bavail  * blksize / 1024 / 1024 /1024;
-      used   = (int)(100 * (1. - bfree / btotal)); 
-    }
-    
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-    {
-      std::ostringstream tmpString;
-      tmpString << "Disk " << i << " usage";
-      maker.addText(tableDiv, tmpString.str());
-    }
-    if(used>89)
-      tableDiv = maker.addNode("td", tableRow, warningAttr);
-    else
-      tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-    {
-      std::ostringstream tmpString;
-      tmpString << used << "% (" << btotal-bfree << " of " << btotal << " GB)";
-      maker.addText(tableDiv, tmpString.str());
-    }
-  }
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "width" ] = "54%";
+
+  XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+  tableValueAttr[ "width" ] = "46%";
+  
+  XHTMLMaker::AttrMap warningAttr = _rowAttr;
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+  XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Disk space usage");
+
 
   for (ResourceMonitorCollection::DiskUsageStatsPtrList::const_iterator
          it = stats.diskUsageStatsList.begin(),
@@ -650,7 +669,6 @@ void WebPageHelper::addDOMforResourceUsage
        ++it)
   {
     warningAttr[ "bgcolor" ] = (*it)->warningColor;
-    warningAttr[ "bordercolor" ] = (*it)->warningColor;
     tableRow = maker.addNode("tr", table, warningAttr);
     tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     maker.addText(tableDiv, (*it)->pathName);
@@ -664,36 +682,6 @@ void WebPageHelper::addDOMforResourceUsage
       maker.addText(tableDiv, tmpString.str());
     }
   }
-  
-  outerTableDiv = maker.addNode("td", outerTableRow, halfWidthAttr);
-  table = maker.addNode("table", outerTableDiv, innerTableAttr);
-  
-  // # copy worker
-  tableRow = maker.addNode("tr", table, _rowAttr);
-  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-  maker.addText(tableDiv, "# CopyWorker");
-  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, getProcessCount("CopyWorker.pl"), 0);
-
-  tableRow = maker.addNode("tr", table, _rowAttr);
-  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-  maker.addText(tableDiv, "# CopyWorker");
-  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, stats.numberOfCopyWorkersStats.getLastSampleValue(), 0);
-  
-  // # inject worker
-  tableRow = maker.addNode("tr", table, _rowAttr);
-  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-  maker.addText(tableDiv, "# InjectWorker");
-  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, getProcessCount("InjectWorker.pl"), 0);
-
-  tableRow = maker.addNode("tr", table, _rowAttr);
-  tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-  maker.addText(tableDiv, "# InjectWorker");
-  tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-  maker.addText(tableDiv, stats.numberOfInjectWorkersStats.getLastSampleValue(), 0);
-  
 }
 
 
@@ -1924,26 +1912,6 @@ void WebPageHelper::addRowForMinDQMEventBandwidth
   maker.addText(tableDiv, stats.servedDQMEventBandwidthStats.getValueMin(dataSet));
   tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
   maker.addText(tableDiv, stats.writtenDQMEventBandwidthStats.getValueMin(dataSet));
-}
-
-
-int WebPageHelper::getProcessCount(std::string processName)
-{
-
-  int count = -1;
-  char buf[128];
-  std::string command = "ps -C " + processName + " --no-header | wc -l";
-
-  FILE *fp = popen(command.c_str(), "r");
-  if ( fp )
-  {
-    if ( fgets(buf, sizeof(buf), fp) )
-    {
-      count = strtol(buf, '\0', 10);
-    }
-    pclose( fp );
-  }
-  return count;
 }
 
 
