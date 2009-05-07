@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.30.16.32 2009/04/17 15:55:39 mommsen Exp $
+# $Id: BuildFile,v 1.30.16.33 2009/04/24 13:49:56 dshpakov Exp $
 
 <environment>
   <use name=boost>
@@ -77,9 +77,6 @@
 
   <bin file=ConcurrentQueue_t.cpp>
     <use name=cppunit>
-  </bin>
-
-  <bin file=processCount_t.cpp>
   </bin>
 
   <bin file=FragmentStore_t.cpp>

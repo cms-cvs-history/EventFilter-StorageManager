@@ -18,7 +18,6 @@ tests="\
  I2OChain_t\
  MemoryChainDuplicate_t\
  MonitoredQuantity_t\
- processCount_t\
  QueueID_t\
  Sleep_t \
  state_machine_t\
