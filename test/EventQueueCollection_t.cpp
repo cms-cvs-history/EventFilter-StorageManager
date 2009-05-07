@@ -144,11 +144,11 @@ testEventQueueCollection::add_and_pop()
   using namespace boost;
   shared_ptr<EventQueueCollection> pcoll(new EventQueueCollection);
 
-  thread t1(bind(add_and_pop_helper, pcoll));
-  thread t2(bind(create_queues_helper, pcoll));
-  thread t3(bind(create_queues_helper, pcoll));
-  thread t4(bind(create_queues_helper, pcoll));
-  thread t5(bind(create_queues_helper, pcoll));
+  boost::thread t1(bind(add_and_pop_helper, pcoll));
+  boost::thread t2(bind(create_queues_helper, pcoll));
+  boost::thread t3(bind(create_queues_helper, pcoll));
+  boost::thread t4(bind(create_queues_helper, pcoll));
+  boost::thread t5(bind(create_queues_helper, pcoll));
 
   t1.join();
   t2.join();
