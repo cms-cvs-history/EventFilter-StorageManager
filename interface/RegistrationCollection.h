@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.h,v 1.1.2.6 2009/04/23 11:46:41 dshpakov Exp $
+// $Id: RegistrationCollection.h,v 1.1.2.7 2009/04/27 17:02:09 mommsen Exp $
 
 #ifndef REGISTRATIONCOLLECTION_H
 #define REGISTRATIONCOLLECTION_H
@@ -46,7 +46,7 @@ namespace stor
     /**
        Get DQM event consumer registrations.
     */
-    typedef std::vector<stor::DQMConsRegPtr> DQMConsumerRegistrations;
+    typedef std::vector<stor::DQMEventConsRegPtr> DQMConsumerRegistrations;
     void getDQMEventConsumers( DQMConsumerRegistrations& );
 
     /**

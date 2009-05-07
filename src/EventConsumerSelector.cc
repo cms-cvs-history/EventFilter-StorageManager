@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.cc,v 1.1.2.1 2009/03/09 20:30:59 biery Exp $
+// $Id: EventConsumerSelector.cc,v 1.1.2.2 2009/03/10 20:39:44 biery Exp $
 
 #include <vector>
 
@@ -40,3 +40,11 @@ bool EventConsumerSelector::acceptEvent( const I2OChain& ioc )
     || _eventSelector->acceptEvent( &hlt_out[0], ioc.hltTriggerCount() );
 
 }
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

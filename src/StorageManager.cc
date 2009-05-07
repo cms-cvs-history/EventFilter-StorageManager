@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.110 2009/05/07 13:09:13 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.111 2009/05/07 13:19:57 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -110,7 +110,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.110 2009/05/07 13:09:13 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.111 2009/05/07 13:19:57 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -2752,7 +2752,7 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
     _sharedResources->_configuration->getEventServingParams()._consumerQueueSize;
 
   // Create registration info and set consumer ID:
-  stor::DQMConsRegPtr dqmreginfo;
+  stor::DQMEventConsRegPtr dqmreginfo;
   std::string errorMsg = "Error parsing a DQM event consumer registration request";
   try
     {

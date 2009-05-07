@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.1.2.5 2009/04/27 17:00:18 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.1.2.6 2009/04/29 16:29:49 mommsen Exp $
 
 /**
    Free helper functions for handling consumer header and event
@@ -40,7 +40,7 @@ namespace stor
   /**
      Parse DQM consumer registration request:
   */
-  DQMConsRegPtr parseDQMEventConsumerRegistration( xgi::Input* in,
+  DQMEventConsRegPtr parseDQMEventConsumerRegistration( xgi::Input* in,
                                                    size_t queueSize,
                                                    enquing_policy::PolicyTag queuePolicy,
                                                    utils::duration_t secondsToStale );

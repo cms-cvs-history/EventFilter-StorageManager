@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.7 2009/04/27 13:55:49 mommsen Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.8 2009/04/27 16:59:31 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -72,7 +72,7 @@ void RegistrationCollection::getDQMEventConsumers( DQMConsumerRegistrations& crs
   for( RegistrationMap::const_iterator it = _consumers.begin();
        it != _consumers.end(); ++it )
     {
-      DQMConsRegPtr dqmEventConsumer =
+      DQMEventConsRegPtr dqmEventConsumer =
         boost::dynamic_pointer_cast<DQMEventConsumerRegistrationInfo>( it->second );
       if ( dqmEventConsumer )
         crs.push_back( dqmEventConsumer );

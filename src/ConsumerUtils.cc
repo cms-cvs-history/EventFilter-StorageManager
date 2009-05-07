@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.1.2.8 2009/04/27 13:55:03 mommsen Exp $
+// $Id: ConsumerUtils.cc,v 1.1.2.9 2009/04/29 16:31:44 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -137,7 +137,7 @@ ConsRegPtr stor::parseEventConsumerRegistration( xgi::Input* in,
 ////////////////////////////////////////////////
 //// Create DQM consumer registration info: ////
 ////////////////////////////////////////////////
-DQMConsRegPtr stor::parseDQMEventConsumerRegistration( xgi::Input* in,
+DQMEventConsRegPtr stor::parseDQMEventConsumerRegistration( xgi::Input* in,
                                                        size_t queueSize,
                                                        enquing_policy::PolicyTag queuePolicy,
                                                        utils::duration_t secondsToStale )
@@ -166,7 +166,7 @@ DQMConsRegPtr stor::parseDQMEventConsumerRegistration( xgi::Input* in,
     if (reqFolder.size() >= 1) consumerTopFolderName = reqFolder;
   }
 
-  DQMConsRegPtr cr( new DQMEventConsumerRegistrationInfo( consumerName,
+  DQMEventConsRegPtr cr( new DQMEventConsumerRegistrationInfo( consumerName,
                                                           consumerTopFolderName, 
                                                           queueSize,
                                                           queuePolicy,

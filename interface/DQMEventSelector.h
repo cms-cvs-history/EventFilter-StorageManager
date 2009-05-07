@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: DQMEventSelector.h,v 1.1.2.4 2009/03/10 12:37:50 dshpakov Exp $
+// $Id: DQMEventSelector.h,v 1.1.2.5 2009/03/10 21:19:38 biery Exp $
 
 #ifndef DQMEVENTSELECTOR_H
 #define DQMEVENTSELECTOR_H
@@ -15,42 +14,47 @@ namespace stor
   /**
    * DQM event selector
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/03/10 12:37:50 $
+   * $Author: biery $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/03/10 21:19:38 $
    */
 
   class DQMEventSelector
   {
 
   public:
-
-    // Constructor:
-    DQMEventSelector( const DQMEventConsumerRegistrationInfo& ri ):
-      _topLevelFolderName( ri.topLevelFolderName() ),
-      _queueId( ri.queueId() )
-    {}
-
-    // Destructor:
-    ~DQMEventSelector() {}
-
-    // Accept event:
+    
+    DQMEventSelector( const DQMEventConsumerRegistrationInfo* ri ):
+    _topLevelFolderName( ri->topLevelFolderName() ),
+    _queueId( ri->queueId() )
+    {};
+    
+    /**
+     * Returns true if the DQM event stored in the I2OChain
+     * passes this event selection.
+     */
     bool acceptEvent( const I2OChain& );
-
+    
     /**
      * Returns the ID of the queue corresponding to this selector.
      */
     const QueueID& queueId() const { return _queueId; }
-
+    
   private:
 
     std::string _topLevelFolderName;
     QueueID _queueId;
-
-    boost::shared_ptr<edm::EventSelector> _eventSelector;
 
   };
 
 }
 
 #endif
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

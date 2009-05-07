@@ -1,5 +1,4 @@
-// -*- c++ -*-
-// $Id: EventConsumerSelector.h,v 1.1.2.3 2009/03/10 21:19:38 biery Exp $
+// $Id: EventConsumerSelector.h,v 1.1.2.4 2009/04/27 10:09:11 dshpakov Exp $
 
 #ifndef EVENTCONSUMERSELECTOR_H
 #define EVENTCONSUMERSELECTOR_H
@@ -17,9 +16,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/04/27 10:09:11 $
    */
 
   class EventConsumerSelector
@@ -31,13 +30,13 @@ namespace stor {
      * Constructs an EventConsumerSelector instance based on the
      * specified registration information.
      */
-    EventConsumerSelector( const EventConsumerRegistrationInfo& configInfo ):
+    EventConsumerSelector( const EventConsumerRegistrationInfo* configInfo ):
       _initialized( false ),
       _stale( false ),
       _outputModuleId( 0 ),
-      _outputModuleLabel( configInfo.selHLTOut() ),
-      _eventSelectionStrings( configInfo.selEvents() ),
-      _queueId( configInfo.queueId() )
+      _outputModuleLabel( configInfo->selHLTOut() ),
+      _eventSelectionStrings( configInfo->selEvents() ),
+      _queueId( configInfo->queueId() )
     {}
 
     /**
@@ -99,3 +98,11 @@ namespace stor {
 } // namespace stor
 
 #endif
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

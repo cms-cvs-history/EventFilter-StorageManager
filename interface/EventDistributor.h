@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.26 2009/04/27 11:05:17 dshpakov Exp $
+// $Id: EventDistributor.h,v 1.1.2.27 2009/05/05 20:11:44 mommsen Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -28,9 +28,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.26 $
-   * $Date: 2009/04/27 11:05:17 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.27 $
+   * $Date: 2009/05/05 20:11:44 $
    */
 
   class EventDistributor
@@ -47,7 +47,7 @@ namespace stor {
     void addEventToRelevantQueues( I2OChain& );
 
     /**
-     * Returns false if no further events can be processed,
+     * Returns true if no further events can be processed,
      * e.g. the StreamQueue is full
      */
     const bool full() const;
@@ -55,13 +55,12 @@ namespace stor {
     /**
      * Registers a new consumer
      */
-    void registerEventConsumer( EventConsumerRegistrationInfo* );
+    void registerEventConsumer( const EventConsumerRegistrationInfo* );
 
     /**
      * Registers a new DQM consumer
      */
-    typedef DQMEventConsumerRegistrationInfo* DQMRegPtr;
-    void registerDQMEventConsumer( DQMRegPtr );
+    void registerDQMEventConsumer( const DQMEventConsumerRegistrationInfo* );
 
     /**
      * Registers the full set of event streams.
@@ -110,15 +109,15 @@ namespace stor {
     void checkForStaleConsumers();
 
     EventQueueCollection _eventConsumerQueueCollection;
-    EventQueueCollection _DQMQueueCollection;
+    EventQueueCollection _DQMEventQueueCollection;
 
     SharedResourcesPtr _sharedResources;
 
     typedef std::vector<EventStreamSelector> EvtSelList;
     EvtSelList _eventStreamSelectors;
 
-    typedef std::vector<DQMEventSelector> DQMSelList;
-    DQMSelList _DQMSelectors;
+    typedef std::vector<DQMEventSelector> DQMEvtSelList;
+    DQMEvtSelList _dqmEventSelectors;
 
     typedef std::vector<ErrorStreamSelector> ErrSelList;
     ErrSelList _errorStreamSelectors;
