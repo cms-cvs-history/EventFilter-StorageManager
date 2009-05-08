@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: MockDiskWriterResources.h,v 1.1.2.1 2009/03/31 19:22:08 mommsen Exp $
+// $Id: MockDiskWriterResources.h,v 1.1.2.1 2009/04/03 14:41:22 biery Exp $
 
 #ifndef MOCKDISKWRITERRESOURCES_H
 #define MOCKDISKWRITERRESOURCES_H
@@ -18,9 +18,9 @@ namespace stor
 
     ~MockDiskWriterResources() {}
 
-    void waitForStreamConfiguration() { return; }
+    void waitForStreamChange() { return; }
 
-    void waitForStreamDestruction() { return; }
+    bool streamChangeOngoing() { return false; }
 
   };
 
