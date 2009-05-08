@@ -12,7 +12,7 @@ setenv STMGR_DIR $demoSystemDir
 
 # initial setup
 source $demoSystemDir/bin/uaf_setup.csh
-source $demoSystemDir/bin/cvs_setup.csh
+#source $demoSystemDir/bin/cvs_setup.csh
 
 # check if this script is being run from inside a CMSSW project area
 set selectedProject = ""
