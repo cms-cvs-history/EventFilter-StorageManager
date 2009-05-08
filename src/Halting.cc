@@ -1,4 +1,4 @@
-// $Id: Enabled.cc,v 1.1.2.36 2009/05/05 10:40:39 mommsen Exp $
+// $Id: Halting.cc,v 1.1.2.1 2009/05/05 20:13:25 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -61,8 +61,10 @@ Halting::destructionIsDone() const
   SharedResourcesPtr sharedResources =
     outermost_context().getSharedResources();
 
+  // check if the requests are still being processed
+  if ( sharedResources->_diskWriterResources->streamChangeOngoing() ) return false;
+
   // wait for the requests to be fulfilled
-  sharedResources->_diskWriterResources->waitForStreamDestruction();
   sharedResources->_dqmEventProcessorResources->waitForStoreDestruction();
 
   return true;

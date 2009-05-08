@@ -1,4 +1,4 @@
-// $Id: Enabled.cc,v 1.1.2.36 2009/05/05 10:40:39 mommsen Exp $
+// $Id: Starting.cc,v 1.1.2.1 2009/05/05 20:13:25 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -79,7 +79,9 @@ Starting::workerThreadsConfigured() const
   SharedResourcesPtr sharedResources =
     outermost_context().getSharedResources();
 
-  sharedResources->_diskWriterResources->waitForStreamConfiguration();
+  // check if the requests are still being processed
+  if ( sharedResources->_diskWriterResources->streamChangeOngoing() ) return false;
+
   sharedResources->_dqmEventProcessorResources->waitForConfiguration();
 
   return true; 
