@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.1.2.4 2009/04/08 16:25:58 biery Exp $
+// $Id: DiskWriterResources.h,v 1.1.2.5 2009/05/05 20:11:44 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_DiskWriterResources_h
@@ -17,9 +17,9 @@ namespace stor
    * Container class for resources that are needed by the DiskWriter
    * and need to be accessed from multiple threads.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2009/04/08 16:25:58 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2009/05/05 20:11:44 $
    */
 
   class DiskWriterResources
@@ -39,49 +39,51 @@ namespace stor
     /**
      * Requests that the DiskWriter streams be configured with the
      * specified configurations.  Also allows a new dequeue timeout
-     * value to be specified.
+     * value to be specified. Existing stream configurations will be
+     * discarded. 
      */
-    void requestStreamConfiguration(EvtStrConfigListPtr, ErrStrConfigListPtr,
-                                    double timeoutValue);
-
-    /**
-     * Checks if a request has been made to configure the DiskWriter
-     * streams *and* clears any pending request.  Supplies the new
-     * configurations and a new dequeue timeout value.
-     */
-    bool streamConfigurationRequested(EvtStrConfigListPtr&, ErrStrConfigListPtr&,
-                                      double& timeoutValue);
-
-    /**
-     * Waits until a requested stream configuration has been completed.
-     */
-    virtual void waitForStreamConfiguration();
-
-    /**
-     * Indicates that the stream configuration operation is done.
-     */
-    void streamConfigurationDone();
+    void requestStreamConfiguration
+    (
+      EvtStrConfigListPtr,
+      ErrStrConfigListPtr,
+      double timeoutValue
+    );
 
     /**
      * Requests that the DiskWriter streams be destroyed.
+     * Any pending stream configuraton request will be cancelled.
      */
     void requestStreamDestruction();
 
     /**
-     * Checks if a request has been made to destroy the DiskWriter
-     * streams *and* clears any pending request.
+     * Checks if a request has been made to change the stream configuration
+     * in the DiskWriter streams *and* clears any pending request.
+     * Existing streams are purged.
+     * If doConfig is true, the supplied new configurations and a new dequeue
+     * timeout value should be used to configure a new set of DiskWriter streams.
      */
-    bool streamDestructionRequested();
+    bool streamChangeRequested
+    (
+      bool& doConfig,
+      EvtStrConfigListPtr&,
+      ErrStrConfigListPtr&,
+      double& timeoutValue
+    );
 
     /**
-     * Waits until a requested stream destruction has been completed.
+     * Waits until a requested stream configuration change has been completed.
      */
-    virtual void waitForStreamDestruction();
+    virtual void waitForStreamChange();
 
     /**
-     * Indicates that the stream destruction operation is done.
+     * Returns true when a stream configuration change is requested or in progress.
      */
-    void streamDestructionDone();
+    virtual bool streamChangeOngoing();
+
+    /**
+     * Indicates that the stream configuration change is done.
+     */
+    void streamChangeDone();
 
     /**
      * Requests that the DiskWriter check if files need to be closed.
@@ -107,7 +109,7 @@ namespace stor
   private:
 
     bool _configurationIsNeeded;
-    bool _streamDestructionIsNeeded;
+    bool _streamChangeIsNeeded;
     bool _fileClosingTestIsNeeded;
     bool _diskWriterIsBusy;
 
@@ -115,11 +117,10 @@ namespace stor
     ErrStrConfigListPtr _requestedErrorStreamConfig;
     double _requestedTimeout;
 
-    bool _configurationInProgress;
-    boost::condition _configurationCondition;
-    bool _streamDestructionInProgress;
-    boost::condition _destructionCondition;
+    bool _streamChangeInProgress;
+    boost::condition _streamChangeCondition;
 
+    mutable boost::mutex _streamChangeMutex;
     mutable boost::mutex _generalMutex;
   };
 

@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.19 2009/04/17 09:18:43 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.20 2009/05/05 20:14:12 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -127,19 +127,18 @@ void DiskWriter::writeNextEvent()
   EvtStrConfigListPtr evtCfgList;
   ErrStrConfigListPtr errCfgList;
   double newTimeoutValue;
+  bool doConfig;
   if (_sharedResources->_diskWriterResources->
-      streamConfigurationRequested(evtCfgList, errCfgList, newTimeoutValue))
-  {
-    configureEventStreams(evtCfgList);
-    configureErrorStreams(errCfgList);
-    _timeout = (unsigned int) newTimeoutValue;
-    _sharedResources->_diskWriterResources->streamConfigurationDone();
-  }
-
-  if (_sharedResources->_diskWriterResources->streamDestructionRequested())
+    streamChangeRequested(doConfig, evtCfgList, errCfgList, newTimeoutValue))
   {
     destroyStreams();
-    _sharedResources->_diskWriterResources->streamDestructionDone();
+    if (doConfig)
+    {
+      configureEventStreams(evtCfgList);
+      configureErrorStreams(errCfgList);
+      _timeout = (unsigned int) newTimeoutValue;
+    }
+    _sharedResources->_diskWriterResources->streamChangeDone();
   }
 }
 
