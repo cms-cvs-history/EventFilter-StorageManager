@@ -100,6 +100,8 @@ alias globalEnable="cd $demoSystemDir/soap; ./globalEnable.sh"
 alias globalStop="cd $demoSystemDir/soap; ./globalStop.sh"
 alias globalHalt="cd $demoSystemDir/soap; ./globalHalt.sh"
 
+alias shutdownEverything="globalStop ; sleep 3 ; killEverything"
+
 # 02-Jan-2008 - if needed, create a shared memory key file so that we
 # can use shared memory keys independent of other developers
 keyDir="/tmp/$USER"
