@@ -40,14 +40,10 @@ void processEvent(  StateMachine& machine,
   cmdQueue->enq_wait( requestedEvent );
 
   stor::event_ptr nextEvent;
-  while ( !cmdQueue->empty() )
+  while ( cmdQueue->deq_nowait( nextEvent ) )
     {
-      bool gotEvent = cmdQueue->deq_nowait( nextEvent );
-      if ( gotEvent )
-        {
-          machine.process_event( *nextEvent );
-          machine.getCurrentState().noFragmentToProcess();
-        }
+        machine.process_event( *nextEvent );
+        machine.getCurrentState().noFragmentToProcess();
     }
 }
 
