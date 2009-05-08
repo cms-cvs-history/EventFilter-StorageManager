@@ -70,9 +70,9 @@ cvs co -r $tagName EventFilter/SMProxyServer
 
 # possibly needed modules (may need specific version)
 cvs co -r $tagName IOPool/Streamer
+cvs co -r $tagName EventFilter/Modules
 
 # modules needed only for tweaks or development on them
-#cvs co -r $tagName EventFilter/Modules
 #cvs co -r $tagName EventFilter/Playback
 #cvs co -r $tagName EventFilter/ShmBuffer
 #cvs co -r $tagName EventFilter/ShmReader
@@ -86,6 +86,7 @@ if ($tagName == "CMSSW_3_0_0_pre9") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
+  cvs update -dR -r V00-06-02 EventFilter/Modules
   cvs update -dR -r V05-06-08-03 IOPool/Streamer
 endif
 
@@ -94,6 +95,7 @@ if ($tagName == "CMSSW_3_0_0_pre5") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
+  cvs update -dR -r V00-06-02 EventFilter/Modules
   cvs update -dR -r V05-06-02-03 IOPool/Streamer
 endif
 
