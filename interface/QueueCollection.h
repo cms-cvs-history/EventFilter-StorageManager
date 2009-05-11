@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.1.2.5 2009/04/29 12:17:35 dshpakov Exp $
+// $Id: QueueCollection.h,v 1.1.2.6 2009/05/07 08:37:22 mommsen Exp $
 
 #ifndef StorageManager_QueueCollection_h
 #define StorageManager_QueueCollection_h
@@ -32,9 +32,9 @@ namespace stor {
    * returning a std::vector<QueueID> which gives the list
    * of QueueIDs of queues the class should be added.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/04/29 12:17:35 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/05/07 08:37:22 $
    */
 
   template <class T>
@@ -42,10 +42,12 @@ namespace stor {
   {
   public:
 
+    typedef boost::shared_ptr<ConsumerMonitorCollection> ConsCollPtr;
+
     /**
        A default-constructed QueueCollection contains no queues
      */
-    QueueCollection();
+    QueueCollection( ConsCollPtr );
 
     /**
        Set or get the time in seconds that the queue with the given id
@@ -127,7 +129,7 @@ namespace stor {
     /**
        Get consumer monitor collection
     */
-    boost::shared_ptr<ConsumerMonitorCollection> consumerMonitorCollection();
+    ConsCollPtr consumerMonitorCollection();
 
   private:
     typedef ExpirableQueue<T, RejectNewest<T> > expirable_discard_new_queue_t;
@@ -154,6 +156,7 @@ namespace stor {
     std::vector<expirable_discard_old_queue_ptr> _discard_old_queues;
     typedef std::map<ConsumerID, QueueID>        map_type;
     map_type                                     _queue_id_lookup;
+    ConsCollPtr _consumer_monitor_collection;
 
     /*
       These functions are declared private and not implemented to
@@ -193,13 +196,14 @@ namespace stor {
   } // anonymous namespace
 
   template <class T>
-  QueueCollection<T>::QueueCollection() :
+  QueueCollection<T>::QueueCollection( ConsCollPtr ccp ) :
     _protect_discard_new_queues(),
     _protect_discard_old_queues(),
     _protect_lookup(),
     _discard_new_queues(),
     _discard_old_queues(),
-    _queue_id_lookup()
+    _queue_id_lookup(),
+    _consumer_monitor_collection( ccp )
   { }
 
   template <class T>

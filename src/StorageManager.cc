@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.112 2009/05/07 18:52:21 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.113 2009/05/11 15:27:32 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -78,7 +78,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.112 2009/05/07 18:52:21 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.113 2009/05/11 15:27:32 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -192,8 +192,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
                                              getApplicationDescriptor()));
 
   _sharedResources->_registrationCollection.reset( new RegistrationCollection() );
-  _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection() );
-  _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection() );
+  boost::shared_ptr<ConsumerMonitorCollection>
+    cmcptr( &(_sharedResources->_statisticsReporter->getConsumerMonitorCollection()) );
+  _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
+  _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 
   // Main worker threads
   _fragmentProcessor = new FragmentProcessor( this, _sharedResources,

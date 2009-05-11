@@ -155,6 +155,9 @@ void checkHistory( const StateMachine& m,
 int main()
 {
 
+  MockApplicationStub* stub(new MockApplicationStub());
+  MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
+
   FragmentStore fs;
   SharedResourcesPtr sr;
   sr.reset(new SharedResources());
@@ -166,11 +169,11 @@ int main()
   sr->_registrationQueue.reset(new RegistrationQueue(32));
   sr->_streamQueue.reset(new StreamQueue(32));
   sr->_dqmEventQueue.reset(new DQMEventQueue(32));
-  sr->_eventConsumerQueueCollection.reset(new EventQueueCollection());
-  sr->_dqmEventConsumerQueueCollection.reset(new DQMEventQueueCollection());
-
-  MockApplicationStub* stub(new MockApplicationStub());
-  MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
+  sr->_statisticsReporter.reset( new StatisticsReporter( app ) );
+  boost::shared_ptr<ConsumerMonitorCollection>
+    cmcptr( &(sr->_statisticsReporter->getConsumerMonitorCollection()) );
+  sr->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
+  sr->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 
   sr->_discardManager.reset(new DiscardManager(stub->getContext(),
                                                stub->getDescriptor()));

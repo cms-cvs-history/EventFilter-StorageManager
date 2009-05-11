@@ -60,16 +60,20 @@ void testEventDistributor::initEventDistributor()
 {
   if (_eventDistributor.get() == 0)
     {
-      _sharedResources.reset(new SharedResources());
-      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
-      _sharedResources->_eventConsumerQueueCollection.reset(new EventQueueCollection());
-      _sharedResources->_dqmEventQueue.reset(new DQMEventQueue(1024));
-      _eventDistributor.reset(new EventDistributor(_sharedResources));
 
       MockApplicationStub* stub(new MockApplicationStub());
       MockApplication* app(new MockApplication(stub)); // stub is owned now by xdaq::Application
+      _sharedResources.reset(new SharedResources());
+      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
+      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
+      _sharedResources->_dqmEventQueue.reset(new DQMEventQueue(1024));
+      _eventDistributor.reset(new EventDistributor(_sharedResources));
       _sharedResources->_statisticsReporter.reset(new StatisticsReporter(app));
+      boost::shared_ptr<ConsumerMonitorCollection>
+        cmcptr( &(_sharedResources->_statisticsReporter->getConsumerMonitorCollection()) );
+      _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
+
+      _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
     }
 }
 
