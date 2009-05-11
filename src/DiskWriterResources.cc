@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.cc,v 1.1.2.5 2009/05/05 20:14:12 mommsen Exp $
+// $Id: DiskWriterResources.cc,v 1.1.2.6 2009/05/08 14:15:36 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
 
@@ -44,8 +44,6 @@ namespace stor
     double& timeoutValue
   )
   {
-    std::cout << "stream change requested: " << _streamChangeIsNeeded << std::endl;
-
     // Avoid locking for each event when there is no
     // change needed.
     if (! _streamChangeIsNeeded) {return false;}
@@ -70,7 +68,6 @@ namespace stor
   void DiskWriterResources::waitForStreamChange()
   {
     boost::mutex::scoped_lock sl(_streamChangeMutex);
-    std::cout << "wait for stream change" << std::endl;
     if (_streamChangeIsNeeded || _streamChangeInProgress)
       {
         _streamChangeCondition.wait(sl);
