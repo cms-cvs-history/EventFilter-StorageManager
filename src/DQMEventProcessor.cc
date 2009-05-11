@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.11 2009/04/29 16:32:29 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.12 2009/05/04 12:36:17 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -123,6 +123,7 @@ void DQMEventProcessor::processNextDQMEvent()
   {
     _timeout = static_cast<unsigned int>(newTimeoutValue);
     _dqmEventStore.setParameters(dqmParams);
+    checkDirectories(dqmParams);
     _sharedResources->_dqmEventProcessorResources->configurationDone();
   }
 
@@ -155,6 +156,15 @@ void DQMEventProcessor::processCompleteDQMEventRecords()
   {
     _sharedResources->
       _dqmEventConsumerQueueCollection->addEvent(dqmRecordEntry);
+  }
+}
+
+
+void DQMEventProcessor::checkDirectories(DQMProcessingParams const& dqmParams) const
+{
+  if ( dqmParams._archiveDQM )
+  {
+    utils::checkDirectory(dqmParams._filePrefixDQM);
   }
 }
 

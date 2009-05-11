@@ -1,13 +1,15 @@
 /**
- * $Id: Utils.cc,v 1.1.2.4 2009/03/24 14:36:10 paterno Exp $
+ * $Id: Utils.cc,v 1.1.2.5 2009/03/27 13:14:35 paterno Exp $
  */
 
+#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 
 #include <iomanip>
 #include <sstream>
 
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include "xdaq/ApplicationDescriptor.h"
 
@@ -76,6 +78,21 @@ namespace stor
       identifier << appDesc->getClassName() << appDesc->getInstance() << "/";
       return identifier.str();
     }
+    
+    
+    void checkDirectory(const std::string& path)
+    {
+      struct stat64 buf;
+      
+      int retVal = stat64(path.c_str(), &buf);
+      if( retVal !=0 )
+      {
+        std::ostringstream msg;
+        msg << "Directory " << path << " does not exist. Error=" << errno;
+        XCEPT_RAISE(stor::exception::NoSuchDirectory, msg.str());
+      }
+    }
+
 
   } // namespace utils
 

@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.1.2.12 2009/04/06 10:20:48 mommsen Exp $
+// $Id: FileHandler.h,v 1.1.2.13 2009/04/06 13:37:36 mommsen Exp $
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/04/06 10:20:48 $
+   * $Revision: 1.1.2.13 $
+   * $Date: 2009/04/06 13:37:36 $
    */
 
   class FileHandler
@@ -163,14 +163,9 @@ namespace stor {
     
     /**
      * Check if all directories needed for the file output are available.
-     * Throws a cms::Exception when a directory does not exist.
+     * Throws a stor::execption::NoSuchDirectory when a directory does not exist.
      */
     void checkDirectories() const;
-    
-    /**
-     * Throw a cms::Exception when the directory does not exist
-     */
-    void checkDirectory(const std::string&) const;
     
     /**
      * Return the name of the log file

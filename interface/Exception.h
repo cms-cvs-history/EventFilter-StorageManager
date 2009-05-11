@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.12 2009/04/27 16:57:30 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.13 2009/05/11 09:00:39 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -102,6 +102,11 @@ XCEPT_DEFINE_EXCEPTION(stor, DQMEventProcessing)
  * Exception raised in case of a disk writing error
  */
 XCEPT_DEFINE_EXCEPTION(stor, DiskWriting)
+
+/**
+ * Exception when requested directory does not exist
+ */
+XCEPT_DEFINE_EXCEPTION( stor, NoSuchDirectory )
 
 /**
  * Consumer registration exception

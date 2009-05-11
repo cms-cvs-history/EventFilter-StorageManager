@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.9 2009/04/23 13:19:00 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.1.2.10 2009/04/23 19:17:09 mommsen Exp $
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
@@ -27,8 +27,8 @@ namespace stor {
    * to disk every N lumi-sections.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/23 13:19:00 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2009/04/23 19:17:09 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class
@@ -77,6 +77,12 @@ namespace stor {
      */    
     void endOfRun();
 
+    /**
+     * Check if all directories needed for the DQM histogram output are available.
+     * Throws a stor::execption::NoSuchDirectory when a directory does not exist.
+     */
+    void checkDirectories(DQMProcessingParams const&) const;
+ 
 
     xdaq::Application*        _app;
     SharedResourcesPtr        _sharedResources;

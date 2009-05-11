@@ -1,4 +1,4 @@
-// $Id: Utils.h,v 1.1.2.5 2009/03/24 14:36:10 paterno Exp $
+// $Id: Utils.h,v 1.1.2.6 2009/03/27 13:14:34 paterno Exp $
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
@@ -20,8 +20,8 @@ namespace stor {
      * Collection of utility functions used in the storage manager
      *
      * $Author: paterno $
-     * $Revision: 1.1.2.5 $
-     * $Date: 2009/03/24 14:36:10 $
+     * $Revision: 1.1.2.6 $
+     * $Date: 2009/03/27 13:14:34 $
      */
 
     /**
@@ -69,6 +69,11 @@ namespace stor {
        Returns an identifier string composed of class name and instance
     */
     std::string getIdentifier(xdaq::ApplicationDescriptor*);
+    
+    /**
+       Throws a stor::exception::NoSuchDirectory when the directory does not exist
+     */
+    void checkDirectory(const std::string&);
 
 
   } // namespace utils
