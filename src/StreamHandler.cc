@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.1.2.8 2009/04/06 18:31:40 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.1.2.9 2009/04/09 11:26:12 mommsen Exp $
 
 #include <sstream>
 #include <iomanip>
@@ -39,7 +39,7 @@ void StreamHandler::closeTimedOutFiles(utils::time_point_t currentTime)
   ) 
   {
     if ( (*it)->tooOld(currentTime) )
-      it = _fileHandlers.erase(it); // Is this correct?
+      it = _fileHandlers.erase(it);
   }
 }
 
