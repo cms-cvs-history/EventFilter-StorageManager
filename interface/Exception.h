@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.11 2009/04/16 12:55:20 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.12 2009/04/27 16:57:30 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -112,6 +112,12 @@ XCEPT_DEFINE_EXCEPTION( stor, ConsumerRegistration )
  * DQM consumer registration exception
  */
 XCEPT_DEFINE_EXCEPTION( stor, DQMConsumerRegistration )
+
+/**
+ * Exception for sentinel alarm if disk space fills up
+ */
+XCEPT_DEFINE_EXCEPTION( stor, DiskSpaceAlarm )
+
 
 #endif // _storagemanager_Exception_h_
 

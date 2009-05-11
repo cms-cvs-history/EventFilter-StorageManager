@@ -1,9 +1,16 @@
-// $Id: ResourceMonitorCollection.cc,v 1.1.2.10 2009/04/09 17:00:35 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.1.2.1 2009/05/07 10:47:22 mommsen Exp $
 
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <sys/statfs.h>
+
+#include "sentinel/utils/version.h"
+#if SENTINELUTILS_VERSION_MAJOR>1
+#include "sentinel/utils/Alarm.h"
+#endif
+
+#include "xdata/InfoSpaceFactory.h"
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/ResourceMonitorCollection.h"
@@ -12,6 +19,7 @@ using namespace stor;
 
 ResourceMonitorCollection::ResourceMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app),
+_app(app),
 _pool(0)
 {
   putItemsIntoInfoSpace();
@@ -38,6 +46,7 @@ void ResourceMonitorCollection::configureDisks(DiskWritingParams const& dwParams
       oss << "/" << std::setfill('0') << std::setw(2) << i; 
       diskUsage->pathName += oss.str();
     }
+    diskUsage->alarmName = "stor-diskspace-" + diskUsage->pathName;
 
     diskUsage->diskSize = 0;
     struct statfs64 buf;
@@ -138,15 +147,63 @@ void ResourceMonitorCollection::calcDiskUsage()
       (*it)->relDiskUsage.calculateStatistics();
       if (relused > _highWaterMark*100)
       {
-        (*it)->warningColor = "#EF5A10";
-        // TODO: add sentinel warning
+        emitDiskUsageAlarm(*it);
       }
-      else
+      else if (relused < _highWaterMark*95)
+        // do not change alarm level if we are close to the high water mark
       {
-        (*it)->warningColor = "#FFFFFF";
+        revokeDiskUsageAlarm(*it);
       }
     }
   }
+}
+
+
+void ResourceMonitorCollection::emitDiskUsageAlarm(DiskUsagePtr diskUsage)
+{
+  diskUsage->warningColor = "#EF5A10";
+
+#if SENTINELUTILS_VERSION_MAJOR>1
+  MonitoredQuantity::Stats relUsageStats, absUsageStats;
+  diskUsage->absDiskUsage.getStats(relUsageStats);
+  diskUsage->absDiskUsage.getStats(absUsageStats);
+
+  xdata::InfoSpace *is =
+    xdata::getInfoSpaceFactory()->get("urn:xdaq-sentinel:alarms");
+
+  std::ostringstream msg;
+  msg << std::fixed << std::setprecision(1) <<
+    "Disk space usage for " << diskUsage->pathName <<
+    " is " << relUsageStats.getLastSampleValue() << "% (" <<
+    absUsageStats.getLastSampleValue() << "GB of " <<
+    diskUsage->diskSize << "GB).";
+
+  XCEPT_DECLARE(stor::exception::DiskSpaceAlarm, ex, msg.str());
+
+  sentinel::utils::Alarm *alarm =
+    new sentinel::utils::Alarm("warning", ex, _app);
+
+  is->fireItemAvailable(diskUsage->alarmName, alarm);
+#endif
+
+}
+
+
+void ResourceMonitorCollection::revokeDiskUsageAlarm(DiskUsagePtr diskUsage)
+{
+  diskUsage->warningColor = "#FFFFFF";
+
+#if SENTINELUTILS_VERSION_MAJOR>1
+  xdata::InfoSpace *is =
+    xdata::getInfoSpaceFactory()->get("urn:xdaq-sentinel:alarms");
+
+  sentinel::utils::Alarm *alarm =
+    dynamic_cast<sentinel::utils::Alarm*>(is->find( diskUsage->alarmName ));                     
+
+  is->fireItemRevoked(diskUsage->alarmName, _app);
+  delete alarm;
+#endif
+
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.h,v 1.1.2.9 2009/04/09 17:00:58 mommsen Exp $
+// $Id: ResourceMonitorCollection.h,v 1.1.2.1 2009/05/07 10:47:49 mommsen Exp $
 
 #ifndef StorageManager_ResourceMonitorCollection_h
 #define StorageManager_ResourceMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to resource usages
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2009/04/09 17:00:58 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/05/07 10:47:49 $
    */
   
   class ResourceMonitorCollection : public MonitorCollection
@@ -71,6 +71,25 @@ namespace stor {
 
   private:
 
+    struct DiskUsage
+    {
+      MonitoredQuantity absDiskUsage;
+      MonitoredQuantity relDiskUsage;
+      size_t diskSize;
+      std::string pathName;
+      std::string warningColor;
+      std::string alarmName;
+    };
+    typedef boost::shared_ptr<DiskUsage> DiskUsagePtr;
+    typedef std::vector<DiskUsagePtr> DiskUsagePtrList;
+    DiskUsagePtrList _diskUsageList;
+    mutable boost::mutex _diskUsageListMutex;
+
+    MonitoredQuantity _poolUsage;
+    MonitoredQuantity _numberOfCopyWorkers;
+    MonitoredQuantity _numberOfInjectWorkers;
+
+
     //Prevent copying of the ResourceMonitorCollection
     ResourceMonitorCollection(ResourceMonitorCollection const&);
     ResourceMonitorCollection& operator=(ResourceMonitorCollection const&);
@@ -81,31 +100,18 @@ namespace stor {
     
     virtual void do_reset();
 
+    void emitDiskUsageAlarm(DiskUsagePtr);
+    void revokeDiskUsageAlarm(DiskUsagePtr);
+
     void getDiskStats(Stats&) const;
     void calcPoolUsage();
     void calcDiskUsage();
     void calcNumberOfWorkers();
     unsigned int getProcessCount(std::string processName);
 
+    xdaq::Application* _app;
     toolbox::mem::Pool* _pool;
     double _highWaterMark;     //percentage of disk full when issuing an alarm
-
-    struct DiskUsage
-    {
-      MonitoredQuantity absDiskUsage;
-      MonitoredQuantity relDiskUsage;
-      size_t diskSize;
-      std::string pathName;
-      std::string warningColor;
-    };
-    typedef boost::shared_ptr<DiskUsage> DiskUsagePtr;
-    typedef std::vector<DiskUsagePtr> DiskUsagePtrList;
-    DiskUsagePtrList _diskUsageList;
-    mutable boost::mutex _diskUsageListMutex;
-
-    MonitoredQuantity _poolUsage;
-    MonitoredQuantity _numberOfCopyWorkers;
-    MonitoredQuantity _numberOfInjectWorkers;
 
   };
   
