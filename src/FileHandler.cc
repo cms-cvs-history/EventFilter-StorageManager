@@ -1,5 +1,6 @@
-// $Id: FileHandler.cc,v 1.1.2.12 2009/04/06 10:20:37 mommsen Exp $
+// $Id: FileHandler.cc,v 1.1.2.13 2009/04/06 13:40:12 mommsen Exp $
 
+#include <EventFilter/StorageManager/interface/Exception.h>
 #include <EventFilter/StorageManager/interface/FileHandler.h>
 
 #include <FWCore/MessageLogger/interface/MessageLogger.h>
@@ -198,18 +199,23 @@ size_t FileHandler::checkFileSizeMatch(const string& fileName, const size_t& siz
 {
   struct stat64 statBuff;
   int statStatus = stat64(fileName.c_str(), &statBuff);
-  if (statStatus != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Error checking the status of open file "
-      << fileName << std::endl;
+  if ( statStatus != 0 )
+  {
+    std::ostringstream msg;
+    msg << "Error checking the status of open file "
+      << fileName;
+    XCEPT_RAISE(stor::exception::DiskWriting, msg.str());
   }
   
   if ( sizeMismatch(size, statBuff.st_size) )
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Found an unexpected file size when trying to move "
+  {
+    std::ostringstream msg;
+    msg << "Found an unexpected file size when trying to move "
       << "the file to the closed state.  File " << fileName
       << " has an actual size of " << statBuff.st_size
-      << " instead of the expected size of " << size << std::endl;
+      << " instead of the expected size of " << size;
+    XCEPT_RAISE(stor::exception::DiskWriting, msg.str());
+  }
 
   return statBuff.st_size;
 }
@@ -234,9 +240,10 @@ void FileHandler::makeFileReadOnly(const string& fileName) const
 {
   int ronly  = chmod(fileName.c_str(), S_IREAD|S_IRGRP|S_IROTH);
   if (ronly != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Unable to change permissions of " << fileName
+    std::ostringstream msg;
+    msg << "Unable to change permissions of " << fileName
       << " to read only." << std::endl;
+    XCEPT_RAISE(stor::exception::DiskWriting, msg.str());
   }
 }
 
@@ -245,10 +252,11 @@ void FileHandler::renameFile(const string& openFileName, const string& closedFil
 {
   int result = rename( openFileName.c_str(), closedFileName.c_str() );
   if (result != 0) {
-    throw cms::Exception("FileHandler", "moveFileToClosed")
-      << "Unable to move " << openFileName << " to "
+    std::ostringstream msg;
+    msg << "Unable to move " << openFileName << " to "
       << closedFileName << ".  Possibly the storage manager "
-      << "disk areas are full." << std::endl;
+      << "disk areas are full.";
+    XCEPT_RAISE(stor::exception::DiskWriting, msg.str());
   }
 }
 
@@ -273,26 +281,11 @@ const string FileHandler::logFile(const DiskWritingParams& dwp) const
 
 void FileHandler::checkDirectories() const
 {
-  checkDirectory(_diskWritingParams._filePath);
-  checkDirectory(_fileRecord->baseFilePath);
-  checkDirectory(_fileRecord->baseFilePath + "/open");
-  checkDirectory(_fileRecord->baseFilePath + "/closed");
-  checkDirectory(_logPath);
-}
-
-
-void FileHandler::checkDirectory(const string& path) const
-{
-  struct stat64 buf;
-
-  int retVal = stat64(path.c_str(), &buf);
-  if(retVal !=0 )
-    {
-      edm::LogError("StorageManager") << "Directory " << path
-				      << " does not exist. Error=" << errno ;
-      throw cms::Exception("FileHandler","checkDirectory")
-            << "Directory " << path << " does not exist. Error=" << errno << std::endl;
-    }
+  utils::checkDirectory(_diskWritingParams._filePath);
+  utils::checkDirectory(_fileRecord->baseFilePath);
+  utils::checkDirectory(_fileRecord->baseFilePath + "/open");
+  utils::checkDirectory(_fileRecord->baseFilePath + "/closed");
+  utils::checkDirectory(_logPath);
 }
 
 
