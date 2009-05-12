@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessorResources.cc,v 1.1.2.1 2009/04/23 19:19:49 mommsen Exp $
+// $Id: DQMEventProcessorResources.cc,v 1.1.2.2 2009/05/12 12:58:16 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventProcessorResources.h"
 
@@ -8,9 +8,7 @@ namespace stor
   _requestsPending(false),
   _requestsInProgress(false)
   {
-    _pendingRequests.configuration = false;
-    _pendingRequests.endOfRun = false;
-    _pendingRequests.storeDestruction = false;
+    _pendingRequests.reset();
   }
   
   void DQMEventProcessorResources::
@@ -60,10 +58,12 @@ namespace stor
 
     boost::mutex::scoped_lock sl(_requestsMutex);
 
-    _requestsPending = false;
     requests = _pendingRequests;
     params = _requestedDQMProcessingParams;
     timeoutValue = _requestedTimeout;
+
+    _requestsPending = false;
+    _pendingRequests.reset();
     _requestsInProgress = true;
 
     return true;
@@ -92,6 +92,13 @@ namespace stor
         _requestsCondition.notify_one();
       }
     _requestsInProgress = false;
+  }
+
+  void DQMEventProcessorResources::Requests::reset()
+  {
+    configuration = false;
+    endOfRun = false;
+    storeDestruction = false;
   }
 
 } // namespace stor
