@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.22 2009/05/12 13:37:32 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.23 2009/05/12 14:40:02 dshpakov Exp $
 
 #include <string>
 #include <sstream>
@@ -36,14 +36,14 @@ _progressMarker( "unused" )
 
   try
   {
-    ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
-    ispace->fireItemAvailable( "progressMarker", &_progressMarker );
+//     ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
+//     ispace->fireItemAvailable( "progressMarker", &_progressMarker );
   }
   catch(xdata::exception::Exception &e)
   {
     std::stringstream oss;
     
-    oss << "Failed to put stateName into info space " << ispace->name();
+    oss << "Failed to put items into info space " << ispace->name();
     
     XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
   }
