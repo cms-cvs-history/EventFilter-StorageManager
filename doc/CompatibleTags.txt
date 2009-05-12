@@ -29,6 +29,17 @@ CMSSW_3_0_0_pre5:
 (Run EventFilter/StorageManager/test/demoSystem/bin/applyDevelopmentPatches.pl
 to get the useful and/or necessary patches for the demo system.)
 
+CMSSW_2_2_6:
+ - EventFilter/StorageManager refdev01_scratch_branch
+ - EventFilter/ResourceBroker V00-12-02
+ - IOPool/Streamer V05-05-01-03
+ - EventFilter/SMProxyServer V01-08-12
+ - EventFilter/AutoBU CMSSW_2_2_6
+ - EventFilter/Processor CMSSW_2_2_6
+ - EventFilter/Modules V00-06-02
+(Run EventFilter/StorageManager/test/demoSystem/bin/applyDevelopmentPatches.pl
+to get the useful and/or necessary patches for the demo system.)
+
 ----------------------------------------
 
 For development in the refdev01_intg_branch of the EventFilter/StorageManager
