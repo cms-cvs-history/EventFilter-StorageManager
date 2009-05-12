@@ -1,9 +1,11 @@
-// $Id: ResourceMonitorCollection.cc,v 1.1.2.1 2009/05/07 10:47:22 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.1.2.2 2009/05/11 09:00:55 mommsen Exp $
 
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <sys/statfs.h>
+#include <dirent.h>
+#include <fnmatch.h>
 
 #include "sentinel/utils/version.h"
 #if SENTINELUTILS_VERSION_MAJOR>1
@@ -211,7 +213,7 @@ void ResourceMonitorCollection::calcNumberOfWorkers()
 {
   _numberOfCopyWorkers.addSample( getProcessCount("CopyWorker.pl") );
   _numberOfInjectWorkers.addSample( getProcessCount("InjectWorker.pl") );
-
+  
   _numberOfCopyWorkers.calculateStatistics();
   _numberOfInjectWorkers.calculateStatistics();
 }
@@ -241,23 +243,62 @@ void ResourceMonitorCollection::do_reset()
   }
 }
 
+namespace {
+  int filter(const struct dirent *dir)
+  {
+    return !fnmatch("[1-9]*", dir->d_name, 0);
+  }
+  
+  bool grep(const struct dirent *dir, const std::string name)
+  {
+    bool match = false;
+    
+    std::ostringstream cmdline;
+    cmdline << "/proc/" << dir->d_name << "/cmdline";
+    
+    std::ifstream in;
+    in.open( cmdline.str().c_str() );
 
-unsigned int ResourceMonitorCollection::getProcessCount(std::string processName)
+    if ( in.is_open() )
+    {
+      std::string line;
+      while( getline(in,line) )
+      {
+        if ( line.find(name) != std::string::npos )
+        {
+          match = true;
+          break;
+        }
+      }
+      in.close();
+    }
+
+    return match;
+  }
+}
+
+
+int ResourceMonitorCollection::getProcessCount(const std::string processName)
 {
 
-  int count = -1;
-  char buf[128];
-  std::string command = "ps -C " + processName + " --no-header | wc -l";
+  int count(0);
+  struct dirent **namelist;
+  int n;
+  
+  n = scandir("/proc", &namelist, filter, 0);
 
-  FILE *fp = popen(command.c_str(), "r");
-  if ( fp )
+  if (n < 0) return -1;
+
+  while(n--)
   {
-    if ( fgets(buf, sizeof(buf), fp) )
+    if ( grep(namelist[n], processName) )
     {
-      count = strtol(buf, '\0', 10);
+      ++count;
     }
-    pclose( fp );
+    free(namelist[n]);
   }
+  free(namelist);
+
   return count;
 }
 
