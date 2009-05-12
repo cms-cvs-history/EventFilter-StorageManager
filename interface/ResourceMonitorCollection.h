@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.h,v 1.1.2.1 2009/05/07 10:47:49 mommsen Exp $
+// $Id: ResourceMonitorCollection.h,v 1.1.2.2 2009/05/11 09:00:39 mommsen Exp $
 
 #ifndef StorageManager_ResourceMonitorCollection_h
 #define StorageManager_ResourceMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to resource usages
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/05/07 10:47:49 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/05/11 09:00:39 $
    */
   
   class ResourceMonitorCollection : public MonitorCollection
@@ -107,7 +107,7 @@ namespace stor {
     void calcPoolUsage();
     void calcDiskUsage();
     void calcNumberOfWorkers();
-    unsigned int getProcessCount(std::string processName);
+    int getProcessCount(const std::string processName);
 
     xdaq::Application* _app;
     toolbox::mem::Pool* _pool;
