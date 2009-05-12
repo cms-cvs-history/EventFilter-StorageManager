@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.24 2009/04/09 11:26:12 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.25 2009/04/16 12:58:30 mommsen Exp $
 
 #include <unistd.h>
 
@@ -86,9 +86,12 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
     LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg << xcept::stdformat_exception_history(e));
 
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE_NESTED(stor::exception::FragmentProcessing,
       sentinelException, errorMsg, e);
     _app->notifyQualified("fatal", sentinelException);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
   catch(std::exception &e)
@@ -98,9 +101,12 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
     LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg);
     
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE(stor::exception::FragmentProcessing,
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
   catch(...)
@@ -110,9 +116,12 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
     LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg);
     
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE(stor::exception::FragmentProcessing,
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
 

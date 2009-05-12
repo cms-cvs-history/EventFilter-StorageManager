@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.13 2009/05/11 15:28:54 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.14 2009/05/12 12:58:16 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -71,33 +71,42 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
     LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg << xcept::stdformat_exception_history(e));
 
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE_NESTED(stor::exception::DQMEventProcessing,
       sentinelException, errorMsg, e);
     _app->notifyQualified("fatal", sentinelException);
+    #endif
+    
     _sharedResources->moveToFailedState();
   }
   catch(std::exception &e)
   {
     errorMsg += e.what();
-
+    
     LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg);
     
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE(stor::exception::DQMEventProcessing,
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
+    #endif
+    
     _sharedResources->moveToFailedState();
   }
   catch(...)
   {
     errorMsg += "Unknown exception";
-
+    
     LOG4CPLUS_FATAL(_app->getApplicationLogger(),
       errorMsg);
     
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE(stor::exception::DQMEventProcessing,
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
 

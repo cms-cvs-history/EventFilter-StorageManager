@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.113 2009/05/11 15:27:32 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.114 2009/05/11 16:34:41 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -78,7 +78,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.113 2009/05/11 15:27:32 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.114 2009/05/11 16:34:41 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -216,7 +216,10 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
     LOG4CPLUS_FATAL(getApplicationLogger(),
       e.what() << xcept::stdformat_exception_history(e));
 
+    #ifndef STOR_BYPASS_SENTINEL
     notifyQualified("fatal", e);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
   catch(std::exception &e)
@@ -224,9 +227,12 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
     LOG4CPLUS_FATAL(getApplicationLogger(),
       e.what());
     
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE(stor::exception::Exception,
       sentinelException, e.what());
     notifyQualified("fatal", sentinelException);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
   catch(...)
@@ -235,9 +241,12 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
     LOG4CPLUS_FATAL(getApplicationLogger(),
       errorMsg);
     
+    #ifndef STOR_BYPASS_SENTINEL
     XCEPT_DECLARE(stor::exception::Exception,
       sentinelException, errorMsg);
     notifyQualified("fatal", sentinelException);
+    #endif
+
     _sharedResources->moveToFailedState();
   }
 
@@ -2556,9 +2565,11 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
       LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
 
+      #ifndef STOR_BYPASS_SENTINEL
       XCEPT_DECLARE(stor::exception::ConsumerRegistration,
       sentinelException, errorMsg);
       notifyQualified("error", sentinelException);
+      #endif
 
       writeErrorString( out, errorMsg );
       return;
@@ -2568,9 +2579,11 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
         errorMsg << xcept::stdformat_exception_history(excpt));
 
+      #ifndef STOR_BYPASS_SENTINEL
       XCEPT_DECLARE_NESTED(stor::exception::ConsumerRegistration,
       sentinelException, errorMsg, excpt);
       notifyQualified("error", sentinelException);
+      #endif
 
       writeErrorString( out, errorMsg );
       return;
@@ -2581,9 +2594,11 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
       LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
 
+      #ifndef STOR_BYPASS_SENTINEL
       XCEPT_DECLARE(stor::exception::ConsumerRegistration,
       sentinelException, errorMsg);
       notifyQualified("error", sentinelException);
+      #endif
 
       writeErrorString( out, errorMsg );
       return;
@@ -2731,9 +2746,11 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
 
       LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
 
+      #ifndef STOR_BYPASS_SENTINEL
       XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
       sentinelException, errorMsg);
       notifyQualified("error", sentinelException);
+      #endif
 
       writeErrorString( out, errorMsg );
       return;
@@ -2743,9 +2760,11 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
       LOG4CPLUS_ERROR(this->getApplicationLogger(),
         errorMsg << xcept::stdformat_exception_history(excpt));
 
+      #ifndef STOR_BYPASS_SENTINEL
       XCEPT_DECLARE_NESTED(stor::exception::DQMConsumerRegistration,
       sentinelException, errorMsg, excpt);
       notifyQualified("error", sentinelException);
+      #endif
 
       writeErrorString( out, errorMsg );
       return;
@@ -2756,9 +2775,11 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
 
       LOG4CPLUS_ERROR(this->getApplicationLogger(), errorMsg);
 
+      #ifndef STOR_BYPASS_SENTINEL
       XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
       sentinelException, errorMsg);
       notifyQualified("error", sentinelException);
+      #endif
 
       writeErrorString( out, errorMsg );
       return;
