@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.12 2009/05/04 12:36:17 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.13 2009/05/11 15:28:54 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -116,29 +116,27 @@ void DQMEventProcessor::processNextDQMEvent()
 
   processCompleteDQMEventRecords();
 
+  DQMEventProcessorResources::Requests requests;
   DQMProcessingParams dqmParams;
   double newTimeoutValue;
   if (_sharedResources->_dqmEventProcessorResources->
-    configurationRequested(dqmParams, newTimeoutValue))
+    getRequests(requests, dqmParams, newTimeoutValue))
   {
-    _timeout = static_cast<unsigned int>(newTimeoutValue);
-    _dqmEventStore.setParameters(dqmParams);
-    checkDirectories(dqmParams);
-    _sharedResources->_dqmEventProcessorResources->configurationDone();
-  }
-
-  if (_sharedResources->_dqmEventProcessorResources->
-      endOfRunRequested())
-  {
-    endOfRun();
-    _sharedResources->_dqmEventProcessorResources->endOfRunDone();
-  }
-
-  if (_sharedResources->_dqmEventProcessorResources->
-      storeDestructionRequested())
-  {
-    _dqmEventStore.clear();
-    _sharedResources->_dqmEventProcessorResources->storeDestructionDone();
+    if (requests.configuration)
+    {
+      _timeout = static_cast<unsigned int>(newTimeoutValue);
+      _dqmEventStore.setParameters(dqmParams);
+      checkDirectories(dqmParams);
+    }
+    if (requests.endOfRun)
+    {
+      endOfRun();
+    }
+    if (requests.storeDestruction)
+    {
+      _dqmEventStore.clear();
+    }
+    _sharedResources->_dqmEventProcessorResources->requestsDone();
   }
 }
 
