@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessorResources.h,v 1.1.2.3 2009/05/12 12:57:51 mommsen Exp $
+// $Id: DQMEventProcessorResources.h,v 1.1.2.4 2009/05/12 13:46:16 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_DQMEventProcessorResources_h
@@ -17,8 +17,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/05/12 12:57:51 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2009/05/12 13:46:16 $
    */
 
   class DQMEventProcessorResources
@@ -76,7 +76,7 @@ namespace stor
     /**
      * Returns true when requests are pending or being processed
      */
-    bool requestsOngoing();
+    virtual bool requestsOngoing();
 
     /**
      * Indicates that the requests were processed
