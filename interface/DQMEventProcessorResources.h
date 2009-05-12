@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessorResources.h,v 1.1.2.2 2009/04/24 18:50:29 biery Exp $
+// $Id: DQMEventProcessorResources.h,v 1.1.2.3 2009/05/12 12:57:51 mommsen Exp $
 
 
 #ifndef EventFilter_StorageManager_DQMEventProcessorResources_h
@@ -16,9 +16,9 @@ namespace stor
    * Container class for resources that are needed by the DQMEventProcessor
    * and need to be accessed from multiple threads.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/04/24 18:50:29 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/05/12 12:57:51 $
    */
 
   class DQMEventProcessorResources
@@ -30,6 +30,8 @@ namespace stor
       bool configuration;
       bool endOfRun;
       bool storeDestruction;
+
+      void reset();
     };
 
     /**
