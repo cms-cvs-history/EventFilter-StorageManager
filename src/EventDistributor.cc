@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.48 2009/05/07 18:52:08 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.1.2.49 2009/05/11 16:34:41 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -6,8 +6,8 @@ using namespace stor;
 
 
 EventDistributor::EventDistributor(SharedResourcesPtr sr):
-  _eventConsumerQueueCollection( boost::shared_ptr<ConsumerMonitorCollection>( &(sr->_statisticsReporter->getConsumerMonitorCollection())) ),
-  _DQMEventQueueCollection( boost::shared_ptr<ConsumerMonitorCollection>( &(sr->_statisticsReporter->getConsumerMonitorCollection())) ),
+  _eventConsumerQueueCollection( sr->_statisticsReporter->getConsumerMonitorCollection() ),
+  _DQMEventQueueCollection( sr->_statisticsReporter->getConsumerMonitorCollection() ),
   _sharedResources(sr)
 {}
 

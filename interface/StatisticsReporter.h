@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.15 2009/05/06 10:05:46 dshpakov Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.16 2009/05/07 10:47:49 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -30,9 +30,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.15 $
-   * $Date: 2009/05/06 10:05:46 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.16 $
+   * $Date: 2009/05/07 10:47:49 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -43,6 +43,7 @@ namespace stor {
     
     ~StatisticsReporter();
 
+    typedef boost::shared_ptr<ConsumerMonitorCollection> CMCPtr;
 
     const RunMonitorCollection& getRunMonitorCollection() const
     { return _runMonCollection; }
@@ -93,15 +94,11 @@ namespace stor {
     { return _resourceMonCollection; }
 
 
-    const ConsumerMonitorCollection& getConsumerMonitorCollection() const
+    CMCPtr getConsumerMonitorCollection()
     {
       return _consumerMonitorCollection;
     }
 
-    ConsumerMonitorCollection& getConsumerMonitorCollection()
-    {
-      return _consumerMonitorCollection;
-    }
 
     // Current state name:
     const std::string& externallyVisibleState() const;
@@ -134,7 +131,7 @@ namespace stor {
     DataSenderMonitorCollection _dataSenderMonCollection;
     DQMEventMonitorCollection _dqmEventMonCollection;
     ResourceMonitorCollection _resourceMonCollection;
-    ConsumerMonitorCollection _consumerMonitorCollection;
+    CMCPtr _consumerMonitorCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 

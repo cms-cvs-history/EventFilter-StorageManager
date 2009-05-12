@@ -171,7 +171,7 @@ int main()
   sr->_dqmEventQueue.reset(new DQMEventQueue(32));
   sr->_statisticsReporter.reset( new StatisticsReporter( app ) );
   boost::shared_ptr<ConsumerMonitorCollection>
-    cmcptr( &(sr->_statisticsReporter->getConsumerMonitorCollection()) );
+    cmcptr( sr->_statisticsReporter->getConsumerMonitorCollection() );
   sr->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
   sr->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 

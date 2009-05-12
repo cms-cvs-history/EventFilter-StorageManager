@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.37 2009/05/07 10:47:05 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.38 2009/05/07 13:09:13 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -191,7 +191,8 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   RegistrationCollection::ConsumerRegistrations regs;
   rc->getEventConsumers( regs );
 
-  ConsumerMonitorCollection& cc = resPtr->_statisticsReporter->getConsumerMonitorCollection();
+  boost::shared_ptr<ConsumerMonitorCollection> cc =
+    resPtr->_statisticsReporter->getConsumerMonitorCollection();
 
   // Loop over consumers:
   for( RegistrationCollection::ConsumerRegistrations::const_iterator it = regs.begin();
@@ -248,7 +249,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       // Events queued:
       std::ostringstream eq_oss;
       MonitoredQuantity::Stats eq_stats;
-      bool eq_found = cc.getQueued( (*it)->consumerId(), eq_stats );
+      bool eq_found = cc->getQueued( (*it)->consumerId(), eq_stats );
       if( eq_found )
         {
           eq_oss << eq_stats.getSampleCount();
@@ -263,7 +264,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       // Events served:
       std::ostringstream es_oss;
       MonitoredQuantity::Stats es_stats;
-      bool es_found = cc.getServed( (*it)->consumerId(), es_stats );
+      bool es_found = cc->getServed( (*it)->consumerId(), es_stats );
       if( es_found )
         {
           es_oss << es_stats.getSampleCount();

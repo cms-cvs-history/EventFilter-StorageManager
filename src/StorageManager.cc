@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.114 2009/05/11 16:34:41 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.115 2009/05/12 13:37:32 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -78,7 +78,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.114 2009/05/11 16:34:41 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.115 2009/05/12 13:37:32 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -193,7 +193,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   _sharedResources->_registrationCollection.reset( new RegistrationCollection() );
   boost::shared_ptr<ConsumerMonitorCollection>
-    cmcptr( &(_sharedResources->_statisticsReporter->getConsumerMonitorCollection()) );
+    cmcptr( _sharedResources->_statisticsReporter->getConsumerMonitorCollection() );
   _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
   _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 

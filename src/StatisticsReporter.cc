@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.21 2009/05/07 10:47:22 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.22 2009/05/12 13:37:32 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -25,13 +25,13 @@ _streamsMonCollection(app),
 _dataSenderMonCollection(app),
 _dqmEventMonCollection(app),
 _resourceMonCollection(app),
-_consumerMonitorCollection(app),
 _monitorWL(0),
 _doMonitoring(true),
 _externallyVisibleState( "Halted" ),
 _xdaq_state_name( "Halted" ),
 _progressMarker( "unused" )
 {
+  _consumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
   xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
 
   try
@@ -103,7 +103,7 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _dataSenderMonCollection.update();
     _dqmEventMonCollection.update();
     _resourceMonCollection.update();
-    _consumerMonitorCollection.update();
+    _consumerMonitorCollection->update();
     reportStateName();
   }
   catch(xcept::Exception &e)
@@ -158,7 +158,7 @@ void StatisticsReporter::reset()
   _dataSenderMonCollection.reset();
   _dqmEventMonCollection.reset();
   _resourceMonCollection.reset();
-  _consumerMonitorCollection.reset();
+  _consumerMonitorCollection->reset();
 }
 
 
