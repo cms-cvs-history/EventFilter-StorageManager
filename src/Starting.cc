@@ -1,4 +1,4 @@
-// $Id: Starting.cc,v 1.1.2.1 2009/05/05 20:13:25 mommsen Exp $
+// $Id: Starting.cc,v 1.1.2.2 2009/05/08 14:16:40 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -82,7 +82,7 @@ Starting::workerThreadsConfigured() const
   // check if the requests are still being processed
   if ( sharedResources->_diskWriterResources->streamChangeOngoing() ) return false;
 
-  sharedResources->_dqmEventProcessorResources->waitForConfiguration();
+  if ( sharedResources->_dqmEventProcessorResources->requestsOngoing() ) return false;
 
   return true; 
 }
