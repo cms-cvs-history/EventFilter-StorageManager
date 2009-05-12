@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.cc,v 1.1.2.6 2009/05/08 14:15:36 mommsen Exp $
+// $Id: DiskWriterResources.cc,v 1.1.2.7 2009/05/11 18:09:16 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DiskWriterResources.h"
 
@@ -44,11 +44,11 @@ namespace stor
     double& timeoutValue
   )
   {
-    // Avoid locking for each event when there is no
-    // change needed.
+    boost::mutex::scoped_lock sl(_streamChangeMutex);
+
     if (! _streamChangeIsNeeded) {return false;}
 
-    boost::mutex::scoped_lock sl(_streamChangeMutex);
+    _streamChangeIsNeeded = false;
 
     doConfig = _configurationIsNeeded;
     if (_configurationIsNeeded)
@@ -59,7 +59,6 @@ namespace stor
       timeoutValue = _requestedTimeout;
     }
 
-    _streamChangeIsNeeded = false;
     _streamChangeInProgress = true;
 
     return true;
@@ -98,10 +97,9 @@ namespace stor
 
   bool DiskWriterResources::fileClosingTestRequested()
   {
-    if (! _fileClosingTestIsNeeded) {return false;}
-
     boost::mutex::scoped_lock sl(_generalMutex);
 
+    if (! _fileClosingTestIsNeeded) {return false;}
     _fileClosingTestIsNeeded = false;
     return true;
   }

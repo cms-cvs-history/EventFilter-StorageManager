@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessorResources.cc,v 1.1.2.2 2009/05/12 12:58:16 mommsen Exp $
+// $Id: DQMEventProcessorResources.cc,v 1.1.2.3 2009/05/12 13:45:47 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventProcessorResources.h"
 
@@ -52,17 +52,16 @@ namespace stor
   bool DQMEventProcessorResources::
   getRequests(Requests& requests, DQMProcessingParams& params, double& timeoutValue)
   {
-    // Avoid locking for each event when there is no
-    // change needed.
+    boost::mutex::scoped_lock sl(_requestsMutex);
+
     if (! _requestsPending) {return false;}
 
-    boost::mutex::scoped_lock sl(_requestsMutex);
+    _requestsPending = false;
 
     requests = _pendingRequests;
     params = _requestedDQMProcessingParams;
     timeoutValue = _requestedTimeout;
 
-    _requestsPending = false;
     _pendingRequests.reset();
     _requestsInProgress = true;
 
