@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.1.2.7 2009/05/11 16:34:41 dshpakov Exp $
+// $Id: QueueCollection.h,v 1.1.2.8 2009/05/13 10:02:47 dshpakov Exp $
 
 #ifndef StorageManager_QueueCollection_h
 #define StorageManager_QueueCollection_h
@@ -33,8 +33,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: dshpakov $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/05/11 16:34:41 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2009/05/13 10:02:47 $
    */
 
   template <class T>
@@ -340,20 +340,9 @@ namespace stor {
                  boost::bind(&QueueCollection<T>::_enqueue_event, 
                              this, _1, event));
 
-    read_lock_t lookup_lock( _protect_lookup );
-
     for( std::vector<QueueID>::iterator i = routes.begin(); i != routes.end(); ++i )
       {
-        // Lookup via linear search:
-        for( map_type::const_iterator j = _queue_id_lookup.begin();
-             j != _queue_id_lookup.end(); ++j )
-          {
-            if( j->second == *i )
-              {
-                _consumer_monitor_collection->addQueuedEventSample( j->first,
-                                                                    event.totalDataSize() );
-              }
-          }
+        _consumer_monitor_collection->addQueuedEventSample( *i, event.totalDataSize() );
       }
 
   }
@@ -385,6 +374,12 @@ namespace stor {
           // does not return, no break needed
         }
       }
+
+    if (!result.empty())
+      {
+        _consumer_monitor_collection->addServedEventSample( id, result.totalDataSize() );
+      }
+
     return result;
   }
 
@@ -402,7 +397,6 @@ namespace stor {
       if (i == _queue_id_lookup.end()) return result;
       id = i->second;
     }
-    _consumer_monitor_collection->addServedEventSample( cid, result.totalDataSize() );
     return popEvent(id);
   }
 
