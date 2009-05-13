@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.115 2009/05/12 13:37:32 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.116 2009/05/12 14:40:02 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -78,7 +78,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   mybuffer_(7000000),
   _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.115 2009/05/12 13:37:32 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.116 2009/05/12 14:40:02 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -2516,7 +2516,8 @@ std::string StorageManager::externallyVisibleState() const
 {
   if( !_sharedResources ) return "Halted";
   if( !_sharedResources->_statisticsReporter ) return "Halted";
-  return _sharedResources->_statisticsReporter->externallyVisibleState();
+  return _sharedResources->_statisticsReporter->
+    getStateMachineMonitorCollection().externallyVisibleState();
 }
 
 ////////////////////////////////////////////
