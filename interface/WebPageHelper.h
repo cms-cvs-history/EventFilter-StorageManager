@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.20 2009/05/07 10:47:49 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.21 2009/05/07 13:08:24 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -28,8 +28,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.20 $
-   * $Date: 2009/05/07 10:47:49 $
+   * $Revision: 1.1.2.21 $
+   * $Date: 2009/05/07 13:08:24 $
    */
   
   class WebPageHelper
@@ -109,7 +109,7 @@ namespace stor {
     /**
      * Returns the webpage body with the standard header as XHTML node
      */
-    XHTMLMaker::Node* createWebPageBody(XHTMLMaker&, const std::string stateName);
+    XHTMLMaker::Node* createWebPageBody(XHTMLMaker&, const StatisticsReporterPtr);
 
     /**
      * Adds the links for the other SM webpages

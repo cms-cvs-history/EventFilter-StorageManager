@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.38 2009/05/07 13:09:13 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.39 2009/05/12 14:40:02 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -59,8 +59,7 @@ void WebPageHelper::defaultWebPage
   StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
 
   // Create the body with the standard header
-  XHTMLMaker::Node* body = createWebPageBody(maker,
-    statReporter->externallyVisibleState());
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
 
   //TODO: Failed printout
 
@@ -95,8 +94,7 @@ void WebPageHelper::storedDataWebPage
   StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = 
-    createWebPageBody(maker, statReporter->externallyVisibleState());
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter); 
 
   addDOMforStoredData(maker, body, statReporter->getStreamsMonitorCollection());
 
@@ -124,8 +122,7 @@ void WebPageHelper::filesWebPage
   StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = 
-    createWebPageBody(maker, statReporter->externallyVisibleState());
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
 
   addDOMforFiles(maker, body, statReporter->getFilesMonitorCollection());  
 
@@ -149,8 +146,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   XHTMLMaker maker;
 
   // Make header:
-  XHTMLMaker::Node* body =
-    createWebPageBody( maker, resPtr->_statisticsReporter->externallyVisibleState() );
+  XHTMLMaker::Node* body = createWebPageBody( maker, resPtr->_statisticsReporter );
 
   // Title:
   XHTMLMaker::AttrMap title_attr;
@@ -304,8 +300,7 @@ void WebPageHelper::resourceBrokerOverview
   StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = 
-    createWebPageBody(maker, statReporter->externallyVisibleState());
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
 
   addOutputModuleTables(maker, body,
                         statReporter->getDataSenderMonitorCollection());  
@@ -336,8 +331,7 @@ void WebPageHelper::resourceBrokerDetail
   StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = 
-    createWebPageBody(maker, statReporter->externallyVisibleState());
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
 
   addResourceBrokerDetails(maker, body, uniqueRBID,
                            statReporter->getDataSenderMonitorCollection());  
@@ -368,8 +362,7 @@ void WebPageHelper::dqmEventWebPage
   StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
   
   // Create the body with the standard header
-  XHTMLMaker::Node* body = 
-    createWebPageBody(maker, statReporter->externallyVisibleState());
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
 
   addDOMforProcessedDQMEvents(maker, body, statReporter->getDQMEventMonitorCollection());  
   addDOMforDQMEventStatistics(maker, body, statReporter->getDQMEventMonitorCollection());  
@@ -393,7 +386,7 @@ std::string WebPageHelper::baseURL() const
 XHTMLMaker::Node* WebPageHelper::createWebPageBody
 (
   XHTMLMaker& maker,
-  const std::string stateName
+  const StatisticsReporterPtr statReporter
 )
 {
   std::ostringstream title;
@@ -453,7 +446,8 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   instanceTableDiv = maker.addNode("td", instanceTableRow, tableDivAttr);
   header = maker.addNode("font", instanceTableDiv, fontAttr);
   header = maker.addNode("b", header);
-  maker.addText(header, stateName);
+  maker.addText(header, 
+    statReporter->getStateMachineMonitorCollection().externallyVisibleState());
 
   instanceTableRow = maker.addNode("tr", instanceTable, _rowAttr);
   instanceTableDiv = maker.addNode("td", instanceTableRow);
