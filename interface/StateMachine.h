@@ -1,10 +1,9 @@
-// $Id: StateMachine.h,v 1.1.2.26 2009/04/28 18:16:41 biery Exp $
+// $Id: StateMachine.h,v 1.1.2.27 2009/05/05 20:11:01 mommsen Exp $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/Notifier.h"
 
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/in_state_reaction.hpp>
@@ -16,8 +15,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <ctime>
-#include <sys/time.h>
 
 namespace bsc = boost::statechart;
 
@@ -29,6 +26,7 @@ namespace stor
   class EventDistributor;
   class FragmentStore;
   class Notifier;
+  class TransitionRecord;
 
   ////////////////////////////////////////////////
   //// Forward declarations of state classes: ////
@@ -100,32 +98,6 @@ namespace stor
 
   };
 
-  ///////////////////////////
-  //// TransitionRecord: ////
-  ///////////////////////////
-
-  class TransitionRecord
-  {
-
-  public:
-
-    TransitionRecord( const std::string& state_name,
-                      bool is_entry );
-
-    const std::string& stateName() const { return _stateName; }
-    bool isEntry() const { return _isEntry; }
-    const struct timeval& timeStamp() const { return _timestamp; }
-
-    friend std::ostream& operator << ( std::ostream&,
-                                       const TransitionRecord& );
-
-  private:
-
-    std::string _stateName;
-    bool _isEntry;
-    struct timeval _timestamp;
-
-  };
 
   ///////////////////////
   //// StateMachine: ////
@@ -146,12 +118,6 @@ namespace stor
     Operations const& getCurrentState() const;
 
     void updateHistory( const TransitionRecord& tr );
-    void clearHistory() { _history.clear(); }
-
-    typedef std::vector<TransitionRecord> History;
-    const History& history() const { return _history; }
-
-    void dumpHistory( std::ostream& ) const;
 
     EventDistributor* getEventDistributor() const { return _eventDistributor; }
     FragmentStore* getFragmentStore() const { return _fragmentStore; }
@@ -165,8 +131,6 @@ namespace stor
     void setExternallyVisibleState( const std::string& );
 
   private:
-
-    History _history;
 
     DiskWriter* _diskWriter;
     EventDistributor* _eventDistributor;
