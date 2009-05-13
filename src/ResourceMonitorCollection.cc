@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.cc,v 1.1.2.2 2009/05/11 09:00:55 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.1.2.3 2009/05/12 15:39:08 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -22,8 +22,11 @@ using namespace stor;
 ResourceMonitorCollection::ResourceMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app),
 _app(app),
-_pool(0)
+_pool(0),
+_progressMarker( "unused" )
 {
+  _infoSpaceItems.push_back(std::make_pair("progressMarker", &_progressMarker));
+
   putItemsIntoInfoSpace();
 }
 
@@ -221,7 +224,7 @@ void ResourceMonitorCollection::calcNumberOfWorkers()
 
 void ResourceMonitorCollection::do_updateInfoSpace()
 {
-  //nothing to do
+  //nothing to do: the progressMarker does not change its value
 }
 
 

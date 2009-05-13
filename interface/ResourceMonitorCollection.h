@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.h,v 1.1.2.2 2009/05/11 09:00:39 mommsen Exp $
+// $Id: ResourceMonitorCollection.h,v 1.1.2.3 2009/05/12 15:39:32 mommsen Exp $
 
 #ifndef StorageManager_ResourceMonitorCollection_h
 #define StorageManager_ResourceMonitorCollection_h
@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "toolbox/mem/Pool.h"
+#include "xdata/String.h"
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
@@ -21,8 +22,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to resource usages
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/05/11 09:00:39 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/05/12 15:39:32 $
    */
   
   class ResourceMonitorCollection : public MonitorCollection
@@ -113,6 +114,8 @@ namespace stor {
     toolbox::mem::Pool* _pool;
     double _highWaterMark;     //percentage of disk full when issuing an alarm
 
+    // Unused status string from old SM
+    xdata::String _progressMarker;
   };
   
 } // namespace stor
