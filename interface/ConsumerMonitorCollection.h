@@ -1,10 +1,10 @@
 // -*- c++ -*-
-// $Id: ConsumerMonitorCollection.h,v 1.1.2.4 2009/05/06 10:05:46 dshpakov Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.1.2.5 2009/05/06 20:36:16 dshpakov Exp $
 
 #ifndef CONSUMERMONITORCOLLECTION
 #define CONSUMERMONITORCOLLECTION
 
-#include "EventFilter/StorageManager/interface/ConsumerID.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 
@@ -26,32 +26,27 @@ namespace stor
     /**
        Add queued sample
     */
-    void addQueuedEventSample( ConsumerID cid, unsigned int data_size );
+    void addQueuedEventSample( QueueID qid, unsigned int data_size );
 
     /**
        Add served sample
     */
-    void addServedEventSample( ConsumerID cid, unsigned int data_size );
+    void addServedEventSample( QueueID qid, unsigned int data_size );
 
     /**
        Get queued data size. Return false if consumer ID not found.
     */
-    bool getQueued( ConsumerID cid, MonitoredQuantity::Stats& result );
+    bool getQueued( QueueID qid, MonitoredQuantity::Stats& result );
 
     /**
        Get served data size. Return false if consumer ID not found.
     */
-    bool getServed( ConsumerID cid, MonitoredQuantity::Stats& result );
+    bool getServed( QueueID qid, MonitoredQuantity::Stats& result );
 
     /**
        Reset sizes to zero leaving consumers in
     */
     void resetCounters();
-
-    /**
-       Clear all consumer data
-    */
-    void clearConsumers();
 
   private:
 
@@ -63,7 +58,7 @@ namespace stor
     virtual void do_reset();
     virtual void do_updateInfoSpace();
 
-    typedef std::map< ConsumerID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
+    typedef std::map< QueueID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
 
     ConsStatMap _qmap; // queued
     ConsStatMap _smap; // served
