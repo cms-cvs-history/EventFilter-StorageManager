@@ -1,10 +1,11 @@
-// $Id: StateMachine.cc,v 1.1.2.20 2009/04/23 19:19:49 mommsen Exp $
+// $Id: StateMachine.cc,v 1.1.2.21 2009/05/05 20:13:24 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/Notifier.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <typeinfo>
 
@@ -39,23 +40,8 @@ string StateMachine::getCurrentStateName() const
 
 void StateMachine::updateHistory( const TransitionRecord& tr )
 {
-  _history.push_back( tr );
-  cout << tr << endl;
-}
-
-void StateMachine::dumpHistory( ostream& os ) const
-{
-
-  cout << "**** Begin transition history ****" << endl;
-
-  for( StateMachine::History::const_iterator j = _history.begin();
-       j != _history.end(); ++j )
-    {
-      os << "  " << *j << endl;
-    }
-
-  cout << "**** End transition history ****" << endl;
-
+  _sharedResources->_statisticsReporter->
+    getStateMachineMonitorCollection().updateHistory(tr);
 }
 
 void StateMachine::unconsumed_event( bsc::event_base const &event )
@@ -78,10 +64,12 @@ void StateMachine::setExternallyVisibleState( const std::string& s )
     {
       if( _sharedResources->_statisticsReporter.get() != 0 )
         {
-          _sharedResources->_statisticsReporter->setExternallyVisibleState( s );
+          _sharedResources->_statisticsReporter->
+            getStateMachineMonitorCollection().setExternallyVisibleState( s );
         }
     }
 }
+
 
 /// emacs configuration
 /// Local Variables: -
