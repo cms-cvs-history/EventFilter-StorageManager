@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.1.2.3 2009/05/06 09:23:26 dshpakov Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.1.2.4 2009/05/06 20:36:17 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 
@@ -10,54 +10,54 @@ ConsumerMonitorCollection::ConsumerMonitorCollection( xdaq::Application* xapp ):
 {}
 
 
-void ConsumerMonitorCollection::addQueuedEventSample( ConsumerID cid,
+void ConsumerMonitorCollection::addQueuedEventSample( QueueID qid,
 						      unsigned int data_size )
 {
   boost::mutex::scoped_lock l( _mutex );
-  if( _qmap.find( cid ) != _qmap.end() )
+  if( _qmap.find( qid ) != _qmap.end() )
     {
-      _qmap[ cid ]->addSample( data_size );
+      _qmap[ qid ]->addSample( data_size );
     }
   else
     {
-      _qmap[ cid ] = boost::shared_ptr<MonitoredQuantity>( new MonitoredQuantity() );
-      _qmap[ cid ]->addSample( data_size );
+      _qmap[ qid ] = boost::shared_ptr<MonitoredQuantity>( new MonitoredQuantity() );
+      _qmap[ qid ]->addSample( data_size );
     }
 }
 
 
-void ConsumerMonitorCollection::addServedEventSample( ConsumerID cid,
+void ConsumerMonitorCollection::addServedEventSample( QueueID qid,
 						      unsigned int data_size )
 {
   boost::mutex::scoped_lock l( _mutex );
-  if( _smap.find( cid ) != _smap.end() )
+  if( _smap.find( qid ) != _smap.end() )
     {
-      _smap[ cid ]->addSample( data_size );
+      _smap[ qid ]->addSample( data_size );
     }
   else
     {
-      _smap[ cid ] = boost::shared_ptr<MonitoredQuantity>( new MonitoredQuantity() );
-      _smap[ cid ]->addSample( data_size );
+      _smap[ qid ] = boost::shared_ptr<MonitoredQuantity>( new MonitoredQuantity() );
+      _smap[ qid ]->addSample( data_size );
     }
 }
 
 
-bool ConsumerMonitorCollection::getQueued( ConsumerID cid,
+bool ConsumerMonitorCollection::getQueued( QueueID qid,
 					   MonitoredQuantity::Stats& result )
 {
   boost::mutex::scoped_lock l( _mutex );
-  if( _qmap.find( cid ) == _qmap.end() ) return false;
-  _qmap[ cid ]->getStats( result );
+  if( _qmap.find( qid ) == _qmap.end() ) return false;
+  _qmap[ qid ]->getStats( result );
   return true;
 }
 
 
-bool ConsumerMonitorCollection::getServed( ConsumerID cid,
+bool ConsumerMonitorCollection::getServed( QueueID qid,
 					   MonitoredQuantity::Stats& result )
 {
   boost::mutex::scoped_lock l( _mutex );
-  if( _smap.find( cid ) == _smap.end() ) return false;
-  _smap[ cid ]->getStats( result );
+  if( _smap.find( qid ) == _smap.end() ) return false;
+  _smap[ qid ]->getStats( result );
   return true;
 }
 
@@ -72,7 +72,17 @@ void ConsumerMonitorCollection::resetCounters()
 }
 
 
-void ConsumerMonitorCollection::clearConsumers()
+void ConsumerMonitorCollection::do_calculateStatistics()
+{
+  boost::mutex::scoped_lock l( _mutex );
+  for( ConsStatMap::iterator i = _qmap.begin(); i != _qmap.end(); ++i )
+    i->second->calculateStatistics();
+  for( ConsStatMap::iterator i = _smap.begin(); i != _smap.end(); ++i )
+    i->second->calculateStatistics();
+}
+
+
+void ConsumerMonitorCollection::do_reset()
 {
   boost::mutex::scoped_lock l( _mutex );
   _qmap.clear();
@@ -80,6 +90,4 @@ void ConsumerMonitorCollection::clearConsumers()
 }
 
 
-void ConsumerMonitorCollection::do_calculateStatistics() {}
-void ConsumerMonitorCollection::do_reset() {}
 void ConsumerMonitorCollection::do_updateInfoSpace() {}
