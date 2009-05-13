@@ -1,6 +1,6 @@
-// $Id: StateMachine.cc,v 1.1.2.20 2009/04/23 19:19:49 mommsen Exp $
+// $Id: TransitionRecord.cc,v 1.1.2.4 2009/05/05 20:13:47 mommsen Exp $
 
-#include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <iostream>
 #include <sys/time.h>
