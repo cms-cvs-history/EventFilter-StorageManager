@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.16 2009/05/07 10:47:49 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.17 2009/05/12 14:40:02 dshpakov Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -6,16 +6,16 @@
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
 #include "xdaq/Application.h"
-#include "xdata/String.h"
 
+#include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/ResourceMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/StateMachineMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
@@ -30,9 +30,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/05/07 10:47:49 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.17 $
+   * $Date: 2009/05/12 14:40:02 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -94,15 +94,17 @@ namespace stor {
     { return _resourceMonCollection; }
 
 
+    const StateMachineMonitorCollection& getStateMachineMonitorCollection() const
+    { return _stateMachineMonCollection; }
+
+    StateMachineMonitorCollection& getStateMachineMonitorCollection()
+    { return _stateMachineMonCollection; }
+
+
     CMCPtr getConsumerMonitorCollection()
     {
       return _consumerMonitorCollection;
     }
-
-
-    // Current state name:
-    const std::string& externallyVisibleState() const;
-    void setExternallyVisibleState( const std::string& );
 
     /**
      * Create and start the monitoring workloop
@@ -131,19 +133,10 @@ namespace stor {
     DataSenderMonitorCollection _dataSenderMonCollection;
     DQMEventMonitorCollection _dqmEventMonCollection;
     ResourceMonitorCollection _resourceMonCollection;
+    StateMachineMonitorCollection _stateMachineMonCollection;
     CMCPtr _consumerMonitorCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
-
-    std::string _externallyVisibleState;
-    mutable boost::mutex _state_name_lock;
-
-    // State name for infospace updates:
-    xdata::String _xdaq_state_name;
-    void reportStateName();
-
-    // Unused status string from old SM
-    xdata::String _progressMarker;
 
   };
 

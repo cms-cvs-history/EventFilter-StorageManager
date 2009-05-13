@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.24 2009/05/12 16:08:22 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.25 2009/05/13 14:48:30 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -25,28 +25,11 @@ _streamsMonCollection(app),
 _dataSenderMonCollection(app),
 _dqmEventMonCollection(app),
 _resourceMonCollection(app),
+_stateMachineMonCollection(app),
 _monitorWL(0),
-_doMonitoring(true),
-_externallyVisibleState( "Halted" ),
-_xdaq_state_name( "Halted" ),
-_progressMarker( "unused" )
+_doMonitoring(true)
 {
   _consumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
-  xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
-
-  try
-  {
-//     ispace->fireItemAvailable( "stateName", &_xdaq_state_name );
-//     ispace->fireItemAvailable( "progressMarker", &_progressMarker );
-  }
-  catch(xdata::exception::Exception &e)
-  {
-    std::stringstream oss;
-    
-    oss << "Failed to put items into info space " << ispace->name();
-    
-    XCEPT_RETHROW(stor::exception::Monitoring, oss.str(), e);
-  }
 }
 
 
@@ -103,8 +86,8 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _dataSenderMonCollection.update();
     _dqmEventMonCollection.update();
     _resourceMonCollection.update();
+    _stateMachineMonCollection.update();
     _consumerMonitorCollection->update();
-    //    reportStateName();
   }
   catch(xcept::Exception &e)
   {
@@ -151,6 +134,8 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
 
 void StatisticsReporter::reset()
 {
+  // do not reset the stateMachineMonCollection, as we want to
+  // keep the state machine history
   _runMonCollection.reset();
   _fragMonCollection.reset();
   _filesMonCollection.reset();
@@ -159,60 +144,6 @@ void StatisticsReporter::reset()
   _dqmEventMonCollection.reset();
   _resourceMonCollection.reset();
   _consumerMonitorCollection->reset();
-}
-
-
-/////////////////////////
-//// Set state name: ////
-/////////////////////////
-void StatisticsReporter::setExternallyVisibleState( const std::string& n )
-{
-  boost::mutex::scoped_lock sl( _state_name_lock );
-  _externallyVisibleState = n;
-}
-
-/////////////////////////
-//// Get state name: ////
-/////////////////////////
-const std::string& StatisticsReporter::externallyVisibleState() const
-{
-  boost::mutex::scoped_lock sl( _state_name_lock );
-  return _externallyVisibleState;
-}
-
-/////////////////////////////////////////
-//// Update state name in infospace: ////
-/////////////////////////////////////////
-void StatisticsReporter::reportStateName()
-{
-
-  xdata::InfoSpace* ispace = _app->getApplicationInfoSpace();
-
-  const std::string errorMsg =
-    "Failed to update state name in infospace " + ispace->name();
-
-  try
-    {
-      ispace->lock();
-      _xdaq_state_name =
-        static_cast<xdata::String>( _externallyVisibleState );
-      ispace->unlock();
-    }
-  catch( ... )
-    {
-      ispace->unlock();
-      XCEPT_RAISE( stor::exception::Monitoring, errorMsg );
-    }
-
-  try
-  {
-    // Notify the info space that the value has changed
-    ispace->fireItemValueChanged( "stateName", this );
-  }
-  catch (xdata::exception::Exception &e)
-  {
-    XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
-  }
 }
 
 
