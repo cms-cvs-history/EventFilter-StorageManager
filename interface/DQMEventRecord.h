@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.h,v 1.1.2.8 2009/05/04 16:46:25 mommsen Exp $
+// $Id: DQMEventRecord.h,v 1.1.2.9 2009/05/13 10:02:47 dshpakov Exp $
 
 #ifndef StorageManager_DQMEventRecord_h
 #define StorageManager_DQMEventRecord_h
@@ -21,9 +21,9 @@ namespace stor {
   /**
    * Class holding information for one DQM event
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2009/05/04 16:46:25 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2009/05/13 10:02:47 $
    */
 
   class DQMEventRecord : public DQMInstance
@@ -56,9 +56,9 @@ namespace stor {
       { return DQMEventMsgView(&_entry->buffer[0]); }
 
       /**
-       * Returns true if there is a DQM event message view available
+       * Returns true if there is no DQM event message view available
        */
-      bool isValid() const
+      bool empty() const
       { return ( !_entry->buffer.empty() ); }
 
       /**
