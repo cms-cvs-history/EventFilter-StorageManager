@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.23 2009/05/12 14:40:02 dshpakov Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.24 2009/05/12 16:08:22 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -104,7 +104,7 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _dqmEventMonCollection.update();
     _resourceMonCollection.update();
     _consumerMonitorCollection->update();
-    reportStateName();
+    //    reportStateName();
   }
   catch(xcept::Exception &e)
   {
