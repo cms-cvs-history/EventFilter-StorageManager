@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.cc,v 1.1.2.6 2009/05/04 12:35:56 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.1.2.7 2009/05/04 16:49:04 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventRecord.h"
 
@@ -160,7 +160,7 @@ DQMEventRecord::GroupRecord DQMEventRecord::populateAndGetGroup(const std::strin
   }
 
   _dqmEventMonColl.getServedDQMEventSizeMQ().addSample(
-    static_cast<double>(groupRecord.size()) / 0x100000
+    static_cast<double>(groupRecord.totalDataSize()) / 0x100000
   );
 
   return groupRecord;

@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.1.2.6 2009/05/07 08:37:22 mommsen Exp $
+// $Id: QueueCollection.h,v 1.1.2.7 2009/05/11 16:34:41 dshpakov Exp $
 
 #ifndef StorageManager_QueueCollection_h
 #define StorageManager_QueueCollection_h
@@ -32,9 +32,9 @@ namespace stor {
    * returning a std::vector<QueueID> which gives the list
    * of QueueIDs of queues the class should be added.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/05/07 08:37:22 $
+   * $Author: dshpakov $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/05/11 16:34:41 $
    */
 
   template <class T>
@@ -331,12 +331,31 @@ namespace stor {
   void 
   QueueCollection<T>::addEvent(T const& event)
   {
+
     read_lock_t lock_discard_old(_protect_discard_new_queues);
     read_lock_t lock_discard_new(_protect_discard_old_queues);
+
     std::vector<QueueID> routes = event.getEventConsumerTags();
     edm::for_all(routes,
                  boost::bind(&QueueCollection<T>::_enqueue_event, 
                              this, _1, event));
+
+    read_lock_t lookup_lock( _protect_lookup );
+
+    for( std::vector<QueueID>::iterator i = routes.begin(); i != routes.end(); ++i )
+      {
+        // Lookup via linear search:
+        for( map_type::const_iterator j = _queue_id_lookup.begin();
+             j != _queue_id_lookup.end(); ++j )
+          {
+            if( j->second == *i )
+              {
+                _consumer_monitor_collection->addQueuedEventSample( j->first,
+                                                                    event.totalDataSize() );
+              }
+          }
+      }
+
   }
 
   template <class T>
@@ -383,6 +402,7 @@ namespace stor {
       if (i == _queue_id_lookup.end()) return result;
       id = i->second;
     }
+    _consumer_monitor_collection->addServedEventSample( cid, result.totalDataSize() );
     return popEvent(id);
   }
 
