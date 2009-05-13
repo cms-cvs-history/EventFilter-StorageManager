@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.39 2009/05/12 14:40:02 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.40 2009/05/13 16:04:10 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -245,7 +245,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       // Events queued:
       std::ostringstream eq_oss;
       MonitoredQuantity::Stats eq_stats;
-      bool eq_found = cc->getQueued( (*it)->consumerId(), eq_stats );
+      bool eq_found = cc->getQueued( (*it)->queueId(), eq_stats );
       if( eq_found )
         {
           eq_oss << eq_stats.getSampleCount();
@@ -260,7 +260,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       // Events served:
       std::ostringstream es_oss;
       MonitoredQuantity::Stats es_stats;
-      bool es_found = cc->getServed( (*it)->consumerId(), es_stats );
+      bool es_found = cc->getServed( (*it)->queueId(), es_stats );
       if( es_found )
         {
           es_oss << es_stats.getSampleCount();
