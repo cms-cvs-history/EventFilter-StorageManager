@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.20 2009/04/09 11:25:27 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.1.2.21 2009/04/16 12:55:02 mommsen Exp $
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -28,15 +28,15 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.20 $
-   * $Date: 2009/04/09 11:25:27 $
+   * $Revision: 1.1.2.21 $
+   * $Date: 2009/04/16 12:55:02 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor( xdaq::Application *app, SharedResourcesPtr sr, WrapperNotifier& wn );
+    FragmentProcessor( xdaq::Application *app, SharedResourcesPtr sr );
 
     ~FragmentProcessor();
     

@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.58 2009/05/05 10:39:50 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.59 2009/05/07 13:20:04 mommsen Exp $
 */
 
 #include <string>
@@ -29,7 +29,6 @@
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/DQMEventProcessor.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
-#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 #include "xdaq/Application.h"
 #include "xdaq/ApplicationContext.h"
@@ -163,9 +162,6 @@ namespace stor {
     FragmentProcessor *_fragmentProcessor;
     DiskWriter *_diskWriter;
     DQMEventProcessor *_dqmEventProcessor;
-
-    // Notifier wrapper:
-    WrapperNotifier _wrapper_notifier;
 
     WebPageHelper _webPageHelper;
 

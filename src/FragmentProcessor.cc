@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.25 2009/04/16 12:58:30 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.26 2009/05/12 13:37:32 mommsen Exp $
 
 #include <unistd.h>
 
@@ -12,11 +12,10 @@ using namespace stor;
 
 
 FragmentProcessor::FragmentProcessor( xdaq::Application *app,
-                                      SharedResourcesPtr sr,
-                                      WrapperNotifier& wn ) :
+                                      SharedResourcesPtr sr ) :
   _app(app),
   _sharedResources(sr),
-  _wrapperNotifier( wn ),
+  _wrapperNotifier( app ),
   _fragmentStore(),
   _eventDistributor(sr),
   _actionIsActive(true)

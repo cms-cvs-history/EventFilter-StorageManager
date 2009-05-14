@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.117 2009/05/13 16:05:18 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.118 2009/05/13 18:04:41 biery Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -76,9 +76,8 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   xdaq::Application(s),
   reasonForFailedState_(),
   mybuffer_(7000000),
-  _wrapper_notifier( this ),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.117 2009/05/13 16:05:18 mommsen Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.118 2009/05/13 18:04:41 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -198,8 +197,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 
   // Main worker threads
-  _fragmentProcessor = new FragmentProcessor( this, _sharedResources,
-                                              _wrapper_notifier );
+  _fragmentProcessor = new FragmentProcessor( this, _sharedResources );
   _diskWriter = new DiskWriter(this, _sharedResources);
   _dqmEventProcessor = new DQMEventProcessor(this, _sharedResources);
 
@@ -249,7 +247,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
     _sharedResources->moveToFailedState();
   }
-
 }
 
 StorageManager::~StorageManager()
