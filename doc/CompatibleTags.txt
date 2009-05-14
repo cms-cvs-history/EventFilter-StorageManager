@@ -31,7 +31,7 @@ to get the useful and/or necessary patches for the demo system.)
 
 CMSSW_2_2_6:
  - EventFilter/StorageManager refdev01_scratch_branch
- - EventFilter/ResourceBroker V00-12-02
+ - EventFilter/ResourceBroker CMSSW_2_2_6
  - IOPool/Streamer V05-05-01-03
  - EventFilter/SMProxyServer V01-08-12
  - EventFilter/AutoBU CMSSW_2_2_6
