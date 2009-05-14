@@ -103,7 +103,6 @@ endif
 if ($tagName == "CMSSW_2_2_6") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
   cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
-  cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
   cvs update -dR -r V00-06-02 EventFilter/Modules
   cvs update -dR -r V05-05-01-03 IOPool/Streamer
 endif
