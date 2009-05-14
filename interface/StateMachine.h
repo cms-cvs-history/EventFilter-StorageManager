@@ -1,4 +1,4 @@
-// $Id: StateMachine.h,v 1.1.2.27 2009/05/05 20:11:01 mommsen Exp $
+// $Id: StateMachine.h,v 1.1.2.28 2009/05/13 16:02:34 mommsen Exp $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
@@ -126,7 +126,8 @@ namespace stor
 
     void unconsumed_event( bsc::event_base const& );
 
-    void declareInitialized() { _initialized = true; }
+    // Remi May 14, 2009: not clear why we originally introduced the _initialized
+    // void declareInitialized() { _initialized = true; }
 
     void setExternallyVisibleState( const std::string& );
 
@@ -138,7 +139,8 @@ namespace stor
     Notifier* _notifier;
     SharedResourcesPtr _sharedResources;
 
-    bool _initialized; // to control access to state name
+    // Remi May 14, 2009: not clear why we originally introduced the _initialized
+    // bool _initialized; // to control access to state name
 
   };
 
