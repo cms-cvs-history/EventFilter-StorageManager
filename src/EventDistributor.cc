@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.50 2009/05/12 14:40:02 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.51 2009/05/15 13:57:11 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -41,7 +41,6 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
   if( ioc.isTaggedForAnyEventConsumer() )
   {
     _sharedResources->_eventConsumerQueueCollection->addEvent( ioc );
-    checkForStaleConsumers();
   }
 }
 

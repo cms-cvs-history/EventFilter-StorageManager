@@ -1,4 +1,4 @@
-// $Id: Enabled.cc,v 1.1.2.36 2009/05/05 10:40:39 mommsen Exp $
+// $Id: Processing.cc,v 1.1.2.22 2009/05/05 20:13:25 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -79,6 +79,7 @@ Processing::do_noFragmentToProcess() const
     outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(staleEvent);
     outermost_context().getEventDistributor()->addEventToRelevantQueues(staleEvent);
   }
+  outermost_context().getEventDistributor()->checkForStaleConsumers();
 }
 
 /// emacs configuration

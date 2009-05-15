@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.1.2.27 2009/05/05 20:11:44 mommsen Exp $
+// $Id: EventDistributor.h,v 1.1.2.28 2009/05/07 18:50:31 mommsen Exp $
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -29,8 +29,8 @@ namespace stor {
    * header.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.27 $
-   * $Date: 2009/05/05 20:11:44 $
+   * $Revision: 1.1.2.28 $
+   * $Date: 2009/05/07 18:50:31 $
    */
 
   class EventDistributor
@@ -102,11 +102,14 @@ namespace stor {
      */
     unsigned int initializedConsumerCount() const;
 
+    /**
+       Updates staleness info for consumers.
+    */
+    void checkForStaleConsumers();
+
   private:
 
     void tagCompleteEventForQueues( I2OChain& );
-
-    void checkForStaleConsumers();
 
     EventQueueCollection _eventConsumerQueueCollection;
     EventQueueCollection _DQMEventQueueCollection;
