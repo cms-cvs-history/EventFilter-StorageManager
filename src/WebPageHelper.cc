@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.42 2009/05/15 07:48:17 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.43 2009/05/15 13:57:11 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -216,7 +216,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       std::string status_message = "";
       if( (*it)->isStale() )
         {
-          status_attr[ "style" ] = "color:yellow";
+          status_attr[ "style" ] = "color:brown";
           status_message = "Stale";
         }
       else
