@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.cc,v 1.1.2.1 2009/05/13 16:06:08 mommsen Exp $
+// $Id: StateMachineMonitorCollection.cc,v 1.1.2.2 2009/05/14 12:42:31 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/StateMachineMonitorCollection.h"
@@ -18,7 +18,13 @@ _stateName( "unknown" )
 
 void StateMachineMonitorCollection::updateHistory( const TransitionRecord& tr )
 {
-  LOG4CPLUS_INFO(_logger, "State changed to " << tr.stateName());
+  std::ostringstream msg;
+  if ( tr.isEntry() )
+    msg << "Entered state ";
+  else
+    msg << "Exited state ";
+  msg << tr.stateName();
+  //  LOG4CPLUS_INFO(_logger, msg.str());
 
   boost::mutex::scoped_lock sl( _stateMutex );
   _history.push_back( tr );
