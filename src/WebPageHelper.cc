@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.43 2009/05/15 13:57:11 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.44 2009/05/15 14:06:18 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -182,6 +182,8 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   maker.addText( cs_th_queued, "Events Queued" );
   XHTMLMaker::Node* cs_th_served = maker.addNode( "th", cs_top_row );
   maker.addText( cs_th_served, "Events Served" );
+  XHTMLMaker::Node* cs_th_served_rate = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_served_rate, "Served Event Rate" );
 
   boost::shared_ptr<RegistrationCollection> rc = resPtr->_registrationCollection;
   RegistrationCollection::ConsumerRegistrations regs;
@@ -267,20 +269,25 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       XHTMLMaker::Node* cs_td_eq = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_eq, eq_oss.str() );
 
-      // Events served:
+      // Number and rate of served events:
       std::ostringstream es_oss;
+      std::ostringstream rate_oss;
       MonitoredQuantity::Stats es_stats;
       bool es_found = cc->getServed( (*it)->queueId(), es_stats );
       if( es_found )
         {
           es_oss << es_stats.getSampleCount();
+          rate_oss << es_stats.getSampleRate();
         }
       else
         {
           es_oss << "Not found";
+          rate_oss << "Not found";
         }
       XHTMLMaker::Node* cs_td_es = maker.addNode( "td", cs_tr );
       maker.addText( cs_td_es, es_oss.str() );
+      XHTMLMaker::Node* cs_td_rate = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_rate, rate_oss.str() );
 
     }
 
