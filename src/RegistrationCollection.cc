@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.1.2.8 2009/04/27 16:59:31 mommsen Exp $
+// $Id: RegistrationCollection.cc,v 1.1.2.9 2009/05/07 18:52:21 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
@@ -31,7 +31,7 @@ ConsumerID RegistrationCollection::getConsumerID()
 }
 
 bool
-RegistrationCollection::addRegistrationInfo( ConsumerID cid, RegPtr ri)
+RegistrationCollection::addRegistrationInfo( ConsumerID cid, RegPtr ri )
 {
   boost::mutex::scoped_lock sl( _lock );
   if( _registrationAllowed )
@@ -105,6 +105,7 @@ bool RegistrationCollection::registrationIsAllowed() const
 
 bool RegistrationCollection::isProxy( ConsumerID cid ) const
 {
+
   boost::mutex::scoped_lock sl( _lock );
 
   RegistrationMap::const_iterator pos = _consumers.lower_bound(cid);
@@ -116,8 +117,8 @@ bool RegistrationCollection::isProxy( ConsumerID cid ) const
   if ( ! eventConsumer ) return false;
 
   return eventConsumer->isProxyServer();
-}
 
+}
 
 /// emacs configuration
 /// Local Variables: -

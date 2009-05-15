@@ -1,5 +1,5 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.17 2009/04/27 13:47:39 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.18 2009/04/27 17:00:18 mommsen Exp $
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
@@ -20,12 +20,13 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.17 $
-   * $Date: 2009/04/27 13:47:39 $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/04/27 17:00:18 $
    */
 
-  class EventConsumerRegistrationInfo : public RegistrationInfoBase
+  class EventConsumerRegistrationInfo: public RegistrationInfoBase
   {
+
   public:
 
     typedef std::vector<std::string> FilterList;
@@ -44,12 +45,16 @@ namespace stor
 
     ~EventConsumerRegistrationInfo();
 
-    // Additional accessors:
+    // Accessors:
     unsigned int maxConnectRetries() const { return _maxConnectRetries; }
     unsigned int connectRetryInterval() const { return _connectRetryInterval; }
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
     bool isProxyServer() const { return _isProxy; }
+
+    // Staleness:
+    bool isStale() const { return _stale; }
+    void setStaleness( bool s ) { _stale = s; }
 
     // Output:
     std::ostream& write(std::ostream& os) const;
@@ -65,37 +70,35 @@ namespace stor
     virtual enquing_policy::PolicyTag do_queuePolicy() const;
     virtual utils::duration_t do_secondsToStale() const;
 
-
   private:
 
     CommonRegistrationInfo _common;
 
-    unsigned int     _maxConnectRetries;
-    unsigned int     _connectRetryInterval;
-    FilterList       _selEvents;
-    std::string      _selHLTOut;
-    bool             _isProxy;
+    unsigned int _maxConnectRetries;
+    unsigned int _connectRetryInterval;
+    FilterList _selEvents;
+    std::string _selHLTOut;
+    bool _isProxy;
+    bool _stale;
 
   };
 
   typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
-
 
   /**
      Print the given EventConsumerRegistrationInfo to the given
      stream.
   */
   inline
-  std::ostream& operator<<(std::ostream& os, 
-                           EventConsumerRegistrationInfo const& ri)
+  std::ostream& operator << ( std::ostream& os, 
+                              EventConsumerRegistrationInfo const& ri )
   {
-    return ri.write(os);
+    return ri.write( os );
   }
 
 } // namespace stor
 
 #endif
-
 
 /// emacs configuration
 /// Local Variables: -

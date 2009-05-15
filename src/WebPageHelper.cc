@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.41 2009/05/13 18:05:15 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.42 2009/05/15 07:48:17 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -211,11 +211,21 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       else
         maker.addText( cs_td_name, (*it)->consumerName() );
 
-      // Status. TODO...
+      // Status:
       XHTMLMaker::AttrMap status_attr;
-      status_attr[ "style" ] = "color:green";
+      std::string status_message = "";
+      if( (*it)->isStale() )
+        {
+          status_attr[ "style" ] = "color:yellow";
+          status_message = "Stale";
+        }
+      else
+        {
+          status_attr[ "style" ] = "color:green";
+          status_message = "Active";
+        }
       XHTMLMaker::Node* cs_td_status = maker.addNode( "td", cs_tr, status_attr );
-      maker.addText( cs_td_status, "Active" );
+      maker.addText( cs_td_status, status_message );
 
       // HLT output module:
       XHTMLMaker::Node* cs_td_hlt = maker.addNode( "td", cs_tr );

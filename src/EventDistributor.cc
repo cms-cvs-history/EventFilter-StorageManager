@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.49 2009/05/11 16:34:41 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.50 2009/05/12 14:40:02 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -290,6 +290,9 @@ void EventDistributor::checkForStaleConsumers()
   std::vector<QueueID> stale_qs;
   _sharedResources->_eventConsumerQueueCollection->clearStaleQueues( stale_qs );
 
+  RegistrationCollection::ConsumerRegistrations cregs;
+  _sharedResources->_registrationCollection->getEventConsumers( cregs );
+
   // Double linear search, should try to optimize...
   for( ConsSelList::iterator i = _eventConsumerSelectors.begin();
            i != _eventConsumerSelectors.end(); ++i )
@@ -305,6 +308,18 @@ void EventDistributor::checkForStaleConsumers()
           if( i->queueId() == *j )
             {
               i->markAsStale();
+            }
+        }
+
+      // Finally, to make matters even worse, we iterate over the
+      // registrations to set the staleness flags so that it can be
+      // displayed on the web page:
+      for( RegistrationCollection::ConsumerRegistrations::iterator k = cregs.begin();
+           k != cregs.end(); ++k )
+        {
+          if( (*k)->queueId() == i->queueId() )
+            {
+              (*k)->setStaleness( i->isStale() );
             }
         }
 
