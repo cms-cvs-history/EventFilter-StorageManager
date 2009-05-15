@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.h,v 1.1.2.16 2009/04/14 12:50:30 mommsen Exp $
+// $Id: StateMachineMonitorCollection.h,v 1.1.2.1 2009/05/13 16:02:55 mommsen Exp $
 
 #ifndef StorageManager_StateMachineMonitorCollection_h
 #define StorageManager_StateMachineMonitorCollection_h
@@ -18,8 +18,8 @@ namespace stor {
    * A collection of monitored quantities related to the state machine
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.16 $
-   * $Date: 2009/04/14 12:50:30 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/05/13 16:02:55 $
    */
   
   class StateMachineMonitorCollection : public MonitorCollection
@@ -46,14 +46,19 @@ namespace stor {
     void dumpHistory(std::ostream&) const;
 
     /**
-     * Set the externally visible state
+     * Set the externally visible state name
      */
     void setExternallyVisibleState(const std::string&);
 
     /**
-     * Retrieve the externally visible state
+     * Retrieve the externally visible state name
      */
     const std::string& externallyVisibleState() const;
+
+    /**
+     * Retrieve the current internal state name
+     */
+    const std::string& innerStateName() const;
 
 
   private:

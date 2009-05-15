@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.cc,v 1.1.2.2 2009/05/14 12:42:31 mommsen Exp $
+// $Id: StateMachineMonitorCollection.cc,v 1.1.2.3 2009/05/15 07:21:40 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/StateMachineMonitorCollection.h"
@@ -124,6 +124,14 @@ const std::string& StateMachineMonitorCollection::externallyVisibleState() const
 {
   boost::mutex::scoped_lock sl( _stateMutex );
   return _externallyVisibleState;
+}
+
+
+const std::string& StateMachineMonitorCollection::innerStateName() const
+{
+  boost::mutex::scoped_lock sl( _stateMutex );
+  TransitionRecord tr = _history.back();
+  return tr.stateName();;
 }
 
 
