@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.18 2009/04/24 21:04:38 biery Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.1.2.19 2009/04/27 13:58:50 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -26,7 +26,8 @@ namespace stor
   _maxConnectRetries( maxConnectRetries ),
   _connectRetryInterval( connectRetryInterval ),
   _selEvents( selEvents ),
-  _selHLTOut( selHLTOut )
+  _selHLTOut( selHLTOut ),
+  _stale( false )
   {
     if( consumerName == "SMProxyServer" ||
         ( consumerName.find( "urn" ) != std::string::npos &&
