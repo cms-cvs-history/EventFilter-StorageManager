@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.1.2.5 2009/03/10 21:19:38 biery Exp $
+// $Id: DQMEventSelector.cc,v 1.1.2.4 2009/05/07 18:52:21 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventSelector.h"
 
@@ -6,6 +6,7 @@ using namespace stor;
 
 bool DQMEventSelector::acceptEvent( const I2OChain& ioc )
 {
+  if( _stale ) return false;
   if( _topLevelFolderName == std::string( "*" ) ) return true;
   if( ioc.topFolderName() == _topLevelFolderName ) return true;
   return false;

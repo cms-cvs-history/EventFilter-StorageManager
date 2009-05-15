@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.1.2.5 2009/03/10 21:19:38 biery Exp $
+// $Id: DQMEventSelector.h,v 1.1.2.6 2009/05/07 18:50:31 mommsen Exp $
 
 #ifndef DQMEVENTSELECTOR_H
 #define DQMEVENTSELECTOR_H
@@ -14,9 +14,9 @@ namespace stor
   /**
    * DQM event selector
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2009/03/10 21:19:38 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2009/05/07 18:50:31 $
    */
 
   class DQMEventSelector
@@ -26,7 +26,8 @@ namespace stor
     
     DQMEventSelector( const DQMEventConsumerRegistrationInfo* ri ):
     _topLevelFolderName( ri->topLevelFolderName() ),
-    _queueId( ri->queueId() )
+    _queueId( ri->queueId() ),
+    _stale( false )
     {};
     
     /**
@@ -40,10 +41,26 @@ namespace stor
      */
     const QueueID& queueId() const { return _queueId; }
     
+    /**
+       Check if stale:
+    */
+    bool isStale() const { return _stale; }
+
+    /**
+       Mark as stale:
+    */
+    void markAsStale() { _stale = true; }
+
+    /**
+       Mark as active:
+    */
+    void markAsActive() { _stale = false; }
+
   private:
 
     std::string _topLevelFolderName;
     QueueID _queueId;
+    bool _stale;
 
   };
 
