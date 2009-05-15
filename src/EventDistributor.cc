@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.51 2009/05/15 13:57:11 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.52 2009/05/15 15:57:36 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -6,8 +6,6 @@ using namespace stor;
 
 
 EventDistributor::EventDistributor(SharedResourcesPtr sr):
-  _eventConsumerQueueCollection( sr->_statisticsReporter->getConsumerMonitorCollection() ),
-  _DQMEventQueueCollection( sr->_statisticsReporter->getConsumerMonitorCollection() ),
   _sharedResources(sr)
 {}
 
@@ -286,6 +284,10 @@ unsigned int EventDistributor::initializedConsumerCount() const
 void EventDistributor::checkForStaleConsumers()
 {
 
+  /////////////////////
+  // event consumers //
+  /////////////////////
+
   std::vector<QueueID> stale_qs;
   _sharedResources->_eventConsumerQueueCollection->clearStaleQueues( stale_qs );
 
@@ -315,6 +317,48 @@ void EventDistributor::checkForStaleConsumers()
       // displayed on the web page:
       for( RegistrationCollection::ConsumerRegistrations::iterator k = cregs.begin();
            k != cregs.end(); ++k )
+        {
+          if( (*k)->queueId() == i->queueId() )
+            {
+              (*k)->setStaleness( i->isStale() );
+            }
+        }
+
+    }
+  
+  ///////////////////
+  // dqm consumers //
+  ///////////////////
+
+  stale_qs.clear();
+  _sharedResources->_dqmEventConsumerQueueCollection->clearStaleQueues( stale_qs );
+
+  RegistrationCollection::DQMConsumerRegistrations dqm_cregs;
+  _sharedResources->_registrationCollection->getDQMEventConsumers( dqm_cregs );
+
+  // Double linear search, should try to optimize...
+  for( DQMEvtSelList::iterator i = _dqmEventSelectors.begin();
+           i != _dqmEventSelectors.end(); ++i )
+    {
+
+      // First, assume the consumer is active. If we find its queue in
+      // the stale list, we'll mark it stale in the inner loop.
+      i->markAsActive();
+
+      for( std::vector<QueueID>::const_iterator j = stale_qs.begin();
+           j != stale_qs.end(); ++j )
+        {
+          if( i->queueId() == *j )
+            {
+              i->markAsStale();
+            }
+        }
+
+      // Finally, to make matters even worse, we iterate over the
+      // registrations to set the staleness flags so that it can be
+      // displayed on the web page:
+      for( RegistrationCollection::DQMConsumerRegistrations::iterator k = dqm_cregs.begin();
+           k != dqm_cregs.end(); ++k )
         {
           if( (*k)->queueId() == i->queueId() )
             {
