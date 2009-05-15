@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.40 2009/05/13 16:04:10 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.41 2009/05/13 18:05:15 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -454,6 +454,11 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   fontAttr[ "size" ] = "-3";
   XHTMLMaker::Node* version = maker.addNode("font", instanceTableDiv, fontAttr);
   maker.addText(version, _smVersion);
+  instanceTableDiv = maker.addNode("td", instanceTableRow);
+  fontAttr[ "size" ] = "-1";
+  XHTMLMaker::Node* innerState = maker.addNode("font", instanceTableDiv, fontAttr);
+  maker.addText(innerState, 
+    statReporter->getStateMachineMonitorCollection().innerStateName());
 
   tableDivAttr[ "align" ] = "right";
   tableDivAttr[ "width" ] = "64";
