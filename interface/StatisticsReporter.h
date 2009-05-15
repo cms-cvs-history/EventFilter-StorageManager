@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.17 2009/05/12 14:40:02 dshpakov Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.18 2009/05/13 16:03:28 mommsen Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -30,9 +30,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.17 $
-   * $Date: 2009/05/12 14:40:02 $
+   * $Author: mommsen $
+   * $Revision: 1.1.2.18 $
+   * $Date: 2009/05/13 16:03:28 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -101,9 +101,14 @@ namespace stor {
     { return _stateMachineMonCollection; }
 
 
-    CMCPtr getConsumerMonitorCollection()
+    CMCPtr getEventConsumerMonitorCollection()
     {
-      return _consumerMonitorCollection;
+      return _eventConsumerMonitorCollection;
+    }
+
+    CMCPtr getDQMConsumerMonitorCollection()
+    {
+      return _dqmConsumerMonitorCollection;
     }
 
     /**
@@ -134,7 +139,8 @@ namespace stor {
     DQMEventMonitorCollection _dqmEventMonCollection;
     ResourceMonitorCollection _resourceMonCollection;
     StateMachineMonitorCollection _stateMachineMonCollection;
-    CMCPtr _consumerMonitorCollection;
+    CMCPtr _eventConsumerMonitorCollection;
+    CMCPtr _dqmConsumerMonitorCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 

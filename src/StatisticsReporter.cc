@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.25 2009/05/13 14:48:30 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.26 2009/05/13 16:06:57 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -29,7 +29,8 @@ _stateMachineMonCollection(app),
 _monitorWL(0),
 _doMonitoring(true)
 {
-  _consumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
+  _eventConsumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
+  _dqmConsumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
 }
 
 
@@ -87,7 +88,8 @@ bool StatisticsReporter::monitorAction(toolbox::task::WorkLoop* wl)
     _dqmEventMonCollection.update();
     _resourceMonCollection.update();
     _stateMachineMonCollection.update();
-    _consumerMonitorCollection->update();
+    _eventConsumerMonitorCollection->update();
+    _dqmConsumerMonitorCollection->update();
   }
   catch(xcept::Exception &e)
   {
@@ -143,7 +145,8 @@ void StatisticsReporter::reset()
   _dataSenderMonCollection.reset();
   _dqmEventMonCollection.reset();
   _resourceMonCollection.reset();
-  _consumerMonitorCollection->reset();
+  _eventConsumerMonitorCollection->reset();
+  _dqmConsumerMonitorCollection->reset();
 }
 
 

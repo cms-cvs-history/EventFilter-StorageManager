@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.118 2009/05/13 18:04:41 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.119 2009/05/14 12:44:08 mommsen Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -77,7 +77,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   reasonForFailedState_(),
   mybuffer_(7000000),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.118 2009/05/13 18:04:41 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.119 2009/05/14 12:44:08 mommsen Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -192,8 +192,9 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
 
   _sharedResources->_registrationCollection.reset( new RegistrationCollection() );
   boost::shared_ptr<ConsumerMonitorCollection>
-    cmcptr( _sharedResources->_statisticsReporter->getConsumerMonitorCollection() );
+    cmcptr( _sharedResources->_statisticsReporter->getEventConsumerMonitorCollection() );
   _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
+  cmcptr = _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
   _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 
   // Main worker threads
