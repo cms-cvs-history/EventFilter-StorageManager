@@ -103,8 +103,9 @@ void testStateMachine::setUp()
   _sr->_dqmEventQueue.reset(new DQMEventQueue(32));
   _sr->_statisticsReporter.reset( new StatisticsReporter( _app ) );
   boost::shared_ptr<ConsumerMonitorCollection>
-    cmcptr( _sr->_statisticsReporter->getConsumerMonitorCollection() );
+    cmcptr( _sr->_statisticsReporter->getEventConsumerMonitorCollection() );
   _sr->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
+  cmcptr = _sr->_statisticsReporter->getDQMConsumerMonitorCollection();
   _sr->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
 
   _sr->_discardManager.reset(new DiscardManager(stub->getContext(),

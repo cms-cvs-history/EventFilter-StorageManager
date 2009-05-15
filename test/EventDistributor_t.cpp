@@ -70,9 +70,10 @@ void testEventDistributor::initEventDistributor()
       _sharedResources->_statisticsReporter.reset(new StatisticsReporter(app));
       _eventDistributor.reset(new EventDistributor(_sharedResources));
       boost::shared_ptr<ConsumerMonitorCollection>
-        cmcptr( _sharedResources->_statisticsReporter->getConsumerMonitorCollection() );
+        cmcptr( _sharedResources->_statisticsReporter->getEventConsumerMonitorCollection() );
       _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
 
+      cmcptr = _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
       _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
     }
 }
