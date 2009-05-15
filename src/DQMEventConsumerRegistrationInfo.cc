@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.7 2009/04/08 19:28:45 paterno Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.1.2.8 2009/04/27 13:58:50 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
@@ -15,8 +15,21 @@ namespace stor
     const enquing_policy::PolicyTag& queuePolicy,
     const utils::duration_t& secondsToStale ) :
   _common( consumerName, queueSize, queuePolicy, secondsToStale),
-  _topLevelFolderName( topLevelFolderName )
-  { }
+  _topLevelFolderName( topLevelFolderName ),
+  _stale( false )
+  {
+    if( consumerName == "SMProxyServer" ||
+        ( consumerName.find( "urn" ) != std::string::npos &&
+          consumerName.find( "xdaq" ) != std::string::npos &&
+          consumerName.find( "pushDQMEventData" ) != std::string::npos ) )
+      {
+        _isProxy = true;
+      }
+    else
+      {
+        _isProxy = false;
+      }
+  }
 
   DQMEventConsumerRegistrationInfo::~DQMEventConsumerRegistrationInfo() 
   { }
