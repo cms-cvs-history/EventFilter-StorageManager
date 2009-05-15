@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.44 2009/05/15 14:06:18 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.45 2009/05/15 16:11:34 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -148,6 +148,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   // Make header:
   XHTMLMaker::Node* body = createWebPageBody( maker, resPtr->_statisticsReporter );
 
+ {
   // Title:
   XHTMLMaker::AttrMap title_attr;
   title_attr[ "style" ] = "text-align:center;font-weight:bold";
@@ -190,7 +191,7 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
   rc->getEventConsumers( regs );
 
   boost::shared_ptr<ConsumerMonitorCollection> cc =
-    resPtr->_statisticsReporter->getConsumerMonitorCollection();
+    resPtr->_statisticsReporter->getEventConsumerMonitorCollection();
 
   // Loop over consumers:
   for( RegistrationCollection::ConsumerRegistrations::const_iterator it = regs.begin();
@@ -290,6 +291,131 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
       maker.addText( cs_td_rate, rate_oss.str() );
 
     }
+ }
+
+ {
+  // Title:
+  XHTMLMaker::AttrMap title_attr;
+  title_attr[ "style" ] = "text-align:center;font-weight:bold";
+  XHTMLMaker::Node* title = maker.addNode( "p", body, title_attr );
+  maker.addText( title, "DQM Consumer Statistics" );
+
+  //
+  //// Consumer summary table: ////
+  //
+
+  XHTMLMaker::AttrMap table_attr;
+  table_attr[ "cellspacing" ] = "5";
+  table_attr[ "border" ] = "1";
+  XHTMLMaker::Node* cs_table = maker.addNode( "table", body, table_attr );
+  XHTMLMaker::Node* cs_tbody = maker.addNode( "tbody", cs_table );
+  XHTMLMaker::Node* cs_top_row = maker.addNode( "tr", cs_tbody, _rowAttr );
+
+  // Cell titles:
+  XHTMLMaker::Node* cs_th_id = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_id, "ID" );
+  XHTMLMaker::Node* cs_th_name = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_name, "Name" );
+  XHTMLMaker::Node* cs_th_status = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_status, "Status" );
+  XHTMLMaker::Node* cs_th_hlt = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_hlt, "Top Level Folder" );
+  XHTMLMaker::Node* cs_th_policy = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_policy, "Enquing Policy" );
+  XHTMLMaker::Node* cs_th_queued = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_queued, "Events Queued" );
+  XHTMLMaker::Node* cs_th_served = maker.addNode( "th", cs_top_row );
+  maker.addText( cs_th_served, "Events Served" );
+
+  boost::shared_ptr<RegistrationCollection> rc = resPtr->_registrationCollection;
+  RegistrationCollection::DQMConsumerRegistrations regs;
+  rc->getDQMEventConsumers( regs );
+
+  boost::shared_ptr<ConsumerMonitorCollection> cc =
+    resPtr->_statisticsReporter->getDQMConsumerMonitorCollection();
+
+  // Loop over consumers:
+  for( RegistrationCollection::DQMConsumerRegistrations::const_iterator it = regs.begin();
+       it != regs.end(); ++it )
+    {
+
+      // Row:
+      XHTMLMaker::Node* cs_tr = maker.addNode( "tr", cs_tbody, _rowAttr );
+
+      // ID:
+      std::ostringstream cid_oss;
+      cid_oss << (*it)->consumerId();
+      XHTMLMaker::Node* cs_td_id = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_id, cid_oss.str() );
+
+      // Name:
+      XHTMLMaker::Node* cs_td_name = maker.addNode( "td", cs_tr );
+      if ( (*it)->isProxyServer() )
+        maker.addText( cs_td_name, "Proxy Server" );
+      else
+        maker.addText( cs_td_name, (*it)->consumerName() );
+
+      // Status:
+      XHTMLMaker::AttrMap status_attr;
+      std::string status_message = "";
+      if( (*it)->isStale() )
+        {
+          status_attr[ "style" ] = "color:brown";
+          status_message = "Stale";
+        }
+      else
+        {
+          status_attr[ "style" ] = "color:green";
+          status_message = "Active";
+        }
+      XHTMLMaker::Node* cs_td_status = maker.addNode( "td", cs_tr, status_attr );
+      maker.addText( cs_td_status, status_message );
+
+      // Top level folder:
+      XHTMLMaker::Node* cs_td_fld = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_fld, (*it)->topLevelFolderName() );
+
+      // Policy:
+      std::ostringstream policy_oss;
+      policy_oss << (*it)->queuePolicy();
+      XHTMLMaker::Node* cs_td_policy = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_policy, policy_oss.str() );
+
+      // Events queued:
+      std::ostringstream eq_oss;
+      MonitoredQuantity::Stats eq_stats;
+      bool eq_found = cc->getQueued( (*it)->queueId(), eq_stats );
+      if( eq_found )
+        {
+          eq_oss << eq_stats.getSampleCount();
+        }
+      else
+        {
+          eq_oss << "Not found";
+        }
+      XHTMLMaker::Node* cs_td_eq = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_eq, eq_oss.str() );
+
+      // Number and rate of served events:
+      std::ostringstream es_oss;
+      std::ostringstream rate_oss;
+      MonitoredQuantity::Stats es_stats;
+      bool es_found = cc->getServed( (*it)->queueId(), es_stats );
+      if( es_found )
+        {
+          es_oss << es_stats.getSampleCount();
+          rate_oss << es_stats.getSampleRate();
+        }
+      else
+        {
+          es_oss << "Not found";
+          rate_oss << "Not found";
+        }
+      XHTMLMaker::Node* cs_td_es = maker.addNode( "td", cs_tr );
+      maker.addText( cs_td_es, es_oss.str() );
+
+    }
+ }
 
   // Link to the old EventServer page:
   maker.addNode( "hr", body );
