@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.59 2009/05/07 13:20:04 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.60 2009/05/14 12:44:19 mommsen Exp $
 */
 
 #include <string>
@@ -109,21 +109,12 @@ namespace stor {
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void fileStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void eventdataWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void headerdataWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void consumerWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void consumerListWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void eventServerWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
     void dqmEventStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
 
-    // New consumer handling methods. Will replace consumerWebPage,
-    // headerdataWebPage, eventdataWebPage, DQMconsumerWebPage, and DQMeventdataWebPage
+    // New consumer handling methods. Will replace DQMconsumerWebPage and DQMeventdataWebPage
     void processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
     void processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
@@ -135,8 +126,7 @@ namespace stor {
     void processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
 
-    // New consumer statistics web page. Will replace
-    // eventServerWebPage.
+    // Consumer statistics web page
     void consumerStatisticsPage( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
 

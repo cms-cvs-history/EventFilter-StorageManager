@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.45 2009/05/15 16:11:34 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.46 2009/05/15 19:51:34 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -416,13 +416,6 @@ void WebPageHelper::consumerStatistics( xgi::Output* out,
 
     }
  }
-
-  // Link to the old EventServer page:
-  maker.addNode( "hr", body );
-  XHTMLMaker::AttrMap old_page_attr;
-  old_page_attr[ "href" ] = baseURL() + "/EventServerStats?update=off";
-  XHTMLMaker::Node* old_page = maker.addNode( "a", body, old_page_attr );
-  maker.addText( old_page, "Old Event Server Page" );
 
   // Write it:
   maker.out( *out );
