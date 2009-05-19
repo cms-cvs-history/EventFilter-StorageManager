@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.60 2009/05/14 12:44:19 mommsen Exp $
+   $Id: StorageManager.h,v 1.45.6.61 2009/05/18 12:11:36 dshpakov Exp $
 */
 
 #include <string>
@@ -55,7 +55,9 @@ namespace stor {
 
   class StorageManager: public xdaq::Application
   {
-   public:
+
+  public:
+  
     StorageManager(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
   
     ~StorageManager();
@@ -74,17 +76,10 @@ namespace stor {
     xoap::MessageReference halting( xoap::MessageReference )
       throw( xoap::exception::Exception );
 
-    // *** FSM soap command callback
-    /*
-    xoap::MessageReference fsmCallback(xoap::MessageReference msg)
-      throw (xoap::exception::Exception);
-    */
-
-////////////////////////////////////////////////////////////////////////////////
-   private:  
+  private:  
+  
     StorageManager(StorageManager const&); // not implemented
     StorageManager& operator=(StorageManager const&); // not implemented
-
 
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
     void receiveDataMessage(toolbox::mem::Reference *ref);
@@ -114,7 +109,7 @@ namespace stor {
     void dqmEventStatisticsWebPage
       (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
 
-    // New consumer handling methods. Will replace DQMconsumerWebPage and DQMeventdataWebPage
+    // Consumer handling methods:
     void processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
     void processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
@@ -155,8 +150,9 @@ namespace stor {
 
     WebPageHelper _webPageHelper;
 
-  }; 
-} 
+  };
+
+}
 
 #endif
 /// emacs configuration
