@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.1.2.52 2009/05/15 15:57:36 dshpakov Exp $
+// $Id: EventDistributor.cc,v 1.1.2.53 2009/05/15 19:45:59 biery Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 
@@ -110,14 +110,6 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
         _statisticsReporter->getDataSenderMonitorCollection();
       dataSenderMonColl.addEventSample(ioc);
 
-      // temporary handling (until the new event server is ready)
-      if ( _sharedResources->_oldEventServer.get() != NULL )
-      {
-        ioc.copyFragmentsIntoBuffer(_tempEventArea);
-        EventMsgView emsg(&_tempEventArea[0]);
-        _sharedResources->_oldEventServer->processEvent(emsg);
-      }
-      
       break;
     }
     
