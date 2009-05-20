@@ -83,10 +83,10 @@ curl -H "SOAPAction: urn:xdaq-application:lid=4" \
 savedStatus=$?
 echo ""
 
-if [ $savedStatus -eq 0 ]
-then
-   sleep 1
-fi
+#if [ $savedStatus -eq 0 ]
+#then
+#   sleep 1
+#fi
 
 echo ""
 echo "========================================"
@@ -123,10 +123,10 @@ curl -H "SOAPAction: urn:xdaq-application:lid=4" \
 savedStatus=$?
 echo ""
 
-if [ $savedStatus -eq 0 ]
-then
-   sleep 1
-fi
+#if [ $savedStatus -eq 0 ]
+#then
+#   sleep 1
+#fi
 
 echo ""
 echo "========================================"
@@ -163,10 +163,10 @@ curl -H "SOAPAction: urn:xdaq-application:lid=4" \
 savedStatus=$?
 echo ""
 
-if [ $savedStatus -eq 0 ]
-then
-   sleep 1
-fi
+#if [ $savedStatus -eq 0 ]
+#then
+#   sleep 1
+#fi
 
 echo ""
 echo "========================================"
@@ -216,6 +216,8 @@ cat tmp2.xml | sed "s,REQUESTED_ACTION,Halt," > tmp.xml
 curl --stderr /dev/null -H "SOAPAction: urn:xdaq-application:lid=4" \
   -d @tmp.xml $STORAGE_MANAGER_URL
 echo ""
+
+sleep 5
 
 rm -f tmp.xml
 rm -f tmp2.xml
