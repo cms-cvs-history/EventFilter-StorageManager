@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.121 2009/05/18 12:11:37 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.122 2009/05/19 15:19:31 dshpakov Exp $
 
 #include <iostream>
 #include <iomanip>
@@ -77,7 +77,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   reasonForFailedState_(),
   mybuffer_(7000000),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.121 2009/05/18 12:11:37 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.122 2009/05/19 15:19:31 dshpakov Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -654,13 +654,11 @@ xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
 {
   try {
-    LOG4CPLUS_INFO(getApplicationLogger(),"Start configuring ...");
+    if(!edmplugin::PluginManager::isAvailable()) {
+      edmplugin::PluginManager::configure(edmplugin::standard::config());
+    }
 
     _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
-
-    configureAction();
-
-    LOG4CPLUS_INFO(getApplicationLogger(),"Finished configuring!");
   }
   catch (cms::Exception& e) {
     reasonForFailedState_ = e.explainSelf();
@@ -687,24 +685,12 @@ xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
 }
 
 
-void StorageManager::configureAction()
-{
-  if(!edmplugin::PluginManager::isAvailable()) {
-    edmplugin::PluginManager::configure(edmplugin::standard::config());
-  }
-}
-
-
 xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
 {
   if (_sharedResources->_configuration->streamConfigurationHasChanged()) {
     try {
-      LOG4CPLUS_INFO(getApplicationLogger(),"Start re-configuring ...");
       _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
-      this->haltAction();
-      this->configureAction();
-      LOG4CPLUS_INFO(getApplicationLogger(),"Finished re-configuring!");
     }
     catch (cms::Exception& e) {
       reasonForFailedState_ = e.explainSelf();
@@ -729,11 +715,7 @@ xoap::MessageReference StorageManager::enabling( xoap::MessageReference msg )
   }
 
   try {
-    LOG4CPLUS_INFO(getApplicationLogger(),"Start enabling ...");
-
     _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
-
-    LOG4CPLUS_INFO(getApplicationLogger(),"Finished enabling!");
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "enabling FAILED: " + (string)e.what();
@@ -754,11 +736,7 @@ xoap::MessageReference StorageManager::stopping( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
 {
   try {
-    LOG4CPLUS_INFO(getApplicationLogger(),"Start stopping ...");
     _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Stop() ) );
-    stopAction();
-
-    LOG4CPLUS_INFO(getApplicationLogger(),"Finished stopping!");
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "stopping FAILED: " + (string)e.what();
@@ -780,13 +758,7 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
 {
   try {
-    LOG4CPLUS_INFO(getApplicationLogger(),"Start halting ...");
-
     _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
-
-    haltAction();
-    
-    LOG4CPLUS_INFO(getApplicationLogger(),"Finished halting!");
   }
   catch (xcept::Exception &e) {
     reasonForFailedState_ = "halting FAILED: " + (string)e.what();
@@ -802,15 +774,6 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
   
   return msg;
 }
-
-void StorageManager::stopAction()
-{}
-
-void StorageManager::haltAction()
-{
-  stopAction();
-}
-
 
 /////////////////////////////////
 //// Get current state name: ////
