@@ -10,7 +10,7 @@
 
      See CMS EventFilter wiki page for further notes.
 
-   $Id: StorageManager.h,v 1.45.6.61 2009/05/18 12:11:36 dshpakov Exp $
+   $Id: StorageManager.h,v 1.45.6.62 2009/05/19 15:19:31 dshpakov Exp $
 */
 
 #include <string>
@@ -85,10 +85,6 @@ namespace stor {
     void receiveDataMessage(toolbox::mem::Reference *ref);
     void receiveErrorDataMessage(toolbox::mem::Reference *ref);
     void receiveDQMMessage(toolbox::mem::Reference *ref);
-
-    void configureAction();
-    void stopAction();
-    void haltAction();
 
     unsigned int getRunNumber() const;
 
