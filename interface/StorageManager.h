@@ -1,44 +1,21 @@
-#ifndef _StorageManager_h
-#define _StorageManager_h
+// $Id: FragmentProcessor.h,v 1.1.2.22 2009/05/14 12:44:19 mommsen Exp $
 
-/*
-   Author: Harry Cheung, FNAL
-
-   Description:
-     Storage Manager XDAQ application. It can receive and collect
-     I2O frames to remake event data. 
-
-     See CMS EventFilter wiki page for further notes.
-
-   $Id: StorageManager.h,v 1.45.6.62 2009/05/19 15:19:31 dshpakov Exp $
-*/
+#ifndef StorageManager_StorageManager_h
+#define StorageManager_StorageManager_h
 
 #include <string>
-#include <map>
 
-#include "FWCore/MessageService/interface/MessageServicePresence.h"
+//#include "FWCore/MessageService/interface/MessageServicePresence.h"
 
-#include "EventFilter/Utilities/interface/Exception.h"
-#include "EventFilter/Utilities/interface/Css.h"
-
-#include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"
-#include "EventFilter/StorageManager/interface/ForeverAverageCounter.h"
-#include "EventFilter/StorageManager/interface/SMFUSenderList.h"
-#include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/DQMEventProcessor.h"
+#include "EventFilter/StorageManager/interface/FragmentProcessor.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 
 #include "xdaq/Application.h"
-#include "xdaq/ApplicationContext.h"
-
-#include "xdata/UnsignedInteger32.h"
-
 #include "xgi/exception/Exception.h"
 
-#include "boost/shared_ptr.hpp"
-#include "boost/thread/mutex.hpp"
 
 namespace toolbox { 
   namespace mem {
@@ -53,92 +30,207 @@ namespace xgi {
 
 namespace stor {
 
+  /**
+   * Main class of the StorageManager XDAQ application
+   *
+   * $Author: mommsen $
+   * $Revision: 1.1.2.22 $
+   * $Date: 2009/05/14 12:44:19 $
+   */
+
   class StorageManager: public xdaq::Application
   {
 
   public:
   
-    StorageManager(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
+    StorageManager(xdaq::ApplicationStub* s);
   
     ~StorageManager();
 
-    // *** Updates the exported parameters
-    xoap::MessageReference ParameterGet(xoap::MessageReference message)
-    throw (xoap::exception::Exception);
-
-    // *** Callbacks to be executed during transitional states
-    xoap::MessageReference configuring( xoap::MessageReference )
-      throw( xoap::exception::Exception );
-    xoap::MessageReference enabling( xoap::MessageReference )
-      throw( xoap::exception::Exception );
-    xoap::MessageReference stopping( xoap::MessageReference )
-      throw( xoap::exception::Exception );
-    xoap::MessageReference halting( xoap::MessageReference )
-      throw( xoap::exception::Exception );
 
   private:  
   
     StorageManager(StorageManager const&); // not implemented
     StorageManager& operator=(StorageManager const&); // not implemented
 
+    /**
+     * Bind callbacks for I2O message
+     */
+    void bindI2OCallbacks();
+
+    /**
+     * Callback for I2O message containing an init message
+     */
     void receiveRegistryMessage(toolbox::mem::Reference *ref);
+
+    /**
+     * Callback for I2O message containing an event
+     */
     void receiveDataMessage(toolbox::mem::Reference *ref);
+
+    /**
+     * Callback for I2O message containing an error event
+     */
     void receiveErrorDataMessage(toolbox::mem::Reference *ref);
+
+    /**
+     * Callback for I2O message containing a DQM event (histogramms)
+     */
     void receiveDQMMessage(toolbox::mem::Reference *ref);
 
-    unsigned int getRunNumber() const;
 
-    void defaultWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void css(xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception)
-      {css_.css(in,out);}
-    void storedDataWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void rbsenderWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void rbsenderDetailWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void fileStatisticsWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void consumerListWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
-    void dqmEventStatisticsWebPage
-      (xgi::Input *in, xgi::Output *out) throw (xgi::exception::Exception);
+    /**
+     * Bind callbacks for state machine SOAP messages
+     */
+    void bindStateMachineCallbacks();
 
-    // Consumer handling methods:
-    void processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
-      throw( xgi::exception::Exception );
-    void processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
-      throw( xgi::exception::Exception );
-    void processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
-      throw( xgi::exception::Exception );
-    void processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
-      throw( xgi::exception::Exception );
-    void processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out )
-      throw( xgi::exception::Exception );
+    /**
+     * Callback for SOAP message requesting a Configure state machine event
+     */
+    xoap::MessageReference configuring( xoap::MessageReference )
+      throw( xoap::exception::Exception );
 
-    // Consumer statistics web page
+    /**
+     * Callback for SOAP message requesting an Enable state machine event
+     */
+    xoap::MessageReference enabling( xoap::MessageReference )
+      throw( xoap::exception::Exception );
+
+    /**
+     * Callback for SOAP message requesting a Stop state machine event
+     */
+    xoap::MessageReference stopping( xoap::MessageReference )
+      throw( xoap::exception::Exception );
+
+    /**
+     * Callback for SOAP message requesting a Halt state machine event
+     */
+    xoap::MessageReference halting( xoap::MessageReference )
+      throw( xoap::exception::Exception );
+
+
+    /**
+     * Bind callbacks for web interface
+     */
+    void bindWebInterfaceCallbacks();
+
+    /**
+     * Webinterface callback for style sheet
+     */
+    void css(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
+     * Webinterface callback creating default web page
+     */
+    void defaultWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
+     * Webinterface callback creating web page showing the stored data information
+     */
+    void storedDataWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
+     * Webinterface callback creating web page showing information about
+     * recently written files
+     */
+    void fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
+     * Webinterface callback creating web page showing summary information
+     * about the resource broker sending data.
+     */
+    void rbsenderWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
+     * Webinterface callback creating web page showing detailed information
+     * about the resource broker sending data.
+     */
+    void rbsenderDetailWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
+     * Webinterface callback creating web page showing the connected consumers
+     */
     void consumerStatisticsPage( xgi::Input* in, xgi::Output* out )
       throw( xgi::exception::Exception );
 
-    // *** state machine related
-    std::string       reasonForFailedState_;
+    /**
+     * Webinterface callback creating web page showing statistics about the
+     * processed DQM events.
+     */
+    void dqmEventStatisticsWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
 
-    // Get current state name:
-    std::string externallyVisibleState() const;
+    /**
+     * Callback returning a XML list of consumer information.
+     * The current implementation just returns an empty document.
+     */
+    void consumerListWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+
+
+    /**
+     * Bind callbacks for consumers
+     */
+    void bindConsumerCallbacks();
+
+    /**
+     * Callback handling event consumer registration request
+     */
+    void processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+
+    /**
+     * Callback handling event consumer init message request
+     */
+    void processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+
+    /**
+     * Callback handling event consumer event request
+     */
+    void processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+ 
+    /**
+     * Callback handling DQM event consumer registration request
+     */
+    void processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+
+    /**
+     * Callback handling DQM event consumer DQM event request
+     */
+    void processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out )
+      throw( xgi::exception::Exception );
+
+
+    /**
+     * Initialize the shared resources
+     */
+    void initializeSharedResources();
+
+    /**
+     * Create and start all worker threads
+     */
+    void startWorkerThreads();
+
+
+    // Do we need this here?
+    unsigned int getRunNumber() const;
+    std::string reasonForFailedState_;
+
 
     // instantiate the plugin manager, not referenced here after!
     edm::AssertHandler _ah;
 
     SharedResourcesPtr _sharedResources;
-
-    evf::Css css_;
-
-    // added for Event Server
-    std::vector<unsigned char> mybuffer_; //temporary buffer instead of using stack
-    boost::mutex consumerInitMsgLock_;
-
-    SMFUSenderList smrbsenders_;
 
     FragmentProcessor *_fragmentProcessor;
     DiskWriter *_diskWriter;
@@ -150,7 +242,9 @@ namespace stor {
 
 }
 
-#endif
+#endif // StorageManager_StorageManager_h
+
+
 /// emacs configuration
 /// Local Variables: -
 /// mode: c++ -
