@@ -1,87 +1,65 @@
-// $Id: StorageManager.cc,v 1.92.4.122 2009/05/19 15:19:31 dshpakov Exp $
+// $Id: StorageManager.cc,v 1.92.4.123 2009/05/21 13:37:33 biery Exp $
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <vector>
-
-#include "EventFilter/StorageManager/interface/StorageManager.h"
-#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
-#include "EventFilter/StorageManager/interface/FUProxy.h"
-#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
+#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
+#include "EventFilter/StorageManager/interface/FragmentMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/StorageManager.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
 
-#include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
-#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
-#include "EventFilter/Utilities/interface/ModuleWebRegistry.h"
-
-#include "FWCore/Utilities/interface/DebugMacros.h"
-#include "FWCore/ServiceRegistry/interface/ServiceToken.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
-#include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
 
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
-#include "IOPool/Streamer/interface/OtherMessage.h"
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/Utilities.h"
 #include "IOPool/Streamer/interface/StreamerInputSource.h"
 
-#include "xcept/tools.h"
-
 #include "i2o/Method.h"
-#include "i2o/utils/AddressMap.h"
-
 #include "toolbox/task/WorkLoopFactory.h"
-
 #include "xcept/tools.h"
-
-#include "xdaq2rc/RcmsStateNotifier.h"
-
-#include "xdata/InfoSpaceFactory.h"
-
 #include "xdaq/NamespaceURI.h"
+#include "xdata/InfoSpaceFactory.h"
+#include "xgi/Method.h"
+#include "xoap/MessageReference.h"
 #include "xoap/Method.h"
 
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
-#include "boost/lexical_cast.hpp"
-#include "boost/algorithm/string/case_conv.hpp"
-#include "cgicc/Cgicc.h"
-
-#include <sys/statfs.h>
-#include "zlib.h"
-
-// namespace stor {
-//   extern bool getSMFC_exceptionStatus();
-//   extern std::string getSMFC_reason4Exception();
-// }
-
-using namespace edm;
 using namespace std;
 using namespace stor;
 
 
-StorageManager::StorageManager(xdaq::ApplicationStub * s)
-  throw (xdaq::exception::Exception) :
+StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   xdaq::Application(s),
   reasonForFailedState_(),
-  mybuffer_(7000000),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.122 2009/05/19 15:19:31 dshpakov Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.123 2009/05/21 13:37:33 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
-  // Bind specific messages to functions
+  // bind all callback functions
+  bindI2OCallbacks();
+  bindStateMachineCallbacks();
+  bindWebInterfaceCallbacks();
+  bindConsumerCallbacks();
+
+  // need the line below so that deserializeRegistry can run
+  // in order to compare two registries (cannot compare byte-for-byte) (if we keep this)
+  // need line below anyway in case we deserialize DQMEvents for collation
+  edm::RootAutoLibraryLoader::enable();
+
+  initializeSharedResources();
+  startWorkerThreads();
+}
+
+
+void StorageManager::bindI2OCallbacks()
+{
   i2o::bind(this,
             &StorageManager::receiveRegistryMessage,
             I2O_SM_PREAMBLE,
@@ -94,18 +72,15 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
             &StorageManager::receiveErrorDataMessage,
             I2O_SM_ERROR,
             XDAQ_ORGANIZATION_ID);
-  /* no longer used it seems? Don't delete yet
-  i2o::bind(this,
-            &StorageManager::receiveOtherMessage,
-            I2O_SM_OTHER,
-            XDAQ_ORGANIZATION_ID);
-  */
   i2o::bind(this,
             &StorageManager::receiveDQMMessage,
             I2O_SM_DQM,
             XDAQ_ORGANIZATION_ID);
+}
 
-  // Bind callbacks:
+
+void StorageManager::bindStateMachineCallbacks()
+{
   xoap::bind( this,
               &StorageManager::configuring,
               "Configure",
@@ -122,38 +97,38 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
               &StorageManager::halting,
               "Halt",
               XDAQ_NS_URI );
+}
 
-  // Bind web interface
+
+void StorageManager::bindWebInterfaceCallbacks()
+{
+  xgi::bind(this,&StorageManager::css,                      "styles.css");
   xgi::bind(this,&StorageManager::defaultWebPage,           "Default");
   xgi::bind(this,&StorageManager::storedDataWebPage,        "storedData");
-  xgi::bind(this,&StorageManager::css,                      "styles.css");
   xgi::bind(this,&StorageManager::rbsenderWebPage,          "rbsenderlist");
   xgi::bind(this,&StorageManager::rbsenderDetailWebPage,    "rbsenderdetail");
   xgi::bind(this,&StorageManager::fileStatisticsWebPage,    "fileStatistics");
   xgi::bind(this,&StorageManager::dqmEventStatisticsWebPage,"dqmEventStatistics");
+  xgi::bind(this,&StorageManager::consumerStatisticsPage,   "consumerStatistics" );
+  xgi::bind(this,&StorageManager::consumerListWebPage,      "consumerList");
+}
 
-  // Consumer bindings:
+
+void StorageManager::bindConsumerCallbacks()
+{
+  // event consumers
   xgi::bind( this, &StorageManager::processConsumerRegistrationRequest, "registerConsumer" );
   xgi::bind( this, &StorageManager::processConsumerHeaderRequest, "getregdata" );
   xgi::bind( this, &StorageManager::processConsumerEventRequest, "geteventdata" );
 
-  xgi::bind(this,&StorageManager::consumerListWebPage,  "consumerList");
-
+  // dqm event consumers
   xgi::bind(this,&StorageManager::processDQMConsumerRegistrationRequest, "registerDQMConsumer");
   xgi::bind(this,&StorageManager::processDQMConsumerEventRequest, "getDQMeventdata");
+}
 
-  // Consumer statistics page bingding:
-  xgi::bind( this, &StorageManager::consumerStatisticsPage,
-             "consumerStatistics" );
 
-  // need the line below so that deserializeRegistry can run
-  // in order to compare two registries (cannot compare byte-for-byte) (if we keep this)
-  // need line below anyway in case we deserialize DQMEvents for collation
-  edm::RootAutoLibraryLoader::enable();
-
-  // set application icon for hyperdaq
-  getApplicationDescriptor()->setAttribute("icon", "/evf/images/smicon.jpg");
-
+void StorageManager::initializeSharedResources()
+{
   _sharedResources.reset(new SharedResources());
 
   xdata::InfoSpace *ispace = getApplicationInfoSpace();
@@ -188,8 +163,11 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( cmcptr ) );
   cmcptr = _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
   _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( cmcptr ) );
+}
 
-  // Main worker threads
+
+void StorageManager::startWorkerThreads()
+{
   _fragmentProcessor = new FragmentProcessor( this, _sharedResources );
   _diskWriter = new DiskWriter(this, _sharedResources);
   _dqmEventProcessor = new DQMEventProcessor(this, _sharedResources);
@@ -242,6 +220,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s)
   }
 }
 
+
 StorageManager::~StorageManager()
 {
   delete _fragmentProcessor;
@@ -249,15 +228,11 @@ StorageManager::~StorageManager()
   delete _dqmEventProcessor;
 }
 
-xoap::MessageReference
-StorageManager::ParameterGet(xoap::MessageReference message)
-  throw (xoap::exception::Exception)
-{
-  return Application::ParameterGet(message);
-}
 
+/////////////////////////////
+// I2O call back functions //
+/////////////////////////////
 
-////////// *** I2O frame call back functions /////////////////////////////////////////////
 void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
 {
   I2OChain i2oChain(ref);
@@ -274,35 +249,8 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
   );
 
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-
-  ////////////////////
-  // old code below can be removed once new event server is ready
-  ////////////////////
-
-  I2O_MESSAGE_FRAME         *stdMsg  = (I2O_MESSAGE_FRAME*) ref->getDataLocation();
-  I2O_SM_PREAMBLE_MESSAGE_FRAME *msg = (I2O_SM_PREAMBLE_MESSAGE_FRAME*) stdMsg;
-
-  FDEBUG(10) << "StorageManager: Received registry message from HLT " << msg->hltURL
-             << " application " << msg->hltClassName << " id " << msg->hltLocalId
-             << " instance " << msg->hltInstance << " tid " << msg->hltTid
-             << " rbBufferID " << msg->rbBufferID << " outModID " << msg->outModID
-             << " fuProcID " << msg->fuProcID  << " fuGUID 0x" << std::hex
-             << msg->fuGUID << std::dec << std::endl;
-  FDEBUG(10) << "StorageManager: registry size " << msg->dataSize << "\n";
-
-  // *** check the Storage Manager is in the Ready or Enabled state first!
-  if( externallyVisibleState() != "Enabled" && externallyVisibleState() != "Ready" )
-  {
-    LOG4CPLUS_ERROR( this->getApplicationLogger(),
-                     "Received INIT message but not in Ready/Enabled state! Current state = "
-                     << externallyVisibleState() << " INIT from " << msg->hltURL
-                     << " application " << msg->hltClassName );
-    // just release the memory at least - is that what we want to do?
-    ref->release();
-    return;
-  }
 }
+
 
 void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 {
@@ -314,51 +262,19 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
 
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 
-
-  ////////////////////
-  // old code below can be removed once new event server is ready
-  ////////////////////
-
-  I2O_MESSAGE_FRAME         *stdMsg =
-    (I2O_MESSAGE_FRAME*)ref->getDataLocation();
-  I2O_SM_DATA_MESSAGE_FRAME *msg    =
-    (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10)   << "StorageManager: Received data message from HLT at " << msg->hltURL 
-               << " application " << msg->hltClassName << " id " << msg->hltLocalId
-               << " instance " << msg->hltInstance << " tid " << msg->hltTid
-               << " rbBufferID " << msg->rbBufferID << " outModID " << msg->outModID
-               << " fuProcID " << msg->fuProcID  << " fuGUID 0x" << std::hex
-               << msg->fuGUID << std::dec << std::endl;
-  FDEBUG(10)   << "                 for run " << msg->runID << " event " << msg->eventID
-               << " total frames = " << msg->numFrames << std::endl;
-  FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
-               << msg->numFrames-1 << std::endl;
-  
-  // check the storage Manager is in the Ready state first!
-  if( externallyVisibleState() != "Enabled")
-  {
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                       "Received EVENT message but not in Enabled state! Current state = "
-                       << externallyVisibleState() << " EVENT from" << msg->hltURL
-                       << " application " << msg->hltClassName);
-    // just release the memory at least - is that what we want to do?
-    ref->release();
-    return;
-  }
-
-  // should only do this test if the first data frame from each FU?
   // check if run number is the same as that in Run configuration,
   // complain otherwise !!!
   //
   // "The run number check should move somewhere else once we know the
   // right place to put it" (Kurt).
-  if(msg->runID != getRunNumber())
-    {
-      LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
-                      << msg->runID << " From " << msg->hltURL
-                      << " Different from Run Number from configuration = " << getRunNumber());
-    }
+//   if(msg->runID != getRunNumber())
+//     {
+//       LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
+//                       << msg->runID << " From " << msg->hltURL
+//                       << " Different from Run Number from configuration = " << getRunNumber());
+//     }
 }
+
 
 void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
 {
@@ -369,39 +285,8 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
   fragMonCollection.addEventFragmentSample( i2oChain.totalDataSize() );
 
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-
-  ////////////////////
-  // old code below can be removed once new event server is ready
-  ////////////////////
-
-  I2O_MESSAGE_FRAME         *stdMsg =
-    (I2O_MESSAGE_FRAME*)ref->getDataLocation();
-  I2O_SM_DATA_MESSAGE_FRAME *msg    =
-    (I2O_SM_DATA_MESSAGE_FRAME*)stdMsg;
-  FDEBUG(10)   << "StorageManager: Received error data message from HLT at " << msg->hltURL 
-               << " application " << msg->hltClassName << " id " << msg->hltLocalId
-               << " instance " << msg->hltInstance << " tid " << msg->hltTid
-               << " rbBufferID " << msg->rbBufferID << " outModID " << msg->outModID
-               << " fuProcID " << msg->fuProcID  << " fuGUID 0x" << std::hex
-               << msg->fuGUID << std::dec << std::endl;
-  FDEBUG(10)   << "                 for run " << msg->runID << " event " << msg->eventID
-               << " total frames = " << msg->numFrames << std::endl;
-  FDEBUG(10)   << "StorageManager: Frame " << msg->frameCount << " of " 
-               << msg->numFrames-1 << std::endl;
-  
-  // check the storage Manager is in the Ready state first!
-  if(externallyVisibleState() != "Enabled")
-  {
-    LOG4CPLUS_ERROR(this->getApplicationLogger(),
-                       "Received ERROR message but not in Enabled state! Current state = "
-                       << externallyVisibleState() << " ERROR from" << msg->hltURL
-                       << " application " << msg->hltClassName);
-    // just release the memory at least - is that what we want to do?
-    ref->release();
-    return;
-  }
 }
+
 
 void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 {
@@ -414,7 +299,19 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
 }
 
-//////////// *** Default web page ///////////////////////////////////////////////
+
+
+///////////////////////////////////////
+// Web interface call back functions //
+///////////////////////////////////////
+
+void StorageManager::css(xgi::Input *in, xgi::Output *out)
+throw (xgi::exception::Exception)
+{
+  _webPageHelper.css(in,out);
+}
+
+
 void StorageManager::defaultWebPage(xgi::Input *in, xgi::Output *out)
 throw (xgi::exception::Exception)
 {
@@ -445,7 +342,6 @@ throw (xgi::exception::Exception)
 }
 
 
-//////////// *** Store data web page //////////////////////////////////////////////////////////
 void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
   throw (xgi::exception::Exception)
 {
@@ -473,13 +369,9 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
     LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
     XCEPT_RAISE(xgi::exception::Exception, errorMsg);
   }
-
-
 }
 
-///////////////////////////////////
-//// Consumer statistics page: ////
-///////////////////////////////////
+
 void StorageManager::consumerStatisticsPage( xgi::Input* in,
                                              xgi::Output* out )
   throw( xgi::exception::Exception )
@@ -633,7 +525,6 @@ void StorageManager::dqmEventStatisticsWebPage(xgi::Input *in, xgi::Output *out)
     LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
     XCEPT_RAISE(xgi::exception::Exception, errorMsg);
   }
-
 }
 
 
@@ -649,6 +540,10 @@ void StorageManager::consumerListWebPage(xgi::Input *in, xgi::Output *out)
   out->write( &buff, 0 );
 }
 
+
+///////////////////////////////////////
+// State Machine call back functions //
+///////////////////////////////////////
 
 xoap::MessageReference StorageManager::configuring( xoap::MessageReference msg )
   throw( xoap::exception::Exception )
@@ -775,16 +670,6 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
   return msg;
 }
 
-/////////////////////////////////
-//// Get current state name: ////
-/////////////////////////////////
-std::string StorageManager::externallyVisibleState() const
-{
-  if( !_sharedResources ) return "Halted";
-  if( !_sharedResources->_statisticsReporter ) return "Halted";
-  return _sharedResources->_statisticsReporter->
-    getStateMachineMonitorCollection().externallyVisibleState();
-}
 
 ////////////////////////////////////////////
 //// Get run number from Configuration: ////
@@ -796,9 +681,11 @@ unsigned int StorageManager::getRunNumber() const
   return _sharedResources->_configuration->getRunNumber();
 }
 
-/////////////////////////////////////////////
-//// New consumer registration callback: ////
-/////////////////////////////////////////////
+
+////////////////////////////
+//// Consumer callbacks ////
+////////////////////////////
+
 void
 StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
@@ -914,9 +801,7 @@ StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output*
 
 }
 
-///////////////////////////////////////
-//// New consumer header callback: ////
-///////////////////////////////////////
+
 void
 StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
@@ -945,9 +830,7 @@ StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
 
 }
 
-//////////////////////////////////////
-//// New consumer event callback: ////
-//////////////////////////////////////
+
 void
 StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
@@ -977,9 +860,7 @@ StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   writeConsumerEvent( out, evt );
 }
 
-/////////////////////////////////////////////////
-//// New DQM consumer registration callback: ////
-/////////////////////////////////////////////////
+
 void
 StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
@@ -1084,9 +965,7 @@ StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Outp
   writeConsumerRegistration( out, cid );
 }
 
-//////////////////////////////////////////
-//// New DQM consumer event callback: ////
-//////////////////////////////////////////
+
 void
 StorageManager::processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
