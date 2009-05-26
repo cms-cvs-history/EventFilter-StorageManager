@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.21 2009/05/07 13:08:24 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.22 2009/05/13 15:59:58 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -10,6 +10,8 @@
 #include "toolbox/mem/Pool.h"
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
+
+#include "EventFilter/Utilities/interface/Css.h"
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
@@ -28,8 +30,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.21 $
-   * $Date: 2009/05/07 13:08:24 $
+   * $Revision: 1.1.2.22 $
+   * $Date: 2009/05/13 15:59:58 $
    */
   
   class WebPageHelper
@@ -42,6 +44,12 @@ namespace stor {
       const std::string SMversion
     );
 
+
+    /**
+     * Create event filter style sheet
+     */
+    void css(xgi::Input *in, xgi::Output *out)
+    { css_.css(in,out); }
 
     /**
      * Generates the default monitoring webpage
@@ -495,6 +503,8 @@ namespace stor {
     //Prevent copying of the WebPageHelper
     WebPageHelper(WebPageHelper const&);
     WebPageHelper& operator=(WebPageHelper const&);
+
+    evf::Css css_;
 
     static boost::mutex _xhtmlMakerMutex;
     xdaq::ApplicationDescriptor* _appDescriptor;

@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.46 2009/05/15 19:51:34 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.47 2009/05/18 12:11:37 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -27,6 +27,9 @@ WebPageHelper::WebPageHelper
 _appDescriptor(appDesc),
 _smVersion(SMversion)
 {
+  // set application icon for hyperdaq
+  appDesc->setAttribute("icon", "/evf/images/smicon.jpg");
+
   _tableAttr[ "frame" ] = "void";
   _tableAttr[ "rules" ] = "group";
   _tableAttr[ "class" ] = "states";
