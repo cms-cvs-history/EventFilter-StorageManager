@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.1.2.22 2009/05/14 12:44:19 mommsen Exp $
+// $Id: StorageManager.h,v 1.45.6.64 2009/05/26 13:54:52 mommsen Exp $
 
 #ifndef StorageManager_StorageManager_h
 #define StorageManager_StorageManager_h
@@ -34,8 +34,8 @@ namespace stor {
    * Main class of the StorageManager XDAQ application
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.22 $
-   * $Date: 2009/05/14 12:44:19 $
+   * $Revision: 1.45.6.64 $
+   * $Date: 2009/05/26 13:54:52 $
    */
 
   class StorageManager: public xdaq::Application
@@ -167,13 +167,18 @@ namespace stor {
       throw (xgi::exception::Exception);
 
     /**
+     * Webinterface callback creating web page showing statistics about the
+     * data throughput in the SM.
+     */
+    void throughputWebPage(xgi::Input *in, xgi::Output *out)
+      throw (xgi::exception::Exception);
+
+    /**
      * Callback returning a XML list of consumer information.
      * The current implementation just returns an empty document.
      */
     void consumerListWebPage(xgi::Input *in, xgi::Output *out)
       throw (xgi::exception::Exception);
-
-
 
     /**
      * Bind callbacks for consumers

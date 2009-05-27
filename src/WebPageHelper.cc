@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.47 2009/05/18 12:11:37 dshpakov Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.48 2009/05/26 13:55:34 mommsen Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -513,6 +513,30 @@ void WebPageHelper::dqmEventWebPage
 }
 
 
+void WebPageHelper::throughputWebPage
+(
+  xgi::Output *out,
+  const SharedResourcesPtr sharedResources
+)
+{
+  boost::mutex::scoped_lock lock(_xhtmlMakerMutex);
+  XHTMLMonitor theMonitor;
+  XHTMLMaker maker;
+
+  StatisticsReporterPtr statReporter = sharedResources->_statisticsReporter;
+
+  // Create the body with the standard header
+  XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
+
+  addDOMforThroughputStatistics(maker, body, statReporter->getThroughputMonitorCollection());  
+
+  addDOMforSMLinks(maker, body);
+
+  // Dump the webpage to the output stream
+  maker.out(*out);
+}
+
+
 ///////////////////////
 //// Get base URL: ////
 ///////////////////////
@@ -663,6 +687,12 @@ void WebPageHelper::addDOMforSMLinks
   linkAttr[ "href" ] = url + "/dqmEventStatistics";
   link = maker.addNode("a", parent, linkAttr);
   maker.addText(link, "DQM event processor statistics");
+
+  maker.addNode("hr", parent);
+
+  linkAttr[ "href" ] = url + "/throughputStatistics";
+  link = maker.addNode("a", parent, linkAttr);
+  maker.addText(link, "Throughput statistics");
 
   maker.addNode("hr", parent);
 
@@ -1501,6 +1531,178 @@ void WebPageHelper::addDOMforDQMEventStatistics(XHTMLMaker& maker,
 }
 
 
+void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
+                                                  XHTMLMaker::Node *parent,
+                                                  ThroughputMonitorCollection const& tmc)
+{
+  double busyPercentage, dataRate; // , average;
+
+  MonitoredQuantity::Stats fqEntryCountMQ, fragSizeMQ, fpIdleMQ;
+  MonitoredQuantity::Stats sqEntryCountMQ, eventSizeMQ, dwIdleMQ, diskWriteMQ;
+  tmc.getFragmentQueueEntryCountMQ().getStats(fqEntryCountMQ);
+  tmc.getPoppedFragmentSizeMQ().getStats(fragSizeMQ);
+  tmc.getFragmentProcessorIdleMQ().getStats(fpIdleMQ);
+  tmc.getStreamQueueEntryCountMQ().getStats(sqEntryCountMQ);
+  tmc.getPoppedEventSizeMQ().getStats(eventSizeMQ);
+  tmc.getDiskWriterIdleMQ().getStats(dwIdleMQ);
+  tmc.getDiskWriteMQ().getStats(diskWriteMQ);
+  int binCount = tmc.getBinCount();
+
+  XHTMLMaker::AttrMap colspanAttr;
+  colspanAttr[ "colspan" ] = "12";
+
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  tableLabelAttr[ "align" ] = "center";
+
+  XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+
+  XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+  XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
+  maker.addText(tableDiv, "Throughput Statistics");
+
+  // Header
+  tableRow = maker.addNode("tr", table, _specialRowAttr);
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Relative Time (sec)");
+  tableDiv = maker.addNode("th", tableRow);
+  maker.addText(tableDiv, "Bin Size (sec)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Instantaneous Number of Fragments in Fragment Queue");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Number of Fragments Popped from Fragment Queue");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Data Rate Popped from Fragment Queue (MB/sec)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Fragment Processor Thread Busy Percentage");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Instantaneous Number of Events in Stream Queue");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Number of Events Popped from Stream Queue");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Data Rate Popped from Stream Queue (MB/sec)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Disk Writer Thread Busy Percentage");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Number of Events Written to Disk");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Data  Rate to Disk (MB/sec)");
+
+  // smooth out the idle times so that the busy times that we display
+  // are not garbled by slight differences in the binning inside the
+  // monitored quanitity and the reporting of the idle time.
+  // NOTE that this "smoothing" does *not* reduce the normal variations
+  // is idle or busy times, when events are flowing normally.  Instead,
+  // it handles the cases in which the idle time is so large that it gets
+  // reported in the wrong bin.
+  int index = binCount - 1;
+  while (index >= 0)
+  {
+    index = smoothIdleTimes(fpIdleMQ.recentBinnedValueSums,
+                            fpIdleMQ.recentBinnedDurations,
+                            index, index);
+  }
+  index = binCount - 1;
+  while (index >= 0)
+  {
+    index = smoothIdleTimes(dwIdleMQ.recentBinnedValueSums,
+                            dwIdleMQ.recentBinnedDurations,
+                            index, index);
+  }
+
+  // add individual rows for the bins
+  double relativeTime = fqEntryCountMQ.recentDuration;
+  for (int idx = (binCount - 1); idx >= 0; --idx)
+  {
+    tableRow = maker.addNode("tr", table, _rowAttr);
+
+    // relative time
+    relativeTime -= fqEntryCountMQ.recentBinnedDurations[idx];
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, relativeTime, 2);
+
+    // bin size
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, fqEntryCountMQ.recentBinnedDurations[idx], 2);
+
+    // number of fragments in fragment queue
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, fqEntryCountMQ.recentBinnedValueSums[idx], 0);
+
+    // number of fragments popped from fragment queue
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, fragSizeMQ.recentBinnedSampleCounts[idx], 0);
+
+    // data rate popped from fragment queue
+    dataRate = 0.0;
+    if (fragSizeMQ.recentBinnedDurations[idx] > 0.0)
+    {
+      dataRate = (fragSizeMQ.recentBinnedValueSums[idx] / 1048576.0) /
+        fragSizeMQ.recentBinnedDurations[idx];
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, dataRate, 1);
+
+    // fragment processor thread busy percentage
+    busyPercentage = 0.0;
+    if (fpIdleMQ.recentBinnedSampleCounts[idx] > 0 &&
+        (fpIdleMQ.recentBinnedValueSums[idx] <=
+         fpIdleMQ.recentBinnedDurations[idx]))
+    {
+      busyPercentage = 100.0 * (1.0 - (fpIdleMQ.recentBinnedValueSums[idx] /
+                                       fpIdleMQ.recentBinnedDurations[idx]));
+      busyPercentage += 0.5;
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, busyPercentage, 0);
+
+    // number of events in stream queue
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, sqEntryCountMQ.recentBinnedValueSums[idx], 0);
+
+    // number of events popped from stream queue
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, eventSizeMQ.recentBinnedSampleCounts[idx], 0);
+
+    // data rate popped from stream queue
+    dataRate = 0.0;
+    if (eventSizeMQ.recentBinnedDurations[idx] > 0.0)
+    {
+      dataRate = (eventSizeMQ.recentBinnedValueSums[idx] / 1048576.0) /
+        eventSizeMQ.recentBinnedDurations[idx];
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, dataRate, 1);
+
+    // disk writer thread busy percentage
+    busyPercentage = 0.0;
+    if (dwIdleMQ.recentBinnedSampleCounts[idx] > 0 &&
+        (dwIdleMQ.recentBinnedValueSums[idx] <=
+         dwIdleMQ.recentBinnedDurations[idx]))
+    {
+      busyPercentage = 100.0 * (1.0 - (dwIdleMQ.recentBinnedValueSums[idx] /
+                                       dwIdleMQ.recentBinnedDurations[idx]));
+      busyPercentage += 0.5;
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, busyPercentage, 0);
+
+    // number of events written to disk
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, diskWriteMQ.recentBinnedSampleCounts[idx], 0);
+
+    // date rate written to disk
+    dataRate = 0.0;
+    if (diskWriteMQ.recentBinnedDurations[idx] > 0.0)
+    {
+      dataRate = (diskWriteMQ.recentBinnedValueSums[idx] / 1048576.0) /
+        diskWriteMQ.recentBinnedDurations[idx];
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, dataRate, 1);
+  }
+}
+
+
 void WebPageHelper::addOutputModuleTables(XHTMLMaker& maker,
                                           XHTMLMaker::Node *parent,
                            DataSenderMonitorCollection const& dsmc)
@@ -2051,6 +2253,39 @@ void WebPageHelper::addRowForMinDQMEventBandwidth
   maker.addText(tableDiv, stats.servedDQMEventBandwidthStats.getValueMin(dataSet));
   tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
   maker.addText(tableDiv, stats.writtenDQMEventBandwidthStats.getValueMin(dataSet));
+}
+
+
+int WebPageHelper::smoothIdleTimes(std::vector<double>& idleTimes,
+                                   std::vector<utils::duration_t>& durations,
+                                   int firstIndex, int lastIndex)
+{
+  int workingSize = lastIndex - firstIndex + 1;
+  double idleTimeSum = 0.0;
+  double durationSum = 0.0;
+
+  for (int idx = firstIndex; idx <= lastIndex; ++idx)
+  {
+    idleTimeSum += idleTimes[idx];
+    durationSum += durations[idx];
+  }
+
+  if (idleTimeSum > durationSum && firstIndex > 0)
+  {
+    return smoothIdleTimes(idleTimes, durations, firstIndex-1, lastIndex);
+  }
+  else
+  {
+    if (lastIndex > firstIndex)
+    {
+      for (int idx = firstIndex; idx <= lastIndex; ++idx)
+      {
+        idleTimes[idx] = idleTimeSum / workingSize;
+        durations[idx] = durationSum / workingSize;
+      }
+    }
+    return (firstIndex - 1);
+  }
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.1.2.22 2009/05/13 15:59:58 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.1.2.23 2009/05/26 13:55:24 mommsen Exp $
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -30,8 +30,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.22 $
-   * $Date: 2009/05/13 15:59:58 $
+   * $Revision: 1.1.2.23 $
+   * $Date: 2009/05/26 13:55:24 $
    */
   
   class WebPageHelper
@@ -101,6 +101,15 @@ namespace stor {
      * Generates the DQM event processor monitoring webpage
      */
     void dqmEventWebPage
+    (
+      xgi::Output*,
+      const SharedResourcesPtr
+    );
+
+    /**
+     * Generates the throughput monitoring webpage
+     */
+    void throughputWebPage
     (
       xgi::Output*,
       const SharedResourcesPtr
@@ -202,6 +211,16 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node *parent,
       DQMEventMonitorCollection const&
+    );
+
+    /**
+     * Adds throughput statistics to the parent DOM element
+     */
+    void addDOMforThroughputStatistics
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node *parent,
+      ThroughputMonitorCollection const&
     );
 
     /**
@@ -496,6 +515,19 @@ namespace stor {
       ResourceMonitorCollection::Stats const&
     );
 
+    /**
+     * Smooth out binned idle times for the throughput display.
+     * Returns the index to be used for the next section to smooth.
+     * Note that this method works on the idleTimes and durations
+     * lists in *reverse* order.  So, the initial indices should be
+     * idleTimes.size()-1.
+     */
+    int smoothIdleTimes
+    (
+      std::vector<double>& idleTimes,
+      std::vector<utils::duration_t>& durations,
+      int firstIndex, int lastIndex
+    );
 
 
   private:

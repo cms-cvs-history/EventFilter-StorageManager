@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.123 2009/05/21 13:37:33 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.124 2009/05/26 13:56:10 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -38,7 +38,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   xdaq::Application(s),
   reasonForFailedState_(),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.123 2009/05/21 13:37:33 biery Exp $ $Name: refdev01_scratch_branch $")
+    "$Id: StorageManager.cc,v 1.92.4.124 2009/05/26 13:56:10 mommsen Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -111,6 +111,7 @@ void StorageManager::bindWebInterfaceCallbacks()
   xgi::bind(this,&StorageManager::dqmEventStatisticsWebPage,"dqmEventStatistics");
   xgi::bind(this,&StorageManager::consumerStatisticsPage,   "consumerStatistics" );
   xgi::bind(this,&StorageManager::consumerListWebPage,      "consumerList");
+  xgi::bind(this,&StorageManager::throughputWebPage,"throughputStatistics");
 }
 
 
@@ -152,6 +153,9 @@ void StorageManager::initializeSharedResources()
   _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
   _sharedResources->_diskWriterResources.reset(new DiskWriterResources());
   _sharedResources->_dqmEventProcessorResources.reset(new DQMEventProcessorResources());
+
+  _sharedResources->_statisticsReporter->getThroughputMonitorCollection().setFragmentQueue(_sharedResources->_fragmentQueue);
+  _sharedResources->_statisticsReporter->getThroughputMonitorCollection().setStreamQueue(_sharedResources->_streamQueue);
 
   _sharedResources->
     _discardManager.reset(new DiscardManager(getApplicationContext(),
@@ -525,6 +529,37 @@ void StorageManager::dqmEventStatisticsWebPage(xgi::Input *in, xgi::Output *out)
     LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
     XCEPT_RAISE(xgi::exception::Exception, errorMsg);
   }
+}
+
+
+void StorageManager::throughputWebPage(xgi::Input *in, xgi::Output *out)
+  throw (xgi::exception::Exception)
+{
+  std::string errorMsg = "Failed to create the throughput statistics webpage";
+
+  try
+  {
+    _webPageHelper.throughputWebPage(
+      out,
+      _sharedResources
+    );
+  }
+  catch(std::exception &e)
+  {
+    errorMsg += ": ";
+    errorMsg += e.what();
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+  catch(...)
+  {
+    errorMsg += ": Unknown exception";
+    
+    LOG4CPLUS_ERROR(getApplicationLogger(), errorMsg);
+    XCEPT_RAISE(xgi::exception::Exception, errorMsg);
+  }
+
 }
 
 
