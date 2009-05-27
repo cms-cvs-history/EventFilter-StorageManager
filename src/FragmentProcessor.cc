@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.26 2009/05/12 13:37:32 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.27 2009/05/14 12:44:08 mommsen Exp $
 
 #include <unistd.h>
 
@@ -130,7 +130,28 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
 void FragmentProcessor::processOneFragmentIfPossible()
 {
   if (_eventDistributor.full()) 
-    ::sleep(_timeout);
+  {
+    utils::time_point_t startTime = utils::getCurrentTime();
+
+    // 27-May-2009, KAB - This is rather ugly. At the moment, we are limited
+    // to wait times of an integer number of seconds by the deq_timed_wait
+    // call below. (The Configuration class enforces this rule.)  Once we
+    // can support sub-second wait times [Boost 1.38?], we can relax this
+    // rule.  In the meantime, the ThroughputMonitorCollection busy time
+    // calculation for this thread gives smoother results if we don't sleep
+    // for full seconds here.  
+    if (_timeout > 0.25)
+    {
+      ::usleep(250000);
+    }
+    else
+    {
+      ::sleep(_timeout);
+    }
+
+    utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+  }
   else 
     processOneFragment();
 }
@@ -139,12 +160,20 @@ void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
   boost::shared_ptr<FragmentQueue> fq = _sharedResources->_fragmentQueue;
+  utils::time_point_t startTime = utils::getCurrentTime();
   if (fq->deq_timed_wait(fragment, _timeout))
     {
+      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addPoppedFragmentSample(fragment.totalDataSize());
+
       _stateMachine->getCurrentState().processI2OFragment(fragment);
     }
   else
     {
+      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+
       _stateMachine->getCurrentState().noFragmentToProcess();  
     }
 }
