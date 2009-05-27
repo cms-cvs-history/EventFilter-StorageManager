@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.18 2009/05/13 16:03:28 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.19 2009/05/15 19:49:37 biery Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -16,6 +16,7 @@
 #include "EventFilter/StorageManager/interface/RunMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StateMachineMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/ThroughputMonitorCollection.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
@@ -30,9 +31,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.18 $
-   * $Date: 2009/05/13 16:03:28 $
+   * $Author: biery $
+   * $Revision: 1.1.2.19 $
+   * $Date: 2009/05/15 19:49:37 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class
@@ -111,6 +112,13 @@ namespace stor {
       return _dqmConsumerMonitorCollection;
     }
 
+    const ThroughputMonitorCollection& getThroughputMonitorCollection() const
+    { return _throughputMonCollection; }
+
+    ThroughputMonitorCollection& getThroughputMonitorCollection()
+    { return _throughputMonCollection; }
+
+
     /**
      * Create and start the monitoring workloop
      */
@@ -141,6 +149,7 @@ namespace stor {
     StateMachineMonitorCollection _stateMachineMonCollection;
     CMCPtr _eventConsumerMonitorCollection;
     CMCPtr _dqmConsumerMonitorCollection;
+    ThroughputMonitorCollection _throughputMonCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
 
