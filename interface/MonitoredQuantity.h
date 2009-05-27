@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.1.2.18 2009/04/09 12:14:26 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.1.2.19 2009/04/25 20:40:19 biery Exp $
 
 #ifndef StorageManager_MonitoredQuantity_h
 #define StorageManager_MonitoredQuantity_h
@@ -18,9 +18,9 @@ namespace stor
    * This class keeps track of statistics for a set of sample values 
    * and provides timing information on the samples.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.18 $
-   * $Date: 2009/04/09 12:14:26 $
+   * $Author: biery $
+   * $Revision: 1.1.2.19 $
+   * $Date: 2009/04/25 20:40:19 $
    */
 
   class MonitoredQuantity
@@ -190,6 +190,9 @@ namespace stor
     double recentValueRate;
     double recentSampleLatency;
     utils::duration_t recentDuration;
+    std::vector<long long> recentBinnedSampleCounts;
+    std::vector<double> recentBinnedValueSums;
+    std::vector<utils::duration_t> recentBinnedDurations;
 
     double lastSampleValue;
     double lastValueRate;
