@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.1.2.14 2009/05/12 12:58:16 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.1.2.15 2009/05/12 13:37:32 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -118,9 +118,19 @@ void DQMEventProcessor::processNextDQMEvent()
 {
   I2OChain dqmEvent;
   boost::shared_ptr<DQMEventQueue> eq = _sharedResources->_dqmEventQueue;
+  utils::time_point_t startTime = utils::getCurrentTime();
   if (eq->deq_timed_wait(dqmEvent, _timeout))
   {
+    utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDQMEventProcessorIdleSample(elapsedTime);
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addPoppedDQMEventSample(dqmEvent.totalDataSize());
+
     _dqmEventStore.addDQMEvent(dqmEvent);
+  }
+  else
+  {
+    utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDQMEventProcessorIdleSample(elapsedTime);
   }
 
   processCompleteDQMEventRecords();

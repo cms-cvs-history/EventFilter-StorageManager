@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.48 2009/05/26 13:55:34 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.49 2009/05/27 19:04:10 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -1535,10 +1535,11 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
                                                   XHTMLMaker::Node *parent,
                                                   ThroughputMonitorCollection const& tmc)
 {
-  double busyPercentage, dataRate; // , average;
+  double busyPercentage, dataRate;
 
   MonitoredQuantity::Stats fqEntryCountMQ, fragSizeMQ, fpIdleMQ;
   MonitoredQuantity::Stats sqEntryCountMQ, eventSizeMQ, dwIdleMQ, diskWriteMQ;
+  MonitoredQuantity::Stats dqEntryCountMQ, dqmEventSizeMQ, dqmIdleMQ;
   tmc.getFragmentQueueEntryCountMQ().getStats(fqEntryCountMQ);
   tmc.getPoppedFragmentSizeMQ().getStats(fragSizeMQ);
   tmc.getFragmentProcessorIdleMQ().getStats(fpIdleMQ);
@@ -1546,10 +1547,13 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
   tmc.getPoppedEventSizeMQ().getStats(eventSizeMQ);
   tmc.getDiskWriterIdleMQ().getStats(dwIdleMQ);
   tmc.getDiskWriteMQ().getStats(diskWriteMQ);
+  tmc.getDQMEventQueueEntryCountMQ().getStats(dqEntryCountMQ);
+  tmc.getPoppedDQMEventSizeMQ().getStats(dqmEventSizeMQ);
+  tmc.getDQMEventProcessorIdleMQ().getStats(dqmIdleMQ);
   int binCount = tmc.getBinCount();
 
   XHTMLMaker::AttrMap colspanAttr;
-  colspanAttr[ "colspan" ] = "12";
+  colspanAttr[ "colspan" ] = "16";
 
   XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
   tableLabelAttr[ "align" ] = "center";
@@ -1586,6 +1590,14 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
   maker.addText(tableDiv, "Number of Events Written to Disk");
   tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
   maker.addText(tableDiv, "Data  Rate to Disk (MB/sec)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Instantaneous Number of DQMEvents in DQMEvent Queue");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Number of DQMEvents Popped from DQMEvent Queue");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "Data Rate Popped from DQMEvent Queue (MB/sec)");
+  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  maker.addText(tableDiv, "DQMEvent Processor Thread Busy Percentage");
 
   // smooth out the idle times so that the busy times that we display
   // are not garbled by slight differences in the binning inside the
@@ -1699,6 +1711,37 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dataRate, 1);
+
+    // number of dqm events in DQMEvent queue
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, dqEntryCountMQ.recentBinnedValueSums[idx], 0);
+
+    // number of dqm events popped from DQMEvent queue
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, dqmEventSizeMQ.recentBinnedSampleCounts[idx], 0);
+
+    // data rate popped from DQMEvent queue
+    dataRate = 0.0;
+    if (dqmEventSizeMQ.recentBinnedDurations[idx] > 0.0)
+    {
+      dataRate = (dqmEventSizeMQ.recentBinnedValueSums[idx] / 1048576.0) /
+        dqmEventSizeMQ.recentBinnedDurations[idx];
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, dataRate, 1);
+
+    // DQMEvent processor thread busy percentage
+    busyPercentage = 0.0;
+    if (dqmIdleMQ.recentBinnedSampleCounts[idx] > 0 &&
+        (dqmIdleMQ.recentBinnedValueSums[idx] <=
+         dqmIdleMQ.recentBinnedDurations[idx]))
+    {
+      busyPercentage = 100.0 * (1.0 - (dqmIdleMQ.recentBinnedValueSums[idx] /
+                                       dqmIdleMQ.recentBinnedDurations[idx]));
+      busyPercentage += 0.5;
+    }
+    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    maker.addText(tableDiv, busyPercentage, 0);
   }
 }
 

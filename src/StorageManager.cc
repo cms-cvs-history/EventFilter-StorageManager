@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.124 2009/05/26 13:56:10 mommsen Exp $
+// $Id: StorageManager.cc,v 1.92.4.125 2009/05/27 19:05:28 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -38,7 +38,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   xdaq::Application(s),
   reasonForFailedState_(),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.124 2009/05/26 13:56:10 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.125 2009/05/27 19:05:28 biery Exp $ $Name:  $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -156,6 +156,7 @@ void StorageManager::initializeSharedResources()
 
   _sharedResources->_statisticsReporter->getThroughputMonitorCollection().setFragmentQueue(_sharedResources->_fragmentQueue);
   _sharedResources->_statisticsReporter->getThroughputMonitorCollection().setStreamQueue(_sharedResources->_streamQueue);
+  _sharedResources->_statisticsReporter->getThroughputMonitorCollection().setDQMEventQueue(_sharedResources->_dqmEventQueue);
 
   _sharedResources->
     _discardManager.reset(new DiscardManager(getApplicationContext(),

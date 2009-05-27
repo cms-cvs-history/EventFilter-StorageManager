@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.cc,v 1.1.2.1 2009/05/27 16:57:51 biery Exp $
+// $Id: ThroughputMonitorCollection.cc,v 1.1.2.2 2009/05/27 17:05:27 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ThroughputMonitorCollection.h"
 
@@ -15,6 +15,9 @@ ThroughputMonitorCollection::ThroughputMonitorCollection(xdaq::Application *app)
   _poppedEventSize.setNewTimeWindowForRecentResults(_binCount);
   _diskWriterIdleTime.setNewTimeWindowForRecentResults(_binCount);
   _diskWriteSize.setNewTimeWindowForRecentResults(_binCount);
+  _entriesInDQMEventQueue.setNewTimeWindowForRecentResults(_binCount);
+  _poppedDQMEventSize.setNewTimeWindowForRecentResults(_binCount);
+  _dqmEventProcessorIdleTime.setNewTimeWindowForRecentResults(_binCount);
 
   //putItemsIntoInfoSpace();
 }
@@ -52,6 +55,19 @@ void ThroughputMonitorCollection::addDiskWriteSample(double dataSize)
 }
 
 
+void ThroughputMonitorCollection::addPoppedDQMEventSample(double dataSize)
+{
+  _poppedDQMEventSize.addSample(dataSize);
+}
+
+
+void ThroughputMonitorCollection::
+addDQMEventProcessorIdleSample(utils::duration_t idleTime)
+{
+  _dqmEventProcessorIdleTime.addSample(idleTime);
+}
+
+
 void ThroughputMonitorCollection::do_calculateStatistics()
 {
   if (_fragmentQueue.get() != 0) {
@@ -59,6 +75,9 @@ void ThroughputMonitorCollection::do_calculateStatistics()
   }
   if (_streamQueue.get() != 0) {
     _entriesInStreamQueue.addSample(_streamQueue->size());
+  }
+  if (_dqmEventQueue.get() != 0) {
+    _entriesInDQMEventQueue.addSample(_dqmEventQueue->size());
   }
 
   _entriesInFragmentQueue.calculateStatistics();
@@ -68,6 +87,9 @@ void ThroughputMonitorCollection::do_calculateStatistics()
   _poppedEventSize.calculateStatistics();
   _diskWriterIdleTime.calculateStatistics();
   _diskWriteSize.calculateStatistics();
+  _entriesInDQMEventQueue.calculateStatistics();
+  _poppedDQMEventSize.calculateStatistics();
+  _dqmEventProcessorIdleTime.calculateStatistics();
 }
 
 
@@ -85,6 +107,9 @@ void ThroughputMonitorCollection::do_reset()
   _poppedEventSize.reset();
   _diskWriterIdleTime.reset();
   _diskWriteSize.reset();
+  _entriesInDQMEventQueue.reset();
+  _poppedDQMEventSize.reset();
+  _dqmEventProcessorIdleTime.reset();
 }
 
 

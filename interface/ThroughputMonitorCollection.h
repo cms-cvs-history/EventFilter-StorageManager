@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.h,v 1.1.2.1 2009/05/27 16:57:51 biery Exp $
+// $Id: ThroughputMonitorCollection.h,v 1.1.2.2 2009/05/27 17:05:26 biery Exp $
 
 #ifndef StorageManager_ThroughputMonitorCollection_h
 #define StorageManager_ThroughputMonitorCollection_h
@@ -6,6 +6,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "EventFilter/StorageManager/interface/DQMEventQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 #include "EventFilter/StorageManager/interface/StreamQueue.h"
@@ -17,8 +18,8 @@ namespace stor {
    * through the storage manager.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2009/05/27 16:57:51 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2009/05/27 17:05:26 $
    */
   
   class ThroughputMonitorCollection : public MonitorCollection
@@ -96,6 +97,35 @@ namespace stor {
       return _diskWriteSize;
     }
 
+    void setDQMEventQueue(boost::shared_ptr<DQMEventQueue> dqmEventQueue) {
+      _dqmEventQueue = dqmEventQueue;
+    }
+
+    const MonitoredQuantity& getDQMEventQueueEntryCountMQ() const {
+      return _entriesInDQMEventQueue;
+    }
+    MonitoredQuantity& getDQMEventQueueEntryCountMQ() {
+      return _entriesInDQMEventQueue;
+    }
+
+    void addPoppedDQMEventSample(double dataSize);
+
+    const MonitoredQuantity& getPoppedDQMEventSizeMQ() const {
+      return _poppedDQMEventSize;
+    }
+    MonitoredQuantity& getPoppedDQMEventSizeMQ() {
+      return _poppedDQMEventSize;
+    }
+
+    void addDQMEventProcessorIdleSample(utils::duration_t idleTime);
+
+    const MonitoredQuantity& getDQMEventProcessorIdleMQ() const {
+      return _fragmentProcessorIdleTime;
+    }
+    MonitoredQuantity& getDQMEventProcessorIdleMQ() {
+      return _fragmentProcessorIdleTime;
+    }
+
   private:
 
     //Prevent copying of the ThroughputMonitorCollection
@@ -119,8 +149,13 @@ namespace stor {
     MonitoredQuantity _diskWriterIdleTime;
     MonitoredQuantity _diskWriteSize;
 
+    MonitoredQuantity _entriesInDQMEventQueue;
+    MonitoredQuantity _poppedDQMEventSize;
+    MonitoredQuantity _dqmEventProcessorIdleTime;
+
     boost::shared_ptr<FragmentQueue> _fragmentQueue;
     boost::shared_ptr<StreamQueue> _streamQueue;
+    boost::shared_ptr<DQMEventQueue> _dqmEventQueue;
 
   };
   
