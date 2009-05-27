@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.h,v 1.1.2.7 2009/05/04 17:54:09 biery Exp $
+// $Id: ThroughputMonitorCollection.h,v 1.1.2.1 2009/05/27 16:57:51 biery Exp $
 
 #ifndef StorageManager_ThroughputMonitorCollection_h
 #define StorageManager_ThroughputMonitorCollection_h
@@ -17,8 +17,8 @@ namespace stor {
    * through the storage manager.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2009/05/04 17:54:09 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2009/05/27 16:57:51 $
    */
   
   class ThroughputMonitorCollection : public MonitorCollection
@@ -69,7 +69,7 @@ namespace stor {
       return _entriesInStreamQueue;
     }
 
-    void addEventSizeSample(double size);
+    void addPoppedEventSample(double dataSize);
 
     const MonitoredQuantity& getPoppedEventSizeMQ() const {
       return _poppedEventSize;
@@ -87,7 +87,7 @@ namespace stor {
       return _diskWriterIdleTime;
     }
 
-    void addDiskWriteSample(double size);
+    void addDiskWriteSample(double dataSize);
 
     const MonitoredQuantity& getDiskWriteMQ() const {
       return _diskWriteSize;

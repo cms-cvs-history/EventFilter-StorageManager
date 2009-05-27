@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.cc,v 1.1.2.22 2009/04/25 20:43:58 biery Exp $
+// $Id: ThroughputMonitorCollection.cc,v 1.1.2.1 2009/05/27 16:57:51 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ThroughputMonitorCollection.h"
 
@@ -33,9 +33,9 @@ addFragmentProcessorIdleSample(utils::duration_t idleTime)
 }
 
 
-void ThroughputMonitorCollection::addEventSizeSample(double size)
+void ThroughputMonitorCollection::addPoppedEventSample(double dataSize)
 {
-  _poppedEventSize.addSample(size);
+  _poppedEventSize.addSample(dataSize);
 }
 
 
@@ -46,9 +46,9 @@ addDiskWriterIdleSample(utils::duration_t idleTime)
 }
 
 
-void ThroughputMonitorCollection::addDiskWriteSample(double size)
+void ThroughputMonitorCollection::addDiskWriteSample(double dataSize)
 {
-  _diskWriteSize.addSample(size);
+  _diskWriteSize.addSample(dataSize);
 }
 
 
