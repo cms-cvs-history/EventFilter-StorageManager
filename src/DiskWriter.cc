@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.1.2.21 2009/05/08 14:15:36 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.1.2.22 2009/05/12 13:37:32 mommsen Exp $
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -120,8 +120,13 @@ void DiskWriter::writeNextEvent()
 {
   I2OChain event;
   boost::shared_ptr<StreamQueue> sq = _sharedResources->_streamQueue;
+  utils::time_point_t startTime = utils::getCurrentTime();
   if (sq->deq_timed_wait(event, _timeout))
   {
+    utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDiskWriterIdleSample(elapsedTime);
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addPoppedEventSample(event.totalDataSize());
+
     _sharedResources->_diskWriterResources->setBusy(true);
     writeEventToStreams(event);
 
@@ -129,6 +134,9 @@ void DiskWriter::writeNextEvent()
   }
   else
   {
+    utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDiskWriterIdleSample(elapsedTime);
+
     closeTimedOutFiles();
     _sharedResources->_diskWriterResources->setBusy(false);
   }
@@ -164,6 +172,8 @@ void DiskWriter::writeEventToStreams(const I2OChain& event)
     try
     {
       _streamHandlers.at(*it)->writeEvent(event);
+
+      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDiskWriteSample(event.totalDataSize());
     }
     catch (std::out_of_range& e)
     {
