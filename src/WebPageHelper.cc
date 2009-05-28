@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.49 2009/05/27 19:04:10 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.50 2009/05/27 21:31:57 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -1558,6 +1558,9 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
   XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
   tableLabelAttr[ "align" ] = "center";
 
+  XHTMLMaker::AttrMap tableAverageAttr = _tableValueAttr;
+  tableAverageAttr[ "style" ] = "background-color: yellow;";
+
   XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -1620,6 +1623,17 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
                             dwIdleMQ.recentBinnedDurations,
                             index, index);
   }
+  index = binCount - 1;
+  while (index >= 0)
+  {
+    index = smoothIdleTimes(dqmIdleMQ.recentBinnedValueSums,
+                            dqmIdleMQ.recentBinnedDurations,
+                            index, index);
+  }
+
+  // calculate the sum of the data in each column so we can show averages
+  double sums[15];
+  for (int idx = 0; idx < 15; ++idx) {sums[idx] = 0.0;}
 
   // add individual rows for the bins
   double relativeTime = fqEntryCountMQ.recentDuration;
@@ -1635,14 +1649,17 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     // bin size
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, fqEntryCountMQ.recentBinnedDurations[idx], 2);
+    sums[0] += fqEntryCountMQ.recentBinnedDurations[idx];
 
     // number of fragments in fragment queue
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, fqEntryCountMQ.recentBinnedValueSums[idx], 0);
+    sums[1] += fqEntryCountMQ.recentBinnedValueSums[idx];
 
     // number of fragments popped from fragment queue
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, fragSizeMQ.recentBinnedSampleCounts[idx], 0);
+    sums[2] += fragSizeMQ.recentBinnedSampleCounts[idx];
 
     // data rate popped from fragment queue
     dataRate = 0.0;
@@ -1653,6 +1670,7 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dataRate, 1);
+    sums[3] += dataRate;
 
     // fragment processor thread busy percentage
     busyPercentage = 0.0;
@@ -1666,14 +1684,17 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, busyPercentage, 0);
+    sums[4] += busyPercentage;
 
     // number of events in stream queue
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, sqEntryCountMQ.recentBinnedValueSums[idx], 0);
+    sums[5] += sqEntryCountMQ.recentBinnedValueSums[idx];
 
     // number of events popped from stream queue
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, eventSizeMQ.recentBinnedSampleCounts[idx], 0);
+    sums[6] += eventSizeMQ.recentBinnedSampleCounts[idx];
 
     // data rate popped from stream queue
     dataRate = 0.0;
@@ -1684,6 +1705,7 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dataRate, 1);
+    sums[7] += dataRate;
 
     // disk writer thread busy percentage
     busyPercentage = 0.0;
@@ -1697,10 +1719,12 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, busyPercentage, 0);
+    sums[8] += busyPercentage;
 
     // number of events written to disk
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, diskWriteMQ.recentBinnedSampleCounts[idx], 0);
+    sums[9] += diskWriteMQ.recentBinnedSampleCounts[idx];
 
     // date rate written to disk
     dataRate = 0.0;
@@ -1711,14 +1735,17 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dataRate, 1);
+    sums[10] += dataRate;
 
     // number of dqm events in DQMEvent queue
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dqEntryCountMQ.recentBinnedValueSums[idx], 0);
+    sums[11] += dqEntryCountMQ.recentBinnedValueSums[idx];
 
     // number of dqm events popped from DQMEvent queue
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dqmEventSizeMQ.recentBinnedSampleCounts[idx], 0);
+    sums[12] += dqmEventSizeMQ.recentBinnedSampleCounts[idx];
 
     // data rate popped from DQMEvent queue
     dataRate = 0.0;
@@ -1729,6 +1756,7 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, dataRate, 1);
+    sums[13] += dataRate;
 
     // DQMEvent processor thread busy percentage
     busyPercentage = 0.0;
@@ -1742,6 +1770,90 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
     }
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addText(tableDiv, busyPercentage, 0);
+    sums[14] += busyPercentage;
+  }
+
+  // calculate the averages
+  double averages[15];
+  for (int idx = 0; idx < 15; ++idx)
+  {
+    if (binCount > 0)
+    {
+      averages[idx] = sums[idx] / binCount;
+    }
+    else
+    {
+      averages[idx] = 0.0;
+    }
+  }
+
+  // display the averages
+  {
+    tableRow = maker.addNode("tr", table, _rowAttr);
+
+    // relative time
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, "Avg");
+
+    // bin size
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[0], 2);
+
+    // number of fragments in fragment queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[1], 1);
+
+    // number of fragments popped from fragment queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[2], 1);
+
+    // data rate popped from fragment queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[3], 1);
+
+    // fragment processor thread busy percentage
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[4], 1);
+
+    // number of events in stream queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[5], 1);
+
+    // number of events popped from stream queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[6], 1);
+
+    // data rate popped from stream queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[7], 1);
+
+    // disk writer thread busy percentage
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[8], 1);
+
+    // number of events written to disk
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[9], 1);
+
+    // date rate written to disk
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[10], 1);
+
+    // number of dqm events in DQMEvent queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[11], 1);
+
+    // number of dqm events popped from DQMEvent queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[12], 1);
+
+    // data rate popped from DQMEvent queue
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[13], 1);
+
+    // DQMEvent processor thread busy percentage
+    tableDiv = maker.addNode("td", tableRow, tableAverageAttr);
+    maker.addText(tableDiv, averages[14], 1);
   }
 }
 
