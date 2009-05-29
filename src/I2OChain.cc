@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.37 2009/04/17 17:28:34 mommsen Exp $
+// $Id: I2OChain.cc,v 1.1.2.38 2009/04/21 17:16:29 biery Exp $
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -84,6 +84,8 @@ namespace stor
       void hltTriggerSelections(Strings& nameList) const;
       void l1TriggerNames(Strings& nameList) const;
 
+      void assertRunNumber(uint32 runNumber);
+
       uint32 runNumber() const;
       uint32 lumiSection() const;
       uint32 eventNumber() const;
@@ -158,6 +160,8 @@ namespace stor
 
       virtual uint32 do_hltTriggerCount() const;
       virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
+
+      virtual void do_assertRunNumber(uint32 runNumber);
 
       virtual uint32 do_runNumber() const;
       virtual uint32 do_lumiSection() const;
@@ -691,6 +695,11 @@ namespace stor
       do_hltTriggerBits(bitList);
     }
 
+    inline void ChainData::assertRunNumber(uint32 runNumber)
+    {
+      do_assertRunNumber(runNumber);
+    }
+
     inline uint32 ChainData::runNumber() const
     {
       return do_runNumber();
@@ -918,6 +927,9 @@ namespace stor
       msg << "complete Event message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
+
+    inline void ChainData::do_assertRunNumber(uint32 runNumber)
+    {}
 
     inline uint32 ChainData::do_runNumber() const
     {
@@ -1185,6 +1197,7 @@ namespace stor
       uint32 do_outputModuleId() const;
       uint32 do_hltTriggerCount() const;
       void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
+      void do_assertRunNumber(uint32 runNumber);
       uint32 do_runNumber() const;
       uint32 do_lumiSection() const;
       uint32 do_eventNumber() const;
@@ -1305,6 +1318,21 @@ namespace stor
 
       if (! _headerFieldsCached) {cacheHeaderFields();}
       bitList = _hltTriggerBits;
+    }
+
+    void 
+    EventMsgData::do_assertRunNumber(uint32 runNumber)
+    {
+      if ( do_runNumber() != runNumber )
+      {
+        std::ostringstream errorMsg;
+        errorMsg << "Run number " << do_runNumber() 
+          << " of event " << do_eventNumber() <<
+          " received from " << hltURL() << 
+          " does not match the run number " << runNumber << 
+          " used to configure the StorageManager.";
+        XCEPT_RAISE(stor::exception::RunNumberMismatch, errorMsg.str());
+      }
     }
 
     uint32 EventMsgData::do_runNumber() const
@@ -1435,6 +1463,7 @@ namespace stor
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       std::string do_topFolderName() const;
       DQMKey do_dqmKey() const;
+      void do_assertRunNumber(uint32 runNumber);
 
     private:
 
@@ -1512,6 +1541,20 @@ namespace stor
 
       return _dqmKey;
 
+    }
+
+    void DQMEventMsgData::do_assertRunNumber(uint32 runNumber)
+    {
+      if ( do_dqmKey().runNumber != runNumber )
+      {
+        std::ostringstream errorMsg;
+        errorMsg << "Run number " << do_runNumber() 
+          << " of DQM event " << do_eventNumber() <<
+          " received from " << hltURL() << 
+          " does not match the run number " << runNumber << 
+          " used to configure the StorageManager.";
+        XCEPT_RAISE(stor::exception::RunNumberMismatch, errorMsg.str());
+      }
     }
 
     unsigned long DQMEventMsgData::do_headerSize() const
@@ -1627,6 +1670,7 @@ namespace stor
       unsigned long do_headerSize() const;
       unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      void do_assertRunNumber(uint32 runNumber);
       uint32 do_runNumber() const;
       uint32 do_lumiSection() const;
       uint32 do_eventNumber() const;
@@ -1700,6 +1744,23 @@ namespace stor
         {
           return dataLoc;
         }
+    }
+
+    void
+    ErrorEventMsgData::do_assertRunNumber(uint32 runNumber)
+    {
+      if ( do_runNumber() != runNumber )
+      {
+        _runNumber = runNumber;
+        std::ostringstream errorMsg;
+        errorMsg << "Run number " << do_runNumber() 
+          << " of error event " << do_eventNumber() <<
+          " received from " << hltURL() << 
+          " does not match the run number " << runNumber << 
+          " used to configure the StorageManager." <<
+          " Enforce usage of configured run number.";
+        XCEPT_RAISE(stor::exception::RunNumberMismatch, errorMsg.str());
+      }
     }
 
     uint32 ErrorEventMsgData::do_runNumber() const
@@ -2283,6 +2344,16 @@ namespace stor
           "HLT trigger bits can not be determined from an empty I2OChain.");
       }
     _data->hltTriggerBits(bitList);
+  }
+
+  void I2OChain::assertRunNumber(uint32 runNumber)
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The run number can not be checked for an empty I2OChain.");
+      }
+    return _data->assertRunNumber(runNumber);
   }
 
   uint32 I2OChain::runNumber() const

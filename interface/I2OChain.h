@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.31 2009/04/17 17:27:36 mommsen Exp $
+// $Id: I2OChain.h,v 1.1.2.32 2009/04/21 17:16:29 biery Exp $
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -31,9 +31,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.31 $
-   * $Date: 2009/04/17 17:27:36 $
+   * $Author: biery $
+   * $Revision: 1.1.2.32 $
+   * $Date: 2009/04/21 17:16:29 $
    */
 
 
@@ -491,6 +491,16 @@ namespace stor {
        Otherwise an exception is thrown.
      */
     uint32 eventNumber() const;
+
+    /**
+       Checks that the run number found in the I2OChain header
+       corresponds to the run number given as argument.
+       It throws stor::exception::RunNumberMismatch if it is 
+       not the case.
+       For error events, the given run number will be used by
+       the StorageManager, but it will *not* be changed in the I2O header.
+     */
+    void assertRunNumber(uint32 runNumber);
 
   private:
 
