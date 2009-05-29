@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.1.2.27 2009/05/14 12:44:08 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.1.2.28 2009/05/27 17:13:53 biery Exp $
 
 #include <unistd.h>
 
@@ -79,6 +79,14 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
     
     errorMsg = "Failed to process an event fragment: ";
     processOneFragmentIfPossible();
+  }
+  catch(stor::exception::RunNumberMismatch &e)
+  {
+    LOG4CPLUS_ERROR(_app->getApplicationLogger(), e.message());
+
+    #ifndef STOR_BYPASS_SENTINEL
+    _app->notifyQualified("error", e);
+    #endif
   }
   catch(xcept::Exception &e)
   {
