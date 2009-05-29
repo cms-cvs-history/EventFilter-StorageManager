@@ -1,4 +1,4 @@
-// $Id: StateMachine.h,v 1.1.2.28 2009/05/13 16:02:34 mommsen Exp $
+// $Id: StateMachine.h,v 1.1.2.29 2009/05/14 13:28:07 mommsen Exp $
 
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
@@ -16,10 +16,14 @@
 #include <string>
 #include <vector>
 
+
 namespace bsc = boost::statechart;
 
 namespace stor
 {
+
+  // Simple file-based debugging. Will remove when no longer needed.
+  void sm_debug( const std::string& file_name_suffix, const std::string& message );
 
   class I2OChain;
   class DiskWriter;

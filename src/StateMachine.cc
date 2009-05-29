@@ -1,4 +1,4 @@
-// $Id: StateMachine.cc,v 1.1.2.22 2009/05/13 16:12:23 mommsen Exp $
+// $Id: StateMachine.cc,v 1.1.2.23 2009/05/14 13:28:28 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -8,9 +8,22 @@
 #include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <typeinfo>
+#include <fstream>
 
 using namespace stor;
 using namespace std;
+
+void stor::sm_debug( const std::string& file_name_suffix, const std::string& message )
+{
+  const std::string fname = std::string( "/tmp/storage_manager_debug_" ) + file_name_suffix;
+  std::ofstream f( fname.c_str() );
+  if( f.is_open() )
+    {
+      f << message << std::endl;
+      f.close();
+    }
+}
+
 
 StateMachine::StateMachine
 ( 
