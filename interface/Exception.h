@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.13 2009/05/11 09:00:39 mommsen Exp $
+// $Id: Exception.h,v 1.1.2.14 2009/05/11 15:28:23 mommsen Exp $
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -87,6 +87,11 @@ XCEPT_DEFINE_EXCEPTION(stor, UnknownQueueId)
  * Exception raised when a non-existant stream is requested.
  */
 XCEPT_DEFINE_EXCEPTION(stor, UnknownStreamId)
+
+/**
+ * Exception raised if a run number mismatch is detected.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, RunNumberMismatch)
 
 /**
  * Exception raised in case of a fragment processing error
