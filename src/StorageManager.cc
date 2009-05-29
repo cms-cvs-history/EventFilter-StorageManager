@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.92.4.125 2009/05/27 19:05:28 biery Exp $
+// $Id: StorageManager.cc,v 1.92.4.126 2009/05/27 21:31:57 biery Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -38,7 +38,7 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   xdaq::Application(s),
   reasonForFailedState_(),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.92.4.125 2009/05/27 19:05:28 biery Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.92.4.126 2009/05/27 21:31:57 biery Exp $ $Name: refdev01_scratch_branch $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -266,18 +266,6 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
   fragMonCollection.addEventFragmentSample( i2oChain.totalDataSize() );
 
   _sharedResources->_fragmentQueue->enq_wait(i2oChain);
-
-  // check if run number is the same as that in Run configuration,
-  // complain otherwise !!!
-  //
-  // "The run number check should move somewhere else once we know the
-  // right place to put it" (Kurt).
-//   if(msg->runID != getRunNumber())
-//     {
-//       LOG4CPLUS_ERROR(this->getApplicationLogger(),"Run Number from event stream = "
-//                       << msg->runID << " From " << msg->hltURL
-//                       << " Different from Run Number from configuration = " << getRunNumber());
-//     }
 }
 
 
@@ -704,17 +692,6 @@ xoap::MessageReference StorageManager::halting( xoap::MessageReference msg )
   }
   
   return msg;
-}
-
-
-////////////////////////////////////////////
-//// Get run number from Configuration: ////
-////////////////////////////////////////////
-unsigned int StorageManager::getRunNumber() const
-{
-  if( !_sharedResources ) return 0;
-  if( !_sharedResources->_configuration ) return 0;
-  return _sharedResources->_configuration->getRunNumber();
 }
 
 
