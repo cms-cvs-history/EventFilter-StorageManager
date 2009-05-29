@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.50 2009/05/27 21:31:57 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.51 2009/05/28 14:10:36 biery Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -63,6 +63,15 @@ void WebPageHelper::defaultWebPage
 
   // Create the body with the standard header
   XHTMLMaker::Node* body = createWebPageBody(maker, statReporter);
+
+  // Show host name:
+  XHTMLMaker::Node* hn_table = maker.addNode( "table", body );
+  XHTMLMaker::Node* hn_tbody = maker.addNode( "tbody", hn_table );
+  XHTMLMaker::Node* hn_tr = maker.addNode( "tr", hn_tbody );
+  XHTMLMaker::Node* hn_td = maker.addNode( "td", hn_tr );
+  std::string hname( "Running on host: " );
+  hname += sharedResources->_configuration->getDiskWritingParams()._hostName;
+  maker.addText( hn_td, hname );
 
   //TODO: Failed printout
 
