@@ -1,4 +1,4 @@
-// $Id: Processing.cc,v 1.1.2.23 2009/05/15 15:57:36 dshpakov Exp $
+// $Id: Processing.cc,v 1.1.2.24 2009/05/29 13:36:56 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -54,6 +54,10 @@ Processing::do_processI2OFragment( I2OChain& frag ) const
   if ( completed )
   {
     outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(frag);
+
+    uint32 runNumber = outermost_context().getSharedResources()->_configuration->getRunNumber();
+    frag.assertRunNumber(runNumber);
+
     outermost_context().getEventDistributor()->addEventToRelevantQueues(frag);
   }
   else
@@ -71,7 +75,6 @@ Processing::do_processI2OFragment( I2OChain& frag ) const
 void
 Processing::do_noFragmentToProcess() const
 {
-  //std::cout << stateName() << "::noFragmentToProcess()" << std::endl;
   I2OChain staleEvent;
   bool gotStaleEvent = 
     outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 5);
@@ -83,6 +86,7 @@ Processing::do_noFragmentToProcess() const
   }
   outermost_context().getEventDistributor()->checkForStaleConsumers();
 }
+
 
 /// emacs configuration
 /// Local Variables: -
