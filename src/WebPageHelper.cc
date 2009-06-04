@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.1.2.51 2009/05/28 14:10:36 biery Exp $
+// $Id: WebPageHelper.cc,v 1.1.2.52 2009/05/29 12:39:29 dshpakov Exp $
 
 #include <iomanip>
 #include <iostream>
@@ -2022,6 +2022,7 @@ void WebPageHelper::addResourceBrokerList(XHTMLMaker& maker,
 {
   DataSenderMonitorCollection::ResourceBrokerResultsList rbResultsList =
     dsmc.getAllResourceBrokerResults();
+  std::sort(rbResultsList.begin(), rbResultsList.end(), compareRBResultPtrValues);
 
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "7";
