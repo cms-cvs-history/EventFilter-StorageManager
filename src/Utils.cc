@@ -1,5 +1,5 @@
 /**
- * $Id: Utils.cc,v 1.1.2.5 2009/03/27 13:14:35 paterno Exp $
+ * $Id: Utils.cc,v 1.1.2.6 2009/05/11 15:28:54 mommsen Exp $
  */
 
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -54,9 +54,9 @@ namespace stor
     }
     
     
-    std::string timeStamp(time_point_t)
+    std::string timeStamp(time_point_t theTime)
     {
-      time_t rawtime = (time_t)time;
+      time_t rawtime = (time_t)theTime;
       tm * ptm;
       ptm = localtime(&rawtime);
       std::ostringstream timeStampStr;
