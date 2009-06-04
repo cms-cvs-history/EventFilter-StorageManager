@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.1.2.6 2009/05/01 21:10:37 biery Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.1.2.7 2009/05/04 17:54:09 biery Exp $
 
 #ifndef StorageManager_DataSenderMonitorCollection_h
 #define StorageManager_DataSenderMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/05/01 21:10:37 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2009/05/04 17:54:09 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -133,9 +133,7 @@ namespace stor {
       unsigned int lastEventNumber;
 
       explicit FilterUnitRecord(FilterUnitKey fuKey) :
-        key(fuKey),
-        initMsgCount(0)
-      {}
+        key(fuKey), initMsgCount(0), lastRunNumber(0), lastEventNumber(0) {}
     };
     typedef boost::shared_ptr<FilterUnitRecord> FURecordPtr;
 
@@ -153,9 +151,7 @@ namespace stor {
       unsigned int lastEventNumber;
 
       explicit ResourceBrokerRecord(ResourceBrokerKey rbKey) :
-        key(rbKey),
-        initMsgCount(0)
-      {}
+        key(rbKey), initMsgCount(0), lastRunNumber(0), lastEventNumber(0) {}
     };
     typedef boost::shared_ptr<ResourceBrokerRecord> RBRecordPtr;
 
@@ -188,7 +184,13 @@ namespace stor {
       UniqueResourceBrokerID_t uniqueRBID;
 
       explicit ResourceBrokerResult(ResourceBrokerKey const& rbKey):
-        key(rbKey) {}
+        key(rbKey), filterUnitCount(0), initMsgCount(0),
+        lastRunNumber(0), lastEventNumber(0), uniqueRBID(0) {}
+
+      bool operator<(ResourceBrokerResult const& other) const
+      {
+        return key < other.key;
+      }
     };
     typedef boost::shared_ptr<ResourceBrokerResult> RBResultPtr;
     typedef std::vector<RBResultPtr> ResourceBrokerResultsList;
@@ -204,8 +206,8 @@ namespace stor {
       unsigned int lastEventNumber;
       MonitoredQuantity::Stats eventStats;
 
-      explicit FilterUnitResult(FilterUnitKey const& rbKey):
-        key(rbKey) {}
+      explicit FilterUnitResult(FilterUnitKey const& fuKey):
+        key(fuKey), initMsgCount(0), lastRunNumber(0), lastEventNumber(0) {}
     };
     typedef boost::shared_ptr<FilterUnitResult> FUResultPtr;
     typedef std::vector<FUResultPtr> FilterUnitResultsList;
@@ -299,7 +301,10 @@ namespace stor {
     std::map<UniqueResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
 
   };
-  
+
+  bool compareRBResultPtrValues(DataSenderMonitorCollection::RBResultPtr firstValue,
+                                DataSenderMonitorCollection::RBResultPtr secondValue);
+
 } // namespace stor
 
 #endif // StorageManager_DataSenderMonitorCollection_h 
