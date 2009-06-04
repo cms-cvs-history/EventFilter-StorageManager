@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.1.2.7 2009/05/04 14:50:04 biery Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.1.2.8 2009/05/04 17:54:14 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -473,6 +473,13 @@ void DSMC::calcStatsForOutputModules(DSMC::OutputModuleRecordMap& outputModuleMa
       //outModRecordPtr->fragmentSize.calculateStatistics();
       outModRecordPtr->eventSize.calculateStatistics();
     }
+}
+
+
+bool stor::compareRBResultPtrValues(DSMC::RBResultPtr firstValue,
+                                    DSMC::RBResultPtr secondValue)
+{
+  return *firstValue < *secondValue;
 }
 
 
