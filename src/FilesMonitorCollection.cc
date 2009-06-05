@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.1.2.9 2009/04/09 12:25:26 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.1.2.10 2009/04/09 17:00:35 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -12,14 +12,16 @@ using namespace stor;
 FilesMonitorCollection::FilesMonitorCollection(xdaq::Application *app) :
 MonitorCollection(app),
 _maxFileEntries(250),
-_entryCounter(0)
+_entryCounter(0),
+_numberOfErasedRecords(0)
 {
   boost::mutex::scoped_lock sl(_fileRecordsMutex);
   _fileRecords.reserve(_maxFileEntries);
 
+  _infoSpaceItems.push_back(std::make_pair("openFiles", &_openFiles));
+  _infoSpaceItems.push_back(std::make_pair("closedFiles", &_closedFiles));
+
   // These infospace items were defined in the old SM
-  // _infoSpaceItems.push_back(std::make_pair("closedFiles", &_closedFiles));
-  // _infoSpaceItems.push_back(std::make_pair("openFiles", &_openFiles));
   // _infoSpaceItems.push_back(std::make_pair("fileList", &_fileList));
   // _infoSpaceItems.push_back(std::make_pair("eventsInFile", &_eventsInFile));
   // _infoSpaceItems.push_back(std::make_pair("fileSize", &_fileSize));
@@ -35,6 +37,7 @@ FilesMonitorCollection::getNewFileRecord()
 
   if (_fileRecords.size() >= _maxFileEntries)
   {
+    ++_numberOfErasedRecords;
     _fileRecords.erase(_fileRecords.begin());
   }
 
@@ -55,7 +58,59 @@ void FilesMonitorCollection::do_calculateStatistics()
 
 void FilesMonitorCollection::do_updateInfoSpace()
 {
-  // nothing to do
+  boost::mutex::scoped_lock sl(_fileRecordsMutex);
+
+  std::string errorMsg =
+    "Failed to update values of items in info space " + _infoSpace->name();
+
+  // Lock the infospace to assure that all items are consistent
+  try
+  {
+    _infoSpace->lock();
+
+    _openFiles = 0;
+    _closedFiles = _numberOfErasedRecords;
+
+    for (
+      FileRecordList::const_iterator it = _fileRecords.begin(),
+        itEnd = _fileRecords.end();
+      it != itEnd;
+      ++it
+    )
+    {
+      if ( (*it)->whyClosed == FileRecord::notClosed )
+        ++_openFiles;
+      else
+        ++_closedFiles;
+    }
+
+    _infoSpace->unlock();
+  }
+  catch(std::exception &e)
+  {
+    _infoSpace->unlock();
+ 
+    errorMsg += ": ";
+    errorMsg += e.what();
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
+  }
+  catch (...)
+  {
+    _infoSpace->unlock();
+ 
+    errorMsg += " : unknown exception";
+    XCEPT_RAISE(stor::exception::Monitoring, errorMsg);
+  }
+
+  try
+  {
+    // The fireItemGroupChanged locks the infospace
+    _infoSpace->fireItemGroupChanged(_infoSpaceItemNames, this);
+  }
+  catch (xdata::exception::Exception &e)
+  {
+    XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
+  }
 }
 
 
@@ -64,6 +119,7 @@ void FilesMonitorCollection::do_reset()
   boost::mutex::scoped_lock sl(_fileRecordsMutex);
   _fileRecords.clear();
   _entryCounter = 0;
+  _numberOfErasedRecords = 0;
 }
 
 
