@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.1.2.19 2009/05/15 19:49:37 biery Exp $
+// $Id: StatisticsReporter.h,v 1.1.2.20 2009/05/27 16:59:07 biery Exp $
 
 #ifndef StorageManager_StatisticsReporter_h
 #define StorageManager_StatisticsReporter_h
@@ -6,6 +6,7 @@
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
 #include "xdaq/Application.h"
+#include "xdata/UnsignedInteger32.h"
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -32,17 +33,17 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.19 $
-   * $Date: 2009/05/15 19:49:37 $
+   * $Revision: 1.1.2.20 $
+   * $Date: 2009/05/27 16:59:07 $
    */
   
-  class StatisticsReporter : public toolbox::lang::Class
+  class StatisticsReporter : public toolbox::lang::Class, public xdata::ActionListener
   {
   public:
     
     explicit StatisticsReporter(xdaq::Application*);
     
-    ~StatisticsReporter();
+    virtual ~StatisticsReporter();
 
     typedef boost::shared_ptr<ConsumerMonitorCollection> CMCPtr;
 
@@ -129,6 +130,11 @@ namespace stor {
      */
     void reset();
 
+    /**
+     * Update the variables put into the application info space
+     */
+    virtual void actionPerformed(xdata::Event&);
+
 
   private:
 
@@ -137,6 +143,7 @@ namespace stor {
     StatisticsReporter& operator=(StatisticsReporter const&);
 
     bool monitorAction(toolbox::task::WorkLoop*);
+    void addRunInfoQuantitiesToApplicationInfoSpace();
 
     xdaq::Application* _app;
     RunMonitorCollection _runMonCollection;
@@ -152,6 +159,13 @@ namespace stor {
     ThroughputMonitorCollection _throughputMonCollection;
     toolbox::task::WorkLoop* _monitorWL;      
     bool _doMonitoring;
+
+    // These values have to be in the application infospace as
+    // the HLTSFM queries them from the application infospace at 
+    // the end of the run to put them into the RunInfo DB. The HTLSFM
+    // uses the application infospace, and not the monitoring infospace.
+    xdata::UnsignedInteger32 _storedEvents;
+    xdata::UnsignedInteger32 _closedFiles;
 
   };
 

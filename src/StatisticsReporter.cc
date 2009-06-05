@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.27 2009/05/15 19:50:00 biery Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.28 2009/05/27 16:59:07 biery Exp $
 
 #include <string>
 #include <sstream>
@@ -7,6 +7,8 @@
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
 #include "xdaq/ApplicationDescriptor.h"
+#include "xdata/Event.h"
+#include "xdata/InfoSpace.h"
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
@@ -32,6 +34,23 @@ _doMonitoring(true)
 {
   _eventConsumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
   _dqmConsumerMonitorCollection.reset( new ConsumerMonitorCollection( app ) );
+
+  addRunInfoQuantitiesToApplicationInfoSpace();
+}
+
+
+void StatisticsReporter::addRunInfoQuantitiesToApplicationInfoSpace()
+{
+  xdata::InfoSpace *infoSpace = _app->getApplicationInfoSpace();
+
+  // bind the local xdata variables to the infospace
+  infoSpace->fireItemAvailable("storedEvents", &_storedEvents);
+  infoSpace->fireItemAvailable("closedFiles", &_closedFiles);
+
+  // spacial handling for the monitoring values requested by the HLTSFM
+  // we want to assure that the values are current when they are queried
+  infoSpace->addItemRetrieveListener("closedFiles", this);
+  infoSpace->addItemRetrieveListener("storedEvents", this);
 }
 
 
@@ -150,6 +169,28 @@ void StatisticsReporter::reset()
   _eventConsumerMonitorCollection->reset();
   _dqmConsumerMonitorCollection->reset();
   _throughputMonCollection.reset();
+}
+
+
+void StatisticsReporter::actionPerformed(xdata::Event& ispaceEvent)
+{
+  if (ispaceEvent.type() == "ItemRetrieveEvent")
+  {
+    std::string item =
+      dynamic_cast<xdata::ItemChangedEvent&>(ispaceEvent).itemName();
+    if (item == "closedFiles")
+    {
+      _filesMonCollection.updateInfoSpace();
+      xdata::InfoSpace* ispace = _filesMonCollection.getMonitoringInfoSpace();
+      _closedFiles.setValue( *(ispace->find("closedFiles")) );
+    }
+    else if (item == "storedEvents")
+    {
+      _streamsMonCollection.updateInfoSpace();
+      xdata::InfoSpace* ispace = _streamsMonCollection.getMonitoringInfoSpace();
+      _storedEvents.setValue( *(ispace->find("storedEvents")) );
+    } 
+  }
 }
 
 
