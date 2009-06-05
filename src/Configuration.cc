@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.1.2.21 2009/05/04 20:46:20 biery Exp $
+// $Id: Configuration.cc,v 1.1.2.22 2009/05/05 20:14:12 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
@@ -206,7 +206,7 @@ namespace stor
   void Configuration::setQueueConfigurationDefaults()
   {
     _queueConfigParamCopy._commandQueueSize = 128;
-    _queueConfigParamCopy._dqmEventQueueSize = 512;
+    _queueConfigParamCopy._dqmEventQueueSize = 2048;
     _queueConfigParamCopy._fragmentQueueSize = 1024;
     _queueConfigParamCopy._registrationQueueSize = 128;
     _queueConfigParamCopy._streamQueueSize = 512;
