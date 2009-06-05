@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.11 2009/04/08 09:34:41 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.1.2.12 2009/04/09 17:00:58 mommsen Exp $
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.11 $
-   * $Date: 2009/04/08 09:34:41 $
+   * $Revision: 1.1.2.12 $
+   * $Date: 2009/04/09 17:00:58 $
    */
   
   class MonitorCollection
@@ -55,7 +55,13 @@ namespace stor {
      */
     void reset();
 
+    /**
+     * Returns the pointer to the monitoring info space
+     */
+    xdata::InfoSpace* getMonitoringInfoSpace()
+    { return _infoSpace; }
 
+    
   protected:
 
     virtual void do_calculateStatistics() = 0;
