@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.h,v 1.1.2.2 2009/05/27 17:05:26 biery Exp $
+// $Id: ThroughputMonitorCollection.h,v 1.1.2.3 2009/05/27 21:31:56 biery Exp $
 
 #ifndef StorageManager_ThroughputMonitorCollection_h
 #define StorageManager_ThroughputMonitorCollection_h
@@ -18,8 +18,8 @@ namespace stor {
    * through the storage manager.
    *
    * $Author: biery $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/05/27 17:05:26 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2009/05/27 21:31:56 $
    */
   
   class ThroughputMonitorCollection : public MonitorCollection
@@ -120,10 +120,10 @@ namespace stor {
     void addDQMEventProcessorIdleSample(utils::duration_t idleTime);
 
     const MonitoredQuantity& getDQMEventProcessorIdleMQ() const {
-      return _fragmentProcessorIdleTime;
+      return _dqmEventProcessorIdleTime;
     }
     MonitoredQuantity& getDQMEventProcessorIdleMQ() {
-      return _fragmentProcessorIdleTime;
+      return _dqmEventProcessorIdleTime;
     }
 
   private:
