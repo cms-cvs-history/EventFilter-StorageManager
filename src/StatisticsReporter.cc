@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.1.2.28 2009/05/27 16:59:07 biery Exp $
+// $Id: StatisticsReporter.cc,v 1.1.2.29 2009/06/05 11:16:27 mommsen Exp $
 
 #include <string>
 #include <sstream>
@@ -177,18 +177,32 @@ void StatisticsReporter::actionPerformed(xdata::Event& ispaceEvent)
   if (ispaceEvent.type() == "ItemRetrieveEvent")
   {
     std::string item =
-      dynamic_cast<xdata::ItemChangedEvent&>(ispaceEvent).itemName();
+      dynamic_cast<xdata::ItemRetrieveEvent&>(ispaceEvent).itemName();
     if (item == "closedFiles")
     {
       _filesMonCollection.updateInfoSpace();
       xdata::InfoSpace* ispace = _filesMonCollection.getMonitoringInfoSpace();
-      _closedFiles.setValue( *(ispace->find("closedFiles")) );
+      try
+      {
+        _closedFiles.setValue( *(ispace->find("closedFiles")) );
+      }
+      catch(xdata::exception::Exception& e)
+      {
+        _closedFiles = 0;
+      }
     }
     else if (item == "storedEvents")
     {
       _streamsMonCollection.updateInfoSpace();
       xdata::InfoSpace* ispace = _streamsMonCollection.getMonitoringInfoSpace();
-      _storedEvents.setValue( *(ispace->find("storedEvents")) );
+      try
+      {
+        _storedEvents.setValue( *(ispace->find("storedEvents")) );
+      }
+      catch(xdata::exception::Exception& e)
+      {
+        _storedEvents = 0;
+      }
     } 
   }
 }
