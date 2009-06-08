@@ -1,4 +1,4 @@
-// $Id: RunCollector_t.cpp,v 1.12.4.3 2009/03/03 22:07:16 biery Exp $
+// $Id$
 // The FragmentCollector no longer puts events into the EventBuffer
 // so the drain will not get any events
 
@@ -15,10 +15,7 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
-#include "EventFilter/StorageManager/interface/Configurator.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/DiscardManager.h"
 
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
@@ -123,14 +120,6 @@ void Drain::readData()
 
 // -----------------------------------------------
 
-static void deleteBuffer(void* v)
-{
-	stor::FragEntry* fe = (stor::FragEntry*)v;
-	delete [] (char*)fe->buffer_address_;
-}
-
-// -----------------------------------------------
-
 class Main
 {
  public:
@@ -155,7 +144,7 @@ class Main
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
-  stor::SharedResources sharedResources_;
+  boost::shared_ptr<stor::SharedResources> sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -168,7 +157,6 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   names_(file_names),
   prods_(edm::getRegFromFile(file_names[0])),
   info_(prods_),
-  //coll2_(info_,deleteBuffer,prods_),
   drain_(info_),
   logger_(log4cplus::Logger::getRoot())  // placeholder, overwritten below
 {
@@ -178,22 +166,11 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
-  sharedResources_._fragmentQueue.reset(new stor::FragmentQueue(128));
-  boost::shared_ptr<stor::DiscardManager> discardMgr;
+  sharedResources_.reset(new stor::SharedResources());
+  sharedResources_->_fragmentQueue.reset(new stor::FragmentQueue(128));
 
-  coll_.reset(new stor::FragmentCollector(info_,&deleteBuffer,
-                                          logger_,sharedResources_,
-                                          discardMgr,conffile));
-
-  boost::shared_ptr<stor::InitMsgCollection>
-    initMsgCollection(new stor::InitMsgCollection());
-  coll_->setInitMsgCollection(initMsgCollection);
-
-  boost::shared_ptr<stor::Parameter> smParameter =
-    stor::Configurator::instance()->getParameter();
-  // the following directory path must have "open", "closed", and
-  // "log" subdirectories!
-  smParameter->setfilePath("/tmp");
+  coll_.reset(new stor::FragmentCollector(info_,
+                                          logger_,sharedResources_));
 
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);

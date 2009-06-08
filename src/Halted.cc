@@ -1,3 +1,6 @@
+// $Id$
+
+#include "EventFilter/StorageManager/interface/Notifier.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -9,6 +12,10 @@ Halted::Halted( my_context c ): my_base(c)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
+  // Remi May 14, 2009: not clear why we originally introduced the _initialized
+  // outermost_context().declareInitialized();
+  outermost_context().setExternallyVisibleState( "Halted" );
+  outermost_context().getNotifier()->reportNewState( "Halted" );
 }
 
 Halted::~Halted()
@@ -22,10 +29,7 @@ string Halted::do_stateName() const
   return string( "Halted" );
 }
 
-// void Halted::handleI2OEventMessage() const
-// {
-//   cerr << "Error: " << stateName() << " state cannot handle I2O messages" << endl;
-// }
+
 
 /// emacs configuration
 /// Local Variables: -

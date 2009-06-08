@@ -1,27 +1,43 @@
+// $Id$
+
+#include "EventFilter/StorageManager/interface/EventDistributor.h"
+#include "EventFilter/StorageManager/interface/FragmentStore.h"
+#include "EventFilter/StorageManager/interface/Notifier.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <typeinfo>
+#include <fstream>
 
 using namespace stor;
 using namespace std;
 
-// void StateMachine::handleI2OEventMessage()
-// {
-//   const Operations& ref = state_cast<Operations const&>();
-//   ref.handleI2OEventMessage();
-// }
+void stor::sm_debug( const std::string& file_name_suffix, const std::string& message )
+{
+  const std::string fname = std::string( "/tmp/storage_manager_debug_" ) + file_name_suffix;
+  std::ofstream f( fname.c_str() );
+  if( f.is_open() )
+    {
+      f << message << std::endl;
+      f.close();
+    }
+}
+
 
 StateMachine::StateMachine
 ( 
-  DiskWriter* dw,
   EventDistributor* ed,
   FragmentStore* fs,
-  SharedResources* sr
+  Notifier* n,
+  SharedResourcesPtr sr
 ):
-_diskWriter(dw),
 _eventDistributor(ed),
 _fragmentStore(fs),
+_notifier(n),
 _sharedResources(sr)
+// Remi May 14, 2009: not clear why we originally introduced the _initialized
+// _initialized( false )
 {
 }
 
@@ -38,33 +54,36 @@ string StateMachine::getCurrentStateName() const
 
 void StateMachine::updateHistory( const TransitionRecord& tr )
 {
-  _history.push_back( tr );
+  _sharedResources->_statisticsReporter->
+    getStateMachineMonitorCollection().updateHistory(tr);
 }
 
-void StateMachine::dumpHistory( ostream& os ) const
+void StateMachine::unconsumed_event( bsc::event_base const &event )
 {
 
-  cout << "**** Begin transition history ****" << endl;
-
-  for( StateMachine::History::const_iterator j = _history.begin();
-       j != _history.end(); ++j )
-    {
-      os << "  " << *j << endl;
-    }
-
-  cout << "**** End transition history ****" << endl;
-
-}
-
-void StateMachine::unconsumed_event( bsc::event_base const &event)
-{
   std::cerr << "The " << 
     //event.dynamic_type()
     typeid(event).name()
     << " event is not supported from the "
     << getCurrentStateName() << " state!" << std::endl;
+
+  // Tell run control not to wait:
+  _notifier->reportNewState( "Unchanged" );
+
 }
 
+void StateMachine::setExternallyVisibleState( const std::string& s )
+{
+// Remi May 14, 2009: not clear why we originally introduced the _initialized
+//   if( _initialized )
+//     {
+//       if( _sharedResources->_statisticsReporter.get() != 0 )
+//         {
+          _sharedResources->_statisticsReporter->
+            getStateMachineMonitorCollection().setExternallyVisibleState( s );
+//         }
+//     }
+}
 
 
 /// emacs configuration

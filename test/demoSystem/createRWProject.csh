@@ -12,7 +12,7 @@ set BASE_DIR = `pwd`
 
 # check for valid arguments
 if ($#argv < 1 || $1 == "-h") then
-    echo "Usage: createProject.csh <CMSSW_release_label_or_tag>"
+    echo "Usage: createRWProject.csh <CMSSW_release_label_or_tag>"
     exit
 endif
 
@@ -70,9 +70,9 @@ cvs co -r $tagName EventFilter/SMProxyServer
 
 # possibly needed modules (may need specific version)
 cvs co -r $tagName IOPool/Streamer
+cvs co -r $tagName EventFilter/Modules
 
 # modules needed only for tweaks or development on them
-#cvs co -r $tagName EventFilter/Modules
 #cvs co -r $tagName EventFilter/Playback
 #cvs co -r $tagName EventFilter/ShmBuffer
 #cvs co -r $tagName EventFilter/ShmReader
@@ -81,33 +81,33 @@ cvs co -r $tagName IOPool/Streamer
 #cvs co -r $tagName FWCore/Modules
 #cvs co -r $tagName IORawData/DaqSource
 
-# 09-Feb-2009 - using the SM refdev01 "work" branch with 3_0_0_pre8
-if ($tagName == "CMSSW_3_0_0_pre8") then
+# 27-Mar-2009 - using the SM refdev01 "work" branch with 3_0_0_pre9
+if ($tagName == "CMSSW_3_0_0_pre9") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -dR -r V01-08-08 EventFilter/SMProxyServer
+  cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
+  cvs update -dR -r V00-06-02 EventFilter/Modules
+  cvs update -dR -r V05-06-08-03 IOPool/Streamer
 endif
 
-# 23-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre7
-if ($tagName == "CMSSW_3_0_0_pre7") then
-  cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -dR -r V01-08-08 EventFilter/SMProxyServer
-  cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
-endif
-
-# 23-Jan-2009 - using the SM refdev01 "work" branch with 3_0_0_pre5
+# 27-Mar-2009 - using the SM refdev01 "work" branch with 3_0_0_pre5
 if ($tagName == "CMSSW_3_0_0_pre5") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
+  cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
   cvs update -dR -r V00-12-02 EventFilter/ResourceBroker
+  cvs update -dR -r V00-06-02 EventFilter/Modules
+  cvs update -dR -r V05-06-02-03 IOPool/Streamer
 endif
 
-# 02-Jan-2009 - using the SM refdev01 work branch with 3_0_0_pre3
-if ($tagName == "CMSSW_3_0_0_pre3") then
+# 12-May-2009 - using the SM refdev01 "work" branch with 2_2_6
+if ($tagName == "CMSSW_2_2_6") then
   cvs update -dR -r refdev01_scratch_branch EventFilter/StorageManager
-  cvs update -r 1.13 IOPool/Streamer/interface/HLTInfo.h
+  cvs update -dR -r V01-08-12 EventFilter/SMProxyServer
+  cvs update -dR -r V00-06-02 EventFilter/Modules
+  cvs update -dR -r V05-05-01-03 IOPool/Streamer
 endif
 
-# 02-Jan-2009 - using the SM refdev01 work branch with 2_1_11
+# 02-Jan-2009 - using the SM refdev01 "work" branch with 2_1_11
 if ($tagName == "CMSSW_2_1_11") then
   cvs update -dR -r CMSSW_3_0_0_pre2 EventFilter/AutoBU
   cvs co -r CMSSW_3_0_0_pre2 EventFilter/Modules
@@ -132,4 +132,4 @@ echo "Applying development-specific patches..."
 ../../bin/applyDevelopmentPatches.pl
 
 echo "Building..."
-scramv1 build
+scramv1 build -j 8

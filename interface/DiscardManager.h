@@ -1,4 +1,4 @@
-// $Id: DiscardManager.h,v 1.1.2.1 2009/03/03 22:05:11 biery Exp $
+// $Id$
 
 #ifndef StorageManager_DiscardManager_h
 #define StorageManager_DiscardManager_h
@@ -16,6 +16,14 @@
 
 namespace stor {
 
+  /**
+   * Handles the discard messages sent to the upstream Resource Brokers.
+   *
+   * $Author$
+   * $Revision$
+   * $Date$
+   */
+
   class DiscardManager
   {
   public:
@@ -28,14 +36,23 @@ namespace stor {
      * Creates a DiscardManager that will send discard messages
      * to upstream Resource Brokers on behalf of the application
      * specified in the application descriptor.  The DiscardManager
-     * will use the specified application context and
-     * buffer pool to send and store the messages.
+     * will use the specified application context to send the messages.
      */
     DiscardManager(xdaq::ApplicationContext* ctx,
-                   xdaq::ApplicationDescriptor* desc,
-                   toolbox::mem::Pool* memPool);
+                   xdaq::ApplicationDescriptor* desc);
 
     ~DiscardManager() {}
+
+    /**
+     * Configures the discard manager.  Internally, this connects
+     * the DiscardManager to the buffer pool that it will use to store
+     * the discard messages.  This should be done at configuration time.
+     * (Application startup is too soon because the memory pool for
+     * TCP messages may not have been created yet.  Also, it's probably
+     * possible, in principle, for the configuration of resource brokers
+     * to change while the SM is in the Halted state.)
+     */
+    void configure();
 
     /**
      * Sends a message to the appropriate resource broker

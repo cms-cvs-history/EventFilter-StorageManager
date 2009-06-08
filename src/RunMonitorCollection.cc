@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.1.2.5 2009/03/02 18:08:22 biery Exp $
+// $Id$
 
 #include <string>
 #include <sstream>
@@ -10,11 +10,13 @@
 using namespace stor;
 
 RunMonitorCollection::RunMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app, "Run")
+MonitorCollection(app)
 {
   _infoSpaceItems.push_back(std::make_pair("runNumber", &_runNumber));
-  _infoSpaceItems.push_back(std::make_pair("receivedEvents", &_receivedEvents));
-  _infoSpaceItems.push_back(std::make_pair("receivedErrorEvents", &_receivedErrorEvents));
+
+  // These infospace items were defined in the old SM
+  // _infoSpaceItems.push_back(std::make_pair("receivedEvents", &_receivedEvents));
+  // _infoSpaceItems.push_back(std::make_pair("receivedErrorEvents", &_receivedErrorEvents));
 
   putItemsIntoInfoSpace();
 }
@@ -22,10 +24,10 @@ MonitorCollection(app, "Run")
 
 void RunMonitorCollection::do_calculateStatistics()
 {
-  eventIDsReceived.calculateStatistics();
-  errorEventIDsReceived.calculateStatistics();
-  runNumbersSeen.calculateStatistics();
-  lumiSectionsSeen.calculateStatistics();
+  _eventIDsReceived.calculateStatistics();
+  _errorEventIDsReceived.calculateStatistics();
+  _runNumbersSeen.calculateStatistics();
+  _lumiSectionsSeen.calculateStatistics();
 }
 
 
@@ -38,9 +40,17 @@ void RunMonitorCollection::do_updateInfoSpace()
   try
   {
     _infoSpace->lock();
-    _runNumber = static_cast<xdata::UnsignedInteger32>(runNumbersSeen.getLastSampleValue());
-    _receivedEvents = static_cast<xdata::UnsignedInteger32>(eventIDsReceived.getSampleCount());
-    _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(errorEventIDsReceived.getSampleCount());
+    MonitoredQuantity::Stats stats;
+
+    _runNumbersSeen.getStats(stats);
+    _runNumber = static_cast<xdata::UnsignedInteger32>(static_cast<unsigned int>(stats.getLastSampleValue()));
+
+    // _eventIDsReceived.getStats(stats);
+    // _receivedEvents = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
+
+    // _errorEventIDsReceived.getStats(stats);
+    // _receivedErrorEvents = static_cast<xdata::UnsignedInteger32>(stats.getSampleCount());
+
     _infoSpace->unlock();
   }
   catch(std::exception &e)
@@ -68,6 +78,15 @@ void RunMonitorCollection::do_updateInfoSpace()
   {
     XCEPT_RETHROW(stor::exception::Infospace, errorMsg, e);
   }
+}
+
+
+void RunMonitorCollection::do_reset()
+{
+  _eventIDsReceived.reset();
+  _errorEventIDsReceived.reset();
+  _runNumbersSeen.reset();
+  _lumiSectionsSeen.reset();
 }
 
 

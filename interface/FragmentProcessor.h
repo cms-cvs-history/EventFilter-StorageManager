@@ -1,10 +1,11 @@
-// $Id: FragmentProcessor.h,v 1.1.2.6 2009/02/22 18:16:34 biery Exp $
+// $Id$
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
+#include "xdaq/Application.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -12,10 +13,10 @@
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Types.h"
-
+#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 namespace stor {
 
@@ -26,17 +27,16 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/02/22 18:16:34 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
 
   class FragmentProcessor : public toolbox::lang::Class
   {
   public:
     
-    FragmentProcessor( boost::shared_ptr<SharedResources> sr,
-                       boost::shared_ptr<StateMachine> sm );
+    FragmentProcessor( xdaq::Application *app, SharedResourcesPtr sr );
 
     ~FragmentProcessor();
     
@@ -48,17 +48,9 @@ namespace stor {
     bool processMessages(toolbox::task::WorkLoop*);
 
     /**
-     * Updates the statistics of processed fragments
+     * Create and start the fragment processing workloop
      */
-    void updateStatistics();
-
-    /**
-     * Registers a new event consumer with the EventDistributor
-     */
-    const QueueID registerEventConsumer
-    (
-      boost::shared_ptr<EventConsumerRegistrationInfo>
-    );
+    void startWorkLoop(std::string workloopName);
 
 
   private:
@@ -67,6 +59,11 @@ namespace stor {
      * Processes all state machine events in the command queue
      */
     void processAllCommands();
+
+    /**
+     * Processes all consumer registrations in the registration queue
+     */
+    void processAllRegistrations();
 
     /**
        Process a single fragment, if there is  place to put it.
@@ -79,13 +76,18 @@ namespace stor {
      */
     void processOneFragment();
 
-    boost::shared_ptr<SharedResources> _sharedResources;
+    xdaq::Application*                 _app;
+    SharedResourcesPtr                 _sharedResources;
+    WrapperNotifier                    _wrapperNotifier;
     boost::shared_ptr<StateMachine>    _stateMachine;
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;
 
-    const unsigned int                 _timeout; // Waiting time in microseconds.
+    unsigned int                       _timeout; // Waiting time in seconds.
     bool                               _actionIsActive;
+
+    toolbox::task::WorkLoop*           _processWL;      
+
   };
   
 } // namespace stor

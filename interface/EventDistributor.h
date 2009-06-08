@@ -1,18 +1,21 @@
-// $Id: EventDistributor.h,v 1.1.2.6 2009/03/03 17:50:36 dshpakov Exp $
+// $Id$
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
 
-#include "EventFilter/StorageManager/interface/EventConsumerQueue.h"
-#include "EventFilter/StorageManager/interface/EventConsumerQueueCollection.h"
+#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/ErrorStreamSelector.h"
+#include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventConsumerSelector.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
-#include "EventFilter/StorageManager/interface/DQMEventQueue.h"
+#include "EventFilter/StorageManager/interface/EventStreamSelector.h"
+#include "EventFilter/StorageManager/interface/DQMEventSelector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/StreamQueue.h"
-#include "EventFilter/StorageManager/interface/Types.h"
-#include "EventFilter/StorageManager/interface/EventSelector.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
+
+#include "boost/shared_ptr.hpp"
 
 
 namespace stor {
@@ -25,26 +28,26 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/03 17:50:36 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
-  
+
   class EventDistributor
   {
   public:
-    
-    EventDistributor();
-    
+
+    EventDistributor(SharedResourcesPtr sr);
+
     ~EventDistributor();
-    
+
     /**
      * Add the event given as I2OChain to the appropriate queues
      */
-    void addEventToRelevantQueues(I2OChain&);
+    void addEventToRelevantQueues( I2OChain& );
 
     /**
-     * Returns false if no further events can be processed,
+     * Returns true if no further events can be processed,
      * e.g. the StreamQueue is full
      */
     const bool full() const;
@@ -52,37 +55,78 @@ namespace stor {
     /**
      * Registers a new consumer
      */
-    const QueueID registerEventConsumer
-    (
-      boost::shared_ptr<EventConsumerRegistrationInfo>
-    );
+    void registerEventConsumer( const EventConsumerRegistrationInfo* );
 
     /**
-     * Registers new event streams ???
+     * Registers a new DQM consumer
      */
-    typedef std::vector<EventStreamConfigurationInfo> StreamConfList;
-    void registerEventStreams( const StreamConfList& );
+    void registerDQMEventConsumer( const DQMEventConsumerRegistrationInfo* );
+
+    /**
+     * Registers the full set of event streams.
+     */
+    void registerEventStreams( const EvtStrConfigListPtr );
+
+    /**
+     * Registers the full set of error event streams.
+     */
+    void registerErrorStreams( const ErrStrConfigListPtr );
+
+    /**
+     * Clears out all existing event and error streams.
+     */
+    void clearStreams();
+
+    /**
+     * Returns the number of streams that have been configured.
+     */
+    unsigned int configuredStreamCount() const;
+
+    /**
+     * Returns the number of streams that have been configured and initialized.
+     */
+    unsigned int initializedStreamCount() const;
+
+    /**
+     * Clears out all existing consumer registrations.
+     */
+    void clearConsumers();
+
+    /**
+     * Returns the number of consumers that have been configured.
+     */
+    unsigned int configuredConsumerCount() const;
+
+    /**
+     * Returns the number of consumers that have been configured and initialized.
+     */
+    unsigned int initializedConsumerCount() const;
+
+    /**
+       Updates staleness info for consumers.
+    */
+    void checkForStaleConsumers();
 
   private:
-    
 
-    /**
-     * Create a new event selector ???
-     */
-    void makeEventSelector
-    (
-      const QueueID, 
-      boost::shared_ptr<EventConsumerRegistrationInfo>
-    );
+    void tagCompleteEventForQueues( I2OChain& );
 
-    EventConsumerQueueCollection _eventConsumerQueueCollection;
-    DQMEventQueue _dqmEventQueue;
-    StreamQueue _streamQueue;
+    SharedResourcesPtr _sharedResources;
 
-    InitMsgCollection _initMsgCollection;
+    typedef std::vector<EventStreamSelector> EvtSelList;
+    EvtSelList _eventStreamSelectors;
 
-    typedef std::vector<EventSelector> ESList;
-    ESList _eventSelectors;
+    typedef std::vector<DQMEventSelector> DQMEvtSelList;
+    DQMEvtSelList _dqmEventSelectors;
+
+    typedef std::vector<ErrorStreamSelector> ErrSelList;
+    ErrSelList _errorStreamSelectors;
+
+    typedef std::vector<EventConsumerSelector> ConsSelList;
+    ConsSelList _eventConsumerSelectors;
+
+    // temporary
+    std::vector<unsigned char> _tempEventArea;
 
   };
   

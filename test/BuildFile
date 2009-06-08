@@ -1,19 +1,9 @@
-# $Id: BuildFile,v 1.30.16.22 2009/03/03 16:59:26 dshpakov Exp $
+# $Id$
 
 <environment>
   <use name=boost>
   <use name=xdaq>
    <use name=EventFilter/StorageManager>
-
-  <library file=StorageManagerRun.cpp>
-   <use name=FWCore/Framework>
-   <use name=FWCore/MessageLogger>
-   <use name=FWCore/MessageService>
-   <use name=FWCore/PluginManager>
-   <use name=DataFormats/Provenance>
-   <use name=DataFormats/Streamer>
-   <use name=IOPool/Streamer>
-  </library>
 
   <library file="SillyLockService.cc" name=SillyLockService>
    <flags EDM_PLUGIN=1>
@@ -48,30 +38,14 @@
   <library file=fsmSoap_t.cpp>
   </library>
 
-  <bin file=RunnerTest_t.cpp>
-   <use name=FWCore/MessageLogger>
-   <use name=FWCore/MessageService>
-   <use name=FWCore/PluginManager>
-   <use name=DataFormats/Provenance>
-   <use name=DataFormats/Streamer>
-   <use name=IOPool/Streamer>
-  </bin>
-
-  <bin file=RunCollector_t.cpp>
-   <use name=FWCore/MessageLogger>
-   <use name=FWCore/PluginManager>
-   <use name=DataFormats/Provenance>
-   <use name=DataFormats/Streamer>
-   <use name=IOPool/Streamer>
-  </bin>
-
   <bin file=state_machine_t.cpp>
+    <use name=cppunit>
   </bin>
 
   <bin file=xhtmlmaker_t.cpp>
   </bin>
 
-  <bin file=EventSelector_t.cpp>
+  <bin file=EnquingPolicyTag_t.cpp>
   </bin>
 
   <bin file=EventStreamConfigurationInfo_t.cpp>
@@ -94,10 +68,6 @@
   </bin>
 
 
-  <bin file=SyncQueue_t.cpp>
-    <use name=cppunit>
-  </bin>
-
   <bin file=CommandQueue_t.cpp>
     <use name=cppunit>
   </bin>
@@ -106,14 +76,8 @@
     <use name=cppunit>
   </bin>
 
-  <bin file=test_condition.cpp>
-  </bin>
-
   <bin file=ConcurrentQueue_t.cpp>
     <use name=cppunit>
-  </bin>
-
-  <bin file=processCount_t.cpp>
   </bin>
 
   <bin file=FragmentStore_t.cpp>
@@ -124,6 +88,29 @@
     <use name=cppunit>
   </bin>
 
+  <bin file=EventDistributor_t.cpp>
+    <use name=cppunit>
+  </bin>
 
+  <bin file=InitMsgCollection_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=ExpirableQueue_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=EventQueueCollection_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=Sleep_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+
+  <bin file=ConsumerID_t.cpp>
+    <use name=cppunit>
+  </bin>
 
 </environment>

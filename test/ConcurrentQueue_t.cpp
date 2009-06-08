@@ -82,6 +82,46 @@ unsigned int DrainQueue::count() const
   return _counter;
 }
 
+
+/*
+  DrainTimedQueue is used for testing the timed-wait version of the
+  dequeue functionality.
+ */
+
+class DrainTimedQueue
+{
+public:
+  DrainTimedQueue(boost::shared_ptr<queue_t>& p, unsigned int delay) :
+    _sharedQueue(p),
+    _delay(delay),
+    _counter(0)
+  { }  
+
+  void operator()();
+  unsigned int count() const;
+
+private:
+  boost::shared_ptr<queue_t> _sharedQueue;
+  unsigned int               _delay;
+  unsigned int               _counter;
+};
+
+void DrainTimedQueue::operator()()
+{
+  queue_t::value_type val;
+  while(true)
+    {
+      sleep(_delay);
+      if (_sharedQueue->deq_nowait(val)) ++_counter;
+      else return;
+    }
+}
+
+unsigned int DrainTimedQueue::count() const
+{
+  return _counter;
+}
+
 class testConcurrentQueue : public CppUnit::TestFixture
 {
   CPPUNIT_TEST_SUITE(testConcurrentQueue);
@@ -131,6 +171,7 @@ testConcurrentQueue::default_q_is_empty()
   std::cerr << "\nConcurrentQueue_t::default_q_is_empty\n";
   stor::ConcurrentQueue<int> q;
   CPPUNIT_ASSERT(q.empty());
+  CPPUNIT_ASSERT(!q.full());
 }
 
 void
@@ -149,6 +190,7 @@ testConcurrentQueue::queue_is_fifo()
   CPPUNIT_ASSERT(q.deq_nowait(value));
   CPPUNIT_ASSERT(value == 3);
   CPPUNIT_ASSERT(q.empty());
+  CPPUNIT_ASSERT(!q.full());
 }
 
 void
@@ -202,6 +244,7 @@ testConcurrentQueue::enq_timing()
   CPPUNIT_ASSERT(q.enq_nowait(1));
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.capacity() == 1);
+  CPPUNIT_ASSERT(q.full());
 
   // The queue is now full. The next enq should fail.
   edm::CPUTimer t;

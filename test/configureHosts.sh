@@ -53,7 +53,7 @@ then
     consCfgFile="fuConsumer.cfg"
 fi
 
-for filename in `find . -name "*.base"`
+for filename in `find -maxdepth 3 -name "*.base"`
 do
     finalFile="${filename/.base}"
     inputFile="$filename"

@@ -1,4 +1,4 @@
-// $Id: Types.h,v 1.1.2.2 2009/01/30 20:34:34 paterno Exp $
+// $Id$
 
 #ifndef StorageManager_Types_h
 #define StorageManager_Types_h
@@ -10,12 +10,10 @@ namespace stor {
   /**
    * Definition of types used in the storage manager
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2009/01/30 20:34:34 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
-
-  typedef size_t QueueID;
 
   
 } // namespace stor

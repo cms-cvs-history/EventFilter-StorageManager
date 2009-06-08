@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.1.2.5 2009/03/03 22:01:39 biery Exp $
+// $Id$
 
 #ifndef _storagemanager_Exception_h_
 #define _storagemanager_Exception_h_
@@ -77,6 +77,56 @@ XCEPT_DEFINE_EXCEPTION(stor, IncompleteEventMessage)
  * broker should received a discard message for a particular I2O message.
  */
 XCEPT_DEFINE_EXCEPTION(stor, RBLookupFailed)
+
+/**
+ * Exception raised when a non-existant queue is requested.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, UnknownQueueId)
+
+/**
+ * Exception raised when a non-existant stream is requested.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, UnknownStreamId)
+
+/**
+ * Exception raised if a run number mismatch is detected.
+ */
+XCEPT_DEFINE_EXCEPTION(stor, RunNumberMismatch)
+
+/**
+ * Exception raised in case of a fragment processing error
+ */
+XCEPT_DEFINE_EXCEPTION(stor, FragmentProcessing)
+
+/**
+ * Exception raised in case of a DQM event processing error
+ */
+XCEPT_DEFINE_EXCEPTION(stor, DQMEventProcessing)
+
+/**
+ * Exception raised in case of a disk writing error
+ */
+XCEPT_DEFINE_EXCEPTION(stor, DiskWriting)
+
+/**
+ * Exception when requested directory does not exist
+ */
+XCEPT_DEFINE_EXCEPTION( stor, NoSuchDirectory )
+
+/**
+ * Consumer registration exception
+ */
+XCEPT_DEFINE_EXCEPTION( stor, ConsumerRegistration )
+
+/**
+ * DQM consumer registration exception
+ */
+XCEPT_DEFINE_EXCEPTION( stor, DQMConsumerRegistration )
+
+/**
+ * Exception for sentinel alarm if disk space fills up
+ */
+XCEPT_DEFINE_EXCEPTION( stor, DiskSpaceAlarm )
 
 
 #endif // _storagemanager_Exception_h_

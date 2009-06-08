@@ -1,4 +1,4 @@
-// $Id: NotSoUrgentIssues.txt,v 1.1.2.1 2009/02/20 12:23:11 mommsen Exp $
+// $Id$
 
 This file shall collect items which should be addressed at some point
 during the re-factoring process, but which are not urgent or not
@@ -38,3 +38,13 @@ webpage and the requirement to have current data.
 This will be available from boost 1.38 onwards. unordered_map is the
 upcoming Standard's name for a hashmap.
 
+
+- Include more information in the consumer registration message or
+data inside the SM (e.g. initial run number) so that we can definitively
+tell a consumer that it should disconnect and reregister because its
+registration is stale (or has been reused).
+
+
+- Move consumer registration data out of the serialized parameter set
+and into the registration message so that we aren't bothered by which
+parameters are tracked and untracked.

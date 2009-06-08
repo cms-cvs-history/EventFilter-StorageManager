@@ -1,21 +1,22 @@
-// $Id: DQMEventConsumerRegistrationInfo_t.cpp,v 1.1.2.1 2009/02/27 13:59:43 dshpakov Exp $
+// $Id$
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 using stor::DQMEventConsumerRegistrationInfo;
 using namespace std;
+using stor::QueueID;
 
 int main()
 {
-
-  DQMEventConsumerRegistrationInfo ecri( "http://cmsmon.cms:50082/urn:xdaq-application:lid=29",
-				      "Test Consumer",
-				      5,
-				      1.,
-				      "*" );
+  typedef DQMEventConsumerRegistrationInfo DECRI;
+  QueueID id1(stor::enquing_policy::DiscardOld, 2);
+  DECRI ecri( "Test Consumer",
+	      "*",
+              id1.index(),
+              id1.policy(),
+	      1024 );
 
   cout << ecri << endl;
-
   return 0;
-
 }

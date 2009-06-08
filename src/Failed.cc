@@ -1,3 +1,6 @@
+// $Id$
+
+#include "EventFilter/StorageManager/interface/Notifier.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 
 #include <iostream>
@@ -9,6 +12,8 @@ Failed::Failed( my_context c ): my_base(c)
 {
   TransitionRecord tr( stateName(), true );
   outermost_context().updateHistory( tr );
+  outermost_context().setExternallyVisibleState( "Failed" );
+  outermost_context().getNotifier()->reportNewState( "Failed" );
 }
 
 Failed::~Failed()

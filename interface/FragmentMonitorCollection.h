@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.1.2.12 2009/03/02 18:08:21 biery Exp $
+// $Id$
 
 #ifndef StorageManager_FragmentMonitorCollection_h
 #define StorageManager_FragmentMonitorCollection_h
@@ -14,25 +14,36 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities related to fragments
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.12 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
   
   class FragmentMonitorCollection : public MonitorCollection
   {
   private:
 
-    MonitoredQuantity allFragmentSizes;
-    MonitoredQuantity eventFragmentSizes;
-    MonitoredQuantity dqmEventFragmentSizes;
+    MonitoredQuantity _allFragmentSizes;
+    MonitoredQuantity _eventFragmentSizes;
+    MonitoredQuantity _dqmEventFragmentSizes;
 
-    MonitoredQuantity allFragmentBandwidth;
-    MonitoredQuantity eventFragmentBandwidth;
-    MonitoredQuantity dqmEventFragmentBandwidth;
+    MonitoredQuantity _allFragmentBandwidth;
+    MonitoredQuantity _eventFragmentBandwidth;
+    MonitoredQuantity _dqmEventFragmentBandwidth;
 
 
   public:
+
+    struct FragmentStats
+    {
+      MonitoredQuantity::Stats allFragmentSizeStats;
+      MonitoredQuantity::Stats eventFragmentSizeStats;
+      MonitoredQuantity::Stats dqmEventFragmentSizeStats;
+      
+      MonitoredQuantity::Stats allFragmentBandwidthStats;
+      MonitoredQuantity::Stats eventFragmentBandwidthStats;
+      MonitoredQuantity::Stats dqmEventFragmentBandwidthStats;
+    };
 
     explicit FragmentMonitorCollection(xdaq::Application*);
 
@@ -41,46 +52,51 @@ namespace stor {
     void addDQMEventFragmentSample(const double bytecount);
 
     const MonitoredQuantity& getAllFragmentSizeMQ() const {
-      return allFragmentSizes;
+      return _allFragmentSizes;
     }
     MonitoredQuantity& getAllFragmentSizeMQ() {
-      return allFragmentSizes;
+      return _allFragmentSizes;
     }
 
     const MonitoredQuantity& getEventFragmentSizeMQ() const {
-      return eventFragmentSizes;
+      return _eventFragmentSizes;
     }
     MonitoredQuantity& getEventFragmentSizeMQ() {
-      return eventFragmentSizes;
+      return _eventFragmentSizes;
     }
 
     const MonitoredQuantity& getDQMEventFragmentSizeMQ() const {
-      return dqmEventFragmentSizes;
+      return _dqmEventFragmentSizes;
     }
     MonitoredQuantity& getDQMEventFragmentSizeMQ() {
-      return dqmEventFragmentSizes;
+      return _dqmEventFragmentSizes;
     }
 
     const MonitoredQuantity& getAllFragmentBandwidthMQ() const {
-      return allFragmentBandwidth;
+      return _allFragmentBandwidth;
     }
     MonitoredQuantity& getAllFragmentBandwidthMQ() {
-      return allFragmentBandwidth;
+      return _allFragmentBandwidth;
     }
 
     const MonitoredQuantity& getEventFragmentBandwidthMQ() const {
-      return eventFragmentBandwidth;
+      return _eventFragmentBandwidth;
     }
     MonitoredQuantity& getEventFragmentBandwidthMQ() {
-      return eventFragmentBandwidth;
+      return _eventFragmentBandwidth;
     }
 
     const MonitoredQuantity& getDQMEventFragmentBandwidthMQ() const {
-      return dqmEventFragmentBandwidth;
+      return _dqmEventFragmentBandwidth;
     }
     MonitoredQuantity& getDQMEventFragmentBandwidthMQ() {
-      return dqmEventFragmentBandwidth;
+      return _dqmEventFragmentBandwidth;
     }
+
+   /**
+    * Write all our collected statistics into the given Stats struct.
+    */
+    void getStats(FragmentStats& stats) const;
 
 
   private:
@@ -92,31 +108,33 @@ namespace stor {
     virtual void do_calculateStatistics();
     
     virtual void do_updateInfoSpace();
+    
+    virtual void do_reset();
 
+    xdata::UnsignedInteger32 _receivedFrames; // Total I2O frames received
+    xdata::Double _instantBandwidth;          // Recent bandwidth in MB/s
+    xdata::Double _instantRate;               // Recent number of frames/s
 
     // InfoSpace items which were defined in the old SM
-    xdata::Double _duration;                  // Duration of run in seconds
-    xdata::UnsignedInteger32 _receivedFrames; // Total I2O frames received
-    xdata::UnsignedInteger32 _totalSamples;   // Total number of samples used for measurement
+    // xdata::Double _duration;                  // Duration of run in seconds
+    // xdata::UnsignedInteger32 _totalSamples;   // Total number of samples used for measurement
                                               // (same as receivedFrames)
-    xdata::UnsignedInteger32 _dqmRecords;     // Total number of DQM records (frames) received
+    // xdata::UnsignedInteger32 _dqmRecords;     // Total number of DQM records (frames) received
 
-    xdata::Double _meanBandwidth;    // Total average bandwidth in MB/s
-    xdata::Double _meanRate;         // Total avarage number of frames/s
-    xdata::Double _meanLatency;      // Total average latency in micro-seconds/frame
-    xdata::Double _receivedVolume;   // Total received data in MB
+    // xdata::Double _meanBandwidth;    // Total average bandwidth in MB/s
+    // xdata::Double _meanRate;         // Total avarage number of frames/s
+    // xdata::Double _meanLatency;      // Total average latency in micro-seconds/frame
+    // xdata::Double _receivedVolume;   // Total received data in MB
 
-    xdata::UnsignedInteger32 _receivedPeriod4Stats;  // Time period per recent measurements
-    xdata::UnsignedInteger32 _receivedSamples4Stats; // Number of recent samples used for measurement
-    xdata::Double _instantBandwidth; // Recent bandwidth in MB/s
-    xdata::Double _instantRate;      // Recent number of frames/s
-    xdata::Double _instantLatency;   // Recent latency in micro-seconds/frame
-    xdata::Double _maxBandwidth;     // Recent maximum bandwidth in MB/s
-    xdata::Double _minBandwidth;     // Recent minimum bandwidth in MB/s
+    // xdata::UnsignedInteger32 _receivedPeriod4Stats;  // Time period per recent measurements
+    // xdata::UnsignedInteger32 _receivedSamples4Stats; // Number of recent samples used for measurement
+    // xdata::Double _instantLatency;   // Recent latency in micro-seconds/frame
+    // xdata::Double _maxBandwidth;     // Recent maximum bandwidth in MB/s
+    // xdata::Double _minBandwidth;     // Recent minimum bandwidth in MB/s
 
     // Why are these put into infospace if none of the DQM related measurements are?
-    xdata::UnsignedInteger32 _receivedDQMPeriod4Stats;  // Number of recent samples used for DQM measurement
-    xdata::UnsignedInteger32 _receivedDQMSamples4Stats; // Time period per recent DQMmeasurements
+    // xdata::UnsignedInteger32 _receivedDQMPeriod4Stats;  // Number of recent samples used for DQM measurement
+    // xdata::UnsignedInteger32 _receivedDQMSamples4Stats; // Time period per recent DQMmeasurements
 
   };
   

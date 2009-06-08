@@ -1,3 +1,6 @@
+// $Id$
+
+#include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -28,24 +31,34 @@ string DrainingQueues::do_stateName() const
   return string( "DrainingQueues" );
 }
 
+void DrainingQueues::logStopRequest( const Stop& request )
+{
+  outermost_context().unconsumed_event( request );
+}
+
+void DrainingQueues::logEndRunRequest( const EndRun& request )
+{
+  outermost_context().unconsumed_event( request );
+}
+
 void
 DrainingQueues::do_noFragmentToProcess() const
 {
   if ( allQueuesAndWorkersAreEmpty() )
-    {
-      SharedResources* sharedRes = outermost_context().getSharedResources();
-      boost::shared_ptr<CommandQueue> commandQueue =
-        sharedRes->_commandQueue;
-      event_ptr stMachEvent( new StopDone() );
-      // do we really want enq_wait here?
-      // it could cause deadlock if the command queue is full...
-      commandQueue->enq_wait( stMachEvent );
-    }
+  {
+    SharedResourcesPtr sharedResources =
+      outermost_context().getSharedResources();
+    event_ptr stMachEvent( new QueuesEmpty() );
+    sharedResources->_commandQueue->enq_wait( stMachEvent );
+  }
 }
 
 bool
 DrainingQueues::allQueuesAndWorkersAreEmpty() const
 {
+  SharedResourcesPtr sharedResources = 
+    outermost_context().getSharedResources();
+
   // the order is important here - upstream entities first,
   // followed by more downstream entities
 
@@ -56,21 +69,11 @@ DrainingQueues::allQueuesAndWorkersAreEmpty() const
   FragmentStore *fs = outermost_context().getFragmentStore();
   if ( ! fs->empty() ) return false;
 
-  //<queue collection> *qCollection = outermost_context.<getQueueCollection>
-  //boost::shared_ptr<StreamQueue> streamQueue =
-  //    <queue collection>.getStreamQueue();
-  //if ( ! streamQueue->empty() ) return false;
+  if ( ! sharedResources->_streamQueue->empty() ) return false;
 
-  DiskWriter *ds = outermost_context().getDiskWriter();
-  if ( ! ds->empty() ) return false;
-
-  //<queue collection> *qCollection = outermost_context.<getQueueCollection>
-  //boost::shared_ptr<DQMEventQueue> dqmEventQueue =
-  //    <queue collection>.getDQMEventQueue();
-  //if ( ! dqmEventQueue->empty() ) return false;
-
-  //DQMEventProcessor *dqmEP = outermost_context.getDQMEventProcessor();
-  //if ( ! dqmEP->empty() ) return false;
+  if ( sharedResources->_diskWriterResources->isBusy() ) return false;
+  
+  if ( ! sharedResources->_dqmEventQueue->empty() ) return false;
 
   return true;
 }
@@ -90,6 +93,7 @@ DrainingQueues::processStaleFragments() const
       outermost_context().getFragmentStore()->getStaleEvent(staleEvent, 0);
     if ( gotStaleEvent )
     {
+      outermost_context().getSharedResources()->_discardManager->sendDiscardMessage(staleEvent);
       ed->addEventToRelevantQueues(staleEvent);
     }
   }

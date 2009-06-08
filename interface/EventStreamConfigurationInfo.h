@@ -1,8 +1,11 @@
-// -*- c++ -*-
-// $Id: EventStreamConfigurationInfo.h,v 1.1.2.3 2009/03/03 16:59:26 dshpakov Exp $
+// $Id$
 
 #ifndef EVENTSTREAMCONFIGURATIONINFO_H
 #define EVENTSTREAMCONFIGURATIONINFO_H
+
+#include "EventFilter/StorageManager/interface/StreamID.h"
+
+#include <boost/shared_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -20,16 +23,16 @@ namespace stor
 
     // Constructor:
     EventStreamConfigurationInfo( const std::string& streamLabel,
-				  unsigned int maxFileSize,
+				  const int maxFileSizeMB,
 				  const FilterList& selEvents,
-				  const std::string& selHLTOut,
+				  const std::string& outputModuleLabel,
 				  bool useCompression,
 				  unsigned int compressionLevel,
 				  unsigned int maxEventSize ):
       _streamLabel( streamLabel ),
-      _maxFileSize( maxFileSize ),
+      _maxFileSizeMB( maxFileSizeMB ),
       _selEvents( selEvents ),
-      _selHLTOut( selHLTOut ),
+      _outputModuleLabel( outputModuleLabel ),
       _useCompression( useCompression ),
       _compressionLevel( compressionLevel ),
       _maxEventSize( maxEventSize ),
@@ -41,16 +44,16 @@ namespace stor
 
     // Accessors:
     const std::string& streamLabel() const { return _streamLabel; }
-    unsigned int maxFileSize() const { return _maxFileSize; }
+    const int maxFileSizeMB() const { return _maxFileSizeMB; }
     const FilterList& selEvents() const { return _selEvents; }
-    const std::string& selHLTOut() const { return _selHLTOut; }
+    const std::string& outputModuleLabel() const { return _outputModuleLabel; }
     bool useCompression() const { return _useCompression; }
     unsigned int compressionLevel() const { return _compressionLevel; }
     unsigned int maxEventSize() const { return _maxEventSize; }
-    unsigned int streamId() const { return _streamId; }
+    StreamID streamId() const { return _streamId; }
 
     // Set stream Id:
-    void setStreamId( unsigned int sid ) { _streamId = sid; }
+    void setStreamId( StreamID sid ) { _streamId = sid; }
 
     // Output:
     friend std::ostream& operator <<
@@ -59,16 +62,26 @@ namespace stor
   private:
 
     std::string _streamLabel;
-    unsigned int _maxFileSize;
+    int _maxFileSizeMB;
     FilterList _selEvents;
-    std::string _selHLTOut;
+    std::string _outputModuleLabel;
     bool _useCompression;
     unsigned int _compressionLevel;
     unsigned int _maxEventSize;
-    unsigned int _streamId;
+    StreamID _streamId;
 
   };
+
+  typedef std::vector<EventStreamConfigurationInfo> EvtStrConfigList;
+  typedef boost::shared_ptr<EvtStrConfigList> EvtStrConfigListPtr;
 
 }
 
 #endif
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

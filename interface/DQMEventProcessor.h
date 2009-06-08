@@ -1,15 +1,18 @@
-// $Id: DQMEventProcessor.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id$
 
 #ifndef StorageManager_DQMEventProcessor_h
 #define StorageManager_DQMEventProcessor_h
 
+#include "toolbox/lang/Class.h"
+#include "toolbox/task/WaitingWorkLoop.h"
+#include "xdaq/Application.h"
+
 #include <boost/shared_ptr.hpp>
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
-#include "EventFilter/StorageManager/interface/DQMEventConsumerQueue.h"
-#include "EventFilter/StorageManager/interface/DQMEventConsumerQueueCollection.h"
-#include "EventFilter/StorageManager/interface/DQMEventQueue.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/DQMEventStore.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 
 namespace stor {
@@ -23,49 +26,74 @@ namespace stor {
    * Depending on the configuration, it also writes the histograms
    * to disk every N lumi-sections.
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
   
-  class DQMEventProcessor
+  class DQMEventProcessor : public toolbox::lang::Class
   {
   public:
     
-    DQMEventProcessor();
+    DQMEventProcessor(xdaq::Application*, SharedResourcesPtr sr);
     
     ~DQMEventProcessor();
 
     /**
-     * Pops the next DQM event from the DQMEventQueue, processes it,
-     * and puts it in the appropriate DQMConsumerQueues when the
-     * lumi-section has finished.
+     * The workloop action taking the next DQM event from the
+     * DQMEventQueue, processes it, and puts it into the
+     * appropriate DQMConsumerQueues when the lumi-section has 
+     * finished.
+     */    
+    bool processDQMEvents(toolbox::task::WorkLoop*);
+
+    /**
+     * Creates and starts the DQM event processing workloop
+     */
+    void startWorkLoop(std::string workloopName);
+
+
+  private:
+
+    //Prevent copying of the DQMEventProcessor
+    DQMEventProcessor(DQMEventProcessor const&);
+    DQMEventProcessor& operator=(DQMEventProcessor const&);
+
+    /**
+     * Pops the next DQM event from the DQMEventQueue and
+     * adds it to the DQMStore
      */    
     void processNextDQMEvent();
 
     /**
-     * Register a new DQM event consumer
-     */
-    const QueueID registerDQMEventConsumer
-    (
-      boost::shared_ptr<DQMEventConsumerRegistrationInfo>
-    );
+     * Retrieves all available complete DQMEventRecord
+     * adds it to the consumer queues
+     */    
+    void processCompleteDQMEventRecords();
 
     /**
-     * Create a new DQM event selector
+     * Write all data to disk if needed, purge instances,
+     * and process all completed DQM records
+     */    
+    void endOfRun();
+
+    /**
+     * Check if all directories needed for the DQM histogram output are available.
+     * Throws a stor::execption::NoSuchDirectory when a directory does not exist.
      */
-    void makeDQMEventSelector
-    (
-      const QueueID,
-      boost::shared_ptr<DQMEventConsumerRegistrationInfo>
-    );
-    
-  private:
+    void checkDirectories(DQMProcessingParams const&) const;
+ 
 
-    DQMEventConsumerQueueCollection _dqmEventConsumerQueueCollection;
-    DQMEventQueue _dqmEventQueue;
+    xdaq::Application*        _app;
+    SharedResourcesPtr        _sharedResources;
 
-    
+    unsigned int              _timeout; // Waiting time in seconds.
+    bool                      _actionIsActive;
+
+    toolbox::task::WorkLoop*  _processWL;      
+
+    DQMEventStore             _dqmEventStore;
+
   };
   
 } // namespace stor

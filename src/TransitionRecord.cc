@@ -1,4 +1,6 @@
-#include "EventFilter/StorageManager/interface/StateMachine.h"
+// $Id$
+
+#include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <iostream>
 #include <sys/time.h>
@@ -35,3 +37,11 @@ std::ostream& stor::operator << ( std::ostream& os,
   return os;
 
 }
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

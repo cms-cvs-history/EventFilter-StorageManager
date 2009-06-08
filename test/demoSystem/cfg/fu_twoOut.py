@@ -103,12 +103,12 @@ process.PhysicsOModule = cms.OutputModule("ShmStreamConsumer",
                                           )
 process.end1 = cms.EndPath(process.PhysicsOModule)
 
-process.out4DQM = cms.OutputModule("ShmStreamConsumer",
-                                   use_compression = cms.untracked.bool(True),
-                                   SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('playbackPath4DQM') ),
-                                   outputCommands = cms.untracked.vstring('keep *','drop *_m5b20000_*_*')
-                                   )
-process.end2 = cms.EndPath(process.out4DQM)
+process.hltOutputDQM = cms.OutputModule("ShmStreamConsumer",
+                                        use_compression = cms.untracked.bool(True),
+                                        SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('playbackPath4DQM') ),
+                                        outputCommands = cms.untracked.vstring('keep *','drop *_m5b20000_*_*')
+                                        )
+process.end2 = cms.EndPath(process.hltOutputDQM)
 
 
 process.DQMTester = cms.EDProducer("SMDQMSourceExample")

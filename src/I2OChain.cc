@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.1.2.27 2009/03/04 15:18:31 biery Exp $
+// $Id$
 
 #include <algorithm>
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -8,6 +8,8 @@
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
+#include "IOPool/Streamer/interface/DQMEventMessage.h"
+#include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 namespace stor
 {
@@ -39,6 +41,7 @@ namespace stor
                                INCOMPLETE_MESSAGE = 0x80,
                                EXTERNALLY_REQUESTED = 0x10000 };
 
+
     public:
       explicit ChainData(toolbox::mem::Reference* pRef);
       virtual ~ChainData();
@@ -50,7 +53,7 @@ namespace stor
       void markComplete();
       void markFaulty();
       void markCorrupt();
-      unsigned long* getBufferData();
+      unsigned long* getBufferData() const;
       void swap(ChainData& other);
       unsigned int messageCode() const {return _messageCode;}
       FragKey const& fragmentKey() const {return _fragKey;}
@@ -59,6 +62,8 @@ namespace stor
       unsigned int hltLocalId() const {return _hltLocalId;}
       unsigned int hltInstance() const {return _hltInstance;}
       unsigned int hltTid() const {return _hltTid;}
+      unsigned int fuProcessId() const {return _fuProcessId;}
+      unsigned int fuGuid() const {return _fuGuid;}
       double creationTime() const {return _creationTime;}
       double lastFragmentTime() const {return _lastFragmentTime;}
       unsigned long totalDataSize() const;
@@ -66,6 +71,9 @@ namespace stor
       unsigned char* dataLocation(int fragmentIndex) const;
       unsigned int getFragmentID(int fragmentIndex) const;
       unsigned int copyFragmentsIntoBuffer(std::vector<unsigned char>& buff) const;
+
+      unsigned long headerSize() const;
+      unsigned char* headerLocation() const;
 
       std::string hltURL() const;
       std::string hltClassName() const;
@@ -76,16 +84,25 @@ namespace stor
       void hltTriggerSelections(Strings& nameList) const;
       void l1TriggerNames(Strings& nameList) const;
 
+      void assertRunNumber(uint32 runNumber);
+
+      uint32 runNumber() const;
+      uint32 lumiSection() const;
+      uint32 eventNumber() const;
+
+      std::string topFolderName() const;
+      DQMKey dqmKey() const;
+
       uint32 hltTriggerCount() const;
       void hltTriggerBits(std::vector<unsigned char>& bitList) const;
 
-      void tagForEventStream(StreamID);
+      void tagForStream(StreamID);
       void tagForEventConsumer(QueueID);
       void tagForDQMEventConsumer(QueueID);
-      bool isTaggedForAnyEventStream() {return !_streamTags.empty();}
-      bool isTaggedForAnyEventConsumer() {return !_eventConsumerTags.empty();}
-      bool isTaggedForAnyDQMEventConsumer() {return !_dqmEventConsumerTags.empty();}
-      std::vector<StreamID> const& getEventStreamTags() const;
+      bool isTaggedForAnyStream() const {return !_streamTags.empty();}
+      bool isTaggedForAnyEventConsumer() const {return !_eventConsumerTags.empty();}
+      bool isTaggedForAnyDQMEventConsumer() const {return !_dqmEventConsumerTags.empty();}
+      std::vector<StreamID> const& getStreamTags() const;
       std::vector<QueueID> const& getEventConsumerTags() const;
       std::vector<QueueID> const& getDQMEventConsumerTags() const;
 
@@ -108,6 +125,8 @@ namespace stor
       unsigned int _hltLocalId;
       unsigned int _hltInstance;
       unsigned int _hltTid;
+      unsigned int _fuProcessId;
+      unsigned int _fuGuid;
 
       double _creationTime;
       double _lastFragmentTime;
@@ -125,6 +144,9 @@ namespace stor
       bool validateMessageCode(toolbox::mem::Reference* ref,
                                unsigned short expectedI2OMessageCode);
 
+      virtual unsigned long do_headerSize() const;
+      virtual unsigned char* do_headerLocation() const;
+
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       virtual uint32 do_outputModuleId() const;
 
@@ -133,8 +155,17 @@ namespace stor
       virtual void do_hltTriggerSelections(Strings& nameList) const;
       virtual void do_l1TriggerNames(Strings& nameList) const;
 
+      virtual std::string do_topFolderName() const;
+      virtual DQMKey do_dqmKey() const;
+
       virtual uint32 do_hltTriggerCount() const;
       virtual void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
+
+      virtual void do_assertRunNumber(uint32 runNumber);
+
+      virtual uint32 do_runNumber() const;
+      virtual uint32 do_lumiSection() const;
+      virtual uint32 do_eventNumber() const;
     };
 
     // A ChainData object may or may not contain a Reference.
@@ -153,6 +184,8 @@ namespace stor
       _hltLocalId(0),
       _hltInstance(0),
       _hltTid(0),
+      _fuProcessId(0),
+      _fuGuid(0),
       _creationTime(-1),
       _lastFragmentTime(-1)
     {
@@ -418,7 +451,7 @@ namespace stor
       _faultyBits |= CORRUPT_INITIAL_HEADER;
     }
 
-    inline unsigned long* ChainData::getBufferData()
+    inline unsigned long* ChainData::getBufferData() const
     {
       return _ref 
         ?  static_cast<unsigned long*>(_ref->getDataLocation()) 
@@ -499,7 +532,7 @@ namespace stor
       if (!faulty())
         {
           return do_fragmentLocation(static_cast<unsigned char*>
-                                       (curRef->getDataLocation()));
+                                     (curRef->getDataLocation()));
         }
       else
         {
@@ -571,6 +604,16 @@ namespace stor
       return static_cast<unsigned int>(fullSize);
     }
 
+    inline unsigned long ChainData::headerSize() const
+    {
+      return do_headerSize();
+    }
+
+    inline unsigned char* ChainData::headerLocation() const
+    {
+      return do_headerLocation();
+    }
+
     inline std::string ChainData::hltURL() const
     {
       if (parsable())
@@ -616,6 +659,16 @@ namespace stor
       return do_outputModuleLabel();
     }
 
+    inline std::string ChainData::topFolderName() const
+    {
+      return do_topFolderName();
+    }
+
+    inline DQMKey ChainData::dqmKey() const
+    {
+      return do_dqmKey();
+    }
+
     inline void ChainData::hltTriggerNames(Strings& nameList) const
     {
       do_hltTriggerNames(nameList);
@@ -642,7 +695,27 @@ namespace stor
       do_hltTriggerBits(bitList);
     }
 
-    inline void ChainData::tagForEventStream(StreamID streamId)
+    inline void ChainData::assertRunNumber(uint32 runNumber)
+    {
+      do_assertRunNumber(runNumber);
+    }
+
+    inline uint32 ChainData::runNumber() const
+    {
+      return do_runNumber();
+    }
+
+    inline uint32 ChainData::lumiSection() const
+    {
+      return do_lumiSection();
+    }
+
+    inline uint32 ChainData::eventNumber() const
+    {
+      return do_eventNumber();
+    }
+
+    inline void ChainData::tagForStream(StreamID streamId)
     {
       _streamTags.push_back(streamId);
     }
@@ -657,7 +730,7 @@ namespace stor
       _dqmEventConsumerTags.push_back(queueId);
     }
 
-    inline std::vector<StreamID> const& ChainData::getEventStreamTags() const
+    inline std::vector<StreamID> const& ChainData::getStreamTags() const
     {
       return _streamTags;
     }
@@ -766,6 +839,16 @@ namespace stor
       return true;
     }
 
+    inline unsigned long ChainData::do_headerSize() const
+    {
+      return 0;
+    }
+
+    inline unsigned char* ChainData::do_headerLocation() const
+    {
+      return 0;
+    }
+
     inline unsigned char*
     ChainData::do_fragmentLocation(unsigned char* dataLoc) const
     {
@@ -785,6 +868,22 @@ namespace stor
       std::stringstream msg;
       msg << "An output module label is only available from a valid, ";
       msg << "complete INIT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline std::string ChainData::do_topFolderName() const
+    {
+      std::stringstream msg;
+      msg << "A top folder name is only available from a valid, ";
+      msg << "complete DQM event message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline DQMKey ChainData::do_dqmKey() const
+    {
+      std::stringstream msg;
+      msg << "The DQM key is only available from a valid, ";
+      msg << "complete DQM event message.";
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
@@ -829,6 +928,34 @@ namespace stor
       XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
     }
 
+    inline void ChainData::do_assertRunNumber(uint32 runNumber)
+    {}
+
+    inline uint32 ChainData::do_runNumber() const
+    {
+      std::stringstream msg;
+      msg << "A run number is only available from a valid, ";
+      msg << "complete EVENT or ERROR_EVENT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline uint32 ChainData::do_lumiSection() const
+    {
+      std::stringstream msg;
+      msg << "A luminosity section is only available from a valid, ";
+      msg << "complete EVENT or ERROR_EVENT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+    inline uint32 ChainData::do_eventNumber() const
+    {
+      std::stringstream msg;
+      msg << "An event number is only available from a valid, ";
+      msg << "complete EVENT or ERROR_EVENT message.";
+      XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+    }
+
+
     class InitMsgData : public ChainData
     {
     public:
@@ -836,6 +963,8 @@ namespace stor
       ~InitMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_outputModuleId() const;
       std::string do_outputModuleLabel() const;
@@ -848,6 +977,9 @@ namespace stor
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
+      mutable std::vector<unsigned char> _headerCopy;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
       mutable uint32 _outputModuleId;
       mutable std::string _outputModuleLabel;
       mutable Strings _hltTriggerNames;
@@ -875,6 +1007,28 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    unsigned long InitMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* InitMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
     }
 
     inline unsigned char*
@@ -979,6 +1133,8 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
 
@@ -997,7 +1153,7 @@ namespace stor
       // the full INIT message header  (we require some minimal fixed
       // size in the hope that we don't parse garbage when we overlay
       // the InitMsgView on the buffer)
-      else if (firstFragSize > 4096)
+      else if (firstFragSize > (sizeof(InitHeader) + 16384))
         {
           InitMsgView view(firstFragLoc);
           if (view.headerSize() <= firstFragSize)
@@ -1007,18 +1163,18 @@ namespace stor
         }
 
       boost::shared_ptr<InitMsgView> msgView;
-      boost::shared_ptr< std::vector<unsigned char> >
-        tempBuffer(new std::vector<unsigned char>());
       if (useFirstFrag)
         {
           msgView.reset(new InitMsgView(firstFragLoc));
         }
       else
         {
-          copyFragmentsIntoBuffer(*tempBuffer);
-          msgView.reset(new InitMsgView(&(*tempBuffer)[0]));
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new InitMsgView(&_headerCopy[0]));
         }
 
+      _headerSize = msgView->headerSize();
+      _headerLocation = msgView->startAddress();
       _outputModuleId = msgView->outputModuleId();
       _outputModuleLabel = msgView->outputModuleLabel();
       msgView->hltTriggerNames(_hltTriggerNames);
@@ -1035,19 +1191,31 @@ namespace stor
       ~EventMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_outputModuleId() const;
       uint32 do_hltTriggerCount() const;
       void do_hltTriggerBits(std::vector<unsigned char>& bitList) const;
+      void do_assertRunNumber(uint32 runNumber);
+      uint32 do_runNumber() const;
+      uint32 do_lumiSection() const;
+      uint32 do_eventNumber() const;
 
     private:
       void parseI2OHeader();
       void cacheHeaderFields() const;
 
       mutable bool _headerFieldsCached;
+      mutable std::vector<unsigned char> _headerCopy;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
       mutable uint32 _outputModuleId;
       mutable uint32 _hltTriggerCount;
       mutable std::vector<unsigned char> _hltTriggerBits;
+      mutable uint32 _runNumber;
+      mutable uint32 _lumiSection;
+      mutable uint32 _eventNumber;
     };
 
     inline EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
@@ -1070,6 +1238,28 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    unsigned long EventMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* EventMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
     }
 
     inline unsigned char*
@@ -1130,6 +1320,63 @@ namespace stor
       bitList = _hltTriggerBits;
     }
 
+    void 
+    EventMsgData::do_assertRunNumber(uint32 runNumber)
+    {
+      if ( do_runNumber() != runNumber )
+      {
+        std::ostringstream errorMsg;
+        errorMsg << "Run number " << do_runNumber() 
+          << " of event " << do_eventNumber() <<
+          " received from " << hltURL() << 
+          " does not match the run number " << runNumber << 
+          " used to configure the StorageManager.";
+        XCEPT_RAISE(stor::exception::RunNumberMismatch, errorMsg.str());
+      }
+    }
+
+    uint32 EventMsgData::do_runNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A run number can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _runNumber;
+    }
+
+    uint32 EventMsgData::do_lumiSection() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A luminosity section can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _lumiSection;
+    }
+
+    uint32 EventMsgData::do_eventNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An event number can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _eventNumber;
+    }
+
     inline void EventMsgData::parseI2OHeader()
     {
       if (parsable())
@@ -1147,6 +1394,8 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
 
@@ -1165,7 +1414,7 @@ namespace stor
       // the full Event message header  (we require some minimal fixed
       // size in the hope that we don't parse garbage when we overlay
       // the EventMsgView on the buffer)
-      else if (firstFragSize > 4096)
+      else if (firstFragSize > (sizeof(EventHeader) + 4096))
         {
           EventMsgView view(firstFragLoc);
           if (view.headerSize() <= firstFragSize)
@@ -1175,18 +1424,18 @@ namespace stor
         }
 
       boost::shared_ptr<EventMsgView> msgView;
-      boost::shared_ptr< std::vector<unsigned char> >
-        tempBuffer(new std::vector<unsigned char>());
       if (useFirstFrag)
         {
           msgView.reset(new EventMsgView(firstFragLoc));
         }
       else
         {
-          copyFragmentsIntoBuffer(*tempBuffer);
-          msgView.reset(new EventMsgView(&(*tempBuffer)[0]));
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new EventMsgView(&_headerCopy[0]));
         }
 
+      _headerSize = msgView->headerSize();
+      _headerLocation = msgView->startAddress();
       _outputModuleId = msgView->outModId();
       _hltTriggerCount = msgView->hltCount();
       if (_hltTriggerCount > 0)
@@ -1194,6 +1443,10 @@ namespace stor
           _hltTriggerBits.resize(1 + (_hltTriggerCount-1)/4);
         }
       msgView->hltTriggerBits(&_hltTriggerBits[0]);
+
+      _runNumber = msgView->run();
+      _lumiSection = msgView->lumi();
+      _eventNumber = msgView->event();
 
       _headerFieldsCached = true;
     }
@@ -1205,15 +1458,33 @@ namespace stor
       ~DQMEventMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      std::string do_topFolderName() const;
+      DQMKey do_dqmKey() const;
+      void do_assertRunNumber(uint32 runNumber);
 
     private:
+
       void parseI2OHeader();
+      void cacheHeaderFields() const;
+
+      mutable bool _headerFieldsCached;
+      mutable std::vector<unsigned char> _headerCopy;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
+      mutable std::string _topFolderName;
+      mutable DQMKey _dqmKey;
+
     };
 
     inline DQMEventMsgData::DQMEventMsgData(toolbox::mem::Reference* pRef) :
       ChainData(pRef)
     {
+
+      _headerFieldsCached = false;
+
       parseI2OHeader();
 
       if (_fragmentCount > 1)
@@ -1230,6 +1501,82 @@ namespace stor
         {
           markComplete();
         }
+    }
+
+    inline std::string DQMEventMsgData::do_topFolderName() const
+    {
+
+      if( !_headerFieldsCached )
+        {
+          cacheHeaderFields();
+        }
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "A top folder name can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      return _topFolderName;
+
+    }
+
+    inline DQMKey DQMEventMsgData::do_dqmKey() const
+    {
+
+      if( !_headerFieldsCached )
+        {
+          cacheHeaderFields();
+        }
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "The DQM key can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      return _dqmKey;
+
+    }
+
+    void DQMEventMsgData::do_assertRunNumber(uint32 runNumber)
+    {
+      if ( do_dqmKey().runNumber != runNumber )
+      {
+        std::ostringstream errorMsg;
+        errorMsg << "Run number " << do_runNumber() 
+          << " of DQM event " << do_eventNumber() <<
+          " received from " << hltURL() << 
+          " does not match the run number " << runNumber << 
+          " used to configure the StorageManager.";
+        XCEPT_RAISE(stor::exception::RunNumberMismatch, errorMsg.str());
+      }
+    }
+
+    unsigned long DQMEventMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* DQMEventMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
     }
 
     inline unsigned char*
@@ -1264,7 +1611,53 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
+    }
+
+    // Adapted from InitMsgData::cacheHeaderFields
+    void DQMEventMsgData::cacheHeaderFields() const
+    {
+
+      unsigned char* firstFragLoc = dataLocation(0);
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
+
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      else if( firstFragSize > (sizeof(DQMEventHeader) + 8192) )
+        {
+          DQMEventMsgView view( firstFragLoc );
+          if( view.headerSize() <= firstFragSize )
+            {
+              useFirstFrag = true;
+            }
+        }
+
+      boost::shared_ptr<DQMEventMsgView> msgView;
+      if (useFirstFrag)
+        {
+          msgView.reset(new DQMEventMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new DQMEventMsgView(&_headerCopy[0]));
+        }
+
+      _headerSize = msgView->headerSize();
+      _headerLocation = msgView->startAddress();
+      _topFolderName = msgView->topFolderName();
+
+      _dqmKey.runNumber = msgView->runNumber();
+      _dqmKey.lumiSection = msgView->lumiSection();
+      _dqmKey.updateNumber = msgView->updateNumber();
+
+      _headerFieldsCached = true;
+
     }
 
     class ErrorEventMsgData : public ChainData
@@ -1274,14 +1667,29 @@ namespace stor
       ~ErrorEventMsgData() {}
 
     protected:
+      unsigned long do_headerSize() const;
+      unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      void do_assertRunNumber(uint32 runNumber);
+      uint32 do_runNumber() const;
+      uint32 do_lumiSection() const;
+      uint32 do_eventNumber() const;
 
     private:
       void parseI2OHeader();
+      void cacheHeaderFields() const;
+
+      mutable bool _headerFieldsCached;
+      mutable unsigned long _headerSize;
+      mutable unsigned char* _headerLocation;
+      mutable uint32 _runNumber;
+      mutable uint32 _lumiSection;
+      mutable uint32 _eventNumber;
     };
 
     inline ErrorEventMsgData::ErrorEventMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef)
+      ChainData(pRef),
+      _headerFieldsCached(false)
     {
       parseI2OHeader();
 
@@ -1301,6 +1709,28 @@ namespace stor
         }
     }
 
+    unsigned long ErrorEventMsgData::do_headerSize() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerSize;
+    }
+
+    unsigned char* ErrorEventMsgData::do_headerLocation() const
+    {
+      if (faulty() || !complete())
+        {
+          return 0;
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _headerLocation;
+    }
+
     inline unsigned char*
     ErrorEventMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
@@ -1314,6 +1744,65 @@ namespace stor
         {
           return dataLoc;
         }
+    }
+
+    void
+    ErrorEventMsgData::do_assertRunNumber(uint32 runNumber)
+    {
+      if ( do_runNumber() != runNumber )
+      {
+        _runNumber = runNumber;
+        std::ostringstream errorMsg;
+        errorMsg << "Run number " << do_runNumber() 
+          << " of error event " << do_eventNumber() <<
+          " received from " << hltURL() << 
+          " does not match the run number " << runNumber << 
+          " used to configure the StorageManager." <<
+          " Enforce usage of configured run number.";
+        XCEPT_RAISE(stor::exception::RunNumberMismatch, errorMsg.str());
+      }
+    }
+
+    uint32 ErrorEventMsgData::do_runNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A run number can not be determined from a ";
+          msg << "faulty or incomplete ErrorEvent message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _runNumber;
+    }
+
+    uint32 ErrorEventMsgData::do_lumiSection() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "A luminosity section can not be determined from a ";
+          msg << "faulty or incomplete ErrorEvent message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _lumiSection;
+    }
+
+    uint32 ErrorEventMsgData::do_eventNumber() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An event number can not be determined from a ";
+          msg << "faulty or incomplete ErrorEvent message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _eventNumber;
     }
 
     inline void ErrorEventMsgData::parseI2OHeader()
@@ -1333,8 +1822,52 @@ namespace stor
           _hltLocalId = smMsg->hltLocalId;
           _hltInstance = smMsg->hltInstance;
           _hltTid = smMsg->hltTid;
+          _fuProcessId = smMsg->fuProcID;
+          _fuGuid = smMsg->fuGUID;
         }
     }
+
+    void ErrorEventMsgData::cacheHeaderFields() const
+    {
+      unsigned char* firstFragLoc = dataLocation(0);
+      unsigned long firstFragSize = dataSize(0);
+      bool useFirstFrag = false;
+
+      // if there is only one fragment, use it
+      if (_fragmentCount == 1)
+        {
+          useFirstFrag = true;
+        }
+      // otherwise, check if the first fragment is large enough to hold
+      // the full Event message header  (FRD events have fixed header
+      // size, so the check is easy)
+      else if (firstFragSize > sizeof(FRDEventHeader_V2))
+        {
+          useFirstFrag = true;
+        }
+
+      boost::shared_ptr<FRDEventMsgView> msgView;
+      std::vector<unsigned char> tempBuffer;
+      if (useFirstFrag)
+        {
+          msgView.reset(new FRDEventMsgView(firstFragLoc));
+        }
+      else
+        {
+          copyFragmentsIntoBuffer(tempBuffer);
+          msgView.reset(new FRDEventMsgView(&tempBuffer[0]));
+        }
+
+      _headerSize = sizeof(FRDEventHeader_V2);
+      _headerLocation = msgView->startAddress();
+
+      _runNumber = msgView->run();
+      _lumiSection = msgView->lumi();
+      _eventNumber = msgView->event();
+
+      _headerFieldsCached = true;
+    }
+
   } // namespace detail
 
 
@@ -1505,7 +2038,7 @@ namespace stor
     if (_data) _data->markFaulty();
   }
 
-  unsigned long* I2OChain::getBufferData()
+  unsigned long* I2OChain::getBufferData() const
   {
     return _data ?  _data->getBufferData() : 0UL;
   }
@@ -1560,6 +2093,18 @@ namespace stor
     return _data->hltClassName();
   }
 
+  unsigned int I2OChain::fuProcessId() const
+  {
+    if (!_data) return 0;
+    return _data->fuProcessId();
+  }
+
+  unsigned int I2OChain::fuGuid() const
+  {
+    if (!_data) return 0;
+    return _data->fuGuid();
+  }
+
   FragKey I2OChain::fragmentKey() const
   {
     if (!_data) return FragKey(Header::INVALID,0,0,0,0,0);
@@ -1584,7 +2129,7 @@ namespace stor
     return _data->lastFragmentTime();
   }
 
-  void I2OChain::tagForEventStream(StreamID streamId)
+  void I2OChain::tagForStream(StreamID streamId)
   {
     if (!_data)
       {
@@ -1593,7 +2138,7 @@ namespace stor
         msg << "event stream.";
         XCEPT_RAISE(stor::exception::I2OChain, msg.str());
       }
-    _data->tagForEventStream(streamId);
+    _data->tagForStream(streamId);
   }
 
   void I2OChain::tagForEventConsumer(QueueID queueId)
@@ -1620,35 +2165,35 @@ namespace stor
     _data->tagForDQMEventConsumer(queueId);
   }
 
-  bool I2OChain::isTaggedForAnyEventStream()
+  bool I2OChain::isTaggedForAnyStream() const
   {
     if (!_data) return false;
-    return _data->isTaggedForAnyEventStream();
+    return _data->isTaggedForAnyStream();
   }
 
-  bool I2OChain::isTaggedForAnyEventConsumer()
+  bool I2OChain::isTaggedForAnyEventConsumer() const
   {
     if (!_data) return false;
     return _data->isTaggedForAnyEventConsumer();
   }
 
-  bool I2OChain::isTaggedForAnyDQMEventConsumer()
+  bool I2OChain::isTaggedForAnyDQMEventConsumer() const
   {
     if (!_data) return false;
     return _data->isTaggedForAnyDQMEventConsumer();
   }
 
-  std::vector<StreamID> I2OChain::getEventStreamTags()
+  std::vector<StreamID> I2OChain::getStreamTags() const
   {
     if (!_data)
       {
         std::vector<StreamID> tmpList;
         return tmpList;
       }
-    return _data->getEventStreamTags();
+    return _data->getStreamTags();
   }
 
-  std::vector<QueueID> I2OChain::getEventConsumerTags()
+  std::vector<QueueID> I2OChain::getEventConsumerTags() const
   {
     if (!_data)
       {
@@ -1658,7 +2203,7 @@ namespace stor
     return _data->getEventConsumerTags();
   }
 
-  std::vector<QueueID> I2OChain::getDQMEventConsumerTags()
+  std::vector<QueueID> I2OChain::getDQMEventConsumerTags() const
   {
     if (!_data)
       {
@@ -1692,6 +2237,18 @@ namespace stor
     return _data->getFragmentID(fragmentIndex);
   }
 
+  unsigned long I2OChain::headerSize() const
+  {
+    if (!_data) return 0UL;
+    return _data->headerSize();
+  }
+
+  unsigned char* I2OChain::headerLocation() const
+  {
+    if (!_data) return 0UL;
+    return _data->headerLocation();
+  }
+
   unsigned int I2OChain::
   copyFragmentsIntoBuffer(std::vector<unsigned char>& targetBuffer) const
   {
@@ -1707,6 +2264,26 @@ namespace stor
           "The output module label can not be determined from an empty I2OChain.");
       }
     return _data->outputModuleLabel();
+  }
+
+  std::string I2OChain::topFolderName() const
+  {
+    if( !_data )
+      {
+        XCEPT_RAISE( stor::exception::I2OChain,
+                     "The top folder name can not be determined from an empty I2OChain." );
+      }
+    return _data->topFolderName();
+  }
+
+  DQMKey I2OChain::dqmKey() const
+  {
+    if( !_data )
+      {
+        XCEPT_RAISE( stor::exception::I2OChain,
+                     "The DQM key can not be determined from an empty I2OChain." );
+      }
+    return _data->dqmKey();
   }
 
   uint32 I2OChain::outputModuleId() const
@@ -1767,6 +2344,46 @@ namespace stor
           "HLT trigger bits can not be determined from an empty I2OChain.");
       }
     _data->hltTriggerBits(bitList);
+  }
+
+  void I2OChain::assertRunNumber(uint32 runNumber)
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The run number can not be checked for an empty I2OChain.");
+      }
+    return _data->assertRunNumber(runNumber);
+  }
+
+  uint32 I2OChain::runNumber() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The run number can not be determined from an empty I2OChain.");
+      }
+    return _data->runNumber();
+  }
+
+  uint32 I2OChain::lumiSection() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The luminosity section can not be determined from an empty I2OChain.");
+      }
+    return _data->lumiSection();
+  }
+
+  uint32 I2OChain::eventNumber() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The event number can not be determined from an empty I2OChain.");
+      }
+    return _data->eventNumber();
   }
 
 } // namespace stor

@@ -1,34 +1,22 @@
-// $Id: StreamQueue.h,v 1.1.2.3 2009/01/30 10:49:40 mommsen Exp $
+// $Id$
 
-#ifndef StorageManager_StreamQueue_h
-#define StorageManager_StreamQueue_h
+#ifndef EventFilter_StorageManager_StreamQueue_h
+#define EventFilter_StorageManager_StreamQueue_h
 
-#include "EventFilter/StorageManager/interface/Queue.h"
-
+#include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 namespace stor {
 
   /**
-   * Queue holding I2OChains of complete events waiting to be
-   * written to the appropriate streams on disk.
+   * Queue holding I2OChains of events to be written to disk
    *
-   * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/01/30 10:49:40 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
-  
-  class StreamQueue : public Queue
-  {
-  public:
-    
-    StreamQueue();
-    
-    ~StreamQueue();
-    
-    
-  private:
-    
-  };
+
+  typedef ConcurrentQueue<I2OChain> StreamQueue;  
   
 } // namespace stor
 

@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.1.2.7 2009/02/16 17:37:42 paterno Exp $
+// $Id$
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -37,6 +37,10 @@ namespace stor
 
         RejectNewest: the function returns void; the new item is
         not put onto the FIFO.
+   
+     $Author$
+     $Revision$
+     $Date$
    */
 
   template <class T>
@@ -56,11 +60,12 @@ namespace stor
     {
       bool have_room = size < capacity;
       if (have_room)
-        {
-          elements.push_back(item);
-          ++size;
-          nonempty.notify_one();
-        }
+         {
+           elements.push_back(item);
+           ++size;
+           nonempty.notify_one();
+           return true;
+         }
       return have_room;
     }                       
   };
@@ -207,6 +212,11 @@ namespace stor
     bool empty() const;
 
     /**
+       Return true if the queue is full, and false if it is not.
+    */
+    bool full() const;
+
+    /**
        Return the size of the queue, that is, the number of items it
        contains.
      */
@@ -337,14 +347,14 @@ namespace stor
   template <class T, class EnqPolicy>
   bool
   ConcurrentQueue<T,EnqPolicy>::enq_timed_wait(value_type const& item, 
-                                     unsigned long wait_sec)
+                                               unsigned long wait_sec)
   {
     lock_t lock(_protect_elements);
     if (! (_size < _capacity) )
       {
         boost::xtime now;
         if (boost::xtime_get(&now, CLOCK_MONOTONIC) != CLOCK_MONOTONIC) 
-          return false;
+          return false; // failed to get the time.
         now.sec += wait_sec;
         _queue_not_full.timed_wait(lock, now);
       }
@@ -371,11 +381,18 @@ namespace stor
   template <class T, class EnqPolicy>
   bool
   ConcurrentQueue<T,EnqPolicy>::deq_timed_wait(value_type& item,
-                                     unsigned long wait_usec)
+                                               unsigned long wait_sec)
   {
     lock_t lock(_protect_elements);
-    // THis is not yet implemented
-    return false;
+    if (_size == 0)
+      {
+        boost::xtime now;
+        if (boost::xtime_get(&now, CLOCK_MONOTONIC) != CLOCK_MONOTONIC)
+          return false; // failed to get the time.
+        now.sec += wait_sec;
+        _queue_not_empty.timed_wait(lock, now);
+      }
+    return _remove_head_if_possible(item);
   }
 
   template <class T, class EnqPolicy>
@@ -384,6 +401,15 @@ namespace stor
   {
     // No lock is necessary: the read is atomic.
     return _size == 0;
+  }
+
+  template <class T, class EnqPolicy>
+  bool
+  ConcurrentQueue<T,EnqPolicy>::full() const
+  {
+    // Lock is needed, because we have to read two data members.
+    lock_t lock(_protect_elements);
+    return _size == _capacity;
   }
 
 

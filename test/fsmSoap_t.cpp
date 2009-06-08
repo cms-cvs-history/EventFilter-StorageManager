@@ -1,8 +1,9 @@
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/test/MockNotifier.h"
+#include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -36,13 +37,19 @@ namespace stor {
         xdaq::WebApplication(s)
         {
             std::cout << "Constructor" << std::endl;
-
-            DiskWriter dw;
-            EventDistributor ed;
             FragmentStore fs;
-            SharedResources sr;
+            SharedResourcesPtr sr;
+            sr.reset(new SharedResources());
+            sr->_initMsgCollection.reset(new InitMsgCollection());
+            sr->_diskWriterResources.reset(new MockDiskWriterResources());
+            sr->_commandQueue.reset(new CommandQueue(32));
+            sr->_fragmentQueue.reset(new FragmentQueue(32));
+            sr->_streamQueue.reset(new StreamQueue(32));
             
-            stateMachine = new StateMachine( &dw, &ed, &fs, &sr );
+            EventDistributor ed(sr);
+            MockNotifier mn;
+
+            stateMachine = new StateMachine( &ed, &fs, &mn, sr );
             stateMachine->initiate();
             
 	    xoap::bind(
@@ -188,8 +195,6 @@ namespace stor {
     private:
         
         StateMachine *stateMachine;
-        DiskWriter diskWriter;
-        EventDistributor eventDistributor;
         
     };
     

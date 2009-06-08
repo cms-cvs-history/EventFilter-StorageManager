@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.1.2.22 2009/03/04 15:18:31 biery Exp $
+// $Id$
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -10,8 +10,9 @@
 #include "toolbox/mem/Reference.h"
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
-#include "EventFilter/StorageManager/interface/Types.h"
+#include "EventFilter/StorageManager/interface/DQMKey.h"
 
 namespace toolbox
 {
@@ -30,9 +31,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.22 $
-   * $Date: 2009/03/04 15:18:31 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
 
 
@@ -141,7 +142,7 @@ namespace stor {
        Reference begins. If the chain is empty, a null pointer is
        returned.
     */
-    unsigned long* getBufferData();
+    unsigned long* getBufferData() const;
 
 
     /**
@@ -173,11 +174,11 @@ namespace stor {
     double lastFragmentTime() const;
 
     /**
-       Tags the chain with the specified event stream ID.  This means
-       that the data in the chain should be sent to the specified
-       event stream.
+       Tags the chain with the specified disk writing stream ID.  This
+       means that the data in the chain should be sent to the specified
+       disk stream.
      */
-    void tagForEventStream(StreamID);
+    void tagForStream(StreamID);
 
     /**
        Tags the chain with the specified event consumer queue ID.  This
@@ -194,43 +195,52 @@ namespace stor {
     void tagForDQMEventConsumer(QueueID);
 
     /**
-       Returns true if the chain has been tagged for any event stream
+       Returns true if the chain has been tagged for any disk stream
        and false otherwise.
     */
-    bool isTaggedForAnyEventStream();
+    bool isTaggedForAnyStream() const;
 
     /**
        Returns true if the chain has been tagged for any event consumer
        and false otherwise.
     */
-    bool isTaggedForAnyEventConsumer();
+    bool isTaggedForAnyEventConsumer() const;
 
     /**
        Returns true if the chain has been tagged for any DQM event consumer
        and false otherwise.
     */
-    bool isTaggedForAnyDQMEventConsumer();
+    bool isTaggedForAnyDQMEventConsumer() const;
 
     /**
-       Returns the list of event streams (stream IDs) that
+       Returns the list of disk streams (stream IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
+       NOTE that this method returns a copy of the list, so it
+       should only be used for testing which streams have been tagged,
+       *not* for for modifying the list of tags.
     */
-    std::vector<StreamID> getEventStreamTags();
+    std::vector<StreamID> getStreamTags() const;
 
     /**
        Returns the list of event consumers (queue IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
+       NOTE that this method returns a copy of the list, so it
+       should only be used for testing which consumers have been tagged,
+       *not* for for modifying the list of tags.
     */
-    std::vector<QueueID> getEventConsumerTags();
+    std::vector<QueueID> getEventConsumerTags() const;
 
     /**
        Returns the list of DQM event consumers (queue IDs) that
        this chain has been tagged for.
        An empty list is returned if the chain is empty.
+       NOTE that this method returns a copy of the list, so it
+       should only be used for testing which consumers have been tagged,
+       *not* for for modifying the list of tags.
     */
-    std::vector<QueueID> getDQMEventConsumerTags();
+    std::vector<QueueID> getDQMEventConsumerTags() const;
 
     /**
        Returns the message code for the chain.  Valid values
@@ -288,6 +298,22 @@ namespace stor {
     std::string hltClassName() const;
 
     /**
+       Returns the filter unit process ID from the contained message.
+       If no valid process ID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int fuProcessId() const;
+
+    /**
+       Returns the filter unit GUID from the contained message.
+       If no valid GUID can be determined, zero is returned.
+       NOTE that you must test if messageCode() != Header::INVALID to
+       determine that the returned value is valid.
+     */
+    unsigned int fuGuid() const;
+
+    /**
        Returns the fragment key for the chain.  The fragment key
        is the entity that uniquely identifies all of the fragments
        from a particular event.
@@ -322,10 +348,10 @@ namespace stor {
        (indexed from 0 to N-1, where N is the total number of fragments).
        For complete chains, this method returns the sizes of the actual
        INIT, EVENT, ERROR_EVENT, or DQM_EVENT message fragments.
-       (If the chain has been marked as "faulty", this method will still
+       If the chain has been marked as "faulty", this method will still
        return a valid data size for all fragment indices.  However,
        in that case, the sizes may not correspond to the underlying
-       INIT, EVENT, etc. message.)
+       INIT, EVENT, etc. message.
      */
     unsigned long dataSize(int fragmentIndex) const;
 
@@ -348,6 +374,24 @@ namespace stor {
        so this method is probably only useful for testing.
      */
     unsigned int getFragmentID(int fragmentIndex) const;
+
+    /**
+       Returns the size of the header part of the message that is contained
+       in the chain.  For complete chains of type INIT, EVENT, and
+       DQM_EVENT, this method returns the true size of the message header.
+       For other types of chains, and for chains that have been marked
+       "faulty", this method will return a size of zero.
+     */
+    unsigned long headerSize() const;
+
+    /**
+       Returns the start address of the header part of the message that is
+       contained in the chain.  For complete chains of type INIT, EVENT, and
+       DQM_EVENT, this method returns the true pointer to the message header.
+       For other types of chains, and for chains that have been marked
+       "faulty", this method will return a NULL pointer.
+     */
+    unsigned char* headerLocation() const;
 
     /**
        Copies the internally managed fragments to the specified
@@ -374,6 +418,21 @@ namespace stor {
        an exception is thrown.
      */
     uint32 outputModuleId() const;
+
+    /**
+       Returns the top folder contained in the message, if and
+       only if, the message is a DQM event message.  Otherwise,
+       an exception is thrown.
+     */
+    std::string topFolderName() const;
+
+    /**
+       Returns the DQM key constructed from the message, if and
+       only if, the message is a DQM event message.  Otherwise,
+       an exception is thrown. The DQM key uniquely identifies
+       DQM events to be collated.
+     */
+    DQMKey dqmKey() const;
 
     /**
        Copies the HLT trigger names into the specified vector, if and
@@ -411,6 +470,37 @@ namespace stor {
        hltCount() method) with two bits per HLT trigger.
      */
     void hltTriggerBits(std::vector<unsigned char>& bitList) const;
+
+    /**
+       Returns the run number of the message, if and only if, the 
+       message is an Event or ErrorEvent message. 
+       Otherwise an exception is thrown.
+     */
+    uint32 runNumber() const;
+
+    /**
+       Returns the luminosity section of the message, if and only if,
+       the message is an Event or ErrorEvent message. 
+       Otherwise an exception is thrown.
+     */
+    uint32 lumiSection() const;
+
+    /**
+       Returns the event number of the message, if and only if, the 
+       message is an Event or ErrorEvent message. 
+       Otherwise an exception is thrown.
+     */
+    uint32 eventNumber() const;
+
+    /**
+       Checks that the run number found in the I2OChain header
+       corresponds to the run number given as argument.
+       It throws stor::exception::RunNumberMismatch if it is 
+       not the case.
+       For error events, the given run number will be used by
+       the StorageManager, but it will *not* be changed in the I2O header.
+     */
+    void assertRunNumber(uint32 runNumber);
 
   private:
 

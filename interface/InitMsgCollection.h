@@ -6,14 +6,18 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output streams.
  *
- * $Id: InitMsgCollection.h,v 1.4.12.2 2009/02/23 17:12:00 biery Exp $
+ * $Id$
  */
 
+#include "EventFilter/StorageManager/interface/ConsumerID.h"
+
 #include "IOPool/Streamer/interface/InitMessage.h"
+
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/thread.hpp"
 #include <vector>
 #include <map>
+#include <string>
 
 namespace stor
 {
@@ -34,6 +38,9 @@ namespace stor
     InitMsgSharedPtr getElementAt(unsigned int index);
     InitMsgSharedPtr getFullCollection() { return serializedFullSet_; }
 
+    bool registerConsumer( ConsumerID cid, const std::string& hltModule );
+    InitMsgSharedPtr getElementForConsumer( ConsumerID cid );
+
     void clear();
     int size();
 
@@ -50,9 +57,10 @@ namespace stor
     InitMsgSharedPtr serializedFullSet_;
 
     std::map<uint32, std::string> outModNameTable_;
-
     boost::mutex listLock_;
 
+    std::map<ConsumerID, std::string> consumerOutputModuleMap_;
+    boost::mutex consumerMapLock_;
   };
 }
 

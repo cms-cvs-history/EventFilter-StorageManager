@@ -1,100 +1,108 @@
 // -*- c++ -*-
-// $Id: EventConsumerRegistrationInfo.h,v 1.1.2.3 2009/03/02 17:41:43 paterno Exp $
+// $Id$
 
 #ifndef EVENTCONSUMERREGISTRATIONINFO_H
 #define EVENTCONSUMERREGISTRATIONINFO_H
-
 
 #include <iosfwd>
 #include <string>
 #include <vector>
 
-#include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
+#include "boost/shared_ptr.hpp"
+
+#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
+#include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 namespace stor
 {
   /**
-   * This struct holds the registration information from a event
-   * consumer
+   * Holds the registration information from a event consumer.
    *
-   * $Author: paterno $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2009/03/02 17:41:43 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
 
-  class EventConsumerRegistrationInfo
-
+  class EventConsumerRegistrationInfo: public RegistrationInfoBase
   {
+
   public:
 
     typedef std::vector<std::string> FilterList;
 
-    // Constructor:
-    EventConsumerRegistrationInfo( const std::string& sourceURL,
-                                   unsigned int maxConnectRetries,
-                                   unsigned int connectRetryInterval, // seconds
-                                   const std::string& consumerName,
-                                   unsigned int headerRetryInterval, // seconds
-                                   double maxEventRequestRate, // Hz
-                                   const FilterList& selEvents,
-                                   const std::string& selHLTOut,
-				   unsigned int secondsToStale,
-				   enquing_policy::PolicyTag policy) :
-      _sourceURL( sourceURL ),
-      _maxConnectRetries( maxConnectRetries ),
-      _connectRetryInterval( connectRetryInterval ),
-      _consumerName( consumerName ),
-      _headerRetryInterval( headerRetryInterval ),
-      _maxEventRequestRate( maxEventRequestRate ),
-      _selEvents( selEvents ),
-      _selHLTOut( selHLTOut ),
-      _secondsToStale( secondsToStale ),
-      _policy( policy )
-    {}
+    /**
+     * Constructs an instance with the specified registration information.
+     */
+    EventConsumerRegistrationInfo( const unsigned int& maxConnectRetries,
+				   const unsigned int& connectRetryInterval,// seconds
+				   const std::string& consumerName,
+				   const FilterList& selEvents,
+				   const std::string& selHLTOut,
+                                   const size_t& queueSize,
+                                   const enquing_policy::PolicyTag& queuePolicy,
+				   const utils::duration_t& secondsToStale );
 
-    // Compiler-generated copy constructor, copy assignment, and
-    // destructor do the right thing.
+    ~EventConsumerRegistrationInfo();
 
     // Accessors:
-    const std::string& sourceURL() const { return _sourceURL; }
     unsigned int maxConnectRetries() const { return _maxConnectRetries; }
     unsigned int connectRetryInterval() const { return _connectRetryInterval; }
-    const std::string& consumerName() const { return _consumerName; }
-    unsigned int headerRetryInterval() const { return _headerRetryInterval; }
-    double maxEventRequestRate() const { return _maxEventRequestRate; }
     const FilterList& selEvents() const { return _selEvents; }
     const std::string& selHLTOut() const { return _selHLTOut; }
-    unsigned int secondsToStale() const { return _secondsToStale; }
-    enquing_policy::PolicyTag policy() const { return _policy; }
+    bool isProxyServer() const { return _isProxy; }
+
+    // Staleness:
+    bool isStale() const { return _stale; }
+    void setStaleness( bool s ) { _stale = s; }
 
     // Output:
     std::ostream& write(std::ostream& os) const;
 
+    // Implementation of Template Method pattern.
+    virtual void do_registerMe(EventDistributor*);
+    virtual QueueID do_queueId() const;
+    virtual void do_setQueueID(QueueID const& id);
+    virtual std::string do_consumerName() const;
+    virtual ConsumerID do_consumerId() const;
+    virtual void do_setConsumerID(ConsumerID const& id);
+    virtual size_t do_queueSize() const;
+    virtual enquing_policy::PolicyTag do_queuePolicy() const;
+    virtual utils::duration_t do_secondsToStale() const;
+
   private:
 
-    std::string      _sourceURL;
-    unsigned int     _maxConnectRetries;
-    unsigned int     _connectRetryInterval;
-    std::string      _consumerName;
-    unsigned int     _headerRetryInterval;
-    double           _maxEventRequestRate;
-    FilterList       _selEvents;
-    std::string      _selHLTOut;
-    unsigned long    _secondsToStale;
-    enquing_policy::PolicyTag _policy;
+    CommonRegistrationInfo _common;
+
+    unsigned int _maxConnectRetries;
+    unsigned int _connectRetryInterval;
+    FilterList _selEvents;
+    std::string _selHLTOut;
+    bool _isProxy;
+    bool _stale;
+
   };
+
+  typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> ConsRegPtr;
 
   /**
      Print the given EventConsumerRegistrationInfo to the given
      stream.
-   */
+  */
   inline
-  std::ostream& operator<<(std::ostream& os, 
-                           EventConsumerRegistrationInfo const& ri)
+  std::ostream& operator << ( std::ostream& os, 
+                              EventConsumerRegistrationInfo const& ri )
   {
-    return ri.write(os);
+    return ri.write( os );
   }
-  
+
 } // namespace stor
 
 #endif
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

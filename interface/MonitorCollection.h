@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.1.2.10 2009/03/02 18:08:21 biery Exp $
+// $Id$
 
 #ifndef StorageManager_MonitorCollection_h
 #define StorageManager_MonitorCollection_h
@@ -20,20 +20,16 @@ namespace stor {
   /**
    * An abstract collection of MonitoredQuantities
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.10 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
   
   class MonitorCollection
   {
   public:
 
-    MonitorCollection
-    (
-      xdaq::Application*,
-      const std::string infoSpaceName
-    );
+    explicit MonitorCollection(xdaq::Application*);
 
     // A pure virtual destructor results in a missing symbol
     virtual ~MonitorCollection() {};
@@ -54,18 +50,31 @@ namespace stor {
      */
     void updateInfoSpace();
 
+    /**
+     * Resets the monitored quantities
+     */
+    void reset();
 
+    /**
+     * Returns the pointer to the monitoring info space
+     */
+    xdata::InfoSpace* getMonitoringInfoSpace()
+    { return _infoSpace; }
+
+    
   protected:
 
     virtual void do_calculateStatistics() = 0;
     
     virtual void do_updateInfoSpace() = 0;
 
+    virtual void do_reset() = 0;
+
 
     // Stuff dealing with info space
     void putItemsIntoInfoSpace();
 
-    xdata::InfoSpace *_infoSpace;
+    static xdata::InfoSpace *_infoSpace;
 
     typedef std::vector< std::pair<std::string, xdata::Serializable*> > infoSpaceItems_t;
     infoSpaceItems_t _infoSpaceItems;

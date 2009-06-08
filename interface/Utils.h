@@ -1,9 +1,16 @@
-// $Id: Utils.h,v 1.1.2.2 2009/03/03 18:32:08 paterno Exp $
+// $Id$
 
 #ifndef StorageManager_Utils_h
 #define StorageManager_Utils_h
 
-#include <sys/time.h>
+#include <string>
+
+
+namespace xdaq
+{
+  class ApplicationDescriptor;
+}
+
 
 namespace stor {
 
@@ -12,9 +19,9 @@ namespace stor {
     /**
      * Collection of utility functions used in the storage manager
      *
-     * $Author: paterno $
-     * $Revision: 1.1.2.2 $
-     * $Date: 2009/03/03 18:32:08 $
+     * $Author$
+     * $Revision$
+     * $Date$
      */
 
     /**
@@ -40,6 +47,34 @@ namespace stor {
        system.
     */
     time_point_t getCurrentTime();
+
+    /**
+       Sleep for at least the given duration. Note that the underlying
+       system will round the interval up to an integer multiple of the
+       system's sleep resolution. (The underlying implementation
+       relies upon nanosleep, so see documentation for nanosleep for
+       details). Negative intervals are not allowed, and result in an
+       error (returning -1, and no sleeping).
+     */
+    int sleep(duration_t interval);
+
+    /**
+       Converts a time_point_t into a string.
+       Note: the string formatting is used by the file summary catalog and
+       may or may not depend on the actual formatting
+    */
+    std::string timeStamp(time_point_t);
+
+    /**
+       Returns an identifier string composed of class name and instance
+    */
+    std::string getIdentifier(xdaq::ApplicationDescriptor*);
+    
+    /**
+       Throws a stor::exception::NoSuchDirectory when the directory does not exist
+     */
+    void checkDirectory(const std::string&);
+
 
   } // namespace utils
   

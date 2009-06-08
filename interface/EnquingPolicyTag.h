@@ -1,5 +1,9 @@
+// $Id$
+
 #ifndef EventFilter_StorageManager_EnquingPolicy_t
 #define EventFilter_StorageManager_EnquingPolicy_t
+
+#include <iostream>
 
 namespace stor
 {
@@ -7,6 +11,10 @@ namespace stor
   /**
      This enumeration is used to denote which queuing discipline is
      used for enquing items when the queue in question is full.
+
+     $Author$
+     $Revision$
+     $Date$
    */
 
   namespace enquing_policy
@@ -18,7 +26,12 @@ namespace stor
 	  FailIfFull,
 	  Max
 	};
-    } // namespace enquing_policy
+
+      std::ostream& operator << ( std::ostream& os,
+                                  const enquing_policy::PolicyTag& ptag );
+
+  } // namespace enquing_policy
+
 } // namespace stor
 
 #endif

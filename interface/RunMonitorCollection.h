@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.h,v 1.1.2.6 2009/03/02 18:08:21 biery Exp $
+// $Id$
 
 #ifndef StorageManager_RunMonitorCollection_h
 #define StorageManager_RunMonitorCollection_h
@@ -14,19 +14,19 @@ namespace stor {
    * A collection of MonitoredQuantities related to events received
    * in the current run
    *
-   * $Author: biery $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2009/03/02 18:08:21 $
+   * $Author$
+   * $Revision$
+   * $Date$
    */
   
   class RunMonitorCollection : public MonitorCollection
   {
   private:
 
-    MonitoredQuantity eventIDsReceived;
-    MonitoredQuantity errorEventIDsReceived;
-    MonitoredQuantity runNumbersSeen;  // Does this make sense?
-    MonitoredQuantity lumiSectionsSeen;
+    MonitoredQuantity _eventIDsReceived;
+    MonitoredQuantity _errorEventIDsReceived;
+    MonitoredQuantity _runNumbersSeen;  // Does this make sense?
+    MonitoredQuantity _lumiSectionsSeen;
 
 
   public:
@@ -34,31 +34,31 @@ namespace stor {
     explicit RunMonitorCollection(xdaq::Application*);
 
     const MonitoredQuantity& getEventIDsReceivedMQ() const {
-      return eventIDsReceived;
+      return _eventIDsReceived;
     }
     MonitoredQuantity& getEventIDsReceivedMQ() {
-      return eventIDsReceived;
+      return _eventIDsReceived;
     }
 
     const MonitoredQuantity& getErrorEventIDsReceivedMQ() const {
-      return errorEventIDsReceived;
+      return _errorEventIDsReceived;
     }
     MonitoredQuantity& getErrorEventIDsReceivedMQ() {
-      return errorEventIDsReceived;
+      return _errorEventIDsReceived;
     }
 
     const MonitoredQuantity& getRunNumbersSeenMQ() const {
-      return runNumbersSeen;
+      return _runNumbersSeen;
     }
     MonitoredQuantity& getRunNumbersSeenMQ() {
-      return runNumbersSeen;
+      return _runNumbersSeen;
     }
 
     const MonitoredQuantity& getLumiSectionsSeenMQ() const {
-      return lumiSectionsSeen;
+      return _lumiSectionsSeen;
     }
     MonitoredQuantity& getLumiSectionsSeenMQ() {
-      return lumiSectionsSeen;
+      return _lumiSectionsSeen;
     }
 
 
@@ -71,12 +71,14 @@ namespace stor {
     virtual void do_calculateStatistics();
     
     virtual void do_updateInfoSpace();
+    
+    virtual void do_reset();
 
+    xdata::UnsignedInteger32 _runNumber;           // The current run number
 
     // InfoSpace items which were defined in the old SM
-    xdata::UnsignedInteger32 _runNumber;           // The current run number
-    xdata::UnsignedInteger32 _receivedEvents;      // Total number of received events
-    xdata::UnsignedInteger32 _receivedErrorEvents; // Total number of received error events
+    // xdata::UnsignedInteger32 _receivedEvents;      // Total number of received events
+    // xdata::UnsignedInteger32 _receivedErrorEvents; // Total number of received error events
 
   };
   

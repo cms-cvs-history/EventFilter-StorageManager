@@ -3,7 +3,7 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output disk files.
  *
- * $Id: InitMsgCollection.cc,v 1.5.12.4 2009/02/25 04:01:49 biery Exp $
+ * $Id$
  */
 
 #include "DataFormats/Streamer/interface/StreamedProducts.h"
@@ -30,6 +30,7 @@ InitMsgCollection::InitMsgCollection()
   FDEBUG(5) << "Executing constructor for InitMsgCollection" << std::endl;
   initMsgList_.clear();
   outModNameTable_.clear();
+  consumerOutputModuleMap_.clear();
 
   serializedFullSet_.reset(new InitMsgBuffer(2 * sizeof(Header)));
   OtherMessageBuilder fullSetMsg(&(*serializedFullSet_)[0], Header::INIT_SET);
@@ -208,9 +209,15 @@ InitMsgSharedPtr InitMsgCollection::getElementAt(unsigned int index)
  */
 void InitMsgCollection::clear()
 {
-  boost::mutex::scoped_lock sl(listLock_);
-  initMsgList_.clear();
-  outModNameTable_.clear();
+  {
+    boost::mutex::scoped_lock sl(consumerMapLock_);
+    consumerOutputModuleMap_.clear();
+  }
+  {
+    boost::mutex::scoped_lock sl(listLock_);
+    initMsgList_.clear();
+    outModNameTable_.clear();
+  }
 }
 
 /**
@@ -355,4 +362,45 @@ void InitMsgCollection::add(InitMsgView const& initMsgView)
   std::copy(initMsgView.startAddress(),
             initMsgView.startAddress()+initMsgView.size(),
             copyPtr);
+}
+
+////////////////////////////
+//// Register consumer: ////
+////////////////////////////
+bool InitMsgCollection::registerConsumer( ConsumerID cid, const std::string& hltModule )
+{
+  if ( ! cid.isValid() ) { return false; }
+  if ( hltModule == "" ) { return false; }
+
+  boost::mutex::scoped_lock sl( consumerMapLock_ );
+  consumerOutputModuleMap_[ cid ] = hltModule;
+  return true;
+}
+
+/**
+ * Fetches the single INIT message that matches the requested consumer ID.
+ * If no messages match the request, an empty pointer is returned.
+ */
+InitMsgSharedPtr InitMsgCollection::getElementForConsumer( ConsumerID cid )
+{
+  std::string outputModuleLabel;
+  {
+    boost::mutex::scoped_lock sl( consumerMapLock_ );
+
+    std::map< ConsumerID, std::string >::const_iterator mapIter;
+    mapIter = consumerOutputModuleMap_.find( cid );
+
+    if ( mapIter != consumerOutputModuleMap_.end() &&
+         mapIter->second != "" )
+      {
+        outputModuleLabel = mapIter->second;
+      }
+    else
+      {
+        InitMsgSharedPtr serializedProds;
+        return serializedProds;
+      }
+  }
+
+  return getElementForOutputModule(outputModuleLabel);
 }
