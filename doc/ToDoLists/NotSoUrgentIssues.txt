@@ -1,4 +1,4 @@
-// $Id$
+// $Id: NotSoUrgentIssues.txt,v 1.2 2009/06/10 08:15:15 dshpakov Exp $
 
 This file shall collect items which should be addressed at some point
 during the re-factoring process, but which are not urgent or not
@@ -48,3 +48,6 @@ registration is stale (or has been reused).
 - Move consumer registration data out of the serialized parameter set
 and into the registration message so that we aren't bothered by which
 parameters are tracked and untracked.
+
+
+- Replace sprintf calls in various files with the C++ way.
