@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------
 
- $Id: StorageManagerRun.cpp,v 1.14.4.2 2008/10/14 15:22:37 biery Exp $
+ $Id$
 
 ----------------------------------------------------------------------*/  
 
@@ -20,6 +20,7 @@
 #include "EventFilter/StorageManager/interface/JobController.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "IOPool/Streamer/interface/StreamerInputFile.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -79,12 +80,6 @@ namespace {
   }
 }
 
-static void deleteBuffer(void* v)
-{
-	stor::FragEntry* fe = (stor::FragEntry*)v;
-	delete [] (char*)fe->buffer_address_;
-}
-
 // -----------------------------------------------
 
 class Main // : public xdaq::Application
@@ -102,7 +97,6 @@ class Main // : public xdaq::Application
 
  private:
   // disallow the following
-  //Main(const Main&):jc_(new stor::JobController("",deleteBuffer)) { }
   Main& operator=(const Main&) { return *this; }
 
   stor::JobController* jc_;
@@ -111,6 +105,7 @@ class Main // : public xdaq::Application
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
+  boost::shared_ptr<stor::SharedResources> sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -150,9 +145,10 @@ Main::Main(const string& my_config_file,
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
-  //jc_ = new stor::JobController(pr,
-  jc_ = new stor::JobController(getFileContents(my_config_file),
-                                logger_,&deleteBuffer);
+  sharedResources_.reset(new stor::SharedResources());
+  sharedResources_->_fragmentQueue.reset(new stor::FragmentQueue(128));
+
+  jc_ = new stor::JobController(logger_,sharedResources_);
 
   vector<string>::iterator it(names_.begin()),en(names_.end());
   for(;it!=en;++it)

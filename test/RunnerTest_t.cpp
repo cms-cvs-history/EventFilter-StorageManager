@@ -24,8 +24,7 @@ this can run.
 #include "IOPool/Streamer/interface/ClassFiller.h"
 #include "EventFilter/StorageManager/interface/EPRunner.h"
 #include "EventFilter/StorageManager/interface/FragmentCollector.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
-#include "EventFilter/StorageManager/interface/Configurator.h"
+#include "EventFilter/StorageManager/interface/SharedResources.h"
 
 #include "boost/shared_ptr.hpp"
 
@@ -65,12 +64,6 @@ namespace {
   }
 }
 
-static void deleteBuffer(void* v)
-{
-	stor::FragEntry* fe = (stor::FragEntry*)v;
-	delete [] (char*)fe->buffer_address_;
-}
-
 // -----------------------------------------------
 
 class Main
@@ -95,6 +88,7 @@ class Main
   typedef vector<ReaderPtr> Readers;
   Readers readers_;
   log4cplus::Logger logger_;
+  boost::shared_ptr<stor::SharedResources> sharedResources_;
 };
 
 // ----------- implementation --------------
@@ -115,18 +109,11 @@ Main::Main(const string& conffile, const vector<string>& file_names):
   config.configure();
   logger_ = log4cplus::Logger::getInstance("main");
 
-  coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),deleteBuffer,
-                                          logger_,conffile));
+  sharedResources_.reset(new stor::SharedResources());
+  sharedResources_->_fragmentQueue.reset(new stor::FragmentQueue(128));
 
-  boost::shared_ptr<stor::InitMsgCollection>
-    initMsgCollection(new stor::InitMsgCollection());
-  coll_->setInitMsgCollection(initMsgCollection);
-
-  boost::shared_ptr<stor::Parameter> smParameter =
-    stor::Configurator::instance()->getParameter();
-  // the following directory path must have "open", "closed", and
-  // "log" subdirectories!
-  smParameter->setfilePath("/tmp/biery");
+  coll_.reset(new stor::FragmentCollector(*drain_.getInfo(),
+                                          logger_,sharedResources_));
 
   // jbk - the next line should not be needed
   // edm::declareStreamers(prods_);
