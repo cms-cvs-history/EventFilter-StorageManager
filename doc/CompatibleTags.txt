@@ -55,3 +55,18 @@ CMSSW_3_0_0_pre9:
  - EventFilter/Modules V00-06-02
 (Run EventFilter/StorageManager/test/demoSystem/bin/applyDevelopmentPatches.pl
 to get the useful and/or necessary patches for the demo system.)
+
+----------------------------------------
+
+For development on the trunk:
+
+CMSSW_2_2_11_HLT:
+ - EventFilter/StorageManager (head version)
+ - EventFilter/ResourceBroker CMSSW_2_2_11_HLT
+ - IOPool/Streamer V05-05-01-03
+ - EventFilter/SMProxyServer V01-08-12
+ - EventFilter/AutoBU CMSSW_2_2_11_HLT
+ - EventFilter/Processor CMSSW_2_2_11_HLT
+ - EventFilter/Modules V00-06-02
+(Run EventFilter/StorageManager/test/demoSystem/bin/applyDevelopmentPatches.pl
+to get the useful and/or necessary patches for the demo system.)
