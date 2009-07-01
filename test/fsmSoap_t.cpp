@@ -4,6 +4,7 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/test/MockNotifier.h"
 #include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
+#include "EventFilter/StorageManager/test/MockApplication.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
@@ -47,7 +48,10 @@ namespace stor {
             sr->_streamQueue.reset(new StreamQueue(32));
             
             EventDistributor ed(sr);
-            MockNotifier mn;
+
+	    _app = new MockApplication(s);
+
+            MockNotifier mn( _app );
 
             stateMachine = new StateMachine( &ed, &fs, &mn, sr );
             stateMachine->initiate();
@@ -94,6 +98,8 @@ namespace stor {
             stateMachine->terminate();
 
             delete stateMachine;
+	    delete _app;
+
         };
         
 
@@ -194,7 +200,8 @@ namespace stor {
         
     private:
         
-        StateMachine *stateMachine;
+      StateMachine *stateMachine;
+      xdaq::Application* _app;
         
     };
     
