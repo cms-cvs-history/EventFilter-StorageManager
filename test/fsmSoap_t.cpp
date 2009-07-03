@@ -2,7 +2,7 @@
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/test/MockNotifier.h"
+#include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 #include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
 #include "EventFilter/StorageManager/test/MockApplication.h"
 
@@ -49,11 +49,9 @@ namespace stor {
             
             EventDistributor ed(sr);
 
-	    _app = new MockApplication(s);
+            WrapperNotifier wn(this);
 
-            MockNotifier mn( _app );
-
-            stateMachine = new StateMachine( &ed, &fs, &mn, sr );
+            stateMachine = new StateMachine( &ed, &fs, &wn, sr );
             stateMachine->initiate();
             
 	    xoap::bind(
