@@ -7,6 +7,12 @@ if [[ $SMDEV_FU_PROCESS_COUNT -gt 7 ]] ; then
     SMDEV_FU_PROCESS_COUNT=7
 fi
 
+if [[ `grep -c "pt::atcp" $STMGR_CONFIG` > 0 ]] ; then
+    firstAppToStart=1
+else
+    firstAppToStart=3
+fi
+
 # This map is ordered accoriding to the starting sequence of the applications.
 # The order of stopping is different
 app_name[1]=pt::atcp::PeerTransportATCP ; app_host[1]=STMGR_DEV_BU_HOST      ; app_port[1]=STMGR_DEV_BU_PORT
@@ -27,7 +33,7 @@ app_name[15]=evf::FUEventProcessor      ; app_host[15]=STMGR_DEV_CONSFU_HOST ; a
 
 if [[ $command == "Configure" || 
       $command == "Enable" ]] ; then
-    sequence="$( seq $(($SMDEV_FU_PROCESS_COUNT+6)) ) 15"
+    sequence="$( seq $firstAppToStart $(($SMDEV_FU_PROCESS_COUNT+6)) ) 15"
 elif [[ $command == "Halt" ||
         $command == "Stop" ]] ; then
     #Note: ptatcp cannot be stopped...
