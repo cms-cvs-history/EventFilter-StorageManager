@@ -2,11 +2,11 @@ TIMESTAMP=`date '+%Y%m%d%H%M%S'`
 RUNNUMBER_TIMESTAMP=`date '+%y%m%d%H%M' | sed 's/^0//'`
 
 
-sed --in-place "s/\(<runNumber.*>\).*\(<\/runNumber>\)/\1${RUNNUMBER_TIMESTAMP}\2/" $STMGR_DIR/cfg/sm_autobu_8fu.xml
+sed --in-place "s/\(<runNumber.*>\).*\(<\/runNumber>\)/\1${RUNNUMBER_TIMESTAMP}\2/" $STMGR_CONFIG
 
 
 cd $STMGR_DIR/log/builderUnit
-xdaq.exe -h STMGR_DEV_BU_HOST -p STMGR_DEV_BU_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml > BU${TIMESTAMP}.log 2>&1 &
+xdaq.exe -h STMGR_DEV_BU_HOST -p STMGR_DEV_BU_PORT -c $STMGR_CONFIG > BU${TIMESTAMP}.log 2>&1 &
 echo "Started BU/RB xdaq.exe..."
 
 if [[ $SMDEV_FU_PROCESS_COUNT -gt 7 ]] ; then
@@ -25,20 +25,20 @@ fu_host[8]=STMGR_DEV_FU8_HOST ; fu_port[8]=STMGR_DEV_FU8_PORT
 
 cd $STMGR_DIR/log/filterUnit
 for fucount in $(seq $SMDEV_FU_PROCESS_COUNT) ; do
-    xdaq.exe -h ${fu_host[$fucount]} -p ${fu_port[$fucount]} -c $STMGR_DIR/cfg/sm_autobu_8fu.xml > FU${TIMESTAMP}_${fucount}.log 2>&1 &
+    xdaq.exe -h ${fu_host[$fucount]} -p ${fu_port[$fucount]} -c $STMGR_CONFIG > FU${TIMESTAMP}_${fucount}.log 2>&1 &
     echo "Started FU${fucount} xdaq.exe..."
 done
 
 cd $STMGR_DIR/log/storageManager
-xdaq.exe -h STMGR_DEV_SM_HOST -p STMGR_DEV_SM_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml > SM${TIMESTAMP}.log 2>&1 &
+xdaq.exe -h STMGR_DEV_SM_HOST -p STMGR_DEV_SM_PORT -c $STMGR_CONFIG > SM${TIMESTAMP}.log 2>&1 &
 echo "Started SM xdaq.exe..."
 
 cd $STMGR_DIR/log/smProxy
-xdaq.exe -h STMGR_DEV_SMPROXY_HOST -p STMGR_DEV_SMPROXY_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml > PROXY${TIMESTAMP}.log 2>&1 &
+xdaq.exe -h STMGR_DEV_SMPROXY_HOST -p STMGR_DEV_SMPROXY_PORT -c $STMGR_CONFIG > PROXY${TIMESTAMP}.log 2>&1 &
 echo "Started SMPS xdaq.exe..."
 
 cd $STMGR_DIR/log/consFU
-xdaq.exe -h STMGR_DEV_CONSFU_HOST -p STMGR_DEV_CONSFU_PORT -c $STMGR_DIR/cfg/sm_autobu_8fu.xml > CONS${TIMESTAMP}.log 2>&1 &
+xdaq.exe -h STMGR_DEV_CONSFU_HOST -p STMGR_DEV_CONSFU_PORT -c $STMGR_CONFIG > CONS${TIMESTAMP}.log 2>&1 &
 echo "Started consumer xdaq.exe..."
 
 sleep 5
