@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.99 2009/06/29 13:07:49 mommsen Exp $
+// $Id: StorageManager.cc,v 1.99.2.1 2009/07/07 16:33:58 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -48,7 +48,7 @@ using namespace stor;
 StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   xdaq::Application(s),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.99 2009/06/29 13:07:49 mommsen Exp $ $Name:  $")
+    "$Id: StorageManager.cc,v 1.99.2.1 2009/07/07 16:33:58 mommsen Exp $ $Name: devel_remi $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -608,7 +608,8 @@ xoap::MessageReference StorageManager::handleFSMSoapMessage( xoap::MessageRefere
     }
     else if (command == "Enable")
     {
-      if (_sharedResources->_configuration->streamConfigurationHasChanged()) {
+      if (_sharedResources->_configuration->streamConfigurationHasChanged())
+      {
         _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
       }
       _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Enable() ) );
@@ -619,7 +620,7 @@ xoap::MessageReference StorageManager::handleFSMSoapMessage( xoap::MessageRefere
     }
     else if (command == "Halt")
     {
-        _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
+      _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Halt() ) );
     }
     else
     {
@@ -675,33 +676,29 @@ std::string StorageManager::extractParameters( xoap::MessageReference msg )
 {
   std::string command = "unknown";
 
-  try
-  {
 #if (XDAQ2RC_VERSION_MAJOR*10+XDAQ2RC_VERSION_MINOR)>16
-    xdaq2rc::SOAPParameterExtractor soapParameterExtractor(this);
-    command = soapParameterExtractor.extractParameters(msg);
+  // Extract the command name and update any configuration parameter
+  // found in the SOAP message in the application infospace
+  xdaq2rc::SOAPParameterExtractor soapParameterExtractor(this);
+  command = soapParameterExtractor.extractParameters(msg);
 #else
-    DOMNode* node  = msg->getSOAPPart().getEnvelope().getBody().getDOMNode();
-    DOMNodeList* bodyList = node->getChildNodes();
-
-    for(unsigned int i=0; i<bodyList->getLength(); i++)
-    {
-      node = bodyList->item(i);
-      
-      if(node->getNodeType() == DOMNode::ELEMENT_NODE)
-      {
-        command = xoap::XMLCh2String(node->getLocalName());
-        return command;
-      }
-    }
-    XCEPT_RAISE(xoap::exception::Exception, "FSM event not found");
-#endif
-  }
-  catch(xcept::Exception &e)
+  // Only extract the FSM command name from the SOAP message
+  DOMNode* node  = msg->getSOAPPart().getEnvelope().getBody().getDOMNode();
+  DOMNodeList* bodyList = node->getChildNodes();
+  
+  for(unsigned int i=0; i<bodyList->getLength(); i++)
   {
-    std::string msg = "Failed to extract FSM event and parameters from SOAP message";
-    XCEPT_RETHROW(xoap::exception::Exception, msg, e);
+    node = bodyList->item(i);
+    
+    if(node->getNodeType() == DOMNode::ELEMENT_NODE)
+    {
+      command = xoap::XMLCh2String(node->getLocalName());
+      return command;
+    }
   }
+  XCEPT_RAISE(xoap::exception::Exception, "FSM event not found");
+#endif
+
   return command;
 }
 
