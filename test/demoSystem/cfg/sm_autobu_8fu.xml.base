@@ -165,7 +165,7 @@
     <!-- Declare a Sentinel application -->
     <xc:Application class="sentinel::Application" id="21" network="local" group="exception-l0" service="sentinel">
       <properties xmlns="urn:xdaq-application:Sentinel" xsi:type="soapenc:Struct">
-        <useDiscovery xsi:type="xsd:boolean">true</useDiscovery>
+        <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
         <publish xsi:type="xsd:string">exception-l0</publish>
         <watchdog xsi:type="xsd:string">PT5S</watchdog>
       </properties>
