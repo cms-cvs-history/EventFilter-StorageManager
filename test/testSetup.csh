@@ -25,7 +25,7 @@ else
     # check for existing project areas.  Prompt the user to choose one.
     set projectCount = `ls -1d CMSSW* | wc -l`
     if ($projectCount == 0) then
-        echo "No project areas currently exist; try createProjectArea.csh"
+        echo "No project areas currently exist; try createProjectArea.sh"
         exit
     endif
     set projectList = `ls -dt CMSSW*`
@@ -60,7 +60,7 @@ setenv PATH ${selectedProject}/test/${scramArch}:${PATH}
 
 # define useful aliases
 
-alias startEverything "cd $STMGR_DIR/bin; source ./startEverything.csh"
+alias startEverything "cd $STMGR_DIR/bin; ./startEverything.sh"
 
 alias startConsumer "cd $STMGR_DIR/log/client; cmsRun ../../cfg/eventConsumer.py"
 alias startConsumer1 "cd $STMGR_DIR/log/client1; cmsRun ../../cfg/eventConsumer.py"
@@ -75,10 +75,10 @@ alias startDQMConsumer "cd $STMGR_DIR/log/client; cmsRun ../../cfg/dqmConsumer.p
 alias cleanupShm "FUShmCleanUp_t"
 alias killEverything "killall -9 xdaq.exe; sleep 2; FUShmCleanUp_t; cd $STMGR_DIR/bin; ./removeOldLogFiles.sh; ./removeOldDataFiles.sh; ./removeOldDQMFiles.sh; cd -"
 
-alias globalConfigure "cd $STMGR_DIR/soap; ./globalConfigure.csh"
-alias globalEnable "cd $STMGR_DIR/soap; ./globalEnable.csh"
-alias globalStop "cd $STMGR_DIR/soap; ./globalStop.csh"
-alias globalHalt "cd $STMGR_DIR/soap; ./globalHalt.csh"
+alias globalConfigure "cd $STMGR_DIR/soap; ./globalConfigure.sh"
+alias globalEnable "cd $STMGR_DIR/soap; ./globalEnable.sh"
+alias globalStop "cd $STMGR_DIR/soap; ./globalStop.sh"
+alias globalHalt "cd $STMGR_DIR/soap; ./globalHalt.sh"
 
 alias shutdownEverything "globalStop ; sleep 3 ; killEverything"
 
