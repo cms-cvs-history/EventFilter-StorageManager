@@ -2,9 +2,9 @@
 
 command=$1
 
-if [[ $SMDEV_FU_PROCESS_COUNT -gt 7 ]] ; then
+if [[ $SMDEV_FU_PROCESS_COUNT -gt 8 ]] ; then
     echo "Cannot handle more than 8 FUs."
-    SMDEV_FU_PROCESS_COUNT=7
+    SMDEV_FU_PROCESS_COUNT=8
 fi
 
 if [[ `grep -c "pt::atcp" $STMGR_CONFIG` > 0 ]] ; then

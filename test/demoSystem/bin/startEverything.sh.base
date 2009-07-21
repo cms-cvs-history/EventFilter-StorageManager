@@ -1,3 +1,5 @@
+#!/bin/sh
+
 TIMESTAMP=`date '+%Y%m%d%H%M%S'`
 RUNNUMBER_TIMESTAMP=`date '+%y%m%d%H%M' | sed 's/^0//'`
 
@@ -9,9 +11,9 @@ cd $STMGR_DIR/log/builderUnit
 xdaq.exe -h STMGR_DEV_BU_HOST -p STMGR_DEV_BU_PORT -c $STMGR_CONFIG > BU${TIMESTAMP}.log 2>&1 &
 echo "Started BU/RB xdaq.exe..."
 
-if [[ $SMDEV_FU_PROCESS_COUNT -gt 7 ]] ; then
+if [[ $SMDEV_FU_PROCESS_COUNT -gt 8 ]] ; then
     echo "Cannot handle more than 8 FUs."
-    SMDEV_FU_PROCESS_COUNT=7
+    SMDEV_FU_PROCESS_COUNT=8
 fi
 
 fu_host[1]=STMGR_DEV_FU_HOST ; fu_port[1]=STMGR_DEV_FU_PORT
