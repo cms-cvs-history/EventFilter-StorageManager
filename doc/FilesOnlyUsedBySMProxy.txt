@@ -9,6 +9,9 @@ interface/EventServer.h
 interface/ForeverCounter.h
 interface/RollingIntervalCounter.h
 interface/RollingSampleCounter.h
+interface/SMFUSenderEntry.h
+interface/SMFUSenderList.h
+interface/SMFUSenderStats.h
 interface/SMPerformanceMeter.h
 src/BaseCounter.cc
 src/ConsumerPipe.cc
