@@ -55,5 +55,17 @@ for appcount in $sequence ; do
 
     ./sendSimpleCmdToApp ${app_host[$appcount]} ${app_port[$appcount]} ${app_name[$appcount]} 0 $command
     echo ""
-    sleep 2
+    if [[ $command == "Stop" ]] ; then
+        if [[ ${app_name[$appcount]} == "evf::BU" ]] ; then
+            sleep 5
+        elif [[ ${app_name[$appcount]} == "evf::FUResourceBroker" ]] ; then
+            sleep 1
+        elif [[ ${app_name[$appcount]} == "StorageManager" ]] ; then
+            sleep 10
+        elif [[ ${app_name[$appcount]} != "evf::FUEventProcessor" ]] ; then
+            sleep 2
+        fi
+    else
+        sleep 2
+    fi
 done
