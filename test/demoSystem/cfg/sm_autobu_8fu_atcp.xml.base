@@ -11,7 +11,7 @@
 
 <!-- BU / BROKER CONTEXT -->
   <xc:Context url="http://STMGR_DEV_BU_HOST:STMGR_DEV_BU_PORT">
-      <xc:Endpoint protocol="tcp" service="i2o"
+      <xc:Endpoint protocol="atcp" service="i2o"
           hostname="STMGR_DEV_BU_HOST" port="BU_ENDPOINT_PORT" network="tcp1"/>
 
     <!-- Playback Builder Unit -->
@@ -31,16 +31,17 @@
         <dqmCellSize xsi:type="xsd:unsignedInt">0x200000</dqmCellSize>
         <runNumber xsi:type="xsd:unsignedInt">7291441</runNumber>
       </properties>
+      <xc:Unicast class="StorageManager" network="tcp1"/>
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterResourceBroker.so</xc:Module>
 
-    <xc:Application class="pt::tcp::PeerTransportTCP" id="26" network="tcp1">
-      <properties xmlns="urn:xdaq-application:pt::tcp::PeerTransportTCP" xsi:type="soapenc:Struct">
+    <xc:Application class="pt::atcp::PeerTransportATCP" instance="0" id="26" network="local">
+      <properties xmlns="urn:xdaq-application:pt::atcp::PeerTransportTCP" xsi:type="soapenc:Struct">
         <autoSize xsi:type="xsd:boolean">true</autoSize>
         <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
       </properties>
     </xc:Application>
-    <xc:Module>${XDAQ_ROOT}/lib/libpttcp.so</xc:Module>
+    <xc:Module>${XDAQ_ROOT}/lib/libptatcp.so</xc:Module>
 
   </xc:Context>
 
@@ -159,13 +160,13 @@
 <!-- StorageManager context -->
   <!-- Declare a context that contains the application -->
   <xc:Context id = "1" url="http://STMGR_DEV_SM_HOST:STMGR_DEV_SM_PORT">
-    <xc:Endpoint protocol="tcp" service="i2o"
+    <xc:Endpoint protocol="atcp" service="i2o"
       hostname="STMGR_DEV_SM_HOST" port="SM_ENDPOINT_PORT" network="tcp1"/>
 
     <!-- Declare a Sentinel application -->
     <xc:Application class="sentinel::Application" id="21" network="local" group="exception-l0" service="sentinel">
       <properties xmlns="urn:xdaq-application:Sentinel" xsi:type="soapenc:Struct">
-        <useDiscovery xsi:type="xsd:boolean">false</useDiscovery>
+        <useDiscovery xsi:type="xsd:boolean">true</useDiscovery>
         <publish xsi:type="xsd:string">exception-l0</publish>
         <watchdog xsi:type="xsd:string">PT5S</watchdog>
       </properties>
@@ -211,13 +212,13 @@
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterStorageManager.so</xc:Module>
 
-    <xc:Application class="pt::tcp::PeerTransportTCP" id="31" network="tcp1">
-      <properties xmlns="urn:xdaq-application:pt::tcp::PeerTransportTCP" xsi:type="soapenc:Struct">
+    <xc:Application class="pt::atcp::PeerTransportATCP" instance="0" id="31" network="local">
+      <properties xmlns="urn:xdaq-application:pt::atcp::PeerTransportTCP" xsi:type="soapenc:Struct">
         <autoSize xsi:type="xsd:boolean">true</autoSize>
         <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
       </properties>
     </xc:Application>
-    <xc:Module>${XDAQ_ROOT}/lib/libpttcp.so</xc:Module>
+    <xc:Module>${XDAQ_ROOT}/lib/libptatcp.so</xc:Module>
 
   </xc:Context>
 
