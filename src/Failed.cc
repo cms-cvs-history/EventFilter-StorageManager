@@ -1,4 +1,5 @@
-// $Id: Failed.cc,v 1.7 2009/07/03 14:13:04 dshpakov Exp $
+// $Id: Failed.cc,v 1.10 2009/07/20 13:07:27 mommsen Exp $
+/// @file: Failed.cc
 
 #include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -38,7 +39,7 @@ string Failed::do_stateName() const
   return string( "Failed" );
 }
 
-void Failed::do_moveToFailedState() const
+void Failed::do_moveToFailedState( const std::string& reason ) const
 {
   // nothing can be done here
 }

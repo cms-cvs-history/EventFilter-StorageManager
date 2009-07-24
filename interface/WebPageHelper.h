@@ -1,4 +1,5 @@
-// $Id$
+// $Id: WebPageHelper.h,v 1.3 2009/07/20 13:06:11 mommsen Exp $
+/// @file: WebPageHelper.h
 
 #ifndef StorageManager_WebPageHelper_h
 #define StorageManager_WebPageHelper_h
@@ -29,9 +30,9 @@ namespace stor {
   /**
    * Helper class to handle web page requests
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:11 $
    */
   
   class WebPageHelper

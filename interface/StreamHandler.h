@@ -1,4 +1,5 @@
-// $Id$
+// $Id: StreamHandler.h,v 1.4 2009/07/20 13:06:11 mommsen Exp $
+/// @file: StreamHandler.h 
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
@@ -17,9 +18,9 @@ namespace stor {
   /**
    * Abstract class to handle one stream written to disk.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:11 $
    */
   
   class StreamHandler
@@ -94,12 +95,12 @@ namespace stor {
     /**
      * Get path w/o working directory
      */    
-    const std::string getBaseFilePath(const uint32& runNumber) const;
+    const std::string getBaseFilePath(const uint32& runNumber, uint32_t fileCount) const;
 
     /**
      * Get file system string
      */    
-    const std::string getFileSystem(const uint32& runNumber) const;
+    const std::string getFileSystem(const uint32& runNumber, uint32_t fileCount) const;
 
     /**
      * Get the core file name

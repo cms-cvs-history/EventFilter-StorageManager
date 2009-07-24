@@ -1,7 +1,8 @@
-// $Id$
+// $Id: EventConsumerSelector.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: EventConsumerSelector.h 
 
-#ifndef EVENTCONSUMERSELECTOR_H
-#define EVENTCONSUMERSELECTOR_H
+#ifndef StorageManager_EventConsumerSelector_h
+#define StorageManager_EventConsumerSelector_h
 
 #include <boost/shared_ptr.hpp>
 
@@ -16,9 +17,9 @@ namespace stor {
    * Defines the common interface for event and DQM consumer
    * registration info objects.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class EventConsumerSelector
@@ -97,7 +98,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif
+#endif // StorageManager_EventConsumerSelector_h
 
 
 /// emacs configuration

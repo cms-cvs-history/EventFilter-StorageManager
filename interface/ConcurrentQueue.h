@@ -1,4 +1,5 @@
-// $Id$
+// $Id: ConcurrentQueue.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: ConcurrentQueue.h 
 
 
 #ifndef EventFilter_StorageManager_ConcurrentQueue_h
@@ -38,9 +39,9 @@ namespace stor
         RejectNewest: the function returns void; the new item is
         not put onto the FIFO.
    
-     $Author$
-     $Revision$
-     $Date$
+     $Author: mommsen $
+     $Revision: 1.3 $
+     $Date: 2009/07/20 13:06:10 $
    */
 
   template <class T>

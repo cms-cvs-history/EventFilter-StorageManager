@@ -1,5 +1,6 @@
 // Created by Markus Klute on 2007 Mar 22.
-// $Id: FUProxy.cc,v 1.4 2007/06/28 20:37:42 hcheung Exp $
+// $Id: FUProxy.cc,v 1.6 2009/07/20 13:07:27 mommsen Exp $
+/// @file: FUProxy.cc
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <EventFilter/StorageManager/interface/FUProxy.h>

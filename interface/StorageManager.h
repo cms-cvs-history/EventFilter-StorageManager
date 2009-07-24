@@ -1,11 +1,10 @@
-// $Id: StorageManager.h,v 1.48 2009/06/10 08:15:24 dshpakov Exp $
+// $Id: StorageManager.h,v 1.52 2009/07/20 13:06:11 mommsen Exp $
+/// @file: StorageManager.h 
 
 #ifndef StorageManager_StorageManager_h
 #define StorageManager_StorageManager_h
 
 #include <string>
-
-//#include "FWCore/MessageService/interface/MessageServicePresence.h"
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
 #include "EventFilter/StorageManager/interface/DQMEventProcessor.h"
@@ -15,6 +14,7 @@
 
 #include "xdaq/Application.h"
 #include "xgi/exception/Exception.h"
+#include "xoap/MessageReference.h"
 
 
 namespace toolbox { 
@@ -33,9 +33,9 @@ namespace stor {
   /**
    * Main class of the StorageManager XDAQ application
    *
-   * $Author: dshpakov $
-   * $Revision: 1.48 $
-   * $Date: 2009/06/10 08:15:24 $
+   * $Author: mommsen $
+   * $Revision: 1.52 $
+   * $Date: 2009/07/20 13:06:11 $
    */
 
   class StorageManager: public xdaq::Application
@@ -43,7 +43,7 @@ namespace stor {
 
   public:
   
-    StorageManager(xdaq::ApplicationStub* s);
+    StorageManager( xdaq::ApplicationStub* s );
   
     ~StorageManager();
 
@@ -206,20 +206,6 @@ namespace stor {
      * Create and start all worker threads
      */
     void startWorkerThreads();
-
-    /**
-     * Extract parameters and FSM command from SOAP message
-     */
-    std::string extractParameters( xoap::MessageReference );
-
-    /**
-     * Create a SOAP FSM response message
-     */
-    xoap::MessageReference createFsmSoapResponseMsg
-    (
-      const std::string commandName,
-      const std::string currentState
-    );
 
     // instantiate the plugin manager, not referenced here after!
     edm::AssertHandler _ah;

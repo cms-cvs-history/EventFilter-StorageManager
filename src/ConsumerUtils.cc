@@ -1,4 +1,5 @@
-// $Id$
+// $Id: ConsumerUtils.cc,v 1.3 2009/07/20 13:07:27 mommsen Exp $
+/// @file: ConsumerUtils.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"

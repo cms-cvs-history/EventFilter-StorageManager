@@ -1,4 +1,5 @@
-// $Id$
+// $Id: DiskWriter.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: DiskWriter.h 
 
 #ifndef StorageManager_DiskWriter_h
 #define StorageManager_DiskWriter_h
@@ -27,9 +28,9 @@ namespace stor {
    * It gets the next event from the StreamQueue and writes it
    * to the appropriate stream file(s) on disk. 
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
   
   class DiskWriter : public toolbox::lang::Class

@@ -1,7 +1,10 @@
-// $Id$
+// $Id: SharedResources.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+/// @file: SharedResources.h 
 
 #ifndef StorageManager_SharedResources_h
 #define StorageManager_SharedResources_h
+
+#include <string>
 
 #include "boost/shared_ptr.hpp"
 
@@ -25,9 +28,9 @@ namespace stor {
   /**
    * Container for shared resources.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   struct SharedResources
@@ -54,7 +57,7 @@ namespace stor {
     /**
      * Add a Failed state-machine event to the command queue
      */
-    void moveToFailedState();
+    void moveToFailedState( const std::string& reason );
 
   };
 

@@ -1,4 +1,5 @@
-// $Id: ExpirableQueue.h,v 1.2 2009/06/10 08:15:22 dshpakov Exp $
+// $Id: ExpirableQueue.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+/// @file: ExpirableQueue.h 
 
 
 #ifndef EventFilter_StorageManager_ExpirableQueue_h
@@ -19,9 +20,9 @@ namespace stor
      information. It keeps track of when the most recent called to deq
      was made.
    
-     $Author: dshpakov $
-     $Revision: 1.2 $
-     $Date: 2009/06/10 08:15:22 $
+     $Author: mommsen $
+     $Revision: 1.4 $
+     $Date: 2009/07/20 13:06:10 $
    */
 
   template <class T, class Policy>

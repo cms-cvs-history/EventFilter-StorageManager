@@ -1,4 +1,5 @@
-// $Id$
+// $Id: FilesMonitorCollection.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+/// @file: FilesMonitorCollection.h 
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
@@ -20,9 +21,9 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities of open and closed files
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -64,7 +65,7 @@ namespace stor {
     typedef std::vector<FileRecordPtr> FileRecordList;
 
 
-    explicit FilesMonitorCollection(xdaq::Application*);
+    FilesMonitorCollection();
 
     const FileRecordPtr getNewFileRecord();
 
@@ -80,10 +81,9 @@ namespace stor {
     FilesMonitorCollection& operator=(FilesMonitorCollection const&);
 
     virtual void do_calculateStatistics();
-    
-    virtual void do_updateInfoSpace();
-    
     virtual void do_reset();
+    virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
+    virtual void do_updateInfoSpaceItems();
 
     FileRecordList _fileRecords;
     mutable boost::mutex _fileRecordsMutex;

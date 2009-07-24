@@ -1,4 +1,5 @@
-// $Id$
+// $Id: DiskWriterResources.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: DiskWriterResources.h 
 
 
 #ifndef EventFilter_StorageManager_DiskWriterResources_h
@@ -17,9 +18,9 @@ namespace stor
    * Container class for resources that are needed by the DiskWriter
    * and need to be accessed from multiple threads.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class DiskWriterResources

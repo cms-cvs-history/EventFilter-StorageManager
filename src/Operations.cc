@@ -1,4 +1,5 @@
-// $Id: Operations.cc,v 1.4 2009/07/03 14:48:55 mommsen Exp $
+// $Id: Operations.cc,v 1.8 2009/07/20 13:07:28 mommsen Exp $
+/// @file: Operations.cc
 
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
@@ -41,9 +42,9 @@ std::string Operations::stateName() const
   return do_stateName();
 }
 
-void Operations::moveToFailedState() const
+void Operations::moveToFailedState( const std::string& reason ) const
 {
-  do_moveToFailedState();
+  do_moveToFailedState( reason );
 }
 
 
@@ -91,7 +92,7 @@ void Operations::safeEntryAction( Notifier* n )
           XCEPT_DECLARE_NESTED( stor::exception::StateTransition,
                                 sentinelException, msg, e );
           n->tellSentinel( "fatal", sentinelException );
-          moveToFailedState();
+          moveToFailedState( msg + xcept::stdformat_exception_history(e) );
         }
       catch(...)
         {
@@ -108,7 +109,7 @@ void Operations::safeEntryAction( Notifier* n )
                          sentinelException, msg );
 
           n->tellSentinel( "fatal", sentinelException );
-          moveToFailedState();
+          moveToFailedState( msg );
         }
       catch(...)
         {
@@ -124,7 +125,7 @@ void Operations::safeEntryAction( Notifier* n )
           XCEPT_DECLARE( stor::exception::StateTransition,
                          sentinelException, msg );
           n->tellSentinel( "fatal", sentinelException );
-          moveToFailedState();
+          moveToFailedState( msg );
         }
       catch(...)
         {
@@ -151,7 +152,7 @@ void Operations::safeExitAction( Notifier* n )
           XCEPT_DECLARE_NESTED( stor::exception::StateTransition,
                                 sentinelException, msg, e );
           n->tellSentinel( "fatal", sentinelException );
-          moveToFailedState();
+          moveToFailedState( msg + xcept::stdformat_exception_history(e) );
         }
       catch(...)
         {
@@ -168,7 +169,7 @@ void Operations::safeExitAction( Notifier* n )
                          sentinelException, msg );
 
           n->tellSentinel( "fatal", sentinelException );
-          moveToFailedState();
+          moveToFailedState( msg );
         }
       catch(...)
         {
@@ -184,7 +185,7 @@ void Operations::safeExitAction( Notifier* n )
           XCEPT_DECLARE( stor::exception::StateTransition,
                          sentinelException, msg );
           n->tellSentinel( "fatal", sentinelException );
-          moveToFailedState();
+          moveToFailedState( msg );
         }
       catch(...)
         {

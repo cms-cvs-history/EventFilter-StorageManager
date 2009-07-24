@@ -1,3 +1,6 @@
+// $Id: EnquingPolicyTag.cc,v 1.3 2009/07/20 13:07:27 mommsen Exp $
+/// @file: EnquingPolicyTag.cc
+
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 
 using namespace stor;

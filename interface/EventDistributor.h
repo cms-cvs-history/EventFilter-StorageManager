@@ -1,4 +1,5 @@
-// $Id$
+// $Id: EventDistributor.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: EventDistributor.h 
 
 #ifndef StorageManager_EventDistributor_h
 #define StorageManager_EventDistributor_h
@@ -28,9 +29,9 @@ namespace stor {
    * the I2O message type and the trigger bits in the event
    * header.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class EventDistributor

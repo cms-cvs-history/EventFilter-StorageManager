@@ -1,11 +1,11 @@
 #ifndef SMCurlInterface_H
 #define SMCurlInterface_H
 
-/** 
+/**
  *  This will eventually be an interface class for curl common
  *  functions but now is just some common utility
  *
- *  $Id: SMCurlInterface.h,v 1.1 2007/04/26 00:58:17 hcheung Exp $
+ *  $Id: SMCurlInterface.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
  */
 
 #include <string>

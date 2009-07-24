@@ -1,4 +1,5 @@
-// $Id$
+// $Id: RunMonitorCollection.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+/// @file: RunMonitorCollection.h 
 
 #ifndef StorageManager_RunMonitorCollection_h
 #define StorageManager_RunMonitorCollection_h
@@ -14,9 +15,9 @@ namespace stor {
    * A collection of MonitoredQuantities related to events received
    * in the current run
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
    */
   
   class RunMonitorCollection : public MonitorCollection
@@ -31,7 +32,7 @@ namespace stor {
 
   public:
 
-    explicit RunMonitorCollection(xdaq::Application*);
+    RunMonitorCollection();
 
     const MonitoredQuantity& getEventIDsReceivedMQ() const {
       return _eventIDsReceived;
@@ -69,10 +70,9 @@ namespace stor {
     RunMonitorCollection& operator=(RunMonitorCollection const&);
 
     virtual void do_calculateStatistics();
-    
-    virtual void do_updateInfoSpace();
-    
     virtual void do_reset();
+    virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
+    virtual void do_updateInfoSpaceItems();
 
     xdata::UnsignedInteger32 _runNumber;           // The current run number
 

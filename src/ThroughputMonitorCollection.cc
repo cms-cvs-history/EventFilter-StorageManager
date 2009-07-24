@@ -1,11 +1,12 @@
-// $Id: ThroughputMonitorCollection.cc,v 1.2 2009/06/10 08:15:28 dshpakov Exp $
+// $Id: ThroughputMonitorCollection.cc,v 1.5 2009/07/20 13:07:28 mommsen Exp $
+/// @file: ThroughputMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ThroughputMonitorCollection.h"
 
 using namespace stor;
 
-ThroughputMonitorCollection::ThroughputMonitorCollection(xdaq::Application *app) :
-  MonitorCollection(app),
+ThroughputMonitorCollection::ThroughputMonitorCollection() :
+  MonitorCollection(),
   _binCount(300)
 {
   _entriesInFragmentQueue.setNewTimeWindowForRecentResults(_binCount);
@@ -18,8 +19,6 @@ ThroughputMonitorCollection::ThroughputMonitorCollection(xdaq::Application *app)
   _entriesInDQMEventQueue.setNewTimeWindowForRecentResults(_binCount);
   _poppedDQMEventSize.setNewTimeWindowForRecentResults(_binCount);
   _dqmEventProcessorIdleTime.setNewTimeWindowForRecentResults(_binCount);
-
-  //putItemsIntoInfoSpace();
 }
 
 
@@ -90,11 +89,6 @@ void ThroughputMonitorCollection::do_calculateStatistics()
   _entriesInDQMEventQueue.calculateStatistics();
   _poppedDQMEventSize.calculateStatistics();
   _dqmEventProcessorIdleTime.calculateStatistics();
-}
-
-
-void ThroughputMonitorCollection::do_updateInfoSpace()
-{
 }
 
 

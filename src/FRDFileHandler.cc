@@ -1,4 +1,5 @@
-// $Id: FRDFileHandler.cc,v 1.2 2009/06/10 08:15:26 dshpakov Exp $
+// $Id: FRDFileHandler.cc,v 1.4 2009/07/20 13:07:27 mommsen Exp $
+/// @file: FRDFileHandler.cc
 
 #include <EventFilter/StorageManager/interface/FRDFileHandler.h>
 #include <IOPool/Streamer/interface/FRDEventMessage.h>

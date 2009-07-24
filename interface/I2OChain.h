@@ -1,4 +1,5 @@
-// $Id: I2OChain.h,v 1.3 2009/06/26 21:10:30 biery Exp $
+// $Id: I2OChain.h,v 1.5 2009/07/20 13:06:10 mommsen Exp $
+/// @file: I2OChain.h 
 
 #ifndef StorageManager_I2OChain_h
 #define StorageManager_I2OChain_h
@@ -32,9 +33,9 @@ namespace stor {
    * assures that the corresponding release methods are called when 
    * the last instance of I2OChain goes out of scope.
    *
-   * $Author: biery $
-   * $Revision: 1.3 $
-   * $Date: 2009/06/26 21:10:30 $
+   * $Author: mommsen $
+   * $Revision: 1.5 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
 

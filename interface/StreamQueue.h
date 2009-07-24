@@ -1,4 +1,5 @@
-// $Id$
+// $Id: StreamQueue.h,v 1.3 2009/07/20 13:06:11 mommsen Exp $
+/// @file: StreamQueue.h 
 
 #ifndef EventFilter_StorageManager_StreamQueue_h
 #define EventFilter_StorageManager_StreamQueue_h
@@ -11,9 +12,9 @@ namespace stor {
   /**
    * Queue holding I2OChains of events to be written to disk
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:11 $
    */
 
   typedef ConcurrentQueue<I2OChain> StreamQueue;  

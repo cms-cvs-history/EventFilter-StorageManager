@@ -1,4 +1,5 @@
-// $Id: DrainingQueues.cc,v 1.3 2009/07/03 14:13:04 dshpakov Exp $
+// $Id: DrainingQueues.cc,v 1.7 2009/07/20 13:07:27 mommsen Exp $
+/// @file: DrainingQueues.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -42,14 +43,9 @@ string DrainingQueues::do_stateName() const
   return string( "DrainingQueues" );
 }
 
-void DrainingQueues::do_moveToFailedState() const
+void DrainingQueues::do_moveToFailedState( const std::string& reason ) const
 {
-  outermost_context().getSharedResources()->moveToFailedState();
-}
-
-void DrainingQueues::logStopRequest( const Stop& request )
-{
-  outermost_context().unconsumed_event( request );
+  outermost_context().getSharedResources()->moveToFailedState( reason );
 }
 
 void DrainingQueues::logEndRunRequest( const EndRun& request )

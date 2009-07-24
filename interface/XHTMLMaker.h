@@ -1,5 +1,6 @@
 // -*- c++ -*-
-// $Id$
+// $Id: XHTMLMaker.h,v 1.5 2009/07/20 13:06:11 mommsen Exp $
+/// @file: XHTMLMaker.h 
 
 #ifndef XHTMLMAKER_H
 #define XHTMLMAKER_H
@@ -13,67 +14,106 @@
 #include <string>
 #include <iostream>
 
+
+/**
+   Helper class to build XHTML pages
+
+   $Author: mommsen $
+   $Revision: 1.5 $
+   $Date: 2009/07/20 13:06:11 $
+*/
+
 class XHTMLMaker
 {
 
 public:
 
-  // Typedefs:
+  /**
+     Typedefs
+  */
   typedef xercesc::DOMElement Node;
   typedef std::map<std::string,std::string> AttrMap;
 
-  // Constructor:
+  /**
+     Constructor
+  */
   XHTMLMaker();
 
-  // Destructor:
+  /**
+     Destructor
+  */
   ~XHTMLMaker();
 
-  // Initialize page and return body element:
+  /**
+     Initialize page and return body element
+  */
   Node* start( const std::string& title );
 
-  // Useful for css and javascript:
+  /**
+     Useful for css and javascript
+  */
   Node* getHead() const { return _head; }
 
-  // Add child:
+  /**
+     Add child
+  */
   Node* addNode( const std::string& name,
                  Node* parent,
                  const AttrMap& attrs );
 
-  // Add child to top level:
+  /**
+     Add child to top level
+  */
   Node* addNode( const std::string& name, const AttrMap& attrs )
   {
     return addNode( name, (Node*)0, attrs );
   }
 
-  // Add child without attributes:
+  /**
+     Add child without attributes
+  */
   Node* addNode( const std::string& name, Node* parent )
   {
     AttrMap empty;
     return addNode( name, parent, empty );
   }
 
-  // Add child to top without attributes:
+  /**
+     Add child to top without attributes
+  */
   Node* addNode( const std::string& name )
   {
     return addNode( name, (Node*)0 );
   }
 
-  // Add text:
+  /**
+     Add text
+  */
   void addText( Node* parent, const std::string& data );
 
-  // Add a double value:
+  /**
+     Add a double value
+  */
   void addText( Node* parent, const double& value, const int& precision = 2 );
 
-  // Dump the page to stdout:
+  /**
+     Dump the page to stdout
+  */
   void out();
 
-  // Dump the page to a local file:
+  /**
+     Dump the page to a local file
+  */
   void out( const std::string& dest );
 
-  // Dump the page to a string:
+  /**
+     Dump the page to a string
+  */
   void out( std::string& dest );
 
-  // Dump the page into an output stream:
+  /**
+     Dump the page into an output stream
+  */
   void out( std::ostream& dest );
 
 private:
@@ -86,7 +126,9 @@ private:
 
   bool _page_started;
 
-  // Set DOMWriter features:
+  /**
+     Set DOMWriter features
+  */
   void _setWriterFeatures();
 
 };

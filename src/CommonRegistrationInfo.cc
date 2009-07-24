@@ -1,4 +1,5 @@
-// $Id$
+// $Id: CommonRegistrationInfo.cc,v 1.3 2009/07/20 13:07:27 mommsen Exp $
+/// @file: CommonRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
 

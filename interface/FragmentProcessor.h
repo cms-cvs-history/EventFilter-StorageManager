@@ -1,4 +1,5 @@
-// $Id$
+// $Id: FragmentProcessor.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: FragmentProcessor.h 
 
 #ifndef StorageManager_FragmentProcessor_h
 #define StorageManager_FragmentProcessor_h
@@ -27,9 +28,9 @@ namespace stor {
    * FragmentStore. If this completes the event, it hands it to the 
    * EventDistributor.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class

@@ -1,4 +1,5 @@
-// $Id: FragmentStore.cc,v 1.4 2009/06/29 11:03:00 mommsen Exp $
+// $Id: FragmentStore.cc,v 1.6 2009/07/20 13:07:27 mommsen Exp $
+/// @file: FragmentStore.cc
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/Utils.h"

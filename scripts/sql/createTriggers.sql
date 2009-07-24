@@ -18,6 +18,7 @@ BEGIN
 		APP_VERSION,
 		S_LUMISECTION,
 		S_CREATED,
+                N_INSTANCE,
 		M_INSTANCE,
 		START_WRITE_TIME,
 		LAST_UPDATE_TIME)
@@ -27,6 +28,7 @@ BEGIN
 		:NEW.SETUPLABEL,
 		:NEW.APP_VERSION,
 		:NEW.LUMISECTION,
+                1,
 		1,
 		:NEW.INSTANCE,
 		:NEW.CTIME,
@@ -39,11 +41,13 @@ BEGIN
             INSERT INTO SM_INSTANCES (
                 RUNNUMBER,
                 INSTANCE,
-                N_CREATED)
+                N_CREATED,
+                SETUPLABEL)
             VALUES (
                 :NEW.RUNNUMBER,
                 :NEW.INSTANCE,
-                1);
+                1,
+                :NEW.SETUPLABEL);
          END IF; 
      END IF;	
 END;
@@ -93,6 +97,7 @@ BEGIN
             	S_FILESIZE = NVL(S_FILESIZE,0) + NVL(:NEW.FILESIZE,0),
             	S_FILESIZE2D = NVL(S_FILESIZE2D,0) + NVL(:NEW.FILESIZE,0),
             	S_INJECTED = NVL(S_INJECTED,0) + 1,
+                N_INSTANCE = (SELECT COUNT(DISTINCT INSTANCE) FROM FILES_CREATED WHERE RUNNUMBER = v_runnumber AND STREAM = v_stream),
 	    	STOP_WRITE_TIME = GREATEST(:NEW.ITIME, NVL(STOP_WRITE_TIME, :NEW.ITIME)),
 	    	HLTKEY = NVL(HLTKEY, :NEW.COMMENT_STR),
             	LAST_UPDATE_TIME = sysdate
@@ -101,7 +106,8 @@ BEGIN
          	NULL;
      	END IF;
         UPDATE SM_INSTANCES
-                SET N_INJECTED = NVL(N_INJECTED,0) + 1
+                SET N_INJECTED = NVL(N_INJECTED,0) + 1,
+                LAST_WRITE_TIME = GREATEST(:NEW.ITIME, NVL(LAST_WRITE_TIME, :NEW.ITIME))
         WHERE RUNNUMBER = v_runnumber AND INSTANCE = v_instance;
         IF SQL%ROWCOUNT = 0 THEN
                 NULL;

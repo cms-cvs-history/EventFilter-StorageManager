@@ -1,7 +1,8 @@
-// $Id$
+// $Id: DQMEventSelector.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: DQMEventSelector.h 
 
-#ifndef DQMEVENTSELECTOR_H
-#define DQMEVENTSELECTOR_H
+#ifndef StorageManager_DQMEventSelector_h
+#define StorageManager_DQMEventSelector_h
 
 #include <boost/shared_ptr.hpp>
 
@@ -14,9 +15,9 @@ namespace stor
   /**
    * DQM event selector
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class DQMEventSelector
@@ -66,7 +67,7 @@ namespace stor
 
 }
 
-#endif
+#endif // StorageManager_DQMEventSelector_h
 
 
 /// emacs configuration

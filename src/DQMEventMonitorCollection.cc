@@ -1,4 +1,5 @@
-// $Id$
+// $Id: DQMEventMonitorCollection.cc,v 1.4 2009/07/20 13:07:27 mommsen Exp $
+/// @file: DQMEventMonitorCollection.cc
 
 #include <string>
 #include <sstream>
@@ -9,8 +10,8 @@
 
 using namespace stor;
 
-DQMEventMonitorCollection::DQMEventMonitorCollection(xdaq::Application *app) :
-MonitorCollection(app)
+DQMEventMonitorCollection::DQMEventMonitorCollection() :
+MonitorCollection()
 {
   _dqmEventSizes.setNewTimeWindowForRecentResults(300);
   _servedDQMEventSizes.setNewTimeWindowForRecentResults(300);
@@ -21,8 +22,6 @@ MonitorCollection(app)
   _numberOfGroups.setNewTimeWindowForRecentResults(300);
   _numberOfUpdates.setNewTimeWindowForRecentResults(300);
   _numberOfWrittenGroups.setNewTimeWindowForRecentResults(300);
-
-  putItemsIntoInfoSpace();
 }
 
 
@@ -70,12 +69,6 @@ void DQMEventMonitorCollection::do_calculateStatistics()
   _numberOfGroups.calculateStatistics();
   _numberOfUpdates.calculateStatistics();
   _numberOfWrittenGroups.calculateStatistics();
-}
-
-
-void DQMEventMonitorCollection::do_updateInfoSpace()
-{
-  // nothing to do
 }
 
 

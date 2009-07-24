@@ -1,4 +1,5 @@
-// $Id$
+// $Id: DQMEventProcessorResources.cc,v 1.3 2009/07/20 13:07:27 mommsen Exp $
+/// @file: DQMEventProcessorResources.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventProcessorResources.h"
 

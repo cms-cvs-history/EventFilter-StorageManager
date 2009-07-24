@@ -17,7 +17,8 @@
                 Manager or specify a maximum number of events for
                 the client to read through a maxEvents parameter.
 
-  $Id: OnlineHttpReader.cc,v 1.4 2008/07/19 06:24:12 wmtan Exp $
+  $Id: OnlineHttpReader.cc,v 1.7 2009/07/20 13:07:28 mommsen Exp $
+/// @file: OnlineHttpReader.cc
 */
 
 #include "EventFilter/StorageManager/src/OnlineHttpReader.h"
@@ -25,9 +26,10 @@
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
+#include "IOPool/Streamer/interface/EventMessage.h"
+#include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/OtherMessage.h"
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
-#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "FWCore/Framework/interface/EventPrincipal.h"
 #include "FWCore/Utilities/interface/UnixSignalHandlers.h"
 

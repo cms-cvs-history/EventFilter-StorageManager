@@ -1,5 +1,6 @@
 
-// $Id$
+// $Id: ConsumerID.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: ConsumerID.h 
 
 #ifndef StorageManager_ConsumerID_h
 #define StorageManager_ConsumerID_h
@@ -14,9 +15,9 @@ namespace stor {
   /**
    * Uniquely identifies a consumer.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   struct ConsumerID

@@ -1,7 +1,8 @@
-// $Id: StateMachine.h,v 1.3 2009/07/03 14:13:03 dshpakov Exp $
+// $Id: StateMachine.h,v 1.8 2009/07/20 13:06:11 mommsen Exp $
+/// @file: StateMachine.h 
 
-#ifndef STATEMACHINE_H
-#define STATEMACHINE_H
+#ifndef StorageManager_StateMachine_h
+#define StorageManager_StateMachine_h
 
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
@@ -72,9 +73,13 @@ namespace stor
   class StopDone : public bsc::event<StopDone> {};
   class HaltDone : public bsc::event<HaltDone> {};
 
-  ////////////////////////////////////////////////////////
-  //// Operations -- abstract base for state classes: ////
-  ////////////////////////////////////////////////////////
+  /**
+     Abstract base for state classes
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
 
   class Operations
   {
@@ -89,7 +94,7 @@ namespace stor
 
     std::string stateName() const;
 
-    void moveToFailedState() const;
+    void moveToFailedState( const std::string& reason ) const;
 
   protected:
 
@@ -99,7 +104,7 @@ namespace stor
 
     virtual std::string do_stateName() const = 0;
 
-    virtual void do_moveToFailedState() const = 0;
+    virtual void do_moveToFailedState( const std::string& reason ) const = 0;
 
     void safeEntryAction( Notifier* );
     virtual void do_entryActionWork() = 0;
@@ -110,9 +115,13 @@ namespace stor
   };
 
 
-  ///////////////////////
-  //// StateMachine: ////
-  ///////////////////////
+  /**
+     State machine class
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
 
   class StateMachine: public bsc::state_machine<StateMachine,Normal>
   {
@@ -153,7 +162,13 @@ namespace stor
   //// State classes: ////
   ////////////////////////
 
-  // Failed:
+  /**
+     Failed state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Failed: public bsc::state<Failed,StateMachine>, public Operations
   {
 
@@ -167,11 +182,17 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Normal:
+  /**
+     Normal state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Normal: public bsc::state<Normal,StateMachine,Halted>, public Operations
   {
 
@@ -188,11 +209,17 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Halted:
+  /**
+     Halted state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Halted: public bsc::state<Halted,Normal>, public Operations
   {
 
@@ -209,19 +236,26 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Ready:
+  /**
+     Ready state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Ready: public bsc::state<Ready,Normal,Stopped>, public Operations
   {
 
   public:
 
-    typedef bsc::transition<Reconfigure,Stopped> ST;
+    typedef bsc::transition<Reconfigure,Ready> ST;
     typedef bsc::transition<Halt,Halted> HT;
-    typedef boost::mpl::list<ST,HT> reactions;
+    typedef bsc::transition<HaltDone,Halted> DT;
+    typedef boost::mpl::list<ST,HT,DT> reactions;
 
     Ready( my_context );
     virtual ~Ready();
@@ -231,18 +265,27 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Stopped:
+  /**
+     Stopped state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Stopped: public bsc::state<Stopped,Ready>, public Operations
   {
 
   public:
 
+    void logHaltDoneRequest( const HaltDone& request );
+
     typedef bsc::transition<Enable,Enabled> ET;
-    typedef boost::mpl::list<ET> reactions;
+    typedef bsc::in_state_reaction<HaltDone,Stopped,&Stopped::logHaltDoneRequest> HaltDoneIR;
+    typedef boost::mpl::list<ET,HaltDoneIR> reactions;
 
     Stopped( my_context );
     virtual ~Stopped();
@@ -252,23 +295,29 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Enabled:
+  /**
+     Enabled state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Enabled: public bsc::state<Enabled,Ready,Starting>, public Operations
   {
 
   public:
 
+    void logHaltRequest( const Halt& request );
     void logReconfigureRequest( const Reconfigure& request );
 
-    //    typedef bsc::transition<EmergencyStop,Stopped> ET;
     typedef bsc::transition<StopDone,Stopped> DT;
-    typedef bsc::transition<HaltDone,Halted> HT;
+    typedef bsc::in_state_reaction<Halt,Enabled,&Enabled::logHaltRequest> HaltIR;
     typedef bsc::in_state_reaction<Reconfigure,Enabled,&Enabled::logReconfigureRequest> RecfgIR;
-    typedef boost::mpl::list<DT,HT,RecfgIR> reactions;
+    typedef boost::mpl::list<DT,HaltIR,RecfgIR> reactions;
 
     Enabled( my_context );
     virtual ~Enabled();
@@ -278,11 +327,17 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Starting:
+  /**
+     Starting state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Starting: public bsc::state<Starting,Enabled>, public Operations
   {
 
@@ -306,13 +361,19 @@ namespace stor
     virtual void do_noFragmentToProcess() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
     bool workerThreadsConfigured() const;
 
   };
 
-  // Stopping:
+  /**
+     Stopping state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Stopping: public bsc::state<Stopping,Enabled>, public Operations
   {
 
@@ -320,9 +381,8 @@ namespace stor
 
     void logHaltDoneRequest( const HaltDone& request );
 
-    typedef bsc::transition<StopDone,Stopped> ST;
     typedef bsc::in_state_reaction<HaltDone,Stopping,&Stopping::logHaltDoneRequest> HaltDoneIR;
-    typedef boost::mpl::list<ST,HaltDoneIR> reactions;
+    typedef boost::mpl::list<HaltDoneIR> reactions;
 
     Stopping( my_context );
     virtual ~Stopping();
@@ -333,13 +393,19 @@ namespace stor
     virtual void do_noFragmentToProcess() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
     bool destructionIsDone() const;
 
   };
 
-  // Halting:
+  /**
+     Halting state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Halting: public bsc::state<Halting,Enabled>, public Operations
   {
 
@@ -347,9 +413,8 @@ namespace stor
 
     void logStopDoneRequest( const StopDone& request );
 
-    typedef bsc::transition<HaltDone,Halted> HT;
     typedef bsc::in_state_reaction<StopDone,Halting,&Halting::logStopDoneRequest> StopDoneIR;
-    typedef boost::mpl::list<HT,StopDoneIR> reactions;
+    typedef boost::mpl::list<StopDoneIR> reactions;
 
     Halting( my_context );
     virtual ~Halting();
@@ -360,13 +425,19 @@ namespace stor
     virtual void do_noFragmentToProcess() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
     bool destructionIsDone() const;
 
   };
 
-  // Running:
+  /**
+     Running state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Running: public bsc::state<Running,Enabled,Processing>, public Operations
   {
 
@@ -390,23 +461,27 @@ namespace stor
     virtual std::string do_stateName() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // Processing:
+  /**
+     Processing state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class Processing: public bsc::state<Processing,Running>, public Operations
   {
 
   public:
 
-    void logQueuesEmptyRequest( const QueuesEmpty& request );
     void logEndRunRequest( const EndRun& request );
 
     typedef bsc::transition<Stop,DrainingQueues> DT;
-    typedef bsc::in_state_reaction<QueuesEmpty,Processing,&Processing::logQueuesEmptyRequest> QueuesEmptyIR;
     typedef bsc::in_state_reaction<EndRun,Processing,&Processing::logEndRunRequest> EndRunIR;
-    typedef boost::mpl::list<DT,QueuesEmptyIR,EndRunIR> reactions;
+    typedef boost::mpl::list<DT,EndRunIR> reactions;
 
     Processing( my_context );
     virtual ~Processing();
@@ -418,23 +493,27 @@ namespace stor
     virtual void do_noFragmentToProcess() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
   };
 
-  // DrainingQueues:
+  /**
+     DrainingQueues state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class DrainingQueues: public bsc::state<DrainingQueues,Running>, public Operations
   {
 
   public:
 
-    void logStopRequest( const Stop& request );
     void logEndRunRequest( const EndRun& request );
 
     typedef bsc::transition<QueuesEmpty,FinishingDQM> FT;
-    typedef bsc::in_state_reaction<Stop,DrainingQueues,&DrainingQueues::logStopRequest> StopIR;
     typedef bsc::in_state_reaction<EndRun,DrainingQueues,&DrainingQueues::logEndRunRequest> EndRunIR;
-    typedef boost::mpl::list<FT,StopIR,EndRunIR> reactions;
+    typedef boost::mpl::list<FT,EndRunIR> reactions;
 
     DrainingQueues( my_context );
     virtual ~DrainingQueues();
@@ -444,24 +523,23 @@ namespace stor
     virtual void do_noFragmentToProcess() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
     bool allQueuesAndWorkersAreEmpty() const;
     void processStaleFragments() const;
   };
 
-  // FinishingDQM:
+  /**
+     FinishingDQM state
+
+     $Author: mommsen $
+     $Revision: 1.8 $
+     $Date: 2009/07/20 13:06:11 $
+  */
   class FinishingDQM: public bsc::state<FinishingDQM,Running>, public Operations
   {
 
   public:
-
-    void logStopRequest( const Stop& request );
-    void logQueuesEmptyRequest( const QueuesEmpty& request );
-
-    typedef bsc::in_state_reaction<Stop,FinishingDQM,&FinishingDQM::logStopRequest> StopIR;
-    typedef bsc::in_state_reaction<QueuesEmpty,FinishingDQM,&FinishingDQM::logQueuesEmptyRequest> QueuesEmptyIR;
-    typedef boost::mpl::list<StopIR,QueuesEmptyIR> reactions;
 
     FinishingDQM( my_context );
     virtual ~FinishingDQM();
@@ -472,7 +550,7 @@ namespace stor
     virtual void do_noFragmentToProcess() const;
     virtual void do_entryActionWork();
     virtual void do_exitActionWork();
-    virtual void do_moveToFailedState() const;
+    virtual void do_moveToFailedState( const std::string& reason ) const;
 
     bool endOfRunProcessingIsDone() const;
 
@@ -480,7 +558,7 @@ namespace stor
 
 } // end namespace stor
 
-#endif
+#endif // StorageManager_StateMachine_h
 
 /// emacs configuration
 /// Local Variables: -

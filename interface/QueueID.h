@@ -1,4 +1,5 @@
-// $Id$
+// $Id: QueueID.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: QueueID.h 
 
 #ifndef StorageManager_QueueID_h
 #define StorageManager_QueueID_h
@@ -13,9 +14,9 @@ namespace stor {
   /**
    * Uniquely identifies the consumer queues 
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class QueueID

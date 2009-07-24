@@ -1,4 +1,5 @@
-// $Id$
+// $Id: StateMachineMonitorCollection.h,v 1.5 2009/07/20 13:06:11 mommsen Exp $
+/// @file: StateMachineMonitorCollection.h 
 
 #ifndef StorageManager_StateMachineMonitorCollection_h
 #define StorageManager_StateMachineMonitorCollection_h
@@ -17,9 +18,9 @@ namespace stor {
   /**
    * A collection of monitored quantities related to the state machine
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.5 $
+   * $Date: 2009/07/20 13:06:11 $
    */
   
   class StateMachineMonitorCollection : public MonitorCollection
@@ -27,7 +28,7 @@ namespace stor {
 
   public:
 
-    explicit StateMachineMonitorCollection(xdaq::Application*);
+    StateMachineMonitorCollection();
 
     /**
      * Add the TransitionRecord to the state machine history
@@ -48,7 +49,7 @@ namespace stor {
     /**
      * Set the externally visible state name
      */
-    void setExternallyVisibleState(const std::string&);
+    void setExternallyVisibleState( const std::string& );
 
     /**
      * Retrieve the externally visible state name
@@ -56,10 +57,24 @@ namespace stor {
     const std::string& externallyVisibleState() const;
 
     /**
+     * Set status message
+     */
+    void setStatusMessage( const std::string& );
+
+    /**
+     * Clear status message
+     */
+    void clearStatusMessage();
+
+    /**
+     * Get status message
+     */
+    bool statusMessage( std::string& msg ) const;
+
+    /**
      * Retrieve the current internal state name
      */
     const std::string& innerStateName() const;
-
 
   private:
 
@@ -68,16 +83,16 @@ namespace stor {
     StateMachineMonitorCollection& operator=(StateMachineMonitorCollection const&);
 
     virtual void do_calculateStatistics();
-    
-    virtual void do_updateInfoSpace();
-    
     virtual void do_reset();
-
-    Logger& _logger;
+    virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
+    virtual void do_updateInfoSpaceItems();
 
     History _history;
     std::string _externallyVisibleState;
     mutable boost::mutex _stateMutex;
+
+    bool _statusMessageAvailable;
+    std::string _statusMessage;
 
     xdata::String _stateName;
 

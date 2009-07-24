@@ -17,7 +17,8 @@
                 Manager or specify a maximum number of events for
                 the client to read through a maxEvents parameter.
 
-  $Id: EventStreamHttpReader.cc,v 1.32 2009/01/26 20:54:38 biery Exp $
+  $Id: EventStreamHttpReader.cc,v 1.35 2009/07/20 13:07:27 mommsen Exp $
+/// @file: EventStreamHttpReader.cc
 */
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
@@ -25,9 +26,10 @@
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
+#include "IOPool/Streamer/interface/EventMessage.h"
+#include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/OtherMessage.h"
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
-#include "EventFilter/StorageManager/interface/ConsumerPipe.h"
 #include "FWCore/Framework/interface/EventPrincipal.h"
 #include "FWCore/Utilities/interface/UnixSignalHandlers.h"
 

@@ -1,4 +1,5 @@
-// $Id: DiskWriter.cc,v 1.2 2009/06/10 08:15:25 dshpakov Exp $
+// $Id: DiskWriter.cc,v 1.6 2009/07/20 13:07:27 mommsen Exp $
+/// @file: DiskWriter.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -70,14 +71,16 @@ bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
   }
   catch(xcept::Exception &e)
   {
-    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
-      errorMsg << xcept::stdformat_exception_history(e));
 
-    XCEPT_DECLARE_NESTED(stor::exception::DiskWriting,
-      sentinelException, errorMsg, e);
-    _app->notifyQualified("fatal", sentinelException);
+    LOG4CPLUS_FATAL( _app->getApplicationLogger(),
+                     errorMsg << xcept::stdformat_exception_history(e) );
 
-    _sharedResources->moveToFailedState();
+    XCEPT_DECLARE_NESTED( stor::exception::DiskWriting,
+                          sentinelException, errorMsg, e );
+    _app->notifyQualified( "fatal", sentinelException );
+
+    _sharedResources->moveToFailedState( errorMsg + xcept::stdformat_exception_history(e) );
+
   }
   catch(std::exception &e)
   {
@@ -90,7 +93,7 @@ bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
 
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg );
   }
   catch(...)
   {
@@ -103,7 +106,7 @@ bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
 
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg );
   }
 
   return _actionIsActive;

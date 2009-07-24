@@ -1,4 +1,5 @@
-// $Id$
+// $Id: ThroughputMonitorCollection.h,v 1.4 2009/07/20 13:06:11 mommsen Exp $
+/// @file: ThroughputMonitorCollection.h 
 
 #ifndef StorageManager_ThroughputMonitorCollection_h
 #define StorageManager_ThroughputMonitorCollection_h
@@ -17,16 +18,16 @@ namespace stor {
    * A collection of MonitoredQuantities to track the flow of data
    * through the storage manager.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:11 $
    */
   
   class ThroughputMonitorCollection : public MonitorCollection
   {
   public:
 
-    explicit ThroughputMonitorCollection(xdaq::Application*);
+    ThroughputMonitorCollection();
 
     int getBinCount() const {return _binCount;}
 
@@ -133,9 +134,6 @@ namespace stor {
     ThroughputMonitorCollection& operator=(ThroughputMonitorCollection const&);
 
     virtual void do_calculateStatistics();
-
-    virtual void do_updateInfoSpace();
-
     virtual void do_reset();
 
     int _binCount;

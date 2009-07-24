@@ -4,7 +4,7 @@
      Header file for performance statistics for
      Storage Manager and SMProxyServer.
 
-     $Id$
+     $Id: SMPerformanceMeter.h,v 1.8 2009/07/21 06:43:26 mommsen Exp $
 */
 
 #include <string>

@@ -1,4 +1,5 @@
-// $Id$
+// $Id: EventConsumerRegistrationInfo.cc,v 1.3 2009/07/20 13:07:27 mommsen Exp $
+/// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"

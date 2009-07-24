@@ -1,4 +1,5 @@
-// $Id$
+// $Id: DQMEventProcessorResources.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: DQMEventProcessorResources.h 
 
 
 #ifndef EventFilter_StorageManager_DQMEventProcessorResources_h
@@ -16,9 +17,9 @@ namespace stor
    * Container class for resources that are needed by the DQMEventProcessor
    * and need to be accessed from multiple threads.
    *
-   * $Author$
-   * $Revision$
-   * $Date$
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class DQMEventProcessorResources

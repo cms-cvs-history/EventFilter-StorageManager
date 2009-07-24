@@ -1,7 +1,8 @@
-// $Id$
+// $Id: ErrorStreamConfigurationInfo.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: ErrorStreamConfigurationInfo.h 
 
-#ifndef ERRORSTREAMCONFIGURATIONINFO_H
-#define ERRORSTREAMCONFIGURATIONINFO_H
+#ifndef StorageManager_ErrorStreamConfigurationInfo_h
+#define StorageManager_ErrorStreamConfigurationInfo_h
 
 #include "EventFilter/StorageManager/interface/StreamID.h"
 
@@ -13,6 +14,14 @@
 
 namespace stor
 {
+
+  /**
+     Configuration information for the error stream
+
+     $Author: mommsen $
+     $Revision: 1.3 $
+     $Date: 2009/07/20 13:06:10 $
+  */
 
   class ErrorStreamConfigurationInfo
   {
@@ -56,7 +65,8 @@ namespace stor
   typedef boost::shared_ptr<ErrStrConfigList> ErrStrConfigListPtr;
 }
 
-#endif
+#endif // StorageManager_ErrorStreamConfigurationInfo_h
+
 
 /// emacs configuration
 /// Local Variables: -

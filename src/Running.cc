@@ -1,4 +1,5 @@
-// $Id: Running.cc,v 1.3 2009/07/03 14:13:04 dshpakov Exp $
+// $Id: Running.cc,v 1.6 2009/07/20 13:07:28 mommsen Exp $
+/// @file: Running.cc
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
@@ -84,9 +85,9 @@ string Running::do_stateName() const
   return string( "Running" );
 }
 
-void Running::do_moveToFailedState() const
+void Running::do_moveToFailedState( const std::string& reason ) const
 {
-  outermost_context().getSharedResources()->moveToFailedState();
+  outermost_context().getSharedResources()->moveToFailedState( reason );
 }
 
 void Running::logStopDoneRequest( const StopDone& request )

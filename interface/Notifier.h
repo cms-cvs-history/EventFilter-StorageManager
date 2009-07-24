@@ -1,10 +1,8 @@
-// -*- c++ -*-                                                                              
-// $Id: Notifier.h,v 1.3 2009/07/01 13:08:17 dshpakov Exp $
+// $Id: Notifier.h,v 1.7 2009/07/20 13:06:10 mommsen Exp $
+/// @file: Notifier.h 
 
-#ifndef NOTIFIER_H
-#define NOTIFIER_H
-
-// Interface class for handling RCMS notifier
+#ifndef StorageManager_Notifier_h
+#define StorageManager_Notifier_h
 
 #include <string>
 
@@ -14,27 +12,67 @@
 namespace stor
 {
 
+  /**
+    Interface class for handling RCMS notifier
+    
+    $Author: mommsen $
+    $Revision: 1.7 $
+    $Date: 2009/07/20 13:06:10 $
+  */
+
   class Notifier
   {
 
   public:
 
+    /**
+       Constructor
+    */
     Notifier() {}
 
+    /**
+       Destructor
+    */
     virtual ~Notifier() {};
 
+    /**
+       Report new state to RCMS
+    */
     virtual void reportNewState( const std::string& stateName ) = 0;
+
+    /**
+       Access logger
+    */
     virtual Logger& getLogger() = 0;
+
+    /**
+       Send message to sentinel
+    */
     virtual void tellSentinel( const std::string& level, xcept::Exception& e ) = 0;
 
+    /**
+       Write message to a file in /tmp (last resort when everything
+       else fails)
+    */
     void localDebug( const std::string& message ) const;
 
   protected:
 
+    /**
+       Storage manager instance number
+    */
     virtual unsigned long instanceNumber() const = 0;
 
   };
 
 }
 
-#endif // NOTIFIER_H
+#endif // StorageManager_Notifier_h
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

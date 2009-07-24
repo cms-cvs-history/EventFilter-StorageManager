@@ -2,7 +2,7 @@
      For performance statistics for
      Storage Manager and SMProxyServer.
 
-     $Id: SMPerformanceMeter.cc,v 1.6 2008/10/12 15:18:15 hcheung Exp $
+     $Id: SMPerformanceMeter.cc,v 1.8 2009/07/21 06:48:21 mommsen Exp $
 */
 
 #include "EventFilter/StorageManager/interface/SMPerformanceMeter.h"

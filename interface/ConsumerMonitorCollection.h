@@ -1,8 +1,9 @@
 // -*- c++ -*-
-// $Id$
+// $Id: ConsumerMonitorCollection.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+/// @file: ConsumerMonitorCollection.h 
 
-#ifndef CONSUMERMONITORCOLLECTION
-#define CONSUMERMONITORCOLLECTION
+#ifndef StorageManager_ConsumerMonitorCollection_h
+#define StorageManager_ConsumerMonitorCollection_h
 
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
@@ -13,15 +14,22 @@
 
 #include <map>
 
-namespace stor
-{
+namespace stor {
+
+  /**
+   * A collection of MonitoredQuantities to track consumer activity.
+   *
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
+   */
 
   class ConsumerMonitorCollection: public MonitorCollection
   {
 
   public:
 
-    explicit ConsumerMonitorCollection( xdaq::Application* );
+    ConsumerMonitorCollection();
 
     /**
        Add queued sample
@@ -56,7 +64,6 @@ namespace stor
 
     virtual void do_calculateStatistics();
     virtual void do_reset();
-    virtual void do_updateInfoSpace();
 
     typedef std::map< QueueID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
 
@@ -69,4 +76,12 @@ namespace stor
 
 } // namespace stor
 
-#endif
+#endif // StorageManager_ConsumerMonitorCollection_h
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

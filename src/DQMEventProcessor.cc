@@ -1,4 +1,5 @@
-// $Id: DQMEventProcessor.cc,v 1.2 2009/06/10 08:15:25 dshpakov Exp $
+// $Id: DQMEventProcessor.cc,v 1.6 2009/07/20 13:07:27 mommsen Exp $
+/// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
 #include "xcept/tools.h"
@@ -68,14 +69,14 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
   }
   catch(xcept::Exception &e)
   {
-    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
-      errorMsg << xcept::stdformat_exception_history(e));
+    LOG4CPLUS_FATAL( _app->getApplicationLogger(),
+                     errorMsg << xcept::stdformat_exception_history(e) );
 
-    XCEPT_DECLARE_NESTED(stor::exception::DQMEventProcessing,
-      sentinelException, errorMsg, e);
-    _app->notifyQualified("fatal", sentinelException);
+    XCEPT_DECLARE_NESTED( stor::exception::DQMEventProcessing,
+                          sentinelException, errorMsg, e );
+    _app->notifyQualified( "fatal", sentinelException );
     
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg + xcept::stdformat_exception_history(e) );
   }
   catch(std::exception &e)
   {
@@ -88,7 +89,7 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
     
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg );
   }
   catch(...)
   {
@@ -101,7 +102,7 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
 
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg );
   }
 
   return _actionIsActive;

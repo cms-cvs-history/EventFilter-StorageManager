@@ -1,4 +1,5 @@
-// $Id: StreamHandler.cc,v 1.3 2009/06/17 16:14:43 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.6 2009/07/20 13:07:28 mommsen Exp $
+/// @file: StreamHandler.cc
 
 #include <sstream>
 #include <iomanip>
@@ -84,7 +85,7 @@ StreamHandler::getNewFileRecord(const I2OChain& event)
   fileRecord->runNumber = event.runNumber();
   fileRecord->lumiSection = event.lumiSection();
   fileRecord->streamLabel = streamLabel();
-  fileRecord->baseFilePath = getBaseFilePath(event.runNumber());
+  fileRecord->baseFilePath = getBaseFilePath(event.runNumber(), fileRecord->entryCounter);
   fileRecord->coreFileName = getCoreFileName(event.runNumber(), event.lumiSection());
   fileRecord->fileCounter = getFileCounter(fileRecord->coreFileName);
   fileRecord->whyClosed = FilesMonitorCollection::FileRecord::notClosed;
@@ -95,13 +96,13 @@ StreamHandler::getNewFileRecord(const I2OChain& event)
 }
 
 
-const std::string StreamHandler::getBaseFilePath(const uint32& runNumber) const
+const std::string StreamHandler::getBaseFilePath(const uint32& runNumber, uint32_t fileCount) const
 {
-  return _diskWritingParams._filePath + getFileSystem(runNumber);
+  return _diskWritingParams._filePath + getFileSystem(runNumber, fileCount);
 }
 
 
-const std::string StreamHandler::getFileSystem(const uint32& runNumber) const
+const std::string StreamHandler::getFileSystem(const uint32& runNumber, uint32_t fileCount) const
 {
   // if the number of logical disks is not specified, don't
   // add a file system subdir to the path
@@ -110,7 +111,7 @@ const std::string StreamHandler::getFileSystem(const uint32& runNumber) const
   unsigned int fileSystemNumber =
     (runNumber
      + atoi(_diskWritingParams._smInstanceString.c_str())
-     + _fileHandlers.size())
+     + fileCount)
     % _diskWritingParams._nLogicalDisk;
 
   std::ostringstream fileSystem;

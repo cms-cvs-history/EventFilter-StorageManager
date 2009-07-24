@@ -1,4 +1,5 @@
-// $Id$
+// $Id: EnquingPolicyTag.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+/// @file: EnquingPolicyTag.h 
 
 #ifndef EventFilter_StorageManager_EnquingPolicy_t
 #define EventFilter_StorageManager_EnquingPolicy_t
@@ -12,9 +13,9 @@ namespace stor
      This enumeration is used to denote which queuing discipline is
      used for enquing items when the queue in question is full.
 
-     $Author$
-     $Revision$
-     $Date$
+     $Author: mommsen $
+     $Revision: 1.3 $
+     $Date: 2009/07/20 13:06:10 $
    */
 
   namespace enquing_policy

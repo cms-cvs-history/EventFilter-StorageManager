@@ -3,7 +3,8 @@
  * been received by the storage manager and will be sent to event
  * consumers and written to output disk files.
  *
- * $Id$
+ * $Id: InitMsgCollection.cc,v 1.8 2009/07/20 13:07:27 mommsen Exp $
+/// @file: InitMsgCollection.cc
  */
 
 #include "DataFormats/Streamer/interface/StreamedProducts.h"

@@ -1,4 +1,5 @@
-// $Id: Halting.cc,v 1.3 2009/07/03 14:13:04 dshpakov Exp $
+// $Id: Halting.cc,v 1.6 2009/07/20 13:07:27 mommsen Exp $
+/// @file: Halting.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -51,9 +52,9 @@ string Halting::do_stateName() const
   return string( "Halting" );
 }
 
-void Halting::do_moveToFailedState() const
+void Halting::do_moveToFailedState( const std::string& reason ) const
 {
-  outermost_context().getSharedResources()->moveToFailedState();
+  outermost_context().getSharedResources()->moveToFailedState( reason );
 }
 
 void Halting::logStopDoneRequest( const StopDone& request )

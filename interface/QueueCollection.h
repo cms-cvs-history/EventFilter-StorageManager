@@ -1,4 +1,5 @@
-// $Id: QueueCollection.h,v 1.2 2009/06/10 08:15:23 dshpakov Exp $
+// $Id: QueueCollection.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+/// @file: QueueCollection.h 
 
 #ifndef StorageManager_QueueCollection_h
 #define StorageManager_QueueCollection_h
@@ -32,9 +33,9 @@ namespace stor {
    * returning a std::vector<QueueID> which gives the list
    * of QueueIDs of queues the class should be added.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.2 $
-   * $Date: 2009/06/10 08:15:23 $
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   template <class T>

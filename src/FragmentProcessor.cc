@@ -1,4 +1,5 @@
-// $Id: FragmentProcessor.cc,v 1.6 2009/06/29 13:09:12 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.11 2009/07/20 13:07:27 mommsen Exp $
+/// @file: FragmentProcessor.cc
 
 #include <unistd.h>
 
@@ -88,14 +89,14 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
   }
   catch(xcept::Exception &e)
   {
-    LOG4CPLUS_FATAL(_app->getApplicationLogger(),
-      errorMsg << xcept::stdformat_exception_history(e));
+    LOG4CPLUS_FATAL( _app->getApplicationLogger(),
+                     errorMsg << xcept::stdformat_exception_history(e) );
 
-    XCEPT_DECLARE_NESTED(stor::exception::FragmentProcessing,
-      sentinelException, errorMsg, e);
-    _app->notifyQualified("fatal", sentinelException);
+    XCEPT_DECLARE_NESTED( stor::exception::FragmentProcessing,
+                          sentinelException, errorMsg, e );
+    _app->notifyQualified( "fatal", sentinelException );
 
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg + xcept::stdformat_exception_history(e) );
   }
   catch(std::exception &e)
   {
@@ -108,15 +109,7 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
 
-    _sharedResources->moveToFailedState();
-
-    // Ugly hack to stop the FragmentProcessor thread *after* it moved to Failed
-    // state if another std::exception is thrown. This should avoid the flood
-    // of error messages due to the 'std::badcast' problem.
-    const StateMachineMonitorCollection& smc =
-      _sharedResources->_statisticsReporter->getStateMachineMonitorCollection();
-    if (smc.externallyVisibleState() == "Failed")
-      _actionIsActive = false;
+    _sharedResources->moveToFailedState( errorMsg );
   }
   catch(...)
   {
@@ -129,7 +122,7 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
       sentinelException, errorMsg);
     _app->notifyQualified("fatal", sentinelException);
 
-    _sharedResources->moveToFailedState();
+    _sharedResources->moveToFailedState( errorMsg );
   }
 
   return _actionIsActive;
