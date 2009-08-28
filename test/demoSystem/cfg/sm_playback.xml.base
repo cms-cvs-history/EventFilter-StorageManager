@@ -10,16 +10,25 @@
     </i2o:protocol>
 
 <!-- BU / BROKER CONTEXT -->
-  <xc:Context url="http://cmsroc6.fnal.gov:50000">
+  <xc:Context url="http://STMGR_DEV_BU_HOST:STMGR_DEV_BU_PORT">
       <xc:Endpoint protocol="tcp" service="i2o"
-          hostname="cmsroc6.fnal.gov" port="30001" network="tcp1"/>
+          hostname="STMGR_DEV_BU_HOST" port="BU_ENDPOINT_PORT" network="tcp1"/>
+
+    <!-- FUEventProcessor playback provider -->
+    <xc:Application class="evf::FUEventProcessor" id="27" instance="0" network="local">
+      <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
+        <parameterSet xsi:type="xsd:string">file:../../cfg/FUPB_PROVIDER_CFG_FILE</parameterSet>
+        <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
+      </properties>
+    </xc:Application>
+    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterProcessor.so</xc:Module>
 
     <!-- Playback Builder Unit -->
     <xc:Application class="evf::BU" id="24" instance="0" network="tcp1">
       <properties xmlns="urn:xdaq-application:evf::BU" xsi:type="soapenc:Struct">
         <replay xsi:type="xsd:boolean">true</replay>
         <queueSize xsi:type="xsd:unsignedInt">2000</queueSize>
-        <eventBufferSize xsi:type="xsd:unsignedInt">524288</eventBufferSize>
+        <eventBufferSize xsi:type="xsd:unsignedInt">0x100000</eventBufferSize>
       </properties>
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterAutoBU.so</xc:Module>
@@ -27,27 +36,18 @@
     <!-- FUResourceBroker -->
     <xc:Application class="evf::FUResourceBroker" id="25" instance="0" network="tcp1">
       <properties xmlns="urn:xdaq-application:evf::FUResourceBroker" xsi:type="soapenc:Struct">
-        <buClassName  xsi:type="xsd:string"     >evf::BU</buClassName>
-        <!--<nbRawCells xsi:type="xsd:unsignedInt">16</nbRawCells>-->
+        <buClassName  xsi:type="xsd:string">evf::BU</buClassName>
         <nbRawCells xsi:type="xsd:unsignedInt">3</nbRawCells>
         <nbRecoCells xsi:type="xsd:unsignedInt">3</nbRecoCells>
         <nbDqmCells xsi:type="xsd:unsignedInt">3</nbDqmCells>
         <rawCellSize xsi:type="xsd:unsignedInt">0x300000</rawCellSize>
         <recoCellSize xsi:type="xsd:unsignedInt">0x300000</recoCellSize>
         <dqmCellSize xsi:type="xsd:unsignedInt">0x300000</dqmCellSize>
+        <doCrcCheck xsi:type="xsd:unsignedInt">0</doCrcCheck>
+        <runNumber xsi:type="xsd:unsignedInt">0</runNumber>
       </properties>
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterResourceBroker.so</xc:Module>
-
-    <!-- FUEventProcessor playback provider -->
-    <xc:Application class="evf::FUEventProcessor" id="27" instance="0" network="local">
-      <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
-        <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_playback.cfi</parameterSet>
-        <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
-        <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
-      </properties>
-    </xc:Application>
-    <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterProcessor.so</xc:Module>
 
     <xc:Application class="pt::tcp::PeerTransportTCP" id="26" network="tcp1">
       <properties xmlns="urn:xdaq-application:pt::tcp::PeerTransportTCP" xsi:type="soapenc:Struct">
@@ -55,18 +55,17 @@
         <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
       </properties>
     </xc:Application>
-    <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+    <xc:Module>${XDAQ_ROOT}/lib/libpttcp.so</xc:Module>
 
   </xc:Context>
 
 <!-- FUEventProcessor context -->
-  <xc:Context url="http://cmsroc6.fnal.gov:50001">
+  <xc:Context url="http://STMGR_DEV_FU_HOST:STMGR_DEV_FU_PORT">
 
     <xc:Application class="evf::FUEventProcessor" id="21" instance="0" network="local">
       <properties xmlns="urn:xdaq-application:FUEventProcessor" xsi:type="soapenc:Struct">
-        <parameterSet xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/fu_pass.cfi</parameterSet>
-        <collReconnSec xsi:type="xsd:integer">-1</collReconnSec>
-        <runNumber xsi:type="xsd:unsignedInt">100</runNumber>
+        <parameterSet xsi:type="xsd:string">file:../../cfg/FUPB_PASSTHRU_CFG_FILE</parameterSet>
+        <runNumber xsi:type="xsd:unsignedInt">0</runNumber>
         <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
       </properties>
     </xc:Application>
@@ -75,27 +74,26 @@
   </xc:Context>
 
 <!-- StorageManager context -->
-  <!-- Declare a context that contain applcation -->
-  <xc:Context id = "1" url="http://cmsroc6.fnal.gov:50002">
+  <!-- Declare a context that contains the application -->
+  <xc:Context id = "1" url="http://STMGR_DEV_SM_HOST:STMGR_DEV_SM_PORT">
     <xc:Endpoint protocol="tcp" service="i2o"
-      hostname="cmsroc6.fnal.gov" port="60000" network="tcp1"/>
+      hostname="STMGR_DEV_SM_HOST" port="SM_ENDPOINT_PORT" network="tcp1"/>
 
     <!-- Declare a StorageManager application -->
     <xc:Application class="StorageManager" id="29" instance="0" network="tcp1">
       <properties xmlns="urn:xdaq-application:StorageManager" xsi:type="soapenc:Struct">
-        <STparameterSet     xsi:type="xsd:string">file:/uscms/home/cheung/work/xml2/sm_stage1noout.cfi</STparameterSet>
-        <maxESEventRate     xsi:type="xsd:double">15.0</maxESEventRate>
+        <STparameterSet     xsi:type="xsd:string">file:../../cfg/SMPB_CFG_FILE</STparameterSet>
+        <maxESEventRate     xsi:type="xsd:double">20.0</maxESEventRate>
         <DQMmaxESEventRate  xsi:type="xsd:double">1.0</DQMmaxESEventRate>
-        <runNumber          xsi:type="xsd:unsignedInt">100</runNumber>
+        <runNumber          xsi:type="xsd:unsignedInt">0</runNumber>
         <nLogicalDisk       xsi:type="xsd:integer">0</nLogicalDisk> 
-        <filePath           xsi:type="xsd:string">/scratch2/cheung</filePath> 
+        <filePath           xsi:type="xsd:string">../../db</filePath> 
         <fileCatalog        xsi:type="xsd:string">summaryCatalog.txt</fileCatalog> 
-        <pushMode2Proxy     xsi:type="xsd:boolean">true</pushMode2Proxy>
-        <collateDQM         xsi:type="xsd:boolean">false</collateDQM>
+        <collateDQM         xsi:type="xsd:boolean">true</collateDQM>
         <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
-        <filePrefixDQM      xsi:type="xsd:string">/scratch2/cheung/dqm</filePrefixDQM>
-        <purgeTimeDQM       xsi:type="xsd:integer">20</purgeTimeDQM>
-        <readyTimeDQM       xsi:type="xsd:integer">10</readyTimeDQM>
+        <filePrefixDQM      xsi:type="xsd:string">../../smDQM/</filePrefixDQM>
+        <purgeTimeDQM       xsi:type="xsd:integer">120</purgeTimeDQM>
+        <readyTimeDQM       xsi:type="xsd:integer">30</readyTimeDQM>
         <useCompressionDQM  xsi:type="xsd:boolean">true</useCompressionDQM>
         <compressionLevelDQM xsi:type="xsd:integer">1</compressionLevelDQM>
       </properties>
@@ -108,7 +106,7 @@
         <maxPacketSize xsi:type="xsd:unsignedInt">262144</maxPacketSize>
       </properties>
     </xc:Application>
-    <xc:Module>$XDAQ_ROOT/lib/libpttcp.so</xc:Module>
+    <xc:Module>${XDAQ_ROOT}/lib/libpttcp.so</xc:Module>
 
   </xc:Context>
 
