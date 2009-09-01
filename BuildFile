@@ -6,12 +6,14 @@
 <use name=FWCore/Framework>
 <use name=FWCore/MessageLogger>
 <use name=FWCore/MessageService>
+<use name=FWCore/PythonParameterSet>
 <use name=FWCore/ParameterSet>
 <use name=FWCore/PluginManager>
 <use name=FWCore/RootAutoLibraryLoader>
 <use name=FWCore/ServiceRegistry>
 <use name=FWCore/Sources>
 <use name=FWCore/Utilities>
+<use name=FWCore/Version>
 <use name=DataFormats/Common>
 <use name=DataFormats/Provenance>
 <use name=DataFormats/Streamer>
@@ -33,6 +35,7 @@
  <use name=FWCore/PluginManager>
  <use name=FWCore/ServiceRegistry>
  <use name=FWCore/Utilities>
+ <use name=FWCore/Version>
  <use name=DataFormats/Common>
  <use name=IOPool/Streamer>
  <use name=curl>
