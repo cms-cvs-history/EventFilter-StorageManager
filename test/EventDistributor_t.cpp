@@ -13,7 +13,6 @@
 #include "EventFilter/StorageManager/test/MockApplication.h"
 
 #include "DataFormats/Common/interface/HLTenums.h"
-#include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
 
 
 /////////////////////////////////////////////////////////////
