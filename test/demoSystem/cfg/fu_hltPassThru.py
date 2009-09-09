@@ -37,3 +37,16 @@ process.hltOutputDQM = cms.OutputModule("ShmStreamConsumer",
                                         )
 
 process.e = cms.EndPath(process.hltOutputDQM)
+
+
+# 09-Sep-2009, KAB - In principle, the DQM services aren't needed.  However,
+# because of a bug in the FUEventProcessor::attachDqmToShm() method (my
+# opinion), we need to instantiate the FUshmDQMOutputService.
+
+process.DQMStore = cms.Service("DQMStore")
+
+process.FUShmDQMOutputService = cms.Service("FUShmDQMOutputService",
+                                            lumiSectionsPerUpdate = cms.double(1.0),
+                                            useCompression = cms.bool(True),
+                                            compressionLevel = cms.int32(1)
+                                            )
