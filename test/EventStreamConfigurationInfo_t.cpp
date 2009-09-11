@@ -1,6 +1,7 @@
-// $Id$
+// $Id: EventStreamConfigurationInfo_t.cpp,v 1.2 2009/06/10 08:15:29 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
+#include <iostream>
 
 using stor::EventStreamConfigurationInfo;
 using namespace std;

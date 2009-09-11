@@ -1,10 +1,12 @@
-// $Id: Configuration.cc,v 1.6 2009/07/03 11:07:35 mommsen Exp $
+// $Id: Configuration.cc,v 1.7 2009/07/20 13:07:27 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/Utilities/interface/ParameterSetRetriever.h"
 #include "FWCore/Framework/interface/EventSelector.h"
-#include "FWCore/ParameterSet/interface/PythonProcessDesc.h"
+#include "FWCore/PythonParameterSet/interface/PythonProcessDesc.h"
+#include "FWCore/ParameterSet/interface/ProcessDesc.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include <toolbox/net/Utils.h>
 
