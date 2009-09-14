@@ -1,7 +1,8 @@
-// $Id: ErrorStreamConfigurationInfo.cc,v 1.2 2009/06/10 08:15:26 dshpakov Exp $
+// $Id: ErrorStreamConfigurationInfo.cc,v 1.4 2009/09/11 21:07:06 elmer Exp $
 /// @file: ErrorStreamConfigurationInfo.cc
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
+#include <ostream>
 
 using stor::ErrorStreamConfigurationInfo;
 using namespace std;

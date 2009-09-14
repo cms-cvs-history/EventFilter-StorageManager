@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo.h,v 1.2 2009/06/10 08:15:22 dshpakov Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.4 2009/09/11 21:07:06 elmer Exp $
 /// @file: EventStreamConfigurationInfo.h
 
 #ifndef StorageManager_EventStreamConfigurationInfo_h
@@ -10,7 +10,7 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 
 namespace stor
 {
@@ -18,9 +18,9 @@ namespace stor
   /**
      Configuration information for the event stream
 
-     $Author: dshpakov $
+     $Author: elmer $
      $Revision: 1.4 $
-     $Date: 2009/07/14 10:34:44 $
+     $Date: 2009/09/11 21:07:06 $
   */
 
   class EventStreamConfigurationInfo
@@ -84,6 +84,7 @@ namespace stor
   typedef std::vector<EventStreamConfigurationInfo> EvtStrConfigList;
   typedef boost::shared_ptr<EvtStrConfigList> EvtStrConfigListPtr;
 
+  std::ostream& operator << ( std::ostream&, const EventStreamConfigurationInfo& );
 }
 
 #endif // StorageManager_EventStreamConfigurationInfo_h
