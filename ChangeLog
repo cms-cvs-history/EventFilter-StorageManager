@@ -1,3 +1,8 @@
+2009-09-14 Remi Mommsen <Remigius.Mommsen@cern.ch>
+
+	* tag V05-01-08
+	* Couple of fixes for 64-bit built (slc4_amd64_gcc432)
+
 2009-09-11 Peter Elmer <Peter.Elmer@cern.ch>
 
 	* tag V05-01-07
