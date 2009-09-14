@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.3 2009/07/03 11:08:46 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.4 2009/07/20 13:07:27 mommsen Exp $
 /// @file: EventFileHandler.cc
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
@@ -14,7 +14,7 @@ EventFileHandler::EventFileHandler
   InitMsgSharedPtr view,
   FilesMonitorCollection::FileRecordPtr fileRecord,
   const DiskWritingParams& dwParams,
-  const long long& maxFileSize
+  const unsigned long long& maxFileSize
 ) :
 FileHandler(fileRecord, dwParams, maxFileSize),
 _writer(

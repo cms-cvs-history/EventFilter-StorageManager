@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.3 2009/07/03 11:08:05 mommsen Exp $
+// $Id: FileHandler.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
 /// @file: FileHandler.h 
 
 #ifndef StorageManager_FileHandler_h
@@ -21,8 +21,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/03 11:08:05 $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class FileHandler
@@ -33,7 +33,7 @@ namespace stor {
     (
       FilesMonitorCollection::FileRecordPtr,
       const DiskWritingParams&,
-      const long long& maxFileSize
+      const unsigned long long& maxFileSize
      );
     
     virtual ~FileHandler() {};
@@ -84,7 +84,7 @@ namespace stor {
     /**
      * Return the size of the file in bytes
      */
-    const long long fileSize() const;
+    const unsigned long long fileSize() const;
 
 
   protected:
@@ -199,7 +199,7 @@ namespace stor {
     
   private:
     
-    const long long    _maxFileSize;                // maximal file size in bytes
+    const unsigned long long _maxFileSize;          // maximal file size in bytes
     
     const std::string  _logPath;                    // log path
     const std::string  _logFile;                    // log file including path

@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.h,v 1.3 2009/07/03 11:08:32 mommsen Exp $
+// $Id: EventFileHandler.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
 /// @file: EventFileHandler.h 
 
 #ifndef StorageManager_EventFileHandler_h
@@ -16,8 +16,8 @@ namespace stor {
    * Represents a file holding event data
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/03 11:08:32 $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:10 $
    */
   
   class EventFileHandler : public FileHandler
@@ -28,7 +28,7 @@ namespace stor {
       InitMsgSharedPtr,
       FilesMonitorCollection::FileRecordPtr,
       const DiskWritingParams&,
-      const long long& maxFileSize
+      const unsigned long long& maxFileSize
     );
 
     virtual ~EventFileHandler();

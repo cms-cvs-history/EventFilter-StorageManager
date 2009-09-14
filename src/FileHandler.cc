@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.4 2009/07/20 13:07:27 mommsen Exp $
+// $Id: FileHandler.cc,v 1.5 2009/07/25 02:30:03 wmtan Exp $
 /// @file: FileHandler.cc
 
 #include <EventFilter/StorageManager/interface/Exception.h>
@@ -22,7 +22,7 @@ FileHandler::FileHandler
 (
   FilesMonitorCollection::FileRecordPtr fileRecord,
   const DiskWritingParams& dwParams,
-  const long long& maxFileSize
+  const unsigned long long& maxFileSize
 ):
 _fileRecord(fileRecord),
 _firstEntry(utils::getCurrentTime()),
@@ -150,7 +150,7 @@ const int FileHandler::events() const
 }
 
 
-const long long FileHandler::fileSize() const
+const unsigned long long FileHandler::fileSize() const
 {
   return _fileRecord->fileSize;
 }

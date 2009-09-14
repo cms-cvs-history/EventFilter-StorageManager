@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.3 2009/07/16 11:41:30 mommsen Exp $
+// $Id: StreamHandler.h,v 1.4 2009/07/20 13:06:11 mommsen Exp $
 /// @file: StreamHandler.h 
 
 #ifndef StorageManager_StreamHandler_h
@@ -19,8 +19,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/16 11:41:30 $
+   * $Revision: 1.4 $
+   * $Date: 2009/07/20 13:06:11 $
    */
   
   class StreamHandler
@@ -76,7 +76,7 @@ namespace stor {
     /**
      * Return the maximum file size in bytes
      */
-    const long long getMaxFileSize() const;
+    const unsigned long long getMaxFileSize() const;
 
 
   private:

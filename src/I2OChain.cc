@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.6 2009/07/03 11:05:48 mommsen Exp $
+// $Id: I2OChain.cc,v 1.7 2009/07/20 13:07:27 mommsen Exp $
 /// @file: I2OChain.cc
 
 #include <algorithm>
@@ -205,11 +205,13 @@ namespace stor
       // variable default value for one of the fragKey fields.
       if (pRef)
         {
-          _fragKey.secondaryId_ = (uint32) pRef->getDataLocation();
+          _fragKey.secondaryId_ = static_cast<uint32>(
+            (size_t)pRef->getDataLocation()
+          );
         }
       else
         {
-          _fragKey.secondaryId_ = (uint32) time(0);
+          _fragKey.secondaryId_ = static_cast<uint32>( time(0) );
         }
 
       if (pRef)

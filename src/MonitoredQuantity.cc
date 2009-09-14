@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.2 2009/06/10 08:15:27 dshpakov Exp $
+// $Id: MonitoredQuantity.cc,v 1.3 2009/07/20 13:07:28 mommsen Exp $
 /// @file: MonitoredQuantity.cc
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
@@ -48,6 +48,11 @@ void  MonitoredQuantity::addSample(const int value)
 }
 
 void  MonitoredQuantity::addSample(const uint32_t value)
+{
+  addSample(static_cast<double>(value));
+}
+
+void  MonitoredQuantity::addSample(const uint64_t value)
 {
   addSample(static_cast<double>(value));
 }
