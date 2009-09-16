@@ -1,4 +1,4 @@
-// $Id$
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.2 2009/06/10 08:15:29 dshpakov Exp $
 
 #include <iostream>
 
@@ -25,7 +25,8 @@ int main()
 	     "hltOutputDQM",
              id1.index(),
              id1.policy(),
-	     10 );
+	     10,
+	     "localhost" );
   ecri.setQueueID( id1 );
 	     
 
