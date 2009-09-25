@@ -1,16 +1,17 @@
-// $Id: FileHandler.h,v 1.4.4.1 2009/09/14 16:44:18 mommsen Exp $
+// $Id: FileHandler.h,v 1.4.4.2 2009/09/25 09:57:43 mommsen Exp $
 /// @file: FileHandler.h 
 
 #ifndef StorageManager_FileHandler_h
 #define StorageManager_FileHandler_h
 
-#include <EventFilter/StorageManager/interface/Configuration.h>
-#include <EventFilter/StorageManager/interface/FilesMonitorCollection.h>
-#include <EventFilter/StorageManager/interface/Utils.h>
-#include <IOPool/Streamer/interface/MsgHeader.h>
+#include "EventFilter/StorageManager/interface/Configuration.h"
+#include "EventFilter/StorageManager/interface/FilesMonitorCollection.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
+#include "IOPool/Streamer/interface/MsgHeader.h"
 
-#include <boost/shared_ptr.hpp>
+#include "boost/shared_ptr.hpp"
 
+#include <stdint.h>
 #include <string>
 
 
@@ -22,8 +23,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.4.4.1 $
-   * $Date: 2009/09/14 16:44:18 $
+   * $Revision: 1.4.4.2 $
+   * $Date: 2009/09/25 09:57:43 $
    */
 
   class FileHandler

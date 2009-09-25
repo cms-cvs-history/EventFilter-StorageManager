@@ -1,8 +1,10 @@
-// $Id: StreamHandler.h,v 1.4.4.1 2009/09/14 16:44:18 mommsen Exp $
+// $Id: StreamHandler.h,v 1.4.4.2 2009/09/25 09:57:44 mommsen Exp $
 /// @file: StreamHandler.h 
 
 #ifndef StorageManager_StreamHandler_h
 #define StorageManager_StreamHandler_h
+
+#include <stdint.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -22,8 +24,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.4.4.1 $
-   * $Date: 2009/09/14 16:44:18 $
+   * $Revision: 1.4.4.2 $
+   * $Date: 2009/09/25 09:57:44 $
    */
   
   class StreamHandler

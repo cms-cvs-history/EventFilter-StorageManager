@@ -1,11 +1,12 @@
-// $Id: FilesMonitorCollection.h,v 1.4.2.1 2009/09/14 16:44:18 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.4.2.2 2009/09/25 09:57:43 mommsen Exp $
 /// @file: FilesMonitorCollection.h 
 
 #ifndef StorageManager_FilesMonitorCollection_h
 #define StorageManager_FilesMonitorCollection_h
 
-#include <sstream>
 #include <iomanip>
+#include <sstream>
+#include <stdint.h>
 #include <vector>
 
 #include <boost/circular_buffer.hpp>
@@ -23,8 +24,8 @@ namespace stor {
    * A collection of monitoring entities for open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.4.2.1 $
-   * $Date: 2009/09/14 16:44:18 $
+   * $Revision: 1.4.2.2 $
+   * $Date: 2009/09/25 09:57:43 $
    */
   
   class FilesMonitorCollection : public MonitorCollection

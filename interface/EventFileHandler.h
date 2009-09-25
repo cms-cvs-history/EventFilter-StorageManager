@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.h,v 1.4.4.1 2009/09/14 16:44:17 mommsen Exp $
+// $Id: EventFileHandler.h,v 1.4.4.2 2009/09/25 09:57:43 mommsen Exp $
 /// @file: EventFileHandler.h 
 
 #ifndef StorageManager_EventFileHandler_h
@@ -7,7 +7,9 @@
 #include "EventFilter/StorageManager/interface/FileHandler.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 
-#include <IOPool/Streamer/src/StreamerFileWriter.h>
+#include "IOPool/Streamer/src/StreamerFileWriter.h"
+
+#include <stdint.h>
 
 
 namespace stor {
@@ -19,8 +21,8 @@ namespace stor {
    * Represents a file holding event data
    *
    * $Author: mommsen $
-   * $Revision: 1.4.4.1 $
-   * $Date: 2009/09/14 16:44:17 $
+   * $Revision: 1.4.4.2 $
+   * $Date: 2009/09/25 09:57:43 $
    */
   
   class EventFileHandler : public FileHandler
