@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.2 2009/06/10 08:15:21 dshpakov Exp $
+// $Id: DQMEventProcessor.h,v 1.4 2009/08/28 16:41:49 mommsen Exp $
 /// @file: DQMEventProcessor.h 
 
 #ifndef StorageManager_DQMEventProcessor_h
@@ -10,13 +10,15 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/DQMEventStore.h"
-#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
 
 namespace stor {
+
+  class QueueID;
+  class StatisticsReporter;
+
 
   /**
    * Processes the DQM event (histograms)
@@ -27,9 +29,9 @@ namespace stor {
    * Depending on the configuration, it also writes the histograms
    * to disk every N lumi-sections.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.2 $
-   * $Date: 2009/06/10 08:15:21 $
+   * $Author: mommsen $
+   * $Revision: 1.4 $
+   * $Date: 2009/08/28 16:41:49 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class

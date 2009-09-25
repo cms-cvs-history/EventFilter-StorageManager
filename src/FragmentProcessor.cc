@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.10 2009/07/10 14:51:12 dshpakov Exp $
+// $Id: FragmentProcessor.cc,v 1.12 2009/08/28 16:41:26 mommsen Exp $
 /// @file: FragmentProcessor.cc
 
 #include <unistd.h>
@@ -8,6 +8,10 @@
 
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/FragmentProcessor.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 
 using namespace stor;
 

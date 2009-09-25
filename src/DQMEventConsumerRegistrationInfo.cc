@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.2 2009/06/10 08:15:25 dshpakov Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.4 2009/09/16 09:53:24 dshpakov Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -14,10 +14,12 @@ namespace stor
     const string& topLevelFolderName,
     const size_t& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale ) :
-  _common( consumerName, queueSize, queuePolicy, secondsToStale),
-  _topLevelFolderName( topLevelFolderName ),
-  _stale( false )
+    const utils::duration_t& secondsToStale,
+    const std::string& remoteHost ) :
+    _common( consumerName, queueSize, queuePolicy, secondsToStale),
+    _topLevelFolderName( topLevelFolderName ),
+    _stale( false ),
+    _remoteHost( remoteHost )
   {
     if( consumerName == "SMProxyServer" ||
         ( consumerName.find( "urn" ) != std::string::npos &&

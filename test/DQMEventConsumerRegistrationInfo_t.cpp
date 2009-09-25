@@ -1,4 +1,4 @@
-// $Id$
+// $Id: DQMEventConsumerRegistrationInfo_t.cpp,v 1.3 2009/09/16 09:53:24 dshpakov Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
@@ -15,7 +15,8 @@ int main()
 	      "*",
               id1.index(),
               id1.policy(),
-	      1024 );
+	      1024,
+	      "localhost" );
 
   cout << ecri << endl;
   return 0;

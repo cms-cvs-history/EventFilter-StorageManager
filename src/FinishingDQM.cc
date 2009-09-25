@@ -1,10 +1,12 @@
-// $Id: FinishingDQM.cc,v 1.6 2009/07/10 11:41:03 dshpakov Exp $
+// $Id: FinishingDQM.cc,v 1.8 2009/08/28 16:41:26 mommsen Exp $
 /// @file: FinishingDQM.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
+#include "EventFilter/StorageManager/interface/DQMEventProcessorResources.h"
+#include "EventFilter/StorageManager/interface/Notifier.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Notifier.h"
+#include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <iostream>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.cc,v 1.2 2009/06/10 08:15:29 dshpakov Exp $
+// $Id: XHTMLMaker.cc,v 1.4 2009/09/18 10:22:23 dshpakov Exp $
 /// @file: XHTMLMaker.cc
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
@@ -176,11 +176,20 @@ void XHTMLMaker::addText( Node* parent, const string& data )
   parent->appendChild( txt );
 }
 
+/////////////////////////
+//// Add an integer: ////
+/////////////////////////
+void XHTMLMaker::addInt( Node* parent, int value )
+{
+    ostringstream tmpString;
+    tmpString << value;
+    addText( parent, tmpString.str() );
+}
+
 /////////////////////////////
 //// Add a double value: ////
 /////////////////////////////
-
-void XHTMLMaker::addText( Node* parent, const double& value, const int& precision )
+void XHTMLMaker::addDouble( Node* parent, double value, unsigned int precision )
 {
     ostringstream tmpString;
     tmpString << fixed << setprecision( precision ) << value;

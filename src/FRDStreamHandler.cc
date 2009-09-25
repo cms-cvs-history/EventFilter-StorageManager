@@ -1,6 +1,8 @@
-// $Id: FRDStreamHandler.cc,v 1.2 2009/06/10 08:15:26 dshpakov Exp $
+// $Id: FRDStreamHandler.cc,v 1.4 2009/08/28 16:41:26 mommsen Exp $
 /// @file: FRDStreamHandler.cc
 
+#include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
+#include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/FRDFileHandler.h"
 #include "EventFilter/StorageManager/interface/FRDStreamHandler.h"
 

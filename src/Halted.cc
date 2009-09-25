@@ -1,9 +1,9 @@
-// $Id: Halted.cc,v 1.6 2009/07/10 11:41:03 dshpakov Exp $
+// $Id: Halted.cc,v 1.8 2009/08/28 16:41:26 mommsen Exp $
 /// @file: Halted.cc
 
 #include "EventFilter/StorageManager/interface/Notifier.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
-#include "EventFilter/StorageManager/interface/Notifier.h"
+#include "EventFilter/StorageManager/interface/TransitionRecord.h"
 
 #include <iostream>
 

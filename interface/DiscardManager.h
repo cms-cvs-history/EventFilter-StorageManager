@@ -1,12 +1,8 @@
-// $Id: DiscardManager.h,v 1.3 2009/06/24 19:11:21 biery Exp $
+// $Id: DiscardManager.h,v 1.5 2009/08/28 16:41:49 mommsen Exp $
 /// @file: DiscardManager.h 
 
 #ifndef StorageManager_DiscardManager_h
 #define StorageManager_DiscardManager_h
-
-#include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
-#include "EventFilter/StorageManager/interface/FUProxy.h"
-#include "EventFilter/StorageManager/interface/I2OChain.h"
 
 #include "xdaq/ApplicationContext.h"
 #include "xdaq/ApplicationDescriptor.h"
@@ -18,12 +14,17 @@
 
 namespace stor {
 
+  class DataSenderMonitorCollection;
+  class FUProxy;
+  class I2OChain;
+
+
   /**
    * Handles the discard messages sent to the upstream Resource Brokers.
    *
-   * $Author: biery $
-   * $Revision: 1.3 $
-   * $Date: 2009/06/24 19:11:21 $
+   * $Author: mommsen $
+   * $Revision: 1.5 $
+   * $Date: 2009/08/28 16:41:49 $
    */
 
   class DiscardManager
