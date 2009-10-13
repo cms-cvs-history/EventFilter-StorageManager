@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.7.2.1 2009/08/25 19:33:52 wdd Exp $
+// $Id: Configuration.cc,v 1.7.2.2 2009/09/25 09:57:46 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -163,7 +163,7 @@ namespace stor
     _diskWriteParamCopy._fileClosingTestInterval = 5.0;
     _diskWriteParamCopy._exactFileSizeTest = false;
     _diskWriteParamCopy._useIndexFiles = true;
-    _diskWriteParamCopy._sataUser = "USER:mickey2mouse";
+    _diskWriteParamCopy._sataUser = "";
     _diskWriteParamCopy._nInjectWorkers = -1;
     _diskWriteParamCopy._nCopyWorkers = -1;
 

@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.10 2009/09/22 14:54:50 dshpakov Exp $
+// $Id: StatisticsReporter.h,v 1.4.2.1 2009/09/25 09:57:44 mommsen Exp $
 /// @file: StatisticsReporter.h 
 
 #ifndef StorageManager_StatisticsReporter_h
@@ -8,6 +8,7 @@
 #include "toolbox/task/WaitingWorkLoop.h"
 #include "xdaq/Application.h"
 #include "xdata/InfoSpace.h"
+#include "xdata/String.h"
 #include "xdata/UnsignedInteger32.h"
 
 #include "EventFilter/StorageManager/interface/EventConsumerMonitorCollection.h"
@@ -42,9 +43,9 @@ namespace stor {
    * This class also starts the monitoring workloop to update the 
    * statistics for all MonitorCollections.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.10 $
-   * $Date: 2009/09/22 14:54:50 $
+   * $Author: mommsen $
+   * $Revision: 1.4.2.1 $
+   * $Date: 2009/09/25 09:57:44 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class, public xdata::ActionListener
@@ -201,6 +202,7 @@ namespace stor {
     // the HLTSFM queries them from the application infospace at 
     // the end of the run to put them into the RunInfo DB. The HTLSFM
     // uses the application infospace, and not the monitoring infospace.
+    xdata::String _stateName;
     xdata::UnsignedInteger32 _storedEvents;
     xdata::UnsignedInteger32 _closedFiles;
 
