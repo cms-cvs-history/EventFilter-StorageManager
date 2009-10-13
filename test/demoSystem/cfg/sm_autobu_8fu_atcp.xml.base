@@ -14,10 +14,6 @@
       <xc:Endpoint protocol="atcp" service="i2o"
           hostname="STMGR_DEV_BU_HOST" port="BU_ENDPOINT_PORT" network="tcp1"/>
 
-    <!-- State listener -->
-    <xc:Application class="rubuilder::tester::Application" id="23" instance="0" network="local"/>
-    <xc:Module>${XDAQ_ROOT}/lib/librubuildertester.so</xc:Module>
-
     <!-- Playback Builder Unit -->
     <xc:Application class="evf::BU" id="24" instance="0" network="tcp1">
     </xc:Application>
@@ -34,10 +30,6 @@
         <recoCellSize xsi:type="xsd:unsignedInt">0x200000</recoCellSize>
         <dqmCellSize xsi:type="xsd:unsignedInt">0x200000</dqmCellSize>
         <runNumber xsi:type="xsd:unsignedInt">7291441</runNumber>
-        <rcmsStateListener xsi:type="soapenc:Struct">
-          <classname xsi:type="xsd:string">rubuilder::tester::Application</classname>
-          <instance xsi:type="xsd:unsignedInt">0</instance>
-        </rcmsStateListener>
       </properties>
       <xc:Unicast class="StorageManager" network="tcp1"/>
     </xc:Application>
@@ -61,10 +53,6 @@
         <parameterSet xsi:type="xsd:string">file:../../cfg/FU_CFG_FILE</parameterSet>
         <runNumber xsi:type="xsd:unsignedInt">0</runNumber>
         <hasPrescaleService xsi:type="xsd:boolean">false</hasPrescaleService>
-        <rcmsStateListener xsi:type="soapenc:Struct">
-          <classname xsi:type="xsd:string">rubuilder::tester::Application</classname>
-          <instance xsi:type="xsd:unsignedInt">0</instance>
-        </rcmsStateListener>
       </properties>
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterProcessor.so</xc:Module>
@@ -210,10 +198,6 @@
         <readyTimeDQM       xsi:type="xsd:integer">30</readyTimeDQM>
         <useCompressionDQM  xsi:type="xsd:boolean">true</useCompressionDQM>
         <compressionLevelDQM xsi:type="xsd:integer">1</compressionLevelDQM>
-        <rcmsStateListener xsi:type="soapenc:Struct">
-          <classname xsi:type="xsd:string">rubuilder::tester::Application</classname>
-          <instance xsi:type="xsd:unsignedInt">0</instance>
-        </rcmsStateListener>
       </properties>
     </xc:Application>
     <xc:Module>${CMSSW_BASE}/lib/${SCRAM_ARCH}/libEventFilterStorageManager.so</xc:Module>
