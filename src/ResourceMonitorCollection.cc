@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.cc,v 1.6.2.1 2009/09/25 09:57:48 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.6.2.2 2009/10/13 14:13:55 mommsen Exp $
 /// @file: ResourceMonitorCollection.cc
 
 #include <string>
@@ -169,7 +169,7 @@ void ResourceMonitorCollection::do_updateInfoSpaceItems()
 
   _diskPaths.reserve(stats.diskUsageStatsList.size());
   _totalDiskSpace.reserve(stats.diskUsageStatsList.size());
-  _usedDiskSpace.resize(stats.diskUsageStatsList.size());
+  _usedDiskSpace.reserve(stats.diskUsageStatsList.size());
 
   for (DiskUsageStatsPtrList::const_iterator
          it = stats.diskUsageStatsList.begin(),
