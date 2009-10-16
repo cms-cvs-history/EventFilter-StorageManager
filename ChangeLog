@@ -1,3 +1,8 @@
+2009-10-16 Remi Mommsen <Remigius.Mommsen@cern.ch>
+
+	* tag V05-03-02
+	* Merge changes from V05-02-03 into branch_3_3_X
+
 2009-10-13 Remi Mommsen <Remigius.Mommsen@cern.ch>
 
 	* tag V05-03-01
@@ -8,6 +13,13 @@
 	* tag V05-03-00
 	* Merge changes from V05-02-00 into branch_3_3_X
 	* Fix a couple of issues for gcc4/amd64
+
+2009-10-16 Remi Mommsen <Remigius.Mommsen@cern.ch>
+
+	* tag V05-02-03
+	* Fix sub-second sleep duration
+	* Fix bug in filling the disk-space usages vector in the info space
+	* Backport fixes for gcc4/amd64 from branch_3_3_X
 
 2009-10-13 Remi Mommsen <Remigius.Mommsen@cern.ch>
 
