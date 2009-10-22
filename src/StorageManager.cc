@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.107.2.1 2009/09/25 09:57:49 mommsen Exp $
+// $Id: StorageManager.cc,v 1.107.2.2 2009/10/13 14:13:56 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
@@ -20,6 +20,8 @@
 #include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 
 #include "i2o/Method.h"
+#include "interface/shared/version.h"
+#include "interface/shared/i2oXFunctionCodes.h"
 #include "xcept/tools.h"
 #include "xdaq/NamespaceURI.h"
 #include "xdata/InfoSpaceFactory.h"
@@ -38,7 +40,7 @@ using namespace stor;
 StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   xdaq::Application(s),
   _webPageHelper( getApplicationDescriptor(),
-    "$Id: StorageManager.cc,v 1.107.2.1 2009/09/25 09:57:49 mommsen Exp $ $Name: branch_3_3_X $")
+    "$Id: StorageManager.cc,v 1.107.2.2 2009/10/13 14:13:56 mommsen Exp $ $Name: branch_3_3_X $")
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -93,6 +95,13 @@ void StorageManager::bindI2OCallbacks()
             &StorageManager::receiveDQMMessage,
             I2O_SM_DQM,
             XDAQ_ORGANIZATION_ID);
+
+  #if (INTERFACESHARED_VERSION_MAJOR*1000 + INTERFACESHARED_VERSION_MINOR)>1010
+  i2o::bind(this,
+            &StorageManager::receiveEndOfLumiSectionMessage,
+            I2O_EVM_LUMISECTION,
+            XDAQ_ORGANIZATION_ID);
+  #endif
 }
 
 
@@ -309,6 +318,11 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
 }
 
 
+void StorageManager::receiveEndOfLumiSectionMessage(toolbox::mem::Reference *ref)
+{
+  // do nothing for now
+  ref->release();
+}
 
 ///////////////////////////////////////
 // Web interface call back functions //
