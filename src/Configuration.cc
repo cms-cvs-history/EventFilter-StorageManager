@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.7.2.2 2009/09/25 09:57:46 mommsen Exp $
+// $Id: Configuration.cc,v 1.7.2.3 2009/10/13 14:13:54 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -154,7 +154,7 @@ namespace stor
     _diskWriteParamCopy._filePath = "/tmp";
     _diskWriteParamCopy._otherDiskPaths.clear();
     _diskWriteParamCopy._fileCatalog = "summaryCatalog.txt";
-    _diskWriteParamCopy._setupLabel = "mtcc";
+    _diskWriteParamCopy._setupLabel = "Data";
     _diskWriteParamCopy._nLogicalDisk = 0;
     _diskWriteParamCopy._maxFileSizeMB = 0;
     _diskWriteParamCopy._highWaterMark = 0.9;
