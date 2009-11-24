@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo_t.cpp,v 1.2 2009/06/10 08:15:29 dshpakov Exp $
+// $Id: EventStreamConfigurationInfo_t.cpp,v 1.3 2009/09/11 21:07:07 elmer Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include <iostream>
@@ -21,7 +21,8 @@ int main()
 				     "PhysicsOModule",
 				     true,
 				     7,
-				     7000000 );
+                                     7000000,
+                                     1 );
 
   cout << esci << endl;
 
