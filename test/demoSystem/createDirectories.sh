@@ -20,6 +20,7 @@ mkdir log/consFU
 mkdir log/filterUnit
 mkdir log/smProxy
 mkdir log/storageManager
+mkdir log/watchdog
 
 mkdir smDQM
 mkdir smpsDQM
