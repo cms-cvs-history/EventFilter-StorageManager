@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo_t.cpp,v 1.3 2009/09/11 21:07:07 elmer Exp $
+// $Id: EventStreamConfigurationInfo_t.cpp,v 1.4 2009/11/24 16:39:53 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include <iostream>
@@ -15,8 +15,11 @@ int main()
   fl.push_back( "DiElectron" );
   fl.push_back( "HighPT" );
 
+  std::string f2 = "DiMuon || CalibPath || DiElectron || HighPT";
+
   EventStreamConfigurationInfo esci( "A",
 				     100,
+				     f2,
 				     fl,
 				     "PhysicsOModule",
 				     true,

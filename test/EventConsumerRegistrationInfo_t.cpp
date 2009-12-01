@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.2 2009/06/10 08:15:29 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.3 2009/09/16 09:53:24 dshpakov Exp $
 
 #include <iostream>
 
@@ -16,11 +16,15 @@ int main()
   ECRI::FilterList fl;
   fl.push_back( "DQM1" );
   fl.push_back( "DQM2" );
+
+  std::string filters2 = "DQM1 || DQM2";
+
   QueueID id1(stor::enquing_policy::DiscardOld, 3);
 
   ECRI ecri( 1,
 	     1,
 	     "Test Consumer",
+	     filters2,
 	     fl,
 	     "hltOutputDQM",
              id1.index(),

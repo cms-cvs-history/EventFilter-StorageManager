@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.32 2009/06/10 08:15:29 dshpakov Exp $
+# $Id: BuildFile,v 1.33 2009/08/20 13:47:37 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -114,6 +114,9 @@
 
   <bin file=ResourceMonitorCollection_t.cpp>
     <use name=cppunit>
+  </bin>
+
+  <bin file=TriggerSelector_t.cpp>
   </bin>
 
 
