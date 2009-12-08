@@ -1,4 +1,4 @@
-# $Id: BuildFile,v 1.33 2009/08/20 13:47:37 mommsen Exp $
+# $Id: BuildFile,v 1.34 2009/12/01 13:58:09 mommsen Exp $
 
 <environment>
   <use name=boost>
@@ -89,6 +89,10 @@
   </bin>
 
   <bin file=EventDistributor_t.cpp>
+    <use name=cppunit>
+  </bin>
+
+  <bin file=MockNotifier_t.cpp>
     <use name=cppunit>
   </bin>
 
