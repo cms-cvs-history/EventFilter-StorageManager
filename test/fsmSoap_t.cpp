@@ -5,7 +5,6 @@
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 #include "EventFilter/StorageManager/test/MockDiskWriterResources.h"
-#include "EventFilter/StorageManager/test/MockApplication.h"
 
 #include "xcept/tools.h"
 #include "xdaq/ApplicationStub.h"
