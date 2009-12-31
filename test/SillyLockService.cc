@@ -59,7 +59,7 @@ namespace Nuts {
   void SillyLockService::preModule(const ModuleDescription& desc)
   {
     if(!labels_.empty() &&
-       find(labels_.begin(),labels_.end(),desc.moduleLabel_)!=labels_.end())
+       find(labels_.begin(),labels_.end(),desc.moduleLabel())!=labels_.end())
       {
 	FDEBUG(4) << "made a new locked in SillyLockService" << endl;
 	locker_ = new boost::mutex::scoped_lock(*lock_);
