@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.3 2009/09/16 09:53:24 dshpakov Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.4 2009/12/01 13:58:09 mommsen Exp $
 
 #include <iostream>
 
@@ -21,9 +21,7 @@ int main()
 
   QueueID id1(stor::enquing_policy::DiscardOld, 3);
 
-  ECRI ecri( 1,
-	     1,
-	     "Test Consumer",
+  ECRI ecri( "Test Consumer",
 	     filters2,
 	     fl,
 	     "hltOutputDQM",
