@@ -1,4 +1,6 @@
-// $Id: EventMsgData.cc,v 1.1 2009/09/29 14:58:15 dshpakov Exp $
+// $Id: EventMsgData.cc,v 1.2 2010/01/07 18:03:32 mommsen Exp $
+
+#include "FWCore/Utilities/interface/Adler32Calculator.h"
 
 #include "EventFilter/StorageManager/src/ChainData.h"
 
@@ -15,6 +17,16 @@ namespace stor
       _headerFieldsCached(false)
     {
       parseI2OHeader();
+    }
+
+    void EventMsgData::calculateAdler32(toolbox::mem::Reference* ref, uint32& adlerA, uint32& adlerB) const
+    {
+      if (parsable())
+        {
+          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
+            (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
+          cms::Adler32((char*)smMsg->dataPtr(), smMsg->dataSize, adlerA, adlerB);
+        }
     }
 
     unsigned long EventMsgData::do_headerSize() const
@@ -155,6 +167,20 @@ namespace stor
       return _eventNumber;
     }
 
+    uint32 EventMsgData::do_adler32Checksum() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An adler32 checksum can not be determined from a ";
+          msg << "faulty or incomplete Event message.";
+          XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _adler32;
+    }
+
     inline void EventMsgData::parseI2OHeader()
     {
       if (parsable())
@@ -224,6 +250,7 @@ namespace stor
       _runNumber = msgView->run();
       _lumiSection = msgView->lumi();
       _eventNumber = msgView->event();
+      _adler32 = msgView->adler32_chksum();
 
       _headerFieldsCached = true;
     }

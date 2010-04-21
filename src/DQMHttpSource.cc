@@ -2,7 +2,7 @@
  *  An input source for DQM consumers run in cmsRun that connect to
  *  the StorageManager or SMProxyServer to get DQM data.
  *
- *  $Id: DQMHttpSource.cc,v 1.17 2009/12/11 19:43:37 wmtan Exp $
+ *  $Id: DQMHttpSource.cc,v 1.18 2010/03/04 17:00:18 mommsen Exp $
 /// @file: DQMHttpSource.cc
  */
 
@@ -230,6 +230,8 @@ namespace edm
                 << dqmEventView.lumiSection() << std::endl;
       FDEBUG(8) << "    update number = "
                 << dqmEventView.updateNumber() << std::endl;
+      FDEBUG(8) << "    checksum = "
+                << dqmEventView.adler32_chksum() << std::endl;
       FDEBUG(8) << "    compression flag = "
                 << dqmEventView.compressionFlag() << std::endl;
       FDEBUG(8) << "    reserved word = "

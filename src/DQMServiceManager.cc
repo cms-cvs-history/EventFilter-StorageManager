@@ -3,7 +3,7 @@
 //
 // (W.Badgett)
 //
-// $Id: DQMServiceManager.cc,v 1.11 2010/03/04 17:34:59 mommsen Exp $
+// $Id: DQMServiceManager.cc,v 1.12 2010/03/08 17:04:55 mommsen Exp $
 //
 // Note: this class is no longer used in the StorageManager, but is still
 // required by the SMProxyServer (Remi Mommsen, May 5, 2009)
@@ -159,6 +159,7 @@ void DQMServiceManager::manageDQMEventMsg(DQMEventMsgView& msg)
 				 zeit,
 				 instance->getLumiSection(),
 				 instance->getUpdateNumber(),
+                                 (uint32)serializer.adler32_chksum(),
 				 msg.releaseTag(),
 				 msg.topFolderName(),
 				 table); 

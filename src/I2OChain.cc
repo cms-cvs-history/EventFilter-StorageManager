@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.17 2010/01/07 18:03:57 mommsen Exp $
+// $Id: I2OChain.cc,v 1.18 2010/02/11 13:34:26 mommsen Exp $
 /// @file: I2OChain.cc
 
 #include <algorithm>
@@ -578,6 +578,16 @@ namespace stor
           "The event number can not be determined from an empty I2OChain.");
       }
     return _data->eventNumber();
+  }
+
+  uint32 I2OChain::adler32Checksum() const
+  {
+    if (!_data)
+      {
+        XCEPT_RAISE(stor::exception::I2OChain,
+          "The adler32 checksum can not be determined from an empty I2OChain.");
+      }
+    return _data->adler32Checksum();
   }
 
   bool I2OChain::isEndOfLumiSectionMessage() const

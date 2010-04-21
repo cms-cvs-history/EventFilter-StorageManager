@@ -1,4 +1,6 @@
-// $Id: DQMEventMsgData.cc,v 1.3 2010/03/06 08:39:38 mommsen Exp $
+// $Id: DQMEventMsgData.cc,v 1.4 2010/03/08 11:56:21 mommsen Exp $
+
+#include "FWCore/Utilities/interface/Adler32Calculator.h"
 
 #include "EventFilter/StorageManager/src/ChainData.h"
 
@@ -17,6 +19,16 @@ namespace stor
       parseI2OHeader();
     }
 
+    void DQMEventMsgData::calculateAdler32(toolbox::mem::Reference* ref, uint32& adlerA, uint32& adlerB) const
+    {
+      if (parsable())
+        {
+          I2O_SM_DQM_MESSAGE_FRAME *smMsg =
+            (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
+          cms::Adler32((char*)smMsg->dataPtr(), smMsg->dataSize, adlerA, adlerB);
+        }
+    }
+
     inline std::string DQMEventMsgData::do_topFolderName() const
     {
 
@@ -30,6 +42,21 @@ namespace stor
 
       if( !_headerFieldsCached ) {cacheHeaderFields();}
       return _topFolderName;
+    }
+
+    inline uint32 DQMEventMsgData::do_adler32Checksum() const
+    {
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "An adler32 checksum can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      if( !_headerFieldsCached ) {cacheHeaderFields();}
+      return _adler32;
     }
 
     inline DQMKey DQMEventMsgData::do_dqmKey() const
@@ -47,9 +74,39 @@ namespace stor
       return _dqmKey;
     }
 
+    inline uint32 DQMEventMsgData::do_runNumber() const
+    {
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "The run number can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      if( !_headerFieldsCached ) {cacheHeaderFields();}
+      return _dqmKey.runNumber;
+    }
+
+    inline uint32 DQMEventMsgData::do_lumiSection() const
+    {
+
+      if( faulty() || !complete() )
+        {
+          std::stringstream msg;
+          msg << "The lumi section can not be determined from a ";
+          msg << "faulty or incomplete DQM event message.";
+          XCEPT_RAISE( stor::exception::IncompleteInitMessage, msg.str() );
+        }
+
+      if( !_headerFieldsCached ) {cacheHeaderFields();}
+      return _dqmKey.lumiSection;
+    }
+
     void DQMEventMsgData::do_assertRunNumber(uint32 runNumber)
     {
-      if ( do_dqmKey().runNumber != runNumber )
+      if ( do_runNumber() != runNumber )
       {
         std::ostringstream errorMsg;
         errorMsg << "Run number " << do_runNumber() 
@@ -140,6 +197,7 @@ namespace stor
       _headerSize = msgView->headerSize();
       _headerLocation = msgView->startAddress();
       _topFolderName = msgView->topFolderName();
+      _adler32 = msgView->adler32_chksum();
 
       _dqmKey.runNumber = msgView->runNumber();
       _dqmKey.lumiSection = msgView->lumiSection();

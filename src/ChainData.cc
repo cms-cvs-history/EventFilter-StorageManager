@@ -1,4 +1,4 @@
-// $Id: ChainData.cc,v 1.4 2010/02/11 13:34:26 mommsen Exp $
+// $Id: ChainData.cc,v 1.5 2010/02/18 14:47:31 mommsen Exp $
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
@@ -28,7 +28,7 @@ detail::ChainData::ChainData(toolbox::mem::Reference* pRef,
   _dqmEventConsumerTags(),
   _ref(pRef),
   _complete(false),
-  _faultyBits(0),
+  _faultyBits(INCOMPLETE_MESSAGE),
   _messageCode(messageCode),
   _i2oMessageCode(i2oMessageCode),
   _fragKey(Header::INVALID,0,0,0,0,0),
@@ -40,6 +40,8 @@ detail::ChainData::ChainData(toolbox::mem::Reference* pRef,
   _hltTid(0),
   _fuProcessId(0),
   _fuGuid(0),
+  _adlerA(1),
+  _adlerB(0),
   _creationTime(-1),
   _lastFragmentTime(-1),
   _staleWindowStartTime(-1)
@@ -134,7 +136,10 @@ bool detail::ChainData::complete() const
 
 bool detail::ChainData::faulty() const
 {
-  return (_faultyBits != 0);
+  if (_complete)
+    return (_faultyBits != 0);
+  else
+    return (_faultyBits != INCOMPLETE_MESSAGE);
 }
 
 unsigned int detail::ChainData::faultyBits() const
@@ -274,7 +279,9 @@ void detail::ChainData::addToChain(ChainData const& newpart)
 		  fragmentWasAdded = true;
 		  break;
 		}
-	      
+
+              calculateAdler32(curRef,_adlerA,_adlerB);
+
 	      curRef = nextRef;
 	    }
 	}
@@ -308,7 +315,9 @@ void detail::ChainData::addToChain(ChainData const& newpart)
 
 void detail::ChainData::markComplete()
 {
+  _faultyBits &= ~INCOMPLETE_MESSAGE; // reset incomplete bit
   _complete = true;
+  validateAdler32Checksum();
 }
 
 void detail::ChainData::markFaulty()
@@ -599,6 +608,11 @@ uint32 detail::ChainData::eventNumber() const
   return do_eventNumber();
 }
 
+uint32 detail::ChainData::adler32Checksum() const
+{
+  return do_adler32Checksum();
+}
+
 void detail::ChainData::tagForStream(StreamID streamId)
 {
   _streamTags.push_back(streamId);
@@ -731,6 +745,24 @@ detail::ChainData::validateMessageCode(toolbox::mem::Reference* ref,
   return true;
 }
 
+
+bool detail::ChainData::validateAdler32Checksum()
+{
+  if ( !complete() ) return false;
+
+  const uint32 calculated = (_adlerB << 16) | _adlerA;
+  const uint32 expected = adler32Checksum();
+
+  if ( expected > 0 && calculated != expected )
+  {
+    _faultyBits |= WRONG_CHECKSUM;
+    return false;
+  }
+  return true;
+}
+
+
+
 unsigned long detail::ChainData::do_headerSize() const
 {
   return 0;
@@ -845,6 +877,11 @@ uint32 detail::ChainData::do_eventNumber() const
   msg << "An event number is only available from a valid, ";
   msg << "complete EVENT or ERROR_EVENT message.";
   XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
+}
+
+uint32 detail::ChainData::do_adler32Checksum() const
+{
+  return 0;
 }
 
 

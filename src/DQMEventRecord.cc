@@ -1,4 +1,4 @@
-// $Id: DQMEventRecord.cc,v 1.12 2010/03/06 08:39:03 mommsen Exp $
+// $Id: DQMEventRecord.cc,v 1.13 2010/03/08 11:56:46 mommsen Exp $
 /// @file: DQMEventRecord.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -105,6 +105,7 @@ DQMEventRecord::GroupRecord DQMEventRecord::populateAndGetGroup(const std::strin
     zeit,
     getLumiSection(),
     getUpdateNumber(),
+    (uint32)serializer.adler32_chksum(),
     _releaseTag,
     groupName,
     table
