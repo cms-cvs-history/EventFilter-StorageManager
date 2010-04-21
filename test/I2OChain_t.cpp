@@ -6,6 +6,7 @@
 #include "zlib.h"
 #include <cstring>
 
+#include "EventFilter/StorageManager/interface/DQMKey.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
@@ -15,13 +16,16 @@
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
 #include "IOPool/Streamer/interface/InitMsgBuilder.h"
+#include "IOPool/Streamer/interface/DQMEventMsgBuilder.h"
 #include "IOPool/Streamer/interface/EventMsgBuilder.h"
 #include "IOPool/Streamer/interface/FRDEventMessage.h"
 
 using stor::testhelper::outstanding_bytes;
+using stor::testhelper::get_output_module_id;
 using stor::testhelper::allocate_frame;
 using stor::testhelper::allocate_frame_with_basic_header;
 using stor::testhelper::allocate_frame_with_sample_header;
+using stor::testhelper::allocate_multiple_frames_with_event_msg;
 
 
 class testI2OChain : public CppUnit::TestFixture
@@ -49,6 +53,7 @@ class testI2OChain : public CppUnit::TestFixture
   CPPUNIT_TEST(init_msg_header);
   CPPUNIT_TEST(event_msg_header);
   CPPUNIT_TEST(error_event_msg_header);
+  CPPUNIT_TEST(dqm_event_msg_header);
   CPPUNIT_TEST(stream_and_queue_tags);
   CPPUNIT_TEST(split_init_header);
   CPPUNIT_TEST(split_event_header);
@@ -81,6 +86,7 @@ public:
   void init_msg_header();
   void event_msg_header();
   void error_event_msg_header();
+  void dqm_event_msg_header();
   void stream_and_queue_tags();
   void split_init_header();
   void split_event_header();
@@ -1746,6 +1752,8 @@ testI2OChain::init_msg_header()
                   outputModuleId, hlt_names, hlt_selections, l1_names);
 
     stor::I2OChain initMsgFrag(ref);
+    CPPUNIT_ASSERT(initMsgFrag.complete());
+    CPPUNIT_ASSERT(!initMsgFrag.faulty());
     CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
     stor::FragKey fragmentKey = initMsgFrag.fragmentKey();
@@ -1815,35 +1823,27 @@ testI2OChain::event_msg_header()
       // should mask off bits for trig num GT hltBitCount...
     }
 
-    std::string outputModuleLabel = "HLTOutput";
-    uLong crc = crc32(0L, Z_NULL, 0);
-    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
-    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+    const unsigned int runNumber = 100;
+    const unsigned int eventNumber = 42;
+    const unsigned int lumiNumber = 777;
+    const unsigned int rbBufferID = 3;
+    const unsigned int hltTid = 0xa5a5d2d2;
+    const unsigned int fuProcID = 0xb4b4e1e1;
+    const unsigned int fuGUID = 0xc3c3f0f0;
+    const std::string outputModuleLabel = "HLTOutput";
+    const unsigned int outputModuleId = get_output_module_id(outputModuleLabel);
 
-    unsigned int value1 = 0xa5a5d2d2;
-    unsigned int value2 = 0xb4b4e1e1;
-    unsigned int value3 = 0xc3c3f0f0;
-    unsigned int runNumber = 100;
-    unsigned int eventNumber = 42;
-    unsigned int lumiNumber = 777;
+    stor::testhelper::References refs =
+      allocate_multiple_frames_with_event_msg(
+        runNumber, eventNumber, lumiNumber,
+        outputModuleLabel, l1Bits, hltBits, hltBitCount,
+        rbBufferID, hltTid, fuProcID, fuGUID, 1);
 
-    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
-    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
-      (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-    smMsg->hltTid = value1;
-    smMsg->rbBufferID = 3;
-    smMsg->runID = runNumber;
-    smMsg->eventID = eventNumber;
-    smMsg->outModID = outputModuleId;
-    smMsg->fuProcID = value2;
-    smMsg->fuGUID = value3;
+    CPPUNIT_ASSERT(refs.size() == 1);
 
-    EventMsgBuilder
-      eventBuilder(smMsg->dataPtr(), smMsg->dataSize, runNumber,
-                   eventNumber, lumiNumber, outputModuleId,
-                   l1Bits, &hltBits[0], hltBitCount);
-
-    stor::I2OChain eventMsgFrag(ref);
+    stor::I2OChain eventMsgFrag(refs.front());
+    CPPUNIT_ASSERT(eventMsgFrag.complete());
+    CPPUNIT_ASSERT(!eventMsgFrag.faulty());
     CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
     CPPUNIT_ASSERT(eventMsgFrag.runNumber() == runNumber);
     CPPUNIT_ASSERT(eventMsgFrag.lumiSection() == lumiNumber);
@@ -1854,15 +1854,15 @@ testI2OChain::event_msg_header()
     CPPUNIT_ASSERT(fragmentKey.run_ == runNumber);
     CPPUNIT_ASSERT(fragmentKey.event_ == eventNumber);
     CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
-    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
-    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == fuProcID);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == fuGUID);
 
     CPPUNIT_ASSERT(eventMsgFrag.outputModuleId() == outputModuleId);
     CPPUNIT_ASSERT(eventMsgFrag.hltTriggerCount() == hltBitCount);
 
-    CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == 3);
-    CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == value2);
-    CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == value3);
+    CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == rbBufferID);
+    CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == fuProcID);
+    CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == fuGUID);
 
     std::vector<unsigned char> hltBits2;
     CPPUNIT_ASSERT(hltBits2.size() == 0);
@@ -1902,7 +1902,6 @@ testI2OChain::event_msg_header()
       }
     }
 
-    CPPUNIT_ASSERT(eventMsgFrag.headerSize() == eventBuilder.headerSize());
     CPPUNIT_ASSERT(eventMsgFrag.headerLocation() ==
                    eventMsgFrag.dataLocation(0));
   }
@@ -1939,6 +1938,8 @@ testI2OChain::error_event_msg_header()
     *dataPtr++ = eventNumber;
 
     stor::I2OChain errorMsgFrag(ref);
+    CPPUNIT_ASSERT(errorMsgFrag.complete());
+    CPPUNIT_ASSERT(!errorMsgFrag.faulty());
     CPPUNIT_ASSERT(errorMsgFrag.messageCode() == Header::ERROR_EVENT);
     CPPUNIT_ASSERT(errorMsgFrag.runNumber() == runNumber);
     CPPUNIT_ASSERT(errorMsgFrag.lumiSection() == lumiNumber);
@@ -1951,6 +1952,58 @@ testI2OChain::error_event_msg_header()
     CPPUNIT_ASSERT(errorMsgFrag.rbBufferId() == 3);
     CPPUNIT_ASSERT(errorMsgFrag.fuProcessId() == value2);
     CPPUNIT_ASSERT(errorMsgFrag.fuGuid() == value3);
+  }
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+}
+
+void
+testI2OChain::dqm_event_msg_header()
+{
+  CPPUNIT_ASSERT(outstanding_bytes() == 0);
+  {
+    std::string releaseTag = "test";
+    std::string topFolderName = "HLT";
+    unsigned int value1 = 0xa5a5d2d2;
+    unsigned int value2 = 0xb4b4e1e1;
+    unsigned int value3 = 0xc3c3f0f0;
+    unsigned int runNumber = 100;
+    unsigned int eventNumber = 42;
+    unsigned int lumiNumber = 777;
+    unsigned int updateNumber = 342;
+    edm::Timestamp timestamp;
+    DQMEvent::TObjectTable objects;
+
+    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DQM, 0, 1);
+    I2O_SM_DQM_MESSAGE_FRAME *dqmMsg =
+      (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
+    dqmMsg->rbBufferID = 5;
+    dqmMsg->runID = runNumber;
+    dqmMsg->eventAtUpdateID = eventNumber;
+    dqmMsg->folderID = value1;
+    dqmMsg->fuProcID = value2;
+    dqmMsg->fuGUID = value3;
+    uint32_t adler32_chksum = cms::Adler32((char*)dqmMsg->dataPtr(), dqmMsg->dataSize);
+
+    DQMEventMsgBuilder
+      dqmEventBuilder(dqmMsg->dataPtr(), dqmMsg->dataSize, runNumber,
+        eventNumber, timestamp, lumiNumber, updateNumber, (uint32)adler32_chksum,
+        releaseTag, topFolderName, objects);
+
+    stor::I2OChain dqmEventMsgFrag(ref);
+    CPPUNIT_ASSERT(dqmEventMsgFrag.complete());
+    CPPUNIT_ASSERT(!dqmEventMsgFrag.faulty());
+    CPPUNIT_ASSERT(dqmEventMsgFrag.messageCode() == Header::DQM_EVENT);
+    CPPUNIT_ASSERT(dqmEventMsgFrag.runNumber() == runNumber);
+    CPPUNIT_ASSERT(dqmEventMsgFrag.lumiSection() == lumiNumber);
+    CPPUNIT_ASSERT(dqmEventMsgFrag.topFolderName() == topFolderName);
+
+    stor::DQMKey dqmKey = dqmEventMsgFrag.dqmKey();
+    CPPUNIT_ASSERT(dqmKey.runNumber == runNumber);
+    CPPUNIT_ASSERT(dqmKey.lumiSection == lumiNumber);
+
+    CPPUNIT_ASSERT(dqmEventMsgFrag.rbBufferId() == 5);
+    CPPUNIT_ASSERT(dqmEventMsgFrag.fuProcessId() == value2);
+    CPPUNIT_ASSERT(dqmEventMsgFrag.fuGuid() == value3);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
@@ -2249,54 +2302,27 @@ testI2OChain::split_event_header()
       // should mask off bits for trig num GT hltBitCount...
     }
 
-    std::string outputModuleLabel = "HLTOutput";
-    uLong crc = crc32(0L, Z_NULL, 0);
-    Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
-    unsigned int outputModuleId = crc32(crc,crcbuf,outputModuleLabel.length());
+    const unsigned int runNumber = 100;
+    const unsigned int eventNumber = 42;
+    const unsigned int lumiNumber = 777;
+    const unsigned int rbBufferID = 3;
+    const unsigned int hltTid = 0xa5a5d2d2;
+    const unsigned int fuProcID = 0xb4b4e1e1;
+    const unsigned int fuGUID = 0xc3c3f0f0;
+    const std::string outputModuleLabel = "HLTOutput";
+    const unsigned int outputModuleId = get_output_module_id(outputModuleLabel);
+    const unsigned int fragmentCount = 5;
 
-    unsigned int value1 = 0xa5a5d2d2;
-    unsigned int value2 = 0xb4b4e1e1;
-    unsigned int value3 = 0xc3c3f0f0;
-    unsigned int runNumber = 100;
-    unsigned int eventNumber = 42;
-    unsigned int lumiNumber = 777;
+    stor::testhelper::References frames =
+      allocate_multiple_frames_with_event_msg(
+        runNumber, eventNumber, lumiNumber,
+        outputModuleLabel, l1Bits, hltBits, hltBitCount,
+        rbBufferID, hltTid, fuProcID, fuGUID, fragmentCount);
 
-    int bufferSize = 2000;
-    std::vector<unsigned char> tmpBuffer;
-    tmpBuffer.resize(bufferSize);
+    CPPUNIT_ASSERT(frames.size() == fragmentCount);
 
-    EventMsgBuilder
-      eventBuilder(&tmpBuffer[0], bufferSize, runNumber,
-                   eventNumber, lumiNumber, outputModuleId,
-                   l1Bits, &hltBits[0], hltBitCount);
-    //std::cout << "Size = " << eventBuilder.size() << std::endl;
-
-    uint32 fragmentSize = 10;
-    uint32 msgSize = eventBuilder.size();
-    uint32 fragmentCount = 1 + ((uint32) (msgSize - 1) / fragmentSize);
-
-    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0,
-                                                      fragmentCount);
-    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
-      (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-    smMsg->hltTid = value1;
-    smMsg->rbBufferID = 3;
-    smMsg->runID = runNumber;
-    smMsg->eventID = eventNumber;
-    smMsg->outModID = outputModuleId;
-    smMsg->fuProcID = value2;
-    smMsg->fuGUID = value3;
-
-    unsigned char* sourceLoc = &tmpBuffer[0];
-    unsigned long sourceSize = fragmentSize;
-    if (msgSize < fragmentSize) sourceSize = msgSize;
-    unsigned char* targetLoc = (unsigned char*) smMsg->dataPtr();;
-    std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
-    smMsg->dataSize = sourceSize;
-    smMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
-      (sourceSize + 3 + sizeof(I2O_SM_DATA_MESSAGE_FRAME)) / 4;
-
-    stor::I2OChain eventMsgChain(ref);
+    // first frame
+    stor::I2OChain eventMsgChain(frames[0]);
 
     CPPUNIT_ASSERT(!eventMsgChain.empty());
     CPPUNIT_ASSERT(!eventMsgChain.complete());
@@ -2304,30 +2330,7 @@ testI2OChain::split_event_header()
 
     for (uint32 idx = 1; idx < fragmentCount; ++idx)
       {
-        ref = allocate_frame_with_basic_header(I2O_SM_DATA, idx,
-                                               fragmentCount);
-        smMsg = (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-        smMsg->hltTid = value1;
-        smMsg->rbBufferID = 3;
-        smMsg->runID = runNumber;
-        smMsg->eventID = eventNumber;
-        smMsg->outModID = outputModuleId;
-        smMsg->fuProcID = value2;
-        smMsg->fuGUID = value3;
-
-        sourceLoc = &tmpBuffer[idx*fragmentSize];
-        sourceSize = fragmentSize;
-        if ((msgSize - idx*fragmentSize) < fragmentSize)
-          {
-            sourceSize = msgSize - idx*fragmentSize;
-          }
-        targetLoc = (unsigned char*) smMsg->dataPtr();;
-        std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
-        smMsg->dataSize = sourceSize;
-        smMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
-          (sourceSize + 3 + sizeof(I2O_SM_DATA_MESSAGE_FRAME)) / 4;
-
-        stor::I2OChain eventMsgFrag(ref);
+        stor::I2OChain eventMsgFrag(frames[idx]);
 
         CPPUNIT_ASSERT(!eventMsgFrag.empty());
         CPPUNIT_ASSERT(!eventMsgFrag.complete());
@@ -2347,12 +2350,12 @@ testI2OChain::split_event_header()
         CPPUNIT_ASSERT(!eventMsgChain.faulty());
       }
 
-    std::vector<unsigned char> bufferCopy;
-    eventMsgChain.copyFragmentsIntoBuffer(bufferCopy);
-    for (uint32 idx = 0; idx < msgSize; ++idx)
-      {
-        CPPUNIT_ASSERT(bufferCopy[idx] == tmpBuffer[idx]);
-      }
+    // std::vector<unsigned char> bufferCopy;
+    // eventMsgChain.copyFragmentsIntoBuffer(bufferCopy);
+    // for (uint32 idx = 0; idx < msgSize; ++idx)
+    //   {
+    //     CPPUNIT_ASSERT(bufferCopy[idx] == tmpBuffer[idx]);
+    //   }
 
     CPPUNIT_ASSERT(eventMsgChain.messageCode() == Header::EVENT);
     CPPUNIT_ASSERT(eventMsgChain.runNumber() == runNumber);
@@ -2364,8 +2367,8 @@ testI2OChain::split_event_header()
     CPPUNIT_ASSERT(fragmentKey.run_ == runNumber);
     CPPUNIT_ASSERT(fragmentKey.event_ == eventNumber);
     CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
-    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value2);
-    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value3);
+    CPPUNIT_ASSERT(fragmentKey.originatorPid_ == fuProcID);
+    CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == fuGUID);
 
     CPPUNIT_ASSERT(eventMsgChain.outputModuleId() == outputModuleId);
     CPPUNIT_ASSERT(eventMsgChain.hltTriggerCount() == hltBitCount);
@@ -2406,15 +2409,15 @@ testI2OChain::split_event_header()
           }
       }
 
-    CPPUNIT_ASSERT(eventMsgChain.headerSize() == eventBuilder.headerSize());
+    //CPPUNIT_ASSERT(eventMsgChain.headerSize() == eventBuilder.headerSize());
     CPPUNIT_ASSERT(eventMsgChain.headerLocation() !=
                    eventMsgChain.dataLocation(0));
 
-    unsigned char* headerLoc = eventMsgChain.headerLocation();
-    for (uint32 idx = 0; idx < eventMsgChain.headerSize(); ++idx)
-      {
-        CPPUNIT_ASSERT(headerLoc[idx] == tmpBuffer[idx]);
-      }
+    // unsigned char* headerLoc = eventMsgChain.headerLocation();
+    // for (uint32 idx = 0; idx < eventMsgChain.headerSize(); ++idx)
+    //   {
+    //     CPPUNIT_ASSERT(headerLoc[idx] == tmpBuffer[idx]);
+    //   }
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }

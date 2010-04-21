@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.2 2009/06/10 08:15:30 dshpakov Exp $
+// $Id: TestHelper.h,v 1.3 2009/08/21 07:16:10 mommsen Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -14,6 +14,7 @@
 #include "DataFormats/Common/interface/HLTenums.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
+#include "FWCore/Utilities/interface/Adler32Calculator.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 #include "IOPool/Streamer/interface/InitMsgBuilder.h"
 #include "IOPool/Streamer/interface/EventMsgBuilder.h"
@@ -51,6 +52,44 @@ namespace stor
 {
   namespace testhelper
   {
+    typedef std::vector<Reference*> References;
+
+    void
+    set_trigger_bit
+    (
+      std::vector<unsigned char>& hltBits,
+      const uint32 bitIndex,
+      const edm::hlt::HLTState pathStatus
+    )
+    {
+      // ensure that bit vector is large enough
+      uint32 minBitCount = bitIndex + 1;
+      uint32 minSize = 1 + ((minBitCount - 1) / 4);
+      if (hltBits.size() < minSize) hltBits.resize(minSize);
+
+      uint32 vectorIndex = (uint32) (bitIndex / 4);
+      uint32 shiftCount = 2 * (bitIndex % 4);
+
+      uint32 clearMask = 0xff;
+      clearMask ^= 0x3 << shiftCount;
+
+      hltBits[vectorIndex] &= clearMask;
+      hltBits[vectorIndex] |= pathStatus << shiftCount;
+    }
+
+
+    void
+    clear_trigger_bits
+    (
+      std::vector<unsigned char>& hltBits
+    )
+    {
+      for (unsigned int idx = 0; idx < hltBits.size(); ++idx)
+        {
+          hltBits[idx] = 0;
+        }
+    }
+
 
     // Allocate a new frame from the (global) Pool.
     Reference*
@@ -73,9 +112,9 @@ namespace stor
     Reference*
     allocate_frame_with_basic_header
     (
-      unsigned short code,
-      unsigned int frameIndex,
-      unsigned int totalFrameCount
+      const unsigned short code,
+      const unsigned int frameIndex,
+      const unsigned int totalFrameCount
     )
     {
       const int bufferSize = 1024;
@@ -104,9 +143,9 @@ namespace stor
     Reference*
     allocate_frame_with_sample_header
     (
-      unsigned int frameIndex,
-      unsigned int totalFrameCount,
-      unsigned int rbBufferId
+      const unsigned int frameIndex,
+      const unsigned int totalFrameCount,
+      const unsigned int rbBufferId
     )
     {
       unsigned int value1 = 0xa5a5d2d2;
@@ -146,7 +185,7 @@ namespace stor
     Reference*
     allocate_frame_with_init_msg
     (
-      std::string requestedOMLabel
+      const std::string requestedOMLabel
     )
     {
       char psetid[] = "1234567890123456";
@@ -198,58 +237,152 @@ namespace stor
 
       return ref;
     }
-    
+
+
+    unsigned int
+    get_output_module_id
+    (
+      const std::string& outputModuleLabel
+    )
+    {
+      uLong crc = crc32(0L, Z_NULL, 0);
+      Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
+      return crc32(crc,crcbuf,outputModuleLabel.length());
+    }
+
+
+    References
+    allocate_multiple_frames_with_event_msg
+    (
+      const unsigned int runNumber,
+      const unsigned int eventNumber,
+      const unsigned int lumiNumber,
+      const std::string outputModuleLabel,
+      std::vector<bool>& l1Bits,
+      std::vector<unsigned char>& hltBits,
+      const unsigned int hltBitCount,
+      const unsigned int rbBufferID,
+      const unsigned int hltTid,
+      const unsigned int fuProcID,
+      const unsigned int fuGUID,
+      const unsigned int totalFragments
+    )
+    {
+      int bufferSize = 2000;
+      std::vector<unsigned char> tmpBuffer;
+      tmpBuffer.resize(bufferSize);
+      const uint32_t adler32_chksum = 0;
+      const unsigned int outputModuleId = get_output_module_id(outputModuleLabel);
+
+      EventMsgBuilder
+        eventBuilder(&tmpBuffer[0], bufferSize, runNumber,
+                     eventNumber, lumiNumber, outputModuleId,
+                     l1Bits, &hltBits[0], hltBitCount, (uint32)adler32_chksum);
+      const uint32 msgSize = eventBuilder.size();
+      const uint32 fragmentSize = msgSize/totalFragments + 1;
+
+      References refs;
+      for (uint32 idx = 0; idx < totalFragments; ++idx)
+        {
+          Reference* frame = allocate_frame_with_basic_header(I2O_SM_DATA, idx, totalFragments);
+          I2O_SM_DATA_MESSAGE_FRAME *smEventMsg =
+            (I2O_SM_DATA_MESSAGE_FRAME*) frame->getDataLocation();
+          smEventMsg->hltTid = hltTid;
+          smEventMsg->rbBufferID = rbBufferID;
+          smEventMsg->runID = runNumber;
+          smEventMsg->eventID = eventNumber;
+          smEventMsg->outModID = outputModuleId;
+          smEventMsg->fuProcID = fuProcID;
+          smEventMsg->fuGUID = fuGUID;
+          
+          const unsigned char* sourceLoc = &tmpBuffer[idx*fragmentSize];
+          unsigned long sourceSize = fragmentSize;
+          if ((msgSize - idx*fragmentSize) < fragmentSize)
+            {
+              sourceSize = msgSize - idx*fragmentSize;
+            }
+          unsigned char* targetLoc = (unsigned char*) smEventMsg->dataPtr();;
+          std::copy(sourceLoc, sourceLoc+sourceSize, targetLoc);
+          smEventMsg->dataSize = sourceSize;
+          smEventMsg->PvtMessageFrame.StdMessageFrame.MessageSize =
+            (sourceSize + 3 + sizeof(I2O_SM_DATA_MESSAGE_FRAME)) / 4;
+
+          refs.push_back(frame);
+        }
+
+      return refs;
+    }
+
+
+    References
+    allocate_multiple_frames_with_event_msg
+    (
+      const unsigned int eventNumber,
+      const unsigned int totalFragments
+    )
+    {
+      const unsigned int runNumber = 100;
+      const unsigned int lumiNumber = 777;
+      const unsigned int rbBufferID = 3;
+      const unsigned int hltTid = 0xa5a5d2d2;
+      const unsigned int fuProcID = 0xb4b4e1e1;
+      const unsigned int fuGUID = 0xc3c3f0f0;
+      const std::string outputModuleLabel = "HLTOutput";
+
+      std::vector<bool> l1Bits;
+      l1Bits.push_back(true);
+      l1Bits.push_back(false);
+
+      std::vector<unsigned char> hltBits;
+      uint32 hltBitCount = 9;
+      clear_trigger_bits(hltBits);
+      set_trigger_bit(hltBits, 0, edm::hlt::Pass);
+      set_trigger_bit(hltBits, 2, edm::hlt::Pass);
+      
+      References frames =
+        allocate_multiple_frames_with_event_msg(
+          runNumber, eventNumber, lumiNumber,
+          outputModuleLabel, l1Bits, hltBits, hltBitCount,
+          rbBufferID, hltTid, fuProcID, fuGUID, totalFragments);
+
+      return frames;
+    }
+
 
     Reference*
     allocate_frame_with_event_msg
     (
-      std::string requestedOMLabel,
+      std::string outputModuleLabel,
       std::vector<unsigned char>& hltBits,
       unsigned int hltBitCount,
       unsigned int eventNumber
     )
     {
+      const unsigned int runNumber = 100;
+      const unsigned int lumiNumber = 777;
+      const unsigned int rbBufferID = 3;
+      const unsigned int hltTid = 0xa5a5d2d2;
+      const unsigned int fuProcID = 0xb4b4e1e1;
+      const unsigned int fuGUID = 0xc3c3f0f0;
+  
       std::vector<bool> l1Bits;
       l1Bits.push_back(true);
       l1Bits.push_back(false);
-
-      unsigned int runNumber = 100;
-      unsigned int lumiNumber = 1;
-
-      std::string outputModuleLabel = requestedOMLabel;
-      uLong crc = crc32(0L, Z_NULL, 0);
-      Bytef* crcbuf = (Bytef*) outputModuleLabel.data();
-      unsigned int outputModuleId =
-        crc32(crc,crcbuf,outputModuleLabel.length());
-
-      unsigned int value1 = 0xa5a5d2d2;
-      unsigned int value2 = 0xb4b4e1e1;
-      unsigned int value3 = 0xc3c3f0f0;
-
-      Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
-      I2O_SM_DATA_MESSAGE_FRAME *smEventMsg =
-        (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-      smEventMsg->hltTid = value1;
-      smEventMsg->rbBufferID = 3;
-      smEventMsg->runID = runNumber;
-      smEventMsg->eventID = eventNumber;
-      smEventMsg->outModID = outputModuleId;
-      smEventMsg->fuProcID = value2;
-      smEventMsg->fuGUID = value3;
-
-      EventMsgBuilder
-        eventBuilder(smEventMsg->dataPtr(), smEventMsg->dataSize, runNumber,
-                     eventNumber, lumiNumber, outputModuleId,
-                     l1Bits, &hltBits[0], hltBitCount);
-
-      return ref;
+      
+      References refs =
+        allocate_multiple_frames_with_event_msg(
+          runNumber, eventNumber, lumiNumber,
+          outputModuleLabel, l1Bits, hltBits, hltBitCount,
+          rbBufferID, hltTid, fuProcID, fuGUID, 1);
+      
+      return refs.front();
     }
 
 
     Reference*
     allocate_frame_with_error_msg
     (
-      unsigned int eventNumber
+      const unsigned int eventNumber
     )
     {
       unsigned int runNumber = 100;
@@ -273,7 +406,7 @@ namespace stor
     }
 
 
-    Reference* allocate_frame_with_dqm_msg( unsigned int eventNumber,
+    Reference* allocate_frame_with_dqm_msg( const unsigned int eventNumber,
                                             const std::string& topFolder )
     {
 
@@ -288,52 +421,20 @@ namespace stor
 
       I2O_SM_DQM_MESSAGE_FRAME* msg = (I2O_SM_DQM_MESSAGE_FRAME*)ref->getDataLocation();
 
+      //uint32_t adler32_chksum = cms::Adler32((char*)msg->dataPtr(), msg->dataSize); // not right!!
+      // no data yet to get a checksum!
+      uint32_t adler32_chksum = 0;
+
       DQMEventMsgBuilder b( (void*)(msg->dataPtr()), msg->dataSize, run, eventNumber,
                             ts,
                             lumi_section, update_number,
+                            (uint32)adler32_chksum,
                             release_tag,
                             topFolder,
                             mon_elts );
 
       return ref;
 
-    }
-
-
-    void
-    set_trigger_bit
-    (
-      std::vector<unsigned char>& hltBits,
-      uint32 bitIndex,
-      edm::hlt::HLTState pathStatus
-    )
-    {
-      // ensure that bit vector is large enough
-      uint32 minBitCount = bitIndex + 1;
-      uint32 minSize = 1 + ((minBitCount - 1) / 4);
-      if (hltBits.size() < minSize) hltBits.resize(minSize);
-
-      uint32 vectorIndex = (uint32) (bitIndex / 4);
-      uint32 shiftCount = 2 * (bitIndex % 4);
-
-      uint32 clearMask = 0xff;
-      clearMask ^= 0x3 << shiftCount;
-
-      hltBits[vectorIndex] &= clearMask;
-      hltBits[vectorIndex] |= pathStatus << shiftCount;
-    }
-
-
-    void
-    clear_trigger_bits
-    (
-      std::vector<unsigned char>& hltBits
-    )
-    {
-      for (unsigned int idx = 0; idx < hltBits.size(); ++idx)
-        {
-          hltBits[idx] = 0;
-        }
     }
 
 
