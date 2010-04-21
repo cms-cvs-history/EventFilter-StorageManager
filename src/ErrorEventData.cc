@@ -1,4 +1,4 @@
-// $Id: ErrorEventData.cc,v 1.1 2009/09/29 15:29:59 dshpakov Exp $
+// $Id: ErrorEventData.cc,v 1.2 2010/01/07 18:03:32 mommsen Exp $
 
 #include "EventFilter/StorageManager/src/ChainData.h"
 
@@ -155,15 +155,14 @@ namespace stor
         }
 
       boost::shared_ptr<FRDEventMsgView> msgView;
-      std::vector<unsigned char> tempBuffer;
       if (useFirstFrag)
         {
           msgView.reset(new FRDEventMsgView(firstFragLoc));
         }
       else
         {
-          copyFragmentsIntoBuffer(tempBuffer);
-          msgView.reset(new FRDEventMsgView(&tempBuffer[0]));
+          copyFragmentsIntoBuffer(_headerCopy);
+          msgView.reset(new FRDEventMsgView(&_headerCopy[0]));
         }
 
       _headerSize = sizeof(FRDEventHeader_V2);
