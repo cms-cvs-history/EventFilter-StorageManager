@@ -18,7 +18,8 @@
 using namespace stor;
 
 using stor::testhelper::outstanding_bytes;
-using stor::testhelper::allocate_frame_with_basic_header;
+using stor::testhelper::allocate_multiple_frames_with_event_msg;
+using toolbox::mem::Reference;
 
 class testFragmentStore : public CppUnit::TestFixture
 {
@@ -46,60 +47,56 @@ private:
   unsigned int getEventNumber
   (
     const unsigned int eventCount
-  );
+  ) const;
 
-  stor::I2OChain getFragment
-  (
-    const unsigned int eventCount,
-    const unsigned int fragmentCount,
+  typedef std::vector<stor::I2OChain> Fragments;
+  Fragments getFragments(
+    const unsigned int eventNumber,
     const unsigned int totalFragments
-  );
+  ) const;
 
   FragmentStore fragmentStore;
-
 };
 
 unsigned int testFragmentStore::getEventNumber
 (
   const unsigned int eventCount
-)
+) const
 {
   unsigned int eventNumber = 0xb4b4e1e1;
   eventNumber <<= eventCount;
   return eventNumber;
 }
 
-stor::I2OChain testFragmentStore::getFragment
-(
-  const unsigned int eventCount,
-  const unsigned int fragmentCount,
+
+testFragmentStore::Fragments testFragmentStore::getFragments(
+  const unsigned int eventNumber,
   const unsigned int totalFragments
-)
+) const
 {
-  Reference* ref = 
-    allocate_frame_with_basic_header(I2O_SM_DATA, fragmentCount, totalFragments);
-  I2O_SM_DATA_MESSAGE_FRAME *i2oMsg =
-    (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-  i2oMsg->rbBufferID = 2;
-  i2oMsg->runID = 0xa5a5d2d2;
-  i2oMsg->eventID = getEventNumber(eventCount);
-  i2oMsg->outModID = 0xc3c3f0f0;
-  i2oMsg->fuProcID = 0x01234567;
-  i2oMsg->fuGUID = 0x89abcdef;
-  stor::I2OChain frag(ref);
-  
-  return frag;
+  Fragments fragments;
+  testhelper::References refs =
+    allocate_multiple_frames_with_event_msg(getEventNumber(eventNumber),totalFragments);
+  for (testhelper::References::const_iterator it = refs.begin(), itEnd = refs.end();
+       it != itEnd; ++it)
+  {
+    fragments.push_back(stor::I2OChain(*it));
+  }
+  return fragments;
 }
+
 
 void testFragmentStore::testSingleFragment()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
-    stor::I2OChain frag = getFragment(1,0,1);
+    stor::I2OChain frag = getFragments(1,1).front();
     CPPUNIT_ASSERT(frag.complete());
+    CPPUNIT_ASSERT(!frag.faulty());
     bool complete = fragmentStore.addFragment(frag);
     CPPUNIT_ASSERT(complete);
     CPPUNIT_ASSERT(frag.complete());
+    CPPUNIT_ASSERT(!frag.faulty());
     CPPUNIT_ASSERT(frag.fragmentCount() == 1);
   }
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
@@ -109,27 +106,31 @@ void testFragmentStore::testMultipleFragments()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 
-  const unsigned int totalFragments = 3;
-
-  for (unsigned int i = 0; i < totalFragments; ++i)
   {
-    stor::I2OChain frag = getFragment(1,i,totalFragments);
-    CPPUNIT_ASSERT(!frag.complete());
-    bool complete = fragmentStore.addFragment(frag);
-    if ( i < totalFragments-1 )
+    const unsigned int totalFragments = 3;
+    Fragments fragments = getFragments(1,totalFragments);
+    
+    for (unsigned int i = 0; i < totalFragments; ++i)
     {
-      CPPUNIT_ASSERT(!complete);
-      CPPUNIT_ASSERT(frag.empty());
-    }
-    else
-    {
-      CPPUNIT_ASSERT(complete);
-      CPPUNIT_ASSERT(!frag.empty());
-      CPPUNIT_ASSERT(frag.complete());
-      CPPUNIT_ASSERT(!frag.faulty());
-      CPPUNIT_ASSERT(frag.fragmentCount() == totalFragments);
+      stor::I2OChain frag = fragments[i];
+      CPPUNIT_ASSERT(!frag.complete());
+      bool complete = fragmentStore.addFragment(frag);
+      if ( i < totalFragments-1 )
+      {
+        CPPUNIT_ASSERT(!complete);
+        CPPUNIT_ASSERT(frag.empty());
+      }
+      else
+      {
+        CPPUNIT_ASSERT(complete);
+        CPPUNIT_ASSERT(!frag.empty());
+        CPPUNIT_ASSERT(frag.complete());
+        CPPUNIT_ASSERT(!frag.faulty());
+        CPPUNIT_ASSERT(frag.fragmentCount() == totalFragments);
+      }
     }
   }
+  
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
@@ -138,30 +139,38 @@ void testFragmentStore::testConcurrentFragments()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 
-  const unsigned int totalFragments = 5;
-  const unsigned int totalEvents = 15;
-
-  for (unsigned int fragNum = 0; fragNum < totalFragments; ++fragNum)
   {
+    const unsigned int totalFragments = 5;
+    const unsigned int totalEvents = 15;
+    std::vector<Fragments> allFragments;
+    
     for (unsigned int eventNum = 0; eventNum < totalEvents; ++eventNum)
     {
-      stor::I2OChain frag = getFragment(eventNum,fragNum,totalFragments);
-      CPPUNIT_ASSERT(!frag.complete());
-      bool complete = fragmentStore.addFragment(frag);
-      if ( fragNum < totalFragments-1 )
+      allFragments.push_back( getFragments(eventNum,totalFragments) );
+    }
+    
+    for (unsigned int fragNum = 0; fragNum < totalFragments; ++fragNum)
+    {
+      for (unsigned int eventNum = 0; eventNum < totalEvents; ++eventNum)
       {
-        CPPUNIT_ASSERT(!complete);
-        CPPUNIT_ASSERT(frag.empty());
-      }
-      else
-      {
-        CPPUNIT_ASSERT(complete);
-        CPPUNIT_ASSERT(frag.complete());
-        CPPUNIT_ASSERT(!frag.faulty());
-        CPPUNIT_ASSERT(frag.fragmentCount() == totalFragments);
-
-        stor::FragKey fragmentKey = frag.fragmentKey();
-        CPPUNIT_ASSERT(fragmentKey.event_ == getEventNumber(eventNum));
+        stor::I2OChain frag = allFragments[eventNum][fragNum];
+        CPPUNIT_ASSERT(!frag.complete());
+        bool complete = fragmentStore.addFragment(frag);
+        if ( fragNum < totalFragments-1 )
+        {
+          CPPUNIT_ASSERT(!complete);
+          CPPUNIT_ASSERT(frag.empty());
+        }
+        else
+        {
+          CPPUNIT_ASSERT(complete);
+          CPPUNIT_ASSERT(frag.complete());
+          CPPUNIT_ASSERT(!frag.faulty());
+          CPPUNIT_ASSERT(frag.fragmentCount() == totalFragments);
+          
+          stor::FragKey fragmentKey = frag.fragmentKey();
+          CPPUNIT_ASSERT(fragmentKey.event_ == getEventNumber(eventNum));
+        }
       }
     }
   }
@@ -172,7 +181,7 @@ void testFragmentStore::testStaleEvent()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
-    stor::I2OChain frag = getFragment(1,0,1);
+    stor::I2OChain frag = getFragments(1,1).front();
     CPPUNIT_ASSERT(frag.complete());
     bool hasStaleEvent = fragmentStore.getStaleEvent(frag, 0);
     CPPUNIT_ASSERT(hasStaleEvent == false);
@@ -188,10 +197,11 @@ void testFragmentStore::testSingleIncompleteEvent()
     const unsigned int totalFragments = 5;
     stor::I2OChain frag;
     bool complete;
-    
+    Fragments fragments = getFragments(1, totalFragments);
+
     for (unsigned int i = 0; i < totalFragments-1; ++i)
     {
-      frag = getFragment(1,i,totalFragments);
+      frag = fragments[i];
       CPPUNIT_ASSERT(!frag.complete());
       complete = fragmentStore.addFragment(frag);
     }
@@ -217,11 +227,13 @@ void testFragmentStore::testOneOfManyIncompleteEvent()
     const unsigned int totalEvents = 15;
     stor::I2OChain frag;
     bool complete;
-    
+    std::vector<Fragments> allFragments;
+    allFragments.push_back(getFragments(0,totalFragments));
+
     // Fill one event with a missing fragment
     for (unsigned int fragNum = 0; fragNum < totalFragments-1; ++fragNum)
     {
-      frag = getFragment(0,fragNum,totalFragments);
+      frag = allFragments[0][fragNum];
       CPPUNIT_ASSERT(!frag.complete());
       complete = fragmentStore.addFragment(frag);
     }
@@ -231,12 +243,14 @@ void testFragmentStore::testOneOfManyIncompleteEvent()
     // Sleep for a second
     sleep(1);
     
-    // Fill more events with missing fragmentes
+    // Fill more events with missing fragments
     for (unsigned int eventNum = 1; eventNum < totalEvents; ++eventNum)
     {
+      allFragments.push_back(getFragments(eventNum,totalFragments));
+
       for (unsigned int fragNum = 1; fragNum < totalFragments; ++fragNum)
       {
-        frag = getFragment(eventNum,fragNum,totalFragments);
+        frag = allFragments[eventNum][fragNum];
         CPPUNIT_ASSERT(!frag.complete());
         complete = fragmentStore.addFragment(frag);
       }
@@ -256,7 +270,7 @@ void testFragmentStore::testOneOfManyIncompleteEvent()
     // Finish the other events
     for (unsigned int eventNum = 1; eventNum < totalEvents; ++eventNum)
     {
-      frag = getFragment(eventNum,0,totalFragments);
+      frag = allFragments[eventNum][0];
       CPPUNIT_ASSERT(!frag.complete());
       complete = fragmentStore.addFragment(frag);
       CPPUNIT_ASSERT(complete);
@@ -282,12 +296,15 @@ void testFragmentStore::testClear()
     const unsigned int totalEvents = 15;
     stor::I2OChain frag;
     bool complete;
+    std::vector<Fragments> allFragments;
     
     for (unsigned int eventNum = 0; eventNum < totalEvents; ++eventNum)
     {
+      Fragments fragments = getFragments(eventNum,totalFragments);
+
       for (unsigned int fragNum = 0; fragNum < totalFragments-1; ++fragNum)
       {
-        frag = getFragment(eventNum,fragNum,totalFragments);
+        frag = fragments[fragNum];
         CPPUNIT_ASSERT(!frag.complete());
         complete = fragmentStore.addFragment(frag);
       }
