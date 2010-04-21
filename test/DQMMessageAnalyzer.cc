@@ -10,7 +10,7 @@
   file in DQMServices/Daemon/test, but modified to include another top level
   folder, to remove the 1 sec wait, and to do the fitting without printout.
 
-  $Id: DQMMessageAnalyzer.cc,v 1.7 2009/06/10 13:58:35 biery Exp $
+  $Id: DQMMessageAnalyzer.cc,v 1.8 2009/07/25 02:30:03 wmtan Exp $
 
 */
 
@@ -222,6 +222,8 @@ void DQMMessageAnalyzer::endJob(void)
                 << dqmEventView->lumiSection() << std::endl;
       std::cout << "    update number = "
                 << dqmEventView->updateNumber() << std::endl;
+      std::cout << "    checksum = "
+                << dqmEventView->adler32_chksum() << std::endl;
       std::cout << "    compression flag = "
                 << dqmEventView->compressionFlag() << std::endl;
       std::cout << "    reserved word = "
@@ -413,6 +415,7 @@ void DQMMessageAnalyzer::analyze(const edm::Event& iEvent,
                                         iEvent.id().run(), iEvent.id().event(),
                                         iEvent.time(),
                                         lumiSection, updateNumber,
+                                        (uint32)serializeWorker_.adler32_chksum(),
                                         edm::getReleaseVersion(), dirName,
                                         toTable);
 
@@ -445,6 +448,8 @@ void DQMMessageAnalyzer::analyze(const edm::Event& iEvent,
                 << dqmEventView.lumiSection() << std::endl;
       std::cout << "    update number = "
                 << dqmEventView.updateNumber() << std::endl;
+      std::cout << "    checksum = "
+                << dqmEventView->adler32_chksum() << std::endl;
       std::cout << "    compression flag = "
                 << dqmEventView.compressionFlag() << std::endl;
       std::cout << "    reserved word = "
@@ -511,6 +516,7 @@ DEFINE_FWK_MODULE(DQMMessageAnalyzer);
                                      event.time(),
                                      //event.time().value(),
                                      lumiSectionTag, updateNumber,
+                                     (uint32)serializeWorker_.adler32_chksum(),
                                      edm::getReleaseVersion(), dirName,
                                      toTable);
 
