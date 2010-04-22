@@ -1,4 +1,4 @@
-// $Id: DQMEventMsgData.cc,v 1.4.2.1 2010/04/21 09:59:57 mommsen Exp $
+// $Id: DQMEventMsgData.cc,v 1.4.2.2 2010/04/22 14:08:44 mommsen Exp $
 /// @file: DQMEventMsgData.cc
 
 #include "EventFilter/StorageManager/src/ChainData.h"
@@ -130,28 +130,6 @@ namespace stor
       return _headerLocation;
     }
 
-    unsigned long DQMEventMsgData::do_eventSize() const
-    {
-      if (faulty() || !complete())
-        {
-          return 0;
-        }
-
-      if (! _headerFieldsCached) {cacheHeaderFields();}
-      return _eventSize;
-    }
-
-    unsigned char* DQMEventMsgData::do_eventLocation() const
-    {
-      if (faulty() || !complete())
-        {
-          return 0;
-        }
-
-      if (! _headerFieldsCached) {cacheHeaderFields();}
-      return _eventLocation;
-    }
-
     inline unsigned char*
     DQMEventMsgData::do_fragmentLocation(unsigned char* dataLoc) const
     {
@@ -205,10 +183,8 @@ namespace stor
           msgView.reset(new DQMEventMsgView(&_headerCopy[0]));
         }
 
-      _headerSize = msgView->headerSize() + 4; // FIXME
+      _headerSize = msgView->headerSize();
       _headerLocation = msgView->startAddress();
-      _eventSize = msgView->eventLength();
-      _eventLocation = msgView->eventAddress();
       _topFolderName = msgView->topFolderName();
       _adler32 = msgView->adler32_chksum();
 

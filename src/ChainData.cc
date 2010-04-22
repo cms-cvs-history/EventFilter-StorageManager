@@ -1,4 +1,4 @@
-// $Id: ChainData.cc,v 1.5.2.1 2010/04/21 09:59:57 mommsen Exp $
+// $Id: ChainData.cc,v 1.5.2.2 2010/04/22 14:08:44 mommsen Exp $
 /// @file: ChainData.cc
 
 #include "FWCore/Utilities/interface/Adler32Calculator.h"
@@ -519,16 +519,6 @@ unsigned char* detail::ChainData::headerLocation() const
   return do_headerLocation();
 }
 
-unsigned long detail::ChainData::eventSize() const
-{
-  return do_eventSize();
-}
-
-unsigned char* detail::ChainData::eventLocation() const
-{
-  return do_eventLocation();
-}
-
 std::string detail::ChainData::hltURL() const
 {
   if (parsable())
@@ -809,10 +799,6 @@ uint32 detail::ChainData::calculateAdler32() const
       dataLocation += headerSize;
     }
 
-    std::cout << "Calculate adler for frame " << smMsg->frameCount 
-      << " data size " << dataSize 
-      << " event size " << do_eventSize() << std::endl;
-
     cms::Adler32(dataLocation, dataSize, adlerA, adlerB);
 
     curRef = curRef->getNextReference();
@@ -827,16 +813,6 @@ unsigned long detail::ChainData::do_headerSize() const
 }
 
 unsigned char* detail::ChainData::do_headerLocation() const
-{
-  return 0;
-}
-
-unsigned long detail::ChainData::do_eventSize() const
-{
-  return 0;
-}
-
-unsigned char* detail::ChainData::do_eventLocation() const
 {
   return 0;
 }

@@ -1,4 +1,4 @@
-// $Id: ChainData.h,v 1.8.2.1 2010/04/21 09:59:57 mommsen Exp $
+// $Id: ChainData.h,v 1.8.2.2 2010/04/22 14:08:44 mommsen Exp $
 /// @file: ChainData.h
 
 #ifndef CHAINDATA_H
@@ -97,8 +97,6 @@ namespace stor
 
       unsigned long headerSize() const;
       unsigned char* headerLocation() const;
-      unsigned long eventSize() const;
-      unsigned char* eventLocation() const;
 
       std::string hltURL() const;
       std::string hltClassName() const;
@@ -179,8 +177,6 @@ namespace stor
 
       virtual unsigned long do_headerSize() const;
       virtual unsigned char* do_headerLocation() const;
-      virtual unsigned long do_eventSize() const;
-      virtual unsigned char* do_eventLocation() const;
 
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       virtual uint32 do_outputModuleId() const;
@@ -309,8 +305,6 @@ namespace stor
 
       unsigned long do_headerSize() const;
       unsigned char* do_headerLocation() const;
-      unsigned long do_eventSize() const;
-      unsigned char* do_eventLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_adler32Checksum() const;
       std::string do_topFolderName() const;
@@ -328,8 +322,6 @@ namespace stor
       mutable std::vector<unsigned char> _headerCopy;
       mutable unsigned long _headerSize;
       mutable unsigned char* _headerLocation;
-      mutable unsigned long _eventSize;
-      mutable unsigned char* _eventLocation;
       mutable std::string _topFolderName;
       mutable DQMKey _dqmKey;
       mutable uint32 _adler32;
