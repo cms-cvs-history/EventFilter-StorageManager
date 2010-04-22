@@ -25,6 +25,8 @@ using stor::testhelper::get_output_module_id;
 using stor::testhelper::allocate_frame;
 using stor::testhelper::allocate_frame_with_basic_header;
 using stor::testhelper::allocate_frame_with_sample_header;
+using stor::testhelper::allocate_frame_with_event_msg;
+using stor::testhelper::allocate_frame_with_dqm_msg;
 using stor::testhelper::allocate_multiple_frames_with_event_msg;
 
 
@@ -155,8 +157,6 @@ testI2OChain::nonempty_chain_cleans_up_nice()
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
     CPPUNIT_ASSERT(!frag.empty());
     CPPUNIT_ASSERT(!frag.complete());
-    //frag.markComplete();
-    //CPPUNIT_ASSERT(frag.complete());
     CPPUNIT_ASSERT(frag.faulty());  // because the buffer is empty
     frag.markFaulty();
     CPPUNIT_ASSERT(frag.faulty());
@@ -476,51 +476,54 @@ testI2OChain::copy_with_valid_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
-    unsigned int value1 = 0xa5a5d2d2;
-    unsigned int value2 = 0xb4b4e1e1;
-    unsigned int value3 = 0xc3c3f0f0;
-    unsigned int value4 = 0x01234567;
-    unsigned int value5 = 0x89abcdef;
+    const unsigned int runNumber = 100;
+    const unsigned int eventNumber = 42;
+    const unsigned int lumiNumber = 777;
+    const unsigned int rbBufferID = 3;
+    const unsigned int hltTid = 0xa5a5d2d2;
+    const unsigned int fuProcID = 0xb4b4e1e1;
+    const unsigned int fuGUID = 0xc3c3f0f0;
+    const std::string outputModuleLabel = "HLTOutput";
+    const unsigned int outputModuleId = get_output_module_id(outputModuleLabel);
+    std::vector<bool> l1Bits;
+    std::vector<unsigned char> hltBits;
+    const uint32 hltBitCount = 0;
 
-    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
-    I2O_SM_DATA_MESSAGE_FRAME *smMsg =
-      (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-    smMsg->rbBufferID = 2;
-    smMsg->runID = value1;
-    smMsg->eventID = value2;
-    smMsg->outModID = value3;
-    smMsg->fuProcID = value4;
-    smMsg->fuGUID = value5;
+    stor::testhelper::References refs =
+      allocate_multiple_frames_with_event_msg(
+        runNumber, eventNumber, lumiNumber,
+        outputModuleLabel, l1Bits, hltBits, hltBitCount,
+        rbBufferID, hltTid, fuProcID, fuGUID, 1);
 
-    stor::I2OChain eventMsgFrag(ref);
+    stor::I2OChain eventMsgFrag(refs.front());
     stor::I2OChain copy(eventMsgFrag);
 
     {
       CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
       stor::FragKey fragmentKey = eventMsgFrag.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
-      CPPUNIT_ASSERT(fragmentKey.run_ == value1);
-      CPPUNIT_ASSERT(fragmentKey.event_ == value2);
-      CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
-      CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
-      CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
-      CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == 2);
-      CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == value4);
-      CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == value5);
+      CPPUNIT_ASSERT(fragmentKey.run_ == runNumber);
+      CPPUNIT_ASSERT(fragmentKey.event_ == eventNumber);
+      CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+      CPPUNIT_ASSERT(fragmentKey.originatorPid_ == fuProcID);
+      CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == fuGUID);
+      CPPUNIT_ASSERT(eventMsgFrag.rbBufferId() == rbBufferID);
+      CPPUNIT_ASSERT(eventMsgFrag.fuProcessId() == fuProcID);
+      CPPUNIT_ASSERT(eventMsgFrag.fuGuid() == fuGUID);
     }
 
     {
       CPPUNIT_ASSERT(copy.messageCode() == Header::EVENT);
       stor::FragKey fragmentKey = copy.fragmentKey();
       CPPUNIT_ASSERT(fragmentKey.code_ == Header::EVENT);
-      CPPUNIT_ASSERT(fragmentKey.run_ == value1);
-      CPPUNIT_ASSERT(fragmentKey.event_ == value2);
-      CPPUNIT_ASSERT(fragmentKey.secondaryId_ == value3);
-      CPPUNIT_ASSERT(fragmentKey.originatorPid_ == value4);
-      CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == value5);
-      CPPUNIT_ASSERT(copy.rbBufferId() == 2);
-      CPPUNIT_ASSERT(copy.fuProcessId() == value4);
-      CPPUNIT_ASSERT(copy.fuGuid() == value5);
+      CPPUNIT_ASSERT(fragmentKey.run_ == runNumber);
+      CPPUNIT_ASSERT(fragmentKey.event_ == eventNumber);
+      CPPUNIT_ASSERT(fragmentKey.secondaryId_ == outputModuleId);
+      CPPUNIT_ASSERT(fragmentKey.originatorPid_ == fuProcID);
+      CPPUNIT_ASSERT(fragmentKey.originatorGuid_ == fuGUID);
+      CPPUNIT_ASSERT(copy.rbBufferId() == rbBufferID);
+      CPPUNIT_ASSERT(copy.fuProcessId() == fuProcID);
+      CPPUNIT_ASSERT(copy.fuGuid() == fuGUID);
     }
 
     {
@@ -596,33 +599,36 @@ testI2OChain::swap_with_valid_header()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   {
-    unsigned int value1 = 0xa5a5d2d2;
-    unsigned int value2 = 0xb4b4e1e1;
-    unsigned int value3 = 0xc3c3f0f0;
-    unsigned int value4 = 0x01234567;
-    unsigned int value5 = 0x89abcdef;
+    const unsigned int value1 = 0xa5a5d2d2;
+    const unsigned int value2 = 0xb4b4e1e1;
+    const unsigned int value3 = 0xc3c3f0f0;
+    const unsigned int value4 = 0x01234567;
+    const unsigned int value5 = 0x89abcdef;
 
-    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DQM, 0, 1);
-    I2O_SM_DQM_MESSAGE_FRAME *smMsg =
-      (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
-    smMsg->rbBufferID = 2;
-    smMsg->runID = value1;
-    smMsg->eventAtUpdateID = value2;
-    smMsg->folderID = value3;
-    smMsg->fuProcID = value4;
-    smMsg->fuGUID = value5;
+    Reference* ref = allocate_frame_with_dqm_msg(
+      value2, "HLT", value1, 1, 2, value3, value4, value5);
+
+    // I2O_SM_DQM_MESSAGE_FRAME *smMsg =
+    //   (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
+    // smMsg->rbBufferID = 2;
+    // smMsg->runID = value1;
+    // smMsg->eventAtUpdateID = value2;
+    // smMsg->folderID = value3;
+    // smMsg->fuProcID = value4;
+    // smMsg->fuGUID = value5;
     stor::I2OChain frag1(ref);
     double creationTime1 = frag1.creationTime();
     double lastFragmentTime1 = frag1.lastFragmentTime();
  
-    ref = allocate_frame_with_basic_header(I2O_SM_DQM, 0, 1);
-    smMsg = (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
-    smMsg->rbBufferID = 3;
-    smMsg->runID = value5;
-    smMsg->eventAtUpdateID = value4;
-    smMsg->folderID = value3;
-    smMsg->fuProcID = value2;
-    smMsg->fuGUID = value1;
+    ref = allocate_frame_with_dqm_msg(
+      value4, "HLT", value5, 1, 3, value3, value2, value1);
+    // smMsg = (I2O_SM_DQM_MESSAGE_FRAME*) ref->getDataLocation();
+    // smMsg->rbBufferID = 3;
+    // smMsg->runID = value5;
+    // smMsg->eventAtUpdateID = value4;
+    // smMsg->folderID = value3;
+    // smMsg->fuProcID = value2;
+    // smMsg->fuGUID = value1;
     stor::I2OChain frag2(ref);
     double creationTime2 = frag2.creationTime();
     double lastFragmentTime2 = frag2.lastFragmentTime();
@@ -1815,7 +1821,7 @@ testI2OChain::event_msg_header()
     l1Bits.push_back(false);
     l1Bits.push_back(true);
 
-    uint32 hltBitCount = 21;
+    const uint32 hltBitCount = 21;
     std::vector<unsigned char> hltBits;
     hltBits.resize(1 + (hltBitCount-1)/4);
     for (uint32 idx = 0; idx < hltBits.size(); ++idx) {
@@ -1982,12 +1988,14 @@ testI2OChain::dqm_event_msg_header()
     dqmMsg->folderID = value1;
     dqmMsg->fuProcID = value2;
     dqmMsg->fuGUID = value3;
-    uint32_t adler32_chksum = cms::Adler32((char*)dqmMsg->dataPtr(), dqmMsg->dataSize);
+    uint32_t adler32_chksum = 0;
+    char host_name[255];
+    gethostname(host_name, 255);
 
     DQMEventMsgBuilder
       dqmEventBuilder(dqmMsg->dataPtr(), dqmMsg->dataSize, runNumber,
         eventNumber, timestamp, lumiNumber, updateNumber, (uint32)adler32_chksum,
-        releaseTag, topFolderName, objects);
+        host_name, releaseTag, topFolderName, objects);
 
     stor::I2OChain dqmEventMsgFrag(ref);
     CPPUNIT_ASSERT(dqmEventMsgFrag.complete());
@@ -2024,7 +2032,7 @@ testI2OChain::stream_and_queue_tags()
 
     stor::QueueID dqmQueueA(stor::enquing_policy::DiscardNew, 0xdeadbeef);
 
-    Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
+    Reference* ref = allocate_frame_with_event_msg();
     stor::I2OChain eventMsgFrag(ref);
 
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());

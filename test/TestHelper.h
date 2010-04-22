@@ -1,4 +1,4 @@
-// $Id: TestHelper.h,v 1.3 2009/08/21 07:16:10 mommsen Exp $
+// $Id: TestHelper.h,v 1.3.6.1 2010/04/21 09:39:55 mommsen Exp $
 
 #ifndef StorageManager_TestHelper_h
 #define StorageManager_TestHelper_h
@@ -272,12 +272,15 @@ namespace stor
       std::vector<unsigned char> tmpBuffer;
       tmpBuffer.resize(bufferSize);
       const uint32_t adler32_chksum = 0;
+      char host_name[255];
+      gethostname(host_name, 255);
       const unsigned int outputModuleId = get_output_module_id(outputModuleLabel);
 
       EventMsgBuilder
         eventBuilder(&tmpBuffer[0], bufferSize, runNumber,
                      eventNumber, lumiNumber, outputModuleId,
-                     l1Bits, &hltBits[0], hltBitCount, (uint32)adler32_chksum);
+                     l1Bits, &hltBits[0], hltBitCount,
+                     (uint32)adler32_chksum, host_name);
       const uint32 msgSize = eventBuilder.size();
       const uint32 fragmentSize = msgSize/totalFragments + 1;
 
@@ -352,10 +355,10 @@ namespace stor
     Reference*
     allocate_frame_with_event_msg
     (
+      unsigned int eventNumber,
       std::string outputModuleLabel,
       std::vector<unsigned char>& hltBits,
-      unsigned int hltBitCount,
-      unsigned int eventNumber
+      unsigned int hltBitCount
     )
     {
       const unsigned int runNumber = 100;
@@ -378,6 +381,19 @@ namespace stor
       return refs.front();
     }
 
+    Reference*
+    allocate_frame_with_event_msg
+    (
+      unsigned int eventNumber = 1
+    )
+    {
+      std::vector<unsigned char> hltBits;
+      set_trigger_bit(hltBits, 3, edm::hlt::Fail);
+      set_trigger_bit(hltBits, 5, edm::hlt::Pass);
+      set_trigger_bit(hltBits, 8, edm::hlt::Exception);
+
+      return allocate_frame_with_event_msg(eventNumber, "HLT", hltBits, hltBits.size());
+    }
 
     Reference*
     allocate_frame_with_error_msg
@@ -406,30 +422,45 @@ namespace stor
     }
 
 
-    Reference* allocate_frame_with_dqm_msg( const unsigned int eventNumber,
-                                            const std::string& topFolder )
+    Reference*
+    allocate_frame_with_dqm_msg
+    (
+      const unsigned int eventNumber,
+      const std::string& topFolder = "HLT",
+      const unsigned int runNumber = 1111,
+      const unsigned int lumiNumber = 1,
+      const unsigned int rbBufferID = 1,
+      const unsigned int folderID = 0xc3c3f0f0,
+      const unsigned int fuProcID = 0x01234567,
+      const unsigned int fuGUID = 0x89abcdef,
+      const std::string releaseTag = "v00"
+    )
     {
-
-      unsigned int run = 1111;
       edm::Timestamp ts;
-      unsigned int lumi_section = 1;
-      unsigned int update_number = 1;
-      std::string release_tag( "v00" );
       DQMEvent::TObjectTable mon_elts;
 
       Reference* ref = allocate_frame_with_basic_header( I2O_SM_DQM, 0, 1 );
 
-      I2O_SM_DQM_MESSAGE_FRAME* msg = (I2O_SM_DQM_MESSAGE_FRAME*)ref->getDataLocation();
+      I2O_SM_DQM_MESSAGE_FRAME* smMsg = (I2O_SM_DQM_MESSAGE_FRAME*)ref->getDataLocation();
+      smMsg->rbBufferID = rbBufferID;
+      smMsg->runID = runNumber;
+      smMsg->eventAtUpdateID = eventNumber;
+      smMsg->folderID = folderID;
+      smMsg->fuProcID = fuProcID;
+      smMsg->fuGUID = fuGUID;
 
-      //uint32_t adler32_chksum = cms::Adler32((char*)msg->dataPtr(), msg->dataSize); // not right!!
-      // no data yet to get a checksum!
+      // no data yet to get a checksum (not needed for test)
       uint32_t adler32_chksum = 0;
+      char host_name[255];
+      gethostname(host_name, 255);
 
-      DQMEventMsgBuilder b( (void*)(msg->dataPtr()), msg->dataSize, run, eventNumber,
+      DQMEventMsgBuilder b( (void*)(smMsg->dataPtr()), smMsg->dataSize,
+                            runNumber, eventNumber,
                             ts,
-                            lumi_section, update_number,
+                            lumiNumber, eventNumber,
                             (uint32)adler32_chksum,
-                            release_tag,
+                            host_name,
+                            releaseTag,
                             topFolder,
                             mon_elts );
 

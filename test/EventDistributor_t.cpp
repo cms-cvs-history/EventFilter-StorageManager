@@ -247,8 +247,7 @@ void testEventDistributor::testStreamSelection()
   clear_trigger_bits(hltBits);
   set_trigger_bit(hltBits, 0, edm::hlt::Pass);
 
-  ref = allocate_frame_with_event_msg("HLTDEBUG", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "HLTDEBUG", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag(ref);
   CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
 
@@ -278,8 +277,7 @@ void testEventDistributor::testStreamSelection()
   set_trigger_bit(hltBits, 4, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("HLTDEBUG", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "HLTDEBUG", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag2(ref);
   CPPUNIT_ASSERT(eventMsgFrag2.messageCode() == Header::EVENT);
 
@@ -303,8 +301,7 @@ void testEventDistributor::testStreamSelection()
   set_trigger_bit(hltBits, 0, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("BOGUS", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "BOGUS", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag3(ref);
   CPPUNIT_ASSERT(eventMsgFrag3.messageCode() == Header::EVENT);
 
@@ -438,8 +435,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 0, edm::hlt::Pass);
   set_trigger_bit(hltBits, 2, edm::hlt::Pass);
 
-  ref = allocate_frame_with_event_msg("hltOutputDQM", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "hltOutputDQM", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag(ref);
   CPPUNIT_ASSERT(eventMsgFrag.messageCode() == Header::EVENT);
 
@@ -504,8 +500,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 4, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("hltOutputDQM", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "hltOutputDQM", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag2(ref);
   CPPUNIT_ASSERT(eventMsgFrag2.messageCode() == Header::EVENT);
 
@@ -530,8 +525,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 7, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("hltOutputDQM", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "hltOutputDQM", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag3(ref);
   CPPUNIT_ASSERT(eventMsgFrag3.messageCode() == Header::EVENT);
 
@@ -565,8 +559,7 @@ void testEventDistributor::testConsumerSelection()
   set_trigger_bit(hltBits, 3, edm::hlt::Pass);
 
   ++eventNumber;
-  ref = allocate_frame_with_event_msg("BOGUS", hltBits, hltBitCount,
-                                      eventNumber);
+  ref = allocate_frame_with_event_msg(eventNumber, "BOGUS", hltBits, hltBitCount);
   stor::I2OChain eventMsgFrag4(ref);
   CPPUNIT_ASSERT(eventMsgFrag4.messageCode() == Header::EVENT);
 

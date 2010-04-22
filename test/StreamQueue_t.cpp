@@ -5,9 +5,11 @@
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
+using stor::testhelper::References;
 using stor::testhelper::outstanding_bytes;
 using stor::testhelper::allocate_frame;
-using stor::testhelper::allocate_frame_with_basic_header;
+using stor::testhelper::allocate_frame_with_event_msg;
+using stor::testhelper::allocate_multiple_frames_with_event_msg;
 using namespace stor;
 
 
@@ -52,7 +54,7 @@ testStreamQueue::enq_deq()
   CPPUNIT_ASSERT(sq.empty());
 
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-  Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
+  Reference* ref = allocate_frame_with_event_msg();
   I2OChain c1(ref);
   CPPUNIT_ASSERT(!c1.empty());
   CPPUNIT_ASSERT(sq.enq_nowait(c1));
@@ -80,7 +82,7 @@ testStreamQueue::enq_deq_memlimit()
   CPPUNIT_ASSERT(sq.empty());
 
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-  Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
+  Reference* ref = allocate_frame_with_event_msg();
   I2OChain c1(ref);
   CPPUNIT_ASSERT(!c1.empty());
   CPPUNIT_ASSERT(c1.complete());
@@ -90,8 +92,10 @@ testStreamQueue::enq_deq_memlimit()
   CPPUNIT_ASSERT(sq.used() == memory_consumed_by_one_frame);
   CPPUNIT_ASSERT(sq.full());
 
-  ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 2);
-  I2OChain c2(ref);
+  References refs = allocate_multiple_frames_with_event_msg(1,2);
+  I2OChain c2(refs[0]);
+  refs[1]->release();
+  refs.clear();
   CPPUNIT_ASSERT(!c2.empty());
   CPPUNIT_ASSERT(!c2.complete());
   CPPUNIT_ASSERT(outstanding_bytes() == 2*memory_consumed_by_one_frame);
