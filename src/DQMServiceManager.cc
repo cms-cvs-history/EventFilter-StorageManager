@@ -3,7 +3,7 @@
 //
 // (W.Badgett)
 //
-// $Id: DQMServiceManager.cc,v 1.12 2010/03/08 17:04:55 mommsen Exp $
+// $Id: DQMServiceManager.cc,v 1.12.2.1 2010/04/21 09:59:57 mommsen Exp $
 //
 // Note: this class is no longer used in the StorageManager, but is still
 // required by the SMProxyServer (Remi Mommsen, May 5, 2009)
@@ -16,6 +16,7 @@
 #include "TROOT.h"
 
 #include <limits>
+#include <unistd.h>
 
 using namespace edm;
 using namespace std;
@@ -46,6 +47,8 @@ DQMServiceManager::DQMServiceManager(std::string filePrefix,
   dqmInstances_.reserve(20);
 
   gROOT->SetBatch(kTRUE);
+  int got_host = gethostname(host_name_, 255);
+  if(got_host != 0) strcpy(host_name_, "noHostNameFoundOrTooLong");
 } 
 
 DQMServiceManager::~DQMServiceManager()
@@ -160,6 +163,7 @@ void DQMServiceManager::manageDQMEventMsg(DQMEventMsgView& msg)
 				 instance->getLumiSection(),
 				 instance->getUpdateNumber(),
                                  (uint32)serializer.adler32_chksum(),
+                                 host_name_,
 				 msg.releaseTag(),
 				 msg.topFolderName(),
 				 table); 
