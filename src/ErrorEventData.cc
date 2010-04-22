@@ -1,4 +1,5 @@
-// $Id: ErrorEventData.cc,v 1.2 2010/01/07 18:03:32 mommsen Exp $
+// $Id: ErrorEventData.cc,v 1.2.2.1 2010/04/21 09:50:18 mommsen Exp $
+/// @file: ErrorEventData.cc
 
 #include "EventFilter/StorageManager/src/ChainData.h"
 
@@ -11,9 +12,10 @@ namespace stor
   {
 
     ErrorEventMsgData::ErrorEventMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef, I2O_SM_ERROR, Header::ERROR_EVENT),
+      ChainData(I2O_SM_ERROR, Header::ERROR_EVENT),
       _headerFieldsCached(false)
     {
+      addFirstFragment(pRef);
       parseI2OHeader();
     }
 
@@ -57,7 +59,7 @@ namespace stor
     void
     ErrorEventMsgData::do_assertRunNumber(uint32 runNumber)
     {
-      if ( do_runNumber() != runNumber )
+      if ( !faulty() && do_runNumber() != runNumber )
       {
         std::ostringstream errorMsg;
         errorMsg << "Run number " << do_runNumber() 
@@ -178,3 +180,11 @@ namespace stor
   } // namespace detail
 
 } // namespace stor
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

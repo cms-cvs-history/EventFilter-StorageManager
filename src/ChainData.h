@@ -1,4 +1,5 @@
-// $Id: ChainData.h,v 1.8 2010/02/11 13:34:26 mommsen Exp $
+// $Id: ChainData.h,v 1.8.2.1 2010/04/21 09:59:57 mommsen Exp $
+/// @file: ChainData.h
 
 #ifndef CHAINDATA_H
 #define CHAINDATA_H
@@ -53,8 +54,7 @@ namespace stor
 
 
     public:
-      explicit ChainData(toolbox::mem::Reference*,
-                         unsigned short i2oMessageCode = 0x9999,
+      explicit ChainData(unsigned short i2oMessageCode = 0x9999,
                          unsigned int messageCode = Header::INVALID);
       virtual ~ChainData();
       bool empty() const;
@@ -62,7 +62,8 @@ namespace stor
       bool faulty() const;
       unsigned int faultyBits() const;
       bool parsable() const;
-      void addToChain(ChainData const& newpart);
+      void addFirstFragment(toolbox::mem::Reference*);
+      void addToChain(ChainData const&);
       void markComplete();
       void markFaulty();
       void markCorrupt();
@@ -96,6 +97,8 @@ namespace stor
 
       unsigned long headerSize() const;
       unsigned char* headerLocation() const;
+      unsigned long eventSize() const;
+      unsigned char* eventLocation() const;
 
       std::string hltURL() const;
       std::string hltClassName() const;
@@ -136,6 +139,13 @@ namespace stor
       std::vector<QueueID> _eventConsumerTags;
       std::vector<QueueID> _dqmEventConsumerTags;
 
+      utils::time_point_t _creationTime;
+      utils::time_point_t _lastFragmentTime;
+      utils::time_point_t _staleWindowStartTime;
+
+      bool validateAdler32Checksum();
+      uint32 calculateAdler32() const;
+
     protected:
       toolbox::mem::Reference* _ref;
 
@@ -153,12 +163,6 @@ namespace stor
       unsigned int _hltTid;
       unsigned int _fuProcessId;
       unsigned int _fuGuid;
-      uint32 _adlerA;
-      uint32 _adlerB;
-
-      utils::time_point_t _creationTime;
-      utils::time_point_t _lastFragmentTime;
-      utils::time_point_t _staleWindowStartTime;
 
       bool validateDataLocation(toolbox::mem::Reference* ref,
                                 BitMasksForFaulty maskToUse);
@@ -172,11 +176,11 @@ namespace stor
                                  int& indexValue);
       bool validateMessageCode(toolbox::mem::Reference* ref,
                                unsigned short expectedI2OMessageCode);
-      bool validateAdler32Checksum();
-      virtual void calculateAdler32(toolbox::mem::Reference*, uint32& adlerA, uint32& adlerB) const {};
 
       virtual unsigned long do_headerSize() const;
       virtual unsigned char* do_headerLocation() const;
+      virtual unsigned long do_eventSize() const;
+      virtual unsigned char* do_eventLocation() const;
 
       virtual unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       virtual uint32 do_outputModuleId() const;
@@ -274,8 +278,6 @@ namespace stor
       void parseI2OHeader();
       void cacheHeaderFields() const;
 
-      virtual void calculateAdler32(toolbox::mem::Reference*, uint32& adlerA, uint32& adlerB) const;
-
       mutable bool _headerFieldsCached;
       mutable std::vector<unsigned char> _headerCopy;
       mutable unsigned long _headerSize;
@@ -307,6 +309,8 @@ namespace stor
 
       unsigned long do_headerSize() const;
       unsigned char* do_headerLocation() const;
+      unsigned long do_eventSize() const;
+      unsigned char* do_eventLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
       uint32 do_adler32Checksum() const;
       std::string do_topFolderName() const;
@@ -317,8 +321,6 @@ namespace stor
 
     private:
 
-      virtual void calculateAdler32(toolbox::mem::Reference*, uint32& adlerA, uint32& adlerB) const;
-
       void parseI2OHeader();
       void cacheHeaderFields() const;
 
@@ -326,6 +328,8 @@ namespace stor
       mutable std::vector<unsigned char> _headerCopy;
       mutable unsigned long _headerSize;
       mutable unsigned char* _headerLocation;
+      mutable unsigned long _eventSize;
+      mutable unsigned char* _eventLocation;
       mutable std::string _topFolderName;
       mutable DQMKey _dqmKey;
       mutable uint32 _adler32;

@@ -1,6 +1,5 @@
-// $Id: EventMsgData.cc,v 1.2 2010/01/07 18:03:32 mommsen Exp $
-
-#include "FWCore/Utilities/interface/Adler32Calculator.h"
+// $Id: EventMsgData.cc,v 1.2.2.1 2010/04/21 09:59:57 mommsen Exp $
+/// @file: EventMsgData.cc
 
 #include "EventFilter/StorageManager/src/ChainData.h"
 
@@ -13,20 +12,11 @@ namespace stor
   {
 
     EventMsgData::EventMsgData(toolbox::mem::Reference* pRef) :
-      ChainData(pRef, I2O_SM_DATA, Header::EVENT),
+      ChainData(I2O_SM_DATA, Header::EVENT),
       _headerFieldsCached(false)
     {
+      addFirstFragment(pRef);
       parseI2OHeader();
-    }
-
-    void EventMsgData::calculateAdler32(toolbox::mem::Reference* ref, uint32& adlerA, uint32& adlerB) const
-    {
-      if (parsable())
-        {
-          I2O_SM_DATA_MESSAGE_FRAME *smMsg =
-            (I2O_SM_DATA_MESSAGE_FRAME*) ref->getDataLocation();
-          cms::Adler32((char*)smMsg->dataPtr(), smMsg->dataSize, adlerA, adlerB);
-        }
     }
 
     unsigned long EventMsgData::do_headerSize() const
@@ -112,7 +102,7 @@ namespace stor
     void 
     EventMsgData::do_assertRunNumber(uint32 runNumber)
     {
-      if ( do_runNumber() != runNumber )
+      if ( !faulty() && do_runNumber() != runNumber )
       {
         std::ostringstream errorMsg;
         errorMsg << "Run number " << do_runNumber() 
@@ -258,3 +248,11 @@ namespace stor
   } // namespace detail
 
 } // namespace stor
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -
