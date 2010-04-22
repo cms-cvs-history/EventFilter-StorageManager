@@ -10,7 +10,7 @@
   file in DQMServices/Daemon/test, but modified to include another top level
   folder, to remove the 1 sec wait, and to do the fitting without printout.
 
-  $Id: DQMMessageAnalyzer.cc,v 1.8 2009/07/25 02:30:03 wmtan Exp $
+  $Id: DQMMessageAnalyzer.cc,v 1.8.8.1 2010/04/21 09:41:05 mommsen Exp $
 
 */
 
@@ -21,6 +21,7 @@
 #include <vector>
 #include <math.h>
 #include <cstdio>
+#include <unistd.h>
 
 // user include files
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -93,6 +94,7 @@ private:
   float XMIN; float XMAX;
   // event counter
   int counter;
+  char host_name_[255];
   // back-end interface
   DQMStore * dbe;
 };
@@ -115,6 +117,9 @@ DQMMessageAnalyzer::DQMMessageAnalyzer( const edm::ParameterSet& iConfig )
   std::cout <<" DQMMessageAnalyzer::DQMMessageAnalyzer CTOR" << std::endl;
   useCompression_ = iConfig.getParameter<bool>("useCompression");
   compressionLevel_ = iConfig.getParameter<int>("compressionLevel");
+
+  int got_host = gethostname(host_name_, 255);
+  if(got_host != 0) strcpy(host_name_, "noHostNameFoundOrTooLong");
 
   dqmOutputFile_ = new StreamDQMOutputFile("dqm_events.bin");
 
@@ -224,6 +229,8 @@ void DQMMessageAnalyzer::endJob(void)
                 << dqmEventView->updateNumber() << std::endl;
       std::cout << "    checksum = "
                 << dqmEventView->adler32_chksum() << std::endl;
+      std::cout << "    host name = "
+                << dqmEventView->hostName() << std::endl;
       std::cout << "    compression flag = "
                 << dqmEventView->compressionFlag() << std::endl;
       std::cout << "    reserved word = "
@@ -416,6 +423,7 @@ void DQMMessageAnalyzer::analyze(const edm::Event& iEvent,
                                         iEvent.time(),
                                         lumiSection, updateNumber,
                                         (uint32)serializeWorker_.adler32_chksum(),
+                                        host_name_,
                                         edm::getReleaseVersion(), dirName,
                                         toTable);
 
@@ -450,6 +458,8 @@ void DQMMessageAnalyzer::analyze(const edm::Event& iEvent,
                 << dqmEventView.updateNumber() << std::endl;
       std::cout << "    checksum = "
                 << dqmEventView->adler32_chksum() << std::endl;
+      std::cout << "    host name = "
+                << dqmEventView->hostName() << std::endl;
       std::cout << "    compression flag = "
                 << dqmEventView.compressionFlag() << std::endl;
       std::cout << "    reserved word = "
@@ -517,6 +527,7 @@ DEFINE_FWK_MODULE(DQMMessageAnalyzer);
                                      //event.time().value(),
                                      lumiSectionTag, updateNumber,
                                      (uint32)serializeWorker_.adler32_chksum(),
+                                     host_name_,
                                      edm::getReleaseVersion(), dirName,
                                      toTable);
 
