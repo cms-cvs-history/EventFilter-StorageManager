@@ -1,4 +1,4 @@
-// $Id: InitMsgData.cc,v 1.2 2010/01/07 18:03:32 mommsen Exp $
+// $Id: InitMsgData.cc,v 1.2.2.1 2010/04/22 14:08:44 mommsen Exp $
 /// @file: InitMsgData.cc
 
 #include "EventFilter/StorageManager/src/ChainData.h"
@@ -54,6 +54,20 @@ namespace stor
         {
           return dataLoc;
         }
+    }
+
+    uint32 InitMsgData::do_adler32Checksum() const
+    {
+      if (faulty() || !complete())
+        {
+          std::stringstream msg;
+          msg << "An adler32 checksum can not be determined from a ";
+          msg << "faulty or incomplete INIT message.";
+          XCEPT_RAISE(stor::exception::IncompleteInitMessage, msg.str());
+        }
+
+      if (! _headerFieldsCached) {cacheHeaderFields();}
+      return _adler32;
     }
 
     uint32 InitMsgData::do_outputModuleId() const
@@ -184,6 +198,7 @@ namespace stor
 
       _headerSize = msgView->headerSize();
       _headerLocation = msgView->startAddress();
+      _adler32 = msgView->adler32_chksum();
       _outputModuleId = msgView->outputModuleId();
       _outputModuleLabel = msgView->outputModuleLabel();
       msgView->hltTriggerNames(_hltTriggerNames);

@@ -1,4 +1,4 @@
-// $Id: ChainData.h,v 1.8.2.2 2010/04/22 14:08:44 mommsen Exp $
+// $Id: ChainData.h,v 1.8.2.3 2010/04/22 15:39:20 mommsen Exp $
 /// @file: ChainData.h
 
 #ifndef CHAINDATA_H
@@ -219,6 +219,7 @@ namespace stor
       unsigned long do_headerSize() const;
       unsigned char* do_headerLocation() const;
       unsigned char* do_fragmentLocation(unsigned char* dataLoc) const;
+      uint32 do_adler32Checksum() const;
       uint32 do_outputModuleId() const;
       std::string do_outputModuleLabel() const;
       void do_hltTriggerNames(Strings& nameList) const;
@@ -234,6 +235,7 @@ namespace stor
       mutable std::vector<unsigned char> _headerCopy;
       mutable unsigned long _headerSize;
       mutable unsigned char* _headerLocation;
+      mutable uint32 _adler32;
       mutable uint32 _outputModuleId;
       mutable std::string _outputModuleLabel;
       mutable Strings _hltTriggerNames;
