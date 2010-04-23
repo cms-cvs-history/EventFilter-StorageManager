@@ -1,4 +1,4 @@
-// $Id: ChainData.cc,v 1.5.2.2 2010/04/22 14:08:44 mommsen Exp $
+// $Id: ChainData.cc,v 1.5.2.3 2010/04/22 15:39:20 mommsen Exp $
 /// @file: ChainData.cc
 
 #include "FWCore/Utilities/interface/Adler32Calculator.h"
@@ -784,22 +784,25 @@ uint32 detail::ChainData::calculateAdler32() const
   
   toolbox::mem::Reference* curRef = _ref;
 
+  I2O_SM_MULTIPART_MESSAGE_FRAME* smMsg =
+    (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+
+  //skip event header in first fragment
+  unsigned long headerSize = do_headerSize();
+  unsigned long dataSize = smMsg->dataSize - headerSize;
+  char* dataLocation =
+    (char*)do_fragmentLocation((unsigned char*)curRef->getDataLocation())
+    + headerSize;
+  
+  cms::Adler32(dataLocation, dataSize, adlerA, adlerB);
+  
+  curRef = curRef->getNextReference();
+
   while (curRef)
   {
-    I2O_SM_MULTIPART_MESSAGE_FRAME *smMsg =
-      (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
-
-    unsigned long dataSize = smMsg->dataSize;
-    char *dataLocation = (char*)do_fragmentLocation((unsigned char*)curRef->getDataLocation());
-    if ( smMsg->frameCount == 0 )
-    {
-      //skip event header in first fragment
-      unsigned long headerSize = do_headerSize();
-      dataSize -= headerSize;
-      dataLocation += headerSize;
-    }
-
-    cms::Adler32(dataLocation, dataSize, adlerA, adlerB);
+    smMsg = (I2O_SM_MULTIPART_MESSAGE_FRAME*) curRef->getDataLocation();
+    dataLocation = (char*)do_fragmentLocation((unsigned char*)curRef->getDataLocation());
+    cms::Adler32(dataLocation, smMsg->dataSize, adlerA, adlerB);
 
     curRef = curRef->getNextReference();
   }
