@@ -1,4 +1,4 @@
-// $Id: ChainData.cc,v 1.5.2.3 2010/04/22 15:39:20 mommsen Exp $
+// $Id: ChainData.cc,v 1.5.2.4 2010/04/23 15:32:17 mommsen Exp $
 /// @file: ChainData.cc
 
 #include "FWCore/Utilities/interface/Adler32Calculator.h"
@@ -765,9 +765,6 @@ bool detail::ChainData::validateAdler32Checksum()
   if (expected == 0) return false; // Adler32 not available
 
   const uint32 calculated = calculateAdler32();
-
-  std::cout << fragmentKey().event_ << ":\t" <<
-    i2oMessageCode() << ":\t expected: " << expected << "\t calculated: " << calculated << std::endl;
 
   if ( calculated != expected )
   {
