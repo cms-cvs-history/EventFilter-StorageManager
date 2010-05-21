@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.17 2010/03/19 17:33:54 mommsen Exp $
+// $Id: FileHandler.cc,v 1.18 2010/03/31 12:33:53 mommsen Exp $
 /// @file: FileHandler.cc
 
 #include <EventFilter/StorageManager/interface/Exception.h>
@@ -99,7 +99,7 @@ void FileHandler::updateDatabase() const
       << " --STOPTIME "     << static_cast<int>(_lastEntry)
       << " --STATUS "       << "closed"
       << " --RUNNUMBER "    << _fileRecord->runNumber
-      << " --LUMISECTION "  << _fileRecord->lumiSection
+      << " --LUMISECTION "  << _fileRecord->superLumiSection
       << " --PATHNAME "     << _fileRecord->filePath()
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel
@@ -130,7 +130,7 @@ void FileHandler::insertFileInDatabase() const
       << " --STOPTIME 0"
       << " --STATUS open"
       << " --RUNNUMBER "    << _fileRecord->runNumber
-      << " --LUMISECTION "  << _fileRecord->lumiSection
+      << " --LUMISECTION "  << _fileRecord->superLumiSection
       << " --PATHNAME "     << _fileRecord->filePath()
       << " --HOSTNAME "     << _diskWritingParams._hostName
       << " --SETUPLABEL "   << _diskWritingParams._setupLabel

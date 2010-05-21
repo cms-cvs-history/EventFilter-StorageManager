@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.16 2010/03/19 13:24:05 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.17 2010/03/19 17:33:54 mommsen Exp $
 /// @file: StreamHandler.cc
 
 #include <sstream>
@@ -79,18 +79,46 @@ void StreamHandler::closeFilesForLumiSection
   std::string& str
 )
 {
-  _streamRecord->reportLumiSectionInfo(lumiSection, str);
-  closeFilesForLumiSection(lumiSection);
+  if ( ! superLumiSectionComplete(lumiSection) ) return;
+
+  const uint32_t superLS = getSuperLumiSection(lumiSection);
+
+  _streamRecord->reportSuperLumiSectionInfo(superLS, str);
+
+  _fileHandlers.erase(std::remove_if(_fileHandlers.begin(),
+                                     _fileHandlers.end(),
+                                     boost::bind(&FileHandler::isFromSuperLumiSection,
+                                                 _1, superLS)),
+                      _fileHandlers.end());
 }
 
 
-void StreamHandler::closeFilesForLumiSection(const uint32_t lumiSection)
+bool StreamHandler::superLumiSectionComplete(const uint32_t& lumiSection)
 {
-  _fileHandlers.erase(std::remove_if(_fileHandlers.begin(),
-                                     _fileHandlers.end(),
-                                     boost::bind(&FileHandler::isFromLumiSection,
-                                                 _1, lumiSection)),
-                      _fileHandlers.end());
+  const uint32_t superLumiSectionLength = _diskWritingParams._superLumiSectionLength;
+  if ( superLumiSectionLength == 1 ) return true;
+
+  const uint32_t superLS = getSuperLumiSection(lumiSection);
+
+  IncompleteSuperLSMap::iterator pos = _incompleteSuperLS.lower_bound(superLS);
+
+  if(pos != _incompleteSuperLS.end() && !(_incompleteSuperLS.key_comp()(superLS, pos->first)))
+  {
+    // key already exists
+    pos->second |= ( 1 << (lumiSection - superLS) );
+    if ( pos->second == pow(2,superLumiSectionLength)-1 )
+    {
+      _incompleteSuperLS.erase(pos);
+      return true;
+    }
+  }
+  else
+  {
+    uint32_t lsComplete = ( 1 << (lumiSection - superLS) );
+    _incompleteSuperLS.insert(pos, IncompleteSuperLSMap::value_type(superLS, lsComplete));
+  }
+
+  return false;
 }
 
 
@@ -111,7 +139,7 @@ StreamHandler::FileHandlerPtr StreamHandler::getFileHandler(const I2OChain& even
     ++it
   ) 
   {
-    if ( (*it)->lumiSection() == event.lumiSection() )
+    if ( (*it)->superLumiSection() == getSuperLumiSection( event.lumiSection() ) )
     {
       if ( (*it)->tooLarge(event.totalDataSize()) )
       { 
@@ -135,17 +163,24 @@ StreamHandler::getNewFileRecord(const I2OChain& event)
     _statReporter->getFilesMonitorCollection().getNewFileRecord();
   
   fileRecord->runNumber = event.runNumber();
-  fileRecord->lumiSection = event.lumiSection();
+  fileRecord->superLumiSection = getSuperLumiSection( event.lumiSection() );
   fileRecord->streamLabel = streamLabel();
-  fileRecord->baseFilePath = getBaseFilePath(event.runNumber(), fileRecord->entryCounter);
-  fileRecord->coreFileName = getCoreFileName(event.runNumber(), event.lumiSection());
+  fileRecord->baseFilePath = getBaseFilePath(fileRecord->runNumber, fileRecord->entryCounter);
+  fileRecord->coreFileName = getCoreFileName(fileRecord->runNumber, fileRecord->superLumiSection);
   fileRecord->fileCounter = getFileCounter(fileRecord->coreFileName);
   fileRecord->whyClosed = FilesMonitorCollection::FileRecord::notClosed;
   fileRecord->isOpen = true;
 
-  _streamRecord->incrementFileCount(fileRecord->lumiSection);
+  _streamRecord->incrementFileCount(fileRecord->superLumiSection);
 
   return fileRecord;
+}
+
+
+uint32_t StreamHandler::getSuperLumiSection(const uint32_t& lumiSection) const
+{
+  const uint32_t superLumiSectionLength = _diskWritingParams._superLumiSectionLength;
+  return ( (lumiSection-1) / superLumiSectionLength * superLumiSectionLength ) + 1;
 }
 
 
@@ -177,14 +212,19 @@ std::string StreamHandler::getFileSystem(const uint32& runNumber, uint32_t fileC
 std::string StreamHandler::getCoreFileName
 (
   const uint32& runNumber,
-  const uint32& lumiSection
+  const uint32& superLumiSection
 ) const
 {
   std::ostringstream coreFileName;
   coreFileName << _diskWritingParams._setupLabel
     << "." << std::setfill('0') << std::setw(8) << runNumber
-    << "." << std::setfill('0') << std::setw(4) << lumiSection
-    << "." << streamLabel()
+    << "." << std::setfill('0') << std::setw(4) << superLumiSection;
+  if ( _diskWritingParams._superLumiSectionLength > 1 )
+  {
+    coreFileName << "-" << std::setfill('0') << std::setw(4) << 
+      superLumiSection+_diskWritingParams._superLumiSectionLength-1;
+  }
+  coreFileName << "." << streamLabel()
     << "." << _diskWritingParams._fileName
     << "." << std::setfill('0') << std::setw(2) << _diskWritingParams._smInstanceString;
 

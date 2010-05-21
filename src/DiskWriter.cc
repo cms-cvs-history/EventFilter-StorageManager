@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.21 2010/03/19 13:24:05 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.22 2010/03/19 17:33:54 mommsen Exp $
 /// @file: DiskWriter.cc
 
 #include <algorithm>
@@ -316,7 +316,8 @@ void DiskWriter::processEndOfLumiSection(const I2OChain& msg)
   {
     (*it)->closeFilesForLumiSection(lumiSection, fileCountStr);
   }
-  _dbFileHandler->write(fileCountStr);
+  if ( ! fileCountStr.empty() ) 
+    _dbFileHandler->write(fileCountStr);
 }
 
 

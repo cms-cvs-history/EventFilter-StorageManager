@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.11 2010/03/19 17:33:54 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.12 2010/03/25 09:14:03 mommsen Exp $
 /// @file: StreamsMonitorCollection.cc
 
 #include <string>
@@ -50,20 +50,20 @@ void StreamsMonitorCollection::StreamRecord::addSizeInBytes(double size)
 }
 
 
-void StreamsMonitorCollection::StreamRecord::reportLumiSectionInfo
+void StreamsMonitorCollection::StreamRecord::reportSuperLumiSectionInfo
 (
-  const uint32_t& lumiSection,
+  const uint32_t& superLumiSection,
   std::string& str
 )
 {
   std::ostringstream msg;
   if (str.empty())
   {
-    msg << "LS:" << lumiSection;
+    msg << "LS:" << superLumiSection;
   }
   
   unsigned int count = 0;
-  FileCountPerLumiSectionMap::iterator pos = fileCountPerLS.find(lumiSection);
+  FileCountPerLumiSectionMap::iterator pos = fileCountPerLS.find(superLumiSection);
   if ( pos != fileCountPerLS.end() )
   {
     count = pos->second;
@@ -91,7 +91,7 @@ void StreamsMonitorCollection::reportAllLumiSectionInfos(DbFileHandlerPtr dbFile
          stream != streamEnd;
          ++stream)
     {
-      (*stream)->reportLumiSectionInfo((*it), lsEntry);
+      (*stream)->reportSuperLumiSectionInfo((*it), lsEntry);
     }
     dbFileHandler->write(lsEntry);
   }

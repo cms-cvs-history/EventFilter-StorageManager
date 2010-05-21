@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.11 2010/01/28 13:37:19 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.12 2010/01/29 15:47:59 mommsen Exp $
 /// @file: FilesMonitorCollection.h 
 
 #ifndef StorageManager_FilesMonitorCollection_h
@@ -24,8 +24,8 @@ namespace stor {
    * A collection of monitoring entities for open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2010/01/28 13:37:19 $
+   * $Revision: 1.12 $
+   * $Date: 2010/01/29 15:47:59 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -54,7 +54,7 @@ namespace stor {
 
       uint32_t           entryCounter;      // file counter
       uint32_t           runNumber;         // run number
-      uint32_t           lumiSection;       // luminosity section 
+      uint32_t           superLumiSection;  // super luminosity section 
       std::string        streamLabel;       // datastream label
       std::string        baseFilePath;      // file path w/o the working directory
       std::string        coreFileName;      // file name w/o instance & file ending

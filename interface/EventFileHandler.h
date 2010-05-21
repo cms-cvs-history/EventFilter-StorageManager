@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.h,v 1.10 2010/02/01 14:08:49 mommsen Exp $
+// $Id: EventFileHandler.h,v 1.11 2010/03/19 13:24:30 mommsen Exp $
 /// @file: EventFileHandler.h 
 
 #ifndef StorageManager_EventFileHandler_h
@@ -22,8 +22,8 @@ namespace stor {
    * Represents a file holding event data
    *
    * $Author: mommsen $
-   * $Revision: 1.10 $
-   * $Date: 2010/02/01 14:08:49 $
+   * $Revision: 1.11 $
+   * $Date: 2010/03/19 13:24:30 $
    */
   
   class EventFileHandler : public FileHandler
@@ -46,7 +46,7 @@ namespace stor {
     /**
      * Returns true if the file corresponds to the given lumi section
      */
-    virtual bool isFromLumiSection(const uint32_t lumiSection);
+    virtual bool isFromSuperLumiSection(const uint32_t superLumiSection);
 
     /**
      * Close the file

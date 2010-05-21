@@ -1,4 +1,4 @@
-// $Id: EventFileHandler.cc,v 1.11 2010/02/01 14:08:30 mommsen Exp $
+// $Id: EventFileHandler.cc,v 1.12 2010/03/19 13:24:05 mommsen Exp $
 /// @file: EventFileHandler.cc
 
 #include <EventFilter/StorageManager/interface/EventFileHandler.h>
@@ -75,9 +75,9 @@ bool EventFileHandler::tooOld(const utils::time_point_t currentTime)
 }
 
 
-bool EventFileHandler::isFromLumiSection(const uint32_t lumiSection)
+bool EventFileHandler::isFromSuperLumiSection(const uint32_t superLumiSection)
 {
-  if (lumiSection == _fileRecord->lumiSection)
+  if (superLumiSection == _fileRecord->superLumiSection)
   {
     closeFile(FilesMonitorCollection::FileRecord::LSended);
     return true;

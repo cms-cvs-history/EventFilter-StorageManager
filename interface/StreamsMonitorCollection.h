@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.10 2010/03/19 17:34:06 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.11 2010/03/25 09:55:58 mommsen Exp $
 /// @file: StreamsMonitorCollection.h 
 
 #ifndef StorageManager_StreamsMonitorCollection_h
@@ -28,8 +28,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.10 $
-   * $Date: 2010/03/19 17:34:06 $
+   * $Revision: 1.11 $
+   * $Date: 2010/03/25 09:55:58 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -52,11 +52,11 @@ namespace stor {
       ~StreamRecord()
       { fileCountPerLS.clear(); }
 
-      void incrementFileCount(const uint32_t lumiSection);
+      void incrementFileCount(const uint32_t superLumiSection);
       void addSizeInBytes(double);
-      void reportLumiSectionInfo
+      void reportSuperLumiSectionInfo
       (
-        const uint32_t& lumiSection,
+        const uint32_t& superLumiSection,
         std::string& str
       );
       

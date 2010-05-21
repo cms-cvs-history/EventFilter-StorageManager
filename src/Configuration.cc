@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.31 2010/04/12 12:05:01 mommsen Exp $
+// $Id: Configuration.cc,v 1.32 2010/04/12 15:25:05 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -183,7 +183,7 @@ namespace stor
     _diskWriteParamCopy._errorEventsTimeOut = 300.0;
     _diskWriteParamCopy._fileClosingTestInterval = 5.0;
     _diskWriteParamCopy._fileSizeTolerance = 0.0;
-    _diskWriteParamCopy._useIndexFiles = true;
+    _diskWriteParamCopy._superLumiSectionLength = 1;
 
     _previousStreamCfg = _diskWriteParamCopy._streamConfiguration;
 
@@ -297,7 +297,7 @@ namespace stor
     _fileClosingTestInterval =
       static_cast<int>(_diskWriteParamCopy._fileClosingTestInterval);
     _fileSizeTolerance = _diskWriteParamCopy._fileSizeTolerance;
-    _useIndexFiles = _diskWriteParamCopy._useIndexFiles;
+    _superLumiSectionLength = _diskWriteParamCopy._superLumiSectionLength;
 
     utils::getXdataVector(_diskWriteParamCopy._otherDiskPaths, _otherDiskPaths);
 
@@ -319,7 +319,7 @@ namespace stor
     infoSpace->fireItemAvailable("fileClosingTestInterval",
                                  &_fileClosingTestInterval);
     infoSpace->fireItemAvailable("fileSizeTolerance", &_fileSizeTolerance);
-    infoSpace->fireItemAvailable("useIndexFiles", &_useIndexFiles);
+    infoSpace->fireItemAvailable("superLumiSectionLength", &_superLumiSectionLength);
 
     // special handling for the stream configuration string (we
     // want to note when it changes to see if we need to reconfigure
@@ -473,7 +473,8 @@ namespace stor
     _diskWriteParamCopy._errorEventsTimeOut = _errorEventsTimeOut;
     _diskWriteParamCopy._fileClosingTestInterval = _fileClosingTestInterval;
     _diskWriteParamCopy._fileSizeTolerance = _fileSizeTolerance;
-    _diskWriteParamCopy._useIndexFiles = _useIndexFiles;
+    _diskWriteParamCopy._superLumiSectionLength =
+      std::max(static_cast<unsigned int>(_superLumiSectionLength),1U);
 
     utils::getStdVector(_otherDiskPaths, _diskWriteParamCopy._otherDiskPaths);
 

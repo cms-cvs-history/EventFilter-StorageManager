@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.10 2010/03/19 13:24:30 mommsen Exp $
+// $Id: StreamHandler.h,v 1.11 2010/03/19 17:34:06 mommsen Exp $
 /// @file: StreamHandler.h 
 
 #ifndef StorageManager_StreamHandler_h
@@ -24,8 +24,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.10 $
-   * $Date: 2010/03/19 13:24:30 $
+   * $Revision: 1.11 $
+   * $Date: 2010/03/19 17:34:06 $
    */
   
   class StreamHandler
@@ -47,11 +47,6 @@ namespace stor {
      */    
     void closeTimedOutFiles(utils::time_point_t currentTime =
                             utils::getCurrentTime());
-
-    /**
-     * Close all files which belong to the given lumi section
-     */    
-    void closeFilesForLumiSection(const uint32_t lumiSection);
 
     /**
      * Close all files which belong to the given lumi section
@@ -115,6 +110,17 @@ namespace stor {
     bool fileTooLarge(const FileHandlerPtr, const unsigned long& dataSize) const;
 
     /**
+     * Return the super lumi section to which the passed lumi section belongs
+     */
+    uint32_t getSuperLumiSection(const uint32_t& lumiSection) const;
+
+    /**
+     * Return true if the passed lumi section number completes the super lumi section,
+     * i.e. all other lumi sections belonging to this super lumi section have been seen.
+     */
+    bool superLumiSectionComplete(const uint32_t& lumiSection);
+
+    /**
      * Get path w/o working directory
      */    
     std::string getBaseFilePath(const uint32& runNumber, uint32_t fileCount) const;
@@ -127,7 +133,7 @@ namespace stor {
     /**
      * Get the core file name
      */    
-    std::string getCoreFileName(const uint32& runNumber, const uint32& lumiSection) const;
+    std::string getCoreFileName(const uint32& runNumber, const uint32_t& superLumiSection) const;
     
     /**
      * Get the instance count of this core file name
@@ -147,7 +153,9 @@ namespace stor {
 
     typedef std::map<std::string, unsigned int> CoreFileNamesMap;
     CoreFileNamesMap _usedCoreFileNames;
-    
+
+    typedef std::map<uint32_t, uint32_t> IncompleteSuperLSMap;
+    IncompleteSuperLSMap _incompleteSuperLS;
 
   private:
 

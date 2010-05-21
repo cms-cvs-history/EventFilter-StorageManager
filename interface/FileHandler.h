@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.9 2010/02/01 14:08:49 mommsen Exp $
+// $Id: FileHandler.h,v 1.10 2010/03/19 13:24:30 mommsen Exp $
 /// @file: FileHandler.h 
 
 #ifndef StorageManager_FileHandler_h
@@ -24,8 +24,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.9 $
-   * $Date: 2010/02/01 14:08:49 $
+   * $Revision: 1.10 $
+   * $Date: 2010/03/19 13:24:30 $
    */
 
   class FileHandler
@@ -55,7 +55,7 @@ namespace stor {
     /**
      * Returns true if the file corresponds to the given lumi section
      */
-    virtual bool isFromLumiSection(const uint32_t lumiSection) = 0;
+    virtual bool isFromSuperLumiSection(const uint32_t superLumiSection) = 0;
 
     /**
      * Returns true if the additional data size would push the file size
@@ -76,8 +76,8 @@ namespace stor {
     /**
      * Return the luminosity section the file belongs to
      */
-    uint32 lumiSection() const
-    { return _fileRecord->lumiSection; }
+    uint32_t superLumiSection() const
+    { return _fileRecord->superLumiSection; }
     
     /**
      * Return the size of the file in bytes

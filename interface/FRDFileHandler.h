@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.h,v 1.9 2010/02/01 14:08:49 mommsen Exp $
+// $Id: FRDFileHandler.h,v 1.10 2010/03/19 13:24:30 mommsen Exp $
 /// @file: FRDFileHandler.h 
 
 #ifndef StorageManager_FRDFileHandler_h
@@ -18,8 +18,8 @@ namespace stor {
    * FED Raw Data (FRD) format.
    *
    * $Author: mommsen $
-   * $Revision: 1.9 $
-   * $Date: 2010/02/01 14:08:49 $
+   * $Revision: 1.10 $
+   * $Date: 2010/03/19 13:24:30 $
    */
   
   class FRDFileHandler : public FileHandler
@@ -41,7 +41,7 @@ namespace stor {
     /**
      * Error events do not belong to a lumi section
      */
-    virtual bool isFromLumiSection(const uint32_t lumiSection)
+    virtual bool isFromSuperLumiSection(const uint32_t superLumiSection)
     { return false; }
 
     /**
