@@ -1,5 +1,5 @@
 #!/bin/sh
-#$Id: t0inject.sh,v 1.18 2008/11/08 19:30:44 loizides Exp $
+#$Id: t0inject.sh,v 1.17 2008/11/06 15:02:12 loizides Exp $
 
 . /etc/init.d/functions
 
@@ -68,10 +68,16 @@ start(){
 
     cd ${SMT0_LOCAL_RUN_DIR}/workdir
 
-    echo "Starting $SMT0_IW"
-    nohup ${SMT0_IW} ${SMT0_MONDIR} ${SMT0_LOCAL_RUN_DIR}/logs \
-        ${SMT0_CONFIG} > `hostname`.$$ 2>&1 &
+    #running with four instances should be enough
+    for i in `seq 1 16`; do
+        inst=`expr $i - 1`
+        export SMIW_RUNNUM=$inst
+        echo "Starting $SMT0_IW instance $inst"
+        nohup ${SMT0_IW} ${SMT0_MONDIR} ${SMT0_LOCAL_RUN_DIR}/done \
+            ${SMT0_LOCAL_RUN_DIR}/logs ${SMT0_CONFIG} $inst > `hostname`.$$ 2>&1 &
         sleep 1
+    done
+    echo
 }
 
 stop(){
