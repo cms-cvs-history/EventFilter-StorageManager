@@ -1,4 +1,4 @@
-// $Id: DbFileHandler.cc,v 1.5 2010/04/12 12:05:01 mommsen Exp $
+// $Id: DbFileHandler.cc,v 1.6 2010/04/28 13:06:10 mommsen Exp $
 /// @file: DbFileHandler.cc
 
 #include <EventFilter/StorageManager/interface/DbFileHandler.h>
@@ -79,7 +79,10 @@ void DbFileHandler::addReportHeader
 ) const
 {
   msg << "Timestamp:" << static_cast<int>(timestamp)
-    << "\trun:" << _runNumber << "\t";
+    << "\trun:" << _runNumber
+    << "\thost:" << _dwParams._hostName
+    << "\tinstance:" << _dwParams._smInstanceString
+    << "\t";
 }
 
 
