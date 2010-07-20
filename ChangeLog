@@ -1,3 +1,9 @@
+2010-07-20 Remi Mommsen <Remigius.Mommsen@cern.ch>
+
+	* tag V05-10-04
+	* When counting processes, only consider master processes,
+	  i.e. those with PPID 1.
+
 2010-06-25 Remi Mommsen <Remigius.Mommsen@cern.ch>
 
 	* tag V05-10-03
