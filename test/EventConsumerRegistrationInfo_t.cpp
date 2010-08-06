@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.4 2009/12/01 13:58:09 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.5 2010/04/19 10:36:09 mommsen Exp $
 
 #include <iostream>
 
@@ -32,7 +32,7 @@ int main()
   ecri.setQueueID( id1 );
 	     
 
-  cout << ecri << endl;
+  std::cout << ecri << std::endl;
 
   return 0;
 

@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo_t.cpp,v 1.4 2009/11/24 16:39:53 mommsen Exp $
+// $Id: EventStreamConfigurationInfo_t.cpp,v 1.5 2009/12/01 13:58:09 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include <iostream>
@@ -27,7 +27,7 @@ int main()
                                      7000000,
                                      1 );
 
-  cout << esci << endl;
+  std::cout << esci << std::endl;
 
   return 0;
 

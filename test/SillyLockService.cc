@@ -30,7 +30,7 @@ namespace Nuts {
     reg.watchPreModule(this,&SillyLockService::preModule);
     reg.watchPostModule(this,&SillyLockService::postModule);
 
-    FDEBUG(4) << "In SillyLockServices" << endl;
+    FDEBUG(4) << "In SillyLockServices" << std::endl;
   }
 
 
@@ -61,14 +61,14 @@ namespace Nuts {
     if(!labels_.empty() &&
        find(labels_.begin(),labels_.end(),desc.moduleLabel())!=labels_.end())
       {
-	FDEBUG(4) << "made a new locked in SillyLockService" << endl;
+	FDEBUG(4) << "made a new locked in SillyLockService" << std::endl;
 	locker_ = new boost::mutex::scoped_lock(*lock_);
       }
   }
 
   void SillyLockService::postModule(const ModuleDescription& desc)
   {
-    FDEBUG(4) << "destroyed a locked in SillyLockService" << endl;
+    FDEBUG(4) << "destroyed a locked in SillyLockService" << std::endl;
     delete locker_;
     locker_=0;
   }
