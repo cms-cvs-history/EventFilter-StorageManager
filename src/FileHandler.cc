@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.19 2010/08/06 20:24:31 wmtan Exp $
+// $Id: FileHandler.cc,v 1.20 2010/09/09 08:01:16 mommsen Exp $
 /// @file: FileHandler.cc
 
 #include <EventFilter/StorageManager/interface/Exception.h>
@@ -222,7 +222,7 @@ void FileHandler::moveFileToClosed
   const std::string closedIndexFileName(closedFileName + ".ind");
   const std::string closedStreamerFileName(closedFileName + ".dat");
 
-  size_t openStreamerFileSize = checkFileSizeMatch(openStreamerFileName, fileSize());
+  unsigned long long openStreamerFileSize = checkFileSizeMatch(openStreamerFileName, fileSize());
 
   makeFileReadOnly(openStreamerFileName);
   if (useIndexFile) makeFileReadOnly(openIndexFileName);
@@ -245,7 +245,7 @@ void FileHandler::moveFileToClosed
 }
 
 
-size_t FileHandler::checkFileSizeMatch(const std::string& fileName, const size_t& size) const
+unsigned long long FileHandler::checkFileSizeMatch(const std::string& fileName, const unsigned long long& size) const
 {
   struct stat64 statBuff;
   int statStatus = stat64(fileName.c_str(), &statBuff);
@@ -276,7 +276,7 @@ size_t FileHandler::checkFileSizeMatch(const std::string& fileName, const size_t
 }
 
 
-bool FileHandler::sizeMismatch(const double& initialSize, const double& finalSize) const
+bool FileHandler::sizeMismatch(const unsigned long long& initialSize, const unsigned long long& finalSize) const
 {
   double pctDiff = calcPctDiff(initialSize, finalSize);
   return (pctDiff > _diskWritingParams._fileSizeTolerance);
@@ -317,11 +317,11 @@ void FileHandler::checkDirectories() const
 }
 
 
-double FileHandler::calcPctDiff(const double& value1, const double& value2) const
+double FileHandler::calcPctDiff(const unsigned long long& value1, const unsigned long long& value2) const
 {
   if (value1 == value2) return 0;
-  double largerValue = std::max(value1,value2);
-  double smallerValue = std::min(value1,value2);
+  unsigned long long largerValue = std::max(value1,value2);
+  unsigned long long smallerValue = std::min(value1,value2);
   return ( largerValue > 0 ? (largerValue - smallerValue) / largerValue : 0 );
 }
 
