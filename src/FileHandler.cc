@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.20 2010/09/09 08:01:16 mommsen Exp $
+// $Id: FileHandler.cc,v 1.20.2.1 2010/11/04 14:45:59 mommsen Exp $
 /// @file: FileHandler.cc
 
 #include <EventFilter/StorageManager/interface/Exception.h>
@@ -197,7 +197,7 @@ int FileHandler::events() const
 }
 
 
-const unsigned long long FileHandler::fileSize() const
+unsigned long long FileHandler::fileSize() const
 {
   return _fileRecord->fileSize;
 }

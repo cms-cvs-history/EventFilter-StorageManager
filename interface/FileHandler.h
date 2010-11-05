@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.12 2010/09/09 08:01:16 mommsen Exp $
+// $Id: FileHandler.h,v 1.12.2.1 2010/11/04 14:46:00 mommsen Exp $
 /// @file: FileHandler.h 
 
 #ifndef StorageManager_FileHandler_h
@@ -25,8 +25,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.12 $
-   * $Date: 2010/09/09 08:01:16 $
+   * $Revision: 1.12.2.1 $
+   * $Date: 2010/11/04 14:46:00 $
    */
 
   class FileHandler
@@ -83,7 +83,7 @@ namespace stor {
     /**
      * Return the size of the file in bytes
      */
-    const unsigned long long fileSize() const;
+    unsigned long long fileSize() const;
 
     /**
      * Close the file
