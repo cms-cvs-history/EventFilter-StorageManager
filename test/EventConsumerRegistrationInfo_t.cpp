@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.5 2010/04/19 10:36:09 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo_t.cpp,v 1.6 2010/08/06 20:24:32 wmtan Exp $
 
 #include <iostream>
 
@@ -27,7 +27,7 @@ int main()
 	     "hltOutputDQM",
              id1.index(),
              id1.policy(),
-	     10,
+      boost::posix_time::seconds(10),
 	     "localhost" );
   ecri.setQueueID( id1 );
 	     

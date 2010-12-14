@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo_t.cpp,v 1.3 2009/09/16 09:53:24 dshpakov Exp $
+// $Id: DQMEventConsumerRegistrationInfo_t.cpp,v 1.4 2010/08/06 20:24:32 wmtan Exp $
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
@@ -15,7 +15,7 @@ int main()
 	      "*",
               id1.index(),
               id1.policy(),
-	      1024,
+              boost::posix_time::seconds(1024),
 	      "localhost" );
 
   std::cout << ecri << std::endl;
