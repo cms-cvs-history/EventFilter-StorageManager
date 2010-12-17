@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo_t.cpp,v 1.6 2010/08/06 20:24:32 wmtan Exp $
+// $Id: EventStreamConfigurationInfo_t.cpp,v 1.7 2010/12/10 13:23:43 mommsen Exp $
 
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
 #include <iostream>
@@ -9,7 +9,7 @@ using namespace std;
 int main()
 {
 
-  EventStreamConfigurationInfo::FilterList fl;
+  Strings fl;
   fl.push_back( "DiMuon" );
   fl.push_back( "CalibPath" );
   fl.push_back( "DiElectron" );
