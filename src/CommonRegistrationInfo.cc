@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.cc,v 1.4 2010/02/16 10:49:36 mommsen Exp $
+// $Id: CommonRegistrationInfo.cc,v 1.5 2010/12/14 12:56:52 mommsen Exp $
 /// @file: CommonRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
@@ -10,11 +10,13 @@ namespace stor
   CommonRegistrationInfo::CommonRegistrationInfo
   (
     const std::string& consumerName,
+    const std::string& remoteHost,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
     const utils::duration_t& secondsToStale
   ) :
   _consumerName(consumerName),
+  _remoteHost(remoteHost),
   _queueSize(queueSize),
   _queuePolicy(queuePolicy),
   _secondsToStale(secondsToStale),
@@ -26,6 +28,7 @@ namespace stor
   {
     os << "\n Consumer name: " << ri._consumerName
        << "\n Consumer id: " << ri._consumerId
+       << "\n Remote Host: " << ri._remoteHost
        << "\n Queue id: " << ri._queueId
        << "\n Maximum size of queue: " << ri._queueSize
        << "\n Policy used if queue is full: " << ri._queuePolicy

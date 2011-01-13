@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13 2010/12/20 11:14:24 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.1 2011/01/13 11:19:49 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef StorageManager_EventConsumerRegistrationInfo_h
@@ -21,8 +21,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13 $
-   * $Date: 2010/12/20 11:14:24 $
+   * $Revision: 1.13.2.1 $
+   * $Date: 2011/01/13 11:19:49 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -34,6 +34,7 @@ namespace stor
      * Constructs an instance with the specified registration information.
      */
     EventConsumerRegistrationInfo( const std::string& consumerName,
+                                   const std::string& remoteHost,
                                    const std::string& triggerSelection,
                                    const Strings& eventSelection,
                                    const std::string& outputModuleLabel,
@@ -41,8 +42,7 @@ namespace stor
                                    const bool& uniqueEvents,
                                    const int& queueSize,
                                    const enquing_policy::PolicyTag& queuePolicy,
-                                   const utils::duration_t& secondsToStale,
-                                   const std::string& remoteHost );
+                                   const utils::duration_t& secondsToStale );
 
     ~EventConsumerRegistrationInfo();
 
@@ -52,7 +52,6 @@ namespace stor
     const std::string& outputModuleLabel() const { return _outputModuleLabel; }
     const unsigned int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
-    const std::string& remoteHost() const { return _remoteHost; }
 
     // Staleness:
     bool isStale() const { return _stale; }
@@ -71,6 +70,7 @@ namespace stor
     virtual QueueID do_queueId() const;
     virtual void do_setQueueId(QueueID const& id);
     virtual std::string do_consumerName() const;
+    virtual std::string do_remoteHost() const;
     virtual ConsumerID do_consumerId() const;
     virtual void do_setConsumerId(ConsumerID const& id);
     virtual int do_queueSize() const;
@@ -87,7 +87,6 @@ namespace stor
     unsigned int _prescale;
     bool _uniqueEvents;
     bool _stale;
-    std::string _remoteHost;
 
   };
 

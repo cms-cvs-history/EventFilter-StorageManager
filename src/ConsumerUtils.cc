@@ -447,6 +447,7 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
   }
 
   EventConsRegPtr cr( new EventConsumerRegistrationInfo( name,
+                                                         remoteHost,
                                                          triggerSelection,
                                                          eventSelection,
                                                          outputModuleLabel,
@@ -454,8 +455,7 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
                                                          uniqueEvents,
                                                          queueSize,
                                                          queuePolicy,
-                                                         secondsToStale,
-                                                         remoteHost ) );
+                                                         secondsToStale ) );
   return cr;
 }
 
@@ -512,11 +512,11 @@ DQMEventConsRegPtr ConsumerUtils::parseDQMEventConsumerRegistration(xgi::Input* 
   const std::string remote_host = in->getenv( "REMOTE_HOST" );
   
   DQMEventConsRegPtr cr( new DQMEventConsumerRegistrationInfo( consumerName,
+                                                               remote_host,
                                                                consumerTopFolderName, 
                                                                queueSize,
                                                                queuePolicy,
-                                                               secondsToStale,
-                                                               remote_host ) );
+                                                               secondsToStale ) );
   return cr;
 }
 

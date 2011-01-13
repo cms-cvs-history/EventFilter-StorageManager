@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+// $Id: CommonRegistrationInfo.h,v 1.4 2010/02/16 10:49:52 mommsen Exp $
 /// @file: CommonRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -21,8 +21,8 @@ namespace stor
    * data member.
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/20 13:06:10 $
+   * $Revision: 1.4 $
+   * $Date: 2010/02/16 10:49:52 $
    */
 
   struct CommonRegistrationInfo
@@ -30,12 +30,14 @@ namespace stor
     CommonRegistrationInfo
     (
       const std::string& consumerName,
+      const std::string& remoteHost,
       const int& queueSize,
       const enquing_policy::PolicyTag& queuePolicy,
       const utils::duration_t& secondsToStale
     );
 
     const std::string                _consumerName;
+    const std::string                _remoteHost;
     const int                        _queueSize;
     const enquing_policy::PolicyTag  _queuePolicy;
     const utils::duration_t          _secondsToStale;

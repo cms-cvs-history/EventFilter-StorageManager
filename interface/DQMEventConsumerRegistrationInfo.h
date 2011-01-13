@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8 2010/12/17 18:21:04 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.1 2011/01/13 11:19:49 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -18,8 +18,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8 $
-   * $Date: 2010/12/17 18:21:04 $
+   * $Revision: 1.8.2.1 $
+   * $Date: 2011/01/13 11:19:49 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -30,18 +30,17 @@ namespace stor
      * Constructs an instance from the specified registration information.
      */
     DQMEventConsumerRegistrationInfo( const std::string& consumerName,
+                                      const std::string& remoteHost,
                                       const std::string& topLevelFolderName,
                                       const int& queueSize,
                                       const enquing_policy::PolicyTag& policy,
-                                      const utils::duration_t& secondsToStale,
-                                      const std::string& remoteHost );
+                                      const utils::duration_t& secondsToStale );
 
     // Destructor:
     ~DQMEventConsumerRegistrationInfo();
 
     // Additional accessors:
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
-    const std::string& remoteHost() const { return _remoteHost; }
 
     // Staleness:
     bool isStale() const { return _stale; }
@@ -60,6 +59,7 @@ namespace stor
     virtual QueueID do_queueId() const;
     virtual void do_setQueueId(QueueID const& id);
     virtual std::string do_consumerName() const;
+    virtual std::string do_remoteHost() const;
     virtual ConsumerID do_consumerId() const;
     virtual void do_setConsumerId(ConsumerID const& id);
     virtual int do_queueSize() const;
@@ -73,9 +73,6 @@ namespace stor
 
     std::string _topLevelFolderName;
     bool _stale;
-
-    std::string _remoteHost;
-
   };
 
   typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMEventConsRegPtr;

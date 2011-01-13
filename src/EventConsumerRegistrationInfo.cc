@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14 2010/12/20 11:14:24 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.1 2011/01/13 11:19:49 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -15,6 +15,7 @@ namespace stor
 
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
   ( const std::string& consumerName,
+    const std::string& remoteHost,
     const std::string& triggerSelection,
     const Strings& eventSelection,
     const std::string& outputModuleLabel,
@@ -22,16 +23,14 @@ namespace stor
     const bool& uniqueEvents,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale,
-    const std::string& remoteHost ) :
-    _common( consumerName, queueSize, queuePolicy, secondsToStale ),
+    const utils::duration_t& secondsToStale ) :
+    _common( consumerName, remoteHost, queueSize, queuePolicy, secondsToStale ),
     _triggerSelection( triggerSelection ),
     _eventSelection( eventSelection ),
     _outputModuleLabel( outputModuleLabel ),
     _prescale( prescale ),
     _uniqueEvents( uniqueEvents ),
-    _stale( false ),
-    _remoteHost( remoteHost )
+    _stale( false )
   { }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
@@ -59,6 +58,12 @@ namespace stor
   EventConsumerRegistrationInfo::do_consumerName() const
   {
     return _common._consumerName;
+  }
+
+  std::string
+  EventConsumerRegistrationInfo::do_remoteHost() const
+  {
+    return _common._remoteHost;
   }
 
   ConsumerID

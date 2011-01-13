@@ -42,6 +42,7 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
 
   EventConsumerRegistrationInfo ecri(
     "Test Consumer",
+    "localhost",
     triggerSelection,
     eventSelection,
     "hltOutputDQM",
@@ -49,8 +50,7 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
     false,
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "localhost"
+    boost::posix_time::seconds(10)
   );
   ecri.setQueueId( qid );
 
@@ -80,6 +80,7 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
 
   EventConsumerRegistrationInfo ecri1(
     "Consumer A",
+    "localhost",
     triggerSelection,
     eventSelection,
     "hltOutputDQM",
@@ -87,13 +88,13 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
     false,
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "localhost"
+    boost::posix_time::seconds(10)
   );
   ecri1.setQueueId( qid );
 
   EventConsumerRegistrationInfo ecri2(
     "Consumer B",
+    "remotehost",
     triggerSelection,
     eventSelection,
     "hltOutputDQM",
@@ -101,8 +102,7 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
     false,
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "remotehost"
+    boost::posix_time::seconds(10)
   );
   ecri2.setQueueId( qid );
 
@@ -110,6 +110,7 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
 
   EventConsumerRegistrationInfo ecri3(
     "Consumer C",
+    "farawayhost",
     triggerSelection2,
     eventSelection,
     "hltOutputDQM",
@@ -117,13 +118,13 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
     false,
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "farawayhost"
+    boost::posix_time::seconds(10)
   );
   ecri3.setQueueId( qid );
 
   EventConsumerRegistrationInfo ecri4(
     "Consumer D",
+    "inanothergalaxyhost",
     triggerSelection2,
     eventSelection,
     "hltOutputDQM",
@@ -131,13 +132,13 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
     true, // unique events
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "inanothergalaxyhost"
+    boost::posix_time::seconds(10)
   );
   ecri4.setQueueId( qid );
 
   EventConsumerRegistrationInfo ecri5(
     "Consumer D",
+    "inanotheruniversehost",
     triggerSelection2,
     eventSelection,
     "hltOutputDQM",
@@ -145,8 +146,7 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
     true, // unique events
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "inanotheruniversehost"
+    boost::posix_time::seconds(10)
   );
   ecri5.setQueueId( qid );
 
@@ -163,11 +163,11 @@ void testConsumerRegistrationInfo::testDQMEventConsumerRegistrationInfo()
   QueueID qid(stor::enquing_policy::DiscardNew, 2);
   DQMEventConsumerRegistrationInfo ecri(
     "Histo Consumer",
+    "localhost",
     "*",
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(1024),
-    "localhost"
+    boost::posix_time::seconds(1024)
   );
   ecri.setQueueId( qid );
   
@@ -187,41 +187,41 @@ void testConsumerRegistrationInfo::testIdenticalDQMEventConsumers()
   QueueID qid(stor::enquing_policy::DiscardNew, 2);
   DQMEventConsumerRegistrationInfo ecri1(
     "Histo Consumer 1",
+    "localhost",
     "*",
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(1024),
-    "localhost"
+    boost::posix_time::seconds(1024)
   );
   ecri1.setQueueId( qid );
 
   DQMEventConsumerRegistrationInfo ecri2(
     "Histo Consumer 2",
+    "remotehost",
     "*",
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(1024),
-    "remotehost"
+    boost::posix_time::seconds(1024)
   );
   ecri2.setQueueId( qid );
 
   DQMEventConsumerRegistrationInfo ecri3(
     "Histo Consumer 3",
+    "farawayhost",
     "HCAL",
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(1024),
-    "farawayhost"
+    boost::posix_time::seconds(1024)
   );
   ecri3.setQueueId( qid );
 
   DQMEventConsumerRegistrationInfo ecri4(
     "Histo Consumer 3",
+    "farawayhost",
     "HCAL",
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10),
-    "farawayhost"
+    boost::posix_time::seconds(10)
   );
   ecri4.setQueueId( qid );
  

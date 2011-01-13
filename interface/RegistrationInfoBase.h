@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.5 2010/04/16 14:39:34 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6 2010/12/17 18:21:05 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef StorageManager_RegistrationInfoBase_h
@@ -22,8 +22,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2010/04/16 14:39:34 $
+   * $Revision: 1.6 $
+   * $Date: 2010/12/17 18:21:05 $
    */
 
   class RegistrationInfoBase
@@ -71,6 +71,11 @@ namespace stor {
     std::string consumerName() const;
 
     /**
+       Returns the hostname of the consumer.
+     */
+    std::string remoteHost() const;
+
+    /**
        Returns the ID given to this consumer.
      */
     ConsumerID consumerId() const;
@@ -96,6 +101,7 @@ namespace stor {
     virtual QueueID do_queueId() const = 0;
     virtual void do_setQueueId(QueueID const& id) = 0;
     virtual std::string do_consumerName() const = 0;
+    virtual std::string do_remoteHost() const = 0;
     virtual ConsumerID do_consumerId() const = 0;
     virtual void do_setConsumerId(ConsumerID const& id) = 0;
     virtual int do_queueSize() const = 0;
@@ -139,6 +145,12 @@ namespace stor {
   std::string RegistrationInfoBase::consumerName() const
   {
     return do_consumerName();
+  }
+
+  inline
+  std::string RegistrationInfoBase::remoteHost() const
+  {
+    return do_remoteHost();
   }
 
   inline
