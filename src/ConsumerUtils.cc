@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.15 2010/12/20 11:14:24 mommsen Exp $
+// $Id: ConsumerUtils.cc,v 1.16 2010/12/20 16:33:21 mommsen Exp $
 /// @file: ConsumerUtils.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -314,21 +314,18 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
   }
 
   const edm::ParameterSet pset( psetStr );
-  
-  //
-  //// Check if HLT output module is there: ////
-  //
+
+  // NOTE:
+  // Any parameters added here must also be added to
+  // EventStreamHttpReader::convertToTracked method
   
   std::string outputModuleLabel = "";
-  
   try
   {
-    // new-style consumer
     outputModuleLabel = pset.getParameter<std::string>( "TrackedHLTOutMod" );
   }
   catch( edm::Exception& e )
   {
-    // old-style consumer or param not specified
     outputModuleLabel =
       pset.getUntrackedParameter<std::string>( "SelectHLTOutput", "" );
   }
@@ -340,12 +337,16 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
   }
   
   // Event filters:
-  std::string triggerSelection = std::string();
+  std::string triggerSelection;
   try
   {
-    triggerSelection = pset.getParameter<std::string>("TriggerSelector");
+    triggerSelection = pset.getParameter<std::string>( "TriggerSelector" );
   }
-  catch (edm::Exception& e) {}
+  catch( edm::Exception& e )
+  {
+    triggerSelection =
+      pset.getUntrackedParameter<std::string>( "TriggerSelector", "" );
+  }
   
   Strings eventSelection;
   try
