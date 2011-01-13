@@ -1,3 +1,5 @@
+// $Id: CurlInterface.cc,v 1.2 2010/05/11 17:58:19 mommsen Exp $
+/// @file: EventStreamHttpReader.cc
 /*
   Input source for event consumers that will get events from the
   Storage Manager Event Server. This does uses a HTTP get using the
@@ -17,12 +19,12 @@
                 Manager or specify a maximum number of events for
                 the client to read through a maxEvents parameter.
 
-  $Id: EventStreamHttpReader.cc,v 1.41 2010/08/06 20:24:31 wmtan Exp $
-/// @file: EventStreamHttpReader.cc
+  $Id: EventStreamHttpReader.cc,v 1.42 2010/12/15 15:29:23 mommsen Exp $
 */
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
+#include "EventFilter/StorageManager/interface/CurlInterface.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
@@ -36,9 +38,8 @@
 #include <algorithm>
 #include <iterator>
 #include "curl/curl.h"
+#include "boost/scoped_ptr.hpp"
 
-using namespace std;
-using namespace edm;
 
 namespace edm
 {  
@@ -46,7 +47,6 @@ namespace edm
                                                edm::InputSourceDescription const& desc):
     edm::StreamerInputSource(ps, desc),
     sourceurl_(ps.getParameter<std::string>("sourceURL")),
-    buf_(1000*1000*7), 
     endRunAlreadyNotified_(true),
     runEnded_(false),
     alreadySaidHalted_(false),
@@ -58,23 +58,10 @@ namespace edm
                                                DEFAULT_MAX_CONNECT_TRIES);
     connectTrySleepTime_ = ps.getUntrackedParameter<int>("connectTrySleepTime",
                                                DEFAULT_CONNECT_TRY_SLEEP_TIME);
+
+    // Default in StreamerInputSource is 'false'
     inputFileTransitionsEachEvent_ =
       ps.getUntrackedParameter<bool>("inputFileTransitionsEachEvent", true);
-
-    std::string evturl = sourceurl_ + "/geteventdata";
-    int stlen = evturl.length();
-    for (int i=0; i<stlen; i++) eventurl_[i]=evturl[i];
-    eventurl_[stlen] = '\0';
-
-    std::string header = sourceurl_ + "/getregdata";
-    stlen = header.length();
-    for (int i=0; i<stlen; i++) headerurl_[i]=header[i];
-    headerurl_[stlen] = '\0';
-
-    std::string regurl = sourceurl_ + "/registerConsumer";
-    stlen = regurl.length();
-    for (int i=0; i<stlen; i++) subscriptionurl_[i]=regurl[i];
-    subscriptionurl_[stlen] = '\0';
 
     // 09-Aug-2006, KAB: new parameters
     const double MAX_REQUEST_INTERVAL = 300.0;  // seconds
@@ -83,13 +70,12 @@ namespace edm
     headerRetryInterval_ = ps.getUntrackedParameter<int>("headerRetryInterval",5);
     double maxEventRequestRate = ps.getUntrackedParameter<double>("maxEventRequestRate",1.0);
     if (maxEventRequestRate < (1.0 / MAX_REQUEST_INTERVAL)) {
-      minEventRequestInterval_ = MAX_REQUEST_INTERVAL;
+      minEventRequestInterval_ = stor::utils::seconds_to_duration(MAX_REQUEST_INTERVAL);
     }
     else {
-      minEventRequestInterval_ = 1.0 / maxEventRequestRate;  // seconds
+      minEventRequestInterval_ = stor::utils::seconds_to_duration(1.0 / maxEventRequestRate);
     }
-    lastRequestTime_.tv_sec = 0;
-    lastRequestTime_.tv_usec = 0;
+    nextRequestTime_ = stor::utils::getCurrentTime() + minEventRequestInterval_;
 
     // 26-Jan-2009, KAB: an ugly hack to get ParameterSet to serialize
     // the parameters that we need
@@ -108,15 +94,16 @@ namespace edm
       }
     }
     std::string trigSelector_ = ps.getUntrackedParameter("TriggerSelector",std::string());
-    psCopy.addParameter<std::string>("TriggerSelector",trigSelector_);
+    psCopy.addParameter<std::string>("TrackedTriggerSelector",trigSelector_);
 
     // 28-Aug-2006, KAB: save our parameter set in string format to
     // be sent to the event server to specify our "request" (that is, which
     // events we are interested in).
     consumerPSetString_ = psCopy.toString();
 
-    // 16-Aug-2006, KAB: register this consumer with the event server
-    consumerId_ = (time(0) & 0xffffff);  // temporary - will get from ES later
+    std::cout << "ps: " << ps << std::endl;
+    std::cout << "psCopy: " << psCopy << std::endl;
+
     registerWithEventServer();
 
     readHeader();
@@ -158,113 +145,77 @@ namespace edm
     // and we have a network problem we just try to get another event,
     // but if SM is killed/dead we want to register.)
 
-    // check if we need to sleep (to enforce the allowed request rate)
-    struct timeval now;
-    struct timezone dummyTZ;
-    gettimeofday(&now, &dummyTZ);
-    double timeDiff = (double) now.tv_sec;
-    timeDiff -= (double) lastRequestTime_.tv_sec;
-    timeDiff += ((double) now.tv_usec / 1000000.0);
-    timeDiff -= ((double) lastRequestTime_.tv_usec / 1000000.0);
-    if (timeDiff < minEventRequestInterval_)
-    {
-      double sleepTime = minEventRequestInterval_ - timeDiff;
-      // trim off a little sleep time to account for the time taken by
-      // calling gettimeofday again
-      sleepTime -= 0.01;
-      if (sleepTime < 0.0) {sleepTime = 0.0;}
-      //std::cout << "sleeping for " << sleepTime << std::endl;
-      usleep(static_cast<int>(1000000 * sleepTime));
-      gettimeofday(&lastRequestTime_, &dummyTZ);
-    }
-    else
-    {
-      lastRequestTime_ = now;
-    }
+    sleepUntilNextRequest();
 
-    stor::ReadData data;
-    bool alreadySaidWaiting = false;
-    do {
-      CURL* han = curl_easy_init();
+    std::string data;
+    
+    do
+    {
+      data.clear();
+      getOneEventFromEventServer(data);
+    }
+    while ( !edm::shutdown_flag && data.empty() );
 
-      if(han==0)
+    if ( edm::shutdown_flag ) return 0;
+    return extractEvent(data);
+  }
+  
+  
+  void EventStreamHttpReader::getOneEventFromEventServer(std::string& data)
+  {
+    static bool alreadySaidWaiting = false;
+
+    // build the event request message to send to the storage manager
+    char msgBuff[100];
+    OtherMessageBuilder requestMessage(
+      &msgBuff[0],
+      Header::EVENT_REQUEST,
+      sizeof(char_uint32)
+    );
+    uint8 *bodyPtr = requestMessage.msgBody();
+    convert(consumerId_, bodyPtr);
+
+    do
+    {
+      // send the event request
+      stor::CurlInterface curl;
+      CURLcode result = curl.postBinaryMessage(
+        sourceurl_ + "/geteventdata",
+        requestMessage.startAddress(),
+        requestMessage.size(),
+        data
+      );
+      
+      if ( result != CURLE_OK )
       {
-        std::cerr << "could not create handle" << std::endl;
+        std::cerr << "curl perform failed for event:" << std::endl;
+        std::cerr << data << std::endl;
+        data.clear();
         // this will end cmsRun 
         //return std::auto_ptr<edm::EventPrincipal>();
         throw cms::Exception("getOneEvent","EventStreamHttpReader")
-            << "Could not get event: problem with curl"
+          << "Could not get event: probably XDAQ not running on Storage Manager "
             << "\n";
       }
-
-      stor::setopt(han,CURLOPT_URL,eventurl_);
-      stor::setopt(han,CURLOPT_WRITEFUNCTION,stor::func);
-      stor::setopt(han,CURLOPT_WRITEDATA,&data);
-
-      // 24-Aug-2006, KAB: send our consumer ID as part of the event request
-      char msgBuff[100];
-      OtherMessageBuilder requestMessage(&msgBuff[0], Header::EVENT_REQUEST,
-                                         sizeof(char_uint32));
-      uint8 *bodyPtr = requestMessage.msgBody();
-      convert(consumerId_, bodyPtr);
-      stor::setopt(han, CURLOPT_POSTFIELDS, requestMessage.startAddress());
-      stor::setopt(han, CURLOPT_POSTFIELDSIZE, requestMessage.size());
-      struct curl_slist *headers=NULL;
-      headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
-      headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
-      stor::setopt(han, CURLOPT_HTTPHEADER, headers);
-
-      // send the HTTP POST, read the reply, and cleanup before going on
-      CURLcode messageStatus = curl_easy_perform(han);
-      curl_slist_free_all(headers);
-      curl_easy_cleanup(han);
-
-      if(messageStatus!=0)
-      {
-        std::cerr << "curl perform failed for event, messageStatus = "
-             << messageStatus << std::endl;
-        // this will end cmsRun 
-        //return std::auto_ptr<edm::EventPrincipal>();
-        throw cms::Exception("getOneEvent","EventStreamHttpReader")
-            << "Could not get event: probably XDAQ not running on Storage Manager "
-            << "\n";
-      }
-      if(data.d_.length() == 0)
+      
+      if ( data.empty() )
       {
         if(!alreadySaidWaiting) {
           std::cout << "...waiting for event from Storage Manager..." << std::endl;
           alreadySaidWaiting = true;
         }
-        // sleep for the standard request interval
-        usleep(static_cast<int>(1000000 * minEventRequestInterval_));
+        sleepUntilNextRequest();
       }
-    } while (data.d_.length() == 0 && !edm::shutdown_flag);
-    if (edm::shutdown_flag) {
-        return 0;
-    }
-
-    int len = data.d_.length();
-    FDEBUG(9) << "EventStreamHttpReader received len = " << len << std::endl;
-    buf_.resize(len);
-    for (int i=0; i<len ; i++) buf_[i] = data.d_[i];
-
+    } while (data.empty() && !edm::shutdown_flag);
+  }
+  
+  
+  edm::EventPrincipal* EventStreamHttpReader::extractEvent(std::string& data)
+  {
     // first check if done message
-    OtherMessageView msgView(&buf_[0]);
+    OtherMessageView msgView(&data[0]);
 
     if (msgView.code() == Header::DONE) {
-      // no need to register again as the SM/EventServer is kept alive on a stopAction
-      // *BUT* for a haltAction, we need a code to say when SM is halted as then we need 
-      // register again else the consumerId is wrong and we may get wrong events!
-      // We may even need to end the job if a new run has new triggers, etc.
-      if(!alreadySaidHalted_) {
-        alreadySaidHalted_ = true;
-        std::cout << "Storage Manager has stopped - waiting for restart" << std::endl;
-        std::cout << "Warning! If you are waiting forever at: "
-                  << "...waiting for event from Storage Manager... " << std::endl
-                  << "   it may be that the Storage Manager has been halted with a haltAction," << std::endl
-                  << "   instead of a stopAction. In this case you should control-c to end " << std::endl
-                  << "   this consumer and restart it. (This will be fixed in a future update)" << std::endl;
-      }
       // decide if we need to notify that a run has ended
       if(!endRunAlreadyNotified_) {
         endRunAlreadyNotified_ = true;
@@ -276,31 +227,31 @@ namespace edm
       // reset need-to-set-end-run flag when we get the first event (here any event)
       endRunAlreadyNotified_ = false;
       alreadySaidHalted_ = false;
-
+      
       // 29-Jan-2008, KAB:  catch (and re-throw) any exceptions decoding
       // the event data so that we can display the returned HTML and
       // (hopefully) give the user a hint as to the cause of the problem.
       edm::EventPrincipal* evtPtr = 0;
       try {
-        HeaderView hdrView(&buf_[0]);
+        HeaderView hdrView(&data[0]);
         if (hdrView.code() != Header::EVENT) {
           throw cms::Exception("EventStreamHttpReader", "readOneEvent");
         }
-        EventMsgView eventView(&buf_[0]);
+        EventMsgView eventView(&data[0]);
         evtPtr = deserializeEvent(eventView);
       }
       catch (cms::Exception excpt) {
         const unsigned int MAX_DUMP_LENGTH = 2000;
         std::cout << "========================================" << std::endl;
         std::cout << "* Exception decoding the geteventdata response from the storage manager!" << std::endl;
-        if (data.d_.length() <= MAX_DUMP_LENGTH) {
+        if (data.length() <= MAX_DUMP_LENGTH) {
           std::cout << "* Here is the raw text that was returned:" << std::endl;
-          std::cout << data.d_ << std::endl;
+          std::cout << data << std::endl;
         }
         else {
           std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
             " characters of the raw text that was returned:" << std::endl;
-          std::cout << (data.d_.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+          std::cout << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
         }
         std::cout << "========================================" << std::endl;
         throw excpt;
@@ -308,227 +259,223 @@ namespace edm
       return evtPtr;
     }
   }
-
+  
+  
+  inline void EventStreamHttpReader::sleepUntilNextRequest()
+  {
+    stor::utils::sleepUntil(nextRequestTime_);
+    nextRequestTime_ = stor::utils::getCurrentTime() +
+      minEventRequestInterval_;
+  }
+  
+  
   void EventStreamHttpReader::readHeader()
   {
-    // repeat a http get every 5 seconds until we get the registry
-    // do it like this for pull mode
-    bool alreadySaidWaiting = false;
-    stor::ReadData data;
-    do {
-      CURL* han = curl_easy_init();
-
-      if(han==0)
-        {
-          std::cerr << "could not create handle" << std::endl;
-          //return 0; //or use this?
-          throw cms::Exception("readHeader","EventStreamHttpReader")
-            << "Could not get header: probably XDAQ not running on Storage Manager "
-            << "\n";
-        }
-
-      stor::setopt(han,CURLOPT_URL,headerurl_);
-      stor::setopt(han,CURLOPT_WRITEFUNCTION,stor::func);
-      stor::setopt(han,CURLOPT_WRITEDATA,&data);
-
-      // 10-Aug-2006, KAB: send our consumer ID as part of the header request
-      char msgBuff[100];
-      OtherMessageBuilder requestMessage(&msgBuff[0], Header::HEADER_REQUEST,
-                                         sizeof(char_uint32));
-      uint8 *bodyPtr = requestMessage.msgBody();
-      convert(consumerId_, bodyPtr);
-      stor::setopt(han, CURLOPT_POSTFIELDS, requestMessage.startAddress());
-      stor::setopt(han, CURLOPT_POSTFIELDSIZE, requestMessage.size());
-      struct curl_slist *headers=NULL;
-      headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
-      headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
-      stor::setopt(han, CURLOPT_HTTPHEADER, headers);
-
-      // send the HTTP POST, read the reply, and cleanup before going on
-      CURLcode messageStatus = curl_easy_perform(han);
-      curl_slist_free_all(headers);
-      curl_easy_cleanup(han);
-
-      if(messageStatus!=0)
-      {
-        std::cerr << "curl perform failed for header" << std::endl;
-        // do not retry curl here as we should return to registration instead if we
-        // want an automatic recovery
-        throw cms::Exception("readHeader","EventStreamHttpReader")
-          << "Could not get header: probably XDAQ not running on Storage Manager "
-          << "\n";
-      }
-      if(data.d_.length() == 0)
-      {
-        if(!alreadySaidWaiting) {
-          std::cout << "...waiting for header from Storage Manager..." << std::endl;
-          alreadySaidWaiting = true;
-        }
-        // sleep for desired amount of time
-        sleep(headerRetryInterval_);
-      }
-    } while (data.d_.length() == 0 && !edm::shutdown_flag);
+    std::string data;
+    
+    do
+    {
+      data.clear();
+      getHeaderFromEventServer(data);
+    }
+    while ( !edm::shutdown_flag && !extractInitMsg(data) );
+    
     if (edm::shutdown_flag) {
       throw cms::Exception("readHeader","EventStreamHttpReader")
-          << "The header read was aborted by a shutdown request.\n";
+        << "The header read was aborted by a shutdown request.\n";
     }
+  }
+  
+  
+  void EventStreamHttpReader::getHeaderFromEventServer(std::string& data)
+  {
+    // build the header request message to send to the storage manager
+    char msgBuff[100];
+    OtherMessageBuilder requestMessage(
+      &msgBuff[0],
+      Header::HEADER_REQUEST,
+      sizeof(char_uint32)
+    );
+    uint8 *bodyPtr = requestMessage.msgBody();
+    convert(consumerId_, bodyPtr);
 
-    std::vector<char> regdata(1000*1000);
+    // send the header request
+    stor::CurlInterface curl;
+    CURLcode result = curl.postBinaryMessage(
+      sourceurl_ + "/getregdata",
+      requestMessage.startAddress(),
+      requestMessage.size(),
+      data
+    );
 
-    // rely on http transfer string of correct length!
-    int len = data.d_.length();
-    FDEBUG(9) << "EventStreamHttpReader received registry len = " << len << std::endl;
-    regdata.resize(len);
-    for (int i=0; i<len ; i++) regdata[i] = data.d_[i];
-    // 21-Jun-2006, KAB:  catch (and re-throw) any exceptions decoding
-    // the job header so that we can display the returned HTML and
-    // (hopefully) give the user a hint as to the cause of the problem.
-    std::auto_ptr<SendJobHeader> p;
+    if ( result != CURLE_OK )
+    {
+      // connection failed: try to reconnect
+      std::cerr << "curl perform failed for header:" << std::endl;
+      std::cerr << data << std::endl;
+      std::cerr << "Trying to reconnect." << std::endl;
+      data.clear();
+      registerWithEventServer();
+    }
+  }
+
+
+  bool EventStreamHttpReader::extractInitMsg(std::string& data)
+  {
+    static bool alreadySaidWaiting = false;
+
+    if( data.empty() )
+    {
+      if(!alreadySaidWaiting) {
+        std::cout << "...waiting for header from Storage Manager..." << std::endl;
+        alreadySaidWaiting = true;
+      }
+      // sleep for desired amount of time
+      sleep(headerRetryInterval_);
+      return false;
+    }
+    
     try {
-      HeaderView hdrView(&regdata[0]);
+      HeaderView hdrView(&data[0]);
       if (hdrView.code() != Header::INIT) {
         throw cms::Exception("EventStreamHttpReader", "readHeader");
       }
-      InitMsgView initView(&regdata[0]);
+      InitMsgView initView(&data[0]);
       deserializeAndMergeWithRegistry(initView);
     }
     catch (cms::Exception excpt) {
       const unsigned int MAX_DUMP_LENGTH = 1000;
       std::cout << "========================================" << std::endl;
       std::cout << "* Exception decoding the getregdata response from the storage manager!" << std::endl;
-      if (data.d_.length() <= MAX_DUMP_LENGTH) {
+      if (data.length() <= MAX_DUMP_LENGTH) {
         std::cout << "* Here is the raw text that was returned:" << std::endl;
-        std::cout << data.d_ << std::endl;
+        std::cout << data << std::endl;
       }
       else {
         std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        std::cout << (data.d_.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        std::cout << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
       }
       std::cout << "========================================" << std::endl;
       throw excpt;
     }
-  }
 
+    return true;
+  }
+  
+  
   void EventStreamHttpReader::registerWithEventServer()
   {
-    stor::ReadData data;
-    uint32_t registrationStatus = ConsRegResponseBuilder::ES_NOT_READY;
-    bool alreadySaidWaiting = false;
-    do {
-      data.d_.clear();
-      CURL* han = curl_easy_init();
-      if(han==0)
-        {
-          std::cerr << "could not create handle" << std::endl;
-          throw cms::Exception("registerWithEventServer","EventStreamHttpReader")
-            << "Unable to create curl handle\n";
-        }
+    std::string data;
 
-      // set the standard http request options
-      stor::setopt(han,CURLOPT_URL,subscriptionurl_);
-      stor::setopt(han,CURLOPT_WRITEFUNCTION,stor::func);
-      stor::setopt(han,CURLOPT_WRITEDATA,&data);
+    do
+    {
+      data.clear();
+      connectToEventServer(data);
+    }
+    while ( !edm::shutdown_flag && !extractConsumerId(data) );
 
-      // build the registration request message to send to the storage manager
-      const int BUFFER_SIZE = 2000;
-      char msgBuff[BUFFER_SIZE];
-      ConsRegRequestBuilder requestMessage(msgBuff, BUFFER_SIZE, consumerName_,
-                                       consumerPriority_, consumerPSetString_);
-
-      // add the request message as a http post
-      stor::setopt(han, CURLOPT_POSTFIELDS, requestMessage.startAddress());
-      stor::setopt(han, CURLOPT_POSTFIELDSIZE, requestMessage.size());
-      struct curl_slist *headers=NULL;
-      headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
-      headers = curl_slist_append(headers, "Content-Transfer-Encoding: binary");
-      stor::setopt(han, CURLOPT_HTTPHEADER, headers);
-
-      // send the HTTP POST, read the reply, and cleanup before going on
-      //CURLcode messageStatus = (CURLcode)-1;
-      // set messageStatus to a non-zero (but still within CURLcode enum list)
-      CURLcode messageStatus = CURLE_COULDNT_CONNECT;
-      int tries = 0;
-      while (messageStatus!=0 && !edm::shutdown_flag)
-      {
-        tries++;
-        messageStatus = curl_easy_perform(han);
-        if ( messageStatus != 0 )
-        {
-          if ( tries >= maxConnectTries_ )
-          {
-            std::cerr << "Giving up waiting for connection after " << tries 
-                      << " tries"  << std::endl;
-            curl_slist_free_all(headers);
-            curl_easy_cleanup(han);
-            std::cerr << "curl perform failed for registration" << std::endl;
-            throw cms::Exception("registerWithEventServer","EventStreamHttpReader")
-              << "Could not register: probably XDAQ not running on Storage Manager "
-              << "\n";
-          }
-          else
-          {
-            std::cout << "Waiting for connection to StorageManager... " 
-                      << tries << "/" << maxConnectTries_
-                      << std::endl;
-            sleep(connectTrySleepTime_);
-          }
-        }
-      }
-      if (edm::shutdown_flag) {
-          continue;
-      }
-
-      curl_slist_free_all(headers);
-      curl_easy_cleanup(han);
-
-      registrationStatus = ConsRegResponseBuilder::ES_NOT_READY;
-      if(data.d_.length() > 0)
-      {
-        int len = data.d_.length();
-        FDEBUG(9) << "EventStreamHttpReader received len = " << len << std::endl;
-        buf_.resize(len);
-        for (int i=0; i<len ; i++) buf_[i] = data.d_[i];
-
-        try {
-          ConsRegResponseView respView(&buf_[0]);
-          registrationStatus = respView.getStatus();
-          consumerId_ = respView.getConsumerId();
-        }
-        catch (cms::Exception excpt) {
-          const unsigned int MAX_DUMP_LENGTH = 1000;
-          std::cout << "========================================" << std::endl;
-          std::cout << "* Exception decoding the registerWithEventServer response!" << std::endl;
-          if (data.d_.length() <= MAX_DUMP_LENGTH) {
-            std::cout << "* Here is the raw text that was returned:" << std::endl;
-            std::cout << data.d_ << std::endl;
-          }
-          else {
-            std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
-              " characters of the raw text that was returned:" << std::endl;
-            std::cout << (data.d_.substr(0, MAX_DUMP_LENGTH)) << std::endl;
-          }
-          std::cout << "========================================" << std::endl;
-          throw excpt;
-        }
-      }
-
-      if (registrationStatus == ConsRegResponseBuilder::ES_NOT_READY)
-      {
-        if(!alreadySaidWaiting) {
-          std::cout << "...waiting for registration response from Storage Manager..." << std::endl;
-          alreadySaidWaiting = true;
-        }
-        // sleep for desired amount of time
-        sleep(headerRetryInterval_);
-      }
-    } while (registrationStatus == ConsRegResponseBuilder::ES_NOT_READY &&
-             !edm::shutdown_flag);
     if (edm::shutdown_flag) {
       throw cms::Exception("registerWithEventServer","EventStreamHttpReader")
           << "Registration was aborted by a shutdown request.\n";
     }
-
-    FDEBUG(5) << "Consumer ID = " << consumerId_ << std::endl;
   }
-}
+  
+  
+  void EventStreamHttpReader::connectToEventServer(std::string& data)
+  {
+    // build the registration request message to send to the storage manager
+    const int bufferSize = 2000;
+    char msgBuffer[bufferSize];
+    ConsRegRequestBuilder requestMessage(
+      msgBuffer, bufferSize, consumerName_,
+      consumerPriority_, consumerPSetString_
+    );
+    
+    // send registration request
+    stor::CurlInterface curl;
+    CURLcode result = CURLE_COULDNT_CONNECT;
+    int tries = 0;
+    
+    while ( result != CURLE_OK && !edm::shutdown_flag )
+    {
+      ++tries;
+      result = curl.postBinaryMessage(
+        sourceurl_ + "/registerConsumer",
+        requestMessage.startAddress(),
+        requestMessage.size(),
+        data
+      );
+      
+      if ( result != CURLE_OK )
+      {
+        if ( tries >= maxConnectTries_ )
+        {
+          std::cerr << "Giving up waiting for connection after " << tries 
+            << " tries for Storage Manager on " << sourceurl_ << std::endl;
+          throw cms::Exception("connectToEventServer","EventStreamHttpReader")
+            << "Could not register: probably no Storage Manager is running on "
+              << sourceurl_;
+        }
+        else
+        {
+          std::cout << "Waiting for connection to StorageManager on " << sourceurl_ << "... " 
+            << tries << "/" << maxConnectTries_
+            << std::endl;
+          sleep(connectTrySleepTime_);
+        }
+      }
+    }
+  }
+  
+  
+  bool EventStreamHttpReader::extractConsumerId(std::string& data)      
+  {
+    static bool alreadySaidWaiting = false;
+
+    boost::scoped_ptr<ConsRegResponseView> respView;
+
+    try {
+      respView.reset( new ConsRegResponseView(&data[0]) );
+    }
+    catch (cms::Exception excpt) {
+      const unsigned int MAX_DUMP_LENGTH = 1000;
+      std::cout << "========================================" << std::endl;
+      std::cout << "* Exception decoding the registerWithEventServer response!" << std::endl;
+      if (data.length() <= MAX_DUMP_LENGTH) {
+        std::cout << "* Here is the raw text that was returned:" << std::endl;
+        std::cout << data << std::endl;
+      }
+      else {
+        std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
+          " characters of the raw text that was returned:" << std::endl;
+        std::cout << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+      }
+      std::cout << "========================================" << std::endl;
+      throw excpt;
+    }
+    
+    if ( respView->getStatus() == ConsRegResponseBuilder::ES_NOT_READY )
+    {
+      if(!alreadySaidWaiting) {
+        std::cout << "...waiting for registration response from Storage Manager..." << std::endl;
+        alreadySaidWaiting = true;
+      }
+      // sleep for desired amount of time
+      sleep(headerRetryInterval_);
+      return false;
+    }
+
+    consumerId_ = respView->getConsumerId();
+    return true;
+  }
+
+} //namespace edm
+
+
+/// emacs configuration
+/// Local Variables: -
+/// mode: c++ -
+/// c-basic-offset: 2 -
+/// indent-tabs-mode: nil -
+/// End: -

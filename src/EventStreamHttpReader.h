@@ -1,12 +1,13 @@
 #ifndef STREAMER_EVENTSTREAMHTTPREADER_H
 #define STREAMER_EVENTSTREAMHTTPREADER_H
 
-// $Id: EventStreamHttpReader.h,v 1.21 2009/09/03 21:10:36 biery Exp $
+// $Id: EventStreamHttpReader.h,v 1.22 2009/11/05 12:47:40 mommsen Exp $
 
 #include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/StreamerInputSource.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
+#include "EventFilter/StorageManager/interface/Utils.h"
 
 #include <vector>
 #include <memory>
@@ -15,13 +16,9 @@
 
 namespace edm
 {
-  struct ReadData;
-
   class EventStreamHttpReader : public edm::StreamerInputSource
   {
   public:
-    typedef std::vector<char> Buf;
-
     EventStreamHttpReader(edm::ParameterSet const& pset,
 		 edm::InputSourceDescription const& desc);
     virtual ~EventStreamHttpReader();
@@ -30,23 +27,26 @@ namespace edm
     void readHeader();
     void registerWithEventServer();
 
-  private:  
+  private:
     edm::EventPrincipal* getOneEvent();
+    void getOneEventFromEventServer(std::string&);
+    edm::EventPrincipal* extractEvent(std::string&);
+    void sleepUntilNextRequest();
+    void connectToEventServer(std::string&);
+    bool extractConsumerId(std::string&);
+    void getHeaderFromEventServer(std::string&);
+    bool extractInitMsg(std::string&);
 
     std::string sourceurl_;
-    char eventurl_[256];
-    char headerurl_[256];
-    char subscriptionurl_[256];
-    Buf buf_;
-    int hltBitCount;
-    int l1BitCount;
     std::string consumerName_;
     std::string consumerPriority_;
     std::string consumerPSetString_;
     int headerRetryInterval_;
-    double minEventRequestInterval_;
     unsigned int consumerId_;
-    struct timeval lastRequestTime_;
+
+    stor::utils::time_point_t nextRequestTime_;
+    stor::utils::duration_t minEventRequestInterval_;
+    
     bool endRunAlreadyNotified_;
     bool runEnded_;
     bool alreadySaidHalted_;
