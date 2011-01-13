@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.55 2010/12/17 18:21:05 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.56 2010/12/20 16:33:21 mommsen Exp $
 /// @file: WebPageHelper.cc
 
 #ifdef __APPLE__
@@ -1411,10 +1411,7 @@ void WebPageHelper::addDOMforEventConsumers
     
     // Name:
     tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
-    if ( (*it)->isProxyServer() )
-      maker.addText(tableDiv, "Proxy Server");
-    else
-      maker.addText(tableDiv, (*it)->consumerName());
+    maker.addText(tableDiv, (*it)->consumerName());
 
     // Host:
     tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
@@ -1665,10 +1662,7 @@ void WebPageHelper::addDOMforDQMEventConsumers
     
     // Name:
     tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
-    if ( (*it)->isProxyServer() )
-      maker.addText(tableDiv, "Proxy Server");
-    else
-      maker.addText(tableDiv, (*it)->consumerName());
+    maker.addText(tableDiv, (*it)->consumerName());
     
     // Host:
     tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);

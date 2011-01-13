@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.8 2010/12/16 16:35:29 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9 2010/12/17 18:21:05 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -18,19 +18,7 @@ namespace stor
     _topLevelFolderName( topLevelFolderName ),
     _stale( false ),
     _remoteHost( remoteHost )
-  {
-    if( consumerName == "SMProxyServer" ||
-        ( consumerName.find( "urn" ) != std::string::npos &&
-          consumerName.find( "xdaq" ) != std::string::npos &&
-          consumerName.find( "pushDQMEventData" ) != std::string::npos ) )
-      {
-        _isProxy = true;
-      }
-    else
-      {
-        _isProxy = false;
-      }
-  }
+  { }
 
   DQMEventConsumerRegistrationInfo::~DQMEventConsumerRegistrationInfo() 
   { }

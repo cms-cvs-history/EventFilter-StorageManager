@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.7 2010/12/16 16:35:29 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8 2010/12/17 18:21:04 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -18,8 +18,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/12/16 16:35:29 $
+   * $Revision: 1.8 $
+   * $Date: 2010/12/17 18:21:04 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -41,7 +41,6 @@ namespace stor
 
     // Additional accessors:
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
-    bool isProxyServer() const { return _isProxy; }
     const std::string& remoteHost() const { return _remoteHost; }
 
     // Staleness:
@@ -73,7 +72,6 @@ namespace stor
     CommonRegistrationInfo _common;
 
     std::string _topLevelFolderName;
-    bool _isProxy;
     bool _stale;
 
     std::string _remoteHost;

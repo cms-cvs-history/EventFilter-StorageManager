@@ -64,7 +64,6 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( ecri.eventSelection() == eventSelection );
   CPPUNIT_ASSERT( ecri.outputModuleLabel() == "hltOutputDQM" );
   CPPUNIT_ASSERT( ecri.uniqueEvents() == false );
-  CPPUNIT_ASSERT( ecri.isProxyServer() == false );
   CPPUNIT_ASSERT( ecri.remoteHost() == "localhost" );
 }
 
@@ -179,7 +178,6 @@ void testConsumerRegistrationInfo::testDQMEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::DiscardNew );
   CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(1024) );
   CPPUNIT_ASSERT( ecri.topLevelFolderName() == "*" );
-  CPPUNIT_ASSERT( ecri.isProxyServer() == false );
   CPPUNIT_ASSERT( ecri.remoteHost() == "localhost" );
 }
 

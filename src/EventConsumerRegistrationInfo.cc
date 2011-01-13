@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.13 2010/12/17 18:21:05 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14 2010/12/20 11:14:24 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -32,19 +32,7 @@ namespace stor
     _uniqueEvents( uniqueEvents ),
     _stale( false ),
     _remoteHost( remoteHost )
-  {
-    if( consumerName == "SMProxyServer" ||
-        ( consumerName.find( "urn" ) != std::string::npos &&
-          consumerName.find( "xdaq" ) != std::string::npos &&
-          consumerName.find( "pushEventData" ) != std::string::npos ) )
-      {
-        _isProxy = true;
-      }
-    else
-      {
-        _isProxy = false;
-      }
-  }
+  { }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
   { }
