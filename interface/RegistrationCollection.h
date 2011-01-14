@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.h,v 1.6 2010/04/16 14:39:34 mommsen Exp $
+// $Id: RegistrationCollection.h,v 1.7 2010/12/17 18:21:05 mommsen Exp $
 /// @file: RegistrationCollection.h 
 
 #ifndef StorageManager_RegistrationCollection_h
@@ -22,8 +22,8 @@ namespace stor
      Keep a collection of registered event and DQM event consumers.
 
      $Author: mommsen $
-     $Revision: 1.6 $
-     $Date: 2010/04/16 14:39:34 $
+     $Revision: 1.7 $
+     $Date: 2010/12/17 18:21:05 $
   */
 
   class RegistrationCollection
@@ -81,7 +81,7 @@ namespace stor
     /**
        Test if registration is allowed.
     */
-    bool registrationIsAllowed() const;
+    bool registrationIsAllowed( const ConsumerID ) const;
 
   private:
 

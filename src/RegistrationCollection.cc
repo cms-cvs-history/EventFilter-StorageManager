@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.10 2010/12/17 18:21:05 mommsen Exp $
+// $Id: RegistrationCollection.cc,v 1.10.2.1 2011/01/14 15:40:40 mommsen Exp $
 /// @file: RegistrationCollection.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
@@ -61,6 +61,7 @@ RegPtr RegistrationCollection::getRegistrationInfo( const ConsumerID cid ) const
   RegistrationMap::const_iterator pos = _consumers.find(cid);
   if ( pos != _consumers.end() )
   {
+    pos->second->consumerContact();
     regInfo = pos->second;
   }
   return regInfo;
@@ -115,9 +116,14 @@ void RegistrationCollection::clearRegistrations()
   _consumers.clear();
 }
 
-bool RegistrationCollection::registrationIsAllowed() const
+bool RegistrationCollection::registrationIsAllowed( const ConsumerID cid ) const
 {
-  //boost::mutex::scoped_lock sl( _lock );
+  boost::mutex::scoped_lock sl( _lock );
+
+  RegistrationMap::const_iterator pos = _consumers.find(cid);
+  if ( pos == _consumers.end() ) return false;
+  pos->second->consumerContact();
+
   return _registrationAllowed;
 }
 

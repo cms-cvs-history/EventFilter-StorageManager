@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.1 2011/01/13 11:19:49 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.2 2011/01/13 13:28:41 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -18,8 +18,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.1 $
-   * $Date: 2011/01/13 11:19:49 $
+   * $Revision: 1.8.2.2 $
+   * $Date: 2011/01/13 13:28:41 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -41,10 +41,6 @@ namespace stor
 
     // Additional accessors:
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
-
-    // Staleness:
-    bool isStale() const { return _stale; }
-    void setStaleness( bool s ) { _stale = s; }
 
     // Comparison:
     bool operator<(const DQMEventConsumerRegistrationInfo&) const;
@@ -72,7 +68,6 @@ namespace stor
     CommonRegistrationInfo _common;
 
     std::string _topLevelFolderName;
-    bool _stale;
   };
 
   typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMEventConsRegPtr;

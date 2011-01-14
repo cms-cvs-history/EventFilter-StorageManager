@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.1 2011/01/13 11:19:49 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.2 2011/01/13 13:28:41 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -29,8 +29,7 @@ namespace stor
     _eventSelection( eventSelection ),
     _outputModuleLabel( outputModuleLabel ),
     _prescale( prescale ),
-    _uniqueEvents( uniqueEvents ),
-    _stale( false )
+    _uniqueEvents( uniqueEvents )
   { }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()

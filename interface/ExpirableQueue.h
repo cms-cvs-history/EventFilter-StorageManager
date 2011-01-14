@@ -1,4 +1,4 @@
-// $Id: ExpirableQueue.h,v 1.6 2010/12/14 12:56:51 mommsen Exp $
+// $Id: ExpirableQueue.h,v 1.7 2010/12/20 16:33:21 mommsen Exp $
 /// @file: ExpirableQueue.h 
 
 
@@ -19,8 +19,8 @@ namespace stor
      was made.
    
      $Author: mommsen $
-     $Revision: 1.6 $
-     $Date: 2010/12/14 12:56:51 $
+     $Revision: 1.7 $
+     $Date: 2010/12/20 16:33:21 $
    */
 
   template <class T, class Policy>
@@ -45,19 +45,19 @@ namespace stor
       In either case, update the staleness time to reflect this
       attempt to get an event.
     */
-    bool deq_nowait(T& event);
+    bool deq_nowait(T&);
 
     /**
        Put an event onto the queue, respecting the Policy of this
        queue that controls what is done in the case of a full queue.
        This does not affect the staleness time of this queue.
      */
-    typename Policy::return_type enq_nowait(T const& event);
+    typename Policy::return_type enq_nowait(T const&);
 
     /**
        Set the staleness interval.
      */
-    void set_staleness_interval(utils::duration_t staleness_interval);
+    void set_staleness_interval(const utils::duration_t&);
 
     /**
        Get the staleness interval.
@@ -80,6 +80,11 @@ namespace stor
     bool full() const;
 
     /**
+       Return true if the queue is stale at the given time, and false otherwise.
+    */
+    bool stale(const utils::time_point_t&) const;
+
+    /**
        Get number of entries in queue
     */
     size_type size() const;
@@ -90,14 +95,14 @@ namespace stor
        time. If the queue is stale, we also clear it and return the
        number of cleared events.
     */
-    bool clearIfStale(utils::time_point_t now, size_type& clearedEvents);
+    bool clearIfStale(const utils::time_point_t&, size_type& clearedEvents);
 
   private:
     typedef ConcurrentQueue<T, Policy> queue_t;
 
-    queue_t      _events;
+    queue_t _events;
     /**  Time in seconds it takes for this queue to become stale. */
-    utils::duration_t   _staleness_interval;
+    utils::duration_t _staleness_interval;
     /** Point in time at which this queue will become stale. */
     utils::time_point_t _staleness_time;
 
@@ -138,7 +143,7 @@ namespace stor
   template <class T, class Policy>
   inline
   void
-  ExpirableQueue<T, Policy>::set_staleness_interval(utils::duration_t t)
+  ExpirableQueue<T, Policy>::set_staleness_interval(const utils::duration_t& t)
   {
     _staleness_interval = t;
   }
@@ -188,7 +193,15 @@ namespace stor
   template <class T, class Policy>
   inline
   bool
-  ExpirableQueue<T, Policy>::clearIfStale(utils::time_point_t now, size_type& clearedEvents)
+  ExpirableQueue<T, Policy>::stale(const utils::time_point_t& now) const
+  {
+    return (_staleness_time < now);
+  }
+
+  template <class T, class Policy>
+  inline
+  bool
+  ExpirableQueue<T, Policy>::clearIfStale(const utils::time_point_t& now, size_type& clearedEvents)
   {
     if (_staleness_time < now)
     {

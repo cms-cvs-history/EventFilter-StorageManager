@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.h,v 1.7 2010/12/17 18:21:04 mommsen Exp $
+// $Id: EventConsumerSelector.h,v 1.8 2010/12/20 11:14:24 mommsen Exp $
 /// @file: EventConsumerSelector.h 
 
 #ifndef StorageManager_EventConsumerSelector_h
@@ -18,8 +18,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/12/17 18:21:04 $
+   * $Revision: 1.8 $
+   * $Date: 2010/12/20 11:14:24 $
    */
 
   class EventConsumerSelector
@@ -68,23 +68,23 @@ namespace stor {
     bool isInitialized() const { return _initialized; }
 
     /**
-       Check if stale:
-    */
+     * Return true if no events were requested anymore
+     */
     bool isStale() const { return _stale; }
 
     /**
-       Mark as stale:
-    */
+     * No longer select any events
+     */
     void markAsStale() { _stale = true; }
 
     /**
-       Mark as active:
-    */
+     * Activate event selection
+     */
     void markAsActive() { _stale = false; }
 
     /**
-       Comparison:
-    */
+     *  Comparison:
+     */
     bool operator<(const EventConsumerSelector& other) const;
 
   private:

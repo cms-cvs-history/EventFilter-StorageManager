@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.16.2.2 2011/01/13 13:28:41 mommsen Exp $
+// $Id: ConsumerUtils.cc,v 1.16.2.3 2011/01/14 12:01:57 mommsen Exp $
 /// @file: ConsumerUtils.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -149,7 +149,7 @@ void ConsumerUtils::processConsumerEventRequest(xgi::Input* in, xgi::Output* out
     return;
   }
 
-  if ( !_sharedResources->_registrationCollection->registrationIsAllowed() )
+  if ( !_sharedResources->_registrationCollection->registrationIsAllowed( cid ) )
   {
     writeDone( out );
     return;
@@ -244,7 +244,7 @@ void ConsumerUtils::processDQMConsumerEventRequest(xgi::Input* in, xgi::Output* 
     return;
   }
 
-  if ( !_sharedResources->_registrationCollection->registrationIsAllowed() )
+  if ( !_sharedResources->_registrationCollection->registrationIsAllowed( cid ) )
   {
     writeDone( out );
     return;

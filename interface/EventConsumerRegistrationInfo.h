@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.1 2011/01/13 11:19:49 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.2 2011/01/13 13:28:41 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef StorageManager_EventConsumerRegistrationInfo_h
@@ -21,8 +21,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.1 $
-   * $Date: 2011/01/13 11:19:49 $
+   * $Revision: 1.13.2.2 $
+   * $Date: 2011/01/13 13:28:41 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -53,10 +53,6 @@ namespace stor
     const unsigned int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
 
-    // Staleness:
-    bool isStale() const { return _stale; }
-    void setStaleness( bool s ) { _stale = s; }
-
     // Comparison:
     bool operator<(const EventConsumerRegistrationInfo&) const;
     bool operator==(const EventConsumerRegistrationInfo&) const;
@@ -86,7 +82,6 @@ namespace stor
     std::string _outputModuleLabel;
     unsigned int _prescale;
     bool _uniqueEvents;
-    bool _stale;
 
   };
 

@@ -1389,6 +1389,7 @@ void WebPageHelper::addDOMforEventConsumers
   bool evenRow = false;
   XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
   XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+  utils::time_point_t now = utils::getCurrentTime();
 
   for( RegistrationCollection::ConsumerRegistrations::const_iterator
          it = consumers.begin(), itEnd = consumers.end();
@@ -1424,7 +1425,7 @@ void WebPageHelper::addDOMforEventConsumers
     // Status:
     XHTMLMaker::AttrMap statusAttr = _tableLabelAttr;
     std::string statusMessage;
-    if( (*it)->isStale() )
+    if( (*it)->isStale(now) )
     {
       statusAttr[ "style" ] = "color:brown;";
       statusMessage = "Stale";
@@ -1656,6 +1657,7 @@ void WebPageHelper::addDOMforDQMEventConsumers
 
   // Loop over consumers
   bool evenRow = false;
+  utils::time_point_t now = utils::getCurrentTime();
 
   for( RegistrationCollection::DQMConsumerRegistrations::const_iterator
          it = consumers.begin(), itEnd = consumers.end();
@@ -1691,7 +1693,7 @@ void WebPageHelper::addDOMforDQMEventConsumers
     // Status:
     XHTMLMaker::AttrMap statusAttr = _tableLabelAttr;
     std::string statusMessage;
-    if( (*it)->isStale() )
+    if( (*it)->isStale(now) )
     {
       statusAttr[ "style" ] = "color:brown;";
       statusMessage = "Stale";

@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.11 2011/01/14 11:39:32 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.1 2011/01/14 12:07:22 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2011/01/14 11:39:32 $
+   * $Revision: 1.10.2.1 $
+   * $Date: 2011/01/14 12:07:22 $
    */
 
   template <class T>
@@ -55,8 +55,8 @@ namespace stor {
        Set or get the time in seconds that the queue with the given id
        can be unused (by a consumer) before becoming stale.
      */
-    void setExpirationInterval(QueueID id, utils::duration_t interval);
-    utils::duration_t getExpirationInterval(QueueID id) const;
+    void setExpirationInterval(const QueueID&, const utils::duration_t&);
+    utils::duration_t getExpirationInterval(const QueueID& id) const;
 
     /**
       Create a new contained queue, with the given policy and given
@@ -95,19 +95,25 @@ namespace stor {
       the given id. If there is no event in that queue, an empty
       event is returned.
      */
-    T popEvent(QueueID);
+    T popEvent(const QueueID&);
 
     /**
       Remove and return an event from the queue for the consumer with
       the given ConsumerID. If there is no event in that queue, an
       empty event is returned.
      */
-    T popEvent(ConsumerID);
+    T popEvent(const ConsumerID&);
 
     /**
        Clear the queue with the given QueueID.
      */
-    void clearQueue(QueueID);
+    void clearQueue(const QueueID&);
+
+    /**
+       Clear the queue with the given QueueID if the queue is stale
+       at the specified point in time.
+     */
+    bool clearQueueIfStale(const QueueID&, const utils::time_point_t&);
 
     /**
        Clear all the contained queues.
@@ -117,26 +123,23 @@ namespace stor {
     /**
        Test to see if the queue with the given QueueID is empty.
     */
-    bool empty(QueueID) const;
+    bool empty(const QueueID&) const;
 
     /**
        Test to see if the queue with the given QueueID is full.
      */
-    bool full(QueueID) const;
+    bool full(const QueueID&) const;
+
+    /**
+       Test to see if the queue with the given QueueID is stale
+       at the given time.
+     */
+    bool stale(const QueueID&, const utils::time_point_t&) const;
 
     /**
        Get number of elements in queue
     */
-    size_type size(QueueID) const;
-
-    /**
-       Clear queues which are 'stale'; a queue is stale if it hasn't
-      been requested by a consumer within its 'staleness
-      interval. Return the QueueID for each queue that is stale (not
-      merely those that have become stale recently, but all that are
-      stale) in the output argument 'stale_queues'.
-     */
-    void clearStaleQueues(std::vector<QueueID>& stale_queues);
+    size_type size(const QueueID&) const;
 
 
   private:
@@ -201,7 +204,7 @@ namespace stor {
 
   namespace
   {
-    void throw_unknown_queueid(QueueID id)
+    void throw_unknown_queueid(const QueueID& id)
     {
       std::ostringstream msg;
       msg << "Unable to retrieve queue with signature: ";
@@ -223,8 +226,10 @@ namespace stor {
 
   template <class T>
   void
-  QueueCollection<T>::setExpirationInterval(QueueID id,
-                                         utils::duration_t interval)
+  QueueCollection<T>::setExpirationInterval(
+    const QueueID& id,
+    const utils::duration_t& interval
+  )
   {
     switch (id.policy()) 
       {
@@ -252,7 +257,7 @@ namespace stor {
 
   template <class T>
   utils::duration_t
-  QueueCollection<T>::getExpirationInterval(QueueID id) const
+  QueueCollection<T>::getExpirationInterval(const QueueID& id) const
   {
     utils::duration_t result = boost::posix_time::seconds(0);
     switch (id.policy()) 
@@ -426,7 +431,7 @@ namespace stor {
 
   template <class T>
   T
-  QueueCollection<T>::popEvent(QueueID id)
+  QueueCollection<T>::popEvent(const QueueID& id)
   {
     T result;
     switch (id.policy()) 
@@ -462,7 +467,7 @@ namespace stor {
 
   template <class T>
   T
-  QueueCollection<T>::popEvent(ConsumerID cid)
+  QueueCollection<T>::popEvent(const ConsumerID& cid)
   {
     T result;
     if (!cid.isValid()) return result;
@@ -480,7 +485,7 @@ namespace stor {
 
   template <class T>
   void
-  QueueCollection<T>::clearQueue(QueueID id)
+  QueueCollection<T>::clearQueue(const QueueID& id)
   {
     switch (id.policy()) 
       {
@@ -512,6 +517,54 @@ namespace stor {
           // does not return, no break needed
         }
       }
+  }
+
+
+  template <class T>
+  bool
+  QueueCollection<T>::clearQueueIfStale(const QueueID& id, const utils::time_point_t& now)
+  {
+    bool result(false);
+
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          if (id.index() < _discard_new_queues.size())
+          {
+            if (_discard_new_queues[id.index()]->stale(now))
+            {
+              _consumer_monitor_collection.addDiscardedEvents(
+                id, _discard_new_queues[id.index()]->size() );
+              _discard_new_queues[id.index()]->clear();
+              result = true;
+            }
+          }
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          if (id.index() < _discard_old_queues.size())
+          {
+            if (_discard_old_queues[id.index()]->stale(now))
+            {
+              _consumer_monitor_collection.addDiscardedEvents(
+                id, _discard_old_queues[id.index()]->size() );
+              _discard_old_queues[id.index()]->clear();
+              result = true;
+            }
+          }
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
+    return result;
   }
 
   template <class T>
@@ -547,7 +600,7 @@ namespace stor {
 
   template <class T>
   bool
-  QueueCollection<T>::empty(QueueID id) const
+  QueueCollection<T>::empty(const QueueID& id) const
   {
     bool result(true);
     switch (id.policy()) 
@@ -577,7 +630,7 @@ namespace stor {
 
   template <class T>
   bool
-  QueueCollection<T>::full(QueueID id) const
+  QueueCollection<T>::full(const QueueID& id) const
   {
     bool result(true);
     switch (id.policy()) 
@@ -604,10 +657,40 @@ namespace stor {
       }
     return result;
   }
+  
+  template <class T>
+  bool
+  QueueCollection<T>::stale(const QueueID& id, const utils::time_point_t& now) const
+  {
+    bool result(true);
+    switch (id.policy()) 
+      {
+      case enquing_policy::DiscardNew:
+        {
+          read_lock_t lock(_protect_discard_new_queues);
+          if (id.index() < _discard_new_queues.size())
+            result = _discard_new_queues[id.index()]->stale(now);
+          break;
+        }
+      case enquing_policy::DiscardOld:
+        {
+          read_lock_t lock(_protect_discard_old_queues);
+          if (id.index() < _discard_old_queues.size())
+            result = _discard_old_queues[id.index()]->stale(now);
+          break;
+        }
+      default:
+        {
+          throw_unknown_queueid(id);
+          // does not return, no break needed
+        }
+      }
+    return result;
+  }
 
   template <class T>
   typename QueueCollection<T>::size_type
-  QueueCollection<T>::size( QueueID id ) const
+  QueueCollection<T>::size(const QueueID& id) const
   {
     size_type result = 0;
     switch (id.policy()) 
@@ -645,46 +728,6 @@ namespace stor {
         }
       }
     return result;
-  }
-
-
-  template <class T>
-  void 
-  QueueCollection<T>::clearStaleQueues(std::vector<QueueID>& result)
-  {
-    result.clear();
-    utils::time_point_t now = utils::getCurrentTime();
-
-    {
-      read_lock_t lock_discard_new(_protect_discard_new_queues);
-    
-      const size_type num_queues = _discard_new_queues.size();
-      size_type clearedEvents;
-      for (size_type i = 0; i < num_queues; ++i)
-      {
-        if ( _discard_new_queues[i]->clearIfStale(now, clearedEvents))
-        {
-          const QueueID id(enquing_policy::DiscardNew, i);
-          _consumer_monitor_collection.addDiscardedEvents(id, clearedEvents);
-          result.push_back(id);
-        }
-      }
-    }
-
-    {
-      read_lock_t lock_discard_old(_protect_discard_old_queues);
-      const size_type num_queues = _discard_old_queues.size();
-      size_type clearedEvents;
-       for (size_type i = 0; i < num_queues; ++i)
-      {
-        if ( _discard_old_queues[i]->clearIfStale(now, clearedEvents))
-        {
-          const QueueID id(enquing_policy::DiscardOld, i);
-          _consumer_monitor_collection.addDiscardedEvents(id, clearedEvents);
-          result.push_back(id);
-        }
-      }
-    }
   }
 
   template <class T>

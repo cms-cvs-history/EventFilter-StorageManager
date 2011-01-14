@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.22 2010/12/15 15:29:23 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.23 2010/12/16 16:35:29 mommsen Exp $
 /// @file: EventDistributor.cc
 
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -356,90 +356,41 @@ unsigned int EventDistributor::initializedConsumerCount() const
 
 void EventDistributor::checkForStaleConsumers()
 {
+  utils::time_point_t now = utils::getCurrentTime();
 
   /////////////////////
   // event consumers //
   /////////////////////
 
-  std::vector<QueueID> stale_qs;
-  _sharedResources->_eventConsumerQueueCollection->clearStaleQueues( stale_qs );
+  boost::shared_ptr<EventQueueCollection> ecqc =
+    _sharedResources->_eventConsumerQueueCollection;
 
-  RegistrationCollection::ConsumerRegistrations cregs;
-  _sharedResources->_registrationCollection->getEventConsumers( cregs );
+  for( ConsSelList::iterator it = _eventConsumerSelectors.begin(),
+         itEnd = _eventConsumerSelectors.end();
+       it != itEnd; ++it )
+  {
+    if ( ecqc->clearQueueIfStale((*it)->queueId(), now) )
+      (*it)->markAsStale();
+    else
+      (*it)->markAsActive();
+  }
 
-  // Double linear search, should try to optimize...
-  for( ConsSelList::iterator i = _eventConsumerSelectors.begin();
-           i != _eventConsumerSelectors.end(); ++i )
-    {
-
-      // First, assume the consumer is active. If we find its queue in
-      // the stale list, we'll mark it stale in the inner loop.
-      (*i)->markAsActive();
-
-      for( std::vector<QueueID>::const_iterator j = stale_qs.begin();
-           j != stale_qs.end(); ++j )
-        {
-          if( (*i)->queueId() == *j )
-            {
-              (*i)->markAsStale();
-            }
-        }
-
-      // Finally, to make matters even worse, we iterate over the
-      // registrations to set the staleness flags so that it can be
-      // displayed on the web page:
-      for( RegistrationCollection::ConsumerRegistrations::iterator k = cregs.begin();
-           k != cregs.end(); ++k )
-        {
-          if( (*k)->queueId() == (*i)->queueId() )
-            {
-              (*k)->setStaleness( (*i)->isStale() );
-            }
-        }
-
-    }
-  
   ///////////////////
   // dqm consumers //
   ///////////////////
 
-  stale_qs.clear();
-  _sharedResources->_dqmEventConsumerQueueCollection->clearStaleQueues( stale_qs );
+  boost::shared_ptr<DQMEventQueueCollection> dcqc =
+    _sharedResources->_dqmEventConsumerQueueCollection;
 
-  RegistrationCollection::DQMConsumerRegistrations dqm_cregs;
-  _sharedResources->_registrationCollection->getDQMEventConsumers( dqm_cregs );
-
-  // Double linear search, should try to optimize...
-  for( DQMEvtSelList::iterator i = _dqmEventSelectors.begin();
-           i != _dqmEventSelectors.end(); ++i )
-    {
-
-      // First, assume the consumer is active. If we find its queue in
-      // the stale list, we'll mark it stale in the inner loop.
-      (*i)->markAsActive();
-
-      for( std::vector<QueueID>::const_iterator j = stale_qs.begin();
-           j != stale_qs.end(); ++j )
-        {
-          if( (*i)->queueId() == *j )
-            {
-              (*i)->markAsStale();
-            }
-        }
-
-      // Finally, to make matters even worse, we iterate over the
-      // registrations to set the staleness flags so that it can be
-      // displayed on the web page:
-      for( RegistrationCollection::DQMConsumerRegistrations::iterator k = dqm_cregs.begin();
-           k != dqm_cregs.end(); ++k )
-        {
-          if( (*k)->queueId() == (*i)->queueId() )
-            {
-              (*k)->setStaleness( (*i)->isStale() );
-            }
-        }
-
-    }
+  for( DQMEvtSelList::iterator it = _dqmEventSelectors.begin(),
+         itEnd = _dqmEventSelectors.end();
+       it != itEnd; ++it )
+  {
+    if ( dcqc->clearQueueIfStale((*it)->queueId(), now) )
+      (*it)->markAsStale();
+    else
+      (*it)->markAsActive();
+  }
 }
 
 

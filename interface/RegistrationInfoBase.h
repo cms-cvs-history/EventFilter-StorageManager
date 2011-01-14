@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6 2010/12/17 18:21:05 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.1 2011/01/13 13:28:41 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef StorageManager_RegistrationInfoBase_h
@@ -22,8 +22,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2010/12/17 18:21:05 $
+   * $Revision: 1.6.2.1 $
+   * $Date: 2011/01/13 13:28:41 $
    */
 
   class RegistrationInfoBase
@@ -36,6 +36,12 @@ namespace stor {
        containment-by-reference.
     */
     virtual ~RegistrationInfoBase() {};
+
+    /**
+       Mark time when consumer last contacted us
+    */
+    inline void consumerContact()
+    { _lastConsumerContact = utils::getCurrentTime(); }
 
     /**
        Return whether or not *this is a valid registration
@@ -91,9 +97,15 @@ namespace stor {
     int queueSize() const;
 
     /**
-       Returns the time until the queue becomes stale
+       Returns the time until the consumer becomes stale
      */
     utils::duration_t secondsToStale() const;
+
+    /**
+       Returns if the consumer is stale at the given point in time
+     */
+    bool isStale(const utils::time_point_t& now) const
+    { return ( now > _lastConsumerContact + secondsToStale() ); }
 
 
   private:
@@ -107,6 +119,8 @@ namespace stor {
     virtual int do_queueSize() const = 0;
     virtual enquing_policy::PolicyTag do_queuePolicy() const = 0;
     virtual utils::duration_t do_secondsToStale() const = 0;
+
+    utils::time_point_t _lastConsumerContact;
   };
 
   typedef boost::shared_ptr<stor::RegistrationInfoBase> RegPtr;

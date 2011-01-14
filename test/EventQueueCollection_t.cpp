@@ -281,18 +281,20 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
   CPPUNIT_ASSERT(!coll.empty(q1));
   CPPUNIT_ASSERT(!coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
-  
+
+  // Queues should not be cleared, as not stale, yet
+  CPPUNIT_ASSERT(!coll.clearQueueIfStale(q1,now));
+  CPPUNIT_ASSERT(!coll.clearQueueIfStale(q2,now));
+  CPPUNIT_ASSERT(!coll.clearQueueIfStale(q3,now));
+
   // Now sleep for the expiration interval.
   // Our queues should have all become stale;
   // they should also all be empty.
   stor::utils::sleep(expiration_interval);
-  std::vector<QueueID> stale_queues;
-  coll.clearStaleQueues(stale_queues);
-  //CPPUNIT_ASSERT(stale_queues.size() == coll.size());
-  sort(stale_queues.begin(), stale_queues.end());
-  CPPUNIT_ASSERT(binary_search(stale_queues.begin(), stale_queues.end(), q1));
-  CPPUNIT_ASSERT(binary_search(stale_queues.begin(), stale_queues.end(), q2));
-  CPPUNIT_ASSERT(binary_search(stale_queues.begin(), stale_queues.end(), q3));
+  now = stor::utils::getCurrentTime();
+  CPPUNIT_ASSERT(coll.clearQueueIfStale(q1,now));
+  CPPUNIT_ASSERT(coll.clearQueueIfStale(q2,now));
+  CPPUNIT_ASSERT(coll.clearQueueIfStale(q3,now));
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
@@ -340,11 +342,11 @@ testEventQueueCollection::invalid_queueid()
   CPPUNIT_ASSERT(coll.full(id1));  // nonexistent queue is also full.
   CPPUNIT_ASSERT(coll.empty(id2)); // nonexistent queue is empty.
   CPPUNIT_ASSERT(coll.full(id2));  // nonexistent queue is also full.
-
   
-  std::vector<QueueID> stale_queues;
-  coll.clearStaleQueues(stale_queues);
-  CPPUNIT_ASSERT(stale_queues.empty());
+  stor::utils::time_point_t now = stor::utils::getCurrentTime();
+  CPPUNIT_ASSERT(!coll.clearQueueIfStale(id1,now));
+  CPPUNIT_ASSERT(!coll.clearQueueIfStale(id2,now));
+  
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
 
