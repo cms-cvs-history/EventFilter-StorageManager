@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.9 2010/12/17 18:21:04 mommsen Exp $
+// $Id: QueueCollection.h,v 1.11 2011/01/14 11:39:32 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.9 $
-   * $Date: 2010/12/17 18:21:04 $
+   * $Revision: 1.11 $
+   * $Date: 2011/01/14 11:39:32 $
    */
 
   template <class T>
@@ -304,7 +304,11 @@ namespace stor {
       reginfo_lookup_t::const_iterator it =
         _queue_reginfo_lookup.find(reginfo);
       if ( it != _queue_reginfo_lookup.end() )
-        return (it->second);
+      {
+        qid = it->second;
+        _queue_id_lookup[cid] = qid;
+        return qid;
+      }
     }
 
     qid = get_queue(reginfo, now);
