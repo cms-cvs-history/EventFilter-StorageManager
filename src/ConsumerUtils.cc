@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.16 2010/12/20 16:33:21 mommsen Exp $
+// $Id: ConsumerUtils.cc,v 1.16.2.2 2011/01/13 13:28:41 mommsen Exp $
 /// @file: ConsumerUtils.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -142,6 +142,7 @@ void ConsumerUtils::processConsumerHeaderRequest(xgi::Input* in, xgi::Output* ou
 void ConsumerUtils::processConsumerEventRequest(xgi::Input* in, xgi::Output* out) const
 {
   ConsumerID cid = getConsumerId( in );
+
   if( !cid.isValid() )
   {
     writeEmptyBuffer( out );
@@ -314,124 +315,59 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
   }
 
   const edm::ParameterSet pset( psetStr );
-
-  // NOTE:
-  // Any parameters added here must also be added to
-  // EventStreamHttpReader::convertToTracked method
+  std::cout << pset << std::endl;
   
-  std::string outputModuleLabel = "";
+  std::string outputModuleLabel;
   try
   {
-    outputModuleLabel = pset.getParameter<std::string>( "TrackedHLTOutMod" );
+    outputModuleLabel = pset.getUntrackedParameter<std::string>("SelectHLTOutput");
   }
   catch( edm::Exception& e )
-  {
-    outputModuleLabel =
-      pset.getUntrackedParameter<std::string>( "SelectHLTOutput", "" );
-  }
-  
-  if( outputModuleLabel == "" )
   {
     XCEPT_RAISE( stor::exception::ConsumerRegistration,
       "No HLT output module specified" );
   }
   
-  // Event filters:
-  std::string triggerSelection;
-  try
-  {
-    triggerSelection = pset.getParameter<std::string>( "TriggerSelector" );
-  }
-  catch( edm::Exception& e )
-  {
-    triggerSelection =
-      pset.getUntrackedParameter<std::string>( "TriggerSelector", "" );
-  }
+  std::string triggerSelection =
+    pset.getUntrackedParameter<std::string>("TriggerSelector", "");
   
   Strings eventSelection;
   try
   {
-    eventSelection = pset.getParameter<Strings>( "TrackedEventSelection" );
+    eventSelection = pset.getParameter<Strings>("TrackedEventSelection");
   }
   catch( edm::Exception& e )
   {
     edm::ParameterSet tmpPSet1 =
-      pset.getUntrackedParameter<edm::ParameterSet>( "SelectEvents",
-        edm::ParameterSet() );
+      pset.getUntrackedParameter<edm::ParameterSet>("SelectEvents", edm::ParameterSet());
     if ( ! tmpPSet1.empty() )
     {
-      eventSelection = tmpPSet1.getParameter<Strings>( "SelectEvents" );
+      eventSelection = tmpPSet1.getParameter<Strings>("SelectEvents");
     }
   }
 
-  // Request unique events
-  bool uniqueEvents;
-  try
-  {
-    uniqueEvents = pset.getParameter<bool>( "TrackedUniqueEvents" );
-  }
-  catch( edm::Exception& e )
-  {
-    uniqueEvents = pset.getUntrackedParameter<bool>( "uniqueEvents", false);
-  }
+  bool uniqueEvents =
+    pset.getUntrackedParameter<bool>("uniqueEvents", false);
 
-  // Prescale
-  unsigned int prescale;
-  try
-  {
-    prescale = pset.getParameter<unsigned int>( "TrackedPrescale" );
-  }
-  catch( edm::Exception& e )
-  {
-    prescale = pset.getUntrackedParameter<unsigned int>( "prescale", 1);
-  }
+  unsigned int prescale =
+    pset.getUntrackedParameter<unsigned int>("prescale", 1);
 
-  // Consumer time-out
-  utils::duration_t secondsToStale;
-  try
-  {
-    secondsToStale = boost::posix_time::seconds(
-      pset.getParameter<double>( "TrackedConsumerTimeOut" )
+  utils::duration_t secondsToStale =
+    boost::posix_time::seconds(
+      pset.getUntrackedParameter<double>("consumerTimeOut", 0)
     );
-  }
-  catch( edm::Exception& e )
-  {
-    secondsToStale = boost::posix_time::seconds(
-      pset.getUntrackedParameter<double>( "consumerTimeOut", 0)
-    );
-  }
   if (secondsToStale < boost::posix_time::seconds(1))
-    secondsToStale = _sharedResources->_configuration->getEventServingParams()._activeConsumerTimeout;
+    secondsToStale = _sharedResources->_configuration->
+      getEventServingParams()._activeConsumerTimeout;
+  
+  int queueSize =
+    pset.getUntrackedParameter<int>("queueSize",
+      _sharedResources->_configuration->getEventServingParams()._consumerQueueSize);
 
-
-  // Queue size
-  int queueSize;
-  try
-  {
-    queueSize =
-      pset.getParameter<int>( "TrackedQueueSize" );
-  }
-  catch( edm::Exception& e )
-  {
-    queueSize =
-      pset.getUntrackedParameter<int>( "queueSize",
-        _sharedResources->_configuration->getEventServingParams()._consumerQueueSize);
-  }
-
-  // Queue policy
-  std::string policy;
   enquing_policy::PolicyTag queuePolicy;
-  try
-  {
-    policy =
-      pset.getParameter<std::string>( "TrackedQueuePolicy" );
-  }
-  catch( edm::Exception& e )
-  {
-    policy =
-      pset.getUntrackedParameter<std::string>( "queuePolicy",
-        _sharedResources->_configuration->getEventServingParams()._consumerQueuePolicy);
-  }
+  std::string policy =
+    pset.getUntrackedParameter<std::string>( "queuePolicy",
+      _sharedResources->_configuration->getEventServingParams()._consumerQueuePolicy);
   if ( policy == "DiscardNew" )
   {
     queuePolicy = enquing_policy::DiscardNew;
@@ -456,6 +392,9 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
                                                          queueSize,
                                                          queuePolicy,
                                                          secondsToStale ) );
+
+  std::cout << *cr << std::endl;
+
   return cr;
 }
 

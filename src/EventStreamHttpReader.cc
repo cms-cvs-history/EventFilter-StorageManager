@@ -1,26 +1,5 @@
 // $Id: CurlInterface.cc,v 1.2 2010/05/11 17:58:19 mommsen Exp $
 /// @file: EventStreamHttpReader.cc
-/*
-  Input source for event consumers that will get events from the
-  Storage Manager Event Server. This does uses a HTTP get using the
-  cURL library. The Storage Manager Event Server responses with
-  a binary octet-stream.  The product registry is also obtained
-  through a HTTP get.
-      There is currently no test of the product registry against
-  the consumer client product registry within the code. It should
-  already be done if this was inherenting from the standard
-  framework input source. Currently we inherit from InputSource.
-
-  17 Mar 2006 - HWKC - initial version for testing
-  30 Mar 2006 - HWKC - first proof of principle version that can
-                wait for the the product registry and events from
-                the Storage Manager. Only way to stop the cmsRun
-                using this input source is to kill the Storage
-                Manager or specify a maximum number of events for
-                the client to read through a maxEvents parameter.
-
-  $Id: EventStreamHttpReader.cc,v 1.42 2010/12/15 15:29:23 mommsen Exp $
-*/
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
@@ -43,47 +22,36 @@
 
 namespace edm
 {  
-  EventStreamHttpReader::EventStreamHttpReader(edm::ParameterSet const& ps,
-                                               edm::InputSourceDescription const& desc):
-    edm::StreamerInputSource(ps, desc),
-    sourceurl_(ps.getParameter<std::string>("sourceURL")),
-    endRunAlreadyNotified_(true),
-    runEnded_(false),
-    alreadySaidHalted_(false),
-    maxConnectTries_(DEFAULT_MAX_CONNECT_TRIES),
-    connectTrySleepTime_(DEFAULT_CONNECT_TRY_SLEEP_TIME)
+  EventStreamHttpReader::EventStreamHttpReader
+  (
+    edm::ParameterSet const& ps,
+    edm::InputSourceDescription const& desc
+  ):
+  edm::StreamerInputSource(ps, desc),
+  sourceurl_(ps.getParameter<std::string>("sourceURL")),
+  consumerName_(ps.getUntrackedParameter<std::string>("consumerName","Unknown")),
+  maxConnectTries_(ps.getUntrackedParameter<int>("maxConnectTries", 300)),
+  connectTrySleepTime_(ps.getUntrackedParameter<int>("connectTrySleepTime", 10)),
+  headerRetryInterval_(ps.getUntrackedParameter<int>("headerRetryInterval",5)),
+  consumerId_(0),
+  endRunAlreadyNotified_(true),
+  runEnded_(false),
+  alreadySaidHalted_(false),
+  alreadySaidWaiting_(false)
   {
-    // Retry connection params (wb)
-    maxConnectTries_ = ps.getUntrackedParameter<int>("maxConnectTries",
-                                               DEFAULT_MAX_CONNECT_TRIES);
-    connectTrySleepTime_ = ps.getUntrackedParameter<int>("connectTrySleepTime",
-                                               DEFAULT_CONNECT_TRY_SLEEP_TIME);
-
     // Default in StreamerInputSource is 'false'
     inputFileTransitionsEachEvent_ =
       ps.getUntrackedParameter<bool>("inputFileTransitionsEachEvent", true);
-
-    // 09-Aug-2006, KAB: new parameters
-    const double MAX_REQUEST_INTERVAL = 300.0;  // seconds
-    consumerName_ = ps.getUntrackedParameter<std::string>("consumerName","Unknown");
-    consumerPriority_ = ps.getUntrackedParameter<std::string>("consumerPriority","normal");
-    headerRetryInterval_ = ps.getUntrackedParameter<int>("headerRetryInterval",5);
+    
     double maxEventRequestRate = ps.getUntrackedParameter<double>("maxEventRequestRate",1.0);
-    if (maxEventRequestRate < (1.0 / MAX_REQUEST_INTERVAL)) {
-      minEventRequestInterval_ = stor::utils::seconds_to_duration(MAX_REQUEST_INTERVAL);
-    }
-    else {
-      minEventRequestInterval_ = stor::utils::seconds_to_duration(1.0 / maxEventRequestRate);
-    }
+    minEventRequestInterval_ = stor::utils::seconds_to_duration(
+      maxEventRequestRate > 0 ? 
+      1 / maxEventRequestRate :
+      60
+    );
     nextRequestTime_ = stor::utils::getCurrentTime() + minEventRequestInterval_;
 
-    // 26-Jan-2009, KAB: an ugly hack to get ParameterSet to serialize
-    // the parameters that we need
-    ParameterSet psCopy(ps.toString());
-    psCopy.addParameter<double>("TrackedMaxRate", maxEventRequestRate);
-    std::string hltOMLabel = ps.getUntrackedParameter<std::string>("SelectHLTOutput",
-                                                                   std::string());
-    psCopy.addParameter<std::string>("TrackedHLTOutMod", hltOMLabel);
+    ParameterSet psCopy(ps);
     edm::ParameterSet selectEventsParamSet =
       ps.getUntrackedParameter("SelectEvents", edm::ParameterSet());
     if (! selectEventsParamSet.empty()) {
@@ -93,16 +61,8 @@ namespace edm
         psCopy.addParameter<Strings>("TrackedEventSelection", path_specs);
       }
     }
-    std::string trigSelector_ = ps.getUntrackedParameter("TriggerSelector",std::string());
-    psCopy.addParameter<std::string>("TrackedTriggerSelector",trigSelector_);
 
-    // 28-Aug-2006, KAB: save our parameter set in string format to
-    // be sent to the event server to specify our "request" (that is, which
-    // events we are interested in).
-    consumerPSetString_ = psCopy.toString();
-
-    std::cout << "ps: " << ps << std::endl;
-    std::cout << "psCopy: " << psCopy << std::endl;
+    consumerPSetString_ = psCopy.toString(true);
 
     registerWithEventServer();
 
@@ -163,8 +123,6 @@ namespace edm
   
   void EventStreamHttpReader::getOneEventFromEventServer(std::string& data)
   {
-    static bool alreadySaidWaiting = false;
-
     // build the event request message to send to the storage manager
     char msgBuff[100];
     OtherMessageBuilder requestMessage(
@@ -200,11 +158,15 @@ namespace edm
       
       if ( data.empty() )
       {
-        if(!alreadySaidWaiting) {
+        if(!alreadySaidWaiting_) {
           std::cout << "...waiting for event from Storage Manager..." << std::endl;
-          alreadySaidWaiting = true;
+          alreadySaidWaiting_ = true;
         }
         sleepUntilNextRequest();
+      }
+      else
+      {
+        alreadySaidWaiting_ = false;
       }
     } while (data.empty() && !edm::shutdown_flag);
   }
@@ -322,17 +284,19 @@ namespace edm
 
   bool EventStreamHttpReader::extractInitMsg(std::string& data)
   {
-    static bool alreadySaidWaiting = false;
-
     if( data.empty() )
     {
-      if(!alreadySaidWaiting) {
+      if(!alreadySaidWaiting_) {
         std::cout << "...waiting for header from Storage Manager..." << std::endl;
-        alreadySaidWaiting = true;
+        alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
       sleep(headerRetryInterval_);
       return false;
+    }
+    else
+    {
+      alreadySaidWaiting_ = false;
     }
     
     try {
@@ -389,7 +353,7 @@ namespace edm
     char msgBuffer[bufferSize];
     ConsRegRequestBuilder requestMessage(
       msgBuffer, bufferSize, consumerName_,
-      consumerPriority_, consumerPSetString_
+      "normal", consumerPSetString_
     );
     
     // send registration request
@@ -431,8 +395,6 @@ namespace edm
   
   bool EventStreamHttpReader::extractConsumerId(std::string& data)      
   {
-    static bool alreadySaidWaiting = false;
-
     boost::scoped_ptr<ConsRegResponseView> respView;
 
     try {
@@ -457,13 +419,17 @@ namespace edm
     
     if ( respView->getStatus() == ConsRegResponseBuilder::ES_NOT_READY )
     {
-      if(!alreadySaidWaiting) {
+      if(!alreadySaidWaiting_) {
         std::cout << "...waiting for registration response from Storage Manager..." << std::endl;
-        alreadySaidWaiting = true;
+        alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
       sleep(headerRetryInterval_);
       return false;
+    }
+    else
+    {
+      alreadySaidWaiting_ = false;
     }
 
     consumerId_ = respView->getConsumerId();
