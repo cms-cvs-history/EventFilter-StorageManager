@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.56 2010/12/20 16:33:21 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.56.2.1 2011/01/13 11:19:49 mommsen Exp $
 /// @file: WebPageHelper.cc
 
 #ifdef __APPLE__
@@ -62,8 +62,10 @@ _appDescriptor(appDesc)
   _alarmColors[ AlarmHandler::FATAL ] = "#FF2338";
 
   _tableLabelAttr[ "align" ] = "left";
+  _tableLabelAttr[ "valign" ] = "middle";
 
   _tableValueAttr[ "align" ] = "right";
+  _tableValueAttr[ "valign" ] = "middle";
 }
 
 
@@ -369,7 +371,7 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   header = maker.addNode("b", header);
   maker.addText(header, _appDescriptor->getClassName());
 
-  const std::string cvsVersion = "$Name:  $";
+  const std::string cvsVersion = "$Name: SMPSdev_branch $";
   if ( cvsVersion.length() > 9 ) {
     const std::string smVersion = "(" + cvsVersion.substr(7, cvsVersion.length()-9) + ")";
     maker.addText(instanceTableDiv, smVersion);
@@ -1385,7 +1387,9 @@ void WebPageHelper::addDOMforEventConsumers
   
   // Loop over consumers
   bool evenRow = false;
-  
+  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+  XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+
   for( RegistrationCollection::ConsumerRegistrations::const_iterator
          it = consumers.begin(), itEnd = consumers.end();
        it != itEnd; ++it )
@@ -1432,9 +1436,25 @@ void WebPageHelper::addDOMforEventConsumers
     }
     tableDiv = maker.addNode("td", tableRow, statusAttr);
     maker.addText(tableDiv, statusMessage);
+
+    // Handle the case of consumers sharing a queue
+    // If the previous consumer shared the queue, nothing more 
+    // has to be printed.
+    if ( it != consumers.begin() &&
+      (*(it-1))->queueId() == (*it)->queueId() )
+      continue;
+
+    // Check how many consumers follow which share the same queue
+    unsigned int count = 1;
+    while ( (it+count) != itEnd &&
+      (*(it+count))->queueId() == (*it)->queueId() ) ++count;
+    std::ostringstream str;
+    str << count;
+    tableLabelAttr[ "rowspan" ] = str.str();
+    tableValueAttr[ "rowspan" ] = str.str();
     
     // HLT output module:
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     maker.addText(tableDiv, (*it)->outputModuleLabel());
     
     // Filter list:
@@ -1446,39 +1466,39 @@ void WebPageHelper::addDOMforEventConsumers
              lit = fl.begin(), litEnd = fl.end();
            lit != litEnd; ++lit )
       {
-        if( lit != fl.begin() ) filters += "&nbsp;&nbsp;";
+        if( lit != fl.begin() ) filters += "  ";
         filters += *lit;
       }
     }
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     maker.addText(tableDiv, filters);
     
     // Prescale:
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt(tableDiv, (*it)->prescale());
     
     // Policy:
     std::ostringstream policy;
     policy << (*it)->queuePolicy();
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
     maker.addText(tableDiv, policy.str());
     
     // Queue size:
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt(tableDiv, (*it)->queueSize());
     
     // Events in queue:
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt(tableDiv, sharedResources->_eventConsumerQueueCollection->size( (*it)->queueId() ));
     
     // Events enqueued:
     MonitoredQuantity::Stats enqueuedStats;
     const bool enqueuedFound = eventConsumerCollection.getQueued( (*it)->queueId(), enqueuedStats );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::FULL) : 0
     );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
     );
@@ -1486,11 +1506,11 @@ void WebPageHelper::addDOMforEventConsumers
     // Discarded Events:
     MonitoredQuantity::Stats discardedStats;
     const bool discardedFound = eventConsumerCollection.getDiscarded( (*it)->queueId(), discardedStats );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       discardedFound ? discardedStats.getValueSum(MonitoredQuantity::FULL) : 0, 0
     );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       discardedFound ? discardedStats.getValueSum(MonitoredQuantity::RECENT) : 0, 0
     );
@@ -1500,41 +1520,41 @@ void WebPageHelper::addDOMforEventConsumers
     const bool servedFound = eventConsumerCollection.getServed( (*it)->queueId(), servedStats );
 
     // rate
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       servedFound ? servedStats.getSampleRate(MonitoredQuantity::FULL) : 0
     );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       servedFound ? servedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
     );
       
     // event counts
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt(tableDiv,
       servedFound ? servedStats.getSampleCount(MonitoredQuantity::FULL) : 0
     );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt(tableDiv,
       servedFound ? servedStats.getSampleCount(MonitoredQuantity::RECENT) : 0
     );
       
     // event size
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       servedFound ? servedStats.getValueAverage(MonitoredQuantity::FULL)/1024 : 0,
       1);
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       servedFound ? servedStats.getValueAverage(MonitoredQuantity::RECENT)/1024 : 0,
       1);
 
     // bandwidth
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       servedFound ? servedStats.getValueRate(MonitoredQuantity::FULL)/1024 : 0
     );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble(tableDiv,
       servedFound ? servedStats.getValueRate(MonitoredQuantity::RECENT)/1024 : 0
     );
@@ -1897,9 +1917,6 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "21";
 
-  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "align" ] = "center";
-
   XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -1912,43 +1929,43 @@ void WebPageHelper::addDOMforThroughputStatistics(XHTMLMaker& maker,
   maker.addText(tableDiv, "Time (UTC)");
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Memory pool usage (bytes)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Instantaneous Number of Fragments in Fragment Queue");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Memory used in Fragment Queue (MB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Number of Fragments Popped from Fragment Queue (Hz)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Data Rate Popped from Fragment Queue (MB/sec)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Fragment Processor Thread Busy Percentage");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Instantaneous Number of Events in Fragment Store");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Memory used in Fragment Store (MB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Instantaneous Number of Events in Stream Queue");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Memory used in Stream Queue (MB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Number of Events Popped from Stream Queue (Hz)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Data Rate Popped from Stream Queue (MB/sec)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Disk Writer Thread Busy Percentage");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Number of Events Written to Disk (Hz)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Data  Rate to Disk (MB/sec)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Instantaneous Number of DQMEvents in DQMEvent Queue");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Memory used in DQMEvent Queue (MB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Number of DQMEvents Popped from DQMEvent Queue (Hz)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Data Rate Popped from DQMEvent Queue (MB/sec)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "DQMEvent Processor Thread Busy Percentage");
 
   ThroughputMonitorCollection::Stats stats;
@@ -2108,9 +2125,6 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "7";
 
-  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "align" ] = "center";
-
   XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -2121,17 +2135,17 @@ void WebPageHelper::addOutputModuleStatistics(XHTMLMaker& maker,
   tableRow = maker.addNode("tr", table, _specialRowAttr);
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Output Module");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Size (MB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Size/Evt (KB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "RMS (KB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Min (KB)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Max (KB)");
 
   if (resultsList.empty())
@@ -2182,9 +2196,6 @@ void WebPageHelper::addOutputModuleSummary(XHTMLMaker& maker,
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "3";
 
-  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "align" ] = "center";
-
   XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -2195,9 +2206,9 @@ void WebPageHelper::addOutputModuleSummary(XHTMLMaker& maker,
   tableRow = maker.addNode("tr", table, _specialRowAttr);
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Name");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "ID");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Header Size (bytes)");
 
   if (resultsList.empty())
@@ -2237,9 +2248,6 @@ void WebPageHelper::addResourceBrokerList(XHTMLMaker& maker,
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "15";
 
-  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "align" ] = "center";
-
   XHTMLMaker::AttrMap tableSuspiciousValueAttr = _tableValueAttr;
   tableSuspiciousValueAttr[ "style" ] = "background-color: yellow;";
 
@@ -2253,33 +2261,33 @@ void WebPageHelper::addResourceBrokerList(XHTMLMaker& maker,
   tableRow = maker.addNode("tr", table, _specialRowAttr);
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Resource Broker URL");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "RB instance");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "RB TID");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of FUs");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of INIT messages");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of error events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of faulty events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of outstanding data discards");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of DQM events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of faulty DQM events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of outstanding DQM discards");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of ignored discards");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Recent event rate (Hz)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Last event number received");
 
   if (rbResultsList.empty())
@@ -2405,9 +2413,6 @@ void WebPageHelper::addResourceBrokerDetails(XHTMLMaker& maker,
   XHTMLMaker::AttrMap tableAttr = _tableAttr;
   tableAttr[ "width" ] = "";
 
-  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "align" ] = "center";
-
   XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
 
   XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -2416,9 +2421,9 @@ void WebPageHelper::addResourceBrokerDetails(XHTMLMaker& maker,
 
   // Header
   tableRow = maker.addNode("tr", table, _specialRowAttr);
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Parameter");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Value");
 
   tableRow = maker.addNode("tr", table, _rowAttr);
@@ -2552,9 +2557,6 @@ void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
   XHTMLMaker::AttrMap colspanAttr;
   colspanAttr[ "colspan" ] = "13";
 
-  XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-  tableLabelAttr[ "align" ] = "center";
-
   XHTMLMaker::AttrMap tableSuspiciousValueAttr = _tableValueAttr;
   tableSuspiciousValueAttr[ "style" ] = "background-color: yellow;";
 
@@ -2568,29 +2570,29 @@ void WebPageHelper::addFilterUnitList(XHTMLMaker& maker,
   tableRow = maker.addNode("tr", table, _specialRowAttr);
   tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Process ID");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of INIT messages");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of error events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of faulty events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of outstanding data discards");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of DQM events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of faulty DQM events");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of outstanding DQM discards");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "# of ignored discards");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Recent event rate (Hz)");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Last event number received");
-  tableDiv = maker.addNode("th", tableRow, tableLabelAttr);
+  tableDiv = maker.addNode("th", tableRow);
   maker.addText(tableDiv, "Last run number received");
 
   if (fuResultsList.empty())

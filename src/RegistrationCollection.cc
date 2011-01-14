@@ -1,9 +1,10 @@
-// $Id: RegistrationCollection.cc,v 1.9 2010/04/16 14:40:14 mommsen Exp $
+// $Id: RegistrationCollection.cc,v 1.10 2010/12/17 18:21:05 mommsen Exp $
 /// @file: RegistrationCollection.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 
 #include <boost/pointer_cast.hpp>
+#include <algorithm>
 
 using namespace stor;
 
@@ -77,6 +78,10 @@ void RegistrationCollection::getEventConsumers( ConsumerRegistrations& crs ) con
       if ( eventConsumer )
         crs.push_back( eventConsumer );
     }
+  // sort the event consumers to have identical consumers sharing a queue
+  // next to each others.
+  utils::ptr_comp<EventConsumerRegistrationInfo> comp;
+  std::sort(crs.begin(), crs.end(), comp);
 }
 
 void RegistrationCollection::getDQMEventConsumers( DQMConsumerRegistrations& crs ) const
