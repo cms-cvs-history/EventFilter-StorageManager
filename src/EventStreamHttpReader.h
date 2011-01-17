@@ -1,18 +1,14 @@
-// $Id: EventStreamHttpReader.h,v 1.22.8.1 2011/01/13 11:15:48 mommsen Exp $
+// $Id: EventStreamHttpReader.h,v 1.22.8.2 2011/01/14 12:01:57 mommsen Exp $
+/// @file: EventStreamHttpReader.h
 
-#ifndef STREAMER_EVENTSTREAMHTTPREADER_H
-#define STREAMER_EVENTSTREAMHTTPREADER_H
+#ifndef StorageManager_EventStreamHttpReader_h
+#define StorageManager_EventStreamHttpReader_h
 
-#include "IOPool/Streamer/interface/EventBuffer.h"
 #include "IOPool/Streamer/interface/StreamerInputSource.h"
+#include "EventFilter/StorageManager/interface/EventServerProxy.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/Provenance/interface/ProductRegistry.h"
-#include "EventFilter/StorageManager/interface/Utils.h"
+#include "FWCore/Framework/interface/InputSourceDescription.h"
 
-#include <vector>
-#include <memory>
-#include <string>
-#include <fstream>
 
 namespace edm
 {
@@ -29,54 +25,30 @@ namespace edm
     framework input source. Currently we inherit from InputSource.
 
     $Author: mommsen $
-    $Revision: 1.12 $
-    $Date: 2010/12/10 19:38:48 $
+    $Revision: 1.22.8.2 $
+    $Date: 2011/01/14 12:01:57 $
   */
 
-  class EventStreamHttpReader : public edm::StreamerInputSource
+  class EventStreamHttpReader : public edm::StreamerInputSource, public stor::EventServerProxy
   {
   public:
-    EventStreamHttpReader(edm::ParameterSet const& pset,
-		 edm::InputSourceDescription const& desc);
+    EventStreamHttpReader
+    (
+      edm::ParameterSet const& pset,
+      edm::InputSourceDescription const& desc
+    );
     virtual ~EventStreamHttpReader();
 
-    virtual edm::EventPrincipal* read();
+    virtual EventPrincipal* read();
 
   private:
     void readHeader();
-    void registerWithEventServer();
-
-    edm::EventPrincipal* getOneEvent();
-    void getOneEventFromEventServer(std::string&);
-    edm::EventPrincipal* extractEvent(std::string&);
-    void sleepUntilNextRequest();
-    void connectToEventServer(std::string&);
-    bool extractConsumerId(std::string&);
-    void getHeaderFromEventServer(std::string&);
-    bool extractInitMsg(std::string&);
-
-    std::string sourceurl_;
-    std::string consumerName_;
-    int maxConnectTries_;
-    int connectTrySleepTime_;
-    int headerRetryInterval_;
-
-    std::string consumerPSetString_;
-    unsigned int consumerId_;
-
-    stor::utils::time_point_t nextRequestTime_;
-    stor::utils::duration_t minEventRequestInterval_;
     
-    bool endRunAlreadyNotified_;
-    bool runEnded_;
-    bool alreadySaidHalted_;
-    bool alreadySaidWaiting_;
-
   };
 
 } // namespace edm
 
-#endif // STREAMER_EVENTSTREAMHTTPREADER_H
+#endif // StorageManager_EventStreamHttpReader_h
 
 /// emacs configuration
 /// Local Variables: -
