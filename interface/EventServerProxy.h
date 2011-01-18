@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.h,v 1.2 2010/05/11 17:57:27 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.1 2011/01/17 14:33:52 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef StorageManager_EventServerProxy_h
@@ -20,8 +20,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.2 $
-   * $Date: 2010/05/11 17:57:27 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2011/01/17 14:33:52 $
    */
  
   class EventServerProxy
@@ -33,9 +33,15 @@ namespace stor {
     virtual ~EventServerProxy() {};
 
     /**
-     * Get one event from the the event server.
+     * Get one event from the event server.
      */
     void getOneEvent(std::string& data);
+
+    /**
+     * Try to get one event from the event server.
+     * If succesful, returns true.
+     */
+    bool getEventMaybe(std::string& data);
 
     /**
      * Get the init message from the the event server.

@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.cc,v 1.42.2.2 2011/01/14 12:01:57 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.1 2011/01/17 14:33:52 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventServerProxy.h"
@@ -61,17 +61,21 @@ namespace stor
   void EventServerProxy::getOneEvent(std::string& data)
   {
     sleepUntilNextRequest();
-    
-    do
-    {
-      data.clear();
-      getOneEventFromEventServer(data);
-    }
-    while ( !edm::shutdown_flag && data.empty() );
 
-    if ( edm::shutdown_flag ) return;
+    while ( ! edm::shutdown_flag && ! getEventMaybe(data) ) {}
+  }
+ 
+
+  bool EventServerProxy::getEventMaybe(std::string& data)
+  {
+    data.clear();
+    getOneEventFromEventServer(data);
+
+    if ( edm::shutdown_flag || data.empty() ) return false;
 
     checkEvent(data);
+
+    return true;
   }
   
   
@@ -87,42 +91,38 @@ namespace stor
     uint8 *bodyPtr = requestMessage.msgBody();
     convert(consumerId_, bodyPtr);
 
-    do
+    // send the event request
+    stor::CurlInterface curl;
+    CURLcode result = curl.postBinaryMessage(
+      sourceurl_ + "/geteventdata",
+      requestMessage.startAddress(),
+      requestMessage.size(),
+      data
+    );
+    
+    if ( result != CURLE_OK )
     {
-      // send the event request
-      stor::CurlInterface curl;
-      CURLcode result = curl.postBinaryMessage(
-        sourceurl_ + "/geteventdata",
-        requestMessage.startAddress(),
-        requestMessage.size(),
-        data
-      );
-      
-      if ( result != CURLE_OK )
-      {
-        std::cerr << "curl perform failed for event:" << std::endl;
-        std::cerr << data << std::endl;
-        data.clear();
-        // this will end cmsRun 
-        //return std::auto_ptr<EventPrincipal>();
-        throw cms::Exception("getOneEvent","EventServerProxy")
-          << "Could not get event: probably XDAQ not running on Storage Manager "
-            << "\n";
+      std::cerr << "curl perform failed for event:" << std::endl;
+      std::cerr << data << std::endl;
+      data.clear();
+      // this will end cmsRun 
+      //return std::auto_ptr<EventPrincipal>();
+      throw cms::Exception("getOneEvent","EventServerProxy")
+        << "Could not get event: probably XDAQ not running on Storage Manager "
+          << "\n";
+    }
+    
+    if ( data.empty() )
+    {
+      if(!alreadySaidWaiting_) {
+        std::cout << "...waiting for event from Storage Manager..." << std::endl;
+        alreadySaidWaiting_ = true;
       }
-      
-      if ( data.empty() )
-      {
-        if(!alreadySaidWaiting_) {
-          std::cout << "...waiting for event from Storage Manager..." << std::endl;
-          alreadySaidWaiting_ = true;
-        }
-        sleepUntilNextRequest();
-      }
-      else
-      {
-        alreadySaidWaiting_ = false;
-      }
-    } while (data.empty() && !edm::shutdown_flag);
+    }
+    else
+    {
+      alreadySaidWaiting_ = false;
+    }
   }
   
   
@@ -316,6 +316,7 @@ namespace stor
             << std::endl;
           sleep(connectTrySleepTime_);
         }
+        data.clear();
       }
     }
   }

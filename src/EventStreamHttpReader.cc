@@ -1,4 +1,4 @@
-// $Id: EventStreamHttpReader.cc,v 1.42.2.2 2011/01/14 12:01:57 mommsen Exp $
+// $Id: EventStreamHttpReader.cc,v 1.42.2.3 2011/01/17 14:33:52 mommsen Exp $
 /// @file: EventStreamHttpReader.cc
 
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
@@ -15,7 +15,7 @@ namespace edm
     InputSourceDescription const& desc
   ):
   StreamerInputSource(ps, desc),
-  stor::EventServerProxy(ps)
+  _eventServerProxy(ps)
   {
     // Default in StreamerInputSource is 'false'
     inputFileTransitionsEachEvent_ =
@@ -32,18 +32,19 @@ namespace edm
   {
     std::string data;
 
-    getOneEvent(data);
+    _eventServerProxy.getOneEvent(data);
+    if ( data.empty() ) return 0;
+
     EventMsgView eventView(&data[0]);
     if (eventView.code() == Header::DONE) setEndRun();
     return deserializeEvent(eventView);
   }
   
-  
   void EventStreamHttpReader::readHeader()
   {
     std::string data;
     
-    getInitMsg(data);
+    _eventServerProxy.getInitMsg(data);
     InitMsgView initView(&data[0]);
     deserializeAndMergeWithRegistry(initView);
   }
