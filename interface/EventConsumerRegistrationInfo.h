@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.2 2011/01/13 13:28:41 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.3 2011/01/14 18:30:22 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef StorageManager_EventConsumerRegistrationInfo_h
@@ -10,10 +10,13 @@
 
 #include "boost/shared_ptr.hpp"
 
-#include "IOPool/Streamer/interface/HLTInfo.h"
-#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/Configuration.h"
+#include "EventFilter/StorageManager/interface/Exception.h"
+#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "IOPool/Streamer/interface/HLTInfo.h"
 
 namespace stor
 {
@@ -21,28 +24,43 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.2 $
-   * $Date: 2011/01/13 13:28:41 $
+   * $Revision: 1.13.2.3 $
+   * $Date: 2011/01/14 18:30:22 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
   {
 
   public:
+    
+    EventConsumerRegistrationInfo
+    (
+      const std::string& consumerName,
+      const std::string& remoteHost,
+      const std::string& triggerSelection,
+      const Strings& eventSelection,
+      const std::string& outputModuleLabel,
+      const unsigned int& prescale,
+      const bool& uniqueEvents,
+      const int& queueSize,
+      const enquing_policy::PolicyTag& queuePolicy,
+      const utils::duration_t& secondsToStale
+    );
 
-    /**
-     * Constructs an instance with the specified registration information.
-     */
-    EventConsumerRegistrationInfo( const std::string& consumerName,
-                                   const std::string& remoteHost,
-                                   const std::string& triggerSelection,
-                                   const Strings& eventSelection,
-                                   const std::string& outputModuleLabel,
-                                   const unsigned int& prescale,
-                                   const bool& uniqueEvents,
-                                   const int& queueSize,
-                                   const enquing_policy::PolicyTag& queuePolicy,
-                                   const utils::duration_t& secondsToStale );
+    EventConsumerRegistrationInfo
+    (
+      const std::string& consumerName,
+      const std::string& remoteHost,
+      const edm::ParameterSet& pset,
+      const EventServingParams& eventServingParams
+    );
+
+    EventConsumerRegistrationInfo
+    (
+      const std::string& consumerName,
+      const std::string& remoteHost,
+      const edm::ParameterSet& pset
+    );
 
     ~EventConsumerRegistrationInfo();
 
@@ -52,6 +70,7 @@ namespace stor
     const std::string& outputModuleLabel() const { return _outputModuleLabel; }
     const unsigned int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
+    edm::ParameterSet getPSet() const;
 
     // Comparison:
     bool operator<(const EventConsumerRegistrationInfo&) const;
@@ -74,6 +93,8 @@ namespace stor
     virtual utils::duration_t do_secondsToStale() const;
 
   private:
+
+    void parsePSet(const edm::ParameterSet&);
 
     CommonRegistrationInfo _common;
 

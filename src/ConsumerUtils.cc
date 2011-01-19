@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.cc,v 1.16.2.3 2011/01/14 12:01:57 mommsen Exp $
+// $Id: ConsumerUtils.cc,v 1.16.2.4 2011/01/14 18:30:22 mommsen Exp $
 /// @file: ConsumerUtils.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -19,10 +19,11 @@
 #include "xgi/exception/Exception.h"
 
 #include "boost/date_time/posix_time/posix_time_types.hpp"
+#include "boost/scoped_ptr.hpp"
 
 #include <string>
 #include <vector>
-#include <memory>
+
 
 using namespace stor;
 
@@ -302,7 +303,7 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
 
   if( length > 0 )
   {
-    std::auto_ptr< std::vector<char> > buf( new std::vector<char>(length) );
+    boost::scoped_ptr< std::vector<char> > buf( new std::vector<char>(length) );
     in->read( &(*buf)[0], length );
     ConsRegRequestView req( &(*buf)[0] );
     name = req.getConsumerName();
@@ -315,85 +316,11 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
   }
 
   const edm::ParameterSet pset( psetStr );
-  std::cout << pset << std::endl;
-  
-  std::string outputModuleLabel;
-  try
-  {
-    outputModuleLabel = pset.getUntrackedParameter<std::string>("SelectHLTOutput");
-  }
-  catch( edm::Exception& e )
-  {
-    XCEPT_RAISE( stor::exception::ConsumerRegistration,
-      "No HLT output module specified" );
-  }
-  
-  std::string triggerSelection =
-    pset.getUntrackedParameter<std::string>("TriggerSelector", "");
-  
-  Strings eventSelection;
-  try
-  {
-    eventSelection = pset.getParameter<Strings>("TrackedEventSelection");
-  }
-  catch( edm::Exception& e )
-  {
-    edm::ParameterSet tmpPSet1 =
-      pset.getUntrackedParameter<edm::ParameterSet>("SelectEvents", edm::ParameterSet());
-    if ( ! tmpPSet1.empty() )
-    {
-      eventSelection = tmpPSet1.getParameter<Strings>("SelectEvents");
-    }
-  }
 
-  bool uniqueEvents =
-    pset.getUntrackedParameter<bool>("uniqueEvents", false);
-
-  unsigned int prescale =
-    pset.getUntrackedParameter<unsigned int>("prescale", 1);
-
-  utils::duration_t secondsToStale =
-    boost::posix_time::seconds(
-      pset.getUntrackedParameter<double>("consumerTimeOut", 0)
-    );
-  if (secondsToStale < boost::posix_time::seconds(1))
-    secondsToStale = _sharedResources->_configuration->
-      getEventServingParams()._activeConsumerTimeout;
-  
-  int queueSize =
-    pset.getUntrackedParameter<int>("queueSize",
-      _sharedResources->_configuration->getEventServingParams()._consumerQueueSize);
-
-  enquing_policy::PolicyTag queuePolicy;
-  std::string policy =
-    pset.getUntrackedParameter<std::string>( "queuePolicy",
-      _sharedResources->_configuration->getEventServingParams()._consumerQueuePolicy);
-  if ( policy == "DiscardNew" )
-  {
-    queuePolicy = enquing_policy::DiscardNew;
-  }
-  else if ( policy == "DiscardOld" )
-  {
-    queuePolicy = enquing_policy::DiscardOld;
-  }
-  else
-  {
-    XCEPT_RAISE( stor::exception::ConsumerRegistration,
-      "Unknown enqueuing policy: " + policy );
-  }
-
-  EventConsRegPtr cr( new EventConsumerRegistrationInfo( name,
-                                                         remoteHost,
-                                                         triggerSelection,
-                                                         eventSelection,
-                                                         outputModuleLabel,
-                                                         prescale,
-                                                         uniqueEvents,
-                                                         queueSize,
-                                                         queuePolicy,
-                                                         secondsToStale ) );
-
-  std::cout << *cr << std::endl;
+  EventConsRegPtr cr(
+    new EventConsumerRegistrationInfo(name, remoteHost, pset,
+      _sharedResources->_configuration->getEventServingParams())
+  );
 
   return cr;
 }
@@ -439,7 +366,7 @@ DQMEventConsRegPtr ConsumerUtils::parseDQMEventConsumerRegistration(xgi::Input* 
   unsigned int contentLength = std::atol(lengthString.c_str());
   if (contentLength > 0)
   {
-    std::auto_ptr< std::vector<char> > bufPtr(new std::vector<char>(contentLength));
+    boost::scoped_ptr< std::vector<char> > bufPtr(new std::vector<char>(contentLength));
     in->read(&(*bufPtr)[0], contentLength);
     ConsRegRequestView requestMessage(&(*bufPtr)[0]);
     consumerName = requestMessage.getConsumerName();
@@ -450,12 +377,15 @@ DQMEventConsRegPtr ConsumerUtils::parseDQMEventConsumerRegistration(xgi::Input* 
   
   const std::string remote_host = in->getenv( "REMOTE_HOST" );
   
-  DQMEventConsRegPtr cr( new DQMEventConsumerRegistrationInfo( consumerName,
-                                                               remote_host,
-                                                               consumerTopFolderName, 
-                                                               queueSize,
-                                                               queuePolicy,
-                                                               secondsToStale ) );
+  DQMEventConsRegPtr cr(new DQMEventConsumerRegistrationInfo(
+      consumerName,
+      remote_host,
+      consumerTopFolderName, 
+      queueSize,
+      queuePolicy,
+      secondsToStale
+    ));
+  
   return cr;
 }
 
@@ -571,7 +501,7 @@ ConsumerID ConsumerUtils::getConsumerId(xgi::Input* in) const
   
   if( l > 0 )
   {
-    std::auto_ptr< std::vector<char> > buf( new std::vector<char>(l) );
+    boost::scoped_ptr< std::vector<char> > buf( new std::vector<char>(l) );
     in->read( &(*buf)[0], l );
     OtherMessageView req( &(*buf)[0] );
     if( req.code() == Header::HEADER_REQUEST ||

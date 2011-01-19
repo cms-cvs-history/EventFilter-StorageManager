@@ -1,7 +1,8 @@
-// $Id: CommonRegistrationInfo.cc,v 1.5 2010/12/14 12:56:52 mommsen Exp $
+// $Id: CommonRegistrationInfo.cc,v 1.5.2.1 2011/01/13 13:28:41 mommsen Exp $
 /// @file: CommonRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/Exception.h"
 
 using std::string;
 
@@ -22,6 +23,49 @@ namespace stor
   _secondsToStale(secondsToStale),
   _consumerId(0)
   { }
+
+  CommonRegistrationInfo::CommonRegistrationInfo
+  (
+    const std::string& consumerName,
+    const std::string& remoteHost,
+    const edm::ParameterSet& pset,
+    const EventServingParams& eventServingParams,
+    const bool useEventServingParams
+  ) :
+  _consumerName(consumerName),
+  _remoteHost(remoteHost),
+  _consumerId(0)
+  {
+    _queueSize = pset.getUntrackedParameter<int>("queueSize",
+      useEventServingParams ? eventServingParams._consumerQueueSize : 0);
+
+    const std::string policy =
+      pset.getUntrackedParameter<std::string>("queuePolicy",
+        useEventServingParams ? eventServingParams._consumerQueuePolicy : "Default");
+    if ( policy == "DiscardNew" )
+    {
+      _queuePolicy = enquing_policy::DiscardNew;
+    }
+    else if ( policy == "DiscardOld" )
+    {
+      _queuePolicy = enquing_policy::DiscardOld;
+    }
+    else if ( policy == "Default" )
+    {
+      _queuePolicy = enquing_policy::Max;
+    }
+    else
+    {
+      XCEPT_RAISE( stor::exception::ConsumerRegistration,
+        "Unknown enqueuing policy: " + policy );
+    }
+
+    _secondsToStale = utils::seconds_to_duration(
+      pset.getUntrackedParameter<double>("consumerTimeOut", 0)
+    );
+    if ( useEventServingParams && _secondsToStale < boost::posix_time::seconds(1) )
+      _secondsToStale = eventServingParams._activeConsumerTimeout;
+  }
 
   std::ostream& operator<< (std::ostream& os,
                             CommonRegistrationInfo const& ri)

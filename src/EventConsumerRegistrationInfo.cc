@@ -1,9 +1,10 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.2 2011/01/13 13:28:41 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.3 2011/01/14 18:30:22 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventDistributor.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
+#include "FWCore/Utilities/interface/EDMException.h"
 
 #include <algorithm>
 #include <iterator>
@@ -12,9 +13,9 @@
 
 namespace stor
 {
-
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
-  ( const std::string& consumerName,
+  (
+    const std::string& consumerName,
     const std::string& remoteHost,
     const std::string& triggerSelection,
     const Strings& eventSelection,
@@ -23,17 +24,98 @@ namespace stor
     const bool& uniqueEvents,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale ) :
-    _common( consumerName, remoteHost, queueSize, queuePolicy, secondsToStale ),
-    _triggerSelection( triggerSelection ),
-    _eventSelection( eventSelection ),
-    _outputModuleLabel( outputModuleLabel ),
-    _prescale( prescale ),
-    _uniqueEvents( uniqueEvents )
+    const utils::duration_t& secondsToStale
+  ) :
+  _common(consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
+  _triggerSelection( triggerSelection ),
+  _eventSelection( eventSelection ),
+  _outputModuleLabel( outputModuleLabel ),
+  _prescale( prescale ),
+  _uniqueEvents( uniqueEvents )
   { }
+
+  EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
+  (
+    const std::string& consumerName,
+    const std::string& remoteHost,
+    const edm::ParameterSet& pset,
+    const EventServingParams& eventServingParams
+  ) :
+  _common(consumerName, remoteHost, pset, eventServingParams)
+  {
+    parsePSet(pset);
+  }
+
+  EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
+  (
+    const std::string& consumerName,
+    const std::string& remoteHost,
+    const edm::ParameterSet& pset
+  ) :
+  _common(consumerName, remoteHost, pset, EventServingParams(), false)
+  {
+    parsePSet(pset);
+  }
+
+  void EventConsumerRegistrationInfo::parsePSet(const edm::ParameterSet& pset)
+  {
+    try
+    {
+      _outputModuleLabel = pset.getUntrackedParameter<std::string>("SelectHLTOutput");
+    }
+    catch( edm::Exception& e )
+    {
+      XCEPT_RAISE( stor::exception::ConsumerRegistration,
+        "No HLT output module specified" );
+    }
+
+    _triggerSelection = pset.getUntrackedParameter<std::string>("TriggerSelector", "");
+
+    try
+    {
+      _eventSelection = pset.getParameter<Strings>("TrackedEventSelection");
+    }
+    catch( edm::Exception& e )
+    {
+      edm::ParameterSet tmpPSet1 =
+        pset.getUntrackedParameter<edm::ParameterSet>("SelectEvents", edm::ParameterSet());
+      if ( ! tmpPSet1.empty() )
+      {
+        _eventSelection = tmpPSet1.getParameter<Strings>("SelectEvents");
+      }
+    }
+
+    _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
+    _prescale = pset.getUntrackedParameter<unsigned int>("prescale", 1);
+  }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
   { }
+
+  edm::ParameterSet
+  EventConsumerRegistrationInfo::getPSet() const
+  {
+    edm::ParameterSet pset;
+    pset.addUntrackedParameter<std::string>("SelectHLTOutput", _outputModuleLabel);
+    pset.addUntrackedParameter<std::string>("TriggerSelector", _triggerSelection);
+    pset.addParameter<Strings>("TrackedEventSelection", _eventSelection);
+    pset.addUntrackedParameter<bool>("uniqueEvents", _uniqueEvents);
+    pset.addUntrackedParameter<unsigned int>("prescale", _prescale);
+
+    if ( _common._queueSize > 0 )
+      pset.addUntrackedParameter<int>("queueSize", _common._queueSize);
+
+    const double secondsToStale = utils::duration_to_seconds(_common._secondsToStale);
+    if ( secondsToStale > 0 )
+      pset.addUntrackedParameter<double>("consumerTimeOut", secondsToStale);
+
+    if ( _common._queuePolicy == enquing_policy::DiscardNew )
+      pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+    if ( _common._queuePolicy == enquing_policy::DiscardOld )
+      pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+
+    return pset;
+  }
 
   void 
   EventConsumerRegistrationInfo::do_registerMe(EventDistributor* evtDist)

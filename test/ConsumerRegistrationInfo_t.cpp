@@ -4,6 +4,7 @@
 #include "Utilities/Testing/interface/CppUnit_testdriver.icpp"
 #include "cppunit/extensions/HelperMacros.h"
 
+#include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 
@@ -13,6 +14,8 @@ class testConsumerRegistrationInfo : public CppUnit::TestFixture
 {
   CPPUNIT_TEST_SUITE(testConsumerRegistrationInfo);
   CPPUNIT_TEST(testEventConsumerRegistrationInfo);
+  CPPUNIT_TEST(testEventConsumerPSet);
+  CPPUNIT_TEST(testIncompleteEventConsumerPSet);
   CPPUNIT_TEST(testIdenticalEventConsumers);
   CPPUNIT_TEST(testDQMEventConsumerRegistrationInfo);
   CPPUNIT_TEST(testIdenticalDQMEventConsumers);
@@ -22,6 +25,8 @@ class testConsumerRegistrationInfo : public CppUnit::TestFixture
 public:
 
   void testEventConsumerRegistrationInfo();
+  void testEventConsumerPSet();
+  void testIncompleteEventConsumerPSet();
   void testIdenticalEventConsumers();
 
   void testDQMEventConsumerRegistrationInfo();
@@ -65,6 +70,102 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( ecri.outputModuleLabel() == "hltOutputDQM" );
   CPPUNIT_ASSERT( ecri.uniqueEvents() == false );
   CPPUNIT_ASSERT( ecri.remoteHost() == "localhost" );
+
+  edm::ParameterSet pset = ecri.getPSet();
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("TriggerSelector") == triggerSelection );
+  CPPUNIT_ASSERT( pset.getParameter<Strings>("TrackedEventSelection") == eventSelection );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<bool>("uniqueEvents") == false );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<unsigned int>("prescale") == 1 );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<int>("queueSize") == 3 );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<double>("consumerTimeOut") == 10 );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
+}
+
+
+void testConsumerRegistrationInfo::testEventConsumerPSet()
+{
+  Strings eventSelection;
+  eventSelection.push_back( "DQM" );
+  eventSelection.push_back( "HLT" );
+
+  const std::string triggerSelection = "HLT || DQM";
+
+  edm::ParameterSet origPSet;
+  origPSet.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  origPSet.addUntrackedParameter<std::string>("TriggerSelector", triggerSelection);
+  origPSet.addParameter<Strings>("TrackedEventSelection", eventSelection);
+  origPSet.addUntrackedParameter<bool>("uniqueEvents", true);
+  origPSet.addUntrackedParameter<unsigned int>("prescale", 5);
+  origPSet.addUntrackedParameter<int>("queueSize", 10);
+  origPSet.addUntrackedParameter<double>("consumerTimeOut", 33);
+  origPSet.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+
+  EventConsumerRegistrationInfo ecri(
+    "Test Consumer",
+    "localhost",
+    origPSet
+  );
+
+  edm::ParameterSet ecriPSet = ecri.getPSet();
+  CPPUNIT_ASSERT( isTransientEqual(origPSet, ecriPSet) );
+}
+
+
+void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
+{
+  edm::ParameterSet origPSet;
+  origPSet.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  
+  EventConsumerRegistrationInfo ecri(
+    "Test Consumer",
+    "localhost",
+    origPSet
+  );
+
+  CPPUNIT_ASSERT( ecri.queueSize() == 0 );
+  CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::Max );
+  CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(0) );
+
+  edm::ParameterSet ecriPSet = ecri.getPSet();
+  CPPUNIT_ASSERT( ! isTransientEqual(origPSet, ecriPSet) );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("TriggerSelector") == "" );
+  CPPUNIT_ASSERT( ecriPSet.getParameter<Strings>("TrackedEventSelection") == Strings() );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<bool>("uniqueEvents") == false );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<unsigned int>("prescale") == 1 );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("queueSize") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("consumerTimeOut") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("queuePolicy") );
+
+  EventServingParams defaults;
+  defaults._activeConsumerTimeout =  boost::posix_time::seconds(12);
+  defaults._consumerQueueSize = 22;
+  defaults._consumerQueuePolicy = "DiscardOld";
+
+  EventConsumerRegistrationInfo ecriDefaults(
+    "Test Consumer",
+    "localhost",
+    origPSet,
+    defaults
+  );
+
+  CPPUNIT_ASSERT( ecriDefaults.queueSize() == defaults._consumerQueueSize );
+  CPPUNIT_ASSERT( ecriDefaults.queuePolicy() == enquing_policy::DiscardOld );
+  CPPUNIT_ASSERT( ecriDefaults.secondsToStale() == defaults._activeConsumerTimeout );
+
+  edm::ParameterSet ecriDefaultsPSet = ecriDefaults.getPSet();
+  CPPUNIT_ASSERT( ! isTransientEqual(origPSet, ecriDefaultsPSet) );
+  CPPUNIT_ASSERT( ! isTransientEqual(ecriPSet, ecriDefaultsPSet) );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("TriggerSelector") == "" );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getParameter<Strings>("TrackedEventSelection") == Strings() );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<bool>("uniqueEvents") == false );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<unsigned int>("prescale") == 1 );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<int>("queueSize") == 22 );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<double>("consumerTimeOut") == 12 );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
+
 }
 
 

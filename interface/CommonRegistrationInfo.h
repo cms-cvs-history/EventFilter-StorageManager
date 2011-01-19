@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.h,v 1.4 2010/02/16 10:49:52 mommsen Exp $
+// $Id: CommonRegistrationInfo.h,v 1.4.8.1 2011/01/13 13:28:41 mommsen Exp $
 /// @file: CommonRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -8,9 +8,11 @@
 #include <iosfwd>
 #include <string>
 
-#include "EventFilter/StorageManager/interface/QueueID.h"
+#include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 namespace stor
 {
@@ -21,8 +23,8 @@ namespace stor
    * data member.
    *
    * $Author: mommsen $
-   * $Revision: 1.4 $
-   * $Date: 2010/02/16 10:49:52 $
+   * $Revision: 1.4.8.1 $
+   * $Date: 2011/01/13 13:28:41 $
    */
 
   struct CommonRegistrationInfo
@@ -36,11 +38,20 @@ namespace stor
       const utils::duration_t& secondsToStale
     );
 
+    CommonRegistrationInfo
+    (
+      const std::string& consumerName,
+      const std::string& remoteHost,
+      const edm::ParameterSet& pset,
+      const EventServingParams& eventServingParams,
+      const bool useEventServingParams = true
+    );
+    
     const std::string                _consumerName;
     const std::string                _remoteHost;
-    const int                        _queueSize;
-    const enquing_policy::PolicyTag  _queuePolicy;
-    const utils::duration_t          _secondsToStale;
+    int                              _queueSize;
+    enquing_policy::PolicyTag        _queuePolicy;
+    utils::duration_t                _secondsToStale;
     QueueID                          _queueId;
     ConsumerID                       _consumerId;
   };

@@ -35,8 +35,14 @@ namespace edm
     _eventServerProxy.getOneEvent(data);
     if ( data.empty() ) return 0;
 
+    HeaderView hdrView(&data[0]);
+    if (hdrView.code() == Header::DONE)
+    {
+      setEndRun();
+      return 0;
+    }
+
     EventMsgView eventView(&data[0]);
-    if (eventView.code() == Header::DONE) setEndRun();
     return deserializeEvent(eventView);
   }
   

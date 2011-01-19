@@ -1,6 +1,7 @@
-// $Id: EventServerProxy.cc,v 1.1.2.1 2011/01/17 14:33:52 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.2 2011/01/18 15:56:37 mommsen Exp $
 /// @file: EventServerProxy.cc
 
+#include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventServerProxy.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -24,16 +25,16 @@ namespace stor
 {  
   EventServerProxy::EventServerProxy(edm::ParameterSet const& ps) :
   sourceurl_(ps.getParameter<std::string>("sourceURL")),
-  consumerName_(ps.getUntrackedParameter<std::string>("consumerName","Unknown")),
+  consumerName_(ps.getUntrackedParameter<std::string>("consumerName", "Unknown")),
   maxConnectTries_(ps.getUntrackedParameter<int>("maxConnectTries", 300)),
   connectTrySleepTime_(ps.getUntrackedParameter<int>("connectTrySleepTime", 10)),
-  headerRetryInterval_(ps.getUntrackedParameter<int>("headerRetryInterval",5)),
+  headerRetryInterval_(ps.getUntrackedParameter<int>("headerRetryInterval", 5)),
   consumerId_(0),
   endRunAlreadyNotified_(true),
   alreadySaidHalted_(false),
   alreadySaidWaiting_(false)
   {
-    double maxEventRequestRate = ps.getUntrackedParameter<double>("maxEventRequestRate",1.0);
+    double maxEventRequestRate = ps.getUntrackedParameter<double>("maxEventRequestRate", 1);
     minEventRequestInterval_ = stor::utils::seconds_to_duration(
       maxEventRequestRate > 0 ? 
       1 / maxEventRequestRate :
@@ -41,18 +42,9 @@ namespace stor
     );
     nextRequestTime_ = stor::utils::getCurrentTime() + minEventRequestInterval_;
 
-    edm::ParameterSet psCopy(ps);
-    edm::ParameterSet selectEventsParamSet =
-      ps.getUntrackedParameter("SelectEvents", edm::ParameterSet());
-    if (! selectEventsParamSet.empty()) {
-      Strings path_specs = 
-        selectEventsParamSet.getParameter<Strings>("SelectEvents");
-      if (! path_specs.empty()) {
-        psCopy.addParameter<Strings>("TrackedEventSelection", path_specs);
-      }
-    }
-
-    psCopy.allToString(consumerPSetString_);
+    EventConsumerRegistrationInfo regInfo(consumerName_, sourceurl_, ps);
+    edm::ParameterSet consumerPSet = regInfo.getPSet();
+    consumerPSet.allToString(consumerPSetString_);
 
     registerWithEventServer();
   }
@@ -133,9 +125,16 @@ namespace stor
     // (hopefully) give the user a hint as to the cause of the problem.
     try {
       HeaderView hdrView(&data[0]);
-      if (hdrView.code() != Header::EVENT) {
+      if (hdrView.code() == Header::DONE) {
+        if(!alreadySaidHalted_) {
+          alreadySaidHalted_ = true;
+          std::cout << "Storage Manager has stopped" << std::endl;
+        }
+      }
+      else if (hdrView.code() != Header::EVENT) {
         throw cms::Exception("EventServerProxy", "readOneEvent");
       }
+      alreadySaidHalted_ = false;
     }
     catch (cms::Exception excpt) {
       const unsigned int MAX_DUMP_LENGTH = 2000;

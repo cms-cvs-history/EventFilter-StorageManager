@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.2 2011/01/13 13:28:41 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.3 2011/01/14 18:30:22 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -8,14 +8,16 @@ namespace stor
 {
 
   DQMEventConsumerRegistrationInfo::DQMEventConsumerRegistrationInfo
-  ( const std::string& consumerName,
+  (
+    const std::string& consumerName,
     const std::string& remoteHost,
     const std::string& topLevelFolderName,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale ) :
-    _common( consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
-    _topLevelFolderName( topLevelFolderName )
+    const utils::duration_t& secondsToStale
+  ) :
+  _common( consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
+  _topLevelFolderName( topLevelFolderName )
   { }
 
   DQMEventConsumerRegistrationInfo::~DQMEventConsumerRegistrationInfo() 
