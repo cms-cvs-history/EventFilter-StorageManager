@@ -1,4 +1,4 @@
-// $Id: AlarmHandler.h,v 1.6 2009/09/29 08:04:54 mommsen Exp $
+// $Id: AlarmHandler.h,v 1.7 2010/02/16 09:56:19 mommsen Exp $
 /// @file: AlarmHandler.h 
 
 #ifndef StorageManager_AlarmHandler_h
@@ -19,8 +19,8 @@ namespace stor {
    * Helper class to handle sentinel alarming
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2009/09/29 08:04:54 $
+   * $Revision: 1.7 $
+   * $Date: 2010/02/16 09:56:19 $
    */
 
   class AlarmHandler
@@ -81,6 +81,8 @@ namespace stor {
 
   };
   
+  typedef boost::shared_ptr<AlarmHandler> AlarmHandlerPtr;
+
 } // namespace stor
 
 #endif // StorageManager_AlarmHandler_h 

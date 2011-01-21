@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.40 2010/12/14 12:56:52 mommsen Exp $
+// $Id: Configuration.cc,v 1.41 2010/12/17 18:21:05 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -350,7 +350,7 @@ namespace stor
     _DQMconsumerQueuePolicy = _eventServeParamCopy._DQMconsumerQueuePolicy;
 
     // bind the local xdata variables to the infospace
-    infoSpace->fireItemAvailable( "runNumber", &_infospaceRunNumber );
+    infoSpace->fireItemAvailable("runNumber", &_infospaceRunNumber);
     infoSpace->fireItemAvailable("activeConsumerTimeout",
                                  &_activeConsumerTimeout);
     infoSpace->fireItemAvailable("consumerQueueSize",&_consumerQueueSize);
@@ -381,8 +381,7 @@ namespace stor
     infoSpace->fireItemAvailable("dqmEventQueueMemoryLimitMB", &_dqmEventQueueMemoryLimitMB);
     infoSpace->fireItemAvailable("fragmentQueueSize", &_fragmentQueueSize);
     infoSpace->fireItemAvailable("fragmentQueueMemoryLimitMB", &_fragmentQueueMemoryLimitMB);
-    infoSpace->fireItemAvailable("registrationQueueSize",
-                                 &_registrationQueueSize);
+    infoSpace->fireItemAvailable("registrationQueueSize", &_registrationQueueSize);
     infoSpace->fireItemAvailable("streamQueueSize", &_streamQueueSize);
     infoSpace->fireItemAvailable("streamQueueMemoryLimitMB", &_streamQueueMemoryLimitMB);
   }
@@ -505,13 +504,13 @@ namespace stor
 
     // validation
     if (_eventServeParamCopy._consumerQueueSize < 1)
-      {
-        _eventServeParamCopy._consumerQueueSize = 1;
-      }
+    {
+      _eventServeParamCopy._consumerQueueSize = 1;
+    }
     if (_eventServeParamCopy._DQMconsumerQueueSize < 1)
-      {
-        _eventServeParamCopy._DQMconsumerQueueSize = 1;
-      }
+    {
+      _eventServeParamCopy._DQMconsumerQueueSize = 1;
+    }
   }
 
   void Configuration::updateLocalQueueConfigurationData()

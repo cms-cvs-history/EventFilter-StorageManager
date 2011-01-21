@@ -1,10 +1,11 @@
-// $Id: StateMachine.h,v 1.7 2009/07/14 10:34:44 dshpakov Exp $
+// $Id: RegistrationQueue.h,v 1.5 2009/07/20 13:06:10 mommsen Exp $
 /// @file: RegistrationQueue.h 
 
 #ifndef EventFilter_StorageManager_RegistrationQueue_h
 #define EventFilter_StorageManager_RegistrationQueue_h
 
 #include <boost/shared_ptr.hpp>
+#include <EventFilter/StorageManager/interface/ConcurrentQueue.h>
 #include <EventFilter/StorageManager/interface/RegistrationInfoBase.h>
 
 namespace stor
@@ -13,12 +14,13 @@ namespace stor
   /**
      Concurrent queue holding consumer registrations
 
-     $Author: dshpakov $
-     $Revision: 1.4 $
-     $Date: 2009/07/14 10:34:44 $
+     $Author: mommsen $
+     $Revision: 1.5 $
+     $Date: 2009/07/20 13:06:10 $
   */
   typedef boost::shared_ptr<RegistrationInfoBase> RegInfoBasePtr;
   typedef ConcurrentQueue<RegInfoBasePtr> RegistrationQueue;
+  typedef boost::shared_ptr<RegistrationQueue> RegistrationQueuePtr;
 }
 
 #endif

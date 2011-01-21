@@ -1,10 +1,11 @@
-// $Id: ConsumerMonitorCollection.h,v 1.10 2010/12/20 16:33:21 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11 2010/12/20 16:39:45 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef StorageManager_ConsumerMonitorCollection_h
 #define StorageManager_ConsumerMonitorCollection_h
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
@@ -13,7 +14,6 @@
 
 namespace stor {
 
-  class QueueID;
   class MonitoredQuantity;
 
 
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.10 $
-   * $Date: 2010/12/20 16:33:21 $
+   * $Revision: 1.11 $
+   * $Date: 2010/12/20 16:39:45 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection

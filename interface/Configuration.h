@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.25 2010/12/10 19:38:48 mommsen Exp $
+// $Id: Configuration.h,v 1.26 2010/12/14 12:56:51 mommsen Exp $
 /// @file: Configuration.h 
 
 
@@ -162,8 +162,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: mommsen $
-   * $Revision: 1.25 $
-   * $Date: 2010/12/10 19:38:48 $
+   * $Revision: 1.26 $
+   * $Date: 2010/12/14 12:56:51 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -263,7 +263,7 @@ namespace stor
      * Gets invoked when a operation is performed on the infospace
      * that we are interested in knowing about.
      */
-    void actionPerformed(xdata::Event& isEvt);
+    virtual void actionPerformed(xdata::Event& isEvt);
 
     /**
      * Sets the current list of event stream configuration info

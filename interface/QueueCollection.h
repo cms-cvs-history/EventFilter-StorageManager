@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.1 2011/01/14 12:07:22 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.2 2011/01/14 18:30:22 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.1 $
-   * $Date: 2011/01/14 12:07:22 $
+   * $Revision: 1.10.2.2 $
+   * $Date: 2011/01/14 18:30:22 $
    */
 
   template <class T>
@@ -45,6 +45,7 @@ namespace stor {
   {
   public:
     typedef typename ExpirableQueue<T, RejectNewest<T> >::size_type size_type;
+    typedef T return_type;
 
     /**
        A default-constructed QueueCollection contains no queues
@@ -95,14 +96,14 @@ namespace stor {
       the given id. If there is no event in that queue, an empty
       event is returned.
      */
-    T popEvent(const QueueID&);
+    return_type popEvent(const QueueID&);
 
     /**
       Remove and return an event from the queue for the consumer with
       the given ConsumerID. If there is no event in that queue, an
       empty event is returned.
      */
-    T popEvent(const ConsumerID&);
+    return_type popEvent(const ConsumerID&);
 
     /**
        Clear the queue with the given QueueID.

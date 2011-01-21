@@ -1,4 +1,4 @@
-// $Id: EventQueueCollection.h,v 1.2 2009/06/10 08:15:22 dshpakov Exp $
+// $Id: EventQueueCollection.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
 /// @file: EventQueueCollection.h 
 
 #ifndef StorageManager_EventQueueCollection_h
@@ -12,12 +12,13 @@ namespace stor {
   /**
    * A collection of ConcurrentQueue<I2OChain>.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.2 $
-   * $Date: 2009/06/10 08:15:22 $
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   typedef QueueCollection<I2OChain> EventQueueCollection;
+  typedef boost::shared_ptr<EventQueueCollection> EventQueueCollectionPtr;
   
 } // namespace stor
 

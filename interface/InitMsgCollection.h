@@ -1,4 +1,4 @@
-// $Id: InitMsgCollection.h,v 1.11 2010/08/06 20:24:30 wmtan Exp $
+// $Id: InitMsgCollection.h,v 1.12 2010/12/17 18:21:04 mommsen Exp $
 /// @file: InitMsgCollection.h 
 
 #ifndef StorageManager_InitMsgCollection_h
@@ -21,9 +21,9 @@ namespace stor
      that have been received by the storage manager and will be sent
      to event consumers and written to output streams.
 
-     $Author: wmtan $
-     $Revision: 1.11 $
-     $Date: 2010/08/06 20:24:30 $
+     $Author: mommsen $
+     $Revision: 1.12 $
+     $Date: 2010/12/17 18:21:04 $
   */
 
   typedef std::vector<unsigned char> InitMsgBuffer;
@@ -181,7 +181,10 @@ namespace stor
     OutModTable outModNameTable_;
     mutable boost::mutex listLock_;
   };
-}
+  
+  typedef boost::shared_ptr<InitMsgCollection> InitMsgCollectionPtr;
+
+} //namespace stor
 
 #endif // StorageManager_InitMsgCollection_h
 

@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.h,v 1.7 2010/12/17 18:21:05 mommsen Exp $
+// $Id: RegistrationCollection.h,v 1.7.2.1 2011/01/14 18:30:22 mommsen Exp $
 /// @file: RegistrationCollection.h 
 
 #ifndef StorageManager_RegistrationCollection_h
@@ -22,8 +22,8 @@ namespace stor
      Keep a collection of registered event and DQM event consumers.
 
      $Author: mommsen $
-     $Revision: 1.7 $
-     $Date: 2010/12/17 18:21:05 $
+     $Revision: 1.7.2.1 $
+     $Date: 2011/01/14 18:30:22 $
   */
 
   class RegistrationCollection
@@ -95,6 +95,8 @@ namespace stor
     RegistrationMap _consumers;
 
   };
+
+  typedef boost::shared_ptr<RegistrationCollection> RegistrationCollectionPtr;
 
 } // namespace stor
 
