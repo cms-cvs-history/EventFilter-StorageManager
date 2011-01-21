@@ -1,4 +1,4 @@
-// $Id: Exception.h,v 1.14 2010/04/30 07:44:16 mommsen Exp $
+// $Id: Exception.h,v 1.15 2010/05/03 12:16:57 mommsen Exp $
 /// @file: Exception.h 
 
 #ifndef StorageManager_Exception_h
@@ -7,24 +7,6 @@
 
 #include "xcept/Exception.h"
 
-// The following macro is defined in newer xdaq versions
-#ifndef XCEPT_DEFINE_EXCEPTION
-#define XCEPT_DEFINE_EXCEPTION(NAMESPACE1, EXCEPTION_NAME)      \
-  namespace NAMESPACE1 {                                        \
-    namespace exception {                                       \
-      class EXCEPTION_NAME: public xcept::Exception             \
-      {                                                         \
-      public:                                                           \
-        EXCEPTION_NAME( std::string name, std::string message, std::string module, int line, std::string function ): \
-          xcept::Exception(name, message, module, line, function)       \
-        {}                                                              \
-        EXCEPTION_NAME( std::string name, std::string message, std::string module, int line, std::string function, xcept::Exception & e ): \
-          xcept::Exception(name, message, module, line, function,e)     \
-        {}                                                              \
-      };                                                                \
-    }                                                                   \
-  }
-#endif
 
 namespace stor {
 
@@ -32,8 +14,8 @@ namespace stor {
      List of exceptions thrown by the StorageManager
 
      $Author: mommsen $
-     $Revision: 1.14 $
-     $Date: 2010/04/30 07:44:16 $
+     $Revision: 1.15 $
+     $Date: 2010/05/03 12:16:57 $
   */
 }
 
