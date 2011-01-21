@@ -1,10 +1,8 @@
-// $Id: ConsumerUtils.cc,v 1.16.2.4 2011/01/14 18:30:22 mommsen Exp $
-/// @file: ConsumerUtils.cc
+// $Id: ConsumerUtils.icc,v 1.16.2.5 2011/01/19 13:50:38 mommsen Exp $
+/// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
-#include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
-#include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 
 #include "IOPool/Streamer/interface/ConsRegMessage.h"
@@ -28,8 +26,32 @@
 using namespace stor;
 
 
+template<typename Configuration_t, typename EventQueueCollection_t>
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+ConsumerUtils
+(
+  boost::shared_ptr<Configuration_t> configuration,
+  boost::shared_ptr<RegistrationCollection> registrationCollection,
+  boost::shared_ptr<RegistrationQueue> registrationQueue,
+  boost::shared_ptr<InitMsgCollection> initMsgCollection,
+  boost::shared_ptr<EventQueueCollection_t> eventQueueCollection,
+  boost::shared_ptr<DQMEventQueueCollection> dqmEventQueueCollection,
+  StatisticsReporter::AlarmHandlerPtr alarmHandler
+) :
+_configuration(configuration),
+_registrationCollection(registrationCollection),
+_registrationQueue(registrationQueue),
+_initMsgCollection(initMsgCollection),
+_eventQueueCollection(eventQueueCollection),
+_dqmEventQueueCollection(dqmEventQueueCollection),
+_alarmHandler(alarmHandler)
+{}
 
-void ConsumerUtils::processConsumerRegistrationRequest(xgi::Input* in, xgi::Output* out) const
+
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+processConsumerRegistrationRequest(xgi::Input* in, xgi::Output* out) const
 {
   EventConsRegPtr reginfo = createEventConsumerRegistrationInfo(in,out);
 
@@ -45,18 +67,17 @@ void ConsumerUtils::processConsumerRegistrationRequest(xgi::Input* in, xgi::Outp
   }
 }
 
-
-EventConsRegPtr ConsumerUtils::createEventConsumerRegistrationInfo(xgi::Input* in, xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+EventConsRegPtr
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+createEventConsumerRegistrationInfo(xgi::Input* in, xgi::Output* out) const
 {
   EventConsRegPtr reginfo;
-  if ( _sharedResources.get() == NULL ) return reginfo;
 
-  ConsumerID cid = _sharedResources->_registrationCollection->getConsumerId();
+  ConsumerID cid = _registrationCollection->getConsumerId();
   if ( !cid.isValid() ) return reginfo;
 
   std::string errorMsg = "Error parsing an event consumer registration request";
-  StatisticsReporter::AlarmHandlerPtr alarmHandler =
-    _sharedResources->_statisticsReporter->alarmHandler();
   try
   {
     reginfo = parseEventConsumerRegistration(in);
@@ -68,7 +89,7 @@ EventConsRegPtr ConsumerUtils::createEventConsumerRegistrationInfo(xgi::Input* i
     
     XCEPT_DECLARE(stor::exception::ConsumerRegistration,
       sentinelException, errorMsg);
-    alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+    _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
     
     writeErrorString( out, errorMsg );
     return reginfo;
@@ -77,7 +98,7 @@ EventConsRegPtr ConsumerUtils::createEventConsumerRegistrationInfo(xgi::Input* i
   {
     XCEPT_DECLARE_NESTED(stor::exception::ConsumerRegistration,
       sentinelException, errorMsg, excpt);
-    alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+    _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
     
     writeErrorString( out, errorMsg + ": " + xcept::stdformat_exception_history(excpt) );
     return reginfo;
@@ -88,7 +109,7 @@ EventConsRegPtr ConsumerUtils::createEventConsumerRegistrationInfo(xgi::Input* i
     
     XCEPT_DECLARE(stor::exception::ConsumerRegistration,
       sentinelException, errorMsg);
-    alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+    _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
     
     writeErrorString( out, errorMsg );
     return reginfo;
@@ -98,10 +119,12 @@ EventConsRegPtr ConsumerUtils::createEventConsumerRegistrationInfo(xgi::Input* i
 }
 
 
-bool ConsumerUtils::createEventConsumerQueue(EventConsRegPtr reginfo) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+bool
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+createEventConsumerQueue(EventConsRegPtr reginfo) const
 {
-  QueueID qid =
-    _sharedResources->_eventConsumerQueueCollection->createQueue(reginfo);
+  QueueID qid = _eventQueueCollection->createQueue(reginfo);
 
   if( !qid.isValid() ) return false;
   
@@ -110,7 +133,10 @@ bool ConsumerUtils::createEventConsumerQueue(EventConsRegPtr reginfo) const
 }
 
 
-void ConsumerUtils::processConsumerHeaderRequest(xgi::Input* in, xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+processConsumerHeaderRequest(xgi::Input* in, xgi::Output* out) const
 {
   ConsumerID cid = getConsumerId( in );
   if( !cid.isValid() )
@@ -120,7 +146,7 @@ void ConsumerUtils::processConsumerHeaderRequest(xgi::Input* in, xgi::Output* ou
   }
   
   EventConsRegPtr consRegPtr = boost::dynamic_pointer_cast<EventConsumerRegistrationInfo>(
-    _sharedResources->_registrationCollection->getRegistrationInfo( cid ));
+    _registrationCollection->getRegistrationInfo( cid ));
   if ( consRegPtr.get() == NULL )
   {
     writeEmptyBuffer( out );
@@ -128,7 +154,7 @@ void ConsumerUtils::processConsumerHeaderRequest(xgi::Input* in, xgi::Output* ou
   }
   
   InitMsgSharedPtr payload =
-    _sharedResources->_initMsgCollection->getElementForOutputModule( consRegPtr->outputModuleLabel() );
+    _initMsgCollection->getElementForOutputModule( consRegPtr->outputModuleLabel() );
   
   if( payload.get() == NULL )
   {
@@ -140,7 +166,10 @@ void ConsumerUtils::processConsumerHeaderRequest(xgi::Input* in, xgi::Output* ou
 }
 
 
-void ConsumerUtils::processConsumerEventRequest(xgi::Input* in, xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+processConsumerEventRequest(xgi::Input* in, xgi::Output* out) const
 {
   ConsumerID cid = getConsumerId( in );
 
@@ -150,14 +179,14 @@ void ConsumerUtils::processConsumerEventRequest(xgi::Input* in, xgi::Output* out
     return;
   }
 
-  if ( !_sharedResources->_registrationCollection->registrationIsAllowed( cid ) )
+  if ( !_registrationCollection->registrationIsAllowed( cid ) )
   {
     writeDone( out );
     return;
   }
 
-  I2OChain evt =
-    _sharedResources->_eventConsumerQueueCollection->popEvent( cid );
+  typename EventQueueCollection_t::return_type evt =
+    _eventQueueCollection->popEvent( cid );
   if( evt.faulty() )
   {
     writeEmptyBuffer( out );
@@ -168,7 +197,10 @@ void ConsumerUtils::processConsumerEventRequest(xgi::Input* in, xgi::Output* out
 }
 
 
-void ConsumerUtils::processDQMConsumerRegistrationRequest(xgi::Input* in, xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+processDQMConsumerRegistrationRequest(xgi::Input* in, xgi::Output* out) const
 {
   DQMEventConsRegPtr reginfo = createDQMEventConsumerRegistrationInfo(in,out);
 
@@ -184,17 +216,18 @@ void ConsumerUtils::processDQMConsumerRegistrationRequest(xgi::Input* in, xgi::O
   }
 }
 
-DQMEventConsRegPtr ConsumerUtils::createDQMEventConsumerRegistrationInfo(xgi::Input* in, xgi::Output* out) const
+
+template<typename Configuration_t, typename EventQueueCollection_t>
+DQMEventConsRegPtr
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+createDQMEventConsumerRegistrationInfo(xgi::Input* in, xgi::Output* out) const
 {
   DQMEventConsRegPtr dqmreginfo;
-  if ( _sharedResources.get() == NULL ) return dqmreginfo;
 
-  ConsumerID cid = _sharedResources->_registrationCollection->getConsumerId();
+  ConsumerID cid = _registrationCollection->getConsumerId();
   if ( !cid.isValid() ) return dqmreginfo;
 
   std::string errorMsg = "Error parsing a DQM event consumer registration request";
-  StatisticsReporter::AlarmHandlerPtr alarmHandler =
-    _sharedResources->_statisticsReporter->alarmHandler();
   try
   {
     dqmreginfo = parseDQMEventConsumerRegistration(in);
@@ -206,7 +239,7 @@ DQMEventConsRegPtr ConsumerUtils::createDQMEventConsumerRegistrationInfo(xgi::In
     
     XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
       sentinelException, errorMsg);
-    alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+    _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
     
     writeErrorString( out, errorMsg );
     return dqmreginfo;
@@ -215,7 +248,7 @@ DQMEventConsRegPtr ConsumerUtils::createDQMEventConsumerRegistrationInfo(xgi::In
   {
     XCEPT_DECLARE_NESTED(stor::exception::DQMConsumerRegistration,
       sentinelException, errorMsg, excpt);
-    alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+    _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
     
     writeErrorString( out, errorMsg + ": " + xcept::stdformat_exception_history(excpt) );
     return dqmreginfo;
@@ -226,7 +259,7 @@ DQMEventConsRegPtr ConsumerUtils::createDQMEventConsumerRegistrationInfo(xgi::In
     
     XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
       sentinelException, errorMsg);
-    alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+    _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
     
     writeErrorString( out, errorMsg );
     return dqmreginfo;
@@ -236,7 +269,10 @@ DQMEventConsRegPtr ConsumerUtils::createDQMEventConsumerRegistrationInfo(xgi::In
 }
 
 
-void ConsumerUtils::processDQMConsumerEventRequest(xgi::Input* in, xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+processDQMConsumerEventRequest(xgi::Input* in, xgi::Output* out) const
 {
   ConsumerID cid = getConsumerId( in );
   if( !cid.isValid() )
@@ -245,14 +281,14 @@ void ConsumerUtils::processDQMConsumerEventRequest(xgi::Input* in, xgi::Output* 
     return;
   }
 
-  if ( !_sharedResources->_registrationCollection->registrationIsAllowed( cid ) )
+  if ( !_registrationCollection->registrationIsAllowed( cid ) )
   {
     writeDone( out );
     return;
   }
   
   DQMEventRecord::GroupRecord dqmGroupRecord =
-    _sharedResources->_dqmEventConsumerQueueCollection->popEvent( cid );
+    _dqmEventQueueCollection->popEvent( cid );
 
   if ( !dqmGroupRecord.empty() )
     writeDQMConsumerEvent( out, dqmGroupRecord.getDQMEventMsgView() );
@@ -261,10 +297,12 @@ void ConsumerUtils::processDQMConsumerEventRequest(xgi::Input* in, xgi::Output* 
 }
 
 
-bool ConsumerUtils::createDQMEventConsumerQueue(DQMEventConsRegPtr reginfo) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+bool
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+createDQMEventConsumerQueue(DQMEventConsRegPtr reginfo) const
 {
-  QueueID qid =
-    _sharedResources->_dqmEventConsumerQueueCollection->createQueue(reginfo);
+  QueueID qid = _dqmEventQueueCollection->createQueue(reginfo);
 
   if( !qid.isValid() ) return false;
   
@@ -273,18 +311,24 @@ bool ConsumerUtils::createDQMEventConsumerQueue(DQMEventConsRegPtr reginfo) cons
 }
 
 
-bool ConsumerUtils::addRegistrationInfo(const RegPtr reginfo) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+bool
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+addRegistrationInfo(const RegPtr reginfo) const
 {
-  if ( !_sharedResources->_registrationCollection->addRegistrationInfo( reginfo ) ) return false;
+  if ( !_registrationCollection->addRegistrationInfo( reginfo ) ) return false;
 
-  return _sharedResources->_registrationQueue->enq_timed_wait( reginfo, boost::posix_time::seconds(5) );
+  return _registrationQueue->enq_timed_wait( reginfo, boost::posix_time::seconds(5) );
 }
 
 
 ////////////////////////////////////////////
 //// Create consumer registration info: ////
 ////////////////////////////////////////////
-EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+EventConsRegPtr
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+parseEventConsumerRegistration(xgi::Input* in) const
 {
   
   if( in == 0 )
@@ -318,8 +362,8 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
   const edm::ParameterSet pset( psetStr );
 
   EventConsRegPtr cr(
-    new EventConsumerRegistrationInfo(name, remoteHost, pset,
-      _sharedResources->_configuration->getEventServingParams())
+    new EventConsumerRegistrationInfo(name, remoteHost, pset, 
+      _configuration->getEventServingParams())
   );
 
   return cr;
@@ -328,7 +372,10 @@ EventConsRegPtr ConsumerUtils::parseEventConsumerRegistration(xgi::Input* in) co
 ////////////////////////////////////////////////
 //// Create DQM consumer registration info: ////
 ////////////////////////////////////////////////
-DQMEventConsRegPtr ConsumerUtils::parseDQMEventConsumerRegistration(xgi::Input* in) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+DQMEventConsRegPtr
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+parseDQMEventConsumerRegistration(xgi::Input* in) const
 {
   if( in == 0 )
   {
@@ -336,13 +383,11 @@ DQMEventConsRegPtr ConsumerUtils::parseDQMEventConsumerRegistration(xgi::Input* 
       "Null xgi::Input* in parseDQMEventConsumerRegistration" );
   }
   
-  const utils::duration_t secondsToStale =
-    _sharedResources->_configuration->getEventServingParams()._DQMactiveConsumerTimeout;
-  const int queueSize =
-    _sharedResources->_configuration->getEventServingParams()._DQMconsumerQueueSize;
-
-  std::string policy =
-  _sharedResources->_configuration->getEventServingParams()._DQMconsumerQueuePolicy;
+  EventServingParams esp = _configuration->getEventServingParams();
+  const utils::duration_t secondsToStale = esp._DQMactiveConsumerTimeout;
+  const int queueSize = esp._DQMconsumerQueueSize;
+  
+  std::string policy = esp._DQMconsumerQueuePolicy;
   enquing_policy::PolicyTag queuePolicy;
   if ( policy == "DiscardNew" )
   {
@@ -392,7 +437,10 @@ DQMEventConsRegPtr ConsumerUtils::parseDQMEventConsumerRegistration(xgi::Input* 
 /////////////////////////////
 //// Write HTTP headers: ////
 /////////////////////////////
-void ConsumerUtils::writeHTTPHeaders(xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeHTTPHeaders(xgi::Output* out) const
 {
   out->getHTTPResponseHeader().addHeader( "Content-Type",
                                           "application/octet-stream" );
@@ -403,7 +451,10 @@ void ConsumerUtils::writeHTTPHeaders(xgi::Output* out) const
 //////////////////////////////
 //// Send ID to consumer: ////
 //////////////////////////////
-void ConsumerUtils::writeConsumerRegistration(xgi::Output* out, const ConsumerID cid) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeConsumerRegistration(xgi::Output* out, const ConsumerID cid) const
 {
 
   const int buff_size = 1000;
@@ -421,7 +472,10 @@ void ConsumerUtils::writeConsumerRegistration(xgi::Output* out, const ConsumerID
 ////////////////////////////////////////
 //// Tell consumer we're not ready: ////
 ////////////////////////////////////////
-void ConsumerUtils::writeNotReady(xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeNotReady(xgi::Output* out) const
 {
 
   const int buff_size = 1000;
@@ -440,7 +494,10 @@ void ConsumerUtils::writeNotReady(xgi::Output* out) const
 ////////////////////////////////////////
 //// Send empty buffer to consumer: ////
 ////////////////////////////////////////
-void ConsumerUtils::writeEmptyBuffer(xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeEmptyBuffer(xgi::Output* out) const
 {
   char buff;
   writeHTTPHeaders( out );
@@ -450,7 +507,10 @@ void ConsumerUtils::writeEmptyBuffer(xgi::Output* out) const
 ///////////////////////////////////////////
 //// Tell consumer that run has ended: ////
 ///////////////////////////////////////////
-void ConsumerUtils::writeDone(xgi::Output* out) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeDone(xgi::Output* out) const
 {
 
   const int buff_size = 1000;
@@ -467,7 +527,10 @@ void ConsumerUtils::writeDone(xgi::Output* out) const
 /////////////////////////////////////////
 //// Send error message to consumer: ////
 /////////////////////////////////////////
-void ConsumerUtils::writeErrorString(xgi::Output* out, const std::string errorString) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeErrorString(xgi::Output* out, const std::string errorString) const
 {
 
   const int buff_size = errorString.size();
@@ -485,7 +548,10 @@ void ConsumerUtils::writeErrorString(xgi::Output* out, const std::string errorSt
 //////////////////////////////////////////////////
 //// Extract consumer ID from header request: ////
 //////////////////////////////////////////////////
-ConsumerID ConsumerUtils::getConsumerId(xgi::Input* in) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+ConsumerID
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+getConsumerId(xgi::Input* in) const
 {
 
   if( in == 0 )
@@ -529,7 +595,10 @@ ConsumerID ConsumerUtils::getConsumerId(xgi::Input* in) const
 ///////////////////////
 //// Write header: ////
 ///////////////////////
-void ConsumerUtils::writeConsumerHeader(xgi::Output* out, const InitMsgSharedPtr ptr) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeConsumerHeader(xgi::Output* out, const InitMsgSharedPtr ptr) const
 {
   const unsigned int len = ptr->size();
   std::vector<unsigned char> buff( len );
@@ -544,7 +613,10 @@ void ConsumerUtils::writeConsumerHeader(xgi::Output* out, const InitMsgSharedPtr
 //////////////////////
 //// Write event: ////
 //////////////////////
-void ConsumerUtils::writeConsumerEvent(xgi::Output* out, const I2OChain& evt) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeConsumerEvent(xgi::Output* out, const typename EventQueueCollection_t::return_type& evt) const
 {
   writeHTTPHeaders( out );
 
@@ -560,7 +632,10 @@ void ConsumerUtils::writeConsumerEvent(xgi::Output* out, const I2OChain& evt) co
 //////////////////////////
 //// Write DQM event: ////
 //////////////////////////
-void ConsumerUtils::writeDQMConsumerEvent(xgi::Output* out, const DQMEventMsgView& view) const
+template<typename Configuration_t, typename EventQueueCollection_t>
+void
+ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+writeDQMConsumerEvent(xgi::Output* out, const DQMEventMsgView& view) const
 {
   writeHTTPHeaders( out );
 

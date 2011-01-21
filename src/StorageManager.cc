@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.133 2010/11/30 15:00:06 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134 2010/12/02 15:53:09 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -51,7 +51,6 @@ StorageManager::StorageManager(xdaq::ApplicationStub * s) :
   try
   {
     initializeSharedResources();
-    _consumerUtils.setSharedResources(_sharedResources);
   }
   catch(std::exception &e)
   {
@@ -194,6 +193,16 @@ void StorageManager::initializeSharedResources()
   DQMConsumerMonitorCollection& dcmc = 
     _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
   _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
+
+  _consumerUtils.reset( new ConsumerUtils_t (
+      _sharedResources->_configuration,
+      _sharedResources->_registrationCollection,
+      _sharedResources->_registrationQueue,
+      _sharedResources->_initMsgCollection,
+      _sharedResources->_eventConsumerQueueCollection,
+      _sharedResources->_dqmEventConsumerQueueCollection,
+      _sharedResources->_statisticsReporter->alarmHandler()
+    ) );
 }
 
 
@@ -684,7 +693,7 @@ void
 StorageManager::processConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
-  _consumerUtils.processConsumerRegistrationRequest(in,out);
+  _consumerUtils->processConsumerRegistrationRequest(in,out);
 }
 
 
@@ -692,7 +701,7 @@ void
 StorageManager::processConsumerHeaderRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
-  _consumerUtils.processConsumerHeaderRequest(in,out);
+  _consumerUtils->processConsumerHeaderRequest(in,out);
 }
 
 
@@ -700,7 +709,7 @@ void
 StorageManager::processConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
-  _consumerUtils.processConsumerEventRequest(in,out);
+  _consumerUtils->processConsumerEventRequest(in,out);
 }
 
 
@@ -708,7 +717,7 @@ void
 StorageManager::processDQMConsumerRegistrationRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
-  _consumerUtils.processDQMConsumerRegistrationRequest(in,out);
+  _consumerUtils->processDQMConsumerRegistrationRequest(in,out);
 }
 
 
@@ -716,7 +725,7 @@ void
 StorageManager::processDQMConsumerEventRequest( xgi::Input* in, xgi::Output* out )
   throw( xgi::exception::Exception )
 {
-  _consumerUtils.processDQMConsumerEventRequest(in,out);
+  _consumerUtils->processDQMConsumerEventRequest(in,out);
 }
 
 

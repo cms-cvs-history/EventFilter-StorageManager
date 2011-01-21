@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.7 2010/04/16 14:39:05 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.8 2010/12/17 18:21:04 mommsen Exp $
 /// @file: ConsumerUtils.h 
 
 #ifndef StorageManager_ConsumerUtils_h
@@ -9,7 +9,7 @@
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
-#include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 
 #include "IOPool/Streamer/interface/DQMEventMessage.h"
@@ -25,24 +25,32 @@ namespace xgi
 namespace stor
 {
   class ConsumerID;
-  class I2OChain;
 
 
   /**
      Handles consumer requests and responses
 
      $Author: mommsen $
-     $Revision: 1.7 $
-     $Date: 2010/04/16 14:39:05 $
+     $Revision: 1.8 $
+     $Date: 2010/12/17 18:21:04 $
   */
 
+  template<typename Configuration_t, typename EventQueueCollection_t>
   class ConsumerUtils
   {
     
   public:
 
-    void setSharedResources(SharedResourcesPtr sr)
-    { _sharedResources = sr; };
+    ConsumerUtils
+    (
+      boost::shared_ptr<Configuration_t>,
+      boost::shared_ptr<RegistrationCollection>,
+      boost::shared_ptr<RegistrationQueue>,
+      boost::shared_ptr<InitMsgCollection>,
+      boost::shared_ptr<EventQueueCollection_t>,
+      boost::shared_ptr<DQMEventQueueCollection>,
+      StatisticsReporter::AlarmHandlerPtr
+    );
 
     /**
       Process registration request from an event consumer
@@ -151,7 +159,7 @@ namespace stor
     /**
       Send event to consumer:
     */
-    void writeConsumerEvent(xgi::Output*, const I2OChain&) const;
+    void writeConsumerEvent(xgi::Output*, const typename EventQueueCollection_t::return_type&) const;
 
     /**
       Send DQM event to DQM consumer:
@@ -159,10 +167,17 @@ namespace stor
     void writeDQMConsumerEvent(xgi::Output*, const DQMEventMsgView&) const;
 
 
-    SharedResourcesPtr _sharedResources;
-
+    boost::shared_ptr<Configuration_t> _configuration;
+    boost::shared_ptr<RegistrationCollection> _registrationCollection;
+    boost::shared_ptr<RegistrationQueue> _registrationQueue;
+    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+    boost::shared_ptr<EventQueueCollection_t> _eventQueueCollection;
+    boost::shared_ptr<DQMEventQueueCollection> _dqmEventQueueCollection;
+    StatisticsReporter::AlarmHandlerPtr _alarmHandler;
   };
 }
+
+#include "EventFilter/StorageManager/src/ConsumerUtils.icc"
 
 #endif // StorageManager_ConsumerUtils_h
 
