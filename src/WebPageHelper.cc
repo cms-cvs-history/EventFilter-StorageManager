@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.56.2.1 2011/01/13 11:19:49 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.56.2.3 2011/01/14 18:30:22 mommsen Exp $
 /// @file: WebPageHelper.cc
 
 #ifdef __APPLE__
@@ -28,6 +28,8 @@
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
+
+#include "toolbox/net/Utils.h"
 
 using namespace stor;
 
@@ -371,7 +373,7 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   header = maker.addNode("b", header);
   maker.addText(header, _appDescriptor->getClassName());
 
-  const std::string cvsVersion = "$Name: SMPSdev_branch $";
+  const std::string cvsVersion = "$Name:  $";
   if ( cvsVersion.length() > 9 ) {
     const std::string smVersion = "(" + cvsVersion.substr(7, cvsVersion.length()-9) + ")";
     maker.addText(instanceTableDiv, smVersion);
@@ -402,8 +404,7 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
 
   instanceTableDiv = maker.addNode("td", instanceTableRow);
   XHTMLMaker::Node* hostname = maker.addNode("font", instanceTableDiv, fontAttr);
-  maker.addText(hostname, "on " +
-    sharedResources->_configuration->getDiskWritingParams()._hostName );
+  maker.addText(hostname, "on " + toolbox::net::getHostName() );
  
   instanceTableDiv = maker.addNode("td", instanceTableRow);
   XHTMLMaker::Node* innerState = maker.addNode("font", instanceTableDiv, fontAttr);
