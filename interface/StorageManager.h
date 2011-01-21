@@ -1,4 +1,4 @@
-// $Id: StorageManager.h,v 1.57 2010/03/04 16:57:41 mommsen Exp $
+// $Id: StorageManager.h,v 1.58 2010/04/16 12:31:34 mommsen Exp $
 /// @file: StorageManager.h 
 
 #ifndef StorageManager_StorageManager_h
@@ -9,8 +9,6 @@
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/WebPageHelper.h"
-
-#include "FWCore/PluginManager/interface/ProblemTracker.h"
 
 #include "xdaq/Application.h"
 #include "xgi/exception/Exception.h"
@@ -39,8 +37,8 @@ namespace stor {
    * Main class of the StorageManager XDAQ application
    *
    * $Author: mommsen $
-   * $Revision: 1.57 $
-   * $Date: 2010/03/04 16:57:41 $
+   * $Revision: 1.58 $
+   * $Date: 2010/04/16 12:31:34 $
    */
 
   class StorageManager: public xdaq::Application
@@ -217,16 +215,14 @@ namespace stor {
      */
     void startWorkerThreads();
 
-    // instantiate the plugin manager, not referenced here after!
-    edm::AssertHandler _ah;
-
     SharedResourcesPtr _sharedResources;
 
     FragmentProcessor *_fragmentProcessor;
     DiskWriter *_diskWriter;
     DQMEventProcessor *_dqmEventProcessor;
 
-    ConsumerUtils _consumerUtils;
+    typedef ConsumerUtils<Configuration,EventQueueCollection> ConsumerUtils_t;
+    boost::scoped_ptr<ConsumerUtils_t> _consumerUtils;
     WebPageHelper _webPageHelper;
 
   };
