@@ -1,11 +1,12 @@
-// $Id: AlarmHandler.h,v 1.7 2010/02/16 09:56:19 mommsen Exp $
+// $Id: AlarmHandler.h,v 1.7.8.1 2011/01/21 15:51:20 mommsen Exp $
 /// @file: AlarmHandler.h 
 
-#ifndef StorageManager_AlarmHandler_h
-#define StorageManager_AlarmHandler_h
+#ifndef EventFilter_StorageManager_AlarmHandler_h
+#define EventFilter_StorageManager_AlarmHandler_h
 
 #include <string>
 
+#include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
 
 #include "xcept/Exception.h"
@@ -19,8 +20,8 @@ namespace stor {
    * Helper class to handle sentinel alarming
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/02/16 09:56:19 $
+   * $Revision: 1.7.8.1 $
+   * $Date: 2011/01/21 15:51:20 $
    */
 
   class AlarmHandler
@@ -85,7 +86,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_AlarmHandler_h 
+#endif // EventFilter_StorageManager_AlarmHandler_h 
 
 
 /// emacs configuration

@@ -1,8 +1,8 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.3 2011/01/14 18:30:22 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.4 2011/01/19 13:50:38 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
-#ifndef StorageManager_EventConsumerRegistrationInfo_h
-#define StorageManager_EventConsumerRegistrationInfo_h
+#ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
+#define EventFilter_StorageManager_EventConsumerRegistrationInfo_h
 
 #include <iosfwd>
 #include <string>
@@ -24,8 +24,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.3 $
-   * $Date: 2011/01/14 18:30:22 $
+   * $Revision: 1.13.2.4 $
+   * $Date: 2011/01/19 13:50:38 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -121,7 +121,7 @@ namespace stor
 
 } // namespace stor
 
-#endif // StorageManager_EventConsumerRegistrationInfo_h
+#endif // EventFilter_StorageManager_EventConsumerRegistrationInfo_h
 
 /// emacs configuration
 /// Local Variables: -

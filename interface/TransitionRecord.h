@@ -1,8 +1,8 @@
-// $Id: TransitionRecord.h,v 1.3 2009/07/20 13:06:11 mommsen Exp $
+// $Id: TransitionRecord.h,v 1.4 2009/09/11 21:07:06 elmer Exp $
 /// @file: TransitionRecord.h 
 
-#ifndef StorageManager_TransitionRecord_h
-#define StorageManager_TransitionRecord_h
+#ifndef EventFilter_StorageManager_TransitionRecord_h
+#define EventFilter_StorageManager_TransitionRecord_h
 
 #include <iosfwd>
 #include <sys/time.h>
@@ -13,9 +13,9 @@ namespace stor {
   /**
    * A record of state machine transitions
    *
-   * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/20 13:06:11 $
+   * $Author: elmer $
+   * $Revision: 1.4 $
+   * $Date: 2009/09/11 21:07:06 $
    */
   
   class TransitionRecord
@@ -45,7 +45,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_TransitionRecord_h 
+#endif // EventFilter_StorageManager_TransitionRecord_h 
 
 
 /// emacs configuration

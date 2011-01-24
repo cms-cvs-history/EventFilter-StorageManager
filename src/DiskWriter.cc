@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.24 2010/10/12 01:41:32 wmtan Exp $
+// $Id: DiskWriter.cc,v 1.25 2010/12/10 19:38:48 mommsen Exp $
 /// @file: DiskWriter.cc
 
 #include <algorithm>
@@ -110,7 +110,7 @@ bool DiskWriter::writeAction(toolbox::task::WorkLoop*)
 void DiskWriter::writeNextEvent()
 {
   I2OChain event;
-  boost::shared_ptr<StreamQueue> sq = _sharedResources->_streamQueue;
+  StreamQueuePtr sq = _sharedResources->_streamQueue;
   utils::time_point_t startTime = utils::getCurrentTime();
   if (sq->deq_timed_wait(event, _timeout))
   {

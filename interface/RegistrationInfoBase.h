@@ -1,8 +1,8 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.1 2011/01/13 13:28:41 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.2 2011/01/14 18:30:22 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
-#ifndef StorageManager_RegistrationInfoBase_h
-#define StorageManager_RegistrationInfoBase_h
+#ifndef EventFilter_StorageManager_RegistrationInfoBase_h
+#define EventFilter_StorageManager_RegistrationInfoBase_h
 
 #include <string>
 
@@ -22,8 +22,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.1 $
-   * $Date: 2011/01/13 13:28:41 $
+   * $Revision: 1.6.2.2 $
+   * $Date: 2011/01/14 18:30:22 $
    */
 
   class RegistrationInfoBase
@@ -193,7 +193,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_RegistrationInfoBase_h
+#endif // EventFilter_StorageManager_RegistrationInfoBase_h
 
 
 /// emacs configuration

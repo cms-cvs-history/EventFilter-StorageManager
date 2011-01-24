@@ -1,8 +1,8 @@
-// $Id: EventStreamSelector.h,v 1.6 2009/12/01 13:58:08 mommsen Exp $
+// $Id: EventStreamSelector.h,v 1.7 2010/12/16 16:35:29 mommsen Exp $
 /// @file: EventStreamSelector.h 
 
-#ifndef StorageManager_EventStreamSelector_h
-#define StorageManager_EventStreamSelector_h
+#ifndef EventFilter_StorageManager_EventStreamSelector_h
+#define EventFilter_StorageManager_EventStreamSelector_h
 
 #include <boost/shared_ptr.hpp>
 
@@ -18,8 +18,8 @@ namespace stor {
      EventStreamConfigurationInfo
 
      $Author: mommsen $
-     $Revision: 1.6 $
-     $Date: 2009/12/01 13:58:08 $
+     $Revision: 1.7 $
+     $Date: 2010/12/16 16:35:29 $
   */
 
   class EventStreamSelector
@@ -54,13 +54,13 @@ namespace stor {
     unsigned int _outputModuleId;
     const EventStreamConfigurationInfo _configInfo;
 
-    boost::shared_ptr<TriggerSelector> _eventSelector;
+    TriggerSelectorPtr _eventSelector;
 
   };
 
 } // namespace stor
 
-#endif // StorageManager_EventStreamSelector_h
+#endif // EventFilter_StorageManager_EventStreamSelector_h
 
 
 /// emacs configuration

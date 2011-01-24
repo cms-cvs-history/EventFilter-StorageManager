@@ -1,8 +1,8 @@
-// $Id: ErrorStreamSelector.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+// $Id: ErrorStreamSelector.h,v 1.4 2010/12/16 16:35:29 mommsen Exp $
 /// @file: ErrorStreamSelector.h 
 
-#ifndef StorageManager_ErrorStreamSelector_h
-#define StorageManager_ErrorStreamSelector_h
+#ifndef EventFilter_StorageManager_ErrorStreamSelector_h
+#define EventFilter_StorageManager_ErrorStreamSelector_h
 
 #include <boost/shared_ptr.hpp>
 
@@ -16,8 +16,8 @@ namespace stor {
      ErrorStreamConfigurationInfo
 
      $Author: mommsen $
-     $Revision: 1.3 $
-     $Date: 2009/07/20 13:06:10 $
+     $Revision: 1.4 $
+     $Date: 2010/12/16 16:35:29 $
   */
 
   class ErrorStreamSelector
@@ -51,7 +51,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_ErrorStreamSelector_h
+#endif // EventFilter_StorageManager_ErrorStreamSelector_h
 
 
 /// emacs configuration

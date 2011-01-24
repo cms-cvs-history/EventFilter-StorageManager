@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.cc,v 1.9 2010/12/15 10:09:14 mommsen Exp $
+// $Id: XHTMLMaker.cc,v 1.10 2010/12/15 15:29:23 mommsen Exp $
 /// @file: XHTMLMaker.cc
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace xercesc;
+using namespace stor;
 
 namespace
 {

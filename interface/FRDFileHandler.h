@@ -1,8 +1,8 @@
-// $Id: FRDFileHandler.h,v 1.11 2010/09/09 08:01:16 mommsen Exp $
+// $Id: FRDFileHandler.h,v 1.12 2010/12/15 10:09:14 mommsen Exp $
 /// @file: FRDFileHandler.h 
 
-#ifndef StorageManager_FRDFileHandler_h
-#define StorageManager_FRDFileHandler_h
+#ifndef EventFilter_StorageManager_FRDFileHandler_h
+#define EventFilter_StorageManager_FRDFileHandler_h
 
 #include "EventFilter/StorageManager/interface/FileHandler.h"
 #include "IOPool/Streamer/interface/FRDEventFileWriter.h"
@@ -21,8 +21,8 @@ namespace stor {
    * FED Raw Data (FRD) format.
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2010/09/09 08:01:16 $
+   * $Revision: 1.12 $
+   * $Date: 2010/12/15 10:09:14 $
    */
   
   class FRDFileHandler : public FileHandler
@@ -54,7 +54,7 @@ namespace stor {
   
 } // stor namespace
 
-#endif // StorageManager_FRDFileHandler_h
+#endif // EventFilter_StorageManager_FRDFileHandler_h
 
 
 /// emacs configuration

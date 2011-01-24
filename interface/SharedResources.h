@@ -1,8 +1,8 @@
-// $Id: SharedResources.h,v 1.5 2009/08/28 16:41:50 mommsen Exp $
+// $Id: SharedResources.h,v 1.6 2009/09/29 07:53:30 mommsen Exp $
 /// @file: SharedResources.h 
 
-#ifndef StorageManager_SharedResources_h
-#define StorageManager_SharedResources_h
+#ifndef EventFilter_StorageManager_SharedResources_h
+#define EventFilter_StorageManager_SharedResources_h
 
 #include <string>
 
@@ -33,21 +33,21 @@ namespace stor {
    * Container for shared resources.
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2009/08/28 16:41:50 $
+   * $Revision: 1.6 $
+   * $Date: 2009/09/29 07:53:30 $
    */
 
   struct SharedResources
   {
 
     // queues
-    boost::shared_ptr<CommandQueue> _commandQueue;
-    boost::shared_ptr<DQMEventQueue> _dqmEventQueue;
-    boost::shared_ptr<FragmentQueue> _fragmentQueue;
-    boost::shared_ptr<StreamQueue> _streamQueue;
-    boost::shared_ptr<RegistrationQueue> _registrationQueue;
-    boost::shared_ptr<EventQueueCollection> _eventConsumerQueueCollection;
-    boost::shared_ptr<DQMEventQueueCollection> _dqmEventConsumerQueueCollection;
+    CommandQueuePtr _commandQueue;
+    DQMEventQueuePtr _dqmEventQueue;
+    FragmentQueuePtr _fragmentQueue;
+    StreamQueuePtr _streamQueue;
+    RegistrationQueuePtr _registrationQueue;
+    EventQueueCollectionPtr _eventQueueCollection;
+    DQMEventQueueCollectionPtr _dqmEventQueueCollection;
 
     // other
     boost::shared_ptr<Configuration> _configuration;
@@ -75,7 +75,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_SharedResources_h 
+#endif // EventFilter_StorageManager_SharedResources_h 
 
 
 /// emacs configuration

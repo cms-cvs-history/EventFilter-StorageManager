@@ -1,8 +1,8 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11 2010/12/20 16:39:45 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.1 2011/01/21 15:51:20 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
-#ifndef StorageManager_ConsumerMonitorCollection_h
-#define StorageManager_ConsumerMonitorCollection_h
+#ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
+#define EventFilter_StorageManager_ConsumerMonitorCollection_h
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2010/12/20 16:39:45 $
+   * $Revision: 1.11.2.1 $
+   * $Date: 2011/01/21 15:51:20 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
@@ -95,7 +95,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_ConsumerMonitorCollection_h
+#endif // EventFilter_StorageManager_ConsumerMonitorCollection_h
 
 
 /// emacs configuration

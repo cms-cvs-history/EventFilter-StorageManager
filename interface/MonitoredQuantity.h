@@ -1,8 +1,8 @@
-// $Id: MonitoredQuantity.h,v 1.8 2010/12/15 10:09:14 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.9 2010/12/15 15:29:23 mommsen Exp $
 /// @file: MonitoredQuantity.h 
 
-#ifndef StorageManager_MonitoredQuantity_h
-#define StorageManager_MonitoredQuantity_h
+#ifndef EventFilter_StorageManager_MonitoredQuantity_h
+#define EventFilter_StorageManager_MonitoredQuantity_h
 
 #include "boost/shared_ptr.hpp"
 #include "boost/thread/mutex.hpp"
@@ -22,8 +22,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.8 $
-   * $Date: 2010/12/15 10:09:14 $
+   * $Revision: 1.9 $
+   * $Date: 2010/12/15 15:29:23 $
    */
 
   class MonitoredQuantity
@@ -255,7 +255,7 @@ namespace stor
 
 } // namespace stor
 
-#endif // StorageManager_MonitoredQuantity_h
+#endif // EventFilter_StorageManager_MonitoredQuantity_h
 
 
 

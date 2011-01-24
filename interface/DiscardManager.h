@@ -1,8 +1,8 @@
-// $Id: DiscardManager.h,v 1.4 2009/07/20 13:06:10 mommsen Exp $
+// $Id: DiscardManager.h,v 1.5 2009/08/28 16:41:49 mommsen Exp $
 /// @file: DiscardManager.h 
 
-#ifndef StorageManager_DiscardManager_h
-#define StorageManager_DiscardManager_h
+#ifndef EventFilter_StorageManager_DiscardManager_h
+#define EventFilter_StorageManager_DiscardManager_h
 
 #include "xdaq/ApplicationContext.h"
 #include "xdaq/ApplicationDescriptor.h"
@@ -23,8 +23,8 @@ namespace stor {
    * Handles the discard messages sent to the upstream Resource Brokers.
    *
    * $Author: mommsen $
-   * $Revision: 1.4 $
-   * $Date: 2009/07/20 13:06:10 $
+   * $Revision: 1.5 $
+   * $Date: 2009/08/28 16:41:49 $
    */
 
   class DiscardManager
@@ -100,9 +100,11 @@ namespace stor {
     DataSenderMonitorCollection& _dataSenderMonCollection;
   };
 
+  typedef boost::shared_ptr<DiscardManager> DiscardManagerPtr;
+
 } // namespace stor
 
-#endif // StorageManager_DiscardManager_h 
+#endif // EventFilter_StorageManager_DiscardManager_h 
 
 
 /// emacs configuration

@@ -1,8 +1,8 @@
-// $Id: FRDStreamHandler.h,v 1.5 2010/02/08 11:58:14 mommsen Exp $
+// $Id: FRDStreamHandler.h,v 1.6 2010/03/19 13:24:30 mommsen Exp $
 /// @file: FRDStreamHandler.h 
 
-#ifndef StorageManager_FRDStreamHandler_h
-#define StorageManager_FRDStreamHandler_h
+#ifndef EventFilter_StorageManager_FRDStreamHandler_h
+#define EventFilter_StorageManager_FRDStreamHandler_h
 
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 #include "EventFilter/StorageManager/interface/StreamHandler.h"
@@ -18,8 +18,8 @@ namespace stor {
    * Handle one FED Raw Data (error) event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2010/02/08 11:58:14 $
+   * $Revision: 1.6 $
+   * $Date: 2010/03/19 13:24:30 $
    */
   
   class FRDStreamHandler : public StreamHandler
@@ -68,7 +68,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_FRDStreamHandler_h 
+#endif // EventFilter_StorageManager_FRDStreamHandler_h 
 
 
 /// emacs configuration

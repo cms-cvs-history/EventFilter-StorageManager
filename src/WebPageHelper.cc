@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.56.2.3 2011/01/14 18:30:22 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.56.2.4 2011/01/21 15:47:02 mommsen Exp $
 /// @file: WebPageHelper.cc
 
 #ifdef __APPLE__
@@ -373,7 +373,7 @@ XHTMLMaker::Node* WebPageHelper::createWebPageBody
   header = maker.addNode("b", header);
   maker.addText(header, _appDescriptor->getClassName());
 
-  const std::string cvsVersion = "$Name:  $";
+  const std::string cvsVersion = "$Name: SMPSdev_branch $";
   if ( cvsVersion.length() > 9 ) {
     const std::string smVersion = "(" + cvsVersion.substr(7, cvsVersion.length()-9) + ")";
     maker.addText(instanceTableDiv, smVersion);
@@ -1491,7 +1491,7 @@ void WebPageHelper::addDOMforEventConsumers
     
     // Events in queue:
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-    maker.addInt(tableDiv, sharedResources->_eventConsumerQueueCollection->size( (*it)->queueId() ));
+    maker.addInt(tableDiv, sharedResources->_eventQueueCollection->size( (*it)->queueId() ));
     
     // Events enqueued:
     MonitoredQuantity::Stats enqueuedStats;
@@ -1723,7 +1723,7 @@ void WebPageHelper::addDOMforDQMEventConsumers
     
     // Events in queue:
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-    maker.addInt(tableDiv, sharedResources->_dqmEventConsumerQueueCollection->size( (*it)->queueId() ));
+    maker.addInt(tableDiv, sharedResources->_dqmEventQueueCollection->size( (*it)->queueId() ));
 
     // Events enqueued:
     MonitoredQuantity::Stats enqueuedStats;

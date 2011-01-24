@@ -1,8 +1,8 @@
-// $Id: StreamHandler.h,v 1.12 2010/05/11 17:58:01 mommsen Exp $
+// $Id: StreamHandler.h,v 1.13 2010/05/17 15:59:09 mommsen Exp $
 /// @file: StreamHandler.h 
 
-#ifndef StorageManager_StreamHandler_h
-#define StorageManager_StreamHandler_h
+#ifndef EventFilter_StorageManager_StreamHandler_h
+#define EventFilter_StorageManager_StreamHandler_h
 
 #include <stdint.h>
 
@@ -24,8 +24,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.12 $
-   * $Date: 2010/05/11 17:58:01 $
+   * $Revision: 1.13 $
+   * $Date: 2010/05/17 15:59:09 $
    */
   
   class StreamHandler
@@ -160,7 +160,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_StreamHandler_h 
+#endif // EventFilter_StorageManager_StreamHandler_h 
 
 
 /// emacs configuration

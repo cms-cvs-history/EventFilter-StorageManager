@@ -1,8 +1,8 @@
-// $Id: FilesMonitorCollection.h,v 1.14 2010/09/28 16:25:29 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.15 2010/12/15 10:09:14 mommsen Exp $
 /// @file: FilesMonitorCollection.h 
 
-#ifndef StorageManager_FilesMonitorCollection_h
-#define StorageManager_FilesMonitorCollection_h
+#ifndef EventFilter_StorageManager_FilesMonitorCollection_h
+#define EventFilter_StorageManager_FilesMonitorCollection_h
 
 #include <iomanip>
 #include <sstream>
@@ -24,8 +24,8 @@ namespace stor {
    * A collection of monitoring entities for open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.14 $
-   * $Date: 2010/09/28 16:25:29 $
+   * $Revision: 1.15 $
+   * $Date: 2010/12/15 10:09:14 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -108,7 +108,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_FilesMonitorCollection_h 
+#endif // EventFilter_StorageManager_FilesMonitorCollection_h 
 
 
 /// emacs configuration

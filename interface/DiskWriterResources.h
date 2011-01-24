@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.7 2010/03/19 13:24:30 mommsen Exp $
+// $Id: DiskWriterResources.h,v 1.8 2010/12/10 19:38:48 mommsen Exp $
 /// @file: DiskWriterResources.h 
 
 
@@ -25,8 +25,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/03/19 13:24:30 $
+   * $Revision: 1.8 $
+   * $Date: 2010/12/10 19:38:48 $
    */
 
   class DiskWriterResources
@@ -124,10 +124,12 @@ namespace stor
     
     mutable boost::mutex _streamChangeMutex;
   };
+  
+  typedef boost::shared_ptr<DiskWriterResources> DiskWriterResourcesPtr;
 
-}
+} // namespace stor
 
-#endif
+#endif // EventFilter_StorageManager_DiskWriterResources_h
 
 /// emacs configuration
 /// Local Variables: -

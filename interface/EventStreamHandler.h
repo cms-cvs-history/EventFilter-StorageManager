@@ -1,8 +1,8 @@
-// $Id: EventStreamHandler.h,v 1.5 2010/02/08 11:58:14 mommsen Exp $
+// $Id: EventStreamHandler.h,v 1.6 2010/03/19 13:24:30 mommsen Exp $
 /// @file: EventStreamHandler.h 
 
-#ifndef StorageManager_EventStreamHandler_h
-#define StorageManager_EventStreamHandler_h
+#ifndef EventFilter_StorageManager_EventStreamHandler_h
+#define EventFilter_StorageManager_EventStreamHandler_h
 
 #include <string>
 
@@ -22,8 +22,8 @@ namespace stor {
    * Handle one event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2010/02/08 11:58:14 $
+   * $Revision: 1.6 $
+   * $Date: 2010/03/19 13:24:30 $
    */
   
   class EventStreamHandler : public StreamHandler
@@ -65,14 +65,14 @@ namespace stor {
 
 
     EventStreamConfigurationInfo _streamConfig;
-    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+    InitMsgCollectionPtr _initMsgCollection;
     InitMsgSharedPtr _initMsgView;
 
   };
   
 } // namespace stor
 
-#endif // StorageManager_EventStreamHandler_h 
+#endif // EventFilter_StorageManager_EventStreamHandler_h 
 
 
 /// emacs configuration

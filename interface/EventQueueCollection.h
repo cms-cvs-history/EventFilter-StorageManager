@@ -1,9 +1,10 @@
-// $Id: EventQueueCollection.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+// $Id: EventQueueCollection.h,v 1.3.14.1 2011/01/21 15:51:20 mommsen Exp $
 /// @file: EventQueueCollection.h 
 
-#ifndef StorageManager_EventQueueCollection_h
-#define StorageManager_EventQueueCollection_h
+#ifndef EventFilter_StorageManager_EventQueueCollection_h
+#define EventFilter_StorageManager_EventQueueCollection_h
 
+#include "boost/shared_ptr.hpp"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/QueueCollection.h"
 
@@ -13,8 +14,8 @@ namespace stor {
    * A collection of ConcurrentQueue<I2OChain>.
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/20 13:06:10 $
+   * $Revision: 1.3.14.1 $
+   * $Date: 2011/01/21 15:51:20 $
    */
 
   typedef QueueCollection<I2OChain> EventQueueCollection;
@@ -22,7 +23,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_EventQueueCollection_h 
+#endif // EventFilter_StorageManager_EventQueueCollection_h 
 
 
 

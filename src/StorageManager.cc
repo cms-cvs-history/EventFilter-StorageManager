@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.134 2010/12/02 15:53:09 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134.2.1 2011/01/21 15:50:22 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -188,19 +188,19 @@ void StorageManager::initializeSharedResources()
   _sharedResources->_registrationCollection.reset( new RegistrationCollection() );
   EventConsumerMonitorCollection& ecmc = 
     _sharedResources->_statisticsReporter->getEventConsumerMonitorCollection();
-  _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( ecmc ) );
+  _sharedResources->_eventQueueCollection.reset( new EventQueueCollection( ecmc ) );
 
   DQMConsumerMonitorCollection& dcmc = 
     _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
-  _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
+  _sharedResources->_dqmEventQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
 
   _consumerUtils.reset( new ConsumerUtils_t (
       _sharedResources->_configuration,
       _sharedResources->_registrationCollection,
       _sharedResources->_registrationQueue,
       _sharedResources->_initMsgCollection,
-      _sharedResources->_eventConsumerQueueCollection,
-      _sharedResources->_dqmEventConsumerQueueCollection,
+      _sharedResources->_eventQueueCollection,
+      _sharedResources->_dqmEventQueueCollection,
       _sharedResources->_statisticsReporter->alarmHandler()
     ) );
 }

@@ -1,8 +1,8 @@
-// $Id: EventServerProxy.h,v 1.1.2.1 2011/01/17 14:33:52 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.2 2011/01/18 15:56:37 mommsen Exp $
 /// @file: EventServerProxy.h
 
-#ifndef StorageManager_EventServerProxy_h
-#define StorageManager_EventServerProxy_h
+#ifndef EventFilter_StorageManager_EventServerProxy_h
+#define EventFilter_StorageManager_EventServerProxy_h
 
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -20,8 +20,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2011/01/17 14:33:52 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2011/01/18 15:56:37 $
    */
  
   class EventServerProxy
@@ -81,7 +81,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_EventServerProxy_h
+#endif // EventFilter_StorageManager_EventServerProxy_h
 
 
 /// emacs configuration

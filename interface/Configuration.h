@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.26 2010/12/14 12:56:51 mommsen Exp $
+// $Id: Configuration.h,v 1.26.2.1 2011/01/21 15:51:20 mommsen Exp $
 /// @file: Configuration.h 
 
 
@@ -162,8 +162,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: mommsen $
-   * $Revision: 1.26 $
-   * $Date: 2010/12/14 12:56:51 $
+   * $Revision: 1.26.2.1 $
+   * $Date: 2011/01/21 15:51:20 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -404,7 +404,9 @@ namespace stor
     ErrStrConfigListPtr _currentErrorStreamConfig;
   };
 
-}
+  typedef boost::shared_ptr<Configuration> ConfigurationPtr;
+
+} // namespace stor
 
 #endif // EventFilter_StorageManager_Configuration_h
 

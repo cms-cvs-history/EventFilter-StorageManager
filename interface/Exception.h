@@ -1,8 +1,8 @@
-// $Id: Exception.h,v 1.15 2010/05/03 12:16:57 mommsen Exp $
+// $Id: Exception.h,v 1.15.4.1 2011/01/21 15:48:59 mommsen Exp $
 /// @file: Exception.h 
 
-#ifndef StorageManager_Exception_h
-#define StorageManager_Exception_h
+#ifndef EventFilter_StorageManager_Exception_h
+#define EventFilter_StorageManager_Exception_h
 
 
 #include "xcept/Exception.h"
@@ -14,8 +14,8 @@ namespace stor {
      List of exceptions thrown by the StorageManager
 
      $Author: mommsen $
-     $Revision: 1.15 $
-     $Date: 2010/05/03 12:16:57 $
+     $Revision: 1.15.4.1 $
+     $Date: 2011/01/21 15:48:59 $
   */
 }
 
@@ -181,7 +181,7 @@ XCEPT_DEFINE_EXCEPTION( stor, FaultyEvents )
 XCEPT_DEFINE_EXCEPTION( stor, IgnoredDiscard )
 
 
-#endif // StorageManager_Exception_h
+#endif // EventFilter_StorageManager_Exception_h
 
 
 /// emacs configuration

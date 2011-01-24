@@ -1,8 +1,8 @@
-// $Id: QueueCollection.h,v 1.10.2.2 2011/01/14 18:30:22 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.3 2011/01/21 15:51:20 mommsen Exp $
 /// @file: QueueCollection.h 
 
-#ifndef StorageManager_QueueCollection_h
-#define StorageManager_QueueCollection_h
+#ifndef EventFilter_StorageManager_QueueCollection_h
+#define EventFilter_StorageManager_QueueCollection_h
 
 #include <vector>
 #include <limits>
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.2 $
-   * $Date: 2011/01/14 18:30:22 $
+   * $Revision: 1.10.2.3 $
+   * $Date: 2011/01/21 15:51:20 $
    */
 
   template <class T>
@@ -767,7 +767,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_QueueCollection_h 
+#endif // EventFilter_StorageManager_QueueCollection_h 
 
 /// emacs configuration
 /// Local Variables: -

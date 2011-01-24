@@ -1,8 +1,8 @@
-// $Id: RunMonitorCollection.h,v 1.11 2010/05/17 15:59:09 mommsen Exp $
+// $Id: RunMonitorCollection.h,v 1.12 2010/06/03 14:04:37 mommsen Exp $
 /// @file: RunMonitorCollection.h 
 
-#ifndef StorageManager_RunMonitorCollection_h
-#define StorageManager_RunMonitorCollection_h
+#ifndef EventFilter_StorageManager_RunMonitorCollection_h
+#define EventFilter_StorageManager_RunMonitorCollection_h
 
 #include <boost/thread/mutex.hpp>
 
@@ -21,8 +21,8 @@ namespace stor {
    * in the current run
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2010/05/17 15:59:09 $
+   * $Revision: 1.12 $
+   * $Date: 2010/06/03 14:04:37 $
    */
   
   class RunMonitorCollection : public MonitorCollection
@@ -32,7 +32,7 @@ namespace stor {
     RunMonitorCollection
     (
       const utils::duration_t& updateInterval,
-      boost::shared_ptr<AlarmHandler>,
+      AlarmHandlerPtr,
       SharedResourcesPtr
     );
 
@@ -96,7 +96,7 @@ namespace stor {
     MonitoredQuantity _lumiSectionsSeen;
     MonitoredQuantity _eolsSeen;
 
-    boost::shared_ptr<AlarmHandler> _alarmHandler;
+    AlarmHandlerPtr _alarmHandler;
     SharedResourcesPtr _sharedResources;
 
     virtual void do_calculateStatistics();
@@ -134,7 +134,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_RunMonitorCollection_h 
+#endif // EventFilter_StorageManager_RunMonitorCollection_h 
 
 
 /// emacs configuration

@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.16.2.5 2011/01/19 13:50:38 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.1 2011/01/21 15:50:22 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -31,12 +31,12 @@ ConsumerUtils<Configuration_t,EventQueueCollection_t>::
 ConsumerUtils
 (
   boost::shared_ptr<Configuration_t> configuration,
-  boost::shared_ptr<RegistrationCollection> registrationCollection,
-  boost::shared_ptr<RegistrationQueue> registrationQueue,
-  boost::shared_ptr<InitMsgCollection> initMsgCollection,
+  RegistrationCollectionPtr registrationCollection,
+  RegistrationQueuePtr registrationQueue,
+  InitMsgCollectionPtr initMsgCollection,
   boost::shared_ptr<EventQueueCollection_t> eventQueueCollection,
-  boost::shared_ptr<DQMEventQueueCollection> dqmEventQueueCollection,
-  StatisticsReporter::AlarmHandlerPtr alarmHandler
+  DQMEventQueueCollectionPtr dqmEventQueueCollection,
+  AlarmHandlerPtr alarmHandler
 ) :
 _configuration(configuration),
 _registrationCollection(registrationCollection),

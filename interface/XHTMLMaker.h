@@ -1,9 +1,8 @@
-// -*- c++ -*-
-// $Id: XHTMLMaker.h,v 1.9 2010/12/15 10:09:14 mommsen Exp $
+// $Id: XHTMLMaker.h,v 1.10 2010/12/15 15:29:23 mommsen Exp $
 /// @file: XHTMLMaker.h 
 
-#ifndef XHTMLMAKER_H
-#define XHTMLMAKER_H
+#ifndef EventFilter_StorageManager_XHTMLMaker_h
+#define EventFilter_StorageManager_XHTMLMaker_h
 
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
@@ -15,155 +14,162 @@
 #include <iostream>
 #include <stdint.h>
 
-/**
-   Helper class to build XHTML pages
-
-   $Author: mommsen $
-   $Revision: 1.9 $
-   $Date: 2010/12/15 10:09:14 $
-*/
-
-class XHTMLMaker
-{
-
-public:
+namespace stor {
 
   /**
-     Typedefs
-  */
-  typedef xercesc::DOMElement Node;
-  typedef std::map<std::string,std::string> AttrMap;
+    Helper class to build XHTML pages
 
-  /**
-     Constructor
+    $Author: mommsen $
+    $Revision: 1.10 $
+    $Date: 2010/12/15 15:29:23 $
   */
-  XHTMLMaker();
 
-  /**
-     Destructor
-  */
-  ~XHTMLMaker();
-
-  /**
-     Initialize page and return body element
-  */
-  Node* start( const std::string& title );
-
-  /**
-     Useful for css and javascript
-  */
-  Node* getHead() const { return _head; }
-
-  /**
-     Add child
-  */
-  Node* addNode( const std::string& name,
-                 Node* parent,
-                 const AttrMap& attrs );
-
-  /**
-     Add child to top level
-  */
-  Node* addNode( const std::string& name, const AttrMap& attrs )
+  class XHTMLMaker
   {
-    return addNode( name, (Node*)0, attrs );
-  }
+    
+  public:
+    
+    /**
+       Typedefs
+    */
+    typedef xercesc::DOMElement Node;
+    typedef std::map<std::string,std::string> AttrMap;
+    
+    /**
+      Constructor
+    */
+    XHTMLMaker();
+ 
+    /**
+      Destructor
+    */
+    ~XHTMLMaker();
 
-  /**
-     Add child without attributes
-  */
-  Node* addNode( const std::string& name, Node* parent )
-  {
-    AttrMap empty;
-    return addNode( name, parent, empty );
-  }
+    /**
+      Initialize page and return body element
+    */
+    Node* start( const std::string& title );
 
-  /**
-     Add child to top without attributes
-  */
-  Node* addNode( const std::string& name )
-  {
-    return addNode( name, (Node*)0 );
-  }
+    /**
+      Useful for css and javascript
+    */
+    Node* getHead() const { return _head; }
 
-  /**
-     Add text
-  */
-  void addText( Node* parent, const std::string& );
+    /**
+      Add child
+    */
+    Node* addNode
+    (
+      const std::string& name,
+      Node* parent,
+      const AttrMap& attrs
+    );
 
-  /**
-     Add an int
-  */
-  void addInt( Node* parent, const int& );
+    /**
+      Add child to top level
+    */
+    Node* addNode( const std::string& name, const AttrMap& attrs )
+    {
+      return addNode( name, (Node*)0, attrs );
+    }
 
-  /**
-     Add an unsigned int
-  */
-  void addInt( Node* parent, const unsigned int& );
+    /**
+      Add child without attributes
+    */
+    Node* addNode( const std::string& name, Node* parent )
+    {
+      AttrMap empty;
+      return addNode( name, parent, empty );
+    }
 
-  /**
-     Add a long
-  */
-  void addInt( Node* parent, const long& );
+    /**
+      Add child to top without attributes
+    */
+    Node* addNode( const std::string& name )
+    {
+      return addNode( name, (Node*)0 );
+    }
 
-  /**
-     Add an unsigned long
-  */
-  void addInt( Node* parent, const unsigned long& );
+    /**
+      Add text
+    */
+    void addText( Node* parent, const std::string& );
 
-  /**
-     Add a long long
-  */
-  void addInt( Node* parent, const long long& );
+    /**
+      Add an int
+    */
+    void addInt( Node* parent, const int& );
 
-  /**
-     Add an unsigned long
-  */
-  void addInt( Node* parent, const unsigned long long& );
+    /**
+      Add an unsigned int
+    */
+    void addInt( Node* parent, const unsigned int& );
 
-  /**
-     Add a double
-  */
-  void addDouble( Node* parent, const double& value, const unsigned int& precision = 2 );
+    /**
+      Add a long
+    */
+    void addInt( Node* parent, const long& );
 
-  /**
-     Dump the page to stdout
-  */
-  void out();
+    /**
+      Add an unsigned long
+    */
+    void addInt( Node* parent, const unsigned long& );
 
-  /**
-     Dump the page to a local file
-  */
-  void out( const std::string& dest );
+    /**
+      Add a long long
+    */
+    void addInt( Node* parent, const long long& );
 
-  /**
-     Dump the page to a string
-  */
-  void out( std::string& dest );
+    /**
+      Add an unsigned long
+    */
+    void addInt( Node* parent, const unsigned long long& );
 
-  /**
-     Dump the page into an output stream
-  */
-  void out( std::ostream& dest );
+    /**
+      Add a double
+    */
+    void addDouble( Node* parent, const double& value, const unsigned int& precision = 2 );
 
-private:
+    /**
+      Dump the page to stdout
+    */
+    void out();
 
-  xercesc::DOMDocument* _doc;
-  xercesc::DOMWriter* _writer;
-  xercesc::DOMDocumentType* _typ;
+    /**
+      Dump the page to a local file
+    */
+    void out( const std::string& dest );
 
-  Node* _head;
+    /**
+      Dump the page to a string
+    */
+    void out( std::string& dest );
 
-  bool _page_started;
+    /**
+      Dump the page into an output stream
+    */
+    void out( std::ostream& dest );
 
-  /**
-     Set DOMWriter features
-  */
-  void _setWriterFeatures();
+  private:
 
-};
+    xercesc::DOMDocument* _doc;
+    xercesc::DOMWriter* _writer;
+    xercesc::DOMDocumentType* _typ;
+    
+    Node* _head;
+    
+    bool _page_started;
 
-#endif
+    /**
+      Set DOMWriter features
+    */
+    void _setWriterFeatures();
+    
+  };
+
+} // namespace stor
+
+#endif // EventFilter_StorageManager_XHTMLMaker_h
 
 /// emacs configuration
 /// Local Variables: -

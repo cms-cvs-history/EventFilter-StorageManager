@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.13 2010/06/03 14:04:28 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.14 2010/12/14 12:56:52 mommsen Exp $
 /// @file: RunMonitorCollection.cc
 
 #include <string>
@@ -18,7 +18,7 @@ using namespace stor;
 RunMonitorCollection::RunMonitorCollection
 (
   const utils::duration_t& updateInterval,
-  boost::shared_ptr<AlarmHandler> ah,
+  AlarmHandlerPtr ah,
   SharedResourcesPtr sr
 ) :
 MonitorCollection(updateInterval),

@@ -1,9 +1,9 @@
 
-// $Id: ConsumerID.h,v 1.2 2009/06/10 08:15:21 dshpakov Exp $
+// $Id: ConsumerID.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
 /// @file: ConsumerID.h 
 
-#ifndef StorageManager_ConsumerID_h
-#define StorageManager_ConsumerID_h
+#ifndef EventFilter_StorageManager_ConsumerID_h
+#define EventFilter_StorageManager_ConsumerID_h
 
 #include <cstddef>
 #include <iostream>
@@ -15,9 +15,9 @@ namespace stor {
   /**
    * Uniquely identifies a consumer.
    *
-   * $Author: dshpakov $
-   * $Revision: 1.2 $
-   * $Date: 2009/06/10 08:15:21 $
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   struct ConsumerID
@@ -73,7 +73,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_ConsumerID_h 
+#endif // EventFilter_StorageManager_ConsumerID_h 
 
 
 /// emacs configuration

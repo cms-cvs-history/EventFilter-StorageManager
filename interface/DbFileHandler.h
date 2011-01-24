@@ -1,8 +1,8 @@
-// $Id: DbFileHandler.h,v 1.3 2010/03/25 09:55:27 mommsen Exp $
+// $Id: DbFileHandler.h,v 1.4 2010/03/31 12:34:43 mommsen Exp $
 /// @file: DbFileHandler.h 
 
-#ifndef StorageManager_DbFileHandler_h
-#define StorageManager_DbFileHandler_h
+#ifndef EventFilter_StorageManager_DbFileHandler_h
+#define EventFilter_StorageManager_DbFileHandler_h
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 
@@ -19,8 +19,8 @@ namespace stor {
    * Handle the file used to pass information into SM database
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2010/03/25 09:55:27 $
+   * $Revision: 1.4 $
+   * $Date: 2010/03/31 12:34:43 $
    */
 
   class DbFileHandler
@@ -66,7 +66,7 @@ namespace stor {
   
 } // stor namespace
 
-#endif // StorageManager_DbFileHandler_h
+#endif // EventFilter_StorageManager_DbFileHandler_h
 
 
 /// emacs configuration

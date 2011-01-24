@@ -1,8 +1,8 @@
-// $Id: FileHandler.h,v 1.15 2010/11/05 10:33:38 mommsen Exp $
+// $Id: FileHandler.h,v 1.16 2010/12/15 10:09:14 mommsen Exp $
 /// @file: FileHandler.h 
 
-#ifndef StorageManager_FileHandler_h
-#define StorageManager_FileHandler_h
+#ifndef EventFilter_StorageManager_FileHandler_h
+#define EventFilter_StorageManager_FileHandler_h
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DbFileHandler.h"
@@ -25,8 +25,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.15 $
-   * $Date: 2010/11/05 10:33:38 $
+   * $Revision: 1.16 $
+   * $Date: 2010/12/15 10:09:14 $
    */
 
   class FileHandler
@@ -216,7 +216,7 @@ namespace stor {
   
 } // stor namespace
 
-#endif // StorageManager_FileHandler_h
+#endif // EventFilter_StorageManager_FileHandler_h
 
 
 /// emacs configuration

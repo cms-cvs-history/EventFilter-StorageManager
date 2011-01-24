@@ -1,8 +1,8 @@
-// $Id: FragmentMonitorCollection.h,v 1.6 2009/08/24 14:31:11 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.7 2009/12/08 15:03:43 mommsen Exp $
 /// @file: FragmentMonitorCollection.h 
 
-#ifndef StorageManager_FragmentMonitorCollection_h
-#define StorageManager_FragmentMonitorCollection_h
+#ifndef EventFilter_StorageManager_FragmentMonitorCollection_h
+#define EventFilter_StorageManager_FragmentMonitorCollection_h
 
 #include "xdata/Double.h"
 #include "xdata/UnsignedInteger32.h"
@@ -16,8 +16,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2009/08/24 14:31:11 $
+   * $Revision: 1.7 $
+   * $Date: 2009/12/08 15:03:43 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -132,7 +132,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_FragmentMonitorCollection_h 
+#endif // EventFilter_StorageManager_FragmentMonitorCollection_h 
 
 
 /// emacs configuration

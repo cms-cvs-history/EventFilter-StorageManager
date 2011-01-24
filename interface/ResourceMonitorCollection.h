@@ -1,8 +1,8 @@
-// $Id: ResourceMonitorCollection.h,v 1.26 2010/04/12 15:25:26 mommsen Exp $
+// $Id: ResourceMonitorCollection.h,v 1.27 2010/12/01 13:44:48 eulisse Exp $
 /// @file: ResourceMonitorCollection.h 
 
-#ifndef StorageManager_ResourceMonitorCollection_h
-#define StorageManager_ResourceMonitorCollection_h
+#ifndef EventFilter_StorageManager_ResourceMonitorCollection_h
+#define EventFilter_StorageManager_ResourceMonitorCollection_h
 
 #include <set>
 #include <vector>
@@ -32,9 +32,9 @@ namespace stor {
   /**
    * A collection of MonitoredQuantities related to resource usages
    *
-   * $Author: mommsen $
-   * $Revision: 1.26 $
-   * $Date: 2010/04/12 15:25:26 $
+   * $Author: eulisse $
+   * $Revision: 1.27 $
+   * $Date: 2010/12/01 13:44:48 $
    */
   
   class ResourceMonitorCollection : public MonitorCollection
@@ -71,7 +71,7 @@ namespace stor {
     ResourceMonitorCollection
     (
       const utils::duration_t& updateInterval,
-      boost::shared_ptr<AlarmHandler>
+      AlarmHandlerPtr
     );
 
     /**
@@ -112,7 +112,7 @@ namespace stor {
     mutable boost::mutex _diskUsageListMutex;
 
     const utils::duration_t _updateInterval;
-    boost::shared_ptr<AlarmHandler> _alarmHandler;
+    AlarmHandlerPtr _alarmHandler;
 
     //Prevent copying of the ResourceMonitorCollection
     ResourceMonitorCollection(ResourceMonitorCollection const&);
@@ -168,7 +168,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_ResourceMonitorCollection_h 
+#endif // EventFilter_StorageManager_ResourceMonitorCollection_h 
 
 
 /// emacs configuration

@@ -1,8 +1,8 @@
-// $Id: RegistrationCollection.h,v 1.7.2.1 2011/01/14 18:30:22 mommsen Exp $
+// $Id: RegistrationCollection.h,v 1.7.2.2 2011/01/21 15:51:20 mommsen Exp $
 /// @file: RegistrationCollection.h 
 
-#ifndef StorageManager_RegistrationCollection_h
-#define StorageManager_RegistrationCollection_h
+#ifndef EventFilter_StorageManager_RegistrationCollection_h
+#define EventFilter_StorageManager_RegistrationCollection_h
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -22,8 +22,8 @@ namespace stor
      Keep a collection of registered event and DQM event consumers.
 
      $Author: mommsen $
-     $Revision: 1.7.2.1 $
-     $Date: 2011/01/14 18:30:22 $
+     $Revision: 1.7.2.2 $
+     $Date: 2011/01/21 15:51:20 $
   */
 
   class RegistrationCollection
@@ -100,7 +100,7 @@ namespace stor
 
 } // namespace stor
 
-#endif // StorageManager_RegistrationCollection_h
+#endif // EventFilter_StorageManager_RegistrationCollection_h
 
 
 /// emacs configuration

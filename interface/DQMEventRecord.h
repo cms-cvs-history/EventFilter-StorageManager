@@ -1,8 +1,8 @@
-// $Id: DQMEventRecord.h,v 1.10.2.1 2010/04/22 14:02:39 mommsen Exp $
+// $Id: DQMEventRecord.h,v 1.11 2010/04/30 07:44:16 mommsen Exp $
 /// @file: DQMEventRecord.h 
 
-#ifndef StorageManager_DQMEventRecord_h
-#define StorageManager_DQMEventRecord_h
+#ifndef EventFilter_StorageManager_DQMEventRecord_h
+#define EventFilter_StorageManager_DQMEventRecord_h
 
 #include <vector>
 
@@ -25,8 +25,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.1 $
-   * $Date: 2010/04/22 14:02:39 $
+   * $Revision: 1.11 $
+   * $Date: 2010/04/30 07:44:16 $
    */
 
   class DQMEventRecord : public DQMInstance
@@ -135,7 +135,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_DQMEventRecord_h 
+#endif // EventFilter_StorageManager_DQMEventRecord_h 
 
 
 /// emacs configuration

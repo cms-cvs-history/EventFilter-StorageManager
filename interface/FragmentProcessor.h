@@ -1,8 +1,8 @@
-// $Id: FragmentProcessor.h,v 1.4 2009/08/28 16:41:49 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.5 2010/12/10 19:38:48 mommsen Exp $
 /// @file: FragmentProcessor.h 
 
-#ifndef StorageManager_FragmentProcessor_h
-#define StorageManager_FragmentProcessor_h
+#ifndef EventFilter_StorageManager_FragmentProcessor_h
+#define EventFilter_StorageManager_FragmentProcessor_h
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
@@ -15,6 +15,7 @@
 #include "EventFilter/StorageManager/interface/FragmentQueue.h"
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
+#include "EventFilter/StorageManager/interface/StateMachine.h"
 #include "EventFilter/StorageManager/interface/WrapperNotifier.h"
 
 
@@ -22,7 +23,6 @@ namespace stor {
 
   class I2OChain;
   class QueueID;
-  class StateMachine;
 
 
   /**
@@ -33,8 +33,8 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: mommsen $
-   * $Revision: 1.4 $
-   * $Date: 2009/08/28 16:41:49 $
+   * $Revision: 1.5 $
+   * $Date: 2010/12/10 19:38:48 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -84,7 +84,7 @@ namespace stor {
     xdaq::Application*                 _app;
     SharedResourcesPtr                 _sharedResources;
     WrapperNotifier                    _wrapperNotifier;
-    boost::shared_ptr<StateMachine>    _stateMachine;
+    StateMachinePtr    _stateMachine;
     FragmentStore                      _fragmentStore;
     EventDistributor                   _eventDistributor;
 
@@ -97,7 +97,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_FragmentProcessor_h 
+#endif // EventFilter_StorageManager_FragmentProcessor_h 
 
 
 /// emacs configuration

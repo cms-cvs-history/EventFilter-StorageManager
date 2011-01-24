@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.cc,v 1.38 2010/10/19 06:15:35 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.39 2010/12/01 13:44:48 eulisse Exp $
 /// @file: ResourceMonitorCollection.cc
 
 #include <stdio.h>
@@ -33,7 +33,7 @@ using namespace stor;
 ResourceMonitorCollection::ResourceMonitorCollection
 (
   const utils::duration_t& updateInterval,
-  boost::shared_ptr<AlarmHandler> ah
+  AlarmHandlerPtr ah
 ) :
 MonitorCollection(updateInterval),
 _updateInterval(updateInterval),

@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.cc,v 1.11 2010/03/09 12:58:04 mommsen Exp $
+// $Id: DQMEventStore.cc,v 1.12 2010/12/14 12:56:52 mommsen Exp $
 /// @file: DQMEventStore.cc
 
 #include "TROOT.h"
@@ -7,7 +7,6 @@
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventStore.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
-#include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
 #include "EventFilter/StorageManager/interface/Utils.h"

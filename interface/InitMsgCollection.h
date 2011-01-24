@@ -1,8 +1,8 @@
-// $Id: InitMsgCollection.h,v 1.12 2010/12/17 18:21:04 mommsen Exp $
+// $Id: InitMsgCollection.h,v 1.12.2.1 2011/01/21 15:51:20 mommsen Exp $
 /// @file: InitMsgCollection.h 
 
-#ifndef StorageManager_InitMsgCollection_h
-#define StorageManager_InitMsgCollection_h
+#ifndef EventFilter_StorageManager_InitMsgCollection_h
+#define EventFilter_StorageManager_InitMsgCollection_h
 
 #include "IOPool/Streamer/interface/InitMessage.h"
 
@@ -22,8 +22,8 @@ namespace stor
      to event consumers and written to output streams.
 
      $Author: mommsen $
-     $Revision: 1.12 $
-     $Date: 2010/12/17 18:21:04 $
+     $Revision: 1.12.2.1 $
+     $Date: 2011/01/21 15:51:20 $
   */
 
   typedef std::vector<unsigned char> InitMsgBuffer;
@@ -186,7 +186,7 @@ namespace stor
 
 } //namespace stor
 
-#endif // StorageManager_InitMsgCollection_h
+#endif // EventFilter_StorageManager_InitMsgCollection_h
 
 
 /// emacs configuration

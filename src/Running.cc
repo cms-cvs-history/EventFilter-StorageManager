@@ -1,4 +1,4 @@
-// $Id: Running.cc,v 1.8 2009/09/29 07:57:56 mommsen Exp $
+// $Id: Running.cc,v 1.9 2010/08/06 20:24:31 wmtan Exp $
 /// @file: Running.cc
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
@@ -42,8 +42,8 @@ void Running::do_entryActionWork()
   // Clear old consumer registrations:
   sharedResources->_registrationCollection->clearRegistrations();
   ed->clearConsumers();
-  sharedResources->_eventConsumerQueueCollection->removeQueues();
-  sharedResources->_dqmEventConsumerQueueCollection->removeQueues();
+  sharedResources->_eventQueueCollection->removeQueues();
+  sharedResources->_dqmEventQueueCollection->removeQueues();
 
   // Enable consumer registration:
   sharedResources->_registrationCollection->enableConsumerRegistration();
@@ -67,8 +67,8 @@ void Running::do_exitActionWork()
   sharedResources->_registrationCollection->disableConsumerRegistration();
 
   // Clear consumer queues
-  sharedResources->_eventConsumerQueueCollection->clearQueues();
-  sharedResources->_dqmEventConsumerQueueCollection->clearQueues();
+  sharedResources->_eventQueueCollection->clearQueues();
+  sharedResources->_dqmEventQueueCollection->clearQueues();
 
   // Clear the queues
   sharedResources->_fragmentQueue->clear();

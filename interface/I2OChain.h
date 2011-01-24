@@ -1,8 +1,8 @@
-// $Id: I2OChain.h,v 1.9 2010/04/30 07:44:16 mommsen Exp $
+// $Id: I2OChain.h,v 1.10 2010/05/17 15:59:09 mommsen Exp $
 /// @file: I2OChain.h 
 
-#ifndef StorageManager_I2OChain_h
-#define StorageManager_I2OChain_h
+#ifndef EventFilter_StorageManager_I2OChain_h
+#define EventFilter_StorageManager_I2OChain_h
 
 #include <vector>
 
@@ -28,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: mommsen $
-   * $Revision: 1.9 $
-   * $Date: 2010/04/30 07:44:16 $
+   * $Revision: 1.10 $
+   * $Date: 2010/05/17 15:59:09 $
    */
 
 
@@ -557,7 +557,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_I2OChain_h 
+#endif // EventFilter_StorageManager_I2OChain_h 
 
 
 /// emacs configuration

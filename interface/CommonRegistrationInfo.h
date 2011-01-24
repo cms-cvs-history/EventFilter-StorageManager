@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.h,v 1.4.8.1 2011/01/13 13:28:41 mommsen Exp $
+// $Id: CommonRegistrationInfo.h,v 1.4.8.2 2011/01/19 13:50:38 mommsen Exp $
 /// @file: CommonRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -23,8 +23,8 @@ namespace stor
    * data member.
    *
    * $Author: mommsen $
-   * $Revision: 1.4.8.1 $
-   * $Date: 2011/01/13 13:28:41 $
+   * $Revision: 1.4.8.2 $
+   * $Date: 2011/01/19 13:50:38 $
    */
 
   struct CommonRegistrationInfo
@@ -66,7 +66,7 @@ namespace stor
   
 } // namespace stor
 
-#endif
+#endif // EventFilter_StorageManager_CommonRegistrationInfo_h
 
 
 /// emacs configuration

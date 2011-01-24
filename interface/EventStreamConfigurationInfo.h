@@ -1,8 +1,8 @@
-// $Id: EventStreamConfigurationInfo.h,v 1.9 2010/12/16 16:35:29 mommsen Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.10 2010/12/17 18:21:04 mommsen Exp $
 /// @file: EventStreamConfigurationInfo.h
 
-#ifndef StorageManager_EventStreamConfigurationInfo_h
-#define StorageManager_EventStreamConfigurationInfo_h
+#ifndef EventFilter_StorageManager_EventStreamConfigurationInfo_h
+#define EventFilter_StorageManager_EventStreamConfigurationInfo_h
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
@@ -20,8 +20,8 @@ namespace stor
      Configuration information for the event stream
 
      $Author: mommsen $
-     $Revision: 1.9 $
-     $Date: 2010/12/16 16:35:29 $
+     $Revision: 1.10 $
+     $Date: 2010/12/17 18:21:04 $
   */
 
   class EventStreamConfigurationInfo
@@ -83,9 +83,10 @@ namespace stor
   typedef boost::shared_ptr<EvtStrConfigList> EvtStrConfigListPtr;
 
   std::ostream& operator << ( std::ostream&, const EventStreamConfigurationInfo& );
-}
 
-#endif // StorageManager_EventStreamConfigurationInfo_h
+} // namespace stor
+
+#endif // EventFilter_StorageManager_EventStreamConfigurationInfo_h
 
 
 /// emacs configuration

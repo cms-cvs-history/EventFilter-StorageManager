@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.23 2010/12/16 16:35:29 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.23.2.1 2011/01/14 18:30:22 mommsen Exp $
 /// @file: EventDistributor.cc
 
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -76,7 +76,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
   if( ioc.isTaggedForAnyEventConsumer() )
   {
     unexpected = false;
-    _sharedResources->_eventConsumerQueueCollection->addEvent( ioc );
+    _sharedResources->_eventQueueCollection->addEvent( ioc );
   }
 
   if( unexpected && ioc.messageCode() == Header::EVENT )
@@ -362,14 +362,14 @@ void EventDistributor::checkForStaleConsumers()
   // event consumers //
   /////////////////////
 
-  boost::shared_ptr<EventQueueCollection> ecqc =
-    _sharedResources->_eventConsumerQueueCollection;
+  EventQueueCollectionPtr eqc =
+    _sharedResources->_eventQueueCollection;
 
   for( ConsSelList::iterator it = _eventConsumerSelectors.begin(),
          itEnd = _eventConsumerSelectors.end();
        it != itEnd; ++it )
   {
-    if ( ecqc->clearQueueIfStale((*it)->queueId(), now) )
+    if ( eqc->clearQueueIfStale((*it)->queueId(), now) )
       (*it)->markAsStale();
     else
       (*it)->markAsActive();
@@ -379,14 +379,14 @@ void EventDistributor::checkForStaleConsumers()
   // dqm consumers //
   ///////////////////
 
-  boost::shared_ptr<DQMEventQueueCollection> dcqc =
-    _sharedResources->_dqmEventConsumerQueueCollection;
+  DQMEventQueueCollectionPtr dqc =
+    _sharedResources->_dqmEventQueueCollection;
 
   for( DQMEvtSelList::iterator it = _dqmEventSelectors.begin(),
          itEnd = _dqmEventSelectors.end();
        it != itEnd; ++it )
   {
-    if ( dcqc->clearQueueIfStale((*it)->queueId(), now) )
+    if ( dqc->clearQueueIfStale((*it)->queueId(), now) )
       (*it)->markAsStale();
     else
       (*it)->markAsActive();

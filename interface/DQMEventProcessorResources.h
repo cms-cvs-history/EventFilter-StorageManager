@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessorResources.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+// $Id: DQMEventProcessorResources.h,v 1.4 2010/12/10 19:38:48 mommsen Exp $
 /// @file: DQMEventProcessorResources.h 
 
 
@@ -18,8 +18,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/20 13:06:10 $
+   * $Revision: 1.4 $
+   * $Date: 2010/12/10 19:38:48 $
    */
 
   class DQMEventProcessorResources
@@ -99,9 +99,11 @@ namespace stor
     mutable boost::mutex _requestsMutex;
   };
 
-}
+  typedef boost::shared_ptr<DQMEventProcessorResources> DQMEventProcessorResourcesPtr;
 
-#endif
+} // namespace stor
+
+#endif // EventFilter_StorageManager_DQMEventProcessorResources_h
 
 /// emacs configuration
 /// Local Variables: -

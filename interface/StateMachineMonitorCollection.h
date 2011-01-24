@@ -1,8 +1,8 @@
-// $Id: StateMachineMonitorCollection.h,v 1.6 2009/08/18 08:54:13 mommsen Exp $
+// $Id: StateMachineMonitorCollection.h,v 1.7 2010/01/28 13:37:46 mommsen Exp $
 /// @file: StateMachineMonitorCollection.h 
 
-#ifndef StorageManager_StateMachineMonitorCollection_h
-#define StorageManager_StateMachineMonitorCollection_h
+#ifndef EventFilter_StorageManager_StateMachineMonitorCollection_h
+#define EventFilter_StorageManager_StateMachineMonitorCollection_h
 
 #include <ostream>
 #include <string>
@@ -19,8 +19,8 @@ namespace stor {
    * A collection of monitored quantities related to the state machine
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2009/08/18 08:54:13 $
+   * $Revision: 1.7 $
+   * $Date: 2010/01/28 13:37:46 $
    */
   
   class StateMachineMonitorCollection : public MonitorCollection
@@ -99,7 +99,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_StateMachineMonitorCollection_h 
+#endif // EventFilter_StorageManager_StateMachineMonitorCollection_h 
 
 
 /// emacs configuration

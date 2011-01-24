@@ -118,10 +118,10 @@ void testStateMachine::setUp()
     _sr->_statisticsReporter.reset( new StatisticsReporter( _app, _sr ) );
     EventConsumerMonitorCollection& ecmc = 
       _sr->_statisticsReporter->getEventConsumerMonitorCollection();
-    _sr->_eventConsumerQueueCollection.reset( new EventQueueCollection( ecmc ) );
+    _sr->_eventQueueCollection.reset( new EventQueueCollection( ecmc ) );
     DQMConsumerMonitorCollection& dcmc = 
       _sr->_statisticsReporter->getDQMConsumerMonitorCollection();
-    _sr->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
+    _sr->_dqmEventQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
     
     _sr->_discardManager.reset(new DiscardManager(_app->getApplicationContext(),
                                                   _app->getApplicationDescriptor(),

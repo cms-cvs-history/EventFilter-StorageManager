@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.15 2010/12/10 14:31:52 mommsen Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.16 2010/12/15 10:09:14 mommsen Exp $
 /// @file: DataSenderMonitorCollection.cc
 
 #include <string>
@@ -8,7 +8,6 @@
 #include <zlib.h>
 #include <boost/lexical_cast.hpp>
 
-#include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
 
@@ -18,7 +17,7 @@ using namespace stor;
 DataSenderMonitorCollection::DataSenderMonitorCollection
 (
   const utils::duration_t& updateInterval,
-  boost::shared_ptr<AlarmHandler> ah
+  AlarmHandlerPtr ah
 ) :
 MonitorCollection(updateInterval),
 _connectedRBs(0),

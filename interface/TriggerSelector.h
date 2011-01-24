@@ -1,4 +1,4 @@
-// $Id: TriggerSelector.h,v 1.5 2010/02/17 15:21:29 smorovic Exp $
+// $Id: TriggerSelector.h,v 1.6 2010/02/17 23:05:24 smorovic Exp $
 /// @file: TriggerSelector.h 
 
 #ifndef EventFilter_StorageManager_TriggerSelector_h
@@ -22,8 +22,8 @@ namespace stor
    * Event selector allowing for and/not combination of triggers/paths
    *
    * $Author: smorovic $
-   * $Revision: 1.5 $
-   * $Date: 2010/02/17 15:21:29 $
+   * $Revision: 1.6 $
+   * $Date: 2010/02/17 23:05:24 $
    */
 
   class TriggerSelector
@@ -158,7 +158,10 @@ namespace stor
       static const bool debug_ = false;
 
   };
-}
+
+  typedef boost::shared_ptr<TriggerSelector> TriggerSelectorPtr;
+
+} // namespace stor
 
 #endif // EventFilter_StorageManager_TriggerSelector_h
 

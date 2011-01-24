@@ -1,4 +1,4 @@
-// $Id: ExpirableQueue.h,v 1.7 2010/12/20 16:33:21 mommsen Exp $
+// $Id: ExpirableQueue.h,v 1.7.2.1 2011/01/14 18:30:22 mommsen Exp $
 /// @file: ExpirableQueue.h 
 
 
@@ -19,8 +19,8 @@ namespace stor
      was made.
    
      $Author: mommsen $
-     $Revision: 1.7 $
-     $Date: 2010/12/20 16:33:21 $
+     $Revision: 1.7.2.1 $
+     $Date: 2011/01/14 18:30:22 $
    */
 
   template <class T, class Policy>
@@ -218,7 +218,7 @@ namespace stor
 } // namespace stor
   
 
-#endif
+#endif // EventFilter_StorageManager_ExpirableQueue_h
 
 /// emacs configuration
 /// Local Variables: -

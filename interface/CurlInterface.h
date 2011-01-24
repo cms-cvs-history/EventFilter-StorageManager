@@ -1,8 +1,8 @@
-// $Id: CurlInterface.h,v 1.1 2009/08/20 13:43:18 mommsen Exp $
+// $Id: CurlInterface.h,v 1.2 2010/05/11 17:57:27 mommsen Exp $
 /// @file: CurlInterface.h
 
-#ifndef StorageManager_CurlInterface_h
-#define StorageManager_CurlInterface_h
+#ifndef EventFilter_StorageManager_CurlInterface_h
+#define EventFilter_StorageManager_CurlInterface_h
 
 #include <string>
 #include <curl/curl.h>
@@ -14,8 +14,8 @@ namespace stor {
    * Helper class to interact with curl
    *
    * $Author: mommsen $
-   * $Revision: 1.1 $
-   * $Date: 2009/08/20 13:43:18 $
+   * $Revision: 1.2 $
+   * $Date: 2010/05/11 17:57:27 $
    */
  
   class CurlInterface
@@ -51,7 +51,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_CurlInterface_h
+#endif // EventFilter_StorageManager_CurlInterface_h
 
 
 /// emacs configuration

@@ -1,8 +1,8 @@
-// $Id: DiskWriter.h,v 1.11 2010/05/11 17:58:01 mommsen Exp $
+// $Id: DiskWriter.h,v 1.12 2010/12/10 19:38:48 mommsen Exp $
 /// @file: DiskWriter.h 
 
-#ifndef StorageManager_DiskWriter_h
-#define StorageManager_DiskWriter_h
+#ifndef EventFilter_StorageManager_DiskWriter_h
+#define EventFilter_StorageManager_DiskWriter_h
 
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/shared_ptr.hpp"
@@ -34,8 +34,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2010/05/11 17:58:01 $
+   * $Revision: 1.12 $
+   * $Date: 2010/12/10 19:38:48 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -160,7 +160,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_DiskWriter_h 
+#endif // EventFilter_StorageManager_DiskWriter_h 
 
 
 /// emacs configuration

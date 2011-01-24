@@ -1,8 +1,8 @@
-// $Id: WebPageHelper.h,v 1.11 2010/12/02 15:51:09 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.12 2010/12/03 15:56:48 mommsen Exp $
 /// @file: WebPageHelper.h
 
-#ifndef StorageManager_WebPageHelper_h
-#define StorageManager_WebPageHelper_h
+#ifndef EventFilter_StorageManager_WebPageHelper_h
+#define EventFilter_StorageManager_WebPageHelper_h
 
 #include <string>
 #include <map>
@@ -35,8 +35,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.11 $
-   * $Date: 2010/12/02 15:51:09 $
+   * $Revision: 1.12 $
+   * $Date: 2010/12/03 15:56:48 $
    */
   
   class WebPageHelper
@@ -135,7 +135,7 @@ namespace stor {
     /**
      * Adds the links for the other SM webpages
      */
-    void addDOMforSMLinks(XHTMLMaker&, XHTMLMaker::Node *parent);
+    void addDOMforSMLinks(XHTMLMaker&, XHTMLMaker::Node* parent);
 
     /**
      * Adds the resource table to the parent DOM element
@@ -143,7 +143,7 @@ namespace stor {
     void addDOMforResourceUsage
     (
       XHTMLMaker&,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       ResourceMonitorCollection const&,
       ThroughputMonitorCollection const&
     );
@@ -154,7 +154,7 @@ namespace stor {
     void addDOMforFragmentMonitor
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       FragmentMonitorCollection const&
     );
 
@@ -164,7 +164,7 @@ namespace stor {
     void addDOMforRunMonitor
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       RunMonitorCollection const&
     );
 
@@ -174,7 +174,7 @@ namespace stor {
     void addDOMforStoredData
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       StreamsMonitorCollection const&
     );
 
@@ -184,7 +184,7 @@ namespace stor {
     void addDOMforConfigString
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DiskWritingParams const&
     );
 
@@ -194,7 +194,7 @@ namespace stor {
     void addDOMforFiles
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       FilesMonitorCollection const&
     );
 
@@ -204,7 +204,7 @@ namespace stor {
      void addDOMforEventConsumers
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       const SharedResourcesPtr
     );
 
@@ -214,7 +214,7 @@ namespace stor {
      void addDOMforDQMEventConsumers
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       const SharedResourcesPtr
     );
 
@@ -224,7 +224,7 @@ namespace stor {
     void addDOMforProcessedDQMEvents
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DQMEventMonitorCollection const&
     );
 
@@ -234,7 +234,7 @@ namespace stor {
     void addDOMforDQMEventStatistics
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DQMEventMonitorCollection const&
     );
 
@@ -244,7 +244,7 @@ namespace stor {
     void addDOMforThroughputStatistics
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       ThroughputMonitorCollection const&
     );
 
@@ -265,7 +265,7 @@ namespace stor {
     void listStreamRecordsStats
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       StreamsMonitorCollection const&,
       const MonitoredQuantity::DataSetType
     );
@@ -276,7 +276,7 @@ namespace stor {
     void addFragmentStats
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -287,7 +287,7 @@ namespace stor {
     void addDurationToTableHead
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *tableRow,
+      XHTMLMaker::Node* tableRow,
       const utils::duration_t
     );
     
@@ -297,7 +297,7 @@ namespace stor {
     void addRowForFramesReceived
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -308,7 +308,7 @@ namespace stor {
     void addRowForBandwidth
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -319,7 +319,7 @@ namespace stor {
     void addRowForRate
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -330,7 +330,7 @@ namespace stor {
     void addRowForLatency
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -341,7 +341,7 @@ namespace stor {
     void addRowForTotalVolume
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -352,7 +352,7 @@ namespace stor {
     void addRowForMaxBandwidth
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -363,7 +363,7 @@ namespace stor {
     void addRowForMinBandwidth
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -374,7 +374,7 @@ namespace stor {
     void addOutputModuleTables
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DataSenderMonitorCollection const&
     );
 
@@ -385,7 +385,7 @@ namespace stor {
     void addOutputModuleStatistics
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
     );
@@ -396,7 +396,7 @@ namespace stor {
     void addOutputModuleStatistics
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DataSenderMonitorCollection::OutputModuleResultsList const&
     );
 
@@ -406,7 +406,7 @@ namespace stor {
     void addOutputModuleSummary
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DataSenderMonitorCollection::OutputModuleResultsList const&
     );
 
@@ -417,7 +417,7 @@ namespace stor {
     void addResourceBrokerList
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       DataSenderMonitorCollection const&
     );
 
@@ -428,7 +428,7 @@ namespace stor {
     void addResourceBrokerDetails
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
     );
@@ -440,7 +440,7 @@ namespace stor {
     void addFilterUnitList
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
     );
@@ -451,7 +451,7 @@ namespace stor {
     void addDQMEventStats
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -462,7 +462,7 @@ namespace stor {
     void addRowForDQMEventsProcessed
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -473,7 +473,7 @@ namespace stor {
     void addRowForDQMEventBandwidth
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -484,7 +484,7 @@ namespace stor {
     void addRowForTotalDQMEventVolume
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -495,7 +495,7 @@ namespace stor {
     void addRowForMaxDQMEventBandwidth
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -506,7 +506,7 @@ namespace stor {
     void addRowForMinDQMEventBandwidth
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
     );
@@ -517,7 +517,7 @@ namespace stor {
     void addTableForResourceUsages
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       ResourceMonitorCollection::Stats const&,
       MonitoredQuantity::Stats const&
     );
@@ -528,7 +528,7 @@ namespace stor {
     void addRowsForMemoryUsage
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       MonitoredQuantity::Stats const&
     );
 
@@ -538,7 +538,7 @@ namespace stor {
     void addRowsForWorkers
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       ResourceMonitorCollection::Stats const&
     );
 
@@ -548,7 +548,7 @@ namespace stor {
     void addRowsForSataBeast
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *table,
+      XHTMLMaker::Node* table,
       ResourceMonitorCollection::Stats const&
     );
 
@@ -558,7 +558,7 @@ namespace stor {
     void addTableForDiskUsages
     (
       XHTMLMaker& maker,
-      XHTMLMaker::Node *parent,
+      XHTMLMaker::Node* parent,
       ResourceMonitorCollection::Stats const&
     );
 
@@ -587,7 +587,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_WebPageHelper_h 
+#endif // EventFilter_StorageManager_WebPageHelper_h 
 
 
 /// emacs configuration

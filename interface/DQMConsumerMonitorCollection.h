@@ -1,8 +1,8 @@
-// $Id: DQMConsumerMonitorCollection.h,v 1.5 2009/08/18 08:54:13 mommsen Exp $
+// $Id: DQMConsumerMonitorCollection.h,v 1.1 2009/08/24 14:31:11 mommsen Exp $
 /// @file: DQMConsumerMonitorCollection.h 
 
-#ifndef StorageManager_DQMConsumerMonitorCollection_h
-#define StorageManager_DQMConsumerMonitorCollection_h
+#ifndef EventFilter_StorageManager_DQMConsumerMonitorCollection_h
+#define EventFilter_StorageManager_DQMConsumerMonitorCollection_h
 
 #include "xdata/UnsignedInteger32.h"
 
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track event consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2009/08/18 08:54:13 $
+   * $Revision: 1.1 $
+   * $Date: 2009/08/24 14:31:11 $
    */
 
   class DQMConsumerMonitorCollection: public ConsumerMonitorCollection
@@ -41,7 +41,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_DQMConsumerMonitorCollection_h
+#endif // EventFilter_StorageManager_DQMConsumerMonitorCollection_h
 
 
 /// emacs configuration

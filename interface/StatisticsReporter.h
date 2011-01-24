@@ -1,8 +1,8 @@
-// $Id: StatisticsReporter.h,v 1.12 2010/03/16 17:55:43 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.13 2010/04/12 15:25:26 mommsen Exp $
 /// @file: StatisticsReporter.h 
 
-#ifndef StorageManager_StatisticsReporter_h
-#define StorageManager_StatisticsReporter_h
+#ifndef EventFilter_StorageManager_StatisticsReporter_h
+#define EventFilter_StorageManager_StatisticsReporter_h
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
@@ -11,6 +11,7 @@
 #include "xdata/String.h"
 #include "xdata/UnsignedInteger32.h"
 
+#include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/EventConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -36,8 +37,6 @@
 
 namespace stor {
 
-  class AlarmHandler;
-
   /**
    * Singleton to keep track of all monitoring and statistics issues
    *
@@ -45,8 +44,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.12 $
-   * $Date: 2010/03/16 17:55:43 $
+   * $Revision: 1.13 $
+   * $Date: 2010/04/12 15:25:26 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class, public xdata::ActionListener
@@ -151,7 +150,6 @@ namespace stor {
     /**
      * Access alarm handler
      */
-    typedef boost::shared_ptr<AlarmHandler> AlarmHandlerPtr;
     AlarmHandlerPtr alarmHandler() { return _alarmHandler; }
 
     /**
@@ -214,7 +212,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_StatisticsReporter_h 
+#endif // EventFilter_StorageManager_StatisticsReporter_h 
 
 
 /// emacs configuration

@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.16 2010/12/10 19:38:48 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.17 2010/12/14 12:56:52 mommsen Exp $
 /// @file: FragmentProcessor.cc
 
 #include <unistd.h>
@@ -134,7 +134,7 @@ void FragmentProcessor::processOneFragmentIfPossible()
 void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
-  boost::shared_ptr<FragmentQueue> fq = _sharedResources->_fragmentQueue;
+  FragmentQueuePtr fq = _sharedResources->_fragmentQueue;
   utils::time_point_t startTime = utils::getCurrentTime();
   if (fq->deq_timed_wait(fragment, _timeout))
     {
@@ -156,7 +156,7 @@ void FragmentProcessor::processOneFragment()
 
 void FragmentProcessor::processAllCommands()
 {
-  boost::shared_ptr<CommandQueue> cq = _sharedResources->_commandQueue;
+  CommandQueuePtr cq = _sharedResources->_commandQueue;
   stor::event_ptr evt;
   bool gotCommand = false;
 
@@ -180,7 +180,7 @@ void FragmentProcessor::processAllCommands()
 void FragmentProcessor::processAllRegistrations()
 {
   RegInfoBasePtr regInfo;
-  boost::shared_ptr<RegistrationQueue> regQueue =
+  RegistrationQueuePtr regQueue =
     _sharedResources->_registrationQueue;
   while ( regQueue->deq_nowait( regInfo ) )
     {

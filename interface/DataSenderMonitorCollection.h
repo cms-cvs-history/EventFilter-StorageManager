@@ -1,8 +1,8 @@
-// $Id: DataSenderMonitorCollection.h,v 1.16 2010/12/14 12:56:51 mommsen Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.17 2010/12/15 10:09:13 mommsen Exp $
 /// @file: DataSenderMonitorCollection.h 
 
-#ifndef StorageManager_DataSenderMonitorCollection_h
-#define StorageManager_DataSenderMonitorCollection_h
+#ifndef EventFilter_StorageManager_DataSenderMonitorCollection_h
+#define EventFilter_StorageManager_DataSenderMonitorCollection_h
 
 #include <map>
 
@@ -12,22 +12,20 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 
 namespace stor {
 
-  class AlarmHandler;
-
-
   /**
    * A collection of MonitoredQuantities to track received fragments
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: mommsen $
-   * $Revision: 1.16 $
-   * $Date: 2010/12/14 12:56:51 $
+   * $Revision: 1.17 $
+   * $Date: 2010/12/15 10:09:13 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -296,7 +294,7 @@ namespace stor {
     DataSenderMonitorCollection
     (
       const utils::duration_t& updateInterval,
-      boost::shared_ptr<AlarmHandler>
+      AlarmHandlerPtr
     );
 
     /**
@@ -427,7 +425,7 @@ namespace stor {
     std::map<UniqueResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
 
     const utils::duration_t _updateInterval;
-    boost::shared_ptr<AlarmHandler> _alarmHandler;
+    AlarmHandlerPtr _alarmHandler;
 
   };
 
@@ -436,7 +434,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_DataSenderMonitorCollection_h 
+#endif // EventFilter_StorageManager_DataSenderMonitorCollection_h 
 
 
 /// emacs configuration

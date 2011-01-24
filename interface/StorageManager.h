@@ -1,8 +1,8 @@
-// $Id: StorageManager.h,v 1.58 2010/04/16 12:31:34 mommsen Exp $
+// $Id: StorageManager.h,v 1.58.4.1 2011/01/21 15:48:12 mommsen Exp $
 /// @file: StorageManager.h 
 
-#ifndef StorageManager_StorageManager_h
-#define StorageManager_StorageManager_h
+#ifndef EventFilter_StorageManager_StorageManager_h
+#define EventFilter_StorageManager_StorageManager_h
 
 #include <string>
 
@@ -37,8 +37,8 @@ namespace stor {
    * Main class of the StorageManager XDAQ application
    *
    * $Author: mommsen $
-   * $Revision: 1.58 $
-   * $Date: 2010/04/16 12:31:34 $
+   * $Revision: 1.58.4.1 $
+   * $Date: 2011/01/21 15:48:12 $
    */
 
   class StorageManager: public xdaq::Application
@@ -227,9 +227,9 @@ namespace stor {
 
   };
 
-}
+} // namespace stor
 
-#endif // StorageManager_StorageManager_h
+#endif // EventFilter_StorageManager_StorageManager_h
 
 
 /// emacs configuration

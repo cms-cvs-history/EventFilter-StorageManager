@@ -1,8 +1,8 @@
-// $Id: DQMInstance.h,v 1.16 2010/03/04 16:58:35 mommsen Exp $
+// $Id: DQMInstance.h,v 1.17 2010/03/04 17:34:40 mommsen Exp $
 /// @file: DQMInstance.h 
 
-#ifndef StorageManager_DQMInstance_h
-#define StorageManager_DQMInstance_h
+#ifndef EventFilter_StorageManager_DQMInstance_h
+#define EventFilter_StorageManager_DQMInstance_h
 
 #include <string>
 #include <vector>
@@ -21,8 +21,8 @@ namespace stor
    * A single DQM folder holding several histograms
    *
    * $Author: mommsen $
-   * $Revision: 1.16 $
-   * $Date: 2010/03/04 16:58:35 $
+   * $Revision: 1.17 $
+   * $Date: 2010/03/04 17:34:40 $
    */
 
   class DQMFolder
@@ -47,8 +47,8 @@ namespace stor
    * A collection of DQM Folders under the same top-level name.
    *
    * $Author: mommsen $
-   * $Revision: 1.16 $
-   * $Date: 2010/03/04 16:58:35 $
+   * $Revision: 1.17 $
+   * $Date: 2010/03/04 17:34:40 $
    */
 
   class DQMGroup
@@ -92,8 +92,8 @@ namespace stor
    * collated DQM groups
    *
    * $Author: mommsen $
-   * $Revision: 1.16 $
-   * $Date: 2010/03/04 16:58:35 $
+   * $Revision: 1.17 $
+   * $Date: 2010/03/04 17:34:40 $
    */
 
   class DQMInstance
@@ -149,10 +149,10 @@ namespace stor
     DQMInstance *instance_;
     DQMGroup    *group_;
   };
-}
 
+} // namespace stor
 
-#endif // StorageManager_DQMInstance_h
+#endif // EventFilter_StorageManager_DQMInstance_h
 
 
 /// emacs configuration

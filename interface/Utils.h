@@ -1,8 +1,8 @@
-// $Id: Utils.h,v 1.12 2010/12/14 12:56:51 mommsen Exp $
+// $Id: Utils.h,v 1.13 2010/12/16 16:35:29 mommsen Exp $
 /// @file: Utils.h 
 
-#ifndef StorageManager_Utils_h
-#define StorageManager_Utils_h
+#ifndef EventFilter_StorageManager_Utils_h
+#define EventFilter_StorageManager_Utils_h
 
 #include <string>
 #include <vector>
@@ -25,8 +25,8 @@ namespace stor {
      * Collection of utility functions used in the storage manager
      *
      * $Author: mommsen $
-     * $Revision: 1.12 $
-     * $Date: 2010/12/14 12:56:51 $
+     * $Revision: 1.13 $
+     * $Date: 2010/12/16 16:35:29 $
      */
 
     /**
@@ -174,7 +174,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_Utils_h 
+#endif // EventFilter_StorageManager_Utils_h 
 
 
 /// emacs configuration

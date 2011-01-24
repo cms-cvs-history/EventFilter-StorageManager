@@ -1,8 +1,8 @@
-// $Id: ThroughputMonitorCollection.h,v 1.17 2010/12/10 19:33:36 mommsen Exp $
+// $Id: ThroughputMonitorCollection.h,v 1.18 2010/12/14 12:56:51 mommsen Exp $
 /// @file: ThroughputMonitorCollection.h 
 
-#ifndef StorageManager_ThroughputMonitorCollection_h
-#define StorageManager_ThroughputMonitorCollection_h
+#ifndef EventFilter_StorageManager_ThroughputMonitorCollection_h
+#define EventFilter_StorageManager_ThroughputMonitorCollection_h
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
@@ -24,8 +24,8 @@ namespace stor {
    * through the storage manager.
    *
    * $Author: mommsen $
-   * $Revision: 1.17 $
-   * $Date: 2010/12/10 19:33:36 $
+   * $Revision: 1.18 $
+   * $Date: 2010/12/14 12:56:51 $
    */
   
   class ThroughputMonitorCollection : public MonitorCollection
@@ -46,7 +46,7 @@ namespace stor {
      */
     void setMemoryPoolPointer(toolbox::mem::Pool*);
 
-    void setFragmentQueue(boost::shared_ptr<FragmentQueue> fragmentQueue) {
+    void setFragmentQueue(FragmentQueuePtr fragmentQueue) {
       _fragmentQueue = fragmentQueue;
     }
 
@@ -103,7 +103,7 @@ namespace stor {
       return _memoryUsedInFragmentStoreMQ;
     }
 
-    void setStreamQueue(boost::shared_ptr<StreamQueue> streamQueue) {
+    void setStreamQueue(StreamQueuePtr streamQueue) {
       _streamQueue = streamQueue;
     }
 
@@ -148,7 +148,7 @@ namespace stor {
       return _diskWriteSizeMQ;
     }
 
-    void setDQMEventQueue(boost::shared_ptr<DQMEventQueue> dqmEventQueue) {
+    void setDQMEventQueue(DQMEventQueuePtr dqmEventQueue) {
       _dqmEventQueue = dqmEventQueue;
     }
 
@@ -318,9 +318,9 @@ namespace stor {
     MonitoredQuantity _poppedDQMEventSizeMQ;
     MonitoredQuantity _dqmEventProcessorIdleTimeMQ;
 
-    boost::shared_ptr<FragmentQueue> _fragmentQueue;
-    boost::shared_ptr<StreamQueue> _streamQueue;
-    boost::shared_ptr<DQMEventQueue> _dqmEventQueue;
+    FragmentQueuePtr _fragmentQueue;
+    StreamQueuePtr _streamQueue;
+    DQMEventQueuePtr _dqmEventQueue;
 
     unsigned int _currentFragmentStoreSize;
     double _currentFragmentStoreMemoryUsedMB;
@@ -354,7 +354,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_ThroughputMonitorCollection_h 
+#endif // EventFilter_StorageManager_ThroughputMonitorCollection_h 
 
 
 /// emacs configuration

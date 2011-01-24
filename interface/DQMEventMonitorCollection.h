@@ -1,8 +1,8 @@
-// $Id: DQMEventMonitorCollection.h,v 1.6 2009/08/24 14:31:11 mommsen Exp $
+// $Id: DQMEventMonitorCollection.h,v 1.7 2010/02/18 11:21:01 mommsen Exp $
 /// @file: DQMEventMonitorCollection.h 
 
-#ifndef StorageManager_DQMEventMonitorCollection_h
-#define StorageManager_DQMEventMonitorCollection_h
+#ifndef EventFilter_StorageManager_DQMEventMonitorCollection_h
+#define EventFilter_StorageManager_DQMEventMonitorCollection_h
 
 #include "xdata/Double.h"
 #include "xdata/UnsignedInteger32.h"
@@ -16,8 +16,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2009/08/24 14:31:11 $
+   * $Revision: 1.7 $
+   * $Date: 2010/02/18 11:21:01 $
    */
   
   class DQMEventMonitorCollection : public MonitorCollection
@@ -154,7 +154,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_DQMEventMonitorCollection_h 
+#endif // EventFilter_StorageManager_DQMEventMonitorCollection_h 
 
 
 /// emacs configuration

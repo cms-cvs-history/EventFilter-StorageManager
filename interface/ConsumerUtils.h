@@ -1,9 +1,10 @@
-// $Id: ConsumerUtils.h,v 1.8 2010/12/17 18:21:04 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.8.2.1 2011/01/21 15:50:22 mommsen Exp $
 /// @file: ConsumerUtils.h 
 
-#ifndef StorageManager_ConsumerUtils_h
-#define StorageManager_ConsumerUtils_h
+#ifndef EventFilter_StorageManager_ConsumerUtils_h
+#define EventFilter_StorageManager_ConsumerUtils_h
 
+#include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -31,8 +32,8 @@ namespace stor
      Handles consumer requests and responses
 
      $Author: mommsen $
-     $Revision: 1.8 $
-     $Date: 2010/12/17 18:21:04 $
+     $Revision: 1.8.2.1 $
+     $Date: 2011/01/21 15:50:22 $
   */
 
   template<typename Configuration_t, typename EventQueueCollection_t>
@@ -44,12 +45,12 @@ namespace stor
     ConsumerUtils
     (
       boost::shared_ptr<Configuration_t>,
-      boost::shared_ptr<RegistrationCollection>,
-      boost::shared_ptr<RegistrationQueue>,
-      boost::shared_ptr<InitMsgCollection>,
+      RegistrationCollectionPtr,
+      RegistrationQueuePtr,
+      InitMsgCollectionPtr,
       boost::shared_ptr<EventQueueCollection_t>,
-      boost::shared_ptr<DQMEventQueueCollection>,
-      StatisticsReporter::AlarmHandlerPtr
+      DQMEventQueueCollectionPtr,
+      AlarmHandlerPtr
     );
 
     /**
@@ -168,18 +169,19 @@ namespace stor
 
 
     boost::shared_ptr<Configuration_t> _configuration;
-    boost::shared_ptr<RegistrationCollection> _registrationCollection;
-    boost::shared_ptr<RegistrationQueue> _registrationQueue;
-    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+    RegistrationCollectionPtr _registrationCollection;
+    RegistrationQueuePtr _registrationQueue;
+    InitMsgCollectionPtr _initMsgCollection;
     boost::shared_ptr<EventQueueCollection_t> _eventQueueCollection;
-    boost::shared_ptr<DQMEventQueueCollection> _dqmEventQueueCollection;
-    StatisticsReporter::AlarmHandlerPtr _alarmHandler;
+    DQMEventQueueCollectionPtr _dqmEventQueueCollection;
+    AlarmHandlerPtr _alarmHandler;
   };
-}
+
+} // namespace stor
 
 #include "EventFilter/StorageManager/src/ConsumerUtils.icc"
 
-#endif // StorageManager_ConsumerUtils_h
+#endif // EventFilter_StorageManager_ConsumerUtils_h
 
 
 /// emacs configuration

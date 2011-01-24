@@ -1,8 +1,8 @@
-// $Id: QueueID.h,v 1.2 2009/06/10 08:15:23 dshpakov Exp $
+// $Id: QueueID.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
 /// @file: QueueID.h 
 
-#ifndef StorageManager_QueueID_h
-#define StorageManager_QueueID_h
+#ifndef EventFilter_StorageManager_QueueID_h
+#define EventFilter_StorageManager_QueueID_h
 
 #include <cstddef>
 #include <iostream>
@@ -14,9 +14,9 @@ namespace stor {
   /**
    * Uniquely identifies the consumer queues 
    *
-   * $Author: dshpakov $
-   * $Revision: 1.2 $
-   * $Date: 2009/06/10 08:15:23 $
+   * $Author: mommsen $
+   * $Revision: 1.3 $
+   * $Date: 2009/07/20 13:06:10 $
    */
 
   class QueueID
@@ -142,7 +142,7 @@ namespace stor {
 
 } // namespace stor
 
-#endif // StorageManager_QueueID_h 
+#endif // EventFilter_StorageManager_QueueID_h 
 
 
 /// emacs configuration

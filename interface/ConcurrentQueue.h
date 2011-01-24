@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.9 2010/12/01 13:44:48 eulisse Exp $
+// $Id: ConcurrentQueue.h,v 1.10 2010/12/10 19:38:48 mommsen Exp $
 /// @file: ConcurrentQueue.h 
 
 
@@ -41,9 +41,9 @@ namespace stor
         RejectNewest: the function returns void; the new item is
         not put onto the FIFO.
    
-     $Author: eulisse $
-     $Revision: 1.9 $
-     $Date: 2010/12/01 13:44:48 $
+     $Author: mommsen $
+     $Revision: 1.10 $
+     $Date: 2010/12/10 19:38:48 $
    */
 
 
@@ -652,9 +652,10 @@ namespace stor
     if (_size >= _capacity || _used >= _memory) return true;
     return false;
   }
-}
 
-#endif
+} // namespace stor
+
+#endif // EventFilter_StorageManager_ConcurrentQueue_h
 
 /// emacs configuration
 /// Local Variables: -

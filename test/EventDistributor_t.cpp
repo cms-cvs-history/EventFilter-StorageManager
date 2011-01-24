@@ -97,10 +97,10 @@ void testEventDistributor::initEventDistributor()
       _eventDistributor.reset(new EventDistributor(_sharedResources));
       EventConsumerMonitorCollection& ecmc = 
         _sharedResources->_statisticsReporter->getEventConsumerMonitorCollection();
-      _sharedResources->_eventConsumerQueueCollection.reset( new EventQueueCollection( ecmc ) );
+      _sharedResources->_eventQueueCollection.reset( new EventQueueCollection( ecmc ) );
       DQMConsumerMonitorCollection& dcmc = 
         _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
-      _sharedResources->_dqmEventConsumerQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
+      _sharedResources->_dqmEventQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
     }
   else
   {

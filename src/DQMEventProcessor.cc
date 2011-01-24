@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.11 2010/03/03 15:25:21 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12 2010/12/10 19:38:48 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -99,7 +99,7 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
 void DQMEventProcessor::processNextDQMEvent()
 {
   I2OChain dqmEvent;
-  boost::shared_ptr<DQMEventQueue> eq = _sharedResources->_dqmEventQueue;
+  DQMEventQueuePtr eq = _sharedResources->_dqmEventQueue;
   utils::time_point_t startTime = utils::getCurrentTime();
   if (eq->deq_timed_wait(dqmEvent, _timeout))
   {
@@ -154,7 +154,7 @@ void DQMEventProcessor::processCompleteDQMEventRecords()
   while ( _dqmEventStore.getCompletedDQMGroupRecordIfAvailable(dqmRecordEntry) )
   {
     _sharedResources->
-      _dqmEventConsumerQueueCollection->addEvent(dqmRecordEntry);
+      _dqmEventQueueCollection->addEvent(dqmRecordEntry);
   }
 }
 

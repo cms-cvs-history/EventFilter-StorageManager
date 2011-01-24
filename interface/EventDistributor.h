@@ -1,8 +1,8 @@
-// $Id: EventDistributor.h,v 1.6 2010/03/03 15:19:17 mommsen Exp $
+// $Id: EventDistributor.h,v 1.7 2010/12/16 16:35:29 mommsen Exp $
 /// @file: EventDistributor.h 
 
-#ifndef StorageManager_EventDistributor_h
-#define StorageManager_EventDistributor_h
+#ifndef EventFilter_StorageManager_EventDistributor_h
+#define EventFilter_StorageManager_EventDistributor_h
 
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
@@ -37,8 +37,8 @@ namespace stor {
    * header.
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2010/03/03 15:19:17 $
+   * $Revision: 1.7 $
+   * $Date: 2010/12/16 16:35:29 $
    */
 
   class EventDistributor
@@ -141,7 +141,7 @@ namespace stor {
   
 } // namespace stor
 
-#endif // StorageManager_EventDistributor_h 
+#endif // EventFilter_StorageManager_EventDistributor_h 
 
 
 /// emacs configuration

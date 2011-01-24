@@ -1,8 +1,8 @@
-// $Id: FaultyEventStreamHandler.h,v 1.6 2010/03/19 13:24:30 mommsen Exp $
+// $Id: FaultyEventStreamHandler.h,v 1.1 2010/05/11 17:58:01 mommsen Exp $
 /// @file: FaultyEventStreamHandler.h 
 
-#ifndef StorageManager_FaultyEventStreamHandler_h
-#define StorageManager_FaultyEventStreamHandler_h
+#ifndef EventFilter_StorageManager_FaultyEventStreamHandler_h
+#define EventFilter_StorageManager_FaultyEventStreamHandler_h
 
 #include <string>
 
@@ -19,8 +19,8 @@ namespace stor {
    * Handle the faulty event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2010/03/19 13:24:30 $
+   * $Revision: 1.1 $
+   * $Date: 2010/05/11 17:58:01 $
    */
   
   class FaultyEventStreamHandler : public StreamHandler
@@ -66,13 +66,13 @@ namespace stor {
     { return 0; }
 
 
-    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
+    InitMsgCollectionPtr _initMsgCollection;
 
   };
   
 } // namespace stor
 
-#endif // StorageManager_FaultyEventStreamHandler_h 
+#endif // EventFilter_StorageManager_FaultyEventStreamHandler_h 
 
 
 /// emacs configuration

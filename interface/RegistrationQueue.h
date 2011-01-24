@@ -1,4 +1,4 @@
-// $Id: RegistrationQueue.h,v 1.5 2009/07/20 13:06:10 mommsen Exp $
+// $Id: RegistrationQueue.h,v 1.5.14.1 2011/01/21 15:51:20 mommsen Exp $
 /// @file: RegistrationQueue.h 
 
 #ifndef EventFilter_StorageManager_RegistrationQueue_h
@@ -15,15 +15,16 @@ namespace stor
      Concurrent queue holding consumer registrations
 
      $Author: mommsen $
-     $Revision: 1.5 $
-     $Date: 2009/07/20 13:06:10 $
+     $Revision: 1.5.14.1 $
+     $Date: 2011/01/21 15:51:20 $
   */
   typedef boost::shared_ptr<RegistrationInfoBase> RegInfoBasePtr;
   typedef ConcurrentQueue<RegInfoBasePtr> RegistrationQueue;
   typedef boost::shared_ptr<RegistrationQueue> RegistrationQueuePtr;
-}
 
-#endif
+} // namespace stor
+
+#endif // EventFilter_StorageManager_RegistrationQueue_h
 
 /// emacs configuration
 /// Local Variables: -

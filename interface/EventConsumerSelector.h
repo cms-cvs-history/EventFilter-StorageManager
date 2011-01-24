@@ -1,8 +1,8 @@
-// $Id: EventConsumerSelector.h,v 1.8 2010/12/20 11:14:24 mommsen Exp $
+// $Id: EventConsumerSelector.h,v 1.8.2.1 2011/01/14 18:30:22 mommsen Exp $
 /// @file: EventConsumerSelector.h 
 
-#ifndef StorageManager_EventConsumerSelector_h
-#define StorageManager_EventConsumerSelector_h
+#ifndef EventFilter_StorageManager_EventConsumerSelector_h
+#define EventFilter_StorageManager_EventConsumerSelector_h
 
 #include <boost/shared_ptr.hpp>
 
@@ -18,8 +18,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.8 $
-   * $Date: 2010/12/20 11:14:24 $
+   * $Revision: 1.8.2.1 $
+   * $Date: 2011/01/14 18:30:22 $
    */
 
   class EventConsumerSelector
@@ -93,14 +93,14 @@ namespace stor {
     bool _stale;
     unsigned int _outputModuleId;
     const EventConsumerRegistrationInfo _registrationInfo;
-    boost::shared_ptr<TriggerSelector> _eventSelector;
+    TriggerSelectorPtr _eventSelector;
     unsigned long _acceptedEvents;
 
   };
 
 } // namespace stor
 
-#endif // StorageManager_EventConsumerSelector_h
+#endif // EventFilter_StorageManager_EventConsumerSelector_h
 
 
 /// emacs configuration
