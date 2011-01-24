@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.4 2011/01/24 12:18:39 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.5 2011/01/24 14:03:20 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.4 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.10.2.5 $
+   * $Date: 2011/01/24 14:03:20 $
    */
 
   template <class T>
@@ -137,8 +137,13 @@ namespace stor {
     bool stale(const QueueID&, const utils::time_point_t&) const;
 
     /**
+       Returns true if all queues are stale at the given time.
+     */
+    bool allQueuesStale(const utils::time_point_t&) const;
+
+    /**
        Get number of elements in queue
-    */
+     */
     size_type size(const QueueID&) const;
 
 
@@ -674,6 +679,29 @@ namespace stor {
       }
     }
     return result;
+  }
+  
+  template <class T>
+  bool
+  QueueCollection<T>::allQueuesStale(const utils::time_point_t& now) const
+  {
+    {
+      read_lock_t lock_discard_new(_protect_discard_new_queues);
+      const size_type num_queues = _discard_new_queues.size();
+      for (size_type i = 0; i < num_queues; ++i)
+      {
+        if ( ! _discard_new_queues[i]->stale(now) ) return false;
+      }
+    }
+    {
+      read_lock_t lock_discard_old(_protect_discard_old_queues);
+      const size_type num_queues = _discard_old_queues.size();
+      for (size_type i = 0; i < num_queues; ++i)
+      {
+        if ( ! _discard_old_queues[i]->stale(now) ) return false;
+      }
+    }
+    return true;
   }
   
   template <class T>
