@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.5 2010/12/17 18:21:04 mommsen Exp $
+// $Id: DQMEventSelector.h,v 1.5.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DQMEventSelector.h 
 
 #ifndef EventFilter_StorageManager_DQMEventSelector_h
@@ -16,8 +16,8 @@ namespace stor
    * DQM event selector
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2010/12/17 18:21:04 $
+   * $Revision: 1.5.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class DQMEventSelector
@@ -26,8 +26,7 @@ namespace stor
   public:
     
     DQMEventSelector( const DQMEventConsumerRegistrationInfo* registrationInfo ):
-    _registrationInfo( *registrationInfo ),
-    _stale( false )
+    _registrationInfo( *registrationInfo )
     {};
     
     /**
@@ -40,21 +39,6 @@ namespace stor
      * Returns the ID of the queue corresponding to this selector.
      */
     QueueID queueId() const { return _registrationInfo.queueId(); }
-    
-    /**
-       Check if stale:
-    */
-    bool isStale() const { return _stale; }
-
-    /**
-       Mark as stale:
-    */
-    void markAsStale() { _stale = true; }
-
-    /**
-       Mark as active:
-    */
-    void markAsActive() { _stale = false; }
 
     /**
        Comparison:
@@ -64,7 +48,6 @@ namespace stor
   private:
 
     const DQMEventConsumerRegistrationInfo _registrationInfo;
-    bool _stale;
 
   };
 

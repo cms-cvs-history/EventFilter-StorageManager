@@ -283,18 +283,14 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
   CPPUNIT_ASSERT(coll.empty(q3));
 
   // Queues should not be cleared, as not stale, yet
-  CPPUNIT_ASSERT(!coll.clearQueueIfStale(q1,now));
-  CPPUNIT_ASSERT(!coll.clearQueueIfStale(q2,now));
-  CPPUNIT_ASSERT(!coll.clearQueueIfStale(q3,now));
+  CPPUNIT_ASSERT(!coll.clearStaleQueues(now));
 
   // Now sleep for the expiration interval.
   // Our queues should have all become stale;
   // they should also all be empty.
   stor::utils::sleep(expiration_interval);
   now = stor::utils::getCurrentTime();
-  CPPUNIT_ASSERT(coll.clearQueueIfStale(q1,now));
-  CPPUNIT_ASSERT(coll.clearQueueIfStale(q2,now));
-  CPPUNIT_ASSERT(coll.clearQueueIfStale(q3,now));
+  CPPUNIT_ASSERT(coll.clearStaleQueues(now));
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
@@ -344,8 +340,7 @@ testEventQueueCollection::invalid_queueid()
   CPPUNIT_ASSERT(coll.full(id2));  // nonexistent queue is also full.
   
   stor::utils::time_point_t now = stor::utils::getCurrentTime();
-  CPPUNIT_ASSERT(!coll.clearQueueIfStale(id1,now));
-  CPPUNIT_ASSERT(!coll.clearQueueIfStale(id2,now));
+  CPPUNIT_ASSERT(!coll.clearStaleQueues(now));
   
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }

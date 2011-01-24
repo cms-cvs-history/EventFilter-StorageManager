@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.h,v 1.8.2.1 2011/01/14 18:30:22 mommsen Exp $
+// $Id: EventConsumerSelector.h,v 1.8.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventConsumerSelector.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerSelector_h
@@ -18,8 +18,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.1 $
-   * $Date: 2011/01/14 18:30:22 $
+   * $Revision: 1.8.2.2 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class EventConsumerSelector
@@ -33,7 +33,6 @@ namespace stor {
      */
     EventConsumerSelector( const EventConsumerRegistrationInfo* registrationInfo ):
       _initialized( false ),
-      _stale( false ),
       _outputModuleId( 0 ),
       _registrationInfo( *registrationInfo ),
       _acceptedEvents( 0 )
@@ -68,21 +67,6 @@ namespace stor {
     bool isInitialized() const { return _initialized; }
 
     /**
-     * Return true if no events were requested anymore
-     */
-    bool isStale() const { return _stale; }
-
-    /**
-     * No longer select any events
-     */
-    void markAsStale() { _stale = true; }
-
-    /**
-     * Activate event selection
-     */
-    void markAsActive() { _stale = false; }
-
-    /**
      *  Comparison:
      */
     bool operator<(const EventConsumerSelector& other) const;
@@ -90,7 +74,6 @@ namespace stor {
   private:
 
     bool _initialized;
-    bool _stale;
     unsigned int _outputModuleId;
     const EventConsumerRegistrationInfo _registrationInfo;
     TriggerSelectorPtr _eventSelector;

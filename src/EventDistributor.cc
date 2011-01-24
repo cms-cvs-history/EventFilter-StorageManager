@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.23.2.1 2011/01/14 18:30:22 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.23.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventDistributor.cc
 
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -358,39 +358,13 @@ void EventDistributor::checkForStaleConsumers()
 {
   utils::time_point_t now = utils::getCurrentTime();
 
-  /////////////////////
-  // event consumers //
-  /////////////////////
-
   EventQueueCollectionPtr eqc =
     _sharedResources->_eventQueueCollection;
-
-  for( ConsSelList::iterator it = _eventConsumerSelectors.begin(),
-         itEnd = _eventConsumerSelectors.end();
-       it != itEnd; ++it )
-  {
-    if ( eqc->clearQueueIfStale((*it)->queueId(), now) )
-      (*it)->markAsStale();
-    else
-      (*it)->markAsActive();
-  }
-
-  ///////////////////
-  // dqm consumers //
-  ///////////////////
+  eqc->clearStaleQueues(now);
 
   DQMEventQueueCollectionPtr dqc =
     _sharedResources->_dqmEventQueueCollection;
-
-  for( DQMEvtSelList::iterator it = _dqmEventSelectors.begin(),
-         itEnd = _dqmEventSelectors.end();
-       it != itEnd; ++it )
-  {
-    if ( dqc->clearQueueIfStale((*it)->queueId(), now) )
-      (*it)->markAsStale();
-    else
-      (*it)->markAsActive();
-  }
+  dqc->clearStaleQueues(now);
 }
 
 

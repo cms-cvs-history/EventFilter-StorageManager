@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.cc,v 1.11 2010/12/17 18:21:05 mommsen Exp $
+// $Id: EventConsumerSelector.cc,v 1.12 2010/12/20 11:14:24 mommsen Exp $
 /// @file: EventConsumerSelector.cc
 
 #include <vector>
@@ -68,7 +68,6 @@ bool EventConsumerSelector::acceptEvent( const I2OChain& ioc )
 {
 
   if( !_initialized ) return false;
-  if( _stale ) return false;
 
   if( ioc.outputModuleId() != _outputModuleId ) return false;
 
