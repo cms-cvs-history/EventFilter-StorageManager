@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.5 2011/01/24 14:03:20 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.6 2011/01/24 14:32:15 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.5 $
-   * $Date: 2011/01/24 14:03:20 $
+   * $Revision: 1.10.2.6 $
+   * $Date: 2011/01/24 14:32:15 $
    */
 
   template <class T>
@@ -240,15 +240,27 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
-          _discard_new_queues[id.index()]->set_staleness_interval(interval);
+        try
+        {
+          _discard_new_queues.at(id.index())->set_staleness_interval(interval);
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
-          _discard_old_queues[id.index()]->set_staleness_interval(interval);
+        try
+        {
+          _discard_old_queues.at(id.index())->set_staleness_interval(interval);
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       default:
@@ -269,15 +281,27 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
-          result = _discard_new_queues[id.index()]->staleness_interval();
+        try
+        {
+          result = _discard_new_queues.at(id.index())->staleness_interval();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
-          result = _discard_old_queues[id.index()]->staleness_interval();
+        try
+        {
+          result = _discard_old_queues.at(id.index())->staleness_interval();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       default:
@@ -400,6 +424,9 @@ namespace stor {
     write_lock_t lock_discard_old(_protect_discard_old_queues);
     _discard_new_queues.clear();
     _discard_old_queues.clear();    
+
+    write_lock_t lock_lookup(_protect_lookup);
+    _queue_id_lookup.clear();
   }
   
   template <class T>
@@ -442,15 +469,27 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
-          _discard_new_queues[id.index()]->deq_nowait(result);
+        try
+        {
+          _discard_new_queues.at(id.index())->deq_nowait(result);
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
-          _discard_old_queues[id.index()]->deq_nowait(result);
+        try
+        {
+          _discard_old_queues.at(id.index())->deq_nowait(result);
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       default:
@@ -494,22 +533,30 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
+        try
         {
           _consumer_monitor_collection.addDiscardedEvents(
-            id, _discard_new_queues[id.index()]->size() );
-          _discard_new_queues[id.index()]->clear();
+            id, _discard_new_queues.at(id.index())->size() );
+          _discard_new_queues.at(id.index())->clear();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
         }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
+        try
         {
           _consumer_monitor_collection.addDiscardedEvents(
-            id, _discard_old_queues[id.index()]->size() );
-          _discard_old_queues[id.index()]->clear();
+            id, _discard_old_queues.at(id.index())->size() );
+          _discard_old_queues.at(id.index())->clear();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
         }
         break;
       }
@@ -529,7 +576,7 @@ namespace stor {
     size_type clearedEvents;
     
     {
-      read_lock_t lock_discard_new(_protect_discard_new_queues);
+      read_lock_t lock(_protect_discard_new_queues);
       const size_type num_queues = _discard_new_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
@@ -544,7 +591,7 @@ namespace stor {
       }
     }
     {
-      read_lock_t lock_discard_old(_protect_discard_old_queues);
+      read_lock_t lock(_protect_discard_old_queues);
       const size_type num_queues = _discard_old_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
@@ -566,7 +613,7 @@ namespace stor {
   QueueCollection<T>::clearQueues()
   {
     {
-      read_lock_t lock_discard_new(_protect_discard_new_queues);
+      read_lock_t lock(_protect_discard_new_queues);
       const size_type num_queues = _discard_new_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
@@ -578,7 +625,7 @@ namespace stor {
       }
     }
     {
-      read_lock_t lock_discard_old(_protect_discard_old_queues);
+      read_lock_t lock(_protect_discard_old_queues);
       const size_type num_queues = _discard_old_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
@@ -601,15 +648,27 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
-          result = _discard_new_queues[id.index()]->empty();
+        try
+        {
+          result = _discard_new_queues.at(id.index())->empty();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
-          result = _discard_old_queues[id.index()]->empty();
+        try
+        {
+          result = _discard_old_queues.at(id.index())->empty();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       default:
@@ -631,15 +690,27 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
-          result = _discard_new_queues[id.index()]->full();
+        try
+        {
+          result = _discard_new_queues.at(id.index())->full();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
-          result = _discard_old_queues[id.index()]->full();
+        try
+        {
+          result = _discard_old_queues.at(id.index())->full();
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       default:
@@ -661,16 +732,28 @@ namespace stor {
       case enquing_policy::DiscardNew:
       {
         read_lock_t lock(_protect_discard_new_queues);
-        if (id.index() < _discard_new_queues.size())
-          result = _discard_new_queues[id.index()]->stale(now);
+        try
+        {
+          result = _discard_new_queues.at(id.index())->stale(now);
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
         break;
       }
       case enquing_policy::DiscardOld:
       {
         read_lock_t lock(_protect_discard_old_queues);
-        if (id.index() < _discard_old_queues.size())
-          result = _discard_old_queues[id.index()]->stale(now);
-          break;
+        try
+        {
+          result = _discard_old_queues.at(id.index())->stale(now);
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
+        }
+        break;
       }
       default:
       {
@@ -686,7 +769,7 @@ namespace stor {
   QueueCollection<T>::allQueuesStale(const utils::time_point_t& now) const
   {
     {
-      read_lock_t lock_discard_new(_protect_discard_new_queues);
+      read_lock_t lock(_protect_discard_new_queues);
       const size_type num_queues = _discard_new_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
@@ -694,7 +777,7 @@ namespace stor {
       }
     }
     {
-      read_lock_t lock_discard_old(_protect_discard_old_queues);
+      read_lock_t lock(_protect_discard_old_queues);
       const size_type num_queues = _discard_old_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
@@ -713,27 +796,27 @@ namespace stor {
     {
       case enquing_policy::DiscardNew:
       {
-        read_lock_t lock( _protect_discard_new_queues );
-        if( id.index() < _discard_new_queues.size() )
+        read_lock_t lock(_protect_discard_new_queues);
+        try
         {
-          result = _discard_new_queues[ id.index() ]->size();
+          result = _discard_new_queues.at(id.index())->size();
         }
-        else
+        catch(std::out_of_range)
         {
-          throw_unknown_queueid( id );
+          throw_unknown_queueid(id);
         }
         break;
       }
       case enquing_policy::DiscardOld:
       {
-        read_lock_t lock( _protect_discard_old_queues );
-        if( id.index() < _discard_old_queues.size() )
+        read_lock_t lock(_protect_discard_old_queues);
+        try
         {
-          result = _discard_old_queues[ id.index() ]->size();
+          result = _discard_old_queues.at(id.index())->size();
         }
-        else
+        catch(std::out_of_range)
         {
-          throw_unknown_queueid( id );
+          throw_unknown_queueid(id);
         }
         break;
       }
@@ -759,23 +842,31 @@ namespace stor {
     {
       case enquing_policy::DiscardNew:
       {
-        if (id.index() < _discard_new_queues.size())
+        try
         {
-          if ( _discard_new_queues[id.index()]->stale(now) )
+          if ( _discard_new_queues.at(id.index())->stale(now) )
             return 1; // queue is stale, reject event
-          if ( _discard_new_queues[id.index()]->enq_nowait(event) )
+          if ( _discard_new_queues.at(id.index())->enq_nowait(event) )
             return 0; // event was put into the queue
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
         }
         break;
       }
       case enquing_policy::DiscardOld:
       {
-        if (id.index() < _discard_old_queues.size())
+        try
         {
-          if ( _discard_old_queues[id.index()]->stale(now) )
+          if ( _discard_old_queues.at(id.index())->stale(now) )
               return 1; // queue is stale, reject event
-          return _discard_old_queues[id.index()]->enq_nowait(event);
+          return _discard_old_queues.at(id.index())->enq_nowait(event);
           // returns number of discarded events to make room for new one
+        }
+        catch(std::out_of_range)
+        {
+          throw_unknown_queueid(id);
         }
         break;
       }

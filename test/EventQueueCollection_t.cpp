@@ -13,10 +13,6 @@
 
 #include "EventFilter/StorageManager/test/TestHelper.h"
 
-#include "boost/thread.hpp"
-#include "boost/shared_ptr.hpp"
-#include "boost/bind.hpp"
-
 #include <algorithm>
 
 using stor::ConsumerID;
@@ -164,54 +160,12 @@ testEventQueueCollection::pop_event_from_non_existing_queue()
   CPPUNIT_ASSERT(chain.empty());
 }
 
-void add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll);
-void create_queues_helper(boost::shared_ptr<EventQueueCollection> pcoll);
-
 void
 testEventQueueCollection::add_and_pop()
 {
-  using namespace boost;
-  shared_ptr<EventQueueCollection> pcoll(new EventQueueCollection(_ecmc));
-
-  boost::thread t1(bind(add_and_pop_helper, pcoll));
-  boost::thread t2(bind(create_queues_helper, pcoll));
-  boost::thread t3(bind(create_queues_helper, pcoll));
-  boost::thread t4(bind(create_queues_helper, pcoll));
-  boost::thread t5(bind(create_queues_helper, pcoll));
-
-  t1.join();
-  t2.join();
-  t3.join();
-  t4.join();
-  t5.join();
-}
-
-void
-create_queues_helper(boost::shared_ptr<EventQueueCollection> pcoll)
-{
-  ConsumerID cid;
-  cid.value = 0;
-  EventConsRegPtr ecriNew(
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, false, 10, DiscardNew, boost::posix_time::seconds(120)));
-  EventConsRegPtr ecriOld(
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, false, 10, DiscardOld, boost::posix_time::seconds(120)));
-  for (int i = 0; i < 1000; ++i)
-    {
-      ::usleep(2000); // 2000 microseconds
-      ecriNew->setConsumerId(++cid);
-      ecriOld->setConsumerId(++cid);
-      pcoll->createQueue(ecriNew);
-      pcoll->createQueue(ecriOld);
-    }
-}
-
-void
-add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
-{
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-  EventQueueCollection& coll = *pcoll;
+  EventQueueCollection coll(_ecmc);
+
   // We want events to go bad very rapidly.
   stor::utils::duration_t expiration_interval =  boost::posix_time::seconds(5);
 
@@ -240,6 +194,8 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
   ecri3->setConsumerId(++cid);
   QueueID q3 = coll.createQueue(ecri3);
   CPPUNIT_ASSERT(q3.isValid());
+
+  CPPUNIT_ASSERT(coll.size() == 3);
 
   // Make some chains, tagging them, and inserting them into the
   // collection. We use many more chains than we have slots in the
@@ -284,15 +240,24 @@ add_and_pop_helper(boost::shared_ptr<EventQueueCollection> pcoll)
 
   // Queues should not be cleared, as not stale, yet
   CPPUNIT_ASSERT(!coll.clearStaleQueues(now));
+  CPPUNIT_ASSERT(!coll.stale(q1,now));
+  CPPUNIT_ASSERT(!coll.stale(q2,now));
+  CPPUNIT_ASSERT(!coll.stale(q3,now));
   CPPUNIT_ASSERT(!coll.allQueuesStale(now));
+  CPPUNIT_ASSERT(!coll.empty(q1));
+  CPPUNIT_ASSERT(!coll.empty(q2));
+  CPPUNIT_ASSERT(coll.empty(q3));
 
   // Now sleep for the expiration interval.
   // Our queues should have all become stale;
   // they should also all be empty.
   stor::utils::sleep(expiration_interval);
   now = stor::utils::getCurrentTime();
-  CPPUNIT_ASSERT(coll.clearStaleQueues(now));
+  CPPUNIT_ASSERT(coll.stale(q1,now));
+  CPPUNIT_ASSERT(coll.stale(q2,now));
+  CPPUNIT_ASSERT(coll.stale(q3,now));
   CPPUNIT_ASSERT(coll.allQueuesStale(now));
+  CPPUNIT_ASSERT(coll.clearStaleQueues(now));
   CPPUNIT_ASSERT(coll.empty(q1));
   CPPUNIT_ASSERT(coll.empty(q2));
   CPPUNIT_ASSERT(coll.empty(q3));
@@ -305,45 +270,47 @@ testEventQueueCollection::invalid_queueid()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
   EventQueueCollection coll(_ecmc);
-  // Make sure none of the interface functions cause a failure. Many
-  // do not return any status we can test; we just run the function
-  // and observe that we do *not* crash or throw any exception.
+
   QueueID id1(DiscardNew, 0);
   QueueID id2(DiscardOld, 0);
-
-  coll.setExpirationInterval(id1, boost::posix_time::seconds(2));
-  coll.setExpirationInterval(id2, boost::posix_time::seconds(2));
-
-  CPPUNIT_ASSERT(coll.getExpirationInterval(id1) == boost::posix_time::seconds(0));
-  CPPUNIT_ASSERT(coll.getExpirationInterval(id2) == boost::posix_time::seconds(0));
+  
+  CPPUNIT_ASSERT_THROW(coll.setExpirationInterval(id1, boost::posix_time::seconds(2)),
+    stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.setExpirationInterval(id2, boost::posix_time::seconds(2)),
+    stor::exception::UnknownQueueId);
+ 
+  CPPUNIT_ASSERT_THROW(coll.getExpirationInterval(id1), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.getExpirationInterval(id2), stor::exception::UnknownQueueId);
 
   {
     I2OChain event(allocate_frame_with_sample_header(0,1,1));
     event.tagForEventConsumer(id1);
     event.tagForEventConsumer(id2);
     CPPUNIT_ASSERT(!event.empty());
-    coll.addEvent(event);
+    CPPUNIT_ASSERT_THROW(coll.addEvent(event), stor::exception::UnknownQueueId);
     CPPUNIT_ASSERT(outstanding_bytes() != 0);
   }
   // Trying to pop an event off an nonexistent queue should give an
   // empty event.
   I2OChain event;
   CPPUNIT_ASSERT(event.empty());
-  event = coll.popEvent(id1);
+  CPPUNIT_ASSERT_THROW(event = coll.popEvent(id1), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT(event.empty());
-  event = coll.popEvent(id2);
+  CPPUNIT_ASSERT_THROW(event = coll.popEvent(id2), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT(event.empty());
 
-  coll.clearQueue(id1); // should have no effect
-  coll.clearQueue(id2); // should have no effect
-  CPPUNIT_ASSERT(coll.empty(id1)); // nonexistent queue is empty.
-  CPPUNIT_ASSERT(coll.full(id1));  // nonexistent queue is also full.
-  CPPUNIT_ASSERT(coll.empty(id2)); // nonexistent queue is empty.
-  CPPUNIT_ASSERT(coll.full(id2));  // nonexistent queue is also full.
+  CPPUNIT_ASSERT_THROW(coll.clearQueue(id1), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.clearQueue(id2), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.empty(id1), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.full(id1), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.empty(id2), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.full(id2), stor::exception::UnknownQueueId);
   
   stor::utils::time_point_t now = stor::utils::getCurrentTime();
   CPPUNIT_ASSERT(!coll.clearStaleQueues(now));
-  CPPUNIT_ASSERT(!coll.allQueuesStale(now));
+  CPPUNIT_ASSERT_THROW(coll.stale(id1,now), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT_THROW(coll.stale(id2,now), stor::exception::UnknownQueueId);
+  CPPUNIT_ASSERT(coll.allQueuesStale(now));
 
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
 }
