@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.56.2.5 2011/01/24 12:18:39 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.1 2011/01/25 11:29:12 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -40,9 +40,9 @@ namespace stor
     xdaq::ApplicationDescriptor* appDesc,
     SharedResourcesPtr sharedResources
   ) :
-  WebPageHelper(appDesc),
+  WebPageHelper(appDesc, "$Name:  $"),
   _sharedResources(sharedResources),
-  _consumerWebPageHelper(appDesc)
+  _consumerWebPageHelper(appDesc, "$Name:  $")
   {}
 
 

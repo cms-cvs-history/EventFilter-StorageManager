@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.56.2.5 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.1 2011/01/25 11:29:12 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -11,8 +11,12 @@ namespace stor
 
   template<typename EventQueueCollection_t, typename StatisticsReporter_t>
   ConsumerWebPageHelper<EventQueueCollection_t, StatisticsReporter_t>::
-  ConsumerWebPageHelper(xdaq::ApplicationDescriptor* appDesc) :
-  WebPageHelper(appDesc)
+  ConsumerWebPageHelper
+  (
+    xdaq::ApplicationDescriptor* appDesc,
+    const std::string& cvsVersion
+  ) :
+  WebPageHelper(appDesc, cvsVersion)
   {}
   
   template<typename EventQueueCollection_t, typename StatisticsReporter_t>

@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.56.2.5 2011/01/24 12:18:39 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.56.2.6 2011/01/25 11:29:12 mommsen Exp $
 /// @file: WebPageHelper.cc
 
 #include <iomanip>
@@ -15,7 +15,12 @@
 namespace stor
 {
 
-  WebPageHelper::WebPageHelper(xdaq::ApplicationDescriptor* appDesc) :
+  WebPageHelper::WebPageHelper
+  (
+    xdaq::ApplicationDescriptor* appDesc,
+    const std::string& cvsVersion
+  ) :
+  _cvsVersion(cvsVersion),
   _appDescriptor(appDesc)
   {
     // set application icon for hyperdaq
@@ -116,9 +121,8 @@ namespace stor
     header = maker.addNode("b", header);
     maker.addText(header, _appDescriptor->getClassName());
     
-    const std::string cvsVersion = "$Name:  $";
-    if ( cvsVersion.length() > 9 ) {
-      const std::string smVersion = "(" + cvsVersion.substr(7, cvsVersion.length()-9) + ")";
+    if ( _cvsVersion.length() > 9 ) {
+      const std::string smVersion = "(" + _cvsVersion.substr(7, _cvsVersion.length()-9) + ")";
       maker.addText(instanceTableDiv, smVersion);
     }
     

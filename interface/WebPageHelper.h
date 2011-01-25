@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.12.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.12.2.2 2011/01/25 11:28:37 mommsen Exp $
 /// @file: WebPageHelper.h
 
 #ifndef EventFilter_StorageManager_WebPageHelper_h
@@ -22,15 +22,19 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.12.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.12.2.2 $
+   * $Date: 2011/01/25 11:28:37 $
    */
   
   class WebPageHelper
   {
   public:
 
-    WebPageHelper(xdaq::ApplicationDescriptor*);
+    WebPageHelper
+    (
+      xdaq::ApplicationDescriptor*,
+      const std::string& cvsVersion
+    );
 
 
     /**
@@ -66,6 +70,7 @@ namespace stor {
     WebPageHelper(WebPageHelper const&);
     WebPageHelper& operator=(WebPageHelper const&);
 
+    const std::string _cvsVersion;
     evf::Css css_;
     
     
