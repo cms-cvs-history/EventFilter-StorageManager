@@ -1,9 +1,10 @@
-// $Id: XHTMLMonitor.h,v 1.5 2009/07/20 13:06:11 mommsen Exp $
+// $Id: XHTMLMonitor.h,v 1.5.14.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: XHTMLMonitor.h 
 
 #ifndef EventFilter_StorageManager_XHTMLMonitor_h
 #define EventFilter_StorageManager_XHTMLMonitor_h
 
+#include "boost/thread/mutex.hpp"
 
 namespace stor {
 
@@ -11,8 +12,8 @@ namespace stor {
     Controls the use of XHTMLMaker (xerces is not thread-safe)
 
     $Author: mommsen $
-    $Revision: 1.5 $
-    $Date: 2009/07/20 13:06:11 $
+    $Revision: 1.5.14.1 $
+    $Date: 2011/01/24 12:18:39 $
   */
   
   class XHTMLMonitor
@@ -29,6 +30,10 @@ namespace stor {
       Destructor
     */
     ~XHTMLMonitor();
+
+  private:
+
+    static boost::mutex _xhtmlMakerMutex;
 
   };
 

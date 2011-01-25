@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11.2.1 2011/01/21 15:51:20 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11.2.1 $
-   * $Date: 2011/01/21 15:51:20 $
+   * $Revision: 1.11.2.2 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
@@ -50,17 +50,17 @@ namespace stor {
     /**
        Get queued data size. Return false if consumer ID not found.
     */
-    bool getQueued( const QueueID& qid, MonitoredQuantity::Stats& result );
+    bool getQueued( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
 
     /**
        Get served data size. Return false if consumer ID not found.
     */
-    bool getServed( const QueueID& qid, MonitoredQuantity::Stats& result );
+    bool getServed( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
 
     /**
        Get number of discarded events. Return false if consumer ID not found.
     */
-    bool getDiscarded( const QueueID& qid, MonitoredQuantity::Stats& result );
+    bool getDiscarded( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
 
     /**
        Reset sizes to zero leaving consumers in
@@ -76,7 +76,7 @@ namespace stor {
     typedef std::map< QueueID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
 
     void addEventSampleToMap( const QueueID&, const unsigned int& data_size, ConsStatMap& );
-    bool getValueFromMap( const QueueID&, MonitoredQuantity::Stats&, const ConsStatMap& );
+    bool getValueFromMap( const QueueID&, MonitoredQuantity::Stats&, const ConsStatMap& ) const;
 
     virtual void do_calculateStatistics();
     virtual void do_reset();

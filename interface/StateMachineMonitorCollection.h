@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.h,v 1.7 2010/01/28 13:37:46 mommsen Exp $
+// $Id: StateMachineMonitorCollection.h,v 1.7.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: StateMachineMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_StateMachineMonitorCollection_h
@@ -19,8 +19,8 @@ namespace stor {
    * A collection of monitored quantities related to the state machine
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/01/28 13:37:46 $
+   * $Revision: 1.7.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class StateMachineMonitorCollection : public MonitorCollection
@@ -74,7 +74,7 @@ namespace stor {
     /**
      * Retrieve the current internal state name
      */
-    const std::string& innerStateName() const;
+    std::string innerStateName() const;
 
   private:
 

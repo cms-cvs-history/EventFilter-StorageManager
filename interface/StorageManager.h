@@ -1,4 +1,4 @@
-// $Id: StorageManager.h,v 1.58.4.1 2011/01/21 15:48:12 mommsen Exp $
+// $Id: StorageManager.h,v 1.58.4.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: StorageManager.h 
 
 #ifndef EventFilter_StorageManager_StorageManager_h
@@ -8,7 +8,7 @@
 
 #include "EventFilter/StorageManager/interface/ConsumerUtils.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
-#include "EventFilter/StorageManager/interface/WebPageHelper.h"
+#include "EventFilter/StorageManager/interface/SMWebPageHelper.h"
 
 #include "xdaq/Application.h"
 #include "xgi/exception/Exception.h"
@@ -37,8 +37,8 @@ namespace stor {
    * Main class of the StorageManager XDAQ application
    *
    * $Author: mommsen $
-   * $Revision: 1.58.4.1 $
-   * $Date: 2011/01/21 15:48:12 $
+   * $Revision: 1.58.4.2 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class StorageManager: public xdaq::Application
@@ -223,7 +223,7 @@ namespace stor {
 
     typedef ConsumerUtils<Configuration,EventQueueCollection> ConsumerUtils_t;
     boost::scoped_ptr<ConsumerUtils_t> _consumerUtils;
-    WebPageHelper _webPageHelper;
+    boost::scoped_ptr<SMWebPageHelper> _smWebPageHelper;
 
   };
 

@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.10 2010/12/14 12:56:52 mommsen Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.11 2010/12/20 16:33:21 mommsen Exp $
 /// @file: ConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -68,7 +68,7 @@ void ConsumerMonitorCollection::addEventSampleToMap( const QueueID& qid,
 
 
 bool ConsumerMonitorCollection::getQueued( const QueueID& qid,
-					   MonitoredQuantity::Stats& result )
+					   MonitoredQuantity::Stats& result ) const
 {
   boost::mutex::scoped_lock l( _mutex );
   return getValueFromMap( qid, result, _qmap );
@@ -76,7 +76,7 @@ bool ConsumerMonitorCollection::getQueued( const QueueID& qid,
 
 
 bool ConsumerMonitorCollection::getServed( const QueueID& qid,
-					   MonitoredQuantity::Stats& result )
+					   MonitoredQuantity::Stats& result ) const
 {
   boost::mutex::scoped_lock l( _mutex );
   return getValueFromMap( qid, result, _smap );
@@ -84,7 +84,7 @@ bool ConsumerMonitorCollection::getServed( const QueueID& qid,
 
 
 bool ConsumerMonitorCollection::getDiscarded( const QueueID& qid,
-					      MonitoredQuantity::Stats& result )
+					      MonitoredQuantity::Stats& result ) const
 {
   boost::mutex::scoped_lock l( _mutex );
   return getValueFromMap( qid, result, _dmap );
@@ -92,7 +92,7 @@ bool ConsumerMonitorCollection::getDiscarded( const QueueID& qid,
 
 bool ConsumerMonitorCollection::getValueFromMap( const QueueID& qid,
                                                  MonitoredQuantity::Stats& result,
-                                                 const ConsStatMap& map )
+                                                 const ConsStatMap& map ) const
 {
   ConsStatMap::const_iterator pos = map.find(qid);
 

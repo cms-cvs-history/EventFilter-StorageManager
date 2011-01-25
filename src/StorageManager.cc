@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.134.2.1 2011/01/21 15:50:22 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -36,8 +36,7 @@ using namespace stor;
 
 
 StorageManager::StorageManager(xdaq::ApplicationStub * s) :
-  xdaq::Application(s),
-  _webPageHelper( getApplicationDescriptor() )
+  xdaq::Application(s)
 {  
   LOG4CPLUS_INFO(this->getApplicationLogger(),"Making StorageManager");
 
@@ -194,7 +193,7 @@ void StorageManager::initializeSharedResources()
     _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
   _sharedResources->_dqmEventQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
 
-  _consumerUtils.reset( new ConsumerUtils_t (
+  _consumerUtils.reset( new ConsumerUtils_t(
       _sharedResources->_configuration,
       _sharedResources->_registrationCollection,
       _sharedResources->_registrationQueue,
@@ -203,6 +202,10 @@ void StorageManager::initializeSharedResources()
       _sharedResources->_dqmEventQueueCollection,
       _sharedResources->_statisticsReporter->alarmHandler()
     ) );
+
+  _smWebPageHelper.reset( new SMWebPageHelper(
+      getApplicationDescriptor(), _sharedResources));
+
 }
 
 
@@ -339,7 +342,7 @@ void StorageManager::receiveEndOfLumiSectionMessage(toolbox::mem::Reference *ref
 void StorageManager::css(xgi::Input *in, xgi::Output *out)
 throw (xgi::exception::Exception)
 {
-  _webPageHelper.css(in,out);
+  _smWebPageHelper->css(in,out);
 }
 
 
@@ -350,10 +353,7 @@ throw (xgi::exception::Exception)
   
   try
   {
-    _webPageHelper.defaultWebPage(
-      out,
-      _sharedResources
-    );
+    _smWebPageHelper->defaultWebPage(out);
   }
   catch(std::exception &e)
   {
@@ -380,10 +380,7 @@ void StorageManager::storedDataWebPage(xgi::Input *in, xgi::Output *out)
 
   try
   {
-    _webPageHelper.storedDataWebPage(
-      out,
-      _sharedResources
-    );
+    _smWebPageHelper->storedDataWebPage(out);
   }
   catch(std::exception &e)
   {
@@ -413,8 +410,7 @@ void StorageManager::consumerStatisticsPage( xgi::Input* in,
 
   try
   {
-    _webPageHelper.consumerStatistics( out,
-                                       _sharedResources );
+    _smWebPageHelper->consumerStatistics(out);
   }
   catch( std::exception &e )
   {
@@ -440,7 +436,7 @@ void StorageManager::rbsenderWebPage(xgi::Input *in, xgi::Output *out)
 
   try
   {
-    _webPageHelper.resourceBrokerOverview(out, _sharedResources);
+    _smWebPageHelper->resourceBrokerOverview(out);
   }
   catch(std::exception &e)
   {
@@ -477,7 +473,7 @@ void StorageManager::rbsenderDetailWebPage(xgi::Input *in, xgi::Output *out)
       localRBID = boost::lexical_cast<long long>(idString);
     }
 
-    _webPageHelper.resourceBrokerDetail(out, _sharedResources, localRBID);
+    _smWebPageHelper->resourceBrokerDetail(out, localRBID);
   }
   catch(std::exception &e)
   {
@@ -505,10 +501,7 @@ void StorageManager::fileStatisticsWebPage(xgi::Input *in, xgi::Output *out)
 
   try
   {
-    _webPageHelper.filesWebPage(
-      out,
-      _sharedResources
-    );
+    _smWebPageHelper->filesWebPage(out);
   }
   catch(std::exception &e)
   {
@@ -536,10 +529,7 @@ void StorageManager::dqmEventStatisticsWebPage(xgi::Input *in, xgi::Output *out)
 
   try
   {
-    _webPageHelper.dqmEventWebPage(
-      out,
-      _sharedResources
-    );
+    _smWebPageHelper->dqmEventWebPage(out);
   }
   catch(std::exception &e)
   {
@@ -566,10 +556,7 @@ void StorageManager::throughputWebPage(xgi::Input *in, xgi::Output *out)
 
   try
   {
-    _webPageHelper.throughputWebPage(
-      out,
-      _sharedResources
-    );
+    _smWebPageHelper->throughputWebPage(out);
   }
   catch(std::exception &e)
   {

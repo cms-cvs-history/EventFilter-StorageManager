@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.cc,v 1.7 2009/08/18 08:55:12 mommsen Exp $
+// $Id: StateMachineMonitorCollection.cc,v 1.8 2010/01/28 13:40:47 mommsen Exp $
 /// @file: StateMachineMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -82,7 +82,7 @@ bool StateMachineMonitorCollection::statusMessage( std::string& m ) const
 }
 
 
-const std::string& StateMachineMonitorCollection::innerStateName() const
+std::string StateMachineMonitorCollection::innerStateName() const
 {
   boost::mutex::scoped_lock sl( _stateMutex );
   TransitionRecord tr = _history.back();
