@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.3 2011/01/14 18:30:22 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.4 2011/01/19 13:50:38 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -24,14 +24,16 @@ namespace stor
     const bool& uniqueEvents,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale
+    const utils::duration_t& secondsToStale,
+    const utils::duration_t& minEventRequestInterval
   ) :
   _common(consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
   _triggerSelection( triggerSelection ),
   _eventSelection( eventSelection ),
   _outputModuleLabel( outputModuleLabel ),
   _prescale( prescale ),
-  _uniqueEvents( uniqueEvents )
+  _uniqueEvents( uniqueEvents ),
+  _minEventRequestInterval( minEventRequestInterval )
   { }
 
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
@@ -87,6 +89,12 @@ namespace stor
 
     _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
     _prescale = pset.getUntrackedParameter<unsigned int>("prescale", 1);
+
+    double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
+    if ( maxEventRequestRate > 0 )
+      _minEventRequestInterval = utils::seconds_to_duration(1 / maxEventRequestRate);
+    else
+      _minEventRequestInterval = boost::posix_time::not_a_date_time;
   }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
@@ -102,6 +110,12 @@ namespace stor
     pset.addUntrackedParameter<bool>("uniqueEvents", _uniqueEvents);
     pset.addUntrackedParameter<unsigned int>("prescale", _prescale);
 
+    if ( ! _minEventRequestInterval.is_not_a_date_time() )
+    {
+      const double rate = 1 / utils::duration_to_seconds(_minEventRequestInterval);
+      pset.addUntrackedParameter<double>("maxEventRequestRate", rate);
+    }
+    
     if ( _common._queueSize > 0 )
       pset.addUntrackedParameter<int>("queueSize", _common._queueSize);
 

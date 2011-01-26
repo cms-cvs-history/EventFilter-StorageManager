@@ -55,7 +55,8 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
     false,
     qid.index(),
     qid.policy(),
-    boost::posix_time::seconds(10)
+    boost::posix_time::seconds(10),
+    boost::posix_time::milliseconds(100)
   );
   ecri.setQueueId( qid );
 
@@ -70,6 +71,8 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( ecri.outputModuleLabel() == "hltOutputDQM" );
   CPPUNIT_ASSERT( ecri.uniqueEvents() == false );
   CPPUNIT_ASSERT( ecri.remoteHost() == "localhost" );
+  CPPUNIT_ASSERT( ecri.minEventRequestInterval() == boost::posix_time::milliseconds(100) );
+  CPPUNIT_ASSERT( fabs(stor::utils::duration_to_seconds(ecri.minEventRequestInterval()) - 0.1) < 0.0001);
 
   edm::ParameterSet pset = ecri.getPSet();
   CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );
@@ -80,6 +83,7 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( pset.getUntrackedParameter<int>("queueSize") == 3 );
   CPPUNIT_ASSERT( pset.getUntrackedParameter<double>("consumerTimeOut") == 10 );
   CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<double>("maxEventRequestRate") == 10 );
 }
 
 
@@ -100,6 +104,7 @@ void testConsumerRegistrationInfo::testEventConsumerPSet()
   origPSet.addUntrackedParameter<int>("queueSize", 10);
   origPSet.addUntrackedParameter<double>("consumerTimeOut", 33);
   origPSet.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  origPSet.addUntrackedParameter<double>("maxEventRequestRate", 25);
 
   EventConsumerRegistrationInfo ecri(
     "Test Consumer",
@@ -126,6 +131,7 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ecri.queueSize() == 0 );
   CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::Max );
   CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(0) );
+  CPPUNIT_ASSERT( ecri.minEventRequestInterval() == boost::posix_time::not_a_date_time );
 
   edm::ParameterSet ecriPSet = ecri.getPSet();
   CPPUNIT_ASSERT( ! isTransientEqual(origPSet, ecriPSet) );
@@ -137,6 +143,7 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ! ecriPSet.exists("queueSize") );
   CPPUNIT_ASSERT( ! ecriPSet.exists("consumerTimeOut") );
   CPPUNIT_ASSERT( ! ecriPSet.exists("queuePolicy") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("maxEventRequestRate") );
 
   EventServingParams defaults;
   defaults._activeConsumerTimeout =  boost::posix_time::seconds(12);
@@ -153,6 +160,7 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ecriDefaults.queueSize() == defaults._consumerQueueSize );
   CPPUNIT_ASSERT( ecriDefaults.queuePolicy() == enquing_policy::DiscardOld );
   CPPUNIT_ASSERT( ecriDefaults.secondsToStale() == defaults._activeConsumerTimeout );
+  CPPUNIT_ASSERT( ecriDefaults.minEventRequestInterval() == boost::posix_time::not_a_date_time );
 
   edm::ParameterSet ecriDefaultsPSet = ecriDefaults.getPSet();
   CPPUNIT_ASSERT( ! isTransientEqual(origPSet, ecriDefaultsPSet) );
@@ -165,7 +173,7 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<int>("queueSize") == 22 );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<double>("consumerTimeOut") == 12 );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
-
+  CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("maxEventRequestRate") );
 }
 
 

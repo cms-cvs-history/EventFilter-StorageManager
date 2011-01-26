@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.4 2011/01/19 13:50:38 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.5 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -24,8 +24,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.4 $
-   * $Date: 2011/01/19 13:50:38 $
+   * $Revision: 1.13.2.5 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -44,7 +44,8 @@ namespace stor
       const bool& uniqueEvents,
       const int& queueSize,
       const enquing_policy::PolicyTag& queuePolicy,
-      const utils::duration_t& secondsToStale
+      const utils::duration_t& secondsToStale,
+      const utils::duration_t& minEventRequestInterval = boost::posix_time::not_a_date_time
     );
 
     EventConsumerRegistrationInfo
@@ -70,6 +71,7 @@ namespace stor
     const std::string& outputModuleLabel() const { return _outputModuleLabel; }
     const unsigned int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
+    const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
     edm::ParameterSet getPSet() const;
 
     // Comparison:
@@ -103,7 +105,7 @@ namespace stor
     std::string _outputModuleLabel;
     unsigned int _prescale;
     bool _uniqueEvents;
-
+    utils::duration_t _minEventRequestInterval;
   };
 
   typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> EventConsRegPtr;

@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.cc,v 1.1.2.2 2011/01/18 15:56:37 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.3 2011/01/19 13:50:38 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -34,15 +34,11 @@ namespace stor
   alreadySaidHalted_(false),
   alreadySaidWaiting_(false)
   {
-    double maxEventRequestRate = ps.getUntrackedParameter<double>("maxEventRequestRate", 1);
-    minEventRequestInterval_ = stor::utils::seconds_to_duration(
-      maxEventRequestRate > 0 ? 
-      1 / maxEventRequestRate :
-      60
-    );
-    nextRequestTime_ = stor::utils::getCurrentTime() + minEventRequestInterval_;
-
     EventConsumerRegistrationInfo regInfo(consumerName_, sourceurl_, ps);
+
+    minEventRequestInterval_ = regInfo.minEventRequestInterval();
+    nextRequestTime_ = stor::utils::getCurrentTime();
+
     edm::ParameterSet consumerPSet = regInfo.getPSet();
     consumerPSet.allToString(consumerPSetString_);
 
@@ -52,9 +48,13 @@ namespace stor
 
   void EventServerProxy::getOneEvent(std::string& data)
   {
-    sleepUntilNextRequest();
+    stor::utils::sleepUntil(nextRequestTime_);
 
     while ( ! edm::shutdown_flag && ! getEventMaybe(data) ) {}
+
+    if ( ! minEventRequestInterval_.is_not_a_date_time() )
+      nextRequestTime_ = stor::utils::getCurrentTime() +
+        minEventRequestInterval_;
   }
  
 
@@ -152,14 +152,6 @@ namespace stor
       std::cout << "========================================" << std::endl;
       throw excpt;
     }
-  }
-  
-  
-  inline void EventServerProxy::sleepUntilNextRequest()
-  {
-    stor::utils::sleepUntil(nextRequestTime_);
-    nextRequestTime_ = stor::utils::getCurrentTime() +
-      minEventRequestInterval_;
   }
   
   

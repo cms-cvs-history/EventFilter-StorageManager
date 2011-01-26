@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.h,v 1.1.2.2 2011/01/18 15:56:37 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.3 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
@@ -20,8 +20,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2011/01/18 15:56:37 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2011/01/24 12:18:39 $
    */
  
   class EventServerProxy
@@ -53,7 +53,6 @@ namespace stor {
 
     void getOneEventFromEventServer(std::string&);
     void checkEvent(std::string&);
-    void sleepUntilNextRequest();
     void getInitMsgFromEventServer(std::string&);
     void checkInitMsg(std::string&);
     void registerWithEventServer();
