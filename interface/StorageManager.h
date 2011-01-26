@@ -1,4 +1,4 @@
-// $Id: StorageManager.h,v 1.58.4.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: StorageManager.h,v 1.58.4.3 2011/01/25 11:28:37 mommsen Exp $
 /// @file: StorageManager.h 
 
 #ifndef EventFilter_StorageManager_StorageManager_h
@@ -37,8 +37,8 @@ namespace stor {
    * Main class of the StorageManager XDAQ application
    *
    * $Author: mommsen $
-   * $Revision: 1.58.4.2 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.58.4.3 $
+   * $Date: 2011/01/25 11:28:37 $
    */
 
   class StorageManager: public xdaq::Application
@@ -47,8 +47,6 @@ namespace stor {
   public:
   
     StorageManager( xdaq::ApplicationStub* s );
-  
-    ~StorageManager();
 
 
   private:  
@@ -217,9 +215,9 @@ namespace stor {
 
     SharedResourcesPtr _sharedResources;
 
-    FragmentProcessor *_fragmentProcessor;
-    DiskWriter *_diskWriter;
-    DQMEventProcessor *_dqmEventProcessor;
+    boost::scoped_ptr<FragmentProcessor> _fragmentProcessor;
+    boost::scoped_ptr<DiskWriter> _diskWriter;
+    boost::scoped_ptr<DQMEventProcessor> _dqmEventProcessor;
 
     typedef ConsumerUtils<Configuration,EventQueueCollection> ConsumerUtils_t;
     boost::scoped_ptr<ConsumerUtils_t> _consumerUtils;

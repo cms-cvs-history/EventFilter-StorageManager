@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.134.2.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134.2.3 2011/01/25 11:29:12 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -215,9 +215,9 @@ void StorageManager::startWorkerThreads()
   // Start the workloops
   try
   {
-    _fragmentProcessor = new FragmentProcessor( this, _sharedResources );
-    _diskWriter = new DiskWriter(this, _sharedResources);
-    _dqmEventProcessor = new DQMEventProcessor(this, _sharedResources);
+    _fragmentProcessor.reset( new FragmentProcessor( this, _sharedResources ) );
+    _diskWriter.reset( new DiskWriter(this, _sharedResources) );
+    _dqmEventProcessor.reset( new DQMEventProcessor(this, _sharedResources) );
     _sharedResources->_statisticsReporter->startWorkLoop("theStatisticsReporter");
     _fragmentProcessor->startWorkLoop("theFragmentProcessor");
     _diskWriter->startWorkLoop("theDiskWriter");
@@ -240,14 +240,6 @@ void StorageManager::startWorkerThreads()
       sentinelException, errorMsg);
     _sharedResources->moveToFailedState( sentinelException );
   }
-}
-
-
-StorageManager::~StorageManager()
-{
-  delete _fragmentProcessor;
-  delete _diskWriter;
-  delete _dqmEventProcessor;
 }
 
 
