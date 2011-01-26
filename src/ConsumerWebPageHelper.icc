@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.1 2011/01/25 11:29:12 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.2 2011/01/25 17:22:24 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -95,13 +95,13 @@ namespace stor
     //Header
     tableRow = maker.addNode("tr", table, _specialRowAttr);
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "ID");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Name");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Consumer Host" );
+    // tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+    // maker.addText(tableDiv, "Max Request Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Status");
+    maker.addText(tableDiv, "Last Request Seconds Ago");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "HLT Output Module");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
@@ -188,12 +188,6 @@ namespace stor
       }
       tableRow = maker.addNode("tr", table, rowAttr);
       
-      // ID:
-      std::ostringstream cid;
-      cid << (*it)->consumerId();
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-      maker.addText(tableDiv, cid.str());
-      
       // Name:
       tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
       maker.addText(tableDiv, (*it)->consumerName());
@@ -202,21 +196,28 @@ namespace stor
       tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
       maker.addText(tableDiv, (*it)->remoteHost());
       
+      // Max request rate:
+      // tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+      // const utils::duration_t& interval = 
+      //   (*it)->minEventRequestInterval();
+      // if ( interval.is_not_a_date_time() )
+      //   maker.addText(tableDiv, "n/a");
+      // else
+      //   maker.addDouble(tableDiv, 1 / utils::duration_to_seconds(interval), 1);
+      
       // Status:
-      XHTMLMaker::AttrMap statusAttr = _tableLabelAttr;
-      std::string statusMessage;
       if( (*it)->isStale(now) )
       {
+        XHTMLMaker::AttrMap statusAttr = _tableLabelAttr;
         statusAttr[ "style" ] = "color:brown;";
-        statusMessage = "Stale";
+        tableDiv = maker.addNode("td", tableRow, statusAttr);
+        maker.addText(tableDiv, "Stale");
       }
       else
       {
-        statusAttr[ "style" ] = "color:green;";
-        statusMessage = "Active";
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr);
+        maker.addDouble(tableDiv, (*it)->lastContactSecondsAgo(now), 1);
       }
-      tableDiv = maker.addNode("td", tableRow, statusAttr);
-      maker.addText(tableDiv, statusMessage);
       
       // Handle the case of consumers sharing a queue
       // If the previous consumer shared the queue, nothing more 

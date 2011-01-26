@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.h,v 1.1.2.1 2011/01/25 11:28:37 mommsen Exp $
+// $Id: ConsumerWebPageHelper.h,v 1.1.2.2 2011/01/25 17:22:24 mommsen Exp $
 /// @file: ConsumerWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_ConsumerWebPageHelper_h
@@ -23,8 +23,8 @@ namespace stor
    * Helper class to handle consumer web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2011/01/25 11:28:37 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2011/01/25 17:22:24 $
    */
 
   template<typename EventQueueCollection_t, typename StatisticsReporter_t>
@@ -99,8 +99,6 @@ namespace stor
   };
 
 } // namespace stor
-
-#include "EventFilter/StorageManager/src/ConsumerWebPageHelper.icc"
 
 #endif // EventFilter_StorageManager_ConsumerWebPageHelper_h 
 

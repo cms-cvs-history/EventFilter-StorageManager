@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.8.2.1 2011/01/21 15:50:22 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.8.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: ConsumerUtils.h 
 
 #ifndef EventFilter_StorageManager_ConsumerUtils_h
@@ -32,8 +32,8 @@ namespace stor
      Handles consumer requests and responses
 
      $Author: mommsen $
-     $Revision: 1.8.2.1 $
-     $Date: 2011/01/21 15:50:22 $
+     $Revision: 1.8.2.2 $
+     $Date: 2011/01/24 12:18:39 $
   */
 
   template<typename Configuration_t, typename EventQueueCollection_t>
@@ -178,8 +178,6 @@ namespace stor
   };
 
 } // namespace stor
-
-#include "EventFilter/StorageManager/src/ConsumerUtils.icc"
 
 #endif // EventFilter_StorageManager_ConsumerUtils_h
 

@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.2 2011/01/14 18:30:22 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.3 2011/01/24 12:18:39 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -22,8 +22,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.2 $
-   * $Date: 2011/01/14 18:30:22 $
+   * $Revision: 1.6.2.3 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class RegistrationInfoBase
@@ -106,6 +106,12 @@ namespace stor {
      */
     bool isStale(const utils::time_point_t& now) const
     { return ( now > _lastConsumerContact + secondsToStale() ); }
+
+    /**
+       Returns the number of seconds since the last consumer contact
+     */
+    double lastContactSecondsAgo(const utils::time_point_t& now) const
+    { return utils::duration_to_seconds( now - _lastConsumerContact ); }
 
 
   private:

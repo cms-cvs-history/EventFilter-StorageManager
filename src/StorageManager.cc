@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.134.2.3 2011/01/25 11:29:12 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134.2.4 2011/01/26 11:14:19 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -12,6 +12,7 @@
 #include "EventFilter/StorageManager/interface/SoapUtils.h"
 #include "EventFilter/StorageManager/interface/StorageManager.h"
 #include "EventFilter/StorageManager/interface/StateMachine.h"
+#include "EventFilter/StorageManager/src/ConsumerUtils.icc"
 
 #include "EventFilter/Utilities/interface/i2oEvfMsgs.h"
 

@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.1 2011/01/25 11:29:12 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.2 2011/01/25 17:22:24 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -28,6 +28,7 @@
 #include "EventFilter/StorageManager/interface/StreamsMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/SMWebPageHelper.h"
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
+#include "EventFilter/StorageManager/src/ConsumerWebPageHelper.icc"
 
 #include "toolbox/net/Utils.h"
 
