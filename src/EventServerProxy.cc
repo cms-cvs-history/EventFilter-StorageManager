@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.cc,v 1.1.2.4 2011/01/26 14:28:28 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.5 2011/01/27 14:57:17 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -193,7 +193,7 @@ namespace stor
     {
       // connection failed: try to reconnect
       edm::LogError("EventServerProxy") << "curl perform failed for header:" << data << std::endl
-        << "Trying to reconnect.";
+        << ". Trying to reconnect.";
       data.clear();
       registerWithEventServer();
     }
