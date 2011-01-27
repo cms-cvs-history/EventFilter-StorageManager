@@ -225,10 +225,6 @@
         </SMRegistrationList>
         <consumerQueueSize  xsi:type="xsd:integer">10</consumerQueueSize>
         <DQMconsumerQueueSize xsi:type="xsd:integer">10</DQMconsumerQueueSize>
-        <maxESEventRate     xsi:type="xsd:double">15.0</maxESEventRate>
-        <DQMmaxESEventRate  xsi:type="xsd:double">1.0</DQMmaxESEventRate>
-        <maxEventRequestRate     xsi:type="xsd:double">25.0</maxEventRequestRate>
-        <maxDQMEventRequestRate   xsi:type="xsd:double">1.0</maxDQMEventRequestRate>
         <collateDQM         xsi:type="xsd:boolean">false</collateDQM>
         <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
         <filePrefixDQM      xsi:type="xsd:string">../../smpsDQM</filePrefixDQM>
