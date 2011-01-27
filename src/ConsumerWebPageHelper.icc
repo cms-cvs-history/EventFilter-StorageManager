@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.2 2011/01/25 17:22:24 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.3 2011/01/26 16:04:39 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -377,8 +377,6 @@ namespace stor
     //Header
     tableRow = maker.addNode("tr", table, _specialRowAttr);
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "ID");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Name");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Consumer Host" );
@@ -457,12 +455,6 @@ namespace stor
         evenRow = true;
       }
       tableRow = maker.addNode("tr", table, rowAttr);
-      
-      // ID:
-      std::ostringstream cid;
-      cid << (*it)->consumerId();
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-      maker.addText(tableDiv, cid.str());
       
       // Name:
       tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);

@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.41 2010/12/17 18:21:05 mommsen Exp $
+// $Id: Configuration.cc,v 1.41.2.1 2011/01/21 15:51:19 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -46,7 +46,6 @@ namespace stor
     boost::mutex::scoped_lock sl(_generalMutex);
     return _diskWriteParamCopy;
   }
-
 
   struct DQMProcessingParams Configuration::getDQMProcessingParams() const
   {
