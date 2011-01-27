@@ -1,10 +1,11 @@
-// $Id: EventServerProxy.cc,v 1.1.2.3 2011/01/19 13:50:38 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.4 2011/01/26 14:28:28 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventServerProxy.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Streamer/interface/ClassFiller.h"
@@ -94,8 +95,7 @@ namespace stor
     
     if ( result != CURLE_OK )
     {
-      std::cerr << "curl perform failed for event:" << std::endl;
-      std::cerr << data << std::endl;
+      edm::LogError("EventServerProxy") << "curl perform failed for event: " << data;
       data.clear();
       // this will end cmsRun 
       //return std::auto_ptr<EventPrincipal>();
@@ -104,16 +104,9 @@ namespace stor
           << "\n";
     }
     
-    if ( data.empty() )
-    {
-      if(!alreadySaidWaiting_) {
-        std::cout << "...waiting for event from Storage Manager..." << std::endl;
-        alreadySaidWaiting_ = true;
-      }
-    }
-    else
-    {
-      alreadySaidWaiting_ = false;
+    if ( data.empty() && !alreadySaidWaiting_) {
+      edm::LogInfo("EventServerProxy") << "...waiting for first event from Storage Manager...";
+      alreadySaidWaiting_ = true;
     }
   }
   
@@ -128,7 +121,7 @@ namespace stor
       if (hdrView.code() == Header::DONE) {
         if(!alreadySaidHalted_) {
           alreadySaidHalted_ = true;
-          std::cout << "Storage Manager has stopped" << std::endl;
+          edm::LogInfo("EventServerProxy") << "Storage Manager has stopped";
         }
       }
       else if (hdrView.code() != Header::EVENT) {
@@ -138,18 +131,20 @@ namespace stor
     }
     catch (cms::Exception excpt) {
       const unsigned int MAX_DUMP_LENGTH = 2000;
-      std::cout << "========================================" << std::endl;
-      std::cout << "* Exception decoding the geteventdata response from the storage manager!" << std::endl;
+      std::ostringstream dump;
+      dump << "========================================" << std::endl;
+      dump << "* Exception decoding the geteventdata response from the storage manager!" << std::endl;
       if (data.length() <= MAX_DUMP_LENGTH) {
-        std::cout << "* Here is the raw text that was returned:" << std::endl;
-        std::cout << data << std::endl;
+        dump << "* Here is the raw text that was returned:" << std::endl;
+        dump << data << std::endl;
       }
       else {
-        std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
+        dump << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        std::cout << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        dump << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
       }
-      std::cout << "========================================" << std::endl;
+      dump << "========================================" << std::endl;
+      edm::LogError("EventServerProxy") << dump;
       throw excpt;
     }
   }
@@ -197,9 +192,8 @@ namespace stor
     if ( result != CURLE_OK )
     {
       // connection failed: try to reconnect
-      std::cerr << "curl perform failed for header:" << std::endl;
-      std::cerr << data << std::endl;
-      std::cerr << "Trying to reconnect." << std::endl;
+      edm::LogError("EventServerProxy") << "curl perform failed for header:" << data << std::endl
+        << "Trying to reconnect.";
       data.clear();
       registerWithEventServer();
     }
@@ -207,7 +201,7 @@ namespace stor
     if( data.empty() )
     {
       if(!alreadySaidWaiting_) {
-        std::cout << "...waiting for header from Storage Manager..." << std::endl;
+        edm::LogInfo("EventServerProxy") << "...waiting for header from Storage Manager...";
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
@@ -230,18 +224,20 @@ namespace stor
     }
     catch (cms::Exception excpt) {
       const unsigned int MAX_DUMP_LENGTH = 1000;
-      std::cout << "========================================" << std::endl;
-      std::cout << "* Exception decoding the getregdata response from the storage manager!" << std::endl;
+      std::ostringstream dump;
+      dump << "========================================" << std::endl;
+      dump << "* Exception decoding the getregdata response from the storage manager!" << std::endl;
       if (data.length() <= MAX_DUMP_LENGTH) {
-        std::cout << "* Here is the raw text that was returned:" << std::endl;
-        std::cout << data << std::endl;
+        dump << "* Here is the raw text that was returned:" << std::endl;
+        dump << data << std::endl;
       }
       else {
-        std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
+        dump << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        std::cout << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        dump << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
       }
-      std::cout << "========================================" << std::endl;
+      dump << "========================================" << std::endl;
+      edm::LogError("EventServerProxy") << dump;
       throw excpt;
     }
   }
@@ -294,17 +290,16 @@ namespace stor
       {
         if ( tries >= maxConnectTries_ )
         {
-          std::cerr << "Giving up waiting for connection after " << tries 
-            << " tries for Storage Manager on " << sourceurl_ << std::endl;
+          edm::LogError("EventServerProxy") << "Giving up waiting for connection after " <<
+            tries << " tries for Storage Manager on " << sourceurl_ << std::endl;
           throw cms::Exception("connectToEventServer","EventServerProxy")
             << "Could not register: probably no Storage Manager is running on "
               << sourceurl_;
         }
         else
         {
-          std::cout << "Waiting for connection to StorageManager on " << sourceurl_ << "... " 
-            << tries << "/" << maxConnectTries_
-            << std::endl;
+          edm::LogInfo("EventServerProxy") << "Waiting for connection to StorageManager on " <<
+            sourceurl_ << "... " << tries << "/" << maxConnectTries_;
           sleep(connectTrySleepTime_);
         }
         data.clear();
@@ -322,25 +317,27 @@ namespace stor
     }
     catch (cms::Exception excpt) {
       const unsigned int MAX_DUMP_LENGTH = 1000;
-      std::cout << "========================================" << std::endl;
-      std::cout << "* Exception decoding the registerWithEventServer response!" << std::endl;
+      std::ostringstream dump;
+      dump << "========================================" << std::endl;
+      dump << "* Exception decoding the registerWithEventServer response!" << std::endl;
       if (data.length() <= MAX_DUMP_LENGTH) {
-        std::cout << "* Here is the raw text that was returned:" << std::endl;
-        std::cout << data << std::endl;
+        dump << "* Here is the raw text that was returned:" << std::endl;
+        dump << data << std::endl;
       }
       else {
-        std::cout << "* Here are the first " << MAX_DUMP_LENGTH <<
+        dump << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        std::cout << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        dump << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
       }
-      std::cout << "========================================" << std::endl;
+      dump << "========================================" << std::endl;
+      edm::LogError("EventServerProxy") << dump;
       throw excpt;
     }
     
     if ( respView->getStatus() == ConsRegResponseBuilder::ES_NOT_READY )
     {
       if(!alreadySaidWaiting_) {
-        std::cout << "...waiting for registration response from Storage Manager..." << std::endl;
+        edm::LogInfo("EventServerProxy") << "...waiting for registration response from Storage Manager...";
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
