@@ -56,7 +56,7 @@ testStreamQueue::enq_deq()
   Reference* ref = allocate_frame_with_basic_header(I2O_SM_DATA, 0, 1);
   I2OChain c1(ref);
   CPPUNIT_ASSERT(!c1.empty());
-  CPPUNIT_ASSERT(sq.enq_nowait(c1));
+  CPPUNIT_ASSERT_NO_THROW(sq.enq_nowait(c1));
 
   CPPUNIT_ASSERT(sq.size() == 1);
   CPPUNIT_ASSERT(sq.used() == memory_consumed_by_one_frame);
@@ -85,7 +85,7 @@ testStreamQueue::enq_deq_memlimit()
   I2OChain c1(ref);
   CPPUNIT_ASSERT(!c1.empty());
   CPPUNIT_ASSERT(c1.complete());
-  CPPUNIT_ASSERT(sq.enq_nowait(c1));
+  CPPUNIT_ASSERT_NO_THROW(sq.enq_nowait(c1));
 
   CPPUNIT_ASSERT(sq.size() == 1);
   CPPUNIT_ASSERT(sq.used() == memory_consumed_by_one_frame);
@@ -96,7 +96,7 @@ testStreamQueue::enq_deq_memlimit()
   CPPUNIT_ASSERT(!c2.empty());
   CPPUNIT_ASSERT(!c2.complete());
   CPPUNIT_ASSERT(outstanding_bytes() == 2*memory_consumed_by_one_frame);
-  CPPUNIT_ASSERT(!sq.enq_nowait(c2));
+  CPPUNIT_ASSERT_THROW(sq.enq_nowait(c2),stor::FailIfFull<I2OChain>::QueueIsFull);
   CPPUNIT_ASSERT(sq.size() == 1);
   CPPUNIT_ASSERT(sq.used() == memory_consumed_by_one_frame);
   CPPUNIT_ASSERT(sq.full());

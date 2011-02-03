@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.8.2.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.8.2.3 2011/01/26 16:04:39 mommsen Exp $
 /// @file: ConsumerUtils.h 
 
 #ifndef EventFilter_StorageManager_ConsumerUtils_h
@@ -32,8 +32,8 @@ namespace stor
      Handles consumer requests and responses
 
      $Author: mommsen $
-     $Revision: 1.8.2.2 $
-     $Date: 2011/01/24 12:18:39 $
+     $Revision: 1.8.2.3 $
+     $Date: 2011/01/26 16:04:39 $
   */
 
   template<typename Configuration_t, typename EventQueueCollection_t>
@@ -160,7 +160,7 @@ namespace stor
     /**
       Send event to consumer:
     */
-    void writeConsumerEvent(xgi::Output*, const typename EventQueueCollection_t::return_type&) const;
+    void writeConsumerEvent(xgi::Output*, const typename EventQueueCollection_t::value_type&) const;
 
     /**
       Send DQM event to DQM consumer:

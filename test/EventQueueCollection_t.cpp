@@ -153,11 +153,11 @@ testEventQueueCollection::pop_event_from_non_existing_queue()
   QueueID invalid_id;
   CPPUNIT_ASSERT(!invalid_id.isValid());
 
-  I2OChain chain;
-  CPPUNIT_ASSERT(chain.empty());
-  CPPUNIT_ASSERT_THROW(chain = c.popEvent(invalid_id), 
+  EventQueueCollection::value_type event;
+  CPPUNIT_ASSERT(event.first.empty());
+  CPPUNIT_ASSERT_THROW(event = c.popEvent(invalid_id), 
                        stor::exception::UnknownQueueId);
-  CPPUNIT_ASSERT(chain.empty());
+  CPPUNIT_ASSERT(event.first.empty());
 }
 
 void
@@ -227,9 +227,9 @@ testEventQueueCollection::add_and_pop()
 
   // Queue with id q1 should contain "new" events; q2 and q3 should
   // contain "old" events.
-  CPPUNIT_ASSERT(coll.popEvent(q1).dataLocation(0)[0] > num_chains/2);
-  CPPUNIT_ASSERT(coll.popEvent(q2).dataLocation(0)[0] < num_chains/2);
-  CPPUNIT_ASSERT(coll.popEvent(q3).dataLocation(0)[0] < num_chains/2);
+  CPPUNIT_ASSERT(coll.popEvent(q1).first.dataLocation(0)[0] > num_chains/2);
+  CPPUNIT_ASSERT(coll.popEvent(q2).first.dataLocation(0)[0] < num_chains/2);
+  CPPUNIT_ASSERT(coll.popEvent(q3).first.dataLocation(0)[0] < num_chains/2);
 
   // Queues 1 and 2 should not be empty (because each contains one
   // event), but q3 should be empty (it has a capacity of one, and we
@@ -292,12 +292,12 @@ testEventQueueCollection::invalid_queueid()
   }
   // Trying to pop an event off an nonexistent queue should give an
   // empty event.
-  I2OChain event;
-  CPPUNIT_ASSERT(event.empty());
+  EventQueueCollection::value_type event;
+  CPPUNIT_ASSERT(event.first.empty());
   CPPUNIT_ASSERT_THROW(event = coll.popEvent(id1), stor::exception::UnknownQueueId);
-  CPPUNIT_ASSERT(event.empty());
+  CPPUNIT_ASSERT(event.first.empty());
   CPPUNIT_ASSERT_THROW(event = coll.popEvent(id2), stor::exception::UnknownQueueId);
-  CPPUNIT_ASSERT(event.empty());
+  CPPUNIT_ASSERT(event.first.empty());
 
   CPPUNIT_ASSERT_THROW(coll.clearQueue(id1), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT_THROW(coll.clearQueue(id2), stor::exception::UnknownQueueId);
@@ -363,7 +363,7 @@ testEventQueueCollection::clear_all_queues()
   CPPUNIT_ASSERT(!coll.empty(q3));
   CPPUNIT_ASSERT(!coll.empty(q4));
 
-  CPPUNIT_ASSERT(!coll.popEvent(cid).empty());
+  CPPUNIT_ASSERT(!coll.popEvent(cid).first.empty());
   
   coll.clearQueues();
   CPPUNIT_ASSERT(coll.size() == 4);

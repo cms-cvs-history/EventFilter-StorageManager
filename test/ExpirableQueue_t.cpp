@@ -107,11 +107,11 @@ test_pop_freshens_queue()
   // Popping from the queue should make it non-stale. This must be
   // true *even if the queue is empty*, so that popping does not get
   // an event.
-   I2OChain popped;
-   CPPUNIT_ASSERT(!q.deq_nowait(popped));
-   CPPUNIT_ASSERT(q.empty());
-   CPPUNIT_ASSERT(!q.clearIfStale(utils::getCurrentTime(),clearedEvents));
-   CPPUNIT_ASSERT(clearedEvents == 0);
+  typename Q::value_type popped;
+  CPPUNIT_ASSERT(!q.deq_nowait(popped));
+  CPPUNIT_ASSERT(q.empty());
+  CPPUNIT_ASSERT(!q.clearIfStale(utils::getCurrentTime(),clearedEvents));
+  CPPUNIT_ASSERT(clearedEvents == 0);
 }
 
 //  -------------------------------------------------------------------

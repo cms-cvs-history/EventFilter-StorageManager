@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.12 2010/12/10 19:38:48 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -98,16 +98,17 @@ bool DQMEventProcessor::processDQMEvents(toolbox::task::WorkLoop*)
 
 void DQMEventProcessor::processNextDQMEvent()
 {
-  I2OChain dqmEvent;
+  DQMEventQueue::value_type dqmEvent;
   DQMEventQueuePtr eq = _sharedResources->_dqmEventQueue;
   utils::time_point_t startTime = utils::getCurrentTime();
   if (eq->deq_timed_wait(dqmEvent, _timeout))
   {
     utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
     _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDQMEventProcessorIdleSample(elapsedTime);
-    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addPoppedDQMEventSample(dqmEvent.memoryUsed());
+    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addPoppedDQMEventSample(dqmEvent.first.memoryUsed());
+    // dqmEvent.second would give us the number of dropped updates
 
-    _dqmEventStore.addDQMEvent(dqmEvent);
+    _dqmEventStore.addDQMEvent(dqmEvent.first);
   }
   else
   {

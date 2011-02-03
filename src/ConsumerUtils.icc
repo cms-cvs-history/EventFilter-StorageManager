@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.2 2011/01/24 12:18:38 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.3 2011/01/24 19:32:04 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -184,15 +184,12 @@ namespace stor
       return;
     }
     
-    typename EventQueueCollection_t::return_type evt =
+    typename EventQueueCollection_t::value_type event =
       _eventQueueCollection->popEvent( cid );
-    if( evt.faulty() )
-    {
+    if( event.first.faulty() )
       writeEmptyBuffer( out );
-      return;
-    }
-    
-    writeConsumerEvent( out, evt );
+    else    
+      writeConsumerEvent( out, event );
   }
   
   
@@ -286,13 +283,13 @@ namespace stor
       return;
     }
     
-    DQMEventRecord::GroupRecord dqmGroupRecord =
+    typename DQMEventQueueCollection::value_type dqmEvent =
       _dqmEventQueueCollection->popEvent( cid );
     
-    if ( !dqmGroupRecord.empty() )
-      writeDQMConsumerEvent( out, dqmGroupRecord.getDQMEventMsgView() );
-    else
+    if ( dqmEvent.first.empty() )
       writeEmptyBuffer( out );
+    else
+      writeDQMConsumerEvent( out, dqmEvent.first.getDQMEventMsgView() );
   }
   
   
@@ -611,15 +608,15 @@ namespace stor
   template<typename Configuration_t, typename EventQueueCollection_t>
   void
   ConsumerUtils<Configuration_t,EventQueueCollection_t>::
-  writeConsumerEvent(xgi::Output* out, const typename EventQueueCollection_t::return_type& evt) const
+  writeConsumerEvent(xgi::Output* out, const typename EventQueueCollection_t::value_type& evt) const
   {
     writeHTTPHeaders( out );
     
-    const unsigned int nfrags = evt.fragmentCount();
+    const unsigned int nfrags = evt.first.fragmentCount();
     for ( unsigned int i = 0; i < nfrags; ++i )
     {
-      const unsigned int len = evt.dataSize( i );
-      unsigned char* location = evt.dataLocation( i );
+      const unsigned int len = evt.first.dataSize( i );
+      unsigned char* location = evt.first.dataLocation( i );
       out->write( (char*)location, len );
     } 
   }

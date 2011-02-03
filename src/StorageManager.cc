@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.134.2.4 2011/01/26 11:14:19 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134.2.5 2011/01/26 16:04:39 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -600,7 +600,7 @@ xoap::MessageReference StorageManager::handleFSMSoapMessage( xoap::MessageRefere
     errorMsg = "Failed to put a '" + command + "' state machine event into command queue: ";
     if (command == "Configure")
     {
-      _sharedResources->_commandQueue->enq_nowait( stor::event_ptr( new stor::Configure() ) );
+      _sharedResources->_commandQueue->enq_wait( stor::event_ptr( new stor::Configure() ) );
     }
     else if (command == "Enable")
     {

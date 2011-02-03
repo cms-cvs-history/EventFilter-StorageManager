@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.10 2010/12/10 19:38:48 mommsen Exp $
+// $Id: ConcurrentQueue.h,v 1.10.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: ConcurrentQueue.h 
 
 
@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <exception>
 #include <limits>
 #include <list>
 
@@ -31,19 +32,19 @@ namespace stor
      not-full). However, what is done in the case of the queue being
      full depends on the policy chosen:
 
-        FailIfFull: the function will return false, without
-        modifying the queue.
+        FailIfFull: a std::exeption is thrown if the queue is full.
 
-        KeepNewest: the function returns void; the head of the
-        FIFO is popped (and destroyed), and the new item is added to
-        the FIFO.
+        KeepNewest: the head of the FIFO is popped (and destroyed),
+        and the new item is added to the FIFO. The function returns
+        the number of popped (dropped) element.
 
-        RejectNewest: the function returns void; the new item is
-        not put onto the FIFO.
+        RejectNewest: the new item is not put onto the FIFO.
+        The function returns a boolean indicating a successful
+        addition of the new element.
    
      $Author: mommsen $
-     $Revision: 1.10 $
-     $Date: 2010/12/10 19:38:48 $
+     $Revision: 1.10.2.1 $
+     $Date: 2011/01/24 12:18:39 $
    */
 
 
@@ -74,15 +75,19 @@ namespace stor
       static const bool value = (sizeof(test<T>(0)) == sizeof(true_type));
     };
     
-    /*
-      Specialization for simple type int which is used in the unit tests.
-    */
-    template<>
-    class has_memoryUsed<int>
+    template <typename T>
+    memory_type 
+    _memory_usage(const std::pair<T,size_t>& t)
     {
-    public:
-      static const bool value = false;
-    };
+      memory_type usage(0UL);
+      try
+      {
+        usage = t.first.memoryUsed();
+      }
+      catch(...)
+      {}
+      return usage;
+    }
     
     template <typename T>
     typename boost::enable_if<has_memoryUsed<T>, memory_type>::type
@@ -109,74 +114,129 @@ namespace stor
   template <class T>
   struct FailIfFull
   {
-    typedef bool return_type;
+    typedef void return_type;
 
     typedef T value_type;
     typedef std::list<value_type> sequence_type;
     typedef typename sequence_type::size_type size_type;
+
+    static struct QueueIsFull : public std::exception
+    {
+      virtual const char* what() const throw()
+      {
+        return "Cannot add item to a full queue";
+      }
+    } queueIsFull;
+
+    static void do_insert
+    (
+      T const& item,
+      sequence_type& elements,
+      size_type& size,
+      detail::memory_type const& item_size,
+      detail::memory_type& used,
+      size_t& elements_dropped,
+      boost::condition& nonempty
+    )
+    {
+      elements.push_back(item);
+      elements_dropped = 0;
+      ++size;
+      used += item_size;
+      nonempty.notify_one();
+    }
                
-    static return_type do_enq(value_type const& item,
-                              sequence_type& elements,
-                              size_type& size,
-                              size_type& capacity,
-                              detail::memory_type& used,
-                              detail::memory_type& memory,
-                              boost::condition& nonempty)
+    static return_type do_enq
+    (
+      T const& item,
+      sequence_type& elements,
+      size_type& size,
+      size_type& capacity,
+      detail::memory_type& used,
+      detail::memory_type& memory,
+      size_t& elements_dropped,
+      boost::condition& nonempty
+    )
     {
       detail::memory_type item_size = detail::_memory_usage(item);
-      if (size < capacity && used+item_size <= memory)
-         {
-           elements.push_back(item);
-           ++size;
-           used += item_size;
-           nonempty.notify_one();
-           return true;
-         }
-      return false;
-    }                       
+      if (size >= capacity || used+item_size > memory)
+      {
+        ++elements_dropped;
+        throw queueIsFull;
+      }
+      else
+      {
+        do_insert(item, elements, size, item_size, used,
+          elements_dropped, nonempty);
+      }
+    }         
   };
 
 
   template <class T>
   struct KeepNewest
   {
-    typedef T value_type;
+    typedef std::pair<T,size_t> value_type;
     typedef std::list<value_type> sequence_type;
     typedef typename sequence_type::size_type size_type;
     typedef size_type return_type;
 
-    static return_type do_enq(value_type const& item,
-                              sequence_type& elements,
-                              size_type& size,
-                              size_type& capacity,
-                              detail::memory_type& used,
-                              detail::memory_type& memory,
-                              boost::condition& nonempty)
+    static void do_insert
+    (
+      T const& item,
+      sequence_type& elements,
+      size_type& size,
+      detail::memory_type const& item_size,
+      detail::memory_type& used,
+      size_t& elements_dropped,
+      boost::condition& nonempty
+    )
+    {
+      elements.push_back(
+        typename sequence_type::value_type(item,elements_dropped)
+      );
+      elements_dropped = 0;
+      ++size;
+      used += item_size;
+      nonempty.notify_one();
+    }
+
+    static return_type do_enq
+    (
+      T const& item,
+      sequence_type& elements,
+      size_type& size,
+      size_type& capacity,
+      detail::memory_type& used,
+      detail::memory_type& memory,
+      size_t& elements_dropped,
+      boost::condition& nonempty
+    )
     {
       size_type elements_removed(0);
       detail::memory_type item_size = detail::_memory_usage(item);
       while ( (size==capacity || used+item_size > memory) && !elements.empty() )
-        {
-          sequence_type holder;
-          // Move the item out of elements in a manner that will not throw.
-          holder.splice(holder.begin(), elements, elements.begin());
-          // Record the change in the length of elements.
-          --size;
-          used -= detail::_memory_usage( holder.front() );
-          ++elements_removed;
-        }
+      {
+        sequence_type holder;
+        // Move the item out of elements in a manner that will not throw.
+        holder.splice(holder.begin(), elements, elements.begin());
+        // Record the change in the length of elements.
+        --size;
+        used -= detail::_memory_usage( holder.front().first );
+        elements_dropped += holder.front().second + 1;
+        ++elements_removed;
+      }
       if (size < capacity && used+item_size <= memory)
         // we succeeded to make enough room for the new element
       {
-        elements.push_back(item); 
-        ++size;
-        used += item_size;
-        nonempty.notify_one();
+        do_insert(item, elements, size, item_size, used,
+          elements_dropped, nonempty);
       }
       else
       {
         // we cannot add the new element
         ++elements_removed;
+        ++elements_dropped;
       }
       return elements_removed;
     }
@@ -188,27 +248,50 @@ namespace stor
   {
     typedef bool return_type;
 
-    typedef T value_type;
+    typedef std::pair<T,size_t> value_type;
     typedef std::list<value_type> sequence_type;
     typedef typename sequence_type::size_type size_type;
 
-    static return_type do_enq(value_type const& item,
-                              sequence_type& elements,
-                              size_type& size,
-                              size_type& capacity,
-                              detail::memory_type& used,
-                              detail::memory_type& memory,
-                              boost::condition& nonempty)
+    static void do_insert
+    (
+      T const& item,
+      sequence_type& elements,
+      size_type& size,
+      detail::memory_type const& item_size,
+      detail::memory_type& used,
+      size_t& elements_dropped,
+      boost::condition& nonempty
+    )
+    {
+      elements.push_back(
+        typename sequence_type::value_type(item,elements_dropped)
+      );
+      elements_dropped = 0;
+      ++size;
+      used += item_size;
+      nonempty.notify_one();
+    }
+
+    static return_type do_enq
+    (
+      T const& item,
+      sequence_type& elements,
+      size_type& size,
+      size_type& capacity,
+      detail::memory_type& used,
+      detail::memory_type& memory,
+      size_t& elements_dropped,
+      boost::condition& nonempty
+    )
     {
       detail::memory_type item_size = detail::_memory_usage(item);
       if (size < capacity && used+item_size <= memory)
-        {
-          elements.push_back(item);
-          ++size;
-          used += item_size;
-          nonempty.notify_one();
-          return true;
-        }
+      {
+        do_insert(item, elements, size, item_size, used,
+          elements_dropped, nonempty);
+        return true;
+      }
+      ++elements_dropped;
       return false;
     }
   };
@@ -221,7 +304,7 @@ namespace stor
   class ConcurrentQueue
   {
   public:
-    typedef T value_type;
+    typedef typename EnqPolicy::value_type value_type;
     typedef std::list<value_type> sequence_type;
     typedef typename sequence_type::size_type size_type;
 
@@ -229,8 +312,11 @@ namespace stor
        ConcurrentQueue is always bounded. By default, the bound is
        absurdly large.
     */
-    explicit ConcurrentQueue(size_type max_size = std::numeric_limits<size_type>::max(),
-                             detail::memory_type max_memory = std::numeric_limits<detail::memory_type>::max());
+    explicit ConcurrentQueue
+    (
+      size_type max_size = std::numeric_limits<size_type>::max(),
+      detail::memory_type max_memory = std::numeric_limits<detail::memory_type>::max()
+    );
 
     /**
        Applications should arrange to make sure that the destructor of
@@ -250,44 +336,42 @@ namespace stor
        Add a copy if item to the queue, according to the rules
        determined by the EnqPolicy; see documentation above the the
        provided EnqPolicy choices.  This may throw any exception
-       thrown by the assignment operator of type value_type, or
-       bad_alloc.
+       thrown by the assignment operator of type T, or bad_alloc.
      */
-    typename EnqPolicy::return_type enq_nowait(value_type const& item);
+    typename EnqPolicy::return_type enq_nowait(T const& item);
 
     /**
        Add a copy of item to the queue. If the queue is full wait
        until it becomes non-full. This may throw any exception thrown
-       by the assignment operator of type value_type, or bad_alloc.
+       by the assignment operator of type T, or bad_alloc.
      */
-    void enq_wait(value_type const& p);
+    void enq_wait(T const& p);
 
     /**
        Add a copy of item to the queue. If the queue is full wait
        until it becomes non-full or until time_duration has passed.
        Return true if the items has been put onto the queue or
        false if the timeout has expired. This may throw any exception
-       thrown by the assignment operator of type value_type, or
-       bad_alloc.
+       thrown by the assignment operator of T, or bad_alloc.
      */
-    bool enq_timed_wait(value_type const& p, boost::posix_time::time_duration const&);
+    bool enq_timed_wait(T const& p, boost::posix_time::time_duration const&);
 
     /**
        Assign the value at the head of the queue to item and then
        remove the head of the queue. If successful, return true; on
        failure, return false. This function fill fail without waiting
        if the queue is empty. This function may throw any exception
-       thrown by the assignment operator of type value_type.
+       thrown by the assignment operator of type EnqPolicy::value_type.
      */
-    bool deq_nowait(value_type& item);
+    bool deq_nowait(value_type&);
 
     /**
        Assign the value of the head of the queue to item and then
        remove the head of the queue. If the queue is empty wait until
        is has become non-empty. This may throw any exception thrown by
-       the assignment operator of type value_type.
+       the assignment operator of type EnqPolicy::value_type.
      */
-    void deq_wait(value_type& item);
+    void deq_wait(value_type&);
 
     /**
        Assign the value at the head of the queue to item and then
@@ -295,9 +379,9 @@ namespace stor
        is has become non-empty or until time_duration has passed.
        Return true if an item has been removed from the queue
        or false if the timeout has expired. This may throw any
-       exception thrown by the assignment operator of type value_type.
+       exception thrown by the assignment operator of type EnqPolicy::value_type.
      */
-    bool deq_timed_wait(value_type& p, boost::posix_time::time_duration const&);
+    bool deq_timed_wait(value_type&, boost::posix_time::time_duration const&);
 
     /**
        Return true if the queue is empty, and false if it is not.
@@ -372,6 +456,7 @@ namespace stor
     */
     detail::memory_type _memory;
     detail::memory_type _used;
+    size_t _elements_dropped;
 
     /*
       These private member functions assume that whatever locks
@@ -383,13 +468,7 @@ namespace stor
       and increment size. Return true if the item is inserted, and
       false if not.
     */
-    bool _insert_if_possible(value_type const& item);
-
-    /*
-      Insert the given item into the list, and increment size. It is
-      assumed not to be full.
-     */
-    void _insert(value_type const& item);
+    bool _insert_if_possible(T const& item);
 
     /*
       Remove the object at the head of the queue, if there is one, and
@@ -434,9 +513,9 @@ namespace stor
     _capacity(max_size),
     _size(0),
     _memory(max_memory),
-    _used(0)
-  {
-  }
+    _used(0),
+    _elements_dropped(0)
+  {}
 
   template <class T, class EnqPolicy>
   ConcurrentQueue<T,EnqPolicy>::~ConcurrentQueue()
@@ -445,38 +524,43 @@ namespace stor
     _elements.clear();
     _size = 0;
     _used = 0;
+    _elements_dropped = 0;
   }
 
   template <class T, class EnqPolicy>
   typename EnqPolicy::return_type
-  ConcurrentQueue<T,EnqPolicy>::enq_nowait(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::enq_nowait(T const& item)
   {
     lock_t lock(_protect_elements);
-    return EnqPolicy::do_enq(item, _elements, 
-                             _size, _capacity,
-                             _used, _memory,
-                             _queue_not_empty);
+    return EnqPolicy::do_enq
+      (item, _elements, _size, _capacity, _used, _memory,
+        _elements_dropped, _queue_not_empty);
   }
 
   template <class T, class EnqPolicy>
   void
-  ConcurrentQueue<T,EnqPolicy>::enq_wait(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::enq_wait(T const& item)
   {
     lock_t lock(_protect_elements);
     while ( _is_full() ) _queue_not_full.wait(lock);
-    _insert(item);
+    EnqPolicy::do_insert(item, _elements, _size,
+      detail::_memory_usage(item), _used,
+      _elements_dropped, _queue_not_empty);
   }
 
   template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T,EnqPolicy>::enq_timed_wait(value_type const& item, 
-                                               boost::posix_time::time_duration const& wait_time)
+  ConcurrentQueue<T,EnqPolicy>::enq_timed_wait
+  (
+    T const& item, 
+    boost::posix_time::time_duration const& wait_time
+  )
   {
     lock_t lock(_protect_elements);
     if ( _is_full() )
-      {
-        _queue_not_full.timed_wait(lock, wait_time);
-      }
+    {
+      _queue_not_full.timed_wait(lock, wait_time);
+    }
     return _insert_if_possible(item);
   }
 
@@ -499,14 +583,17 @@ namespace stor
 
   template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T,EnqPolicy>::deq_timed_wait(value_type& item,
-                                               boost::posix_time::time_duration const& wait_time)
+  ConcurrentQueue<T,EnqPolicy>::deq_timed_wait
+  (
+    value_type& item,
+    boost::posix_time::time_duration const& wait_time
+  )
   {
     lock_t lock(_protect_elements);
     if (_size == 0)
-      {
-        _queue_not_empty.timed_wait(lock, wait_time);
-      }
+    {
+      _queue_not_empty.timed_wait(lock, wait_time);
+    }
     return _remove_head_if_possible(item);
   }
 
@@ -586,6 +673,7 @@ namespace stor
     _elements.clear();
     _size = 0;
     _used = 0;
+    _elements_dropped = 0;
   }
 
   //-----------------------------------------------------------
@@ -594,38 +682,30 @@ namespace stor
 
   template <class T, class EnqPolicy>
   bool
-  ConcurrentQueue<T,EnqPolicy>::_insert_if_possible(value_type const& item)
+  ConcurrentQueue<T,EnqPolicy>::_insert_if_possible(T const& item)
   {
-    bool item_accepted = false;
-    if ( ! _is_full() )
-      {
-        _insert(item);
-        item_accepted = true;
-      }
-    return item_accepted;
-  }
-
-  template <class T, class EnqPolicy>
-  void
-  ConcurrentQueue<T,EnqPolicy>::_insert(value_type const& item)
-  {
-    _elements.push_back(item);
-    ++_size;
-    _used += detail::_memory_usage( item );
-    _queue_not_empty.notify_one();
+    if ( _is_full() )
+    {
+      ++_elements_dropped;
+      return false;
+    }
+    else
+    {
+      EnqPolicy::do_insert(item, _elements, _size,
+      detail::_memory_usage(item), _used,
+      _elements_dropped, _queue_not_empty);
+      return true;
+    }
   }
 
   template <class T, class EnqPolicy>
   bool
   ConcurrentQueue<T,EnqPolicy>::_remove_head_if_possible(value_type& item)
   {
-    bool item_obtained = false;
-    if (!_size == 0)
-      {
-        _remove_head(item);
-        item_obtained = true;
-      }
-    return item_obtained;
+    if (_size == 0) return false;
+
+    _remove_head(item);
+    return true;
   }
 
   template <class T, class EnqPolicy>
@@ -637,12 +717,12 @@ namespace stor
     holder.splice(holder.begin(), _elements, _elements.begin());
     // Record the change in the length of _elements.
     --_size;
-    _used -= detail::_memory_usage( holder.front() );
-
     _queue_not_full.notify_one();
-    
+
     // Assign the item. This might throw.
     item = holder.front();
+
+    _used -= detail::_memory_usage( item );
   }
 
   template <class T, class EnqPolicy>

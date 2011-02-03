@@ -1,4 +1,4 @@
-// $Id: ExpirableQueue.h,v 1.7.2.1 2011/01/14 18:30:22 mommsen Exp $
+// $Id: ExpirableQueue.h,v 1.7.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: ExpirableQueue.h 
 
 
@@ -19,8 +19,8 @@ namespace stor
      was made.
    
      $Author: mommsen $
-     $Revision: 1.7.2.1 $
-     $Date: 2011/01/14 18:30:22 $
+     $Revision: 1.7.2.2 $
+     $Date: 2011/01/24 12:18:39 $
    */
 
   template <class T, class Policy>
@@ -29,6 +29,7 @@ namespace stor
   public:
     typedef Policy policy_type; // publish template parameter
     typedef typename ConcurrentQueue<T, Policy>::size_type size_type;
+    typedef typename Policy::value_type value_type;
 
     /**
        Create an ExpirableQueue with the given maximum size and
@@ -45,7 +46,7 @@ namespace stor
       In either case, update the staleness time to reflect this
       attempt to get an event.
     */
-    bool deq_nowait(T&);
+    bool deq_nowait(value_type&);
 
     /**
        Put an event onto the queue, respecting the Policy of this
@@ -127,7 +128,7 @@ namespace stor
 
   template <class T, class Policy>
   bool
-  ExpirableQueue<T, Policy>::deq_nowait(T& event)
+  ExpirableQueue<T, Policy>::deq_nowait(value_type& event)
   {
     _staleness_time = utils::getCurrentTime() + _staleness_interval;
     return _events.deq_nowait(event);

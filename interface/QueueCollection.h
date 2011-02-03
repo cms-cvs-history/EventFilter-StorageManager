@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.6 2011/01/24 14:32:15 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.7 2011/01/25 16:53:24 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.6 $
-   * $Date: 2011/01/24 14:32:15 $
+   * $Revision: 1.10.2.7 $
+   * $Date: 2011/01/25 16:53:24 $
    */
 
   template <class T>
@@ -45,7 +45,7 @@ namespace stor {
   {
   public:
     typedef typename ExpirableQueue<T, RejectNewest<T> >::size_type size_type;
-    typedef T return_type;
+    typedef typename ExpirableQueue<T, RejectNewest<T> >::value_type value_type;
 
     /**
        A default-constructed QueueCollection contains no queues
@@ -96,14 +96,14 @@ namespace stor {
       the given id. If there is no event in that queue, an empty
       event is returned.
      */
-    return_type popEvent(const QueueID&);
+    value_type popEvent(const QueueID&);
 
     /**
       Remove and return an event from the queue for the consumer with
       the given ConsumerID. If there is no event in that queue, an
       empty event is returned.
      */
-    return_type popEvent(const ConsumerID&);
+    value_type popEvent(const ConsumerID&);
 
     /**
        Clear the queue with the given QueueID.
@@ -460,10 +460,10 @@ namespace stor {
   }
   
   template <class T>
-  T
+  typename QueueCollection<T>::value_type
   QueueCollection<T>::popEvent(const QueueID& id)
   {
-    T result;
+    value_type result;
     switch (id.policy()) 
     {
       case enquing_policy::DiscardNew:
@@ -471,7 +471,9 @@ namespace stor {
         read_lock_t lock(_protect_discard_new_queues);
         try
         {
-          _discard_new_queues.at(id.index())->deq_nowait(result);
+          if ( _discard_new_queues.at(id.index())->deq_nowait(result) )
+            _consumer_monitor_collection.addServedEventSample(id,
+              result.first.totalDataSize());
         }
         catch(std::out_of_range)
         {
@@ -484,7 +486,9 @@ namespace stor {
         read_lock_t lock(_protect_discard_old_queues);
         try
         {
-          _discard_old_queues.at(id.index())->deq_nowait(result);
+          if ( _discard_old_queues.at(id.index())->deq_nowait(result) )
+            _consumer_monitor_collection.addServedEventSample(id,
+              result.first.totalDataSize());
         }
         catch(std::out_of_range)
         {
@@ -498,20 +502,14 @@ namespace stor {
         // does not return, no break needed
       }
     }
-    
-    if (!result.empty())
-    {
-      _consumer_monitor_collection.addServedEventSample( id, result.totalDataSize() );
-    }
-    
     return result;
   }
   
   template <class T>
-  T
+  typename QueueCollection<T>::value_type
   QueueCollection<T>::popEvent(const ConsumerID& cid)
   {
-    T result;
+    value_type result;
     if (!cid.isValid()) return result;
     QueueID id;
     {
