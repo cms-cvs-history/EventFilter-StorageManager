@@ -79,7 +79,7 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("TriggerSelector") == triggerSelection );
   CPPUNIT_ASSERT( pset.getParameter<Strings>("TrackedEventSelection") == eventSelection );
   CPPUNIT_ASSERT( pset.getUntrackedParameter<bool>("uniqueEvents") == false );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<unsigned int>("prescale") == 1 );
+  CPPUNIT_ASSERT( pset.getUntrackedParameter<int>("prescale") == 1 );
   CPPUNIT_ASSERT( pset.getUntrackedParameter<int>("queueSize") == 3 );
   CPPUNIT_ASSERT( pset.getUntrackedParameter<double>("consumerTimeOut") == 10 );
   CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
@@ -100,7 +100,7 @@ void testConsumerRegistrationInfo::testEventConsumerPSet()
   origPSet.addUntrackedParameter<std::string>("TriggerSelector", triggerSelection);
   origPSet.addParameter<Strings>("TrackedEventSelection", eventSelection);
   origPSet.addUntrackedParameter<bool>("uniqueEvents", true);
-  origPSet.addUntrackedParameter<unsigned int>("prescale", 5);
+  origPSet.addUntrackedParameter<int>("prescale", 5);
   origPSet.addUntrackedParameter<int>("queueSize", 10);
   origPSet.addUntrackedParameter<double>("consumerTimeOut", 33);
   origPSet.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
@@ -139,7 +139,7 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("TriggerSelector") == "" );
   CPPUNIT_ASSERT( ecriPSet.getParameter<Strings>("TrackedEventSelection") == Strings() );
   CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<bool>("uniqueEvents") == false );
-  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<unsigned int>("prescale") == 1 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<int>("prescale") == 1 );
   CPPUNIT_ASSERT( ! ecriPSet.exists("queueSize") );
   CPPUNIT_ASSERT( ! ecriPSet.exists("consumerTimeOut") );
   CPPUNIT_ASSERT( ! ecriPSet.exists("queuePolicy") );
@@ -169,7 +169,7 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("TriggerSelector") == "" );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getParameter<Strings>("TrackedEventSelection") == Strings() );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<bool>("uniqueEvents") == false );
-  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<unsigned int>("prescale") == 1 );
+  CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<int>("prescale") == 1 );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<int>("queueSize") == 22 );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<double>("consumerTimeOut") == 12 );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
