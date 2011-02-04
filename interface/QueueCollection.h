@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.8 2011/02/03 14:16:28 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.9 2011/02/04 13:57:45 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.8 $
-   * $Date: 2011/02/03 14:16:28 $
+   * $Revision: 1.10.2.9 $
+   * $Date: 2011/02/04 13:57:45 $
    */
 
   template <class T>
@@ -533,9 +533,11 @@ namespace stor {
         read_lock_t lock(_protect_discard_new_queues);
         try
         {
+          const size_type clearedEvents =
+            _discard_new_queues.at(id.index())->clear();
+          
           _consumer_monitor_collection.addDroppedEvents(
-            id, _discard_new_queues.at(id.index())->size() );
-          _discard_new_queues.at(id.index())->clear();
+            id, clearedEvents);
         }
         catch(std::out_of_range)
         {
@@ -548,9 +550,11 @@ namespace stor {
         read_lock_t lock(_protect_discard_old_queues);
         try
         {
+          const size_type clearedEvents = 
+            _discard_old_queues.at(id.index())->clear();
+          
           _consumer_monitor_collection.addDroppedEvents(
-            id, _discard_old_queues.at(id.index())->size() );
-          _discard_old_queues.at(id.index())->clear();
+            id, clearedEvents);
         }
         catch(std::out_of_range)
         {
@@ -615,11 +619,13 @@ namespace stor {
       const size_type num_queues = _discard_new_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
+        const size_type clearedEvents =
+          _discard_new_queues[i]->clear();
+
         _consumer_monitor_collection.addDroppedEvents(
           QueueID(enquing_policy::DiscardNew, i),
-          _discard_new_queues[i]->size()
+          clearedEvents
         );
-        _discard_new_queues[i]->clear();
       }
     }
     {
@@ -627,11 +633,13 @@ namespace stor {
       const size_type num_queues = _discard_old_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
+        const size_type clearedEvents =
+          _discard_old_queues[i]->clear();
+
         _consumer_monitor_collection.addDroppedEvents(
           QueueID(enquing_policy::DiscardOld, i),
-          _discard_old_queues[i]->size()
+          clearedEvents
         );
-        _discard_old_queues[i]->clear();
       }
     }
   }
@@ -842,10 +850,7 @@ namespace stor {
       {
         try
         {
-          if ( _discard_new_queues.at(id.index())->stale(now) )
-            return 1; // queue is stale, reject event
-          if ( _discard_new_queues.at(id.index())->enq_nowait(event) )
-            return 0; // event was put into the queue
+          return _discard_new_queues.at(id.index())->enq_nowait(event,now);
         }
         catch(std::out_of_range)
         {
@@ -857,10 +862,7 @@ namespace stor {
       {
         try
         {
-          if ( _discard_old_queues.at(id.index())->stale(now) )
-              return 1; // queue is stale, reject event
-          return _discard_old_queues.at(id.index())->enq_nowait(event);
-          // returns number of dropped events to make room for new one
+          return _discard_old_queues.at(id.index())->enq_nowait(event,now);
         }
         catch(std::out_of_range)
         {

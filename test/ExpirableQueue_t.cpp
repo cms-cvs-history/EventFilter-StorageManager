@@ -53,7 +53,7 @@ test_fill_and_go_stale()
   for (size_t i = 0; i < capacity; ++i)
     {
       I2OChain event(allocate_frame_with_sample_header(0,1,1));
-      q.enq_nowait(event);
+      CPPUNIT_ASSERT(q.enq_nowait(event) == 0);
     }
   CPPUNIT_ASSERT(q.full());
 
@@ -86,7 +86,7 @@ test_pop_freshens_queue()
   Q q(capacity, seconds_to_stale);
 
   // Push in an event, then let the queue go stale.
-  q.enq_nowait(I2OChain(allocate_frame_with_sample_header(0,1,1)));
+  CPPUNIT_ASSERT(q.enq_nowait(I2OChain(allocate_frame_with_sample_header(0,1,1))) == 0);
   CPPUNIT_ASSERT(!q.empty());
   utils::sleep(seconds_to_stale);
 
@@ -96,13 +96,9 @@ test_pop_freshens_queue()
   CPPUNIT_ASSERT(q.empty());
   CPPUNIT_ASSERT(clearedEvents == 1);
 
-  // A queue that has gone stale should remain stale if we add a new
-  // event to it.
-  q.enq_nowait(I2OChain(allocate_frame_with_sample_header(0,1,1)));
-  CPPUNIT_ASSERT(!q.empty());
-  CPPUNIT_ASSERT(q.clearIfStale(utils::getCurrentTime(),clearedEvents));
+  // A queue that has gone stale should reject a new event
+  CPPUNIT_ASSERT(q.enq_nowait(I2OChain(allocate_frame_with_sample_header(0,1,1))) == 1);
   CPPUNIT_ASSERT(q.empty());
-  CPPUNIT_ASSERT(clearedEvents == 1);
 
   // Popping from the queue should make it non-stale. This must be
   // true *even if the queue is empty*, so that popping does not get

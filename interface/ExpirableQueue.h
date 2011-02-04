@@ -1,4 +1,4 @@
-// $Id: ExpirableQueue.h,v 1.7.2.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ExpirableQueue.h,v 1.7.2.3 2011/02/03 14:16:28 mommsen Exp $
 /// @file: ExpirableQueue.h 
 
 
@@ -19,8 +19,8 @@ namespace stor
      was made.
    
      $Author: mommsen $
-     $Revision: 1.7.2.2 $
-     $Date: 2011/01/24 12:18:39 $
+     $Revision: 1.7.2.3 $
+     $Date: 2011/02/03 14:16:28 $
    */
 
   template <class T, class Policy>
@@ -49,11 +49,13 @@ namespace stor
     bool deq_nowait(value_type&);
 
     /**
-       Put an event onto the queue, respecting the Policy of this
-       queue that controls what is done in the case of a full queue.
+       Put an event onto the queue, if the queue is not stale at the
+       given time. It respects the Policy of this queue that controls
+       what is done in the case of a full queue.
        This does not affect the staleness time of this queue.
+       Returns the number of dropped events.
      */
-    typename Policy::return_type enq_nowait(T const&);
+    size_type enq_nowait(T const&, const utils::time_point_t& now = utils::getCurrentTime());
 
     /**
        Set the staleness interval.
@@ -135,9 +137,14 @@ namespace stor
   }
 
   template <class T, class Policy>
-  typename Policy::return_type
-  ExpirableQueue<T, Policy>::enq_nowait(T const& event)
+  typename ExpirableQueue<T, Policy>::size_type
+  ExpirableQueue<T, Policy>::enq_nowait(T const& event, const utils::time_point_t& now)
   {
+    if ( stale(now) )
+    {
+      _events.addExternallyDroppedEvents(1);
+      return 1;
+    }
     return _events.enq_nowait(event);
   }  
 
@@ -162,9 +169,7 @@ namespace stor
   typename ExpirableQueue<T, Policy>::size_type
   ExpirableQueue<T, Policy>::clear()
   {
-    const size_type entries = size();
-    _events.clear();
-    return entries;
+    return _events.clear();
   }  
 
   template <class T, class Policy>

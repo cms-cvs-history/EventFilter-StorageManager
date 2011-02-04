@@ -434,15 +434,15 @@ testConcurrentQueue::rejectnewest()
 {
   std::cerr << "\nConcurrentQueue_t::rejectnewest\n";
   rejectnewest_t q(1);
-  CPPUNIT_ASSERT(q.enq_nowait(1));
-  CPPUNIT_ASSERT(!q.enq_nowait(2));
+  CPPUNIT_ASSERT(q.enq_nowait(1) == 0);
+  CPPUNIT_ASSERT(q.enq_nowait(2) == 1);
   CPPUNIT_ASSERT(q.size() == 1);
   rejectnewest_t::value_type value;
   CPPUNIT_ASSERT(q.deq_nowait(value));
   CPPUNIT_ASSERT(value.first == 1);
   CPPUNIT_ASSERT(value.second == 0);
   CPPUNIT_ASSERT(q.empty());
-  CPPUNIT_ASSERT(q.enq_nowait(3));
+  CPPUNIT_ASSERT(q.enq_nowait(3) == 0);
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.deq_nowait(value));
   CPPUNIT_ASSERT(value.first == 3);
@@ -456,8 +456,8 @@ testConcurrentQueue::rejectnewest_memlimit()
 {
   std::cerr << "\nConcurrentQueue_t::rejectnewest_memlimit\n";
   rejectnewest_t q(5,sizeof(int)); //memory for one int only
-  CPPUNIT_ASSERT(q.enq_nowait(1));
-  CPPUNIT_ASSERT(!q.enq_nowait(2));
+  CPPUNIT_ASSERT(q.enq_nowait(1) == 0);
+  CPPUNIT_ASSERT(q.enq_nowait(2) == 1);
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.used() == sizeof(int));
   rejectnewest_t::value_type value;
@@ -466,7 +466,7 @@ testConcurrentQueue::rejectnewest_memlimit()
   CPPUNIT_ASSERT(value.second == 0);
   CPPUNIT_ASSERT(q.empty());
   CPPUNIT_ASSERT(q.used() == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(3));
+  CPPUNIT_ASSERT(q.enq_nowait(3) == 0);
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.deq_nowait(value));
   CPPUNIT_ASSERT(value.first == 3);

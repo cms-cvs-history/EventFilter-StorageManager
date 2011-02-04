@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.10.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ConcurrentQueue.h,v 1.10.2.2 2011/02/03 14:16:21 mommsen Exp $
 /// @file: ConcurrentQueue.h 
 
 
@@ -39,12 +39,12 @@ namespace stor
         the number of popped (dropped) element.
 
         RejectNewest: the new item is not put onto the FIFO.
-        The function returns a boolean indicating a successful
-        addition of the new element.
+        The function returns the dropped event count (1) if the
+        item cannot be added.
    
      $Author: mommsen $
-     $Revision: 1.10.2.1 $
-     $Date: 2011/01/24 12:18:39 $
+     $Revision: 1.10.2.2 $
+     $Date: 2011/02/03 14:16:21 $
    */
 
 
@@ -246,11 +246,10 @@ namespace stor
   template <class T>
   struct RejectNewest
   {
-    typedef bool return_type;
-
     typedef std::pair<T,size_t> value_type;
     typedef std::list<value_type> sequence_type;
     typedef typename sequence_type::size_type size_type;
+    typedef size_type return_type;
 
     static void do_insert
     (
@@ -289,10 +288,10 @@ namespace stor
       {
         do_insert(item, elements, size, item_size, used,
           elements_dropped, nonempty);
-        return true;
+        return 0;
       }
       ++elements_dropped;
-      return false;
+      return 1;
     }
   };
 
@@ -434,8 +433,15 @@ namespace stor
     /**
        Remove all items from the queue. This changes the size to zero
        but does not change the capacity.
+       Returns the number of cleared events.
      */
-    void clear();
+    size_type clear();
+
+    /**
+       Adds the passed count to the counter of dropped events
+     */
+    void addExternallyDroppedEvents(size_type);
+    
 
   private:
     typedef boost::mutex::scoped_lock lock_t;
@@ -666,14 +672,23 @@ namespace stor
   }
 
   template <class T, class EnqPolicy>
-  void 
+  typename ConcurrentQueue<T,EnqPolicy>::size_type
   ConcurrentQueue<T,EnqPolicy>::clear()
   {
     lock_t lock(_protect_elements);
+    size_type clearedEvents = _size;
+    _elements_dropped += _size;
     _elements.clear();
     _size = 0;
     _used = 0;
-    _elements_dropped = 0;
+    return clearedEvents;
+  }
+  
+  template <class T, class EnqPolicy>
+  void 
+  ConcurrentQueue<T,EnqPolicy>::addExternallyDroppedEvents(size_type n)
+  {
+    _elements_dropped += n;
   }
 
   //-----------------------------------------------------------
