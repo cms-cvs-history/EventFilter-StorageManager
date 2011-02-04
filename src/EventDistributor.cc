@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.23.2.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.23.2.3 2011/01/24 14:03:20 mommsen Exp $
 /// @file: EventDistributor.cc
 
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -173,12 +173,12 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
       // Pass any DQM event to the DQM event processor, as it might write 
       // DQM histograms to disk which are not requested by any consumer
       // Put this here or in EventDistributor::addEventToRelevantQueues?
-      DQMEventQueue::size_type discardedDQMEvents =
+      DQMEventQueue::size_type droppedDQMEvents =
         _sharedResources->_dqmEventQueue->enq_nowait( ioc );
 
       DQMEventMonitorCollection& dqmEventMonColl = _sharedResources->
         _statisticsReporter->getDQMEventMonitorCollection();
-      dqmEventMonColl.getDiscardedDQMEventCountsMQ().addSample(discardedDQMEvents);
+      dqmEventMonColl.getDroppedDQMEventCountsMQ().addSample(droppedDQMEvents);
 
       DataSenderMonitorCollection& dataSenderMonColl = _sharedResources->
         _statisticsReporter->getDataSenderMonitorCollection();

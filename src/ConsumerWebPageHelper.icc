@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.3 2011/01/26 16:04:39 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.4 2011/01/27 14:58:44 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -118,7 +118,7 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Enqueued Event Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
-    maker.addText(tableDiv, "Discarded Events");
+    maker.addText(tableDiv, "Dropped Events");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Served Event Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
@@ -285,16 +285,16 @@ namespace stor
         enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
       );
       
-      // Discarded Events:
-      MonitoredQuantity::Stats discardedStats;
-      const bool discardedFound = eventConsumerCollection.getDiscarded( (*it)->queueId(), discardedStats );
+      // Dropped Events:
+      MonitoredQuantity::Stats droppedStats;
+      const bool droppedFound = eventConsumerCollection.getDropped( (*it)->queueId(), droppedStats );
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
       maker.addDouble(tableDiv,
-        discardedFound ? discardedStats.getValueSum(MonitoredQuantity::FULL) : 0, 0
+        droppedFound ? droppedStats.getValueSum(MonitoredQuantity::FULL) : 0, 0
       );
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
       maker.addDouble(tableDiv,
-        discardedFound ? discardedStats.getValueSum(MonitoredQuantity::RECENT) : 0, 0
+        droppedFound ? droppedStats.getValueSum(MonitoredQuantity::RECENT) : 0, 0
       );
       
       // Events served:

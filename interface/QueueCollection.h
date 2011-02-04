@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.7 2011/01/25 16:53:24 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.8 2011/02/03 14:16:28 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.7 $
-   * $Date: 2011/01/25 16:53:24 $
+   * $Revision: 1.10.2.8 $
+   * $Date: 2011/02/03 14:16:28 $
    */
 
   template <class T>
@@ -453,9 +453,9 @@ namespace stor {
     for( std::vector<QueueID>::const_iterator it = routes.begin(), itEnd = routes.end();
          it != itEnd; ++it )
     {
-      const size_type discardedEvents = _enqueue_event( *it, event, now );
+      const size_type droppedEvents = _enqueue_event( *it, event, now );
       _consumer_monitor_collection.addQueuedEventSample( *it, event.totalDataSize() );
-      _consumer_monitor_collection.addDiscardedEvents( *it, discardedEvents );
+      _consumer_monitor_collection.addDroppedEvents( *it, droppedEvents );
     }
   }
   
@@ -533,7 +533,7 @@ namespace stor {
         read_lock_t lock(_protect_discard_new_queues);
         try
         {
-          _consumer_monitor_collection.addDiscardedEvents(
+          _consumer_monitor_collection.addDroppedEvents(
             id, _discard_new_queues.at(id.index())->size() );
           _discard_new_queues.at(id.index())->clear();
         }
@@ -548,7 +548,7 @@ namespace stor {
         read_lock_t lock(_protect_discard_old_queues);
         try
         {
-          _consumer_monitor_collection.addDiscardedEvents(
+          _consumer_monitor_collection.addDroppedEvents(
             id, _discard_old_queues.at(id.index())->size() );
           _discard_old_queues.at(id.index())->clear();
         }
@@ -580,7 +580,7 @@ namespace stor {
       {
         if ( _discard_new_queues[i]->clearIfStale(now, clearedEvents) )
         {
-          _consumer_monitor_collection.addDiscardedEvents(
+          _consumer_monitor_collection.addDroppedEvents(
             QueueID(enquing_policy::DiscardNew, i),
             clearedEvents
           );
@@ -595,7 +595,7 @@ namespace stor {
       {
         if ( _discard_old_queues[i]->clearIfStale(now, clearedEvents) )
         {
-          _consumer_monitor_collection.addDiscardedEvents(
+          _consumer_monitor_collection.addDroppedEvents(
             QueueID(enquing_policy::DiscardOld, i),
             clearedEvents
           );
@@ -615,7 +615,7 @@ namespace stor {
       const size_type num_queues = _discard_new_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
-        _consumer_monitor_collection.addDiscardedEvents(
+        _consumer_monitor_collection.addDroppedEvents(
           QueueID(enquing_policy::DiscardNew, i),
           _discard_new_queues[i]->size()
         );
@@ -627,7 +627,7 @@ namespace stor {
       const size_type num_queues = _discard_old_queues.size();
       for (size_type i = 0; i < num_queues; ++i)
       {
-        _consumer_monitor_collection.addDiscardedEvents(
+        _consumer_monitor_collection.addDroppedEvents(
           QueueID(enquing_policy::DiscardOld, i),
           _discard_old_queues[i]->size()
         );
@@ -860,7 +860,7 @@ namespace stor {
           if ( _discard_old_queues.at(id.index())->stale(now) )
               return 1; // queue is stale, reject event
           return _discard_old_queues.at(id.index())->enq_nowait(event);
-          // returns number of discarded events to make room for new one
+          // returns number of dropped events to make room for new one
         }
         catch(std::out_of_range)
         {

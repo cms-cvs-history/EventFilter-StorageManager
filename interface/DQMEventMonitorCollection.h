@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.h,v 1.7 2010/02/18 11:21:01 mommsen Exp $
+// $Id: DQMEventMonitorCollection.h,v 1.7.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DQMEventMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DQMEventMonitorCollection_h
@@ -16,15 +16,15 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/02/18 11:21:01 $
+   * $Revision: 1.7.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class DQMEventMonitorCollection : public MonitorCollection
   {
   private:
 
-    MonitoredQuantity _discardedDQMEventCounts;
+    MonitoredQuantity _droppedDQMEventCounts;
 
     MonitoredQuantity _dqmEventSizes;
     MonitoredQuantity _servedDQMEventSizes;
@@ -43,7 +43,7 @@ namespace stor {
 
     struct DQMEventStats
     {
-      MonitoredQuantity::Stats discardedDQMEventCountsStats;  //number of events
+      MonitoredQuantity::Stats droppedDQMEventCountsStats;  //number of events
       
       MonitoredQuantity::Stats dqmEventSizeStats;             //MB
       MonitoredQuantity::Stats servedDQMEventSizeStats;       //MB
@@ -60,11 +60,11 @@ namespace stor {
 
     explicit DQMEventMonitorCollection(const utils::duration_t& updateInterval);
 
-    const MonitoredQuantity& getDiscardedDQMEventCountsMQ() const {
-      return _discardedDQMEventCounts;
+    const MonitoredQuantity& getDroppedDQMEventCountsMQ() const {
+      return _droppedDQMEventCounts;
     }
-    MonitoredQuantity& getDiscardedDQMEventCountsMQ() {
-      return _discardedDQMEventCounts;
+    MonitoredQuantity& getDroppedDQMEventCountsMQ() {
+      return _droppedDQMEventCounts;
     }
 
     const MonitoredQuantity& getDQMEventSizeMQ() const {
@@ -149,7 +149,7 @@ namespace stor {
 
     xdata::Double _dqmFoldersPerEP;
     xdata::UnsignedInteger32 _processedDQMEvents;
-    xdata::UnsignedInteger32 _discardedDQMEvents;
+    xdata::UnsignedInteger32 _droppedDQMEvents;
   };
   
 } // namespace stor

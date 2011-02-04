@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.11 2010/12/20 16:33:21 mommsen Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.11.2.1 2011/01/25 11:29:12 mommsen Exp $
 /// @file: ConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -22,7 +22,7 @@ void ConsumerMonitorCollection::addQueuedEventSample( const QueueID& qid,
 }
 
 
-void ConsumerMonitorCollection::addDiscardedEvents( const QueueID& qid,
+void ConsumerMonitorCollection::addDroppedEvents( const QueueID& qid,
 						    const size_t& count )
 {
   boost::mutex::scoped_lock l( _mutex );
@@ -83,7 +83,7 @@ bool ConsumerMonitorCollection::getServed( const QueueID& qid,
 }
 
 
-bool ConsumerMonitorCollection::getDiscarded( const QueueID& qid,
+bool ConsumerMonitorCollection::getDropped( const QueueID& qid,
 					      MonitoredQuantity::Stats& result ) const
 {
   boost::mutex::scoped_lock l( _mutex );

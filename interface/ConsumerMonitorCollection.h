@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11.2.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.3 2011/01/25 11:28:37 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11.2.2 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.11.2.3 $
+   * $Date: 2011/01/25 11:28:37 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
@@ -38,9 +38,9 @@ namespace stor {
     void addQueuedEventSample( const QueueID&, const unsigned int& data_size );
 
     /**
-       Add number of discarded events
+       Add number of dropped events
     */
-    void addDiscardedEvents( const QueueID&, const size_t& count );
+    void addDroppedEvents( const QueueID&, const size_t& count );
 
     /**
        Add served sample
@@ -58,9 +58,9 @@ namespace stor {
     bool getServed( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
 
     /**
-       Get number of discarded events. Return false if consumer ID not found.
+       Get number of dropped events. Return false if consumer ID not found.
     */
-    bool getDiscarded( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
+    bool getDropped( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
 
     /**
        Reset sizes to zero leaving consumers in

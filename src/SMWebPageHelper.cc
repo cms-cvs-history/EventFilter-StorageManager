@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.2 2011/01/25 17:22:24 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.3 2011/01/26 16:04:39 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -1192,11 +1192,11 @@ namespace stor
     // DQM events lost
     tableRow = maker.addNode("tr", table, _rowAttr);
     tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
-    maker.addText(tableDiv, "DQM events discarded");
+    maker.addText(tableDiv, "DQM events dropped");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-    maker.addDouble( tableDiv, stats.discardedDQMEventCountsStats.getValueSum(MonitoredQuantity::FULL), 0 );
+    maker.addDouble( tableDiv, stats.droppedDQMEventCountsStats.getValueSum(MonitoredQuantity::FULL), 0 );
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-    maker.addDouble( tableDiv, stats.discardedDQMEventCountsStats.getValueSum(MonitoredQuantity::RECENT), 0 );
+    maker.addDouble( tableDiv, stats.droppedDQMEventCountsStats.getValueSum(MonitoredQuantity::RECENT), 0 );
     
     // Average updates/folder
     tableRow = maker.addNode("tr", table, _rowAttr);
