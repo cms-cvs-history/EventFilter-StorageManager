@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.4 2011/01/19 13:50:38 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.5 2011/01/26 14:28:28 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -20,7 +20,7 @@ namespace stor
     const std::string& triggerSelection,
     const Strings& eventSelection,
     const std::string& outputModuleLabel,
-    const unsigned int& prescale,
+    const int& prescale,
     const bool& uniqueEvents,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
@@ -88,7 +88,7 @@ namespace stor
     }
 
     _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
-    _prescale = pset.getUntrackedParameter<unsigned int>("prescale", 1);
+    _prescale = pset.getUntrackedParameter<int>("prescale", 1);
 
     double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
     if ( maxEventRequestRate > 0 )
@@ -108,7 +108,7 @@ namespace stor
     pset.addUntrackedParameter<std::string>("TriggerSelector", _triggerSelection);
     pset.addParameter<Strings>("TrackedEventSelection", _eventSelection);
     pset.addUntrackedParameter<bool>("uniqueEvents", _uniqueEvents);
-    pset.addUntrackedParameter<unsigned int>("prescale", _prescale);
+    pset.addUntrackedParameter<int>("prescale", _prescale);
 
     if ( ! _minEventRequestInterval.is_not_a_date_time() )
     {

@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.5 2011/01/24 12:18:39 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.6 2011/01/26 14:28:28 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -24,8 +24,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.5 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.13.2.6 $
+   * $Date: 2011/01/26 14:28:28 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -40,7 +40,7 @@ namespace stor
       const std::string& triggerSelection,
       const Strings& eventSelection,
       const std::string& outputModuleLabel,
-      const unsigned int& prescale,
+      const int& prescale,
       const bool& uniqueEvents,
       const int& queueSize,
       const enquing_policy::PolicyTag& queuePolicy,
@@ -69,7 +69,7 @@ namespace stor
     const std::string& triggerSelection() const { return _triggerSelection; }
     const Strings& eventSelection() const { return _eventSelection; }
     const std::string& outputModuleLabel() const { return _outputModuleLabel; }
-    const unsigned int& prescale() const { return _prescale; }
+    const int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
     const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
     edm::ParameterSet getPSet() const;
@@ -103,7 +103,7 @@ namespace stor
     std::string _triggerSelection;
     Strings _eventSelection;
     std::string _outputModuleLabel;
-    unsigned int _prescale;
+    int _prescale;
     bool _uniqueEvents;
     utils::duration_t _minEventRequestInterval;
   };
