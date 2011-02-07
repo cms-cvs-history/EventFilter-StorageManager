@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.3 2011/01/24 19:32:04 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.4 2011/01/24 19:32:04 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -186,10 +186,12 @@ namespace stor
     
     typename EventQueueCollection_t::value_type event =
       _eventQueueCollection->popEvent( cid );
-    if( event.first.faulty() )
+    if( event.first.empty() || event.first.faulty() )
       writeEmptyBuffer( out );
-    else    
-      writeConsumerEvent( out, event );
+    else
+    {   
+      writeConsumerEvent( out, event.first );
+    }
   }
   
   
@@ -608,17 +610,26 @@ namespace stor
   template<typename Configuration_t, typename EventQueueCollection_t>
   void
   ConsumerUtils<Configuration_t,EventQueueCollection_t>::
-  writeConsumerEvent(xgi::Output* out, const typename EventQueueCollection_t::value_type& evt) const
+  writeConsumerEvent(xgi::Output* out, const stor::I2OChain& evt) const
   {
     writeHTTPHeaders( out );
-    
-    const unsigned int nfrags = evt.first.fragmentCount();
+
+    const unsigned int nfrags = evt.fragmentCount();
     for ( unsigned int i = 0; i < nfrags; ++i )
     {
-      const unsigned int len = evt.first.dataSize( i );
-      unsigned char* location = evt.first.dataLocation( i );
+      const unsigned long len = evt.dataSize( i );
+      unsigned char* location = evt.dataLocation( i );
       out->write( (char*)location, len );
     } 
+  }
+
+  template<typename Configuration_t, typename EventQueueCollection_t>
+  void
+  ConsumerUtils<Configuration_t,EventQueueCollection_t>::
+  writeConsumerEvent(xgi::Output* out, const smproxy::EventMsg& evt) const
+  {
+    writeHTTPHeaders( out );
+    out->write( (char*)evt.dataLocation(), evt.totalDataSize() );
   }
   
   //////////////////////////

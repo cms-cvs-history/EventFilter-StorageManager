@@ -1,9 +1,10 @@
-// $Id: ConsumerUtils.h,v 1.8.2.3 2011/01/26 16:04:39 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.8.2.4 2011/02/03 14:16:28 mommsen Exp $
 /// @file: ConsumerUtils.h 
 
 #ifndef EventFilter_StorageManager_ConsumerUtils_h
 #define EventFilter_StorageManager_ConsumerUtils_h
 
+#include "EventFilter/SMProxyServer/interface/EventMsg.h"
 #include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
@@ -32,8 +33,8 @@ namespace stor
      Handles consumer requests and responses
 
      $Author: mommsen $
-     $Revision: 1.8.2.3 $
-     $Date: 2011/01/26 16:04:39 $
+     $Revision: 1.8.2.4 $
+     $Date: 2011/02/03 14:16:28 $
   */
 
   template<typename Configuration_t, typename EventQueueCollection_t>
@@ -160,7 +161,8 @@ namespace stor
     /**
       Send event to consumer:
     */
-    void writeConsumerEvent(xgi::Output*, const typename EventQueueCollection_t::value_type&) const;
+    void writeConsumerEvent(xgi::Output*, const stor::I2OChain&) const;
+    void writeConsumerEvent(xgi::Output*, const smproxy::EventMsg&) const;
 
     /**
       Send DQM event to DQM consumer:
