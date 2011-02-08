@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.h,v 1.10 2010/12/15 15:29:23 mommsen Exp $
+// $Id: XHTMLMaker.h,v 1.10.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: XHTMLMaker.h 
 
 #ifndef EventFilter_StorageManager_XHTMLMaker_h
@@ -20,8 +20,8 @@ namespace stor {
     Helper class to build XHTML pages
 
     $Author: mommsen $
-    $Revision: 1.10 $
-    $Date: 2010/12/15 15:29:23 $
+    $Revision: 1.10.2.1 $
+    $Date: 2011/01/24 12:18:39 $
   */
 
   class XHTMLMaker
@@ -129,6 +129,11 @@ namespace stor {
       Add a double
     */
     void addDouble( Node* parent, const double& value, const unsigned int& precision = 2 );
+
+    /**
+      Add a boolean
+    */
+    void addBool( Node* parent, const bool& );
 
     /**
       Dump the page to stdout

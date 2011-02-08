@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.cc,v 1.10 2010/12/15 15:29:23 mommsen Exp $
+// $Id: XHTMLMaker.cc,v 1.10.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: XHTMLMaker.cc
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
@@ -246,6 +246,14 @@ void XHTMLMaker::addDouble( Node* parent, const double& value, const unsigned in
     ostringstream tmpString;
     tmpString << fixed << std::setprecision( precision ) << value;
     addText( parent, tmpString.str() );
+}
+
+//////////////////////////////
+//// Add a boolean value: ////
+//////////////////////////////
+void XHTMLMaker::addBool( Node* parent, const bool& value )
+{
+    addText( parent, value ? "True" : "False" );
 }
 
 /////////////////////////////////
