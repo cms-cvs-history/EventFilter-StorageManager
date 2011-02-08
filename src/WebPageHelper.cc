@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.cc,v 1.56.2.6 2011/01/25 11:29:12 mommsen Exp $
+// $Id: WebPageHelper.cc,v 1.56.2.7 2011/01/25 17:22:24 mommsen Exp $
 /// @file: WebPageHelper.cc
 
 #include <iomanip>
@@ -44,7 +44,7 @@ namespace stor
     _alarmColors[ AlarmHandler::ERROR ] = "#FF9F36";
     _alarmColors[ AlarmHandler::FATAL ] = "#FF2338";
     
-    _tableLabelAttr[ "align" ] = "left";
+    _tableLabelAttr[ "align" ] = "center";
     _tableLabelAttr[ "valign" ] = "middle";
     
     _tableValueAttr[ "align" ] = "right";

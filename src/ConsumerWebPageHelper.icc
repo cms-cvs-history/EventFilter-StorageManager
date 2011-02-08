@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.4 2011/01/27 14:58:44 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.5 2011/02/04 13:57:45 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -109,6 +109,8 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Prescale");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+    maker.addText(tableDiv, "Unique Events");
+    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Enquing Policy");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Queue Size");
@@ -208,7 +210,7 @@ namespace stor
       // Status:
       if( (*it)->isStale(now) )
       {
-        XHTMLMaker::AttrMap statusAttr = _tableLabelAttr;
+        XHTMLMaker::AttrMap statusAttr = _tableValueAttr;
         statusAttr[ "style" ] = "color:brown;";
         tableDiv = maker.addNode("td", tableRow, statusAttr);
         maker.addText(tableDiv, "Stale");
@@ -258,6 +260,10 @@ namespace stor
       // Prescale:
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
       maker.addInt(tableDiv, (*it)->prescale());
+      
+      // Unique events:
+      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+      maker.addBool(tableDiv, (*it)->uniqueEvents());
       
       // Policy:
       std::ostringstream policy;

@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.3 2011/01/26 16:04:39 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.4 2011/02/04 13:57:45 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -390,7 +390,7 @@ namespace stor
     XHTMLMaker::Node* tableDiv;
     if ( stats.getSampleCount() > 0 )
     {
-      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, "Memory pool used (bytes)");
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
       maker.addDouble( tableDiv, stats.getLastSampleValue(), 0 );
@@ -410,22 +410,19 @@ namespace stor
     ResourceMonitorCollection::Stats const& stats
   )
   {
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-    tableLabelAttr[ "width" ] = "54%";
-    
     XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
     tableValueAttr[ "width" ] = "46%";
     
     // # copy worker
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
-    XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "# CopyWorker");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt( tableDiv, stats.numberOfCopyWorkers );
     
     // # inject worker
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "# InjectWorker");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt( tableDiv, stats.numberOfInjectWorkers );
@@ -439,9 +436,6 @@ namespace stor
     ResourceMonitorCollection::Stats const& stats
   )
   {
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-    tableLabelAttr[ "width" ] = "54%";
-    
     XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
     tableValueAttr[ "width" ] = "46%";
     
@@ -465,7 +459,7 @@ namespace stor
       if ( stats.sataBeastStatus > 0 )
         warningAttr[ "bgcolor" ] = _alarmColors[ AlarmHandler::ERROR ];
       tableRow = maker.addNode("tr", table, warningAttr);
-      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, "SATA beast status");
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
       maker.addInt( tableDiv, stats.sataBeastStatus );
@@ -505,7 +499,7 @@ namespace stor
     {
       warningAttr[ "bgcolor" ] = _alarmColors[ (*it)->alarmState ];
       tableRow = maker.addNode("tr", table, warningAttr);
-      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, (*it)->pathName);
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
       if ( (*it)->diskSize > 0 )
@@ -780,9 +774,6 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "6";
     
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-    tableLabelAttr[ "width" ] = "18%";
-    
     XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
     tableValueAttr[ "width" ] = "16%";
     
@@ -794,45 +785,45 @@ namespace stor
     
     // Run number and lumi section
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Run number");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble( tableDiv, runNumbersSeenStats.getLastSampleValue(), 0 );
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Current lumi section");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble( tableDiv, lumiSectionsSeenStats.getLastSampleValue(), 0 );
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Last EoLS");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble( tableDiv, eolsSeenStats.getLastSampleValue(), 0 );
     
     // Total events received
     tableRow = maker.addNode("tr", table, _specialRowAttr);
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Events received (non-unique)");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt( tableDiv, eventIDsReceivedStats.getSampleCount() );
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Error events received");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt( tableDiv, errorEventIDsReceivedStats.getSampleCount() );
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Unwanted events received");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt( tableDiv, unwantedEventIDsReceivedStats.getSampleCount() );
     
     // Last event IDs
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Last event ID");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble( tableDiv, eventIDsReceivedStats.getLastSampleValue(), 0 );
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Last error event ID");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble( tableDiv, errorEventIDsReceivedStats.getLastSampleValue(), 0 );
-    tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Last unwanted event ID");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addDouble( tableDiv, unwantedEventIDsReceivedStats.getLastSampleValue(), 0 );
@@ -1182,7 +1173,7 @@ namespace stor
     
     // DQM events processed
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "DQM events processed");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addInt( tableDiv, stats.dqmEventSizeStats.getSampleCount(MonitoredQuantity::FULL) );
@@ -1191,7 +1182,7 @@ namespace stor
     
     // DQM events lost
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "DQM events dropped");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.droppedDQMEventCountsStats.getValueSum(MonitoredQuantity::FULL), 0 );
@@ -1200,7 +1191,7 @@ namespace stor
     
     // Average updates/folder
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Updates/folder (average)");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.numberOfUpdatesStats.getValueAverage(MonitoredQuantity::FULL) );
@@ -1209,7 +1200,7 @@ namespace stor
     
     // Min updates/folder
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Updates/folder (min)");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.numberOfUpdatesStats.getValueMin(MonitoredQuantity::FULL) );
@@ -1218,7 +1209,7 @@ namespace stor
     
     // Max updates/folder
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Updates/folder (max)");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.numberOfUpdatesStats.getValueMax(MonitoredQuantity::FULL) );
@@ -1227,7 +1218,7 @@ namespace stor
     
     // RMS updates/folder
     tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Updates/folder (RMS)");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.numberOfUpdatesStats.getValueRMS(MonitoredQuantity::FULL) );
