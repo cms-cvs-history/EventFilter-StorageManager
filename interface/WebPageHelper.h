@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.12.2.2 2011/01/25 11:28:37 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.12.2.3 2011/01/25 17:22:24 mommsen Exp $
 /// @file: WebPageHelper.h
 
 #ifndef EventFilter_StorageManager_WebPageHelper_h
@@ -22,10 +22,11 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.12.2.2 $
-   * $Date: 2011/01/25 11:28:37 $
+   * $Revision: 1.12.2.3 $
+   * $Date: 2011/01/25 17:22:24 $
    */
   
+  template<class T>
   class WebPageHelper
   {
   public:
@@ -33,9 +34,10 @@ namespace stor {
     WebPageHelper
     (
       xdaq::ApplicationDescriptor*,
-      const std::string& cvsVersion
+      const std::string& cvsVersion,
+      T* callee,
+      void (T::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
     );
-
 
     /**
      * Create event filter style sheet
@@ -62,19 +64,13 @@ namespace stor {
       const std::string& innerStateName,
       const std::string& errorMsg
     );
-
-
-  private:
-
-    //Prevent copying of the WebPageHelper
-    WebPageHelper(WebPageHelper const&);
-    WebPageHelper& operator=(WebPageHelper const&);
-
-    const std::string _cvsVersion;
-    evf::Css css_;
     
-    
-  protected:
+    /**
+     * Adds the links for the other hyperdaq webpages
+     */
+    void addDOMforHyperLinks(XHTMLMaker& maker, XHTMLMaker::Node* parent)
+    { (_callee->*_addHyperLinks)(maker, parent); } 
+
 
     xdaq::ApplicationDescriptor* _appDescriptor;
 
@@ -85,6 +81,17 @@ namespace stor {
     XHTMLMaker::AttrMap _specialRowAttr;
 
     std::map<unsigned int, std::string> _alarmColors;
+
+  private:
+
+    //Prevent copying of the WebPageHelper
+    WebPageHelper(WebPageHelper const&);
+    WebPageHelper& operator=(WebPageHelper const&);
+
+    evf::Css css_;
+    const std::string _cvsVersion;
+    T* _callee;
+    void (T::*_addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*);
 
   };
 

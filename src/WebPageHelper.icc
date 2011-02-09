@@ -1,5 +1,5 @@
-// $Id: WebPageHelper.cc,v 1.56.2.7 2011/01/25 17:22:24 mommsen Exp $
-/// @file: WebPageHelper.cc
+// $Id: WebPageHelper.icc,v 1.56.2.8 2011/02/08 16:50:36 mommsen Exp $
+/// @file: WebPageHelper.icc
 
 #include <iomanip>
 #include <iostream>
@@ -15,13 +15,18 @@
 namespace stor
 {
 
-  WebPageHelper::WebPageHelper
+  template<class T>
+  WebPageHelper<T>::WebPageHelper
   (
     xdaq::ApplicationDescriptor* appDesc,
-    const std::string& cvsVersion
+    const std::string& cvsVersion,
+    T* callee,
+    void (T::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
   ) :
+  _appDescriptor(appDesc),
   _cvsVersion(cvsVersion),
-  _appDescriptor(appDesc)
+  _callee(callee),
+  _addHyperLinks(addHyperLinks)
   {
     // set application icon for hyperdaq
     appDesc->setAttribute("icon", "/evf/images/smicon.jpg");
@@ -52,13 +57,15 @@ namespace stor
   }
 
   
-  std::string WebPageHelper::baseURL() const
+  template<class T>
+  std::string WebPageHelper<T>::baseURL() const
   {
     return _appDescriptor->getContextDescriptor()->getURL() + "/" + _appDescriptor->getURN();
   }
   
   
-  XHTMLMaker::Node* WebPageHelper::createWebPageBody
+  template<class T>
+  XHTMLMaker::Node* WebPageHelper<T>::createWebPageBody
   (
     XHTMLMaker& maker,
     const std::string& pageTitle,

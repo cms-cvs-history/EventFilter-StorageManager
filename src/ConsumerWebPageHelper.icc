@@ -1,26 +1,29 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.5 2011/02/04 13:57:45 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.6 2011/02/08 16:50:36 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/EventConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
+#include "EventFilter/StorageManager/src/WebPageHelper.icc"
 
 namespace stor
 {
 
-  template<typename EventQueueCollection_t, typename StatisticsReporter_t>
-  ConsumerWebPageHelper<EventQueueCollection_t, StatisticsReporter_t>::
+  template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
+  ConsumerWebPageHelper<WebPageHelper_t, EventQueueCollection_t, StatisticsReporter_t>::
   ConsumerWebPageHelper
   (
     xdaq::ApplicationDescriptor* appDesc,
-    const std::string& cvsVersion
+    const std::string& cvsVersion,
+    WebPageHelper_t* webPageHelper,
+    void (WebPageHelper_t::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
   ) :
-  WebPageHelper(appDesc, cvsVersion)
+  WebPageHelper<WebPageHelper_t>(appDesc, cvsVersion, webPageHelper, addHyperLinks)
   {}
   
-  template<typename EventQueueCollection_t, typename StatisticsReporter_t>
-  void ConsumerWebPageHelper<EventQueueCollection_t, StatisticsReporter_t>::
+  template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
+  void ConsumerWebPageHelper<WebPageHelper_t, EventQueueCollection_t, StatisticsReporter_t>::
   consumerStatistics
   (
     xgi::Output* out,
@@ -38,8 +41,10 @@ namespace stor
     XHTMLMaker maker;
     
     // Create the body with the standard header
-    XHTMLMaker::Node* body = createWebPageBody(maker, "Consumer Statistics", 
-      externallyVisibleState, innerStateName, errorMsg);
+    XHTMLMaker::Node* body = this->createWebPageBody(
+      maker, "Consumer Statistics", 
+      externallyVisibleState, innerStateName, errorMsg
+    );
     
     addDOMforEventConsumers(maker, body,
       registrationCollection,
@@ -55,15 +60,15 @@ namespace stor
       statisticsReporter->getDQMConsumerMonitorCollection()
     );
     
-    addDOMforHyperLinks(maker, body);
+    this->addDOMforHyperLinks(maker, body);
     
     // Dump the webpage to the output stream
     maker.out(*out);
   }
 
   
-  template<typename EventQueueCollection_t, typename StatisticsReporter_t>
-  void ConsumerWebPageHelper<EventQueueCollection_t, StatisticsReporter_t>::
+  template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
+  void ConsumerWebPageHelper<WebPageHelper_t, EventQueueCollection_t, StatisticsReporter_t>::
   addDOMforEventConsumers
   (
     XHTMLMaker& maker,
@@ -76,10 +81,9 @@ namespace stor
     RegistrationCollection::ConsumerRegistrations consumers;
     registrationCollection->getEventConsumers(consumers);
     
+    XHTMLMaker::Node* table = maker.addNode("table", parent, this->_tableAttr);
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
-    
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, this->_rowAttr);
     
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "23";
@@ -93,13 +97,13 @@ namespace stor
     subColspanAttr[ "colspan" ] = "2";
     
     //Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Name");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Consumer Host" );
-    // tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    // maker.addText(tableDiv, "Max Request Rate (Hz)");
+    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
+    maker.addText(tableDiv, "Max Request Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Last Request Seconds Ago");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
@@ -130,7 +134,7 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Bandwidth (kB/s)");
     
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow);
@@ -161,7 +165,7 @@ namespace stor
       XHTMLMaker::AttrMap messageAttr = colspanAttr;
       messageAttr[ "align" ] = "center";
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, this->_rowAttr);
       tableDiv = maker.addNode("td", tableRow, messageAttr);
       maker.addText(tableDiv, "No event consumers have registered yet.");
       return;
@@ -169,8 +173,8 @@ namespace stor
     
     // Loop over consumers
     bool evenRow = false;
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableLabelAttr = this->_tableLabelAttr;
+    XHTMLMaker::AttrMap tableValueAttr = this->_tableValueAttr;
     utils::time_point_t now = utils::getCurrentTime();
     
     for( RegistrationCollection::ConsumerRegistrations::const_iterator
@@ -178,7 +182,7 @@ namespace stor
          it != itEnd; ++it )
     {
       // Row:
-      XHTMLMaker::AttrMap rowAttr = _rowAttr;
+      XHTMLMaker::AttrMap rowAttr = this->_rowAttr;
       if( evenRow )
       {
         rowAttr[ "style" ] = "background-color:#e0e0e0;";
@@ -191,26 +195,20 @@ namespace stor
       tableRow = maker.addNode("tr", table, rowAttr);
       
       // Name:
-      tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->consumerName());
       
       // Host:
-      tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->remoteHost());
       
       // Max request rate:
-      // tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-      // const utils::duration_t& interval = 
-      //   (*it)->minEventRequestInterval();
-      // if ( interval.is_not_a_date_time() )
-      //   maker.addText(tableDiv, "n/a");
-      // else
-      //   maker.addDouble(tableDiv, 1 / utils::duration_to_seconds(interval), 1);
-      
+      addEntryForMaxRequestRate(maker, tableRow, (*it)->minEventRequestInterval());
+
       // Status:
       if( (*it)->isStale(now) )
       {
-        XHTMLMaker::AttrMap statusAttr = _tableValueAttr;
+        XHTMLMaker::AttrMap statusAttr = this->_tableValueAttr;
         statusAttr[ "style" ] = "color:brown;";
         tableDiv = maker.addNode("td", tableRow, statusAttr);
         maker.addText(tableDiv, "Stale");
@@ -350,8 +348,8 @@ namespace stor
   }
   
   
-  template<typename EventQueueCollection_t, typename StatisticsReporter_t>
-  void ConsumerWebPageHelper<EventQueueCollection_t, StatisticsReporter_t>::
+  template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
+  void ConsumerWebPageHelper<WebPageHelper_t, EventQueueCollection_t, StatisticsReporter_t>::
   addDOMforDQMEventConsumers
   (
     XHTMLMaker& maker,
@@ -365,9 +363,9 @@ namespace stor
     registrationCollection->getDQMEventConsumers( consumers );
     
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, this->_tableAttr);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, this->_rowAttr);
     
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "20";
@@ -381,7 +379,7 @@ namespace stor
     subColspanAttr[ "colspan" ] = "2";
     
     //Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Name");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
@@ -408,7 +406,7 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Bandwidth (kB/s)");
     
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow);
@@ -435,7 +433,7 @@ namespace stor
       XHTMLMaker::AttrMap messageAttr = colspanAttr;
       messageAttr[ "align" ] = "center";
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, this->_rowAttr);
       tableDiv = maker.addNode("td", tableRow, messageAttr);
       maker.addText(tableDiv, "No DQM consumers have registered yet.");
     return;
@@ -450,7 +448,7 @@ namespace stor
          it != itEnd; ++it )
     {
       // Row:
-      XHTMLMaker::AttrMap rowAttr = _rowAttr;
+      XHTMLMaker::AttrMap rowAttr = this->_rowAttr;
       if( evenRow )
       {
         rowAttr[ "style" ] = "background-color:#e0e0e0;";
@@ -463,15 +461,15 @@ namespace stor
       tableRow = maker.addNode("tr", table, rowAttr);
       
       // Name:
-      tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->consumerName());
       
       // Host:
-      tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->remoteHost());
       
       // Status:
-      XHTMLMaker::AttrMap statusAttr = _tableLabelAttr;
+      XHTMLMaker::AttrMap statusAttr = this->_tableLabelAttr;
       std::string statusMessage;
       if( (*it)->isStale(now) )
       {
@@ -493,25 +491,25 @@ namespace stor
       // Policy:
       std::ostringstream policy;
       policy << (*it)->queuePolicy();
-      tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, policy.str());
       
       // Queue size:
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addInt(tableDiv, (*it)->queueSize());
       
       // Events in queue:
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addInt(tableDiv, dqmEventQueueCollection->size( (*it)->queueId() ));
       
       // Events enqueued:
       MonitoredQuantity::Stats enqueuedStats;
       const bool enqueuedFound = dqmConsumerCollection.getQueued( (*it)->queueId(), enqueuedStats );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::FULL) : 0
       );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
       );
@@ -521,41 +519,41 @@ namespace stor
       const bool servedFound = dqmConsumerCollection.getServed( (*it)->queueId(), servedStats );
       
       // rate
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         servedFound ? servedStats.getSampleRate(MonitoredQuantity::FULL) : 0
       );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         servedFound ? servedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
       );
       
       // event counts
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addInt(tableDiv,
         servedFound ? servedStats.getSampleCount(MonitoredQuantity::FULL) : 0
       );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addInt(tableDiv,
         servedFound ? servedStats.getSampleCount(MonitoredQuantity::RECENT) : 0
       );
       
       // event size
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         servedFound ? servedStats.getValueAverage(MonitoredQuantity::FULL)/1024 : 0,
         1);
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         servedFound ? servedStats.getValueAverage(MonitoredQuantity::RECENT)/1024 : 0,
         1);
       
       // bandwidth
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         servedFound ? servedStats.getValueRate(MonitoredQuantity::FULL)/1024 : 0
       );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addDouble(tableDiv,
         servedFound ? servedStats.getValueRate(MonitoredQuantity::RECENT)/1024 : 0
       );

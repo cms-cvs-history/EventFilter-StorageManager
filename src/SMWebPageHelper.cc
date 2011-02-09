@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.4 2011/02/04 13:57:45 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.5 2011/02/08 16:50:36 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -41,9 +41,9 @@ namespace stor
     xdaq::ApplicationDescriptor* appDesc,
     SharedResourcesPtr sharedResources
   ) :
-  WebPageHelper(appDesc, "$Name:  $"),
+  WebPageHelper<SMWebPageHelper>(appDesc, "$Name:  $", this, &stor::SMWebPageHelper::addDOMforHyperLinks),
   _sharedResources(sharedResources),
-  _consumerWebPageHelper(appDesc, "$Name:  $")
+  _consumerWebPageHelper(appDesc, "$Name:  $", this, &stor::SMWebPageHelper::addDOMforHyperLinks)
   {}
 
 
@@ -251,7 +251,7 @@ namespace stor
     std::string errorMsg;
     stateMachineMonitorCollection.statusMessage(errorMsg);
     
-    return WebPageHelper::createWebPageBody(
+    return WebPageHelper<SMWebPageHelper>::createWebPageBody(
       maker,
       pageTitle,
       stateMachineMonitorCollection.externallyVisibleState(),
@@ -2162,6 +2162,25 @@ namespace stor
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.writtenDQMEventBandwidthStats.getValueMin(dataSet) );
   }
+
+
+  ////////////////////////////////////////////////////////
+  // Specializations for ConsumerWebPageHelper template //
+  ////////////////////////////////////////////////////////
+
+  template<>
+  void ConsumerWebPageHelper<SMWebPageHelper,EventQueueCollection,StatisticsReporter>::
+  addEntryForMaxRequestRate
+  (
+    XHTMLMaker& maker,
+    XHTMLMaker::Node* tableRow,
+    const utils::duration_t& interval
+  )
+  {
+    XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    maker.addText(tableDiv, "n/a");
+  }
+
  
 } // namespace stor
  

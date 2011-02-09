@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.h,v 1.1.2.2 2011/01/25 17:22:24 mommsen Exp $
+// $Id: ConsumerWebPageHelper.h,v 1.1.2.3 2011/01/26 16:04:39 mommsen Exp $
 /// @file: ConsumerWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_ConsumerWebPageHelper_h
@@ -23,19 +23,21 @@ namespace stor
    * Helper class to handle consumer web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2011/01/25 17:22:24 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2011/01/26 16:04:39 $
    */
 
-  template<typename EventQueueCollection_t, typename StatisticsReporter_t>
-  class ConsumerWebPageHelper : public WebPageHelper
+  template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
+  class ConsumerWebPageHelper : public WebPageHelper<WebPageHelper_t>
   {
   public:
 
     ConsumerWebPageHelper
     (
       xdaq::ApplicationDescriptor* appDesc,
-      const std::string& cvsVersion
+      const std::string& cvsVersion,
+      WebPageHelper_t* webPageHelper,
+      void (WebPageHelper_t::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
     );
 
     /**
@@ -53,15 +55,8 @@ namespace stor
       DQMEventQueueCollectionPtr
     );
     
-    typedef boost::function<void (XHTMLMaker&, XHTMLMaker::Node*)> HyperLinks_t;
-    
     
   private:
-
-    /**
-       Adds the links for the other hyperdaq webpages
-     */
-    void addDOMforHyperLinks(XHTMLMaker&, XHTMLMaker::Node* parent) {}; 
 
     /**
      * Adds statistics for event consumers
@@ -87,8 +82,12 @@ namespace stor
       const DQMConsumerMonitorCollection& dqmConsumerCollection
     );
 
-
-  private:
+    void addEntryForMaxRequestRate
+    (
+      XHTMLMaker& maker,
+      XHTMLMaker::Node* tableRow,
+      const utils::duration_t& interval
+    );
 
     //Prevent copying of the ConsumerWebPageHelper
     ConsumerWebPageHelper(ConsumerWebPageHelper const&);
