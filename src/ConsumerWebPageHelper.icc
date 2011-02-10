@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.6 2011/02/08 16:50:36 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.7 2011/02/09 11:49:06 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -195,15 +195,39 @@ namespace stor
       tableRow = maker.addNode("tr", table, rowAttr);
       
       // Name:
+      bool isProxy(false);
       tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
-      maker.addText(tableDiv, (*it)->consumerName());
+      const std::string consumerName = (*it)->consumerName();
+      if ( consumerName.find( "urn:xdaq-application" ) != std::string::npos )
+      {
+        isProxy = true;
+        XHTMLMaker::AttrMap linkAttr;
+        linkAttr[ "href" ] = consumerName;
+        XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
+        maker.addText(link, "SMProxy");
+      }
+      else
+        maker.addText(tableDiv, consumerName);
       
       // Host:
       tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->remoteHost());
       
       // Max request rate:
-      addEntryForMaxRequestRate(maker, tableRow, (*it)->minEventRequestInterval());
+      if ( isProxy )
+      {
+        tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
+        maker.addText(tableDiv, "n/a");
+      }
+      else
+      {
+        tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
+        const utils::duration_t interval = (*it)->minEventRequestInterval();
+        if ( interval.is_not_a_date_time() )
+          maker.addText(tableDiv, "unlimited");
+        else
+          maker.addDouble(tableDiv, 1 / utils::duration_to_seconds(interval), 1);
+      }
 
       // Status:
       if( (*it)->isStale(now) )

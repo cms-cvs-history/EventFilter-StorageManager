@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.5 2011/02/08 16:50:36 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.6 2011/02/09 11:49:06 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -2162,25 +2162,6 @@ namespace stor
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addDouble( tableDiv, stats.writtenDQMEventBandwidthStats.getValueMin(dataSet) );
   }
-
-
-  ////////////////////////////////////////////////////////
-  // Specializations for ConsumerWebPageHelper template //
-  ////////////////////////////////////////////////////////
-
-  template<>
-  void ConsumerWebPageHelper<SMWebPageHelper,EventQueueCollection,StatisticsReporter>::
-  addEntryForMaxRequestRate
-  (
-    XHTMLMaker& maker,
-    XHTMLMaker::Node* tableRow,
-    const utils::duration_t& interval
-  )
-  {
-    XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
-    maker.addText(tableDiv, "n/a");
-  }
-
  
 } // namespace stor
  
