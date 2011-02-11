@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.7 2011/02/09 11:49:06 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.8 2011/02/10 10:20:57 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -17,7 +17,7 @@ namespace stor
     xdaq::ApplicationDescriptor* appDesc,
     const std::string& cvsVersion,
     WebPageHelper_t* webPageHelper,
-    void (WebPageHelper_t::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
+    void (WebPageHelper_t::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*) const
   ) :
   WebPageHelper<WebPageHelper_t>(appDesc, cvsVersion, webPageHelper, addHyperLinks)
   {}
@@ -34,7 +34,7 @@ namespace stor
     RegistrationCollectionPtr registrationCollection,
     boost::shared_ptr<EventQueueCollection_t> eventQueueCollection,
     DQMEventQueueCollectionPtr dqmEventQueueCollection
-  )
+  ) const
   {
     // Get lock, initialize maker:
     XHTMLMonitor theMonitor;
@@ -76,7 +76,7 @@ namespace stor
     RegistrationCollectionPtr registrationCollection,
     boost::shared_ptr<EventQueueCollection_t> eventQueueCollection,
     const EventConsumerMonitorCollection& eventConsumerCollection
-  )
+  ) const
   {
     RegistrationCollection::ConsumerRegistrations consumers;
     registrationCollection->getEventConsumers(consumers);
@@ -86,7 +86,7 @@ namespace stor
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, this->_rowAttr);
     
     XHTMLMaker::AttrMap colspanAttr;
-    colspanAttr[ "colspan" ] = "23";
+    colspanAttr[ "colspan" ] = "18";
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Consumer Statistics");
     
@@ -107,17 +107,7 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Last Request Seconds Ago");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "HLT Output Module");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Filters");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Prescale");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Unique Events");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Enquing Policy");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Queue Size");
+    maker.addText(tableDiv, "Requested Event Type");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Events In Queue");
     
@@ -259,43 +249,12 @@ namespace stor
       tableLabelAttr[ "rowspan" ] = str.str();
       tableValueAttr[ "rowspan" ] = str.str();
       
-      // HLT output module:
+      // Requested event type
       tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-      maker.addText(tableDiv, (*it)->outputModuleLabel());
-      
-      // Filter list:
-      std::string filters = (*it)->triggerSelection();
-      if ( filters.empty() )
-      {
-        const Strings fl = (*it)->eventSelection();
-        for( Strings::const_iterator
-               lit = fl.begin(), litEnd = fl.end();
-             lit != litEnd; ++lit )
-        {
-          if( lit != fl.begin() ) filters += "  ";
-          filters += *lit;
-        }
-      }
-      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-      maker.addText(tableDiv, filters);
-      
-      // Prescale:
-      tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-      maker.addInt(tableDiv, (*it)->prescale());
-      
-      // Unique events:
-      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-      maker.addBool(tableDiv, (*it)->uniqueEvents());
-      
-      // Policy:
-      std::ostringstream policy;
-      policy << (*it)->queuePolicy();
-      tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
-      maker.addText(tableDiv, policy.str());
-      
-      // Queue size:
-      tableDiv = maker.addNode("td", tableRow, tableValueAttr);
-      maker.addInt(tableDiv, (*it)->queueSize());
+      XHTMLMaker::Node* pre = maker.addNode("pre", tableDiv);
+      std::ostringstream eventType;
+      (*it)->eventType(eventType);
+      maker.addText(pre, eventType.str());
     
       // Events in queue:
       tableDiv = maker.addNode("td", tableRow, tableValueAttr);
@@ -381,7 +340,7 @@ namespace stor
     RegistrationCollectionPtr registrationCollection,
     DQMEventQueueCollectionPtr dqmEventQueueCollection,
     const DQMConsumerMonitorCollection& dqmConsumerCollection
-  )
+  ) const
   {
     RegistrationCollection::DQMConsumerRegistrations consumers;
     registrationCollection->getDQMEventConsumers( consumers );

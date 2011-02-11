@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.h,v 1.1.2.4 2011/02/09 11:49:06 mommsen Exp $
+// $Id: ConsumerWebPageHelper.h,v 1.1.2.5 2011/02/10 10:20:57 mommsen Exp $
 /// @file: ConsumerWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_ConsumerWebPageHelper_h
@@ -23,8 +23,8 @@ namespace stor
    * Helper class to handle consumer web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2011/02/09 11:49:06 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2011/02/10 10:20:57 $
    */
 
   template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
@@ -37,7 +37,7 @@ namespace stor
       xdaq::ApplicationDescriptor* appDesc,
       const std::string& cvsVersion,
       WebPageHelper_t* webPageHelper,
-      void (WebPageHelper_t::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
+      void (WebPageHelper_t::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*) const
     );
 
     /**
@@ -53,7 +53,7 @@ namespace stor
       RegistrationCollectionPtr,
       boost::shared_ptr<EventQueueCollection_t>,
       DQMEventQueueCollectionPtr
-    );
+    ) const;
     
     
   private:
@@ -65,10 +65,10 @@ namespace stor
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
-      RegistrationCollectionPtr registrationCollection,
-      boost::shared_ptr<EventQueueCollection_t> eventQueueCollection,
-      const EventConsumerMonitorCollection& eventConsumerCollection
-    );
+      RegistrationCollectionPtr,
+      boost::shared_ptr<EventQueueCollection_t>,
+      const EventConsumerMonitorCollection&
+    ) const;
 
     /**
      * Adds statistics for DQM event consumers
@@ -77,10 +77,10 @@ namespace stor
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
-      RegistrationCollectionPtr registrationCollection,
-      DQMEventQueueCollectionPtr dqmEventQueueCollection,
-      const DQMConsumerMonitorCollection& dqmConsumerCollection
-    );
+      RegistrationCollectionPtr,
+      DQMEventQueueCollectionPtr,
+      const DQMConsumerMonitorCollection&
+    ) const;
 
     //Prevent copying of the ConsumerWebPageHelper
     ConsumerWebPageHelper(ConsumerWebPageHelper const&);
