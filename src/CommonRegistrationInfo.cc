@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.cc,v 1.5.2.2 2011/01/19 13:50:38 mommsen Exp $
+// $Id: CommonRegistrationInfo.cc,v 1.5.2.3 2011/02/11 12:10:30 mommsen Exp $
 /// @file: CommonRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
@@ -71,7 +71,7 @@ namespace stor
   {
     os << "Queue type: " << _queuePolicy <<
       ", size " << _queueSize << 
-      ", stale " << _secondsToStale.total_seconds() << "s";
+      ", timeout " << _secondsToStale.total_seconds() << "s";
   }
 
   std::ostream& operator<< (std::ostream& os,

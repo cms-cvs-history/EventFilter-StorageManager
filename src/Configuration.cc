@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.41.2.1 2011/01/21 15:51:19 mommsen Exp $
+// $Id: Configuration.cc,v 1.41.2.2 2011/01/27 14:58:44 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -216,7 +216,7 @@ namespace stor
   void Configuration::setEventServingDefaults()
   {
     _eventServeParamCopy._activeConsumerTimeout = boost::posix_time::seconds(60);
-    _eventServeParamCopy._consumerQueueSize = 5;
+    _eventServeParamCopy._consumerQueueSize = 10;
     _eventServeParamCopy._consumerQueuePolicy = "DiscardOld";
     _eventServeParamCopy._DQMactiveConsumerTimeout = boost::posix_time::seconds(60);
     _eventServeParamCopy._DQMconsumerQueueSize = 15;
