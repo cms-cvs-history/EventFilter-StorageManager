@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.h,v 1.7.2.2 2011/01/21 15:51:20 mommsen Exp $
+// $Id: RegistrationCollection.h,v 1.7.2.3 2011/01/24 12:18:39 mommsen Exp $
 /// @file: RegistrationCollection.h 
 
 #ifndef EventFilter_StorageManager_RegistrationCollection_h
@@ -22,8 +22,8 @@ namespace stor
      Keep a collection of registered event and DQM event consumers.
 
      $Author: mommsen $
-     $Revision: 1.7.2.2 $
-     $Date: 2011/01/21 15:51:20 $
+     $Revision: 1.7.2.3 $
+     $Date: 2011/01/24 12:18:39 $
   */
 
   class RegistrationCollection
@@ -54,13 +54,13 @@ namespace stor
     /**
        Get event consumer registrations.
     */
-    typedef std::vector<stor::EventConsRegPtr> ConsumerRegistrations;
+    typedef std::vector<EventConsRegPtr> ConsumerRegistrations;
     void getEventConsumers( ConsumerRegistrations& ) const;
 
     /**
        Get DQM event consumer registrations.
     */
-    typedef std::vector<stor::DQMEventConsRegPtr> DQMConsumerRegistrations;
+    typedef std::vector<DQMEventConsRegPtr> DQMConsumerRegistrations;
     void getDQMEventConsumers( DQMConsumerRegistrations& ) const;
 
     /**

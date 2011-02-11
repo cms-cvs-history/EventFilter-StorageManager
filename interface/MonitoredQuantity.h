@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.h,v 1.9 2010/12/15 15:29:23 mommsen Exp $
+// $Id: MonitoredQuantity.h,v 1.9.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: MonitoredQuantity.h 
 
 #ifndef EventFilter_StorageManager_MonitoredQuantity_h
@@ -22,8 +22,8 @@ namespace stor
    * and provides timing information on the samples.
    *
    * $Author: mommsen $
-   * $Revision: 1.9 $
-   * $Date: 2010/12/15 15:29:23 $
+   * $Revision: 1.9.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class MonitoredQuantity
@@ -252,6 +252,8 @@ namespace stor
     double getLastValueRate() const { return lastValueRate; }
     bool   isEnabled() const { return enabled; }
   };
+
+  typedef boost::shared_ptr<MonitoredQuantity> MonitoredQuantityPtr;
 
 } // namespace stor
 
