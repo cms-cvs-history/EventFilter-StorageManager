@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.icc,v 1.56.2.8 2011/02/08 16:50:36 mommsen Exp $
+// $Id: WebPageHelper.icc,v 1.1.2.1 2011/02/09 11:49:06 mommsen Exp $
 /// @file: WebPageHelper.icc
 
 #include <iomanip>
@@ -21,7 +21,7 @@ namespace stor
     xdaq::ApplicationDescriptor* appDesc,
     const std::string& cvsVersion,
     T* callee,
-    void (T::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
+    void (T::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*) const
   ) :
   _appDescriptor(appDesc),
   _cvsVersion(cvsVersion),
@@ -72,7 +72,7 @@ namespace stor
     const std::string& externallyVisibleState,
     const std::string& innerStateName,
     const std::string& errorMsg
-  )
+  ) const
   {
     std::ostringstream title;
     title << _appDescriptor->getClassName()

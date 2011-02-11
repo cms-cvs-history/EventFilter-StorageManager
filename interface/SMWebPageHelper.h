@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.h,v 1.1.2.1 2011/01/25 11:28:37 mommsen Exp $
+// $Id: SMWebPageHelper.h,v 1.1.2.2 2011/02/09 11:49:06 mommsen Exp $
 /// @file: SMWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_SMWebPageHelper_h
@@ -36,8 +36,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2011/01/25 11:28:37 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2011/02/09 11:49:06 $
    */
   
   class SMWebPageHelper : public WebPageHelper<SMWebPageHelper>
@@ -53,42 +53,42 @@ namespace stor {
     /**
      * Generates the default monitoring webpage
      */
-    void defaultWebPage(xgi::Output*);
+    void defaultWebPage(xgi::Output*) const;
 
     /**
      * Generates the output streams monitoring webpage
      */
-    void storedDataWebPage(xgi::Output*);
+    void storedDataWebPage(xgi::Output*) const;
 
     /**
      * Generates the files monitoring webpage
      */
-    void filesWebPage(xgi::Output*);
+    void filesWebPage(xgi::Output*) const;
 
     /**
        Generates consumer statistics page
     */
-    void consumerStatistics(xgi::Output*);
+    void consumerStatistics(xgi::Output*) const;
 
     /**
        Generates the data sender web page for all resource brokers
     */
-    void resourceBrokerOverview(xgi::Output*);
+    void resourceBrokerOverview(xgi::Output*) const;
 
     /**
        Generates the data sender web page for a specific resource broker
     */
-    void resourceBrokerDetail(xgi::Output*, const long long& uniqueRBID);
+    void resourceBrokerDetail(xgi::Output*, const long long& uniqueRBID) const;
 
     /**
      * Generates the DQM event processor monitoring webpage
      */
-    void dqmEventWebPage(xgi::Output*);
+    void dqmEventWebPage(xgi::Output*) const;
 
     /**
      * Generates the throughput monitoring webpage
      */
-    void throughputWebPage(xgi::Output*);
+    void throughputWebPage(xgi::Output*) const;
         
     
   private:
@@ -101,12 +101,12 @@ namespace stor {
       XHTMLMaker&,
       const std::string& pageTitle,
       const StateMachineMonitorCollection&
-    );
+    ) const;
     
     /**
      * Adds the links for the other hyperdaq webpages
      */
-    void addDOMforHyperLinks(XHTMLMaker&, XHTMLMaker::Node* parent);
+    void addDOMforHyperLinks(XHTMLMaker&, XHTMLMaker::Node* parent) const;
 
     /**
      * Adds the resource table to the parent DOM element
@@ -117,7 +117,7 @@ namespace stor {
       XHTMLMaker::Node* parent,
       ResourceMonitorCollection const&,
       ThroughputMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds fragment monitoring statistics to the parent DOM element
@@ -127,7 +127,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       FragmentMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds run monitoring statistics to the parent DOM element
@@ -137,7 +137,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       RunMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds stored data statistics to the parent DOM element
@@ -147,7 +147,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       StreamsMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds the SM config string to the parent DOM element
@@ -157,7 +157,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DiskWritingParams const&
-    );
+    ) const;
 
     /**
      * Adds files statistics to the parent DOM element
@@ -167,7 +167,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       FilesMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds DQM event processor statistics to the parent DOM element
@@ -177,7 +177,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DQMEventMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds statistics for the DQM events to the parent DOM element
@@ -187,7 +187,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DQMEventMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds throughput statistics to the parent DOM element
@@ -197,7 +197,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       ThroughputMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Add table row using the snapshot values
@@ -208,7 +208,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       const ThroughputMonitorCollection::Stats::Snapshot&,
       bool const isAverage = false
-    );
+    ) const;
 
     /**
      * List stream records statistics
@@ -219,7 +219,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       StreamsMonitorCollection const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add statistics for received fragments
@@ -230,7 +230,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add header with integration duration
@@ -240,7 +240,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* tableRow,
       const utils::duration_t
-    );
+    ) const;
     
     /**
      * Add a table row for number of fragment frames received
@@ -251,7 +251,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for fragment bandwidth
@@ -262,7 +262,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for fragment rate
@@ -273,7 +273,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for fragment latency
@@ -284,7 +284,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for total fragment volume received
@@ -295,7 +295,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for maximum fragment bandwidth
@@ -306,7 +306,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for minimum fragment bandwidth
@@ -317,7 +317,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Adds top-level output module statistics to the parent DOM element
@@ -327,7 +327,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DataSenderMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds output module statistics from the specified resource
@@ -339,7 +339,7 @@ namespace stor {
       XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds output module statistics to the parent DOM element
@@ -349,7 +349,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DataSenderMonitorCollection::OutputModuleResultsList const&
-    );
+    ) const;
 
     /**
      * Adds output module summary information to the parent DOM element
@@ -359,7 +359,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DataSenderMonitorCollection::OutputModuleResultsList const&
-    );
+    ) const;
 
     /**
      * Adds the list of data senders (resource brokers) to the
@@ -370,7 +370,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       DataSenderMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds information about a specific resource broker to the
@@ -382,7 +382,7 @@ namespace stor {
       XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Adds information about the filter units for a specific
@@ -394,7 +394,7 @@ namespace stor {
       XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
-    );
+    ) const;
 
     /**
      * Add statistics for processed DQM events
@@ -405,7 +405,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
     
     /**
      * Add a table row for number of DQM events processed
@@ -416,7 +416,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for DQM event bandwidth
@@ -427,7 +427,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for total fragment volume received
@@ -438,7 +438,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for maximum fragment bandwidth
@@ -449,7 +449,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table row for minimum fragment bandwidth
@@ -460,7 +460,7 @@ namespace stor {
       XHTMLMaker::Node* table,
       DQMEventMonitorCollection::DQMEventStats const&,
       const MonitoredQuantity::DataSetType
-    );
+    ) const;
 
     /**
      * Add a table for resource usage
@@ -471,7 +471,7 @@ namespace stor {
       XHTMLMaker::Node* parent,
       ResourceMonitorCollection::Stats const&,
       MonitoredQuantity::Stats const&
-    );
+    ) const;
 
     /**
      * Add a table row for memory usage
@@ -481,7 +481,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* table,
       MonitoredQuantity::Stats const&
-    );
+    ) const;
 
     /**
      * Add a table row for copy/inject workers
@@ -491,7 +491,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* table,
       ResourceMonitorCollection::Stats const&
-    );
+    ) const;
 
     /**
      * Add a table row for SATA beast status
@@ -501,7 +501,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* table,
       ResourceMonitorCollection::Stats const&
-    );
+    ) const;
 
     /**
      * Add a table for disk usage
@@ -511,7 +511,7 @@ namespace stor {
       XHTMLMaker& maker,
       XHTMLMaker::Node* parent,
       ResourceMonitorCollection::Stats const&
-    );
+    ) const;
 
 
   private:

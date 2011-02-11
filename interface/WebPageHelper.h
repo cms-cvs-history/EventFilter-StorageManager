@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.12.2.3 2011/01/25 17:22:24 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.12.2.4 2011/02/09 11:49:06 mommsen Exp $
 /// @file: WebPageHelper.h
 
 #ifndef EventFilter_StorageManager_WebPageHelper_h
@@ -22,8 +22,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.12.2.3 $
-   * $Date: 2011/01/25 17:22:24 $
+   * $Revision: 1.12.2.4 $
+   * $Date: 2011/02/09 11:49:06 $
    */
   
   template<class T>
@@ -36,7 +36,7 @@ namespace stor {
       xdaq::ApplicationDescriptor*,
       const std::string& cvsVersion,
       T* callee,
-      void (T::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*)
+      void (T::*addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*) const
     );
 
     /**
@@ -63,12 +63,12 @@ namespace stor {
       const std::string& externallyVisibleState,
       const std::string& innerStateName,
       const std::string& errorMsg
-    );
+    ) const;
     
     /**
      * Adds the links for the other hyperdaq webpages
      */
-    void addDOMforHyperLinks(XHTMLMaker& maker, XHTMLMaker::Node* parent)
+    void addDOMforHyperLinks(XHTMLMaker& maker, XHTMLMaker::Node* parent) const
     { (_callee->*_addHyperLinks)(maker, parent); } 
 
 
@@ -91,7 +91,7 @@ namespace stor {
     evf::Css css_;
     const std::string _cvsVersion;
     T* _callee;
-    void (T::*_addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*);
+    void (T::*_addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*) const;
 
   };
 

@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.6 2011/02/09 11:49:06 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.7 2011/02/10 10:20:57 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -47,7 +47,7 @@ namespace stor
   {}
 
 
-  void SMWebPageHelper::defaultWebPage(xgi::Output *out)
+  void SMWebPageHelper::defaultWebPage(xgi::Output *out) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -77,7 +77,7 @@ namespace stor
   }
   
   
-  void SMWebPageHelper::storedDataWebPage(xgi::Output *out)
+  void SMWebPageHelper::storedDataWebPage(xgi::Output *out) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -101,7 +101,7 @@ namespace stor
   }
   
   
-  void SMWebPageHelper::filesWebPage(xgi::Output *out)
+  void SMWebPageHelper::filesWebPage(xgi::Output *out) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -121,7 +121,7 @@ namespace stor
   }
   
   
-  void SMWebPageHelper::consumerStatistics(xgi::Output *out)
+  void SMWebPageHelper::consumerStatistics(xgi::Output *out) const
   {
     const StateMachineMonitorCollection& stateMachineMonitorCollection =
       _sharedResources->_statisticsReporter->getStateMachineMonitorCollection();
@@ -141,7 +141,7 @@ namespace stor
   }
   
   
-  void SMWebPageHelper::resourceBrokerOverview(xgi::Output *out)
+  void SMWebPageHelper::resourceBrokerOverview(xgi::Output *out) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -171,7 +171,7 @@ namespace stor
   (
     xgi::Output *out,
     const long long& uniqueRBID
-  )
+  ) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -200,7 +200,7 @@ namespace stor
   }
   
   
-  void SMWebPageHelper::dqmEventWebPage(xgi::Output* out)
+  void SMWebPageHelper::dqmEventWebPage(xgi::Output* out) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -221,7 +221,7 @@ namespace stor
   }
   
   
-  void SMWebPageHelper::throughputWebPage(xgi::Output *out)
+  void SMWebPageHelper::throughputWebPage(xgi::Output *out) const
   {
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
@@ -246,7 +246,7 @@ namespace stor
     XHTMLMaker& maker,
     const std::string& pageTitle,
     const StateMachineMonitorCollection& stateMachineMonitorCollection
-  )
+  ) const
   {
     std::string errorMsg;
     stateMachineMonitorCollection.statusMessage(errorMsg);
@@ -265,7 +265,7 @@ namespace stor
   (
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent
-  )
+  ) const
   {
     std::string url = _appDescriptor->getContextDescriptor()->getURL()
       + "/" + _appDescriptor->getURN();
@@ -325,7 +325,7 @@ namespace stor
     XHTMLMaker::Node *parent,
     ResourceMonitorCollection const& rmc,
     ThroughputMonitorCollection const& tmc
-  )
+  ) const
   {
     ResourceMonitorCollection::Stats rmcStats;
     rmc.getStats(rmcStats);
@@ -353,7 +353,7 @@ namespace stor
     XHTMLMaker::Node *parent,
     ResourceMonitorCollection::Stats const& rmcStats,
     MonitoredQuantity::Stats const& poolUsageStats
-  )
+  ) const
   {
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
@@ -374,7 +374,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *table,
     MonitoredQuantity::Stats const& stats
-  )
+  ) const
   {
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
@@ -408,7 +408,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *table,
     ResourceMonitorCollection::Stats const& stats
-  )
+  ) const
   {
     XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
     tableValueAttr[ "width" ] = "46%";
@@ -434,7 +434,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *table,
     ResourceMonitorCollection::Stats const& stats
-  )
+  ) const
   {
     XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
     tableValueAttr[ "width" ] = "46%";
@@ -445,7 +445,7 @@ namespace stor
     
     if (stats.sataBeastStatus < 0 )
     {
-      warningAttr[ "bgcolor" ] = _alarmColors[ AlarmHandler::WARNING ];
+      warningAttr[ "bgcolor" ] = _alarmColors.find(AlarmHandler::WARNING)->second;
       
       XHTMLMaker::AttrMap colspanAttr = _tableLabelAttr;
       colspanAttr[ "colspan" ] = "2";
@@ -457,7 +457,7 @@ namespace stor
     else
     {
       if ( stats.sataBeastStatus > 0 )
-        warningAttr[ "bgcolor" ] = _alarmColors[ AlarmHandler::ERROR ];
+        warningAttr[ "bgcolor" ] = _alarmColors.find(AlarmHandler::ERROR)->second;
       tableRow = maker.addNode("tr", table, warningAttr);
       tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, "SATA beast status");
@@ -472,7 +472,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     ResourceMonitorCollection::Stats const& stats
-  )
+  ) const
   {
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
@@ -497,7 +497,7 @@ namespace stor
          it != itEnd;
          ++it)
     {
-      warningAttr[ "bgcolor" ] = _alarmColors[ (*it)->alarmState ];
+      warningAttr[ "bgcolor" ] = _alarmColors.find( (*it)->alarmState )->second;
       tableRow = maker.addNode("tr", table, warningAttr);
       tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, (*it)->pathName);
@@ -524,7 +524,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     FragmentMonitorCollection const& fmc
-  )
+  ) const
   {
     FragmentMonitorCollection::FragmentStats stats;
     fmc.getStats(stats);
@@ -561,7 +561,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     // Mean performance header
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -599,7 +599,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *tableRow,
     const utils::duration_t duration
-  )
+  ) const
   {
     XHTMLMaker::AttrMap tableValueWidth;
     tableValueWidth[ "width" ] = "23%";
@@ -617,7 +617,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -637,7 +637,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -657,7 +657,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -677,7 +677,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -697,7 +697,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -717,7 +717,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -737,7 +737,7 @@ namespace stor
     XHTMLMaker::Node *table,
     FragmentMonitorCollection::FragmentStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -756,7 +756,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     RunMonitorCollection const& rmc
-  )
+  ) const
   {
     MonitoredQuantity::Stats eventIDsReceivedStats;
     rmc.getEventIDsReceivedMQ().getStats(eventIDsReceivedStats);
@@ -835,7 +835,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     StreamsMonitorCollection const& smc
-  )
+  ) const
   {
     MonitoredQuantity::Stats allStreamsVolumeStats;
     smc.getAllStreamsVolumeMQ().getStats(allStreamsVolumeStats);
@@ -921,7 +921,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DiskWritingParams const& dwParams
-  )
+  ) const
   {
     XHTMLMaker::Node* table = maker.addNode("table", parent);
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _specialRowAttr);
@@ -946,7 +946,7 @@ namespace stor
     XHTMLMaker::Node *table,
     StreamsMonitorCollection const& smc,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     StreamsMonitorCollection::StreamRecordList const& streamRecords =
       smc.getStreamRecordsMQ();
@@ -968,7 +968,7 @@ namespace stor
         it = streamRecords.begin(), itEnd = streamRecords.end();
       it != itEnd;
       ++it
-    ) 
+    )
     {
       MonitoredQuantity::Stats streamFileCountStats;
       (*it)->fileCount.getStats(streamFileCountStats);
@@ -1025,7 +1025,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     FilesMonitorCollection const& fmc
-  )
+  ) const
   {
     FilesMonitorCollection::FileRecordList fileRecords;
     fmc.getFileRecords(fileRecords);
@@ -1075,7 +1075,7 @@ namespace stor
         it = fileRecords.rbegin(), itEnd = fileRecords.rend();
       it != itEnd;
       ++it
-    ) 
+    )
     {
       tableRow = maker.addNode("tr", table, _rowAttr);
       tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
@@ -1097,7 +1097,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DQMEventMonitorCollection const& dmc
-  )
+  ) const
   {
     DQMEventMonitorCollection::DQMEventStats stats;
     dmc.getStats(stats);
@@ -1134,7 +1134,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DQMEventMonitorCollection const& dmc
-  )
+  ) const
   {
     DQMEventMonitorCollection::DQMEventStats stats;
     dmc.getStats(stats);
@@ -1232,7 +1232,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     ThroughputMonitorCollection const& tmc
-  )
+  ) const
   {
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "21";
@@ -1312,7 +1312,7 @@ namespace stor
     XHTMLMaker::Node* table,
     const ThroughputMonitorCollection::Stats::Snapshot& snapshot,
     const bool isAverage
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv;
@@ -1419,7 +1419,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DataSenderMonitorCollection const& dsmc
-  )
+  ) const
   {
     DataSenderMonitorCollection::OutputModuleResultsList resultsList =
       dsmc.getTopLevelOutputModuleResults();
@@ -1435,7 +1435,7 @@ namespace stor
     XHTMLMaker::Node *parent,
     long long uniqueRBID,
     DataSenderMonitorCollection const& dsmc
-  )
+  ) const
   {
     DataSenderMonitorCollection::OutputModuleResultsList resultsList =
       dsmc.getOutputModuleResultsForRB(uniqueRBID);
@@ -1449,7 +1449,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DataSenderMonitorCollection::OutputModuleResultsList const& resultsList
-  )
+  ) const
   {
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "7";
@@ -1523,7 +1523,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DataSenderMonitorCollection::OutputModuleResultsList const& resultsList
-  )
+  ) const
   {
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "3";
@@ -1574,7 +1574,7 @@ namespace stor
     XHTMLMaker& maker,
     XHTMLMaker::Node *parent,
     DataSenderMonitorCollection const& dsmc
-  )
+  ) const
   {
     DataSenderMonitorCollection::ResourceBrokerResultsList rbResultsList =
       dsmc.getAllResourceBrokerResults();
@@ -1731,7 +1731,7 @@ namespace stor
     XHTMLMaker::Node *parent,
     long long uniqueRBID,
     DataSenderMonitorCollection const& dsmc
-  )
+  ) const
   {
     DataSenderMonitorCollection::RBResultPtr rbResultPtr =
       dsmc.getOneResourceBrokerResult(uniqueRBID);
@@ -1890,7 +1890,7 @@ namespace stor
     XHTMLMaker::Node *parent,
     long long uniqueRBID,
     DataSenderMonitorCollection const& dsmc
-  )
+  ) const
   {
     DataSenderMonitorCollection::FilterUnitResultsList fuResultsList =
       dsmc.getFilterUnitResultsForRB(uniqueRBID);
@@ -2033,7 +2033,7 @@ namespace stor
     XHTMLMaker::Node *table,
     DQMEventMonitorCollection::DQMEventStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     // Mean performance header
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
@@ -2070,7 +2070,7 @@ namespace stor
     XHTMLMaker::Node *table,
     DQMEventMonitorCollection::DQMEventStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -2090,7 +2090,7 @@ namespace stor
     XHTMLMaker::Node *table,
     DQMEventMonitorCollection::DQMEventStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -2110,7 +2110,7 @@ namespace stor
     XHTMLMaker::Node *table,
     DQMEventMonitorCollection::DQMEventStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -2130,7 +2130,7 @@ namespace stor
     XHTMLMaker::Node *table,
     DQMEventMonitorCollection::DQMEventStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
@@ -2150,7 +2150,7 @@ namespace stor
     XHTMLMaker::Node *table,
     DQMEventMonitorCollection::DQMEventStats const& stats,
     const MonitoredQuantity::DataSetType dataSet
-  )
+  ) const
   {
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
