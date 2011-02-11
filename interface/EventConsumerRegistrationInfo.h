@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.6 2011/01/26 14:28:28 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.7 2011/02/04 13:58:29 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -24,8 +24,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.6 $
-   * $Date: 2011/01/26 14:28:28 $
+   * $Revision: 1.13.2.7 $
+   * $Date: 2011/02/04 13:58:29 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -93,6 +93,7 @@ namespace stor
     virtual int do_queueSize() const;
     virtual enquing_policy::PolicyTag do_queuePolicy() const;
     virtual utils::duration_t do_secondsToStale() const;
+    virtual void do_eventType(std::ostream&) const;
 
   private:
 

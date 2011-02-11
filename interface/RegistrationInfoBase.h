@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.3 2011/01/24 12:18:39 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.4 2011/01/26 16:04:39 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -22,8 +22,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.3 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.6.2.4 $
+   * $Date: 2011/01/26 16:04:39 $
    */
 
   class RegistrationInfoBase
@@ -113,6 +113,11 @@ namespace stor {
     double lastContactSecondsAgo(const utils::time_point_t& now) const
     { return utils::duration_to_seconds( now - _lastConsumerContact ); }
 
+    /**
+       Returns a formatted string which contains the information about the event type.
+     */
+    void eventType(std::ostream&) const;
+
 
   private:
     virtual void do_registerMe(EventDistributor*) = 0;
@@ -125,6 +130,7 @@ namespace stor {
     virtual int do_queueSize() const = 0;
     virtual enquing_policy::PolicyTag do_queuePolicy() const = 0;
     virtual utils::duration_t do_secondsToStale() const = 0;
+    virtual void do_eventType(std::ostream&) const = 0;
 
     utils::time_point_t _lastConsumerContact;
   };
@@ -195,6 +201,12 @@ namespace stor {
   utils::duration_t RegistrationInfoBase::secondsToStale() const
   {
     return do_secondsToStale();
+  }
+
+  inline
+  void RegistrationInfoBase::eventType(std::ostream& os) const
+  {
+    return do_eventType(os);
   }
 
 } // namespace stor

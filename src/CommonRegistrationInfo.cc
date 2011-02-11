@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.cc,v 1.5.2.1 2011/01/13 13:28:41 mommsen Exp $
+// $Id: CommonRegistrationInfo.cc,v 1.5.2.2 2011/01/19 13:50:38 mommsen Exp $
 /// @file: CommonRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
@@ -65,6 +65,13 @@ namespace stor
     );
     if ( useEventServingParams && _secondsToStale < boost::posix_time::seconds(1) )
       _secondsToStale = eventServingParams._activeConsumerTimeout;
+  }
+
+  void CommonRegistrationInfo::queueInfo(std::ostream& os) const
+  {
+    os << "Queue type: " << _queuePolicy <<
+      ", size " << _queueSize << 
+      ", stale " << _secondsToStale.total_seconds() << "s";
   }
 
   std::ostream& operator<< (std::ostream& os,

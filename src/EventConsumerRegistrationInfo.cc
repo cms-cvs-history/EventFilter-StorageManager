@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.5 2011/01/26 14:28:28 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.6 2011/02/04 13:58:29 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -230,6 +230,34 @@ namespace stor
   EventConsumerRegistrationInfo::operator!=(const EventConsumerRegistrationInfo& other) const
   {
     return ! ( *this == other );
+  }
+
+  void
+  EventConsumerRegistrationInfo::do_eventType(std::ostream& os) const
+  {
+    os << "Output module: " << _outputModuleLabel << "\n";
+
+    if ( _triggerSelection.empty() )
+    {
+      if ( ! _eventSelection.empty() )
+      {
+        os  << "Event Selection: ";
+        std::copy(_eventSelection.begin(), _eventSelection.end()-1,
+          std::ostream_iterator<Strings::value_type>(os, ","));
+        os << *(_eventSelection.end()-1);
+      }
+    }
+    else
+      os << "Trigger Selection: " << _triggerSelection;
+
+    if ( _prescale != 1 )
+      os << "; prescale: " << _prescale;
+
+    if ( _uniqueEvents != false )
+      os << "; uniqueEvents";
+
+    os << "\n";
+    _common.queueInfo(os);
   }
 
   std::ostream& 

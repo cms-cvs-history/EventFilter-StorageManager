@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.3 2011/01/14 18:30:22 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.4 2011/01/19 13:50:38 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -110,6 +110,13 @@ namespace stor
   DQMEventConsumerRegistrationInfo::operator!=(const DQMEventConsumerRegistrationInfo& other) const
   {
     return ! ( *this == other );
+  }
+
+  void
+  DQMEventConsumerRegistrationInfo::do_eventType(std::ostream& os) const
+  {
+    os << "Top level folder: " << _topLevelFolderName << "\n";
+    _common.queueInfo(os);
   }
 
   std::ostream&

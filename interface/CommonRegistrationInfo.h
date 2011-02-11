@@ -1,4 +1,4 @@
-// $Id: CommonRegistrationInfo.h,v 1.4.8.2 2011/01/19 13:50:38 mommsen Exp $
+// $Id: CommonRegistrationInfo.h,v 1.4.8.3 2011/01/24 12:18:39 mommsen Exp $
 /// @file: CommonRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_CommonRegistrationInfo_h
@@ -23,8 +23,8 @@ namespace stor
    * data member.
    *
    * $Author: mommsen $
-   * $Revision: 1.4.8.2 $
-   * $Date: 2011/01/19 13:50:38 $
+   * $Revision: 1.4.8.3 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   struct CommonRegistrationInfo
@@ -54,7 +54,14 @@ namespace stor
     utils::duration_t                _secondsToStale;
     QueueID                          _queueId;
     ConsumerID                       _consumerId;
+
+    /**
+      Print queue information into ostream
+     */
+    void queueInfo(std::ostream&) const;
+
   };
+
 
   // If changing the print order of things in
   // EventConsumerRegistrationInfo is acceptable, the following could
