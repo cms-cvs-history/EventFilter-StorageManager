@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11.2.3 2011/01/25 11:28:37 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.4 2011/02/04 13:57:45 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
@@ -21,14 +21,21 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11.2.3 $
-   * $Date: 2011/01/25 11:28:37 $
+   * $Revision: 1.11.2.4 $
+   * $Date: 2011/02/04 13:57:45 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
   {
 
   public:
+
+    struct TotalStats
+    {
+      MonitoredQuantity::Stats queuedStats;
+      MonitoredQuantity::Stats droppedStats;
+      MonitoredQuantity::Stats servedStats;
+    };
 
     explicit ConsumerMonitorCollection(const utils::duration_t& updateInterval);
 
@@ -63,6 +70,11 @@ namespace stor {
     bool getDropped( const QueueID& qid, MonitoredQuantity::Stats& result ) const;
 
     /**
+       Get the summary statistics for all consumers
+    */
+    void getTotalStats( TotalStats& ) const;
+
+    /**
        Reset sizes to zero leaving consumers in
     */
     void resetCounters();
@@ -73,7 +85,7 @@ namespace stor {
     ConsumerMonitorCollection( const ConsumerMonitorCollection& );
     ConsumerMonitorCollection& operator = ( const ConsumerMonitorCollection& );
 
-    typedef std::map< QueueID, boost::shared_ptr<MonitoredQuantity> > ConsStatMap;
+    typedef std::map<QueueID, MonitoredQuantityPtr> ConsStatMap;
 
     void addEventSampleToMap( const QueueID&, const unsigned int& data_size, ConsStatMap& );
     bool getValueFromMap( const QueueID&, MonitoredQuantity::Stats&, const ConsStatMap& ) const;
@@ -82,6 +94,9 @@ namespace stor {
     virtual void do_reset();
 
     const utils::duration_t _updateInterval;
+    MonitoredQuantity _totalQueuedMQ;
+    MonitoredQuantity _totalDroppedMQ;
+    MonitoredQuantity _totalServedMQ;
 
   protected:
 

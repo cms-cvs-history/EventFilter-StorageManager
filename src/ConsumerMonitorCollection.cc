@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.11.2.1 2011/01/25 11:29:12 mommsen Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.11.2.2 2011/02/04 13:57:45 mommsen Exp $
 /// @file: ConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -10,7 +10,10 @@ using namespace stor;
 
 ConsumerMonitorCollection::ConsumerMonitorCollection(const utils::duration_t& updateInterval):
 MonitorCollection(updateInterval),
-_updateInterval(updateInterval)
+_updateInterval(updateInterval),
+_totalQueuedMQ(updateInterval, boost::posix_time::seconds(10)),
+_totalDroppedMQ(updateInterval, boost::posix_time::seconds(10)),
+_totalServedMQ(updateInterval, boost::posix_time::seconds(10))
 {}
 
 
@@ -19,6 +22,7 @@ void ConsumerMonitorCollection::addQueuedEventSample( const QueueID& qid,
 {
   boost::mutex::scoped_lock l( _mutex );
   addEventSampleToMap(qid, data_size, _qmap);
+  _totalQueuedMQ.addSample(data_size);
 }
 
 
@@ -27,6 +31,7 @@ void ConsumerMonitorCollection::addDroppedEvents( const QueueID& qid,
 {
   boost::mutex::scoped_lock l( _mutex );
   addEventSampleToMap(qid, count, _dmap);
+  _totalDroppedMQ.addSample(count);
 }
 
 
@@ -35,6 +40,7 @@ void ConsumerMonitorCollection::addServedEventSample( const QueueID& qid,
 {
   boost::mutex::scoped_lock l( _mutex );
   addEventSampleToMap(qid, data_size, _smap);
+  _totalServedMQ.addSample(data_size);
 }
 
 
@@ -56,7 +62,7 @@ void ConsumerMonitorCollection::addEventSampleToMap( const QueueID& qid,
     // Use pos as a hint to insert, so it can avoid another lookup
     pos = map.insert(pos,
       ConsStatMap::value_type(qid, 
-        boost::shared_ptr<MonitoredQuantity>(
+        MonitoredQuantityPtr(
           new MonitoredQuantity(_updateInterval, boost::posix_time::seconds(10))
         )
       )
@@ -84,7 +90,7 @@ bool ConsumerMonitorCollection::getServed( const QueueID& qid,
 
 
 bool ConsumerMonitorCollection::getDropped( const QueueID& qid,
-					      MonitoredQuantity::Stats& result ) const
+					    MonitoredQuantity::Stats& result ) const
 {
   boost::mutex::scoped_lock l( _mutex );
   return getValueFromMap( qid, result, _dmap );
@@ -103,6 +109,13 @@ bool ConsumerMonitorCollection::getValueFromMap( const QueueID& qid,
 }
 
 
+void ConsumerMonitorCollection::getTotalStats( TotalStats& totalStats ) const
+{
+  _totalQueuedMQ.getStats(totalStats.queuedStats);
+  _totalDroppedMQ.getStats(totalStats.droppedStats);
+  _totalServedMQ.getStats(totalStats.servedStats);
+}
+
 void ConsumerMonitorCollection::resetCounters()
 {
   boost::mutex::scoped_lock l( _mutex );
@@ -112,6 +125,10 @@ void ConsumerMonitorCollection::resetCounters()
     i->second->reset();
   for( ConsStatMap::iterator i = _dmap.begin(); i != _dmap.end(); ++i )
     i->second->reset();
+
+  _totalQueuedMQ.reset();
+  _totalDroppedMQ.reset();
+  _totalServedMQ.reset();
 }
 
 
@@ -124,6 +141,10 @@ void ConsumerMonitorCollection::do_calculateStatistics()
     i->second->calculateStatistics();
   for( ConsStatMap::iterator i = _dmap.begin(); i != _dmap.end(); ++i )
     i->second->calculateStatistics();
+
+  _totalQueuedMQ.calculateStatistics();
+  _totalDroppedMQ.calculateStatistics();
+  _totalServedMQ.calculateStatistics();
 }
 
 
@@ -133,6 +154,10 @@ void ConsumerMonitorCollection::do_reset()
   _qmap.clear();
   _smap.clear();
   _dmap.clear();
+
+  _totalQueuedMQ.reset();
+  _totalDroppedMQ.reset();
+  _totalServedMQ.reset();
 }
 
 
