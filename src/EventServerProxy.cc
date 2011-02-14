@@ -1,10 +1,9 @@
-// $Id: EventServerProxy.cc,v 1.1.2.5 2011/01/27 14:57:17 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.6 2011/01/27 16:32:36 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventServerProxy.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
-#include "EventFilter/StorageManager/interface/CurlInterface.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -47,7 +46,7 @@ namespace stor
   }
 
 
-  void EventServerProxy::getOneEvent(std::string& data)
+  void EventServerProxy::getOneEvent(CurlInterface::Content& data)
   {
     stor::utils::sleepUntil(nextRequestTime_);
 
@@ -59,7 +58,7 @@ namespace stor
   }
  
 
-  bool EventServerProxy::getEventMaybe(std::string& data)
+  bool EventServerProxy::getEventMaybe(CurlInterface::Content& data)
   {
     data.clear();
     getOneEventFromEventServer(data);
@@ -72,7 +71,7 @@ namespace stor
   }
   
   
-  void EventServerProxy::getOneEventFromEventServer(std::string& data)
+  void EventServerProxy::getOneEventFromEventServer(CurlInterface::Content& data)
   {
     // build the event request message to send to the storage manager
     char msgBuff[100];
@@ -95,7 +94,8 @@ namespace stor
     
     if ( result != CURLE_OK )
     {
-      edm::LogError("EventServerProxy") << "curl perform failed for event: " << data;
+      edm::LogError("EventServerProxy") << "curl perform failed for event: "
+        << std::string(&data[0]);
       data.clear();
       // this will end cmsRun 
       //return std::auto_ptr<EventPrincipal>();
@@ -111,7 +111,7 @@ namespace stor
   }
   
   
-  void EventServerProxy::checkEvent(std::string& data)
+  void EventServerProxy::checkEvent(CurlInterface::Content& data)
   {
     // 29-Jan-2008, KAB:  catch (and re-throw) any exceptions decoding
     // the event data so that we can display the returned HTML and
@@ -134,23 +134,25 @@ namespace stor
       std::ostringstream dump;
       dump << "========================================" << std::endl;
       dump << "* Exception decoding the geteventdata response from the storage manager!" << std::endl;
-      if (data.length() <= MAX_DUMP_LENGTH) {
+      if (data.size() < MAX_DUMP_LENGTH)
+      {
         dump << "* Here is the raw text that was returned:" << std::endl;
-        dump << data << std::endl;
+        dump << std::string(&data[0]) << std::endl;
       }
-      else {
+      else
+      {
         dump << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        dump << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        dump << std::string(&data[0], MAX_DUMP_LENGTH) << std::endl;
       }
       dump << "========================================" << std::endl;
-      edm::LogError("EventServerProxy") << dump;
+      edm::LogError("EventServerProxy") << dump.str();
       throw excpt;
     }
   }
   
   
-  void EventServerProxy::getInitMsg(std::string& data)
+  void EventServerProxy::getInitMsg(CurlInterface::Content& data)
   {
     do
     {
@@ -168,7 +170,7 @@ namespace stor
   }
   
   
-  void EventServerProxy::getInitMsgFromEventServer(std::string& data)
+  void EventServerProxy::getInitMsgFromEventServer(CurlInterface::Content& data)
   {
     // build the header request message to send to the storage manager
     char msgBuff[100];
@@ -192,7 +194,8 @@ namespace stor
     if ( result != CURLE_OK )
     {
       // connection failed: try to reconnect
-      edm::LogError("EventServerProxy") << "curl perform failed for header:" << data << std::endl
+      edm::LogError("EventServerProxy") << "curl perform failed for header:"
+        << std::string(&data[0]) << std::endl
         << ". Trying to reconnect.";
       data.clear();
       registerWithEventServer();
@@ -214,7 +217,7 @@ namespace stor
   }
 
 
-  void EventServerProxy::checkInitMsg(std::string& data)
+  void EventServerProxy::checkInitMsg(CurlInterface::Content& data)
   {
     try {
       HeaderView hdrView(&data[0]);
@@ -227,17 +230,19 @@ namespace stor
       std::ostringstream dump;
       dump << "========================================" << std::endl;
       dump << "* Exception decoding the getregdata response from the storage manager!" << std::endl;
-      if (data.length() <= MAX_DUMP_LENGTH) {
+      if (data.size() <= MAX_DUMP_LENGTH)
+      {
         dump << "* Here is the raw text that was returned:" << std::endl;
-        dump << data << std::endl;
+        dump << std::string(&data[0]) << std::endl;
       }
-      else {
+      else
+      {
         dump << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        dump << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        dump << std::string(&data[0], MAX_DUMP_LENGTH) << std::endl;
       }
       dump << "========================================" << std::endl;
-      edm::LogError("EventServerProxy") << dump;
+      edm::LogError("EventServerProxy") << dump.str();
       throw excpt;
     }
   }
@@ -245,7 +250,7 @@ namespace stor
   
   void EventServerProxy::registerWithEventServer()
   {
-    std::string data;
+    CurlInterface::Content data;
 
     do
     {
@@ -261,7 +266,7 @@ namespace stor
   }
   
   
-  void EventServerProxy::connectToEventServer(std::string& data)
+  void EventServerProxy::connectToEventServer(CurlInterface::Content& data)
   {
     // build the registration request message to send to the storage manager
     const int bufferSize = 2000;
@@ -308,7 +313,7 @@ namespace stor
   }
   
   
-  bool EventServerProxy::extractConsumerId(std::string& data)      
+  bool EventServerProxy::extractConsumerId(CurlInterface::Content& data)      
   {
     boost::scoped_ptr<ConsRegResponseView> respView;
 
@@ -320,17 +325,19 @@ namespace stor
       std::ostringstream dump;
       dump << "========================================" << std::endl;
       dump << "* Exception decoding the registerWithEventServer response!" << std::endl;
-      if (data.length() <= MAX_DUMP_LENGTH) {
+      if (data.size() <= MAX_DUMP_LENGTH)
+      {
         dump << "* Here is the raw text that was returned:" << std::endl;
-        dump << data << std::endl;
+        dump << std::string(&data[0]) << std::endl;
       }
-      else {
+      else
+      {
         dump << "* Here are the first " << MAX_DUMP_LENGTH <<
           " characters of the raw text that was returned:" << std::endl;
-        dump << (data.substr(0, MAX_DUMP_LENGTH)) << std::endl;
+        dump << std::string(&data[0], MAX_DUMP_LENGTH) << std::endl;
       }
       dump << "========================================" << std::endl;
-      edm::LogError("EventServerProxy") << dump;
+      edm::LogError("EventServerProxy") << dump.str();
       throw excpt;
     }
     

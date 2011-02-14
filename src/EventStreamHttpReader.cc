@@ -1,6 +1,7 @@
-// $Id: EventStreamHttpReader.cc,v 1.42.2.3 2011/01/17 14:33:52 mommsen Exp $
+// $Id: EventStreamHttpReader.cc,v 1.42.2.5 2011/01/19 13:50:38 mommsen Exp $
 /// @file: EventStreamHttpReader.cc
 
+#include "EventFilter/StorageManager/interface/CurlInterface.h"
 #include "EventFilter/StorageManager/src/EventStreamHttpReader.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
@@ -30,7 +31,7 @@ namespace edm
 
   EventPrincipal* EventStreamHttpReader::read()
   {
-    std::string data;
+    stor::CurlInterface::Content data;
 
     _eventServerProxy.getOneEvent(data);
     if ( data.empty() ) return 0;
@@ -48,7 +49,7 @@ namespace edm
   
   void EventStreamHttpReader::readHeader()
   {
-    std::string data;
+    stor::CurlInterface::Content data;
     
     _eventServerProxy.getInitMsg(data);
     InitMsgView initView(&data[0]);

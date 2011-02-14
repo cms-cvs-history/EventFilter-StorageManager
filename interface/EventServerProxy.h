@@ -1,9 +1,10 @@
-// $Id: EventServerProxy.h,v 1.1.2.4 2011/01/26 14:28:28 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.5 2011/01/27 16:32:36 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
 #define EventFilter_StorageManager_EventServerProxy_h
 
+#include "EventFilter/StorageManager/interface/CurlInterface.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -20,8 +21,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2011/01/26 14:28:28 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2011/01/27 16:32:36 $
    */
  
   class EventServerProxy
@@ -35,18 +36,18 @@ namespace stor {
     /**
      * Get one event from the event server.
      */
-    void getOneEvent(std::string& data);
+    void getOneEvent(CurlInterface::Content& data);
 
     /**
      * Try to get one event from the event server.
      * If succesful, returns true.
      */
-    bool getEventMaybe(std::string& data);
+    bool getEventMaybe(CurlInterface::Content& data);
 
     /**
      * Get the init message from the the event server.
      */
-    void getInitMsg(std::string& data);
+    void getInitMsg(CurlInterface::Content& data);
 
     /**
      * Get the source URL
@@ -57,13 +58,13 @@ namespace stor {
     
   private:
 
-    void getOneEventFromEventServer(std::string&);
-    void checkEvent(std::string&);
-    void getInitMsgFromEventServer(std::string&);
-    void checkInitMsg(std::string&);
+    void getOneEventFromEventServer(CurlInterface::Content&);
+    void checkEvent(CurlInterface::Content&);
+    void getInitMsgFromEventServer(CurlInterface::Content&);
+    void checkInitMsg(CurlInterface::Content&);
     void registerWithEventServer();
-    void connectToEventServer(std::string&);
-    bool extractConsumerId(std::string&);
+    void connectToEventServer(CurlInterface::Content&);
+    bool extractConsumerId(CurlInterface::Content&);
 
     std::string sourceurl_;
     std::string consumerName_;

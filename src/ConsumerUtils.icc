@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.4 2011/01/24 19:32:04 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.5 2011/02/07 13:02:02 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -527,15 +527,14 @@ namespace stor
   ConsumerUtils<Configuration_t,EventQueueCollection_t>::
   writeErrorString(xgi::Output* out, const std::string errorString) const
   {
-    
     const int buff_size = errorString.size();
-    std::vector<unsigned char> buff( buff_size );
+    std::vector<unsigned char> buff( buff_size+1 );
     
-    const char *errorBytes = errorString.c_str();
-    for (int i=0; i<buff_size; ++i) buff[i]=errorBytes[i];
+    for (int i=0; i<buff_size; ++i) buff[i]=errorString[i];
+    buff[buff_size] = '\0';
     
     writeHTTPHeaders( out );
-    out->write( (char*)(&buff[0]), buff_size );
+    out->write( (char*)(&buff[0]), buff_size+1 );
   }
   
   

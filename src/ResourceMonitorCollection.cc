@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.cc,v 1.39 2010/12/01 13:44:48 eulisse Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.39.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: ResourceMonitorCollection.cc
 
 #include <stdio.h>
@@ -480,8 +480,8 @@ bool ResourceMonitorCollection::checkSataDisks
   const std::string& hostSuffix
 )
 {
-  stor::CurlInterface curlInterface;
-  std::string content;
+  CurlInterface curlInterface;
+  CurlInterface::Content content;
 
   // Do not try to connect if we have no user name
   if ( _rmParams._sataUser.empty() ) return true;
@@ -493,7 +493,7 @@ bool ResourceMonitorCollection::checkSataDisks
   
   if (returnCode == CURLE_OK)
   {
-    updateSataBeastStatus(sataBeast, content);
+    updateSataBeastStatus(sataBeast, std::string(&content[0]));
     return true;
   }
   else
@@ -502,7 +502,7 @@ bool ResourceMonitorCollection::checkSataDisks
     msg << "Failed to connect to SATA controller "
       << sataBeast << hostSuffix 
       << " with user name '" << _rmParams._sataUser
-      << "': " << content;
+      << "': " << std::string(&content[0]);
     XCEPT_DECLARE(stor::exception::SataBeast, ex, msg.str());
     _alarmHandler->notifySentinel(AlarmHandler::WARNING, ex);
 
