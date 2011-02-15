@@ -1,4 +1,4 @@
-// $Id: CurlInterface.cc,v 1.2 2010/05/11 17:58:19 mommsen Exp $
+// $Id: CurlInterface.cc,v 1.2.4.1 2011/02/14 16:53:49 mommsen Exp $
 /// @file: CurlInterface.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -67,7 +67,10 @@ CURLcode CurlInterface::do_curl(CURL* curl, const std::string& url, Content& con
     size_t i = 0;
     content.clear();
     while ( _errorBuffer[i] != '\0' )
+    {
       content.push_back( _errorBuffer[i] );
+      ++i;
+    }
   }
 
   return returnCode;
