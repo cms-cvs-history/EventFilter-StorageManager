@@ -406,23 +406,23 @@ testConcurrentQueue::keepnewest_memlimit2()
 {
   std::cerr << "\nConcurrentQueue_t::keepnewest_memlimit2\n";
   keepnewest_t q(5,3*sizeof(uint32_t));
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement(1UL)) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement(2UL)) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement(3UL)) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement(4UL)) == 1);
+  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)1)) == 0);
+  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)2)) == 0);
+  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)3)) == 0);
+  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)4)) == 1);
   CPPUNIT_ASSERT(q.size() == 3);
   CPPUNIT_ASSERT(q.used() == 3*sizeof(uint32_t));
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement(5ULL)) == 2);
+  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint64_t)5)) == 2);
   CPPUNIT_ASSERT(q.size() == 2);
-  CPPUNIT_ASSERT(q.used() == sizeof(unsigned long) + sizeof(unsigned long long));
+  CPPUNIT_ASSERT(q.used() == sizeof(uint32_t) + sizeof(uint64_t));
 
   keepnewest_t::value_type value;
   CPPUNIT_ASSERT(q.deq_nowait(value));
-  CPPUNIT_ASSERT(value.first == 4UL);
+  CPPUNIT_ASSERT(value.first == (uint32_t)4);
   CPPUNIT_ASSERT(value.second == 1);
 
   CPPUNIT_ASSERT(q.deq_nowait(value));
-  CPPUNIT_ASSERT(value.first == 5ULL);
+  CPPUNIT_ASSERT(value.first == (uint64_t)5);
   CPPUNIT_ASSERT(value.second == 2);
 
   CPPUNIT_ASSERT(q.empty());
