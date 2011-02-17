@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.4 2011/01/19 13:50:38 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.5 2011/02/11 12:10:30 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -16,7 +16,7 @@ namespace stor
     const enquing_policy::PolicyTag& queuePolicy,
     const utils::duration_t& secondsToStale
   ) :
-  _common( consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
+  RegistrationInfoBase( consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
   _topLevelFolderName( topLevelFolderName )
   { }
 
@@ -29,80 +29,26 @@ namespace stor
     evtDist->registerDQMEventConsumer(this);
   }
 
-  QueueID
-  DQMEventConsumerRegistrationInfo::do_queueId() const
-  {
-    return _common._queueId;
-  }
-
-  void
-  DQMEventConsumerRegistrationInfo::do_setQueueId(QueueID const& id)
-  {
-    _common._queueId = id;
-  }
-
-  std::string
-  DQMEventConsumerRegistrationInfo::do_consumerName() const
-  {
-    return _common._consumerName;
-  }
-
-  std::string
-  DQMEventConsumerRegistrationInfo::do_remoteHost() const
-  {
-    return _common._remoteHost;
-  }
-
-  ConsumerID
-  DQMEventConsumerRegistrationInfo::do_consumerId() const
-  {
-    return _common._consumerId;
-  }
-
-  void
-  DQMEventConsumerRegistrationInfo::do_setConsumerId(ConsumerID const& id)
-  {
-    _common._consumerId = id;
-  }
-
-  int
-  DQMEventConsumerRegistrationInfo::do_queueSize() const
-  {
-    return _common._queueSize;
-  }
-
-  enquing_policy::PolicyTag
-  DQMEventConsumerRegistrationInfo::do_queuePolicy() const
-  {
-    return _common._queuePolicy;
-  }
-
-  utils::duration_t
-  DQMEventConsumerRegistrationInfo::do_secondsToStale() const
-  {
-    return _common._secondsToStale;
-  }
-
   bool
   DQMEventConsumerRegistrationInfo::operator<(const DQMEventConsumerRegistrationInfo& other) const
   {
-    if ( _topLevelFolderName != other.topLevelFolderName() )
-      return ( _topLevelFolderName < other.topLevelFolderName() );
-    if ( _common._queueSize != other.queueSize() )
-      return ( _common._queueSize < other.queueSize() );
-    if ( _common._queuePolicy != other.queuePolicy() )
-      return ( _common._queuePolicy < other.queuePolicy() );
-    return ( _common._secondsToStale < other.secondsToStale() );
+    if ( topLevelFolderName() != other.topLevelFolderName() )
+      return ( topLevelFolderName() < other.topLevelFolderName() );
+    if ( queueSize() != other.queueSize() )
+      return ( queueSize() < other.queueSize() );
+    if ( queuePolicy() != other.queuePolicy() )
+      return ( queuePolicy() < other.queuePolicy() );
+    return ( secondsToStale() < other.secondsToStale() );
   }
 
   bool
   DQMEventConsumerRegistrationInfo::operator==(const DQMEventConsumerRegistrationInfo& other) const
   {
     return (
-      _topLevelFolderName == other.topLevelFolderName() &&
-      _common._queueSize == other.queueSize() &&
-      _common._queuePolicy == other.queuePolicy() &&
-      _common._secondsToStale == other.secondsToStale()
+      topLevelFolderName() == other.topLevelFolderName() &&
+      queueSize() == other.queueSize() &&
+      queuePolicy() == other.queuePolicy() &&
+      secondsToStale() == other.secondsToStale()
     );
   }
 
@@ -116,16 +62,7 @@ namespace stor
   DQMEventConsumerRegistrationInfo::do_eventType(std::ostream& os) const
   {
     os << "Top level folder: " << _topLevelFolderName << "\n";
-    _common.queueInfo(os);
-  }
-
-  std::ostream&
-  DQMEventConsumerRegistrationInfo::write(std::ostream& os) const
-  {
-    os << "DQMEventConsumerRegistrationInfo:"
-       << _common
-       << "\n Top folder name: " << _topLevelFolderName;
-    return os;
+    queueInfo(os);
   }
 
 } // namespace stor

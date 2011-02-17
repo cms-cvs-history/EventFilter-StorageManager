@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.6 2011/02/04 13:58:29 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.7 2011/02/11 12:10:30 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -15,46 +15,21 @@ namespace stor
 {
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
   (
-    const std::string& consumerName,
-    const std::string& remoteHost,
-    const std::string& triggerSelection,
-    const Strings& eventSelection,
-    const std::string& outputModuleLabel,
-    const int& prescale,
-    const bool& uniqueEvents,
-    const int& queueSize,
-    const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale,
-    const utils::duration_t& minEventRequestInterval
-  ) :
-  _common(consumerName, remoteHost, queueSize, queuePolicy, secondsToStale),
-  _triggerSelection( triggerSelection ),
-  _eventSelection( eventSelection ),
-  _outputModuleLabel( outputModuleLabel ),
-  _prescale( prescale ),
-  _uniqueEvents( uniqueEvents ),
-  _minEventRequestInterval( minEventRequestInterval )
-  { }
-
-  EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
-  (
-    const std::string& consumerName,
-    const std::string& remoteHost,
     const edm::ParameterSet& pset,
-    const EventServingParams& eventServingParams
+    const EventServingParams& eventServingParams,
+    const std::string& remoteHost
   ) :
-  _common(consumerName, remoteHost, pset, eventServingParams)
+  RegistrationInfoBase(pset, remoteHost, eventServingParams, true)
   {
     parsePSet(pset);
   }
 
   EventConsumerRegistrationInfo::EventConsumerRegistrationInfo
   (
-    const std::string& consumerName,
-    const std::string& remoteHost,
-    const edm::ParameterSet& pset
+    const edm::ParameterSet& pset,
+    const std::string& remoteHost
   ) :
-  _common(consumerName, remoteHost, pset, EventServingParams(), false)
+  RegistrationInfoBase(pset, remoteHost, EventServingParams(), false)
   {
     parsePSet(pset);
   }
@@ -87,14 +62,16 @@ namespace stor
       }
     }
 
-    _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
     _prescale = pset.getUntrackedParameter<int>("prescale", 1);
+    _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
 
     double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
     if ( maxEventRequestRate > 0 )
       _minEventRequestInterval = utils::seconds_to_duration(1 / maxEventRequestRate);
     else
       _minEventRequestInterval = boost::posix_time::not_a_date_time;
+
+    _headerRetryInterval = pset.getUntrackedParameter<int>("headerRetryInterval", 5);
   }
 
   EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
@@ -109,24 +86,17 @@ namespace stor
     pset.addParameter<Strings>("TrackedEventSelection", _eventSelection);
     pset.addUntrackedParameter<bool>("uniqueEvents", _uniqueEvents);
     pset.addUntrackedParameter<int>("prescale", _prescale);
-
+    
     if ( ! _minEventRequestInterval.is_not_a_date_time() )
     {
       const double rate = 1 / utils::duration_to_seconds(_minEventRequestInterval);
       pset.addUntrackedParameter<double>("maxEventRequestRate", rate);
     }
+
+    if ( _headerRetryInterval != 5 )
+      pset.addUntrackedParameter<int>("headerRetryInterval", _headerRetryInterval);
     
-    if ( _common._queueSize > 0 )
-      pset.addUntrackedParameter<int>("queueSize", _common._queueSize);
-
-    const double secondsToStale = utils::duration_to_seconds(_common._secondsToStale);
-    if ( secondsToStale > 0 )
-      pset.addUntrackedParameter<double>("consumerTimeOut", secondsToStale);
-
-    if ( _common._queuePolicy == enquing_policy::DiscardNew )
-      pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
-    if ( _common._queuePolicy == enquing_policy::DiscardOld )
-      pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+    addToPSet(pset);
 
     return pset;
   }
@@ -136,102 +106,7 @@ namespace stor
   {
     evtDist->registerEventConsumer(this);
   }
-
-  QueueID
-  EventConsumerRegistrationInfo::do_queueId() const
-  {
-    return _common._queueId;
-  }
-
-  void
-  EventConsumerRegistrationInfo::do_setQueueId(QueueID const& id)
-  {
-    _common._queueId = id;
-  }
-
-  std::string
-  EventConsumerRegistrationInfo::do_consumerName() const
-  {
-    return _common._consumerName;
-  }
-
-  std::string
-  EventConsumerRegistrationInfo::do_remoteHost() const
-  {
-    return _common._remoteHost;
-  }
-
-  ConsumerID
-  EventConsumerRegistrationInfo::do_consumerId() const
-  {
-    return _common._consumerId;
-  }
-
-  void
-  EventConsumerRegistrationInfo::do_setConsumerId(ConsumerID const& id)
-  {
-    _common._consumerId = id;
-  }
-
-  int
-  EventConsumerRegistrationInfo::do_queueSize() const
-  {
-    return _common._queueSize;
-  }
-
-  enquing_policy::PolicyTag
-  EventConsumerRegistrationInfo::do_queuePolicy() const
-  {
-    return _common._queuePolicy;
-  }
-
-  utils::duration_t
-  EventConsumerRegistrationInfo::do_secondsToStale() const
-  {
-    return _common._secondsToStale;
-  }
-
-  bool
-  EventConsumerRegistrationInfo::operator<(const EventConsumerRegistrationInfo& other) const
-  {
-    if ( _outputModuleLabel != other.outputModuleLabel() )
-      return ( _outputModuleLabel < other.outputModuleLabel() );
-    if ( _triggerSelection != other.triggerSelection() )
-      return ( _triggerSelection < other.triggerSelection() );
-    if ( _eventSelection != other.eventSelection() )
-      return ( _eventSelection < other.eventSelection() );
-    if ( _prescale != other.prescale() )
-      return ( _prescale < other.prescale() );
-    if ( _uniqueEvents != other.uniqueEvents() )
-      return ( _uniqueEvents < other.uniqueEvents() );
-    if ( _common._queueSize != other.queueSize() )
-      return ( _common._queueSize < other.queueSize() );
-    if ( _common._queuePolicy != other.queuePolicy() )
-      return ( _common._queuePolicy < other.queuePolicy() );
-    return ( _common._secondsToStale < other.secondsToStale() );
-  }
-
-  bool
-  EventConsumerRegistrationInfo::operator==(const EventConsumerRegistrationInfo& other) const
-  {
-    return (
-      _outputModuleLabel == other.outputModuleLabel() &&
-      _triggerSelection == other.triggerSelection() &&
-      _eventSelection == other.eventSelection() &&
-      _prescale == other.prescale() &&
-      _uniqueEvents == other.uniqueEvents() &&
-      _common._queueSize == other.queueSize() &&
-      _common._queuePolicy == other.queuePolicy() &&
-      _common._secondsToStale == other.secondsToStale()
-    );
-  }
-
-  bool
-  EventConsumerRegistrationInfo::operator!=(const EventConsumerRegistrationInfo& other) const
-  {
-    return ! ( *this == other );
-  }
-
+  
   void
   EventConsumerRegistrationInfo::do_eventType(std::ostream& os) const
   {
@@ -257,32 +132,48 @@ namespace stor
       os << "; uniqueEvents";
 
     os << "\n";
-    _common.queueInfo(os);
+    queueInfo(os);
+  }
+  
+  bool
+  EventConsumerRegistrationInfo::operator<(const EventConsumerRegistrationInfo& other) const
+  {
+    if ( outputModuleLabel() != other.outputModuleLabel() )
+      return ( outputModuleLabel() < other.outputModuleLabel() );
+    if ( triggerSelection() != other.triggerSelection() )
+      return ( triggerSelection() < other.triggerSelection() );
+    if ( eventSelection() != other.eventSelection() )
+      return ( eventSelection() < other.eventSelection() );
+    if ( prescale() != other.prescale() )
+      return ( prescale() < other.prescale() );
+    if ( uniqueEvents() != other.uniqueEvents() )
+      return ( uniqueEvents() < other.uniqueEvents() );
+    if ( queueSize() != other.queueSize() )
+      return ( queueSize() < other.queueSize() );
+    if ( queuePolicy() != other.queuePolicy() )
+      return ( queuePolicy() < other.queuePolicy() );
+    return ( secondsToStale() < other.secondsToStale() );
   }
 
-  std::ostream& 
-  EventConsumerRegistrationInfo::write(std::ostream& os) const
+  bool
+  EventConsumerRegistrationInfo::operator==(const EventConsumerRegistrationInfo& other) const
   {
-    os << "EventConsumerRegistrationInfo:"
-       << _common
-       << "\n HLT output: " << _outputModuleLabel
-       << "\n Event filters:\n";
-    /*
-    if (_triggerSelection.size()) {
-      os << std::endl << _triggerSelection;
-    }
-    else 
-    */
-    std::copy(_eventSelection.begin(), 
-              _eventSelection.end(),
-              std::ostream_iterator<Strings::value_type>(os, "\n"));
-    
-    //     for( unsigned int i = 0; i < _eventSelection.size(); ++i )
-    //       {
-    //         os << '\n' << "  " << _eventSelection[i];
-    //       }
+    return (
+      outputModuleLabel() == other.outputModuleLabel() &&
+      triggerSelection() == other.triggerSelection() &&
+      eventSelection() == other.eventSelection() &&
+      prescale() == other.prescale() &&
+      uniqueEvents() == other.uniqueEvents() &&
+      queueSize() == other.queueSize() &&
+      queuePolicy() == other.queuePolicy() &&
+      secondsToStale() == other.secondsToStale()
+    );
+  }
 
-    return os;
+  bool
+  EventConsumerRegistrationInfo::operator!=(const EventConsumerRegistrationInfo& other) const
+  {
+    return ! ( *this == other );
   }
 
 }

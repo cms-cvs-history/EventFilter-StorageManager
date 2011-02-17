@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.4 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.5 2011/02/11 12:10:30 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -9,7 +9,6 @@
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
-#include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 
 namespace stor
@@ -18,8 +17,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.4 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.8.2.5 $
+   * $Date: 2011/02/11 12:10:30 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -29,12 +28,15 @@ namespace stor
     /**
      * Constructs an instance from the specified registration information.
      */
-    DQMEventConsumerRegistrationInfo( const std::string& consumerName,
-                                      const std::string& remoteHost,
-                                      const std::string& topLevelFolderName,
-                                      const int& queueSize,
-                                      const enquing_policy::PolicyTag& policy,
-                                      const utils::duration_t& secondsToStale );
+    DQMEventConsumerRegistrationInfo
+    (
+      const std::string& consumerName,
+      const std::string& remoteHost,
+      const std::string& topLevelFolderName,
+      const int& queueSize,
+      const enquing_policy::PolicyTag& policy,
+      const utils::duration_t& secondsToStale
+    );
 
     // Destructor:
     ~DQMEventConsumerRegistrationInfo();
@@ -52,38 +54,15 @@ namespace stor
 
     // Implementation of the Template Method pattern.
     virtual void do_registerMe(EventDistributor*);
-    virtual QueueID do_queueId() const;
-    virtual void do_setQueueId(QueueID const& id);
-    virtual std::string do_consumerName() const;
-    virtual std::string do_remoteHost() const;
-    virtual ConsumerID do_consumerId() const;
-    virtual void do_setConsumerId(ConsumerID const& id);
-    virtual int do_queueSize() const;
-    virtual enquing_policy::PolicyTag do_queuePolicy() const;
-    virtual utils::duration_t do_secondsToStale() const;
     virtual void do_eventType(std::ostream&) const;
 
 
   private:
 
-    CommonRegistrationInfo _common;
-
     std::string _topLevelFolderName;
   };
 
   typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMEventConsRegPtr;
-
-
-  /**
-     Print the given DQMEventConsumerRegistrationInfo to the given
-     stream.
-  */
-  inline
-  std::ostream& operator<<(std::ostream& os, 
-			   const DQMEventConsumerRegistrationInfo& ri)
-  {
-    return ri.write(os);
-  }
   
 } // namespace stor
 

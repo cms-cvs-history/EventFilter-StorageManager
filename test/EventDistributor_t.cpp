@@ -501,20 +501,17 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
-  Strings selections;
-  std::string sel;
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
   ConsumerID cid;
 
   // *** first consumer ***
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer");
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("TriggerSelector", "a || b");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
 
-  selections.clear();
-  selections.push_back("a");
-  selections.push_back("b");
-  sel = "a || b"; 
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer", "localhost", sel, selections, "hltOutputDQM",
-      1, false, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID queueId1 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId1.isValid());
@@ -540,13 +537,9 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
 
   // *** second consumer ***
-  selections.clear();
-  selections.push_back("c");
-  selections.push_back("d");
-  sel = "c || d"; 
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer", "localhost", sel, selections, "hltOutputDQM", 
-      1, false, 10, enquing_policy::DiscardNew, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("TriggerSelector", "c || d");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID queueId2 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId2.isValid());
@@ -598,13 +591,9 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(it->policy() == enquing_policy::DiscardNew);
 
   // *** third consumer ***
-  selections.clear();
-  selections.push_back("c");
-  selections.push_back("a");
-  sel = "c || a"; 
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer", "localhost", sel, selections, "hltOutputDQM",
-      1, false, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("TriggerSelector", "c || a");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID queueId3 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId3.isValid());
@@ -617,13 +606,9 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 3);
 
   // *** fourth consumer ***
-  selections.clear();
-  selections.push_back("b");
-  selections.push_back("d");
-  sel = "b || d"; 
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer", "localhost", sel, selections, "hltOutputDQM",
-      1, false, 10, enquing_policy::DiscardNew, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("TriggerSelector", "b || d");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID queueId4 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId4.isValid());
@@ -773,10 +758,13 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   selections.clear();
   selections.push_back("a");
   selections.push_back("b");
-  std::string sel = "a || b"; 
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer", "localhost", sel, selections, "hltOutputDQM",
-      1, false, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer");
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addParameter<Strings>("TrackedEventSelection", selections);
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID queueId = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId.isValid());
@@ -831,9 +819,9 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   // *** second consumer with same selection ***
 
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo2;
-  consInfo2.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer 2", "remotehost", sel, selections, "hltOutputDQM",
-      1, false, 10, queueId.policy(), boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 2");
+
+  consInfo2.reset(new EventConsumerRegistrationInfo(pset, "remotehost"));
   consInfo2->setConsumerId(++cid);
   QueueID queueId2 = _sharedResources->_eventQueueCollection->createQueue(consInfo2);
   CPPUNIT_ASSERT(queueId2.isValid());
@@ -900,17 +888,17 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
-  Strings selections;
-  selections.push_back("a");
-  selections.push_back("b");
-  const std::string sel = "a || b";
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
   ConsumerID cid;
 
   // *** first consumer ***
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer 1", "localhost", sel, selections, "hltOutputDQM",
-      1, true, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 1");
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("TriggerSelector", "a || b");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  pset.addUntrackedParameter<bool>("uniqueEvents", true);
+  consInfo.reset(new EventConsumerRegistrationInfo(pset, "localhost"));
   consInfo->setConsumerId(++cid);
   QueueID qid1 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(qid1.isValid());
@@ -924,9 +912,9 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
 
   // *** second consumer - same request, but no unique events ***
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer 2", "remotehost", sel, selections, "hltOutputDQM",
-      1, false, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 2");
+  pset.addUntrackedParameter<bool>("uniqueEvents", false);
+  consInfo.reset(new EventConsumerRegistrationInfo(pset, "remotehost"));
   consInfo->setConsumerId(++cid);
   QueueID qid2 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(qid2.isValid());
@@ -941,9 +929,9 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 2);
 
   // *** third consumer - share with consumer 1 ***
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer 3", "farawayhost", sel, selections, "hltOutputDQM",
-      1, true, 10, qid1.policy(), boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 3");
+  pset.addUntrackedParameter<bool>("uniqueEvents", true);
+  consInfo.reset(new EventConsumerRegistrationInfo(pset, "farawayhost"));
   consInfo->setConsumerId(++cid);
   QueueID qid3 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(qid3.isValid());
@@ -1021,17 +1009,16 @@ void testEventDistributor::testPrescaledConsumerSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
 
-  Strings selections;
-  selections.push_back("a");
-  selections.push_back("b");
-  const std::string sel = "a || b";
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
   ConsumerID cid;
 
   // *** first consumer - unprescaled ***
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer 1", "localhost", sel, selections, "hltOutputDQM",
-      1, false, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 1");
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("TriggerSelector", "a || b");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID qid1 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(qid1.isValid());
@@ -1045,9 +1032,8 @@ void testEventDistributor::testPrescaledConsumerSelection()
   CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
 
   // *** second consumer - prescaled by 3 ***
-  consInfo.reset(new EventConsumerRegistrationInfo(
-      "Test Consumer 2", "remotehost", sel, selections, "hltOutputDQM",
-      3, false, 10, enquing_policy::DiscardOld, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<int>("prescale", 3);
+  consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
   QueueID qid2 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
   CPPUNIT_ASSERT(qid2.isValid());

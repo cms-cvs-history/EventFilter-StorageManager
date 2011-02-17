@@ -45,45 +45,58 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
 
   QueueID qid(enquing_policy::DiscardOld, 3);
 
-  EventConsumerRegistrationInfo ecri(
-    "Test Consumer",
-    "localhost",
-    triggerSelection,
-    eventSelection,
-    "hltOutputDQM",
-    1,
-    false,
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10),
-    boost::posix_time::milliseconds(100)
-  );
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("TriggerSelector", triggerSelection);
+  pset.addParameter<Strings>("TrackedEventSelection", eventSelection);
+  pset.addUntrackedParameter<bool>("uniqueEvents", false);
+  pset.addUntrackedParameter<int>("prescale", 5);
+  pset.addUntrackedParameter<int>("headerRetryInterval", 11);
+  pset.addUntrackedParameter<int>("maxConnectTries", 13);
+  pset.addUntrackedParameter<int>("connectTrySleepTime", 4);
+  pset.addUntrackedParameter<double>("maxEventRequestRate", 10);
+  pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer");
+  pset.addParameter<std::string>("sourceURL", "mySource");
+  pset.addUntrackedParameter<int>("queueSize", 9);
+  pset.addUntrackedParameter<double>("consumerTimeOut", 14);
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+
+  EventConsumerRegistrationInfo ecri(pset, "localhost");
   ecri.setQueueId( qid );
 
   CPPUNIT_ASSERT( ecri.consumerName() == "Test Consumer" );
   CPPUNIT_ASSERT( ecri.consumerId() == ConsumerID(0) );
   CPPUNIT_ASSERT( ecri.queueId() == qid );
-  CPPUNIT_ASSERT( ecri.queueSize() == 3 );
-  CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::DiscardOld );
-  CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(10) );
+  CPPUNIT_ASSERT( ecri.queueSize() == 9 );
+  CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::DiscardNew );
+  CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(14) );
   CPPUNIT_ASSERT( ecri.triggerSelection() == triggerSelection );
   CPPUNIT_ASSERT( ecri.eventSelection() == eventSelection );
   CPPUNIT_ASSERT( ecri.outputModuleLabel() == "hltOutputDQM" );
   CPPUNIT_ASSERT( ecri.uniqueEvents() == false );
   CPPUNIT_ASSERT( ecri.remoteHost() == "localhost" );
+  CPPUNIT_ASSERT( ecri.sourceURL() == "mySource" );
+  CPPUNIT_ASSERT( ecri.headerRetryInterval() == 11 );
+  CPPUNIT_ASSERT( ecri.maxConnectTries() == 13 );
+  CPPUNIT_ASSERT( ecri.connectTrySleepTime() == 4 );
   CPPUNIT_ASSERT( ecri.minEventRequestInterval() == boost::posix_time::milliseconds(100) );
   CPPUNIT_ASSERT( fabs(stor::utils::duration_to_seconds(ecri.minEventRequestInterval()) - 0.1) < 0.0001);
 
-  edm::ParameterSet pset = ecri.getPSet();
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("TriggerSelector") == triggerSelection );
-  CPPUNIT_ASSERT( pset.getParameter<Strings>("TrackedEventSelection") == eventSelection );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<bool>("uniqueEvents") == false );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<int>("prescale") == 1 );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<int>("queueSize") == 3 );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<double>("consumerTimeOut") == 10 );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
-  CPPUNIT_ASSERT( pset.getUntrackedParameter<double>("maxEventRequestRate") == 10 );
+  edm::ParameterSet ecriPSet = ecri.getPSet();
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("TriggerSelector") == triggerSelection );
+  CPPUNIT_ASSERT( ecriPSet.getParameter<Strings>("TrackedEventSelection") == eventSelection );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<bool>("uniqueEvents") == false );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<int>("prescale") == 5 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<int>("headerRetryInterval") == 11 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<int>("maxConnectTries") == 13 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<int>("connectTrySleepTime") == 4 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<double>("maxEventRequestRate") == 10 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("consumerName") == "Test Consumer" );
+  CPPUNIT_ASSERT( ecriPSet.getParameter<std::string>("sourceURL") == "mySource" );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<int>("queueSize") == 9 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<double>("consumerTimeOut") == 14 );
+  CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("queuePolicy") == "DiscardNew" );
 }
 
 
@@ -105,12 +118,13 @@ void testConsumerRegistrationInfo::testEventConsumerPSet()
   origPSet.addUntrackedParameter<double>("consumerTimeOut", 33);
   origPSet.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
   origPSet.addUntrackedParameter<double>("maxEventRequestRate", 25);
+  origPSet.addUntrackedParameter<int>("headerRetryInterval", 11);
+  origPSet.addUntrackedParameter<int>("maxConnectTries", 13);
+  origPSet.addUntrackedParameter<int>("connectTrySleepTime", 4);
+  origPSet.addUntrackedParameter<std::string>("consumerName", "Test Consumer");
+  origPSet.addParameter<std::string>("sourceURL", "mySource");
 
-  EventConsumerRegistrationInfo ecri(
-    "Test Consumer",
-    "localhost",
-    origPSet
-  );
+  EventConsumerRegistrationInfo ecri(origPSet, "localhost");
 
   edm::ParameterSet ecriPSet = ecri.getPSet();
   CPPUNIT_ASSERT( isTransientEqual(origPSet, ecriPSet) );
@@ -122,16 +136,17 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   edm::ParameterSet origPSet;
   origPSet.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
   
-  EventConsumerRegistrationInfo ecri(
-    "Test Consumer",
-    "localhost",
-    origPSet
-  );
+  EventConsumerRegistrationInfo ecri(origPSet, "localhost");
 
   CPPUNIT_ASSERT( ecri.queueSize() == 0 );
   CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::Max );
   CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(0) );
   CPPUNIT_ASSERT( ecri.minEventRequestInterval() == boost::posix_time::not_a_date_time );
+  CPPUNIT_ASSERT( ecri.consumerName() == "Unknown" );
+  CPPUNIT_ASSERT( ecri.sourceURL() == "Unknown" );
+  CPPUNIT_ASSERT( ecri.headerRetryInterval() == 5);
+  CPPUNIT_ASSERT( ecri.maxConnectTries() == 300);
+  CPPUNIT_ASSERT( ecri.connectTrySleepTime() == 10);
 
   edm::ParameterSet ecriPSet = ecri.getPSet();
   CPPUNIT_ASSERT( ! isTransientEqual(origPSet, ecriPSet) );
@@ -144,18 +159,18 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ! ecriPSet.exists("consumerTimeOut") );
   CPPUNIT_ASSERT( ! ecriPSet.exists("queuePolicy") );
   CPPUNIT_ASSERT( ! ecriPSet.exists("maxEventRequestRate") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("consumerName") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("sourceURL") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("headerRetryInterval") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("maxConnectTries") );
+  CPPUNIT_ASSERT( ! ecriPSet.exists("connectTrySleepTime") );
 
   EventServingParams defaults;
   defaults._activeConsumerTimeout =  boost::posix_time::seconds(12);
   defaults._consumerQueueSize = 22;
   defaults._consumerQueuePolicy = "DiscardOld";
 
-  EventConsumerRegistrationInfo ecriDefaults(
-    "Test Consumer",
-    "localhost",
-    origPSet,
-    defaults
-  );
+  EventConsumerRegistrationInfo ecriDefaults(origPSet, defaults);
 
   CPPUNIT_ASSERT( ecriDefaults.queueSize() == defaults._consumerQueueSize );
   CPPUNIT_ASSERT( ecriDefaults.queuePolicy() == enquing_policy::DiscardOld );
@@ -174,89 +189,53 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<double>("consumerTimeOut") == 12 );
   CPPUNIT_ASSERT( ecriDefaultsPSet.getUntrackedParameter<std::string>("queuePolicy") == "DiscardOld" );
   CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("maxEventRequestRate") );
+  CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("consumerName") );
+  CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("sourceURL") );
+  CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("headerRetryInterval") );
+  CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("maxConnectTries") );
+  CPPUNIT_ASSERT( ! ecriDefaultsPSet.exists("connectTrySleepTime") );
 }
 
 
 void testConsumerRegistrationInfo::testIdenticalEventConsumers()
 {
-  Strings eventSelection;
-  eventSelection.push_back( "DQM1" );
-  eventSelection.push_back( "DQM2" );
-
   const std::string triggerSelection = "DQM1 || DQM2";
 
   QueueID qid(enquing_policy::DiscardOld, 3);
+ 
+  edm::ParameterSet pset1;
+  pset1.addUntrackedParameter<std::string>("consumerName", "Consumer A");
+  pset1.addParameter<std::string>("sourceURL", "mySource");
+  pset1.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset1.addUntrackedParameter<std::string>("TriggerSelector", triggerSelection);
+  pset1.addUntrackedParameter<bool>("uniqueEvents", false);
 
-  EventConsumerRegistrationInfo ecri1(
-    "Consumer A",
-    "localhost",
-    triggerSelection,
-    eventSelection,
-    "hltOutputDQM",
-    1,
-    false,
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10)
-  );
+  EventConsumerRegistrationInfo ecri1(pset1, "localhost");
   ecri1.setQueueId( qid );
 
-  EventConsumerRegistrationInfo ecri2(
-    "Consumer B",
-    "remotehost",
-    triggerSelection,
-    eventSelection,
-    "hltOutputDQM",
-    1,
-    false,
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10)
-  );
+  edm::ParameterSet pset2 = pset1;
+  pset2.addUntrackedParameter<std::string>("consumerName", "Consumer B");
+
+  EventConsumerRegistrationInfo ecri2(pset2, "remotehost");
   ecri2.setQueueId( qid );
 
   const std::string triggerSelection2 = "DQM1";
-
-  EventConsumerRegistrationInfo ecri3(
-    "Consumer C",
-    "farawayhost",
-    triggerSelection2,
-    eventSelection,
-    "hltOutputDQM",
-    1,
-    false,
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10)
-  );
+  edm::ParameterSet pset3 = pset1;
+  pset3.addUntrackedParameter<std::string>("consumerName", "Consumer C");
+  pset3.addUntrackedParameter<std::string>("TriggerSelector", triggerSelection2);
+  EventConsumerRegistrationInfo ecri3(pset3, "farawayhost");
   ecri3.setQueueId( qid );
 
-  EventConsumerRegistrationInfo ecri4(
-    "Consumer D",
-    "inanothergalaxyhost",
-    triggerSelection2,
-    eventSelection,
-    "hltOutputDQM",
-    1,
-    true, // unique events
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10)
-  );
+  edm::ParameterSet pset4 = pset3;
+  pset4.addUntrackedParameter<std::string>("consumerName", "Consumer D");
+  pset4.addUntrackedParameter<bool>("uniqueEvents", true);
+  EventConsumerRegistrationInfo ecri4(pset4, "inanothergalaxyhost");
   ecri4.setQueueId( qid );
 
-  EventConsumerRegistrationInfo ecri5(
-    "Consumer D",
-    "inanotheruniversehost",
-    triggerSelection2,
-    eventSelection,
-    "hltOutputDQM",
-    10, //different prescale
-    true, // unique events
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10)
-  );
+  edm::ParameterSet pset5 = pset4;
+  pset5.addUntrackedParameter<std::string>("consumerName", "Consumer E");
+  pset5.addUntrackedParameter<int>("prescale", 10);
+  EventConsumerRegistrationInfo ecri5(pset5, "inanotheruniversehost");
   ecri5.setQueueId( qid );
 
   CPPUNIT_ASSERT( ecri1 == ecri2 );

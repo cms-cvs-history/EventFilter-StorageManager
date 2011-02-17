@@ -26,7 +26,6 @@ using stor::testhelper::outstanding_bytes;
 
 using stor::enquing_policy::DiscardOld;
 using stor::enquing_policy::DiscardNew;
-using stor::enquing_policy::FailIfFull;
 
 
 using std::binary_search;
@@ -91,9 +90,10 @@ testEventQueueCollection::create_queues()
   // correctly.
   ConsumerID cid1;
   cid1.value = 109;
-  EventConsRegPtr ecri1( 
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, false, 10, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  EventConsRegPtr ecri1(new EventConsumerRegistrationInfo(pset));
   ecri1->setConsumerId(cid1);
   QueueID id1 = c.createQueue(ecri1);
   CPPUNIT_ASSERT(c.size() == 1);
@@ -103,9 +103,8 @@ testEventQueueCollection::create_queues()
 
   ConsumerID cid2;
   cid2.value = 9234;
-  EventConsRegPtr ecri2( 
-    new EventConsumerRegistrationInfo(
-      "cid2", "", "", Strings(), "", 1, false, 20, DiscardOld, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  EventConsRegPtr ecri2(new EventConsumerRegistrationInfo(pset));
   ecri2->setConsumerId(cid2);
   QueueID id2 = c.createQueue(ecri2);
   CPPUNIT_ASSERT(c.size() == 2);
@@ -114,9 +113,7 @@ testEventQueueCollection::create_queues()
 
   ConsumerID cid3;
   cid3.value = 2;
-  EventConsRegPtr ecri3( 
-    new EventConsumerRegistrationInfo(
-      "cid3", "", "", Strings(), "", 1, false, 20, DiscardOld, boost::posix_time::seconds(120)));
+  EventConsRegPtr ecri3(new EventConsumerRegistrationInfo(pset));
   ecri3->setConsumerId(cid3);
   QueueID id3 = c.createQueue(ecri3);
   CPPUNIT_ASSERT(c.size() == 3);
@@ -125,9 +122,9 @@ testEventQueueCollection::create_queues()
   // Other policies should not allow creation
   ConsumerID cid4;
   cid4.value = 16;
-  EventConsRegPtr ecri4( 
-    new EventConsumerRegistrationInfo(
-      "cid4", "", "", Strings(), "", 1, false, 1, FailIfFull, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset2;
+  pset2.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  EventConsRegPtr ecri4(new EventConsumerRegistrationInfo(pset2));
   ecri4->setConsumerId(cid4);
   QueueID id4 = c.createQueue(ecri4);
   CPPUNIT_ASSERT(c.size() == 3);
@@ -167,30 +164,32 @@ testEventQueueCollection::add_and_pop()
   EventQueueCollection coll(_ecmc);
 
   // We want events to go bad very rapidly.
-  stor::utils::duration_t expiration_interval =  boost::posix_time::seconds(5);
+  double expiration_interval = 5;
 
   // Make some queues of each flavor, with very little capacity.  We want
   // them to fill rapidly.
   stor::utils::time_point_t now = stor::utils::getCurrentTime();
 
   ConsumerID cid;
-  EventConsRegPtr ecri1(
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, false, 2, DiscardOld, expiration_interval));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  pset.addUntrackedParameter<double>("consumerTimeOut", expiration_interval);
+  pset.addUntrackedParameter<int>("queueSize", 2);
+
+  EventConsRegPtr ecri1(new EventConsumerRegistrationInfo(pset));
   ecri1->setConsumerId(++cid);
   QueueID q1 = coll.createQueue(ecri1);
   CPPUNIT_ASSERT(q1.isValid());
 
-  EventConsRegPtr ecri2(
-    new EventConsumerRegistrationInfo(
-      "cid2", "", "", Strings(), "", 1, false, 2, DiscardNew, expiration_interval));
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  EventConsRegPtr ecri2(new EventConsumerRegistrationInfo(pset));
   ecri2->setConsumerId(++cid);
   QueueID q2 = coll.createQueue(ecri2);
   CPPUNIT_ASSERT(q2.isValid());
 
-  EventConsRegPtr ecri3(
-    new EventConsumerRegistrationInfo(
-      "cid3", "", "", Strings(), "", 1, false, 1, DiscardNew, expiration_interval));
+  pset.addUntrackedParameter<int>("queueSize", 1);
+  EventConsRegPtr ecri3(new EventConsumerRegistrationInfo(pset));
   ecri3->setConsumerId(++cid);
   QueueID q3 = coll.createQueue(ecri3);
   CPPUNIT_ASSERT(q3.isValid());
@@ -251,7 +250,7 @@ testEventQueueCollection::add_and_pop()
   // Now sleep for the expiration interval.
   // Our queues should have all become stale;
   // they should also all be empty.
-  stor::utils::sleep(expiration_interval);
+  ::sleep(expiration_interval);
   now = stor::utils::getCurrentTime();
   CPPUNIT_ASSERT(coll.stale(q1,now));
   CPPUNIT_ASSERT(coll.stale(q2,now));
@@ -322,27 +321,27 @@ testEventQueueCollection::clear_all_queues()
   EventQueueCollection coll(_ecmc);
   ConsumerID cid;
 
-  EventConsRegPtr ecri1( 
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, false, 10, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  pset.addUntrackedParameter<double>("consumerTimeOut", 120);
+  pset.addUntrackedParameter<int>("queueSize", 10);
+
+  EventConsRegPtr ecri1(new EventConsumerRegistrationInfo(pset));
   ecri1->setConsumerId(++cid);
   QueueID q1 = coll.createQueue(ecri1);
 
-  EventConsRegPtr ecri2( 
-    new EventConsumerRegistrationInfo(
-      "cid2", "", "", Strings(), "", 1, false, 10, DiscardOld, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  EventConsRegPtr ecri2(new EventConsumerRegistrationInfo(pset));
   ecri2->setConsumerId(++cid);
   QueueID q2 = coll.createQueue(ecri2);
 
-  EventConsRegPtr ecri3( 
-    new EventConsumerRegistrationInfo(
-      "cid3", "", "", Strings(), "", 1, false, 10, DiscardOld, boost::posix_time::seconds(120)));
+  EventConsRegPtr ecri3(new EventConsumerRegistrationInfo(pset));
   ecri3->setConsumerId(++cid);
   QueueID q3 = coll.createQueue(ecri3);
 
-  EventConsRegPtr ecri4( 
-    new EventConsumerRegistrationInfo(
-      "cid4", "", "", Strings(), "", 1, false, 10, DiscardNew, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  EventConsRegPtr ecri4(new EventConsumerRegistrationInfo(pset));
   ecri4->setConsumerId(++cid);
   QueueID q4 = coll.createQueue(ecri4);
 
@@ -380,27 +379,27 @@ testEventQueueCollection::remove_all_queues()
   EventQueueCollection coll(_ecmc);
   ConsumerID cid;
 
-  EventConsRegPtr ecri1( 
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, false, 10, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  pset.addUntrackedParameter<double>("consumerTimeOut", 120);
+  pset.addUntrackedParameter<int>("queueSize", 10);
+
+  EventConsRegPtr ecri1(new EventConsumerRegistrationInfo(pset));
   ecri1->setConsumerId(++cid);
   QueueID q1 = coll.createQueue(ecri1);
 
-  EventConsRegPtr ecri2( 
-    new EventConsumerRegistrationInfo(
-      "cid2", "", "", Strings(), "", 1, false, 10, DiscardOld, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  EventConsRegPtr ecri2(new EventConsumerRegistrationInfo(pset));
   ecri2->setConsumerId(++cid);
   QueueID q2 = coll.createQueue(ecri2);
 
-  EventConsRegPtr ecri3( 
-    new EventConsumerRegistrationInfo(
-      "cid3", "", "", Strings(), "", 1, false, 10, DiscardOld, boost::posix_time::seconds(120)));
+  EventConsRegPtr ecri3(new EventConsumerRegistrationInfo(pset));
   ecri3->setConsumerId(++cid);
   QueueID q3 = coll.createQueue(ecri3);
 
-  EventConsRegPtr ecri4( 
-    new EventConsumerRegistrationInfo(
-      "cid4", "", "", Strings(), "", 1, false, 10, DiscardNew, boost::posix_time::seconds(120)));
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  EventConsRegPtr ecri4(new EventConsumerRegistrationInfo(pset));
   ecri4->setConsumerId(++cid);
   QueueID q4 = coll.createQueue(ecri4);
 
@@ -416,71 +415,81 @@ testEventQueueCollection::shared_queues()
   EventQueueCollection coll(_ecmc);
   ConsumerID cid;
 
-  EventConsRegPtr ecri1( 
-    new EventConsumerRegistrationInfo(
-      "cid1", "", "", Strings(), "", 1, true, 10, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset1;
+  pset1.addUntrackedParameter<std::string>("SelectHLTOutput", "hltOutputDQM");
+  pset1.addUntrackedParameter<std::string>("consumerName", "Consumer 1");
+  pset1.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  pset1.addUntrackedParameter<double>("consumerTimeOut", 120);
+  pset1.addUntrackedParameter<int>("queueSize", 10);
+  pset1.addUntrackedParameter<bool>("uniqueEvents", true);
+
+  EventConsRegPtr ecri1(new EventConsumerRegistrationInfo(pset1));
   ecri1->setConsumerId(++cid);
   QueueID q1 = coll.createQueue(ecri1);
   CPPUNIT_ASSERT(coll.size() == 1);
 
   // different policy
-  EventConsRegPtr ecri2( 
-    new EventConsumerRegistrationInfo(
-      "cid2", "", "", Strings(), "", 1, true, 10, DiscardOld, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset2 = pset1;
+  pset2.addUntrackedParameter<std::string>("consumerName", "Consumer 2");
+  pset2.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  EventConsRegPtr ecri2(new EventConsumerRegistrationInfo(pset2));
   ecri2->setConsumerId(++cid);
   QueueID q2 = coll.createQueue(ecri2);
   CPPUNIT_ASSERT(coll.size() == 2);
   CPPUNIT_ASSERT(q1 != q2);
 
   // shared with q1
-  EventConsRegPtr ecri3( 
-    new EventConsumerRegistrationInfo(
-      "cid3", "", "", Strings(), "", 1, true, 10, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset3 = pset1;
+  pset3.addUntrackedParameter<std::string>("consumerName", "Consumer 3");
+  EventConsRegPtr ecri3(new EventConsumerRegistrationInfo(pset3));
   ecri3->setConsumerId(++cid);
   QueueID q3 = coll.createQueue(ecri3);
   CPPUNIT_ASSERT(coll.size() == 2);
   CPPUNIT_ASSERT(q1 == q3);
 
   // shared with q2
-  EventConsRegPtr ecri4( 
-    new EventConsumerRegistrationInfo(
-      "cid4", "", "", Strings(), "", 1, true, 10, DiscardOld, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset4 = pset2;
+  pset4.addUntrackedParameter<std::string>("consumerName", "Consumer 4");
+  EventConsRegPtr ecri4(new EventConsumerRegistrationInfo(pset4));
   ecri4->setConsumerId(++cid);
   QueueID q4 = coll.createQueue(ecri4);
   CPPUNIT_ASSERT(coll.size() == 2);
   CPPUNIT_ASSERT(q2 == q4);
 
   // different size
-  EventConsRegPtr ecri5( 
-    new EventConsumerRegistrationInfo(
-      "cid5", "", "", Strings(), "", 1, true, 20, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset5 = pset4;
+  pset5.addUntrackedParameter<std::string>("consumerName", "Consumer 5");
+  pset5.addUntrackedParameter<int>("queueSize", 20);
+  EventConsRegPtr ecri5(new EventConsumerRegistrationInfo(pset5));
   ecri5->setConsumerId(++cid);
   QueueID q5 = coll.createQueue(ecri5);
   CPPUNIT_ASSERT(coll.size() == 3);
   CPPUNIT_ASSERT(q4 != q5);
 
   // different timeout
-  EventConsRegPtr ecri6( 
-    new EventConsumerRegistrationInfo(
-      "cid6", "", "", Strings(), "", 1, true, 10, DiscardNew, boost::posix_time::seconds(20)));
+  edm::ParameterSet pset6 = pset4;
+  pset6.addUntrackedParameter<std::string>("consumerName", "Consumer 6");
+  pset6.addUntrackedParameter<double>("consumerTimeOut", 20);
+  EventConsRegPtr ecri6(new EventConsumerRegistrationInfo(pset6));
   ecri6->setConsumerId(++cid);
   QueueID q6 = coll.createQueue(ecri6);
   CPPUNIT_ASSERT(coll.size() == 4);
   CPPUNIT_ASSERT(q4 != q6);
 
   // same as queue q5
-  EventConsRegPtr ecri7( 
-    new EventConsumerRegistrationInfo(
-      "cid7", "", "", Strings(), "", 1, true, 20, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset7 = pset5;
+  pset7.addUntrackedParameter<std::string>("consumerName", "Consumer 7");
+  EventConsRegPtr ecri7(new EventConsumerRegistrationInfo(pset7));
   ecri7->setConsumerId(++cid);
   QueueID q7 = coll.createQueue(ecri7);
   CPPUNIT_ASSERT(coll.size() == 4);
   CPPUNIT_ASSERT(q5 == q7);
 
   // different prescale
-  EventConsRegPtr ecri8( 
-    new EventConsumerRegistrationInfo(
-      "cid8", "", "", Strings(), "", 10, true, 20, DiscardNew, boost::posix_time::seconds(120)));
+  edm::ParameterSet pset8 = pset7;
+  pset8.addUntrackedParameter<std::string>("consumerName", "Consumer 8");
+  pset8.addUntrackedParameter<int>("prescale", 10);
+  EventConsRegPtr ecri8(new EventConsumerRegistrationInfo(pset8));
   ecri8->setConsumerId(++cid);
   QueueID q8 = coll.createQueue(ecri8);
   CPPUNIT_ASSERT(coll.size() == 5);

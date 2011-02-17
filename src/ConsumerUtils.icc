@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.5 2011/02/07 13:02:02 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.6 2011/02/14 16:53:49 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -335,7 +335,6 @@ namespace stor
         "Null xgi::Input* in parseEventConsumerRegistration" );
     }
     
-    std::string name = "unknown";
     std::string psetStr = "<>";
     
     const std::string lengthStr = in->getenv( "CONTENT_LENGTH" );
@@ -348,7 +347,6 @@ namespace stor
       boost::scoped_ptr< std::vector<char> > buf( new std::vector<char>(length) );
       in->read( &(*buf)[0], length );
       ConsRegRequestView req( &(*buf)[0] );
-      name = req.getConsumerName();
       psetStr = req.getRequestParameterSet();
     }
     else
@@ -360,8 +358,8 @@ namespace stor
     const edm::ParameterSet pset( psetStr );
     
     EventConsRegPtr cr(
-      new EventConsumerRegistrationInfo(name, remoteHost, pset, 
-        _configuration->getEventServingParams())
+      new EventConsumerRegistrationInfo(pset,
+        _configuration->getEventServingParams(), remoteHost)
     );
     
     return cr;

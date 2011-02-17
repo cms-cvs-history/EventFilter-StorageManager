@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.7 2011/02/04 13:58:29 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.8 2011/02/11 12:10:30 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -8,9 +8,10 @@
 #include <string>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
+#include <boost/shared_ptr.hpp>
 
-#include "EventFilter/StorageManager/interface/CommonRegistrationInfo.h"
+#include "toolbox/net/Utils.h"
+
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -24,8 +25,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.7 $
-   * $Date: 2011/02/04 13:58:29 $
+   * $Revision: 1.13.2.8 $
+   * $Date: 2011/02/11 12:10:30 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -35,35 +36,21 @@ namespace stor
     
     EventConsumerRegistrationInfo
     (
-      const std::string& consumerName,
-      const std::string& remoteHost,
-      const std::string& triggerSelection,
-      const Strings& eventSelection,
-      const std::string& outputModuleLabel,
-      const int& prescale,
-      const bool& uniqueEvents,
-      const int& queueSize,
-      const enquing_policy::PolicyTag& queuePolicy,
-      const utils::duration_t& secondsToStale,
-      const utils::duration_t& minEventRequestInterval = boost::posix_time::not_a_date_time
-    );
-
-    EventConsumerRegistrationInfo
-    (
-      const std::string& consumerName,
-      const std::string& remoteHost,
       const edm::ParameterSet& pset,
-      const EventServingParams& eventServingParams
+      const EventServingParams& eventServingParams,
+      const std::string& remoteHost = toolbox::net::getHostName()
     );
 
     EventConsumerRegistrationInfo
     (
-      const std::string& consumerName,
-      const std::string& remoteHost,
-      const edm::ParameterSet& pset
+      const edm::ParameterSet& pset,
+      const std::string& remoteHost = toolbox::net::getHostName()
     );
 
     ~EventConsumerRegistrationInfo();
+
+    // Setters:
+    void setMinEventRequestInterval(const utils::duration_t& interval) { _minEventRequestInterval= interval; }
 
     // Accessors:
     const std::string& triggerSelection() const { return _triggerSelection; }
@@ -72,6 +59,7 @@ namespace stor
     const int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
     const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
+    const int& headerRetryInterval() const { return _headerRetryInterval; }
     edm::ParameterSet getPSet() const;
 
     // Comparison:
@@ -84,22 +72,11 @@ namespace stor
 
     // Implementation of Template Method pattern.
     virtual void do_registerMe(EventDistributor*);
-    virtual QueueID do_queueId() const;
-    virtual void do_setQueueId(QueueID const& id);
-    virtual std::string do_consumerName() const;
-    virtual std::string do_remoteHost() const;
-    virtual ConsumerID do_consumerId() const;
-    virtual void do_setConsumerId(ConsumerID const& id);
-    virtual int do_queueSize() const;
-    virtual enquing_policy::PolicyTag do_queuePolicy() const;
-    virtual utils::duration_t do_secondsToStale() const;
     virtual void do_eventType(std::ostream&) const;
 
   private:
 
     void parsePSet(const edm::ParameterSet&);
-
-    CommonRegistrationInfo _common;
 
     std::string _triggerSelection;
     Strings _eventSelection;
@@ -107,20 +84,10 @@ namespace stor
     int _prescale;
     bool _uniqueEvents;
     utils::duration_t _minEventRequestInterval;
+    int _headerRetryInterval;
   };
 
   typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> EventConsRegPtr;
-
-  /**
-     Print the given EventConsumerRegistrationInfo to the given
-     stream.
-  */
-  inline
-  std::ostream& operator << ( std::ostream& os, 
-                              EventConsumerRegistrationInfo const& ri )
-  {
-    return ri.write( os );
-  }
 
 } // namespace stor
 

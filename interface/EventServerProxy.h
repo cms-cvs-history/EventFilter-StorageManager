@@ -1,10 +1,11 @@
-// $Id: EventServerProxy.h,v 1.1.2.5 2011/01/27 16:32:36 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.6 2011/02/14 16:53:48 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
 #define EventFilter_StorageManager_EventServerProxy_h
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
+#include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -21,8 +22,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2011/01/27 16:32:36 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2011/02/14 16:53:48 $
    */
  
   class EventServerProxy
@@ -48,12 +49,6 @@ namespace stor {
      * Get the init message from the the event server.
      */
     void getInitMsg(CurlInterface::Content& data);
-
-    /**
-     * Get the source URL
-     */
-    const std::string& getSourceURL()
-    { return sourceurl_; }
     
     
   private:
@@ -66,11 +61,7 @@ namespace stor {
     void connectToEventServer(CurlInterface::Content&);
     bool extractConsumerId(CurlInterface::Content&);
 
-    std::string sourceurl_;
-    std::string consumerName_;
-    int maxConnectTries_;
-    int connectTrySleepTime_;
-    int headerRetryInterval_;
+    const EventConsumerRegistrationInfo ecri_;
     
     std::string consumerPSetString_;
     unsigned int consumerId_;

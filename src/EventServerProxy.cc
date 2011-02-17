@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.cc,v 1.1.2.6 2011/01/27 16:32:36 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.7 2011/02/14 16:53:49 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -24,23 +24,13 @@
 namespace stor
 {  
   EventServerProxy::EventServerProxy(edm::ParameterSet const& ps) :
-  sourceurl_(ps.getParameter<std::string>("sourceURL")),
-  consumerName_(ps.getUntrackedParameter<std::string>("consumerName", "Unknown")),
-  maxConnectTries_(ps.getUntrackedParameter<int>("maxConnectTries", 300)),
-  connectTrySleepTime_(ps.getUntrackedParameter<int>("connectTrySleepTime", 10)),
-  headerRetryInterval_(ps.getUntrackedParameter<int>("headerRetryInterval", 5)),
+  ecri_(ps),
   consumerId_(0),
   endRunAlreadyNotified_(true),
   alreadySaidHalted_(false),
   alreadySaidWaiting_(false)
   {
-    EventConsumerRegistrationInfo regInfo(consumerName_, sourceurl_, ps);
-
-    minEventRequestInterval_ = regInfo.minEventRequestInterval();
     nextRequestTime_ = stor::utils::getCurrentTime();
-
-    edm::ParameterSet consumerPSet = regInfo.getPSet();
-    consumerPSet.allToString(consumerPSetString_);
 
     registerWithEventServer();
   }
@@ -86,7 +76,7 @@ namespace stor
     // send the event request
     stor::CurlInterface curl;
     CURLcode result = curl.postBinaryMessage(
-      sourceurl_ + "/geteventdata",
+      ecri_.sourceURL() + "/geteventdata",
       requestMessage.startAddress(),
       requestMessage.size(),
       data
@@ -185,7 +175,7 @@ namespace stor
     // send the header request
     stor::CurlInterface curl;
     CURLcode result = curl.postBinaryMessage(
-      sourceurl_ + "/getregdata",
+      ecri_.sourceURL() + "/getregdata",
       requestMessage.startAddress(),
       requestMessage.size(),
       data
@@ -208,7 +198,7 @@ namespace stor
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
-      sleep(headerRetryInterval_);
+      sleep(ecri_.headerRetryInterval());
     }
     else
     {
@@ -268,24 +258,32 @@ namespace stor
   
   void EventServerProxy::connectToEventServer(CurlInterface::Content& data)
   {
+    // Serialize the ParameterSet
+    edm::ParameterSet consumerPSet = ecri_.getPSet();
+    std::string consumerPSetString;
+    consumerPSet.allToString(consumerPSetString);
+
     // build the registration request message to send to the storage manager
     const int bufferSize = 2000;
     char msgBuffer[bufferSize];
     ConsRegRequestBuilder requestMessage(
-      msgBuffer, bufferSize, consumerName_,
-      "normal", consumerPSetString_
+      msgBuffer, bufferSize, ecri_.consumerName(),
+      "normal", consumerPSetString
     );
     
     // send registration request
     stor::CurlInterface curl;
     CURLcode result = CURLE_COULDNT_CONNECT;
     int tries = 0;
+
+    const std::string sourceURL = ecri_.sourceURL();
+    const int maxConnectTries = ecri_.maxConnectTries();
     
     while ( result != CURLE_OK && !edm::shutdown_flag )
     {
       ++tries;
       result = curl.postBinaryMessage(
-        sourceurl_ + "/registerConsumer",
+        sourceURL + "/registerConsumer",
         requestMessage.startAddress(),
         requestMessage.size(),
         data
@@ -293,19 +291,19 @@ namespace stor
       
       if ( result != CURLE_OK )
       {
-        if ( tries >= maxConnectTries_ )
+        if ( tries >= maxConnectTries )
         {
           edm::LogError("EventServerProxy") << "Giving up waiting for connection after " <<
-            tries << " tries for Storage Manager on " << sourceurl_ << std::endl;
+            tries << " tries for Storage Manager on " << sourceURL << std::endl;
           throw cms::Exception("connectToEventServer","EventServerProxy")
             << "Could not register: probably no Storage Manager is running on "
-              << sourceurl_;
+              << sourceURL;
         }
         else
         {
           edm::LogInfo("EventServerProxy") << "Waiting for connection to StorageManager on " <<
-            sourceurl_ << "... " << tries << "/" << maxConnectTries_;
-          sleep(connectTrySleepTime_);
+            sourceURL << "... " << tries << "/" << maxConnectTries;
+          sleep(ecri_.connectTrySleepTime());
         }
         data.clear();
       }
@@ -348,7 +346,7 @@ namespace stor
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
-      sleep(headerRetryInterval_);
+      sleep(ecri_.headerRetryInterval());
       return false;
     }
     else
