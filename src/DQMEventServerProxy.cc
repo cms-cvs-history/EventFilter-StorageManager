@@ -1,7 +1,7 @@
-// $Id: EventServerProxy.cc,v 1.1.2.8 2011/02/17 13:18:08 mommsen Exp $
-/// @file: EventServerProxy.cc
+// $Id: DQMEventServerProxy.cc,v 1.1.2.8 2011/02/17 13:18:08 mommsen Exp $
+/// @file: DQMEventServerProxy.cc
 
-#include "EventFilter/StorageManager/interface/EventServerProxy.h"
+#include "EventFilter/StorageManager/interface/DQMEventServerProxy.h"
 #include "EventFilter/StorageManager/interface/SMCurlInterface.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
@@ -22,23 +22,23 @@
 
 namespace stor
 {  
-  EventServerProxy::EventServerProxy(edm::ParameterSet const& ps) :
-  ecri_(ps),
+  DQMEventServerProxy::DQMEventServerProxy(edm::ParameterSet const& ps) :
+  dcri_(ps),
   consumerId_(0),
   alreadySaidHalted_(false),
   alreadySaidWaiting_(false)
   {
     nextRequestTime_ = stor::utils::getCurrentTime();
 
-    registerWithEventServer();
+    registerWithDQMEventServer();
   }
 
 
-  void EventServerProxy::getOneEvent(CurlInterface::Content& data)
+  void DQMEventServerProxy::getOneDQMEvent(CurlInterface::Content& data)
   {
     stor::utils::sleepUntil(nextRequestTime_);
 
-    while ( ! edm::shutdown_flag && ! getEventMaybe(data) ) {}
+    while ( ! edm::shutdown_flag && ! getDQMEventMaybe(data) ) {}
 
     if ( ! minEventRequestInterval_.is_not_a_date_time() )
       nextRequestTime_ = stor::utils::getCurrentTime() +
@@ -46,26 +46,26 @@ namespace stor
   }
  
 
-  bool EventServerProxy::getEventMaybe(CurlInterface::Content& data)
+  bool DQMEventServerProxy::getDQMEventMaybe(CurlInterface::Content& data)
   {
     data.clear();
-    getOneEventFromEventServer(data);
+    getOneDQMEventFromDQMEventServer(data);
 
     if ( edm::shutdown_flag || data.empty() ) return false;
 
-    checkEvent(data);
+    checkDQMEvent(data);
 
     return true;
   }
   
   
-  void EventServerProxy::getOneEventFromEventServer(CurlInterface::Content& data)
+  void DQMEventServerProxy::getOneDQMEventFromDQMEventServer(CurlInterface::Content& data)
   {
     // build the event request message to send to the storage manager
     char msgBuff[100];
     OtherMessageBuilder requestMessage(
       &msgBuff[0],
-      Header::EVENT_REQUEST,
+      Header::DQMEVENT_REQUEST,
       sizeof(char_uint32)
     );
     uint8 *bodyPtr = requestMessage.msgBody();
@@ -74,7 +74,7 @@ namespace stor
     // send the event request
     stor::CurlInterface curl;
     CURLcode result = curl.postBinaryMessage(
-      ecri_.sourceURL() + "/geteventdata",
+      dcri_.sourceURL() + "/getDQMeventdata",
       requestMessage.startAddress(),
       requestMessage.size(),
       data
@@ -82,23 +82,21 @@ namespace stor
     
     if ( result != CURLE_OK )
     {
-      edm::LogError("EventServerProxy") << "curl perform failed for event: "
+      edm::LogError("DQMEventServerProxy") << "curl perform failed for DQM event: "
         << std::string(&data[0]);
       data.clear();
-      // this will end cmsRun 
-      //return std::auto_ptr<EventPrincipal>();
-      throw cms::Exception("getOneEvent","EventServerProxy")
-        << "Could not get event: probably XDAQ not running on Storage Manager\n";
+      throw cms::Exception("getOneDQMEvent","DQMEventServerProxy")
+        << "Could not get DQM event: probably XDAQ not running on Storage Manager\n";
     }
     
     if ( data.empty() && !alreadySaidWaiting_) {
-      edm::LogInfo("EventServerProxy") << "...waiting for first event from Storage Manager...";
+      edm::LogInfo("DQMEventServerProxy") << "...waiting for first DQM event from Storage Manager...";
       alreadySaidWaiting_ = true;
     }
   }
   
   
-  void EventServerProxy::checkEvent(CurlInterface::Content& data)
+  void DQMEventServerProxy::checkDQMEvent(CurlInterface::Content& data)
   {
     // 29-Jan-2008, KAB:  catch (and re-throw) any exceptions decoding
     // the event data so that we can display the returned HTML and
@@ -108,11 +106,11 @@ namespace stor
       if (hdrView.code() == Header::DONE) {
         if(!alreadySaidHalted_) {
           alreadySaidHalted_ = true;
-          edm::LogInfo("EventServerProxy") << "Storage Manager has stopped";
+          edm::LogInfo("DQMEventServerProxy") << "Storage Manager has stopped";
         }
       }
-      else if (hdrView.code() != Header::EVENT) {
-        throw cms::Exception("EventServerProxy", "checkEvent")
+      else if (hdrView.code() != Header::DQM_EVENT) {
+        throw cms::Exception("DQMEventServerProxy", "checkDQMEvent")
           << "Did not receive a DQM event, but an event with header code "
             << hdrView.code();
       }
@@ -122,7 +120,7 @@ namespace stor
       const unsigned int MAX_DUMP_LENGTH = 2000;
       std::ostringstream dump;
       dump << "========================================" << std::endl;
-      dump << "* Exception decoding the geteventdata response from the storage manager!" << std::endl;
+      dump << "* Exception decoding the getDQMeventdata response from the storage manager!" << std::endl;
       if (data.size() < MAX_DUMP_LENGTH)
       {
         dump << "* Here is the raw text that was returned:" << std::endl;
@@ -135,130 +133,34 @@ namespace stor
         dump << std::string(&data[0], MAX_DUMP_LENGTH) << std::endl;
       }
       dump << "========================================" << std::endl;
-      edm::LogError("EventServerProxy") << dump.str();
+      edm::LogError("DQMEventServerProxy") << dump.str();
       throw excpt;
     }
   }
   
   
-  void EventServerProxy::getInitMsg(CurlInterface::Content& data)
-  {
-    do
-    {
-      data.clear();
-      getInitMsgFromEventServer(data);
-    }
-    while ( !edm::shutdown_flag && data.empty() );
-    
-    if (edm::shutdown_flag) {
-      throw cms::Exception("readHeader","EventServerProxy")
-        << "The header read was aborted by a shutdown request.\n";
-    }
-
-    checkInitMsg(data);
-  }
-  
-  
-  void EventServerProxy::getInitMsgFromEventServer(CurlInterface::Content& data)
-  {
-    // build the header request message to send to the storage manager
-    char msgBuff[100];
-    OtherMessageBuilder requestMessage(
-      &msgBuff[0],
-      Header::HEADER_REQUEST,
-      sizeof(char_uint32)
-    );
-    uint8 *bodyPtr = requestMessage.msgBody();
-    convert(consumerId_, bodyPtr);
-
-    // send the header request
-    stor::CurlInterface curl;
-    CURLcode result = curl.postBinaryMessage(
-      ecri_.sourceURL() + "/getregdata",
-      requestMessage.startAddress(),
-      requestMessage.size(),
-      data
-    );
-
-    if ( result != CURLE_OK )
-    {
-      // connection failed: try to reconnect
-      edm::LogError("EventServerProxy") << "curl perform failed for header:"
-        << std::string(&data[0]) << std::endl
-        << ". Trying to reconnect.";
-      data.clear();
-      registerWithEventServer();
-    }
-    
-    if( data.empty() )
-    {
-      if(!alreadySaidWaiting_) {
-        edm::LogInfo("EventServerProxy") << "...waiting for header from Storage Manager...";
-        alreadySaidWaiting_ = true;
-      }
-      // sleep for desired amount of time
-      sleep(ecri_.headerRetryInterval());
-    }
-    else
-    {
-      alreadySaidWaiting_ = false;
-    }
-  }
-
-
-  void EventServerProxy::checkInitMsg(CurlInterface::Content& data)
-  {
-    try {
-      HeaderView hdrView(&data[0]);
-      if (hdrView.code() != Header::INIT) {
-        throw cms::Exception("EventServerProxy", "readHeader");
-      }
-    }
-    catch (cms::Exception excpt) {
-      const unsigned int MAX_DUMP_LENGTH = 1000;
-      std::ostringstream dump;
-      dump << "========================================" << std::endl;
-      dump << "* Exception decoding the getregdata response from the storage manager!" << std::endl;
-      if (data.size() <= MAX_DUMP_LENGTH)
-      {
-        dump << "* Here is the raw text that was returned:" << std::endl;
-        dump << std::string(&data[0]) << std::endl;
-      }
-      else
-      {
-        dump << "* Here are the first " << MAX_DUMP_LENGTH <<
-          " characters of the raw text that was returned:" << std::endl;
-        dump << std::string(&data[0], MAX_DUMP_LENGTH) << std::endl;
-      }
-      dump << "========================================" << std::endl;
-      edm::LogError("EventServerProxy") << dump.str();
-      throw excpt;
-    }
-  }
-  
-  
-  void EventServerProxy::registerWithEventServer()
+  void DQMEventServerProxy::registerWithDQMEventServer()
   {
     CurlInterface::Content data;
 
     do
     {
       data.clear();
-      connectToEventServer(data);
+      connectToDQMEventServer(data);
     }
     while ( !edm::shutdown_flag && !extractConsumerId(data) );
 
     if (edm::shutdown_flag) {
-      throw cms::Exception("registerWithEventServer","EventServerProxy")
+      throw cms::Exception("registerWithDQMEventServer","DQMEventServerProxy")
           << "Registration was aborted by a shutdown request.\n";
     }
   }
   
   
-  void EventServerProxy::connectToEventServer(CurlInterface::Content& data)
+  void DQMEventServerProxy::connectToDQMEventServer(CurlInterface::Content& data)
   {
     // Serialize the ParameterSet
-    edm::ParameterSet consumerPSet = ecri_.getPSet();
+    edm::ParameterSet consumerPSet = dcri_.getPSet();
     std::string consumerPSetString;
     consumerPSet.allToString(consumerPSetString);
 
@@ -266,7 +168,7 @@ namespace stor
     const int bufferSize = 2000;
     char msgBuffer[bufferSize];
     ConsRegRequestBuilder requestMessage(
-      msgBuffer, bufferSize, ecri_.consumerName(),
+      msgBuffer, bufferSize, dcri_.consumerName(),
       "normal", consumerPSetString
     );
     
@@ -275,34 +177,34 @@ namespace stor
     CURLcode result = CURLE_COULDNT_CONNECT;
     int tries = 0;
 
-    const std::string sourceURL = ecri_.sourceURL();
-    const int maxConnectTries = ecri_.maxConnectTries();
+    const std::string sourceURL = dcri_.sourceURL();
+    const int maxConnectTries = dcri_.maxConnectTries();
     
     while ( result != CURLE_OK && !edm::shutdown_flag )
     {
       ++tries;
       result = curl.postBinaryMessage(
-        sourceURL + "/registerConsumer",
+        sourceURL + "/registerDQMConsumer",
         requestMessage.startAddress(),
         requestMessage.size(),
         data
       );
-      
+
       if ( result != CURLE_OK )
       {
         if ( tries >= maxConnectTries )
         {
-          edm::LogError("EventServerProxy") << "Giving up waiting for connection after " <<
+          edm::LogError("DQMEventServerProxy") << "Giving up waiting for connection after " <<
             tries << " tries for Storage Manager on " << sourceURL << std::endl;
-          throw cms::Exception("connectToEventServer","EventServerProxy")
+          throw cms::Exception("connectToDQMEventServer","DQMEventServerProxy")
             << "Could not register: probably no Storage Manager is running on "
               << sourceURL;
         }
         else
         {
-          edm::LogInfo("EventServerProxy") << "Waiting for connection to StorageManager on " <<
+          edm::LogInfo("DQMEventServerProxy") << "Waiting for connection to StorageManager on " <<
             sourceURL << "... " << tries << "/" << maxConnectTries;
-          sleep(ecri_.connectTrySleepTime());
+          sleep(dcri_.connectTrySleepTime());
         }
         data.clear();
       }
@@ -310,7 +212,7 @@ namespace stor
   }
   
   
-  bool EventServerProxy::extractConsumerId(CurlInterface::Content& data)      
+  bool DQMEventServerProxy::extractConsumerId(CurlInterface::Content& data)      
   {
     boost::scoped_ptr<ConsRegResponseView> respView;
 
@@ -321,7 +223,7 @@ namespace stor
       const unsigned int MAX_DUMP_LENGTH = 1000;
       std::ostringstream dump;
       dump << "========================================" << std::endl;
-      dump << "* Exception decoding the registerWithEventServer response!" << std::endl;
+      dump << "* Exception decoding the registerWithDQMEventServer response!" << std::endl;
       if (data.size() <= MAX_DUMP_LENGTH)
       {
         dump << "* Here is the raw text that was returned:" << std::endl;
@@ -334,18 +236,18 @@ namespace stor
         dump << std::string(&data[0], MAX_DUMP_LENGTH) << std::endl;
       }
       dump << "========================================" << std::endl;
-      edm::LogError("EventServerProxy") << dump.str();
+      edm::LogError("DQMEventServerProxy") << dump.str();
       throw excpt;
     }
     
     if ( respView->getStatus() == ConsRegResponseBuilder::ES_NOT_READY )
     {
       if(!alreadySaidWaiting_) {
-        edm::LogInfo("EventServerProxy") << "...waiting for registration response from Storage Manager...";
+        edm::LogInfo("DQMEventServerProxy") << "...waiting for registration response from Storage Manager...";
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
-      sleep(ecri_.headerRetryInterval());
+      sleep(dcri_.retryInterval());
       return false;
     }
     else

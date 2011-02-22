@@ -249,74 +249,64 @@ void testConsumerRegistrationInfo::testIdenticalEventConsumers()
 void testConsumerRegistrationInfo::testDQMEventConsumerRegistrationInfo()
 {
   QueueID qid(stor::enquing_policy::DiscardNew, 2);
-  DQMEventConsumerRegistrationInfo ecri(
-    "Histo Consumer",
-    "localhost",
-    "*",
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(1024)
-  );
-  ecri.setQueueId( qid );
+
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("consumerName", "Histo Consumer");
+  pset.addParameter<std::string>("sourceURL", "myDQMSource");
+  pset.addUntrackedParameter<int>("queueSize", 6);
+  pset.addUntrackedParameter<double>("consumerTimeOut", 1024);
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "*");
+  pset.addUntrackedParameter<int>("maxConnectTries", 11);
+  pset.addUntrackedParameter<int>("connectTrySleepTime", 6);
+  pset.addUntrackedParameter<int>("retryInterval", 21);
+
+  DQMEventConsumerRegistrationInfo dcri(pset, "localhost");
+  dcri.setQueueId( qid );
   
-  CPPUNIT_ASSERT( ecri.consumerName() == "Histo Consumer" );
-  CPPUNIT_ASSERT( ecri.consumerId() == ConsumerID(0) );
-  CPPUNIT_ASSERT( ecri.queueId() == qid );
-  CPPUNIT_ASSERT( ecri.queueSize() == 2 );
-  CPPUNIT_ASSERT( ecri.queuePolicy() == enquing_policy::DiscardNew );
-  CPPUNIT_ASSERT( ecri.secondsToStale() == boost::posix_time::seconds(1024) );
-  CPPUNIT_ASSERT( ecri.topLevelFolderName() == "*" );
-  CPPUNIT_ASSERT( ecri.remoteHost() == "localhost" );
+  CPPUNIT_ASSERT( dcri.consumerName() == "Histo Consumer" );
+  CPPUNIT_ASSERT( dcri.consumerId() == ConsumerID(0) );
+  CPPUNIT_ASSERT( dcri.queueId() == qid );
+  CPPUNIT_ASSERT( dcri.queueSize() == 6 );
+  CPPUNIT_ASSERT( dcri.queuePolicy() == enquing_policy::DiscardNew );
+  CPPUNIT_ASSERT( dcri.secondsToStale() == boost::posix_time::seconds(1024) );
+  CPPUNIT_ASSERT( dcri.topLevelFolderName() == "*" );
+  CPPUNIT_ASSERT( dcri.remoteHost() == "localhost" );
+  CPPUNIT_ASSERT( dcri.sourceURL() == "myDQMSource" );
+  CPPUNIT_ASSERT( dcri.retryInterval() == 21 );
+  CPPUNIT_ASSERT( dcri.maxConnectTries() == 11 );
+  CPPUNIT_ASSERT( dcri.connectTrySleepTime() == 6 );
 }
 
 
 void testConsumerRegistrationInfo::testIdenticalDQMEventConsumers()
 {
   QueueID qid(stor::enquing_policy::DiscardNew, 2);
-  DQMEventConsumerRegistrationInfo ecri1(
-    "Histo Consumer 1",
-    "localhost",
-    "*",
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(1024)
-  );
-  ecri1.setQueueId( qid );
 
-  DQMEventConsumerRegistrationInfo ecri2(
-    "Histo Consumer 2",
-    "remotehost",
-    "*",
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(1024)
-  );
-  ecri2.setQueueId( qid );
+  edm::ParameterSet pset;
+  pset.addUntrackedParameter<std::string>("consumerName", "Histo Consumer 1");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "*");
+  DQMEventConsumerRegistrationInfo dcri1(pset, "localhost");
+  dcri1.setQueueId( qid );
 
-  DQMEventConsumerRegistrationInfo ecri3(
-    "Histo Consumer 3",
-    "farawayhost",
-    "HCAL",
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(1024)
-  );
-  ecri3.setQueueId( qid );
+  pset.addUntrackedParameter<std::string>("consumerName", "Histo Consumer 2");
+  DQMEventConsumerRegistrationInfo dcri2(pset, "remotehost");
+  dcri2.setQueueId( qid );
 
-  DQMEventConsumerRegistrationInfo ecri4(
-    "Histo Consumer 3",
-    "farawayhost",
-    "HCAL",
-    qid.index(),
-    qid.policy(),
-    boost::posix_time::seconds(10)
-  );
-  ecri4.setQueueId( qid );
+  pset.addUntrackedParameter<std::string>("consumerName", "Histo Consumer 3");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "HCAL");
+  DQMEventConsumerRegistrationInfo dcri3(pset, "farawayhost");
+  dcri3.setQueueId( qid );
+
+  pset.addUntrackedParameter<std::string>("consumerName", "Histo Consumer 4");
+  pset.addUntrackedParameter<double>("consumerTimeOut", 10);
+  DQMEventConsumerRegistrationInfo dcri4(pset, "farawayhost");
+  dcri4.setQueueId( qid );
  
-  CPPUNIT_ASSERT( ecri1 == ecri2 );
-  CPPUNIT_ASSERT( ecri1 != ecri3 );
-  CPPUNIT_ASSERT( ecri2 != ecri3 );
-  CPPUNIT_ASSERT( ecri3 != ecri4 );
+  CPPUNIT_ASSERT( dcri1 == dcri2 );
+  CPPUNIT_ASSERT( dcri1 != dcri3 );
+  CPPUNIT_ASSERT( dcri2 != dcri3 );
+  CPPUNIT_ASSERT( dcri3 != dcri4 );
 }
 
 

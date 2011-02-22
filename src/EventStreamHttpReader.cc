@@ -1,4 +1,4 @@
-// $Id: EventStreamHttpReader.cc,v 1.42.2.5 2011/01/19 13:50:38 mommsen Exp $
+// $Id: EventStreamHttpReader.cc,v 1.42.2.6 2011/02/14 16:53:49 mommsen Exp $
 /// @file: EventStreamHttpReader.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -12,23 +12,20 @@ namespace edm
 {  
   EventStreamHttpReader::EventStreamHttpReader
   (
-    ParameterSet const& ps,
+    ParameterSet const& pset,
     InputSourceDescription const& desc
   ):
-  StreamerInputSource(ps, desc),
-  _eventServerProxy(ps)
+  StreamerInputSource(pset, desc),
+  _eventServerProxy(pset)
   {
     // Default in StreamerInputSource is 'false'
     inputFileTransitionsEachEvent_ =
-      ps.getUntrackedParameter<bool>("inputFileTransitionsEachEvent", true);
+      pset.getUntrackedParameter<bool>("inputFileTransitionsEachEvent", true);
 
     readHeader();
   }
-
-  EventStreamHttpReader::~EventStreamHttpReader()
-  {
-  }
-
+  
+  
   EventPrincipal* EventStreamHttpReader::read()
   {
     stor::CurlInterface::Content data;
@@ -46,6 +43,7 @@ namespace edm
     EventMsgView eventView(&data[0]);
     return deserializeEvent(eventView);
   }
+  
   
   void EventStreamHttpReader::readHeader()
   {

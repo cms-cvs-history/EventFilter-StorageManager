@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.7 2011/02/11 12:10:30 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.8 2011/02/17 13:18:08 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -34,7 +34,8 @@ namespace stor
     parsePSet(pset);
   }
 
-  void EventConsumerRegistrationInfo::parsePSet(const edm::ParameterSet& pset)
+  void 
+  EventConsumerRegistrationInfo::parsePSet(const edm::ParameterSet& pset)
   {
     try
     {
@@ -73,10 +74,8 @@ namespace stor
 
     _headerRetryInterval = pset.getUntrackedParameter<int>("headerRetryInterval", 5);
   }
-
-  EventConsumerRegistrationInfo::~EventConsumerRegistrationInfo()
-  { }
-
+  
+  
   edm::ParameterSet
   EventConsumerRegistrationInfo::getPSet() const
   {

@@ -1241,17 +1241,17 @@ void testEventDistributor::testDQMMessages()
   //// DQM-specific stuff: ////
   //
 
-  enquing_policy::PolicyTag policy = stor::enquing_policy::DiscardOld;
   ConsumerID cid;
+  edm::ParameterSet pset;
 
   // Consumer for HCAL:
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1;
-  ri1.reset( new DQMEventConsumerRegistrationInfo(
-      "DQM Consumer 1",
-      "localhost",
-      "HCAL",
-      10, policy,
-      boost::posix_time::seconds(10) )
+  pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 1");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "HCAL");
+  pset.addUntrackedParameter<int>("queueSize", 10);
+  pset.addUntrackedParameter<double>("consumerTimeOut", 10);
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1(
+    new DQMEventConsumerRegistrationInfo(pset)
   );
   ri1->setConsumerId(++cid);
   QueueID qid1 = _sharedResources->_dqmEventQueueCollection->createQueue(ri1);
@@ -1263,13 +1263,10 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 1);
 
   // Consumer for ECAL:
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2;
-  ri2.reset( new DQMEventConsumerRegistrationInfo(
-      "DQM Consumer 2",
-      "localhost",
-      "ECAL",
-      10, policy,
-      boost::posix_time::seconds(10) )
+  pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 2");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "ECAL");
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2(
+    new DQMEventConsumerRegistrationInfo(pset)
   );
   ri2->setConsumerId(++cid);
   QueueID qid2 = _sharedResources->_dqmEventQueueCollection->createQueue(ri2);
@@ -1309,13 +1306,10 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag3.getDQMEventConsumerTags().size() == 0 );
 
   // Wildcard consumer:
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri3;
-  ri3.reset( new DQMEventConsumerRegistrationInfo(
-      "DQM Consumer 3",
-      "localhost",
-      "*",
-      10, policy,
-      boost::posix_time::seconds(10) )
+  pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 3");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "*");
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri3(
+    new DQMEventConsumerRegistrationInfo(pset)
   );
   ri3->setConsumerId(++cid);
   QueueID qid3 = _sharedResources->_dqmEventQueueCollection->createQueue(ri3);
@@ -1370,17 +1364,18 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
 
-  enquing_policy::PolicyTag policy = stor::enquing_policy::DiscardOld;
   ConsumerID cid;
+  edm::ParameterSet pset;
 
   // Consumer for HCAL:
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1;
-  ri1.reset( new DQMEventConsumerRegistrationInfo(
-      "DQM Consumer 1",
-      "localhost",
-      "HCAL",
-      10, policy,
-      boost::posix_time::seconds(10) )
+  pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 1");
+  pset.addUntrackedParameter<std::string>("topLevelFolderName", "HCAL");
+  pset.addUntrackedParameter<int>("queueSize", 10);
+  pset.addUntrackedParameter<double>("consumerTimeOut", 10);
+  pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
+
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri1(
+    new DQMEventConsumerRegistrationInfo(pset)
   );
   ri1->setConsumerId(++cid);
   QueueID qid1 = _sharedResources->_dqmEventQueueCollection->createQueue(ri1);
@@ -1398,13 +1393,9 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
 
   // 2nd consumer requesting same events
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2;
-  ri2.reset( new DQMEventConsumerRegistrationInfo(
-      "DQM Consumer 2",
-      "remotehost",
-      "HCAL",
-      10, qid1.policy(),
-      boost::posix_time::seconds(10) )
+  pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 2");
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri2(
+    new DQMEventConsumerRegistrationInfo(pset)
   );
   ri2->setConsumerId(++cid);
   QueueID qid2 = _sharedResources->_dqmEventQueueCollection->createQueue(ri2);
@@ -1428,13 +1419,10 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   CPPUNIT_ASSERT( std::count(queueIdList1.begin(),queueIdList1.end(),qid2) == 1 );
 
   // 3rd consumer requesting same events, but different queue
-  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri3;
-  ri3.reset( new DQMEventConsumerRegistrationInfo(
-      "DQM Consumer 3",
-      "remotehost",
-      "HCAL",
-      10, policy,
-      boost::posix_time::seconds(10) )
+  pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 3");
+  pset.addUntrackedParameter<double>("consumerTimeOut", 1024);
+  boost::shared_ptr<DQMEventConsumerRegistrationInfo> ri3(
+    new DQMEventConsumerRegistrationInfo(pset)
   );
   ri3->setConsumerId(++cid);
   QueueID qid3 = _sharedResources->_dqmEventQueueCollection->createQueue(ri3);

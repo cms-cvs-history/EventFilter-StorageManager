@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.5 2011/02/11 12:10:30 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.6 2011/02/17 13:17:31 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -7,9 +7,14 @@
 #include <iosfwd>
 #include <string>
 
-#include "IOPool/Streamer/interface/HLTInfo.h"
+#include <boost/shared_ptr.hpp>
+
+#include "toolbox/net/Utils.h"
+
+#include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 namespace stor
 {
@@ -17,8 +22,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.5 $
-   * $Date: 2011/02/11 12:10:30 $
+   * $Revision: 1.8.2.6 $
+   * $Date: 2011/02/17 13:17:31 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -30,19 +35,24 @@ namespace stor
      */
     DQMEventConsumerRegistrationInfo
     (
-      const std::string& consumerName,
-      const std::string& remoteHost,
-      const std::string& topLevelFolderName,
-      const int& queueSize,
-      const enquing_policy::PolicyTag& policy,
-      const utils::duration_t& secondsToStale
+      const edm::ParameterSet& pset,
+      const EventServingParams& eventServingParams,
+      const std::string& remoteHost = toolbox::net::getHostName()
+    );
+
+    DQMEventConsumerRegistrationInfo
+    (
+      const edm::ParameterSet& pset,
+      const std::string& remoteHost = toolbox::net::getHostName()
     );
 
     // Destructor:
-    ~DQMEventConsumerRegistrationInfo();
+    ~DQMEventConsumerRegistrationInfo() {};
 
-    // Additional accessors:
+    // Accessors:
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
+    const int& retryInterval() const { return _retryInterval; }
+    edm::ParameterSet getPSet() const;
 
     // Comparison:
     bool operator<(const DQMEventConsumerRegistrationInfo&) const;
@@ -56,10 +66,12 @@ namespace stor
     virtual void do_registerMe(EventDistributor*);
     virtual void do_eventType(std::ostream&) const;
 
-
   private:
 
+    void parsePSet(const edm::ParameterSet&);
+
     std::string _topLevelFolderName;
+    int _retryInterval;
   };
 
   typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMEventConsRegPtr;

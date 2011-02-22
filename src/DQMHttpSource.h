@@ -1,70 +1,56 @@
-#ifndef DQMHttpSource_H
-#define DQMHttpSource_H
+// $Id: DQMHttpSource.h,v 1.22.8.4 2011/01/18 15:56:37 mommsen Exp $
+/// @file: DQMHttpSource.h
 
-/** 
- *  An input source for DQM consumers using cmsRun that connect to
- *  the StorageManager or SMProxyServer to get DQM data.
- *
- *  $Id$
- */
-#include "IOPool/Streamer/interface/MsgTools.h"
-#include "IOPool/Streamer/interface/EventBuffer.h"
-#include "IOPool/Streamer/interface/StreamerInputSource.h"
+#ifndef StorageManager_DQMHttpSource_h
+#define StorageManager_DQMHttpSource_h
+
 #include "DQMServices/Core/interface/DQMStore.h"
-
+#include "EventFilter/StorageManager/interface/DQMEventServerProxy.h"
+#include "FWCore/Framework/interface/InputSourceDescription.h"
+#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "FWCore/Sources/interface/RawInputSource.h"
+#include "IOPool/Streamer/interface/DQMEventMessage.h"
 
-#include <vector>
 #include <memory>
-#include <string>
+
 
 namespace edm
 {
-  class DQMHttpSource : public edm::RawInputSource {
+  /**
+    An input source for DQM consumers using cmsRun that connect to
+    the StorageManager or SMProxyServer to get DQM (histogram) data.
+    
+    $Author: mommsen $
+    $Revision: 1.22.8.4 $
+    $Date: 2011/01/18 15:56:37 $
+  */
 
-   public:
-    typedef std::vector<char> Buf;
-    explicit DQMHttpSource(const edm::ParameterSet& pset, 
-    const edm::InputSourceDescription& desc);
-  
+  class DQMHttpSource : public edm::RawInputSource
+  {
+  public:
+    DQMHttpSource
+    (
+      const edm::ParameterSet&, 
+      const edm::InputSourceDescription&
+    );
     virtual ~DQMHttpSource() {};
 
-
-   private:
-
-    std::auto_ptr<edm::Event> getOneDQMEvent();
+  private:
     virtual std::auto_ptr<edm::Event> readOneEvent();
-    virtual void registerWithDQMEventServer();
+    void addEventToDQMBackend(const DQMEventMsgView&);
+    void initializeDQMStore();
 
-    unsigned int updatesCounter_;
-
-    std::string sourceurl_;
-    char DQMeventurl_[256];
-    char DQMsubscriptionurl_[256];
-    Buf buf_;
-    unsigned int events_read_;
-    std::string DQMconsumerName_;
-    std::string DQMconsumerPriority_;
-    std::string consumerTopFolderName_;
-    int headerRetryInterval_;
-    double minDQMEventRequestInterval_;
-    unsigned int DQMconsumerId_;
-    struct timeval lastDQMRequestTime_;
-
-    bool alreadySaidHalted_;
-
-    Strings firstHistoExtractDone_;
-
-    protected:
-      DQMStore *bei_;
+    DQMStore *_dqmStore;
+    stor::DQMEventServerProxy _dqmEventServerProxy;
 
   };
 
-}
+} // namespace edm
 
-#endif
+#endif // StorageManager_DQMHttpSource_h
+
+
 /// emacs configuration
 /// Local Variables: -
 /// mode: c++ -

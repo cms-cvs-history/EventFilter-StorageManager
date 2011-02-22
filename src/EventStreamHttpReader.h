@@ -1,4 +1,4 @@
-// $Id: EventStreamHttpReader.h,v 1.22.8.3 2011/01/17 14:33:52 mommsen Exp $
+// $Id: EventStreamHttpReader.h,v 1.22.8.4 2011/01/18 15:56:37 mommsen Exp $
 /// @file: EventStreamHttpReader.h
 
 #ifndef StorageManager_EventStreamHttpReader_h
@@ -25,8 +25,8 @@ namespace edm
     framework input source. Currently we inherit from InputSource.
 
     $Author: mommsen $
-    $Revision: 1.22.8.3 $
-    $Date: 2011/01/17 14:33:52 $
+    $Revision: 1.22.8.4 $
+    $Date: 2011/01/18 15:56:37 $
   */
 
   class EventStreamHttpReader : public edm::StreamerInputSource
@@ -34,10 +34,10 @@ namespace edm
   public:
     EventStreamHttpReader
     (
-      edm::ParameterSet const& pset,
-      edm::InputSourceDescription const& desc
+      edm::ParameterSet const&,
+      edm::InputSourceDescription const&
     );
-    virtual ~EventStreamHttpReader();
+    virtual ~EventStreamHttpReader() {};
 
     virtual EventPrincipal* read();
 

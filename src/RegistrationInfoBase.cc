@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.5.2.4 2011/02/11 16:45:14 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.2 2011/02/17 13:18:08 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -43,7 +43,7 @@ namespace stor
     }
     catch( edm::Exception& e )
     {
-      _sourceURL = "Unknown";
+      _sourceURL = pset.getUntrackedParameter<std::string>("sourceURL", "Unknown");
     }
 
     _maxConnectTries = pset.getUntrackedParameter<int>("maxConnectTries", 300);

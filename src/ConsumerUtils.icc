@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.6 2011/02/14 16:53:49 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.7 2011/02/17 13:18:08 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -379,53 +379,32 @@ namespace stor
         "Null xgi::Input* in parseDQMEventConsumerRegistration" );
     }
     
-    EventServingParams esp = _configuration->getEventServingParams();
-    const utils::duration_t secondsToStale = esp._DQMactiveConsumerTimeout;
-    const int queueSize = esp._DQMconsumerQueueSize;
+    std::string psetStr = "<>";
     
-    std::string policy = esp._DQMconsumerQueuePolicy;
-    enquing_policy::PolicyTag queuePolicy;
-    if ( policy == "DiscardNew" )
+    const std::string lengthStr = in->getenv( "CONTENT_LENGTH" );
+    unsigned long length = std::atol( lengthStr.c_str() );
+    
+    const std::string remoteHost = in->getenv( "REMOTE_HOST" );
+    
+    if( length > 0 )
     {
-      queuePolicy = enquing_policy::DiscardNew;
-    }
-    else if ( policy == "DiscardOld" )
-    {
-      queuePolicy = enquing_policy::DiscardOld;
+      boost::scoped_ptr< std::vector<char> > buf( new std::vector<char>(length) );
+      in->read( &(*buf)[0], length );
+      ConsRegRequestView req( &(*buf)[0] );
+      psetStr = req.getRequestParameterSet();
     }
     else
     {
       XCEPT_RAISE( stor::exception::DQMConsumerRegistration,
-        "Unknown enqueuing policy: " + policy );
+        "Bad request length" );
     }
     
-    std::string consumerName = "None provided";
-    std::string consumerTopFolderName = "*";
+    const edm::ParameterSet pset( psetStr );
     
-    // read the consumer registration message from the http input stream
-    std::string lengthString = in->getenv("CONTENT_LENGTH");
-    unsigned int contentLength = std::atol(lengthString.c_str());
-    if (contentLength > 0)
-    {
-      boost::scoped_ptr< std::vector<char> > bufPtr(new std::vector<char>(contentLength));
-      in->read(&(*bufPtr)[0], contentLength);
-      ConsRegRequestView requestMessage(&(*bufPtr)[0]);
-      consumerName = requestMessage.getConsumerName();
-      // for DQM consumers top folder name is stored in the "parameteSet"
-      std::string reqFolder = requestMessage.getRequestParameterSet();
-      if ( !reqFolder.empty() ) consumerTopFolderName = reqFolder;
-    }
-    
-    const std::string remote_host = in->getenv( "REMOTE_HOST" );
-    
-    DQMEventConsRegPtr cr(new DQMEventConsumerRegistrationInfo(
-        consumerName,
-        remote_host,
-        consumerTopFolderName, 
-        queueSize,
-        queuePolicy,
-        secondsToStale
-      ));
+    DQMEventConsRegPtr cr(
+      new DQMEventConsumerRegistrationInfo(pset,
+        _configuration->getEventServingParams(), remoteHost)
+    );
     
     return cr;
   }

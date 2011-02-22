@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.8 2011/02/11 12:10:30 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.9 2011/02/17 13:17:31 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -6,14 +6,12 @@
 
 #include <iosfwd>
 #include <string>
-#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
 #include "toolbox/net/Utils.h"
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
-#include "EventFilter/StorageManager/interface/Exception.h"
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -25,8 +23,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.8 $
-   * $Date: 2011/02/11 12:10:30 $
+   * $Revision: 1.13.2.9 $
+   * $Date: 2011/02/17 13:17:31 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -47,7 +45,7 @@ namespace stor
       const std::string& remoteHost = toolbox::net::getHostName()
     );
 
-    ~EventConsumerRegistrationInfo();
+    ~EventConsumerRegistrationInfo() {};
 
     // Setters:
     void setMinEventRequestInterval(const utils::duration_t& interval) { _minEventRequestInterval= interval; }

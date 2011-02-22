@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.h,v 1.1.2.6 2011/02/14 16:53:48 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.7 2011/02/17 13:17:31 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
@@ -22,8 +22,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2011/02/14 16:53:48 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2011/02/17 13:17:31 $
    */
  
   class EventServerProxy
@@ -69,8 +69,6 @@ namespace stor {
     stor::utils::time_point_t nextRequestTime_;
     stor::utils::duration_t minEventRequestInterval_;
     
-    bool endRunAlreadyNotified_;
-    bool runEnded_;
     bool alreadySaidHalted_;
     bool alreadySaidWaiting_;
     
