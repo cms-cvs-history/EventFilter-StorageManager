@@ -119,7 +119,6 @@ process.DQMpath = cms.Path(process.DQMTester)
 process.FUShmDQMOutputService = cms.Service("FUShmDQMOutputService",
                                             initialMessageBufferSize = cms.untracked.int32(1000000),
                                             lumiSectionsPerUpdate = cms.double(1.0),
-                                            lumiSectionInterval = cms.untracked.int32(23),
                                             useCompression = cms.bool(True),
                                             compressionLevel = cms.int32(1)
                                             )
