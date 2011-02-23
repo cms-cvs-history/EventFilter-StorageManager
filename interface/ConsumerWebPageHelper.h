@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.h,v 1.1.2.5 2011/02/10 10:20:57 mommsen Exp $
+// $Id: ConsumerWebPageHelper.h,v 1.1.2.6 2011/02/11 12:11:54 mommsen Exp $
 /// @file: ConsumerWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_ConsumerWebPageHelper_h
@@ -23,8 +23,8 @@ namespace stor
    * Helper class to handle consumer web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.5 $
-   * $Date: 2011/02/10 10:20:57 $
+   * $Revision: 1.1.2.6 $
+   * $Date: 2011/02/11 12:11:54 $
    */
 
   template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
@@ -81,6 +81,19 @@ namespace stor
       DQMEventQueueCollectionPtr,
       const DQMConsumerMonitorCollection&
     ) const;
+
+    /**
+     * Add table cell with consumer name. If the consumer is
+     * a proxy server, a hyperlink to it will be added.
+     * Returns true if the consumer is a proxy server.
+     */
+    bool addDOMforConsumerName
+    (
+      stor::XHTMLMaker& maker,
+      stor::XHTMLMaker::Node* tableRow,
+      const std::string& consumerName
+    ) const;
+    
 
     //Prevent copying of the ConsumerWebPageHelper
     ConsumerWebPageHelper(ConsumerWebPageHelper const&);
