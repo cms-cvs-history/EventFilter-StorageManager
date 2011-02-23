@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.9 2011/02/11 12:11:54 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.10 2011/02/11 16:45:14 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -114,7 +114,7 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Enqueued Event Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
-    maker.addText(tableDiv, "Dropped Events");
+    maker.addText(tableDiv, "Events Dropped");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Served Event Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
@@ -185,20 +185,9 @@ namespace stor
       tableRow = maker.addNode("tr", table, rowAttr);
       
       // Name:
-      bool isProxy(false);
-      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
-      const std::string consumerName = (*it)->consumerName();
-      if ( consumerName.find( "urn:xdaq-application" ) != std::string::npos )
-      {
-        isProxy = true;
-        XHTMLMaker::AttrMap linkAttr;
-        linkAttr[ "href" ] = consumerName;
-        XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
-        maker.addText(link, "SMProxy");
-      }
-      else
-        maker.addText(tableDiv, consumerName);
-      
+      const bool isProxy =
+        addDOMforConsumerName(maker, tableRow, (*it)->consumerName());
+
       // Host:
       tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->remoteHost());
@@ -345,13 +334,12 @@ namespace stor
     RegistrationCollection::DQMConsumerRegistrations consumers;
     registrationCollection->getDQMEventConsumers( consumers );
     
-    
     XHTMLMaker::Node* table = maker.addNode("table", parent, this->_tableAttr);
     
     XHTMLMaker::Node* tableRow = maker.addNode("tr", table, this->_rowAttr);
     
     XHTMLMaker::AttrMap colspanAttr;
-    colspanAttr[ "colspan" ] = "20";
+    colspanAttr[ "colspan" ] = "15";
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "DQM Consumer Statistics");
     
@@ -368,24 +356,20 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Consumer Host" );
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Status");
+    maker.addText(tableDiv, "Last Request Seconds Ago");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Top Level Folder");
+    maker.addText(tableDiv, "Requested DQM histograms");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Enquing Policy");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Queue Size");
-    tableDiv = maker.addNode("th", tableRow, rowspanAttr);
-    maker.addText(tableDiv, "Events In Queue");
+    maker.addText(tableDiv, "Top Level Folders In Queue");
     
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
-    maker.addText(tableDiv, "Enqueued Event Rate (Hz)");
+    maker.addText(tableDiv, "Top Level Folders Enqueued");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
-    maker.addText(tableDiv, "Served Event Rate (Hz)");
+    maker.addText(tableDiv, "Top Level Folders Served");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
-    maker.addText(tableDiv, "Events Served");
+    maker.addText(tableDiv, "Served Rate (Hz)");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
-    maker.addText(tableDiv, "Average Event Size (kB)");
+    maker.addText(tableDiv, "Average Top Level Folder Size (kB)");
     tableDiv = maker.addNode("th", tableRow, subColspanAttr);
     maker.addText(tableDiv, "Bandwidth (kB/s)");
     
@@ -444,72 +428,52 @@ namespace stor
       tableRow = maker.addNode("tr", table, rowAttr);
       
       // Name:
-      tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
-      maker.addText(tableDiv, (*it)->consumerName());
+      addDOMforConsumerName(maker, tableRow, (*it)->consumerName());
       
       // Host:
       tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
       maker.addText(tableDiv, (*it)->remoteHost());
       
       // Status:
-      XHTMLMaker::AttrMap statusAttr = this->_tableLabelAttr;
-      std::string statusMessage;
       if( (*it)->isStale(now) )
       {
+        XHTMLMaker::AttrMap statusAttr = this->_tableLabelAttr;
         statusAttr[ "style" ] = "color:brown;";
-        statusMessage = "Stale";
+        tableDiv = maker.addNode("td", tableRow, statusAttr);
+        maker.addText(tableDiv, "Stale");
       }
       else
       {
-        statusAttr[ "style" ] = "color:green;";
-      statusMessage = "Active";
+        tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
+        maker.addDouble(tableDiv, (*it)->lastContactSecondsAgo(now), 1);
       }
-      tableDiv = maker.addNode("td", tableRow, statusAttr);
-      maker.addText(tableDiv, statusMessage);
       
-      // Top level folder:
-      tableDiv = maker.addNode("td", tableRow, statusAttr);
-      maker.addText(tableDiv, (*it)->topLevelFolderName());
-      
-      // Policy:
-      std::ostringstream policy;
-      policy << (*it)->queuePolicy();
+      // Requested event type
       tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
-      maker.addText(tableDiv, policy.str());
+      XHTMLMaker::Node* pre = maker.addNode("pre", tableDiv);
+      std::ostringstream eventType;
+      (*it)->eventType(eventType);
+      maker.addText(pre, eventType.str());
       
-      // Queue size:
-      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
-      maker.addInt(tableDiv, (*it)->queueSize());
-      
-      // Events in queue:
+      // Top level folders in queue:
       tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addInt(tableDiv, dqmEventQueueCollection->size( (*it)->queueId() ));
       
-      // Events enqueued:
+      // Top level folders enqueued:
       MonitoredQuantity::Stats enqueuedStats;
       const bool enqueuedFound = dqmConsumerCollection.getQueued( (*it)->queueId(), enqueuedStats );
       tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
-      maker.addDouble(tableDiv,
-        enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::FULL) : 0
+      maker.addInt(tableDiv,
+        enqueuedFound ? enqueuedStats.getSampleCount(MonitoredQuantity::FULL) : 0
       );
       tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
-      maker.addDouble(tableDiv,
-        enqueuedFound ? enqueuedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
+      maker.addInt(tableDiv,
+        enqueuedFound ? enqueuedStats.getSampleCount(MonitoredQuantity::RECENT) : 0
       );
-      
-      // Events served:
+     
+      // Top level folders served:
       MonitoredQuantity::Stats servedStats;
       const bool servedFound = dqmConsumerCollection.getServed( (*it)->queueId(), servedStats );
-      
-      // rate
-      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
-      maker.addDouble(tableDiv,
-        servedFound ? servedStats.getSampleRate(MonitoredQuantity::FULL) : 0
-      );
-      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
-      maker.addDouble(tableDiv,
-        servedFound ? servedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
-      );
       
       // event counts
       tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
@@ -519,6 +483,16 @@ namespace stor
       tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
       maker.addInt(tableDiv,
         servedFound ? servedStats.getSampleCount(MonitoredQuantity::RECENT) : 0
+      );
+      
+      // rate
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
+      maker.addDouble(tableDiv,
+        servedFound ? servedStats.getSampleRate(MonitoredQuantity::FULL) : 0
+      );
+      tableDiv = maker.addNode("td", tableRow, this->_tableValueAttr);
+      maker.addDouble(tableDiv,
+        servedFound ? servedStats.getSampleRate(MonitoredQuantity::RECENT) : 0
       );
       
       // event size
@@ -542,7 +516,35 @@ namespace stor
       );
     }
   }
+  
+  
+  template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
+  bool ConsumerWebPageHelper<WebPageHelper_t, EventQueueCollection_t, StatisticsReporter_t>::
+  addDOMforConsumerName
+  (
+    stor::XHTMLMaker& maker,
+    stor::XHTMLMaker::Node* tableRow,
+    const std::string& consumerName
+  ) const
+  {
+    bool isProxy(false);
+    stor::XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, this->_tableLabelAttr);
+    if ( consumerName.find( "urn:xdaq-application" ) != std::string::npos )
+    {
+      isProxy = true;
+      XHTMLMaker::AttrMap linkAttr;
+      linkAttr[ "href" ] = consumerName;
+      XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
+      maker.addText(link, "SMProxy");
+    }
+    else
+    {
+      maker.addText(tableDiv, consumerName);
+    }
 
+    return isProxy;
+  }
+  
 } // namespace stor
 
 
