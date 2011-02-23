@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.26.2.1 2011/01/21 15:51:20 mommsen Exp $
+// $Id: Configuration.h,v 1.26.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: Configuration.h 
 
 
@@ -60,10 +60,6 @@ namespace stor
   struct DQMProcessingParams
   {
     bool _collateDQM;
-    bool _archiveDQM;
-    std::string _filePrefixDQM;
-    unsigned int _archiveIntervalDQM;
-    utils::duration_t _purgeTimeDQM;
     utils::duration_t _readyTimeDQM;
     bool _useCompressionDQM;
     int _compressionLevelDQM;
@@ -162,8 +158,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: mommsen $
-   * $Revision: 1.26.2.1 $
-   * $Date: 2011/01/21 15:51:20 $
+   * $Revision: 1.26.2.2 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -361,10 +357,6 @@ namespace stor
     xdata::String  _DQMconsumerQueuePolicy;
 
     xdata::Boolean _collateDQM;
-    xdata::Boolean _archiveDQM;
-    xdata::Integer _archiveIntervalDQM;  // lumi sections
-    xdata::String  _filePrefixDQM;
-    xdata::Integer _purgeTimeDQM;  // seconds
     xdata::Integer _readyTimeDQM;  // seconds
     xdata::Boolean _useCompressionDQM;
     xdata::Integer _compressionLevelDQM;

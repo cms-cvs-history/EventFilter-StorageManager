@@ -1,12 +1,10 @@
-// $Id: EventServerProxy.cc,v 1.1.2.8 2011/02/17 13:18:08 mommsen Exp $
+// $Id: EventServerProxy.cc,v 1.1.2.9 2011/02/22 11:28:41 mommsen Exp $
 /// @file: EventServerProxy.cc
 
 #include "EventFilter/StorageManager/interface/EventServerProxy.h"
-#include "EventFilter/StorageManager/interface/SMCurlInterface.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/DebugMacros.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include "IOPool/Streamer/interface/ClassFiller.h"
 #include "IOPool/Streamer/interface/EventMessage.h"
 #include "IOPool/Streamer/interface/InitMessage.h"
 #include "IOPool/Streamer/interface/OtherMessage.h"
@@ -16,6 +14,7 @@
 
 #include <algorithm>
 #include <iterator>
+
 #include "curl/curl.h"
 #include "boost/scoped_ptr.hpp"
 

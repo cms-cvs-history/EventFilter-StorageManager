@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.5 2010/12/10 19:38:48 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.5.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DQMEventProcessor.h 
 
 #ifndef EventFilter_StorageManager_DQMEventProcessor_h
@@ -30,8 +30,8 @@ namespace stor {
    * to disk every N lumi-sections.
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2010/12/10 19:38:48 $
+   * $Revision: 1.5.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class
@@ -69,22 +69,15 @@ namespace stor {
     void processNextDQMEvent();
 
     /**
-     * Retrieves all available complete DQMEventRecord
+     * Retrieves all available completed top level folders
      * adds it to the consumer queues
      */    
-    void processCompleteDQMEventRecords();
+    void processCompletedTopLevelFolders();
 
     /**
-     * Write all data to disk if needed, purge instances,
-     * and process all completed DQM records
+     * Purge instances and process all completed DQM records
      */    
     void endOfRun();
-
-    /**
-     * Check if all directories needed for the DQM histogram output are available.
-     * Throws a stor::execption::NoSuchDirectory when a directory does not exist.
-     */
-    void checkDirectories(DQMProcessingParams const&) const;
  
 
     xdaq::Application*        _app;

@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.12.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12.2.2 2011/02/03 14:16:28 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -116,7 +116,7 @@ void DQMEventProcessor::processNextDQMEvent()
     _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addDQMEventProcessorIdleSample(elapsedTime);
   }
 
-  processCompleteDQMEventRecords();
+  processCompletedTopLevelFolders();
 
   DQMEventProcessorResources::Requests requests;
   DQMProcessingParams dqmParams;
@@ -128,7 +128,6 @@ void DQMEventProcessor::processNextDQMEvent()
     {
       _timeout = newTimeoutValue;
       _dqmEventStore.setParameters(dqmParams);
-      checkDirectories(dqmParams);
     }
     if (requests.endOfRun)
     {
@@ -144,27 +143,18 @@ void DQMEventProcessor::processNextDQMEvent()
 
 void DQMEventProcessor::endOfRun()
 {
-  _dqmEventStore.writeAndPurgeAllDQMInstances();
-  processCompleteDQMEventRecords();
+  _dqmEventStore.purge();
+  processCompletedTopLevelFolders();
 }
 
 
-void DQMEventProcessor::processCompleteDQMEventRecords()
+void DQMEventProcessor::processCompletedTopLevelFolders()
 {
-  DQMEventRecord::GroupRecord dqmRecordEntry;
-  while ( _dqmEventStore.getCompletedDQMGroupRecordIfAvailable(dqmRecordEntry) )
+  DQMTopLevelFolder::Record topLevelFolderRecord;
+  while ( _dqmEventStore.getCompletedTopLevelFolderIfAvailable(topLevelFolderRecord) )
   {
     _sharedResources->
-      _dqmEventQueueCollection->addEvent(dqmRecordEntry);
-  }
-}
-
-
-void DQMEventProcessor::checkDirectories(DQMProcessingParams const& dqmParams) const
-{
-  if ( dqmParams._archiveDQM )
-  {
-    utils::checkDirectory(dqmParams._filePrefixDQM);
+      _dqmEventQueueCollection->addEvent(topLevelFolderRecord);
   }
 }
 

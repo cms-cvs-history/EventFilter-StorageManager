@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.41.2.2 2011/01/27 14:58:44 mommsen Exp $
+// $Id: Configuration.cc,v 1.41.2.3 2011/02/11 16:45:14 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -204,10 +204,6 @@ namespace stor
   void Configuration::setDQMProcessingDefaults()
   {
     _dqmParamCopy._collateDQM = false;
-    _dqmParamCopy._archiveDQM = false;
-    _dqmParamCopy._filePrefixDQM = "/tmp/DQM";
-    _dqmParamCopy._archiveIntervalDQM = 0;
-    _dqmParamCopy._purgeTimeDQM = boost::posix_time::seconds(300);
     _dqmParamCopy._readyTimeDQM = boost::posix_time::seconds(120);
     _dqmParamCopy._useCompressionDQM = true;
     _dqmParamCopy._compressionLevelDQM = 1;
@@ -318,21 +314,13 @@ namespace stor
   {
     // copy the initial defaults to the xdata variables
     _collateDQM = _dqmParamCopy._collateDQM;
-    _archiveDQM = _dqmParamCopy._archiveDQM;
-    _archiveIntervalDQM = _dqmParamCopy._archiveIntervalDQM;
-    _filePrefixDQM = _dqmParamCopy._filePrefixDQM;
-    _purgeTimeDQM = _dqmParamCopy._purgeTimeDQM.total_seconds();
     _readyTimeDQM = _dqmParamCopy._readyTimeDQM.total_seconds();
     _useCompressionDQM = _dqmParamCopy._useCompressionDQM;
     _compressionLevelDQM = _dqmParamCopy._compressionLevelDQM;
 
     // bind the local xdata variables to the infospace
     infoSpace->fireItemAvailable("collateDQM", &_collateDQM);
-    infoSpace->fireItemAvailable("archiveDQM", &_archiveDQM);
-    infoSpace->fireItemAvailable("archiveIntervalDQM", &_archiveIntervalDQM);
-    infoSpace->fireItemAvailable("purgeTimeDQM", &_purgeTimeDQM);
     infoSpace->fireItemAvailable("readyTimeDQM", &_readyTimeDQM);
-    infoSpace->fireItemAvailable("filePrefixDQM", &_filePrefixDQM);
     infoSpace->fireItemAvailable("useCompressionDQM", &_useCompressionDQM);
     infoSpace->fireItemAvailable("compressionLevelDQM", &_compressionLevelDQM);
   }
@@ -473,21 +461,10 @@ namespace stor
   void Configuration::updateLocalDQMProcessingData()
   {
     _dqmParamCopy._collateDQM = _collateDQM;
-    _dqmParamCopy._archiveDQM = _archiveDQM;
-    _dqmParamCopy._archiveIntervalDQM = _archiveIntervalDQM;
-    _dqmParamCopy._filePrefixDQM = _filePrefixDQM;
-    _dqmParamCopy._purgeTimeDQM =
-      boost::posix_time::seconds( static_cast<int>(_purgeTimeDQM) );
     _dqmParamCopy._readyTimeDQM =
       boost::posix_time::seconds( static_cast<int>(_readyTimeDQM) );
     _dqmParamCopy._useCompressionDQM = _useCompressionDQM;
     _dqmParamCopy._compressionLevelDQM = _compressionLevelDQM;
-
-    // make sure that purge time is larger than ready time
-    if ( _dqmParamCopy._purgeTimeDQM < _dqmParamCopy._readyTimeDQM )
-    {
-      _dqmParamCopy._purgeTimeDQM = _dqmParamCopy._readyTimeDQM + boost::posix_time::seconds(10);
-    }
   }
 
   void Configuration::updateLocalEventServingData()

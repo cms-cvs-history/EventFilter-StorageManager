@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.8 2010/03/09 12:58:04 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.8.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DQMEventStore.h 
 
 #ifndef EventFilter_StorageManager_DQMEventStore_h
@@ -12,7 +12,7 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
-#include "EventFilter/StorageManager/interface/DQMEventRecord.h"
+#include "EventFilter/StorageManager/interface/DQMTopLevelFolder.h"
 #include "EventFilter/StorageManager/interface/DQMKey.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
@@ -31,8 +31,8 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.8 $
-   * $Date: 2010/03/09 12:58:04 $
+   * $Revision: 1.8.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class DQMEventStore
@@ -61,15 +61,15 @@ namespace stor {
      * ready to be served to consumers. In this case
      * DQMEventRecord::GroupRecord holds this record.
      */
-    bool getCompletedDQMGroupRecordIfAvailable(DQMEventRecord::GroupRecord&);
+    bool getCompletedTopLevelFolderIfAvailable(DQMTopLevelFolder::Record&);
 
     /**
-     * Writes and purges all DQMEventRecords hold by the store
+     * Queue completed top level folders, then clear the DQM event store
      */
-    void writeAndPurgeAllDQMInstances();
+    void purge();
 
     /**
-     * Clears all DQMEventRecords hold by the DQM store
+     * Clears all data hold by the DQM event store
      */
     void clear();
 
@@ -77,7 +77,7 @@ namespace stor {
      * Checks if the DQM event store is empty
      */
     bool empty()
-    { return ( _store.empty() && _recordsReadyToServe.empty() ); }
+    { return ( _store.empty() && _topLevelFoldersReadyToServe.empty() ); }
 
     
   private:
@@ -90,28 +90,25 @@ namespace stor {
 
     void addDQMEventToReadyToServe(I2OChain const&);
 
-    void addNextAvailableDQMGroupToReadyToServe(const std::string groupName);
+    void addReadyTopLevelFoldersToReadyToServe();
 
-    DQMEventRecordPtr makeDQMEventRecord(I2OChain const&);
+    DQMTopLevelFolderPtr makeDQMTopLevelFolder(I2OChain const&);
 
     DQMEventMsgView getDQMEventView(I2OChain const&);
 
-    DQMEventRecordPtr getNewestReadyDQMEventRecord(const std::string groupName) const;
+    bool getNextReadyTopLevelFolder(DQMTopLevelFolderPtr&);
 
-    void writeAndPurgeStaleDQMInstances();
-
-    void writeLatestReadyDQMInstance() const;
+    void addTopLevelFolderToReadyToServe(const DQMTopLevelFolderPtr);
 
 
     DQMProcessingParams _dqmParams;
     DQMEventMonitorCollection& _dqmEventMonColl;
     InitMsgCollectionPtr _initMsgColl;
 
-    typedef std::map<DQMKey, DQMEventRecordPtr> DQMEventRecordMap;
-    DQMEventRecordMap _store;
-    std::queue<DQMEventRecord::GroupRecord> _recordsReadyToServe;
+    typedef std::map<DQMKey, DQMTopLevelFolderPtr> DQMTopLevelFolderMap;
+    DQMTopLevelFolderMap _store;
+    std::queue<DQMTopLevelFolder::Record> _topLevelFoldersReadyToServe;
     
-    std::vector<unsigned char> _tempEventArea;
   };
   
 } // namespace stor

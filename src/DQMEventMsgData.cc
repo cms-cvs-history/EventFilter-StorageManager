@@ -1,4 +1,4 @@
-// $Id: DQMEventMsgData.cc,v 1.9 2010/05/12 12:22:06 mommsen Exp $
+// $Id: DQMEventMsgData.cc,v 1.10 2010/05/17 15:59:09 mommsen Exp $
 /// @file: DQMEventMsgData.cc
 
 #include "EventFilter/StorageManager/src/ChainData.h"
@@ -196,6 +196,7 @@ namespace stor
 
       _dqmKey.runNumber = msgView->runNumber();
       _dqmKey.lumiSection = msgView->lumiSection();
+      _dqmKey.topLevelFolderName = msgView->topFolderName();
 
       _headerFieldsCached = true;
 

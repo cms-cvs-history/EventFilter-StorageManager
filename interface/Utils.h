@@ -1,4 +1,4 @@
-// $Id: Utils.h,v 1.13 2010/12/16 16:35:29 mommsen Exp $
+// $Id: Utils.h,v 1.13.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: Utils.h 
 
 #ifndef EventFilter_StorageManager_Utils_h
@@ -25,8 +25,8 @@ namespace stor {
      * Collection of utility functions used in the storage manager
      *
      * $Author: mommsen $
-     * $Revision: 1.13 $
-     * $Date: 2010/12/16 16:35:29 $
+     * $Revision: 1.13.2.1 $
+     * $Date: 2011/01/24 12:18:39 $
      */
 
     /**
@@ -56,6 +56,11 @@ namespace stor {
        Return the number of seconds since the unix epoch 1-1-1970
     */
     long seconds_since_epoch(time_point_t const&);
+
+    /**
+       Return the number of nanoseconds since the unix epoch 1-1-1970
+    */
+    unsigned long long nanoseconds_since_epoch(time_point_t const&);
 
     /**
        Returns the current point in time.
@@ -153,6 +158,12 @@ namespace stor {
     {
       const static boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
       return (timestamp - epoch).total_seconds();
+    }
+
+    inline unsigned long long nanoseconds_since_epoch(time_point_t const& timestamp)
+    {
+      const static boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+      return (timestamp - epoch).total_nanoseconds();
     }
     
     inline time_point_t getCurrentTime()
