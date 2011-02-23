@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.2 2011/02/17 13:18:08 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.3 2011/02/22 11:28:41 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -35,7 +35,14 @@ namespace stor
   _remoteHost(remoteHost),
   _consumerId(0)
   {
-    _consumerName = pset.getUntrackedParameter<std::string>("consumerName", "Unknown");
+    try
+    {
+      _consumerName = pset.getUntrackedParameter<std::string>("consumerName");
+    }
+    catch( edm::Exception& e )
+    {
+      _consumerName = pset.getUntrackedParameter<std::string>("DQMconsumerName", "Unknown");
+    }
 
     try
     {
