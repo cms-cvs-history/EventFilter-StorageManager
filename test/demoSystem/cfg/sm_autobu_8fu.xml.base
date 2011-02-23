@@ -192,9 +192,6 @@
         <setupLabel         xsi:type="xsd:string">smdev</setupLabel> 
         <fileSizeTolerance  xsi:type="xsd:double">0.1</fileSizeTolerance>
         <collateDQM         xsi:type="xsd:boolean">true</collateDQM>
-        <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
-        <filePrefixDQM      xsi:type="xsd:string">../../smDQM/</filePrefixDQM>
-        <purgeTimeDQM       xsi:type="xsd:integer">120</purgeTimeDQM>
         <readyTimeDQM       xsi:type="xsd:integer">30</readyTimeDQM>
         <useCompressionDQM  xsi:type="xsd:boolean">true</useCompressionDQM>
         <compressionLevelDQM xsi:type="xsd:integer">1</compressionLevelDQM>
