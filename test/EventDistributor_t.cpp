@@ -578,9 +578,9 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+  QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
   CPPUNIT_ASSERT(queueIdList.size() == 2);
-  std::vector<QueueID>::const_iterator it =
+  QueueIDs::const_iterator it =
     std::find(queueIdList.begin(), queueIdList.end(), queueId1);
   CPPUNIT_ASSERT(it != queueIdList.end());
   CPPUNIT_ASSERT(it->index() == 0);
@@ -871,7 +871,7 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+  QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
   CPPUNIT_ASSERT(queueIdList.size() == 2);
   CPPUNIT_ASSERT(std::count(queueIdList.begin(),queueIdList.end(),queueId) == 1);
   CPPUNIT_ASSERT(std::count(queueIdList.begin(),queueIdList.end(),queueId2) == 1);
@@ -984,9 +984,9 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+  QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
   CPPUNIT_ASSERT(queueIdList.size() == 2);
-  std::vector<QueueID>::const_iterator it =
+  QueueIDs::const_iterator it =
     std::find(queueIdList.begin(), queueIdList.end(), qid1);
   CPPUNIT_ASSERT(it != queueIdList.end());
   CPPUNIT_ASSERT(it->index() == 0);
@@ -1085,9 +1085,9 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+    QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
     CPPUNIT_ASSERT(queueIdList.size() == 1);
-    std::vector<QueueID>::const_iterator it =
+    QueueIDs::const_iterator it =
       std::find(queueIdList.begin(), queueIdList.end(), qid1);
     CPPUNIT_ASSERT(it != queueIdList.end());
     CPPUNIT_ASSERT(it->index() == 0);
@@ -1112,9 +1112,9 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+    QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
     CPPUNIT_ASSERT(queueIdList.size() == 1);
-    std::vector<QueueID>::const_iterator it =
+    QueueIDs::const_iterator it =
       std::find(queueIdList.begin(), queueIdList.end(), qid1);
     CPPUNIT_ASSERT(it != queueIdList.end());
     CPPUNIT_ASSERT(it->index() == 0);
@@ -1139,9 +1139,9 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+    QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
     CPPUNIT_ASSERT(queueIdList.size() == 2);
-    std::vector<QueueID>::const_iterator it =
+    QueueIDs::const_iterator it =
       std::find(queueIdList.begin(), queueIdList.end(), qid1);
     CPPUNIT_ASSERT(it != queueIdList.end());
     CPPUNIT_ASSERT(it->index() == 0);
@@ -1169,9 +1169,9 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    std::vector<QueueID> queueIdList = eventMsgFrag.getEventConsumerTags();
+    QueueIDs queueIdList = eventMsgFrag.getEventConsumerTags();
     CPPUNIT_ASSERT(queueIdList.size() == 1);
-    std::vector<QueueID>::const_iterator it =
+    QueueIDs::const_iterator it =
       std::find(queueIdList.begin(), queueIdList.end(), qid1);
     CPPUNIT_ASSERT(it != queueIdList.end());
     CPPUNIT_ASSERT(it->index() == 0);
@@ -1283,7 +1283,7 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag1.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag1 );
   CPPUNIT_ASSERT( frag1.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList1 = frag1.getDQMEventConsumerTags();
+  QueueIDs queueIdList1 = frag1.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList1.size() == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList1.begin(),queueIdList1.end(),qid1) == 1 );
 
@@ -1293,7 +1293,7 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag2.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag2 );
   CPPUNIT_ASSERT( frag2.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList2 = frag2.getDQMEventConsumerTags();
+  QueueIDs queueIdList2 = frag2.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList2.size() == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList2.begin(),queueIdList2.end(),qid2) == 1 );
 
@@ -1326,7 +1326,7 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag4.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag4 );
   CPPUNIT_ASSERT( frag4.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList4 = frag4.getDQMEventConsumerTags();
+  QueueIDs queueIdList4 = frag4.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList4.size() == 2 );
   CPPUNIT_ASSERT( std::count(queueIdList4.begin(),queueIdList4.end(),qid1) == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList4.begin(),queueIdList4.end(),qid3) == 1 );
@@ -1337,7 +1337,7 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag5.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag5 );
   CPPUNIT_ASSERT( frag5.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList5 = frag5.getDQMEventConsumerTags();
+  QueueIDs queueIdList5 = frag5.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList5.size() == 2 );
   CPPUNIT_ASSERT( std::count(queueIdList5.begin(),queueIdList5.end(),qid2) == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList5.begin(),queueIdList5.end(),qid3) == 1 );
@@ -1348,7 +1348,7 @@ void testEventDistributor::testDQMMessages()
   CPPUNIT_ASSERT( frag6.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag6 );
   CPPUNIT_ASSERT( frag6.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList6 = frag6.getDQMEventConsumerTags();
+  QueueIDs queueIdList6 = frag6.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList6.size() == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList6.begin(),queueIdList6.end(),qid3) == 1 );
 }
@@ -1413,7 +1413,7 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   CPPUNIT_ASSERT( frag1.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag1 );
   CPPUNIT_ASSERT( frag1.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList1 = frag1.getDQMEventConsumerTags();
+  QueueIDs queueIdList1 = frag1.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList1.size() == 2 );
   CPPUNIT_ASSERT( std::count(queueIdList1.begin(),queueIdList1.end(),qid1) == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList1.begin(),queueIdList1.end(),qid2) == 1 );
@@ -1441,7 +1441,7 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   CPPUNIT_ASSERT( frag2.messageCode() == Header::DQM_EVENT );
   _eventDistributor->addEventToRelevantQueues( frag2 );
   CPPUNIT_ASSERT( frag2.isTaggedForAnyDQMEventConsumer() );
-  std::vector<QueueID> queueIdList2 = frag2.getDQMEventConsumerTags();
+  QueueIDs queueIdList2 = frag2.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList2.size() == 3 );
   CPPUNIT_ASSERT( std::count(queueIdList2.begin(),queueIdList2.end(),qid1) == 1 );
   CPPUNIT_ASSERT( std::count(queueIdList2.begin(),queueIdList2.end(),qid2) == 1 );

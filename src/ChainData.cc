@@ -1,4 +1,4 @@
-// $Id: ChainData.cc,v 1.13 2010/09/24 10:55:16 mommsen Exp $
+// $Id: ChainData.cc,v 1.14 2010/12/14 12:56:52 mommsen Exp $
 /// @file: ChainData.cc
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
@@ -666,12 +666,12 @@ std::vector<StreamID> const& detail::ChainData::getStreamTags() const
   return _streamTags;
 }
 
-std::vector<QueueID> const& detail::ChainData::getEventConsumerTags() const
+QueueIDs const& detail::ChainData::getEventConsumerTags() const
 {
   return _eventConsumerTags;
 }
 
-std::vector<QueueID> const& detail::ChainData::getDQMEventConsumerTags() const
+QueueIDs const& detail::ChainData::getDQMEventConsumerTags() const
 {
   return _dqmEventConsumerTags;
 }

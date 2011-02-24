@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.9 2011/02/04 13:57:45 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.10 2011/02/04 15:42:34 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.9 $
-   * $Date: 2011/02/04 13:57:45 $
+   * $Revision: 1.10.2.10 $
+   * $Date: 2011/02/04 15:42:34 $
    */
 
   template <class T>
@@ -448,9 +448,9 @@ namespace stor {
     read_lock_t lock_discard_old(_protect_discard_old_queues);
     
     utils::time_point_t now = utils::getCurrentTime();
-    std::vector<QueueID> routes = event.getEventConsumerTags();
+    QueueIDs routes = event.getEventConsumerTags();
     
-    for( std::vector<QueueID>::const_iterator it = routes.begin(), itEnd = routes.end();
+    for( QueueIDs::const_iterator it = routes.begin(), itEnd = routes.end();
          it != itEnd; ++it )
     {
       const size_type droppedEvents = _enqueue_event( *it, event, now );

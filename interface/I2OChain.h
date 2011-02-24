@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.10 2010/05/17 15:59:09 mommsen Exp $
+// $Id: I2OChain.h,v 1.10.4.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: I2OChain.h 
 
 #ifndef EventFilter_StorageManager_I2OChain_h
@@ -10,13 +10,13 @@
 #include "toolbox/mem/Reference.h"
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
+#include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 
 
 namespace stor {
 
-  class QueueID;
   class DQMKey;
 
 
@@ -28,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: mommsen $
-   * $Revision: 1.10 $
-   * $Date: 2010/05/17 15:59:09 $
+   * $Revision: 1.10.4.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
 
@@ -252,7 +252,7 @@ namespace stor {
        should only be used for testing which consumers have been tagged,
        *not* for for modifying the list of tags.
     */
-    std::vector<QueueID> getEventConsumerTags() const;
+    QueueIDs getEventConsumerTags() const;
 
     /**
        Returns the list of DQM event consumers (queue IDs) that
@@ -262,7 +262,7 @@ namespace stor {
        should only be used for testing which consumers have been tagged,
        *not* for for modifying the list of tags.
     */
-    std::vector<QueueID> getDQMEventConsumerTags() const;
+    QueueIDs getDQMEventConsumerTags() const;
 
     /**
        Returns the message code for the chain. Valid values

@@ -1,4 +1,4 @@
-// $Id: I2OChain.cc,v 1.21 2010/05/17 15:59:10 mommsen Exp $
+// $Id: I2OChain.cc,v 1.22 2010/12/14 12:56:52 mommsen Exp $
 /// @file: I2OChain.cc
 
 #include <algorithm>
@@ -381,21 +381,21 @@ namespace stor
     return _data->getStreamTags();
   }
 
-  std::vector<QueueID> I2OChain::getEventConsumerTags() const
+  QueueIDs I2OChain::getEventConsumerTags() const
   {
     if (!_data)
       {
-        std::vector<QueueID> tmpList;
+        QueueIDs tmpList;
         return tmpList;
       }
     return _data->getEventConsumerTags();
   }
 
-  std::vector<QueueID> I2OChain::getDQMEventConsumerTags() const
+  QueueIDs I2OChain::getDQMEventConsumerTags() const
   {
     if (!_data)
       {
-        std::vector<QueueID> tmpList;
+        QueueIDs tmpList;
         return tmpList;
       }
     return _data->getDQMEventConsumerTags();

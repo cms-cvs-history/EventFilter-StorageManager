@@ -1,4 +1,4 @@
-// $Id: ChainData.h,v 1.13 2010/05/17 15:59:09 mommsen Exp $
+// $Id: ChainData.h,v 1.14 2010/09/24 10:55:16 mommsen Exp $
 /// @file: ChainData.h
 
 #ifndef CHAINDATA_H
@@ -128,15 +128,15 @@ namespace stor
       bool isTaggedForAnyEventConsumer() const {return !_eventConsumerTags.empty();}
       bool isTaggedForAnyDQMEventConsumer() const {return !_dqmEventConsumerTags.empty();}
       std::vector<StreamID> const& getStreamTags() const;
-      std::vector<QueueID> const& getEventConsumerTags() const;
-      std::vector<QueueID> const& getDQMEventConsumerTags() const;
+      QueueIDs const& getEventConsumerTags() const;
+      QueueIDs const& getDQMEventConsumerTags() const;
 
       bool isEndOfLumiSectionMessage() const;
 
     private:
       std::vector<StreamID> _streamTags;
-      std::vector<QueueID> _eventConsumerTags;
-      std::vector<QueueID> _dqmEventConsumerTags;
+      QueueIDs _eventConsumerTags;
+      QueueIDs _dqmEventConsumerTags;
 
       utils::time_point_t _creationTime;
       utils::time_point_t _lastFragmentTime;

@@ -1,4 +1,4 @@
-// $Id: QueueID.h,v 1.3 2009/07/20 13:06:10 mommsen Exp $
+// $Id: QueueID.h,v 1.3.14.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: QueueID.h 
 
 #ifndef EventFilter_StorageManager_QueueID_h
@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <vector>
 
 #include "EventFilter/StorageManager/interface/EnquingPolicyTag.h"
 
@@ -15,8 +16,8 @@ namespace stor {
    * Uniquely identifies the consumer queues 
    *
    * $Author: mommsen $
-   * $Revision: 1.3 $
-   * $Date: 2009/07/20 13:06:10 $
+   * $Revision: 1.3.14.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class QueueID
@@ -74,6 +75,8 @@ namespace stor {
       policy_type _policy;
 
     };
+
+  typedef std::vector<QueueID> QueueIDs;
 
   inline
   QueueID::QueueID() :
