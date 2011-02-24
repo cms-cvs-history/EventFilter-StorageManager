@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.7 2011/02/17 13:18:08 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.8 2011/02/22 11:28:41 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -16,8 +16,9 @@
 #include "xgi/Output.h"
 #include "xgi/exception/Exception.h"
 
-#include "boost/date_time/posix_time/posix_time_types.hpp"
-#include "boost/scoped_ptr.hpp"
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/pointer_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 #include <vector>

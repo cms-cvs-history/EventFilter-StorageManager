@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.h,v 1.11.4.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DQMTopLevelFolder.h,v 1.1.2.1 2011/02/23 09:27:07 mommsen Exp $
 /// @file: DQMTopLevelFolder.h 
 
 #ifndef EventFilter_StorageManager_DQMTopLevelFolder_h
@@ -26,8 +26,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.11.4.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.1.2.1 $
+   * $Date: 2011/02/23 09:27:07 $
    */
 
   class DQMTopLevelFolder
@@ -35,28 +35,54 @@ namespace stor {
 
   public:
 
-    struct Record
+    typedef std::vector<unsigned char> Buffer_t;
+
+    class Record
     {
+    private:
+
       struct Entry
       {
-        std::vector<unsigned char> buffer;
-        std::vector<QueueID> dqmConsumers;
+        Buffer_t buffer;
+        QueueIDs dqmConsumers;
       };
+
+    public:
       
       Record() :
       _entry(new Entry) {};
+
+      /**
+       * Clear any data
+       */
+      inline void clear()
+      { _entry->buffer.clear(); _entry->dqmConsumers.clear(); }
+
+      /**
+       * Return a reference to the buffer providing space for
+       * the specified size in bytes.
+       */
+      inline void* getBuffer(size_t size) const
+      { _entry->buffer.resize(size); return &(_entry->buffer[0]); }
+
+      /**
+       * Set the list of DQM event consumer this
+       * top level folder should be served to.
+       */
+      inline void tagForEventConsumers(const QueueIDs& ids)
+      { _entry->dqmConsumers = ids; }
       
       /**
        * Get the list of DQM event consumers this
-       * DQM event group should be served to.
+       * top level folder should be served to.
        */
-      std::vector<QueueID> getEventConsumerTags() const
+      inline QueueIDs getEventConsumerTags() const
        { return _entry->dqmConsumers; }
 
       /**
        * Returns the DQM event message view for this group
        */
-      DQMEventMsgView getDQMEventMsgView()
+      inline DQMEventMsgView getDQMEventMsgView()
       { return DQMEventMsgView(&_entry->buffer[0]); }
 
       /**
@@ -76,6 +102,9 @@ namespace stor {
        */
       inline unsigned long totalDataSize() const
       { return _entry->buffer.size(); }
+
+
+    private:
 
       // We use here a shared_ptr to avoid copying the whole
       // buffer each time the event record is handed on
@@ -97,7 +126,16 @@ namespace stor {
     ~DQMTopLevelFolder();
 
     /**
-     * Adds the DQMEventMsgView. Collates the histograms with the existing
+     * Adds the DQMEventMsgView, but does not take ownership of the underlying
+     * data buffer. Collates the histograms with the existing
+     * DQMEventMsgView if there is one.
+     */
+    void addDQMEvent(const DQMEventMsgView&);
+
+    /**
+     * Adds the DQM event message contained in the I2OChain.
+     * It copies the data from the I2OChain in its own buffer space.
+     * Collates the histograms with the existing
      * DQMEventMsgView if there is one.
      */
     void addDQMEvent(const I2OChain& dqmEvent);
@@ -124,7 +162,7 @@ namespace stor {
     const DQMProcessingParams _dqmParams;
     DQMEventMonitorCollection& _dqmEventMonColl;
 
-    std::vector<QueueID> _dqmConsumers;
+    QueueIDs _dqmConsumers;
 
     typedef boost::shared_ptr<DQMFolder> DQMFolderPtr;
     typedef std::map<std::string, DQMFolderPtr> DQMFoldersMap;
@@ -137,7 +175,7 @@ namespace stor {
     unsigned int _sentEvents;
     std::string _releaseTag;
     
-    std::vector<unsigned char> _tempEventArea;
+    Buffer_t _tempEventArea;
     
   };
 

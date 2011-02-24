@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.17 2010/12/14 12:56:52 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.17.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: FragmentProcessor.cc
 
 #include <unistd.h>
@@ -179,12 +179,12 @@ void FragmentProcessor::processAllCommands()
 
 void FragmentProcessor::processAllRegistrations()
 {
-  RegInfoBasePtr regInfo;
+  RegPtr regPtr;
   RegistrationQueuePtr regQueue =
     _sharedResources->_registrationQueue;
-  while ( regQueue->deq_nowait( regInfo ) )
+  while ( regQueue->deq_nowait( regPtr ) )
     {
-      regInfo->registerMe( &_eventDistributor );
+      regPtr->registerMe( &_eventDistributor );
     }
 }
 

@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.18 2010/12/15 15:29:23 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.1 2011/02/23 09:26:39 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -51,7 +51,12 @@ void DQMTopLevelFolder::addDQMEvent(const I2OChain& dqmEvent)
 {
   dqmEvent.copyFragmentsIntoBuffer(_tempEventArea);
   DQMEventMsgView view(&_tempEventArea[0]);
+  addDQMEvent(view);
+}
 
+
+void DQMTopLevelFolder::addDQMEvent(const DQMEventMsgView& view)
+{
   _releaseTag = view.releaseTag();
 
   edm::StreamDQMDeserializer deserializer;
@@ -107,8 +112,8 @@ bool DQMTopLevelFolder::getRecord(DQMTopLevelFolder::Record& record)
 {
   if ( _nUpdates == 0 ) return false;
 
-  record._entry->dqmConsumers = _dqmConsumers;
-  record._entry->buffer.clear();
+  record.clear();
+  record.tagForEventConsumers(_dqmConsumers);
 
   // Package list of TObjects into a DQMEvent::TObjectTable
   DQMEvent::TObjectTable table;
@@ -120,20 +125,19 @@ bool DQMTopLevelFolder::getRecord(DQMTopLevelFolder::Record& record)
     _dqmParams._compressionLevelDQM);
 
   // Add space for header
-  const unsigned int sourceSize = serializer.currentSpaceUsed();
-  const unsigned int totalSize =
+  const size_t sourceSize = serializer.currentSpaceUsed();
+  const size_t totalSize =
     sourceSize
     + sizeof(DQMEventHeader)
     + 12*sizeof(uint32_t)
     + _releaseTag.length()
     + _dqmKey.topLevelFolderName.length()
     + folderSize;
-  record._entry->buffer.resize(totalSize);
   
   edm::Timestamp timestamp(utils::nanoseconds_since_epoch(_lastUpdate));
   
   DQMEventMsgBuilder builder(
-    (void *)&(record._entry->buffer[0]), 
+    record.getBuffer(totalSize),
     totalSize,
     _dqmKey.runNumber,
     ++_sentEvents,
