@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.6 2011/02/17 13:17:31 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.7 2011/02/22 11:29:28 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -22,8 +22,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.6 $
-   * $Date: 2011/02/17 13:17:31 $
+   * $Revision: 1.8.2.7 $
+   * $Date: 2011/02/22 11:29:28 $
    */
 
   class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
@@ -52,7 +52,6 @@ namespace stor
     // Accessors:
     const std::string& topLevelFolderName() const { return _topLevelFolderName; }
     const int& retryInterval() const { return _retryInterval; }
-    edm::ParameterSet getPSet() const;
 
     // Comparison:
     bool operator<(const DQMEventConsumerRegistrationInfo&) const;
@@ -65,6 +64,7 @@ namespace stor
     // Implementation of the Template Method pattern.
     virtual void do_registerMe(EventDistributor*);
     virtual void do_eventType(std::ostream&) const;
+    virtual void do_appendToPSet(edm::ParameterSet&) const;
 
   private:
 

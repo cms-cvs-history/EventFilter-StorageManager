@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.9 2011/02/17 13:17:31 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.10 2011/02/22 11:29:28 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -23,8 +23,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.9 $
-   * $Date: 2011/02/17 13:17:31 $
+   * $Revision: 1.13.2.10 $
+   * $Date: 2011/02/22 11:29:28 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -58,7 +58,6 @@ namespace stor
     const bool& uniqueEvents() const { return _uniqueEvents; }
     const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
     const int& headerRetryInterval() const { return _headerRetryInterval; }
-    edm::ParameterSet getPSet() const;
 
     // Comparison:
     bool operator<(const EventConsumerRegistrationInfo&) const;
@@ -71,6 +70,7 @@ namespace stor
     // Implementation of Template Method pattern.
     virtual void do_registerMe(EventDistributor*);
     virtual void do_eventType(std::ostream&) const;
+    virtual void do_appendToPSet(edm::ParameterSet&) const;
 
   private:
 

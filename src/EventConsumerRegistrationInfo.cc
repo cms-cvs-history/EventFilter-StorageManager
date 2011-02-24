@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.8 2011/02/17 13:18:08 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.9 2011/02/22 11:28:41 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -76,10 +76,9 @@ namespace stor
   }
   
   
-  edm::ParameterSet
-  EventConsumerRegistrationInfo::getPSet() const
+  void
+  EventConsumerRegistrationInfo::do_appendToPSet(edm::ParameterSet& pset) const
   {
-    edm::ParameterSet pset;
     pset.addUntrackedParameter<std::string>("SelectHLTOutput", _outputModuleLabel);
     pset.addUntrackedParameter<std::string>("TriggerSelector", _triggerSelection);
     pset.addParameter<Strings>("TrackedEventSelection", _eventSelection);
@@ -94,10 +93,6 @@ namespace stor
 
     if ( _headerRetryInterval != 5 )
       pset.addUntrackedParameter<int>("headerRetryInterval", _headerRetryInterval);
-    
-    addToPSet(pset);
-
-    return pset;
   }
 
   void 
@@ -147,11 +142,7 @@ namespace stor
       return ( prescale() < other.prescale() );
     if ( uniqueEvents() != other.uniqueEvents() )
       return ( uniqueEvents() < other.uniqueEvents() );
-    if ( queueSize() != other.queueSize() )
-      return ( queueSize() < other.queueSize() );
-    if ( queuePolicy() != other.queuePolicy() )
-      return ( queuePolicy() < other.queuePolicy() );
-    return ( secondsToStale() < other.secondsToStale() );
+    return RegistrationInfoBase::operator<(other);
   }
 
   bool
@@ -163,9 +154,7 @@ namespace stor
       eventSelection() == other.eventSelection() &&
       prescale() == other.prescale() &&
       uniqueEvents() == other.uniqueEvents() &&
-      queueSize() == other.queueSize() &&
-      queuePolicy() == other.queuePolicy() &&
-      secondsToStale() == other.secondsToStale()
+      RegistrationInfoBase::operator==(other)
     );
   }
 

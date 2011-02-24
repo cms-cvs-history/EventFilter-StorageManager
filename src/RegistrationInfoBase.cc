@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.3 2011/02/22 11:28:41 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.4 2011/02/23 10:45:11 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -88,8 +88,10 @@ namespace stor
       _secondsToStale = eventServingParams._activeConsumerTimeout;
   }
 
-  void RegistrationInfoBase::addToPSet(edm::ParameterSet& pset) const
+  edm::ParameterSet RegistrationInfoBase::getPSet() const
   {
+    edm::ParameterSet pset;
+
     if ( _consumerName != "Unknown" )
       pset.addUntrackedParameter<std::string>("consumerName", _consumerName);
 
@@ -114,8 +116,34 @@ namespace stor
     if ( _queuePolicy == enquing_policy::DiscardOld )
       pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
 
+    do_appendToPSet(pset);
+
+    return pset;
   }
-  
+
+  bool RegistrationInfoBase::operator<(const RegistrationInfoBase& other) const
+  {
+    if ( queueSize() != other.queueSize() )
+      return ( queueSize() < other.queueSize() );
+    if ( queuePolicy() != other.queuePolicy() )
+      return ( queuePolicy() < other.queuePolicy() );
+    return ( secondsToStale() < other.secondsToStale() );
+  }
+
+  bool RegistrationInfoBase::operator==(const RegistrationInfoBase& other) const
+  {
+    return (
+      queueSize() == other.queueSize() &&
+      queuePolicy() == other.queuePolicy() &&
+      secondsToStale() == other.secondsToStale()
+    );
+  }
+
+  bool RegistrationInfoBase::operator!=(const RegistrationInfoBase& other) const
+  {
+    return ! ( *this == other );
+  }
+
   void RegistrationInfoBase::queueInfo(std::ostream& os) const
   {
     os << "Queue type: " << _queuePolicy <<

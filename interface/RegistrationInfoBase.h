@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.5 2011/02/11 12:10:30 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.6 2011/02/17 13:17:31 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -25,8 +25,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.5 $
-   * $Date: 2011/02/11 12:10:30 $
+   * $Revision: 1.6.2.6 $
+   * $Date: 2011/02/17 13:17:31 $
    */
 
   class RegistrationInfoBase
@@ -74,9 +74,9 @@ namespace stor {
     void eventType(std::ostream&) const;
 
     /**
-      Add the common quantities to the given ParameterSet
+      Return the ParameterSet containing the consumer registration infos
     */
-    void addToPSet(edm::ParameterSet&) const;
+    edm::ParameterSet getPSet() const;
 
     /**
       Print queue information into ostream
@@ -103,11 +103,17 @@ namespace stor {
     void setSourceURL(const std::string& url) { _sourceURL = url; }
     void setConsumerId(const ConsumerID& id) { _consumerId = id; }
 
+    // Comparison:
+    virtual bool operator<(const RegistrationInfoBase&) const;
+    virtual bool operator==(const RegistrationInfoBase&) const;
+    virtual bool operator!=(const RegistrationInfoBase&) const;
+
 
   protected:
 
     virtual void do_registerMe(EventDistributor*) = 0;
     virtual void do_eventType(std::ostream&) const = 0;
+    virtual void do_appendToPSet(edm::ParameterSet&) const = 0;
 
 
   private:

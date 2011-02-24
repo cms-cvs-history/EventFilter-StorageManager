@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.6 2011/02/17 13:18:08 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.7 2011/02/22 11:28:41 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -38,20 +38,14 @@ namespace stor
     _retryInterval = pset.getUntrackedParameter<int>("retryInterval", 5);
   }
   
-  edm::ParameterSet
-  DQMEventConsumerRegistrationInfo::getPSet() const
+  void
+  DQMEventConsumerRegistrationInfo::do_appendToPSet(edm::ParameterSet& pset) const
   {
-    edm::ParameterSet pset;
-
     if ( _topLevelFolderName != "*" )
       pset.addUntrackedParameter<std::string>("topLevelFolderName", _topLevelFolderName);
 
     if ( _retryInterval != 5 )
       pset.addUntrackedParameter<int>("retryInterval", _retryInterval);
-    
-    addToPSet(pset);
-
-    return pset;
   }
 
   void 
@@ -72,11 +66,7 @@ namespace stor
   {
     if ( topLevelFolderName() != other.topLevelFolderName() )
       return ( topLevelFolderName() < other.topLevelFolderName() );
-    if ( queueSize() != other.queueSize() )
-      return ( queueSize() < other.queueSize() );
-    if ( queuePolicy() != other.queuePolicy() )
-      return ( queuePolicy() < other.queuePolicy() );
-    return ( secondsToStale() < other.secondsToStale() );
+    return RegistrationInfoBase::operator<(other);
   }
 
   bool
@@ -84,12 +74,10 @@ namespace stor
   {
     return (
       topLevelFolderName() == other.topLevelFolderName() &&
-      queueSize() == other.queueSize() &&
-      queuePolicy() == other.queuePolicy() &&
-      secondsToStale() == other.secondsToStale()
+      RegistrationInfoBase::operator==(other)
     );
   }
-
+  
   bool
   DQMEventConsumerRegistrationInfo::operator!=(const DQMEventConsumerRegistrationInfo& other) const
   {
