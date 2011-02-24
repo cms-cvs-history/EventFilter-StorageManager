@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.11 2011/02/23 10:54:17 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.12 2011/02/24 14:40:37 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -131,27 +131,27 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow, noWrapAttr);
-    maker.addText(tableDiv, "last 10s");
+    maker.addText(tableDiv, "last 10 s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow, noWrapAttr);
-    maker.addText(tableDiv, "last 10s");
+    maker.addText(tableDiv, "last 10 s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow, noWrapAttr);
-    maker.addText(tableDiv, "last 10s");
+    maker.addText(tableDiv, "last 10 s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow, noWrapAttr);
-    maker.addText(tableDiv, "last 10s");
+    maker.addText(tableDiv, "last 10 s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow, noWrapAttr);
-    maker.addText(tableDiv, "last 10s");
+    maker.addText(tableDiv, "last 10 s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
     tableDiv = maker.addNode("th", tableRow, noWrapAttr);
-    maker.addText(tableDiv, "last 10s");
+    maker.addText(tableDiv, "last 10 s");
     
     if ( consumers.empty() )
     {

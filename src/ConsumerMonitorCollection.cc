@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.11.2.4 2011/02/23 10:54:17 mommsen Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.11.2.5 2011/02/24 14:40:37 mommsen Exp $
 /// @file: ConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -15,6 +15,7 @@ ConsumerMonitorCollection::ConsumerMonitorCollection
 ):
 MonitorCollection(updateInterval),
 _updateInterval(updateInterval),
+_recentDuration(recentDuration),
 _totalQueuedMQ(updateInterval, recentDuration),
 _totalDroppedMQ(updateInterval, recentDuration),
 _totalServedMQ(updateInterval, recentDuration)
@@ -67,7 +68,7 @@ void ConsumerMonitorCollection::addEventSampleToMap( const QueueID& qid,
     pos = map.insert(pos,
       ConsStatMap::value_type(qid, 
         MonitoredQuantityPtr(
-          new MonitoredQuantity(_updateInterval, boost::posix_time::seconds(10))
+          new MonitoredQuantity(_updateInterval, _recentDuration)
         )
       )
     );

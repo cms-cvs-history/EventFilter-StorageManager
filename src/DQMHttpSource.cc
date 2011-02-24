@@ -1,4 +1,4 @@
-// $Id: DQMHttpSource.cc,v 1.42.2.6 2011/02/14 16:53:49 mommsen Exp $
+// $Id: DQMHttpSource.cc,v 1.22.2.1 2011/02/22 11:28:41 mommsen Exp $
 /// @file: DQMHttpSource.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -32,6 +32,10 @@ namespace edm
 
     _dqmEventServerProxy.getOneDQMEvent(data);
     if ( data.empty() ) return std::auto_ptr<edm::Event>();
+
+    HeaderView hdrView(&data[0]);
+    if (hdrView.code() == Header::DONE)
+      return std::auto_ptr<edm::Event>();
 
     const DQMEventMsgView dqmEventMsgView(&data[0]);
     addEventToDQMBackend(dqmEventMsgView);
