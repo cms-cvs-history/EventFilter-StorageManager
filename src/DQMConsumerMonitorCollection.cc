@@ -1,4 +1,4 @@
-// $Id: DQMConsumerMonitorCollection.cc,v 1.1 2009/08/24 14:31:50 mommsen Exp $
+// $Id: DQMConsumerMonitorCollection.cc,v 1.2 2009/08/28 16:41:25 mommsen Exp $
 /// @file: DQMConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -8,7 +8,7 @@ using namespace stor;
 
 
 DQMConsumerMonitorCollection::DQMConsumerMonitorCollection(const utils::duration_t& updateInterval):
-ConsumerMonitorCollection(updateInterval)
+ConsumerMonitorCollection(updateInterval, boost::posix_time::minutes(5))
 {}
 
 

@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.10 2011/02/11 16:45:14 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.11 2011/02/23 10:54:17 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -95,6 +95,9 @@ namespace stor
     
     XHTMLMaker::AttrMap subColspanAttr;
     subColspanAttr[ "colspan" ] = "2";
+
+    XHTMLMaker::AttrMap noWrapAttr; 
+    noWrapAttr[ "style" ] = "white-space: nowrap;";
     
     //Header
     tableRow = maker.addNode("tr", table, this->_specialRowAttr);
@@ -127,28 +130,28 @@ namespace stor
     tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 10s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 10s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 10s");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 10s");
     tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    maker.addText(tableDiv, "overall");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 10s");
+    tableDiv = maker.addNode("th", tableRow);
+    maker.addText(tableDiv, "overall");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 10s");
     
     if ( consumers.empty() )
     {
@@ -348,7 +351,10 @@ namespace stor
     
     XHTMLMaker::AttrMap subColspanAttr;
     subColspanAttr[ "colspan" ] = "2";
-    
+
+    XHTMLMaker::AttrMap noWrapAttr; 
+    noWrapAttr[ "style" ] = "white-space: nowrap;";
+
     //Header
     tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
@@ -376,24 +382,24 @@ namespace stor
     tableRow = maker.addNode("tr", table, this->_specialRowAttr);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 5 min");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "overall");
-    tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 5 min");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "overall");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 5 min");
     tableDiv = maker.addNode("th", tableRow);
-    maker.addText(tableDiv, "recent");
+    maker.addText(tableDiv, "overall");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 5 min");
+    tableDiv = maker.addNode("th", tableRow);
+    maker.addText(tableDiv, "overall");
+    tableDiv = maker.addNode("th", tableRow, noWrapAttr);
+    maker.addText(tableDiv, "last 5 min");
     
     if ( consumers.empty() )
     {

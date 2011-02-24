@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11.2.4 2011/02/04 13:57:45 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.5 2011/02/11 12:11:04 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11.2.4 $
-   * $Date: 2011/02/04 13:57:45 $
+   * $Revision: 1.11.2.5 $
+   * $Date: 2011/02/11 12:11:04 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
@@ -37,7 +37,11 @@ namespace stor {
       MonitoredQuantity::Stats servedStats;
     };
 
-    explicit ConsumerMonitorCollection(const utils::duration_t& updateInterval);
+    explicit ConsumerMonitorCollection
+    (
+      const utils::duration_t& updateInterval,
+      const utils::duration_t& recentDuration
+    );
 
     /**
        Add queued sample

@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.11.2.3 2011/02/11 12:11:05 mommsen Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.11.2.4 2011/02/23 10:54:17 mommsen Exp $
 /// @file: ConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -8,12 +8,16 @@
 using namespace stor;
 
 
-ConsumerMonitorCollection::ConsumerMonitorCollection(const utils::duration_t& updateInterval):
+ConsumerMonitorCollection::ConsumerMonitorCollection
+(
+  const utils::duration_t& updateInterval,
+  const utils::duration_t& recentDuration
+):
 MonitorCollection(updateInterval),
 _updateInterval(updateInterval),
-_totalQueuedMQ(updateInterval, boost::posix_time::seconds(10)),
-_totalDroppedMQ(updateInterval, boost::posix_time::seconds(10)),
-_totalServedMQ(updateInterval, boost::posix_time::seconds(10))
+_totalQueuedMQ(updateInterval, recentDuration),
+_totalDroppedMQ(updateInterval, recentDuration),
+_totalServedMQ(updateInterval, recentDuration)
 {}
 
 
