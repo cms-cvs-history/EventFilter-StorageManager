@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.11 2011/02/24 13:37:13 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.12 2011/02/25 09:12:38 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -25,8 +25,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.11 $
-   * $Date: 2011/02/24 13:37:13 $
+   * $Revision: 1.13.2.12 $
+   * $Date: 2011/02/25 09:12:38 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -49,16 +49,12 @@ namespace stor
 
     ~EventConsumerRegistrationInfo() {};
 
-    // Setters:
-    void setMinEventRequestInterval(const utils::duration_t& interval) { _minEventRequestInterval= interval; }
-
     // Accessors:
     const std::string& triggerSelection() const { return _triggerSelection; }
     const Strings& eventSelection() const { return _eventSelection; }
     const std::string& outputModuleLabel() const { return _outputModuleLabel; }
     const int& prescale() const { return _prescale; }
     const bool& uniqueEvents() const { return _uniqueEvents; }
-    const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
     const int& headerRetryInterval() const { return _headerRetryInterval; }
     uint32 eventRequestCode() const { return Header::EVENT_REQUEST; }
     uint32 eventCode() const { return Header::EVENT; }
@@ -87,7 +83,6 @@ namespace stor
     std::string _outputModuleLabel;
     int _prescale;
     bool _uniqueEvents;
-    utils::duration_t _minEventRequestInterval;
     int _headerRetryInterval;
   };
 

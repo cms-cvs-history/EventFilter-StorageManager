@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.5 2011/02/24 13:36:30 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.6 2011/02/25 09:13:48 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -52,6 +52,12 @@ namespace stor
     {
       _sourceURL = pset.getUntrackedParameter<std::string>("sourceURL", "Unknown");
     }
+
+    const double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
+    if ( maxEventRequestRate > 0 )
+      _minEventRequestInterval = utils::seconds_to_duration(1 / maxEventRequestRate);
+    else
+      _minEventRequestInterval = boost::posix_time::not_a_date_time;
 
     _maxConnectTries = pset.getUntrackedParameter<int>("maxConnectTries", 300);
 
@@ -111,6 +117,12 @@ namespace stor
     
     if ( _queueSize > 0 )
       pset.addUntrackedParameter<int>("queueSize", _queueSize);
+    
+    if ( ! _minEventRequestInterval.is_not_a_date_time() )
+    {
+      const double rate = 1 / utils::duration_to_seconds(_minEventRequestInterval);
+      pset.addUntrackedParameter<double>("maxEventRequestRate", rate);
+    }
 
     const double secondsToStale = utils::duration_to_seconds(_secondsToStale);
     if ( secondsToStale > 0 )

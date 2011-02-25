@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.9 2011/02/22 11:28:41 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.10 2011/02/24 13:36:30 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -65,13 +65,6 @@ namespace stor
 
     _prescale = pset.getUntrackedParameter<int>("prescale", 1);
     _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
-
-    double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
-    if ( maxEventRequestRate > 0 )
-      _minEventRequestInterval = utils::seconds_to_duration(1 / maxEventRequestRate);
-    else
-      _minEventRequestInterval = boost::posix_time::not_a_date_time;
-
     _headerRetryInterval = pset.getUntrackedParameter<int>("headerRetryInterval", 5);
   }
   
@@ -84,12 +77,6 @@ namespace stor
     pset.addParameter<Strings>("TrackedEventSelection", _eventSelection);
     pset.addUntrackedParameter<bool>("uniqueEvents", _uniqueEvents);
     pset.addUntrackedParameter<int>("prescale", _prescale);
-    
-    if ( ! _minEventRequestInterval.is_not_a_date_time() )
-    {
-      const double rate = 1 / utils::duration_to_seconds(_minEventRequestInterval);
-      pset.addUntrackedParameter<double>("maxEventRequestRate", rate);
-    }
 
     if ( _headerRetryInterval != 5 )
       pset.addUntrackedParameter<int>("headerRetryInterval", _headerRetryInterval);

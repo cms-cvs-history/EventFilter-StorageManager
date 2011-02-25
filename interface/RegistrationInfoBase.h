@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.7 2011/02/24 13:37:13 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.8 2011/02/25 09:12:38 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -25,8 +25,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.7 $
-   * $Date: 2011/02/24 13:37:13 $
+   * $Revision: 1.6.2.8 $
+   * $Date: 2011/02/25 09:12:38 $
    */
 
   class RegistrationInfoBase
@@ -83,6 +83,9 @@ namespace stor {
      */
     void queueInfo(std::ostream&) const;
 
+    // Setters:
+    void setMinEventRequestInterval(const utils::duration_t& interval) { _minEventRequestInterval = interval; }
+
     // Accessors
     bool isValid() const { return _consumerId.isValid(); }
     const QueueID& queueId() const { return _queueId; }
@@ -95,6 +98,7 @@ namespace stor {
     const int& maxConnectTries() const { return _maxConnectTries; }
     const int& connectTrySleepTime() const { return _connectTrySleepTime; }
     const int& retryInterval() const { return _retryInterval; }
+    const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
     const utils::duration_t& secondsToStale() const { return _secondsToStale; }
     bool isStale(const utils::time_point_t&) const;
     double lastContactSecondsAgo(const utils::time_point_t&) const;
@@ -128,6 +132,7 @@ namespace stor {
     int                              _maxConnectTries;
     int                              _connectTrySleepTime;
     int                              _retryInterval;
+    utils::duration_t                _minEventRequestInterval;
     QueueID                          _queueId;
     ConsumerID                       _consumerId;
     utils::time_point_t              _lastConsumerContact;
