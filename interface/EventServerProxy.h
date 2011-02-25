@@ -1,11 +1,11 @@
-// $Id: EventServerProxy.h,v 1.1.2.7 2011/02/17 13:17:31 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.8 2011/02/22 11:29:28 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
 #define EventFilter_StorageManager_EventServerProxy_h
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
-#include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -15,17 +15,18 @@
 namespace stor {
 
   /**
-   * Retrieve data events from the Storage Manager event server.
+   * Retrieve events from the Storage Manager event server.
    *
    * This does uses a HTTP get using the CURL library. The Storage Manager
    * event server responses with a binary octet-stream. The init message
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2011/02/17 13:17:31 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2011/02/22 11:29:28 $
    */
- 
+
+  template<typename RegInfo>
   class EventServerProxy
   {
 
@@ -61,7 +62,7 @@ namespace stor {
     void connectToEventServer(CurlInterface::Content&);
     bool extractConsumerId(CurlInterface::Content&);
 
-    const EventConsumerRegistrationInfo ecri_;
+    const RegInfo regInfo_;
     
     std::string consumerPSetString_;
     unsigned int consumerId_;

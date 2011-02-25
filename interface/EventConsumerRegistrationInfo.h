@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.10 2011/02/22 11:29:28 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.11 2011/02/24 13:37:13 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -16,6 +16,8 @@
 #include "EventFilter/StorageManager/interface/Utils.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "IOPool/Streamer/interface/HLTInfo.h"
+#include "IOPool/Streamer/interface/MsgHeader.h"
+
 
 namespace stor
 {
@@ -23,8 +25,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.10 $
-   * $Date: 2011/02/22 11:29:28 $
+   * $Revision: 1.13.2.11 $
+   * $Date: 2011/02/24 13:37:13 $
    */
 
   class EventConsumerRegistrationInfo: public RegistrationInfoBase
@@ -58,6 +60,10 @@ namespace stor
     const bool& uniqueEvents() const { return _uniqueEvents; }
     const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
     const int& headerRetryInterval() const { return _headerRetryInterval; }
+    uint32 eventRequestCode() const { return Header::EVENT_REQUEST; }
+    uint32 eventCode() const { return Header::EVENT; }
+    std::string eventURL() const { return sourceURL() + "/geteventdata"; }
+    std::string registerURL() const { return sourceURL() + "/registerConsumer"; }
 
     // Comparison:
     bool operator<(const EventConsumerRegistrationInfo&) const;

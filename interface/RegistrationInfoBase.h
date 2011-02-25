@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.6 2011/02/17 13:17:31 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.7 2011/02/24 13:37:13 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -25,8 +25,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.6 $
-   * $Date: 2011/02/17 13:17:31 $
+   * $Revision: 1.6.2.7 $
+   * $Date: 2011/02/24 13:37:13 $
    */
 
   class RegistrationInfoBase
@@ -94,6 +94,7 @@ namespace stor {
     const int& queueSize() const { return _queueSize; }
     const int& maxConnectTries() const { return _maxConnectTries; }
     const int& connectTrySleepTime() const { return _connectTrySleepTime; }
+    const int& retryInterval() const { return _retryInterval; }
     const utils::duration_t& secondsToStale() const { return _secondsToStale; }
     bool isStale(const utils::time_point_t&) const;
     double lastContactSecondsAgo(const utils::time_point_t&) const;
@@ -126,6 +127,7 @@ namespace stor {
     utils::duration_t                _secondsToStale;
     int                              _maxConnectTries;
     int                              _connectTrySleepTime;
+    int                              _retryInterval;
     QueueID                          _queueId;
     ConsumerID                       _consumerId;
     utils::time_point_t              _lastConsumerContact;

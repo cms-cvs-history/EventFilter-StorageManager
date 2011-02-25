@@ -1,11 +1,12 @@
-// $Id: DQMHttpSource.h,v 1.22.8.4 2011/01/18 15:56:37 mommsen Exp $
+// $Id: DQMHttpSource.h,v 1.9.16.1 2011/02/22 11:28:41 mommsen Exp $
 /// @file: DQMHttpSource.h
 
 #ifndef StorageManager_DQMHttpSource_h
 #define StorageManager_DQMHttpSource_h
 
 #include "DQMServices/Core/interface/DQMStore.h"
-#include "EventFilter/StorageManager/interface/DQMEventServerProxy.h"
+#include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventServerProxy.h"
 #include "FWCore/Framework/interface/InputSourceDescription.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -22,8 +23,8 @@ namespace edm
     the StorageManager or SMProxyServer to get DQM (histogram) data.
     
     $Author: mommsen $
-    $Revision: 1.22.8.4 $
-    $Date: 2011/01/18 15:56:37 $
+    $Revision: 1.9.16.1 $
+    $Date: 2011/02/22 11:28:41 $
   */
 
   class DQMHttpSource : public edm::RawInputSource
@@ -42,7 +43,7 @@ namespace edm
     void initializeDQMStore();
 
     DQMStore *_dqmStore;
-    stor::DQMEventServerProxy _dqmEventServerProxy;
+    stor::EventServerProxy<stor::DQMEventConsumerRegistrationInfo> _dqmEventServerProxy;
 
   };
 

@@ -1,13 +1,14 @@
-// $Id: EventStreamHttpReader.h,v 1.22.8.4 2011/01/18 15:56:37 mommsen Exp $
+// $Id: EventStreamHttpReader.h,v 1.22.8.5 2011/02/22 11:28:41 mommsen Exp $
 /// @file: EventStreamHttpReader.h
 
 #ifndef StorageManager_EventStreamHttpReader_h
 #define StorageManager_EventStreamHttpReader_h
 
-#include "IOPool/Streamer/interface/StreamerInputSource.h"
+#include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/EventServerProxy.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/InputSourceDescription.h"
+#include "IOPool/Streamer/interface/StreamerInputSource.h"
 
 
 namespace edm
@@ -25,8 +26,8 @@ namespace edm
     framework input source. Currently we inherit from InputSource.
 
     $Author: mommsen $
-    $Revision: 1.22.8.4 $
-    $Date: 2011/01/18 15:56:37 $
+    $Revision: 1.22.8.5 $
+    $Date: 2011/02/22 11:28:41 $
   */
 
   class EventStreamHttpReader : public edm::StreamerInputSource
@@ -44,7 +45,7 @@ namespace edm
   private:
     void readHeader();
     
-    stor::EventServerProxy _eventServerProxy;
+    stor::EventServerProxy<stor::EventConsumerRegistrationInfo> _eventServerProxy;
 
   };
 

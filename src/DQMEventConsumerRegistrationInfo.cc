@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.7 2011/02/22 11:28:41 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.8 2011/02/24 13:36:30 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -35,7 +35,6 @@ namespace stor
   DQMEventConsumerRegistrationInfo::parsePSet(const edm::ParameterSet& pset)
   {
     _topLevelFolderName = pset.getUntrackedParameter<std::string>("topLevelFolderName", "*");
-    _retryInterval = pset.getUntrackedParameter<int>("retryInterval", 5);
   }
   
   void
@@ -43,9 +42,6 @@ namespace stor
   {
     if ( _topLevelFolderName != "*" )
       pset.addUntrackedParameter<std::string>("topLevelFolderName", _topLevelFolderName);
-
-    if ( _retryInterval != 5 )
-      pset.addUntrackedParameter<int>("retryInterval", _retryInterval);
   }
 
   void 

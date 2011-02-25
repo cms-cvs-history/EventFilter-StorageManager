@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.4 2011/02/23 10:45:11 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.5 2011/02/24 13:36:30 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -57,6 +57,8 @@ namespace stor
 
     _connectTrySleepTime = pset.getUntrackedParameter<int>("connectTrySleepTime", 10);
 
+    _retryInterval = pset.getUntrackedParameter<int>("retryInterval", 5);
+
     _queueSize = pset.getUntrackedParameter<int>("queueSize",
       useEventServingParams ? eventServingParams._consumerQueueSize : 0);
 
@@ -103,6 +105,9 @@ namespace stor
     
     if ( _connectTrySleepTime != 10 )
       pset.addUntrackedParameter<int>("connectTrySleepTime", _connectTrySleepTime);
+
+    if ( _retryInterval != 5 )
+      pset.addUntrackedParameter<int>("retryInterval", _retryInterval);
     
     if ( _queueSize > 0 )
       pset.addUntrackedParameter<int>("queueSize", _queueSize);

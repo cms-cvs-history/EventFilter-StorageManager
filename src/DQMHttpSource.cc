@@ -1,8 +1,9 @@
-// $Id: DQMHttpSource.cc,v 1.22.2.1 2011/02/22 11:28:41 mommsen Exp $
+// $Id: DQMHttpSource.cc,v 1.22.2.2 2011/02/24 15:05:09 mommsen Exp $
 /// @file: DQMHttpSource.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
 #include "EventFilter/StorageManager/src/DQMHttpSource.h"
+#include "EventFilter/StorageManager/src/EventServerProxy.icc"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "IOPool/Streamer/interface/StreamDQMDeserializer.h"
@@ -30,7 +31,7 @@ namespace edm
   {
     stor::CurlInterface::Content data;
 
-    _dqmEventServerProxy.getOneDQMEvent(data);
+    _dqmEventServerProxy.getOneEvent(data);
     if ( data.empty() ) return std::auto_ptr<edm::Event>();
 
     HeaderView hdrView(&data[0]);
