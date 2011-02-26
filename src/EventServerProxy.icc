@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.icc,v 1.1.2.1 2011/02/25 09:13:48 mommsen Exp $
+// $Id: EventServerProxy.icc,v 1.1.2.2 2011/02/25 13:31:43 mommsen Exp $
 /// @file: EventServerProxy.icc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -217,7 +217,7 @@ namespace stor
         {
           edm::LogInfo("EventServerProxy") << "Waiting for connection to StorageManager on " <<
             sourceURL << "... " << tries << "/" << maxConnectTries;
-          sleep(regInfo_.connectTrySleepTime());
+          ::sleep(regInfo_.connectTrySleepTime());
         }
         data.clear();
       }
@@ -262,7 +262,7 @@ namespace stor
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
-      sleep(regInfo_.retryInterval());
+      ::sleep(regInfo_.retryInterval());
       return false;
     }
     else
