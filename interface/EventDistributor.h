@@ -1,9 +1,11 @@
-// $Id: EventDistributor.h,v 1.7 2010/12/16 16:35:29 mommsen Exp $
+// $Id: EventDistributor.h,v 1.7.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventDistributor.h 
 
 #ifndef EventFilter_StorageManager_EventDistributor_h
 #define EventFilter_StorageManager_EventDistributor_h
 
+#include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
+#include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
 #include "EventFilter/StorageManager/interface/ErrorStreamConfigurationInfo.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/EventStreamConfigurationInfo.h"
@@ -15,11 +17,9 @@
 namespace stor {
 
   class DataSenderMonitorCollection;
-  class DQMEventConsumerRegistrationInfo;
   class DQMEventSelector;
   class ErrorStreamConfigurationInfo;
   class ErrorStreamSelector;
-  class EventConsumerRegistrationInfo;
   class EventConsumerSelector;
   class EventStreamConfigurationInfo;
   class EventStreamSelector;
@@ -37,8 +37,8 @@ namespace stor {
    * header.
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2010/12/16 16:35:29 $
+   * $Revision: 1.7.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class EventDistributor
@@ -63,12 +63,12 @@ namespace stor {
     /**
      * Registers a new consumer
      */
-    void registerEventConsumer( const EventConsumerRegistrationInfo* );
+    void registerEventConsumer( const EventConsRegPtr );
 
     /**
      * Registers a new DQM consumer
      */
-    void registerDQMEventConsumer( const DQMEventConsumerRegistrationInfo* );
+    void registerDQMEventConsumer( const DQMEventConsRegPtr );
 
     /**
      * Registers the full set of event streams.

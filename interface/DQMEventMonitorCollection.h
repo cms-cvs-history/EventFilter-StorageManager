@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.h,v 1.7.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DQMEventMonitorCollection.h,v 1.7.8.2 2011/02/04 13:57:45 mommsen Exp $
 /// @file: DQMEventMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DQMEventMonitorCollection_h
@@ -16,8 +16,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.7.8.2 $
+   * $Date: 2011/02/04 13:57:45 $
    */
   
   class DQMEventMonitorCollection : public MonitorCollection
@@ -34,9 +34,9 @@ namespace stor {
     MonitoredQuantity _servedDQMEventBandwidth;
     MonitoredQuantity _writtenDQMEventBandwidth;
 
-    MonitoredQuantity _numberOfGroups;
+    MonitoredQuantity _numberOfTopLevelFolders;
     MonitoredQuantity _numberOfUpdates;
-    MonitoredQuantity _numberOfWrittenGroups;
+    MonitoredQuantity _numberOfWrittenTopLevelFolders;
 
 
   public:
@@ -53,9 +53,9 @@ namespace stor {
       MonitoredQuantity::Stats servedDQMEventBandwidthStats;  //MB/s
       MonitoredQuantity::Stats writtenDQMEventBandwidthStats; //MB/s
 
-      MonitoredQuantity::Stats numberOfGroupsStats;           //number of groups
-      MonitoredQuantity::Stats numberOfUpdatesStats;          //number of received updates per group and DQMKey
-      MonitoredQuantity::Stats numberOfWrittenGroupsStats;    //number of groups written to disk
+      MonitoredQuantity::Stats numberOfTopLevelFoldersStats;  //number of top level folders
+      MonitoredQuantity::Stats numberOfUpdatesStats;          //number of received updates per DQMKey
+      MonitoredQuantity::Stats numberOfWrittenTopLevelFoldersStats; //number of top level folders written to disk
     };
 
     explicit DQMEventMonitorCollection(const utils::duration_t& updateInterval);
@@ -109,11 +109,11 @@ namespace stor {
       return _writtenDQMEventBandwidth;
     }
 
-    const MonitoredQuantity& getNumberOfGroupsMQ() const {
-      return _numberOfGroups;
+    const MonitoredQuantity& getNumberOfTopLevelFoldersMQ() const {
+      return _numberOfTopLevelFolders;
     }
-    MonitoredQuantity& getNumberOfGroupsMQ() {
-      return _numberOfGroups;
+    MonitoredQuantity& getNumberOfTopLevelFoldersMQ() {
+      return _numberOfTopLevelFolders;
     }
 
     const MonitoredQuantity& getNumberOfUpdatesMQ() const {
@@ -123,11 +123,11 @@ namespace stor {
       return _numberOfUpdates;
     }
 
-    const MonitoredQuantity& getNumberOfWrittenGroupsMQ() const {
-      return _numberOfWrittenGroups;
+    const MonitoredQuantity& getNumberOfWrittenTopLevelFoldersMQ() const {
+      return _numberOfWrittenTopLevelFolders;
     }
-    MonitoredQuantity& getNumberOfWrittenGroupsMQ() {
-      return _numberOfWrittenGroups;
+    MonitoredQuantity& getNumberOfWrittenTopLevelFoldersMQ() {
+      return _numberOfWrittenTopLevelFolders;
     }
 
    /**

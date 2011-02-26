@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.23.2.3 2011/01/24 14:03:20 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.23.2.4 2011/02/04 13:57:45 mommsen Exp $
 /// @file: EventDistributor.cc
 
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -159,31 +159,33 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
     
     case Header::DQM_EVENT:
     {
+      utils::time_point_t now = utils::getCurrentTime();
+
       for( DQMEvtSelList::iterator it = _dqmEventSelectors.begin(),
              itEnd = _dqmEventSelectors.end();
            it != itEnd;
            ++it)
       {
-        if( (*it)->acceptEvent( ioc ) )
+        if( (*it)->acceptEvent( ioc, now ) )
         {
           ioc.tagForDQMEventConsumer( (*it)->queueId() );
         }
       }
       
-      // Pass any DQM event to the DQM event processor, as it might write 
-      // DQM histograms to disk which are not requested by any consumer
-      // Put this here or in EventDistributor::addEventToRelevantQueues?
-      DQMEventQueue::size_type droppedDQMEvents =
-        _sharedResources->_dqmEventQueue->enq_nowait( ioc );
-
-      DQMEventMonitorCollection& dqmEventMonColl = _sharedResources->
-        _statisticsReporter->getDQMEventMonitorCollection();
-      dqmEventMonColl.getDroppedDQMEventCountsMQ().addSample(droppedDQMEvents);
-
       DataSenderMonitorCollection& dataSenderMonColl = _sharedResources->
         _statisticsReporter->getDataSenderMonitorCollection();
       dataSenderMonColl.addDQMEventSample(ioc);
 
+      if( ioc.isTaggedForAnyDQMEventConsumer() )
+      {
+        _sharedResources->_dqmEventQueue->enq_nowait( ioc );
+      }
+      else
+      {
+        _sharedResources->_statisticsReporter->getDQMEventMonitorCollection().
+          getDroppedDQMEventCountsMQ().addSample(1);
+      }
+      
       break;
     }
     
@@ -242,17 +244,19 @@ const bool EventDistributor::full() const
 
 void EventDistributor::registerEventConsumer
 (
-  const EventConsumerRegistrationInfo* registrationInfo
+  const EventConsRegPtr regPtr
 )
 {
-  ConsSelPtr evtSel( new EventConsumerSelector(registrationInfo) );
+  ConsSelPtr evtSel( new EventConsumerSelector(regPtr) );
 
   InitMsgSharedPtr initMsgPtr =
-    _sharedResources->_initMsgCollection->getElementForOutputModule( registrationInfo->outputModuleLabel() );
+    _sharedResources->_initMsgCollection->getElementForOutputModule(
+      regPtr->outputModuleLabel()
+    );
   if ( initMsgPtr.get() != 0 )
   {
-    uint8* regPtr = &(*initMsgPtr)[0];
-    InitMsgView initView(regPtr);
+    uint8* initPtr = &(*initMsgPtr)[0];
+    InitMsgView initView(initPtr);
     try
     {
       evtSel->initialize( initView );
@@ -267,7 +271,7 @@ void EventDistributor::registerEventConsumer
   _eventConsumerSelectors.insert( evtSel );
 }
 
-void EventDistributor::registerDQMEventConsumer( const DQMEventConsumerRegistrationInfo* ptr )
+void EventDistributor::registerDQMEventConsumer( const DQMEventConsRegPtr ptr )
 {
   DQMEvtSelPtr dqmEvtSel( new DQMEventSelector(ptr) );
   _dqmEventSelectors.insert( dqmEvtSel );

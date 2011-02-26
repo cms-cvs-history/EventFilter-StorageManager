@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.8 2011/02/24 13:36:30 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.9 2011/02/25 09:13:48 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -47,7 +47,7 @@ namespace stor
   void 
   DQMEventConsumerRegistrationInfo::do_registerMe(EventDistributor* evtDist)
   {
-    evtDist->registerDQMEventConsumer(this);
+    evtDist->registerDQMEventConsumer(shared_from_this());
   }
 
   void

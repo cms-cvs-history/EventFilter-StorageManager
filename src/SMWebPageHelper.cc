@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.7 2011/02/10 10:20:57 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.8 2011/02/11 12:09:14 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -2076,11 +2076,11 @@ namespace stor
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Top level folders");
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-    maker.addDouble( tableDiv, stats.numberOfGroupsStats.getValueSum(dataSet), 0 );
+    maker.addDouble( tableDiv, stats.numberOfTopLevelFoldersStats.getValueSum(dataSet), 0 );
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
     maker.addInt( tableDiv, stats.servedDQMEventSizeStats.getSampleCount(dataSet) );
     tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-    maker.addDouble( tableDiv, stats.numberOfWrittenGroupsStats.getValueSum(dataSet), 0 );
+    maker.addDouble( tableDiv, stats.numberOfWrittenTopLevelFoldersStats.getValueSum(dataSet), 0 );
   }
   
   

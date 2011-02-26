@@ -517,7 +517,7 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(queueId1.isValid());
   consInfo->setQueueId(queueId1);
 
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -545,7 +545,7 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(queueId2.isValid());
   consInfo->setQueueId(queueId2);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
@@ -770,7 +770,7 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   CPPUNIT_ASSERT(queueId.isValid());
   consInfo->setQueueId(queueId);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -779,7 +779,7 @@ void testEventDistributor::testDuplicatedConsumerSelection()
 
   // *** re-register identical consumer *** //
  
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -801,7 +801,7 @@ void testEventDistributor::testDuplicatedConsumerSelection()
 
   // *** re-register identical consumer again *** //
  
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
@@ -827,7 +827,7 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   CPPUNIT_ASSERT(queueId2.isValid());
   consInfo2->setQueueId(queueId2);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo2));
+  _eventDistributor->registerEventConsumer(consInfo2);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
@@ -904,7 +904,7 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(qid1.isValid());
   consInfo->setQueueId(qid1);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -921,7 +921,7 @@ void testEventDistributor::testSharedConsumerSelection()
   consInfo->setQueueId(qid2);
   CPPUNIT_ASSERT(qid1 != qid2);
 
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -939,7 +939,7 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(qid1 == qid3);
   CPPUNIT_ASSERT(qid2 != qid3);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -1024,7 +1024,7 @@ void testEventDistributor::testPrescaledConsumerSelection()
   CPPUNIT_ASSERT(qid1.isValid());
   consInfo->setQueueId(qid1);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -1039,7 +1039,7 @@ void testEventDistributor::testPrescaledConsumerSelection()
   CPPUNIT_ASSERT(qid2.isValid());
   consInfo->setQueueId(qid2);
   
-  _eventDistributor->registerEventConsumer(&(*consInfo));
+  _eventDistributor->registerEventConsumer(consInfo);
   
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
@@ -1257,7 +1257,7 @@ void testEventDistributor::testDQMMessages()
   QueueID qid1 = _sharedResources->_dqmEventQueueCollection->createQueue(ri1);
   CPPUNIT_ASSERT(qid1.isValid());
   ri1->setQueueId( qid1 );
-  _eventDistributor->registerDQMEventConsumer( &( *ri1 ) );
+  _eventDistributor->registerDQMEventConsumer(ri1);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 1);
@@ -1272,7 +1272,7 @@ void testEventDistributor::testDQMMessages()
   QueueID qid2 = _sharedResources->_dqmEventQueueCollection->createQueue(ri2);
   CPPUNIT_ASSERT(qid2.isValid());
   ri2->setQueueId( qid2 );
-  _eventDistributor->registerDQMEventConsumer( &( *ri2 ) );
+  _eventDistributor->registerDQMEventConsumer(ri2);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 2);
@@ -1315,7 +1315,7 @@ void testEventDistributor::testDQMMessages()
   QueueID qid3 = _sharedResources->_dqmEventQueueCollection->createQueue(ri3);
   CPPUNIT_ASSERT(qid3.isValid());
   ri3->setQueueId( qid3 );
-  _eventDistributor->registerDQMEventConsumer( &( *ri3 ) );
+  _eventDistributor->registerDQMEventConsumer(ri3);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 3);
@@ -1381,14 +1381,14 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   QueueID qid1 = _sharedResources->_dqmEventQueueCollection->createQueue(ri1);
   CPPUNIT_ASSERT(qid1.isValid());
   ri1->setQueueId( qid1 );
-  _eventDistributor->registerDQMEventConsumer( &( *ri1 ) );
+  _eventDistributor->registerDQMEventConsumer(ri1);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 1);
 
   // re-register same consumer
 
-  _eventDistributor->registerDQMEventConsumer( &( *ri1 ) );
+  _eventDistributor->registerDQMEventConsumer(ri1);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
 
@@ -1402,7 +1402,7 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   CPPUNIT_ASSERT(qid2.isValid());
   ri2->setQueueId( qid2 );
   CPPUNIT_ASSERT(qid1 != qid2);
-  _eventDistributor->registerDQMEventConsumer( &( *ri2 ) );
+  _eventDistributor->registerDQMEventConsumer(ri2);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 2);
@@ -1430,7 +1430,7 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
   ri3->setQueueId( qid3 );
   CPPUNIT_ASSERT(qid1 != qid3);
   CPPUNIT_ASSERT(qid2 != qid3);
-  _eventDistributor->registerDQMEventConsumer( &( *ri3 ) );
+  _eventDistributor->registerDQMEventConsumer(ri3);
 
   CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
   CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 3);

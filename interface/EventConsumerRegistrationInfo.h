@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.12 2011/02/25 09:12:38 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.13 2011/02/25 13:32:54 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -18,6 +18,8 @@
 #include "IOPool/Streamer/interface/HLTInfo.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 
+#include <boost/enable_shared_from_this.hpp>
+
 
 namespace stor
 {
@@ -25,11 +27,13 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.12 $
-   * $Date: 2011/02/25 09:12:38 $
+   * $Revision: 1.13.2.13 $
+   * $Date: 2011/02/25 13:32:54 $
    */
 
-  class EventConsumerRegistrationInfo: public RegistrationInfoBase
+  class EventConsumerRegistrationInfo :
+    public RegistrationInfoBase,
+    public boost::enable_shared_from_this<EventConsumerRegistrationInfo>
   {
 
   public:

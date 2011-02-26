@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.10 2011/02/24 13:36:30 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.11 2011/02/25 13:32:41 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -85,7 +85,7 @@ namespace stor
   void 
   EventConsumerRegistrationInfo::do_registerMe(EventDistributor* evtDist)
   {
-    evtDist->registerEventConsumer(this);
+    evtDist->registerEventConsumer(shared_from_this());
   }
   
   void

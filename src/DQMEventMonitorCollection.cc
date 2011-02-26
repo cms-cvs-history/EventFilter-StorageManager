@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.cc,v 1.10 2010/12/14 12:56:52 mommsen Exp $
+// $Id: DQMEventMonitorCollection.cc,v 1.10.2.1 2011/02/04 13:57:45 mommsen Exp $
 /// @file: DQMEventMonitorCollection.cc
 
 #include <string>
@@ -19,9 +19,9 @@ _writtenDQMEventSizes(updateInterval, boost::posix_time::seconds(300)),
 _dqmEventBandwidth(updateInterval, boost::posix_time::seconds(300)),
 _servedDQMEventBandwidth(updateInterval, boost::posix_time::seconds(300)),
 _writtenDQMEventBandwidth(updateInterval, boost::posix_time::seconds(300)),
-_numberOfGroups(updateInterval, boost::posix_time::seconds(300)),
+_numberOfTopLevelFolders(updateInterval, boost::posix_time::seconds(300)),
 _numberOfUpdates(updateInterval, boost::posix_time::seconds(300)),
-_numberOfWrittenGroups(updateInterval, boost::posix_time::seconds(300))
+_numberOfWrittenTopLevelFolders(updateInterval, boost::posix_time::seconds(300))
 {}
 
 
@@ -37,9 +37,9 @@ void DQMEventMonitorCollection::getStats(DQMEventStats& stats) const
   getServedDQMEventBandwidthMQ().getStats(stats.servedDQMEventBandwidthStats);
   getWrittenDQMEventBandwidthMQ().getStats(stats.writtenDQMEventBandwidthStats);
 
-  getNumberOfGroupsMQ().getStats(stats.numberOfGroupsStats);
+  getNumberOfTopLevelFoldersMQ().getStats(stats.numberOfTopLevelFoldersStats);
   getNumberOfUpdatesMQ().getStats(stats.numberOfUpdatesStats);
-  getNumberOfWrittenGroupsMQ().getStats(stats.numberOfWrittenGroupsStats);
+  getNumberOfWrittenTopLevelFoldersMQ().getStats(stats.numberOfWrittenTopLevelFoldersStats);
 }
 
 
@@ -70,9 +70,9 @@ void DQMEventMonitorCollection::do_calculateStatistics()
   }
   _writtenDQMEventBandwidth.calculateStatistics();
 
-  _numberOfGroups.calculateStatistics();
+  _numberOfTopLevelFolders.calculateStatistics();
   _numberOfUpdates.calculateStatistics();
-  _numberOfWrittenGroups.calculateStatistics();
+  _numberOfWrittenTopLevelFolders.calculateStatistics();
 }
 
 
@@ -88,9 +88,9 @@ void DQMEventMonitorCollection::do_reset()
   _servedDQMEventBandwidth.reset();
   _writtenDQMEventBandwidth.reset();
 
-  _numberOfGroups.reset();
+  _numberOfTopLevelFolders.reset();
   _numberOfUpdates.reset();
-  _numberOfWrittenGroups.reset();
+  _numberOfWrittenTopLevelFolders.reset();
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.h,v 1.8.2.2 2011/01/24 12:18:39 mommsen Exp $
+// $Id: EventConsumerSelector.h,v 1.8.2.3 2011/01/24 14:03:20 mommsen Exp $
 /// @file: EventConsumerSelector.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerSelector_h
@@ -18,8 +18,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.2 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.8.2.3 $
+   * $Date: 2011/01/24 14:03:20 $
    */
 
   class EventConsumerSelector
@@ -31,10 +31,10 @@ namespace stor {
      * Constructs an EventConsumerSelector instance based on the
      * specified registration information.
      */
-    EventConsumerSelector( const EventConsumerRegistrationInfo* registrationInfo ):
+    EventConsumerSelector( const EventConsRegPtr registrationInfo ):
       _initialized( false ),
       _outputModuleId( 0 ),
-      _registrationInfo( *registrationInfo ),
+      _registrationInfo( registrationInfo ),
       _acceptedEvents( 0 )
     {}
 
@@ -59,7 +59,7 @@ namespace stor {
     /**
      * Returns the ID of the queue corresponding to this selector.
      */
-    QueueID const queueId() const { return _registrationInfo.queueId(); }
+    QueueID const queueId() const { return _registrationInfo->queueId(); }
 
     /**
      * Tests whether this selector has been initialized.
@@ -75,7 +75,7 @@ namespace stor {
 
     bool _initialized;
     unsigned int _outputModuleId;
-    const EventConsumerRegistrationInfo _registrationInfo;
+    const EventConsRegPtr _registrationInfo;
     TriggerSelectorPtr _eventSelector;
     unsigned long _acceptedEvents;
 

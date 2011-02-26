@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.5.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DQMEventSelector.h,v 1.5.2.2 2011/01/24 14:03:20 mommsen Exp $
 /// @file: DQMEventSelector.h 
 
 #ifndef EventFilter_StorageManager_DQMEventSelector_h
@@ -16,8 +16,8 @@ namespace stor
    * DQM event selector
    *
    * $Author: mommsen $
-   * $Revision: 1.5.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.5.2.2 $
+   * $Date: 2011/01/24 14:03:20 $
    */
 
   class DQMEventSelector
@@ -25,20 +25,24 @@ namespace stor
 
   public:
     
-    DQMEventSelector( const DQMEventConsumerRegistrationInfo* registrationInfo ):
-    _registrationInfo( *registrationInfo )
+    DQMEventSelector( const DQMEventConsRegPtr registrationInfo ):
+    _registrationInfo( registrationInfo )
     {};
     
     /**
      * Returns true if the DQM event stored in the I2OChain
      * passes this event selection.
      */
-    bool acceptEvent( const I2OChain& );
+    bool acceptEvent
+    (
+      const I2OChain&,
+      const utils::time_point_t&
+    );
     
     /**
      * Returns the ID of the queue corresponding to this selector.
      */
-    QueueID queueId() const { return _registrationInfo.queueId(); }
+    QueueID queueId() const { return _registrationInfo->queueId(); }
 
     /**
        Comparison:
@@ -47,7 +51,7 @@ namespace stor
 
   private:
 
-    const DQMEventConsumerRegistrationInfo _registrationInfo;
+    const DQMEventConsRegPtr _registrationInfo;
 
   };
 

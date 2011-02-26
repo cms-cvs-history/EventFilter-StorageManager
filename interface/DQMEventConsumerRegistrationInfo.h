@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.8 2011/02/24 13:37:13 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.9 2011/02/25 09:12:38 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -17,6 +17,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "IOPool/Streamer/interface/MsgHeader.h"
 
+#include <boost/enable_shared_from_this.hpp>
+
 
 namespace stor
 {
@@ -24,11 +26,13 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.8 $
-   * $Date: 2011/02/24 13:37:13 $
+   * $Revision: 1.8.2.9 $
+   * $Date: 2011/02/25 09:12:38 $
    */
 
-  class DQMEventConsumerRegistrationInfo : public RegistrationInfoBase
+  class DQMEventConsumerRegistrationInfo : 
+    public RegistrationInfoBase,
+    public boost::enable_shared_from_this<DQMEventConsumerRegistrationInfo>
   {
   public:
 

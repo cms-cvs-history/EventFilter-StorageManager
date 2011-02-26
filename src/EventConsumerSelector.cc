@@ -1,4 +1,4 @@
-// $Id: EventConsumerSelector.cc,v 1.12 2010/12/20 11:14:24 mommsen Exp $
+// $Id: EventConsumerSelector.cc,v 1.12.2.1 2011/01/24 14:03:20 mommsen Exp $
 /// @file: EventConsumerSelector.cc
 
 #include <vector>
@@ -17,22 +17,22 @@ void EventConsumerSelector::initialize( const InitMsgView& imv )
 
   if( _initialized ) return;
 
-  if( _registrationInfo.outputModuleLabel() != imv.outputModuleLabel() ) return; 
+  if( _registrationInfo->outputModuleLabel() != imv.outputModuleLabel() ) return; 
 
   _outputModuleId = imv.outputModuleId();
 
   edm::ParameterSet pset;
-  pset.addParameter<std::string>( "TriggerSelector", _registrationInfo.triggerSelection() );
-  pset.addParameter<Strings>( "SelectEvents", _registrationInfo.eventSelection() );
+  pset.addParameter<std::string>( "TriggerSelector", _registrationInfo->triggerSelection() );
+  pset.addParameter<Strings>( "SelectEvents", _registrationInfo->eventSelection() );
 
   Strings tnames;
   imv.hltTriggerNames( tnames );
 
   std::ostringstream errorMsg;
   errorMsg << "Cannot initialize edm::EventSelector for consumer" <<
-    _registrationInfo.consumerName() << " running on " << _registrationInfo.remoteHost() <<
+    _registrationInfo->consumerName() << " running on " << _registrationInfo->remoteHost() <<
     " requesting output module ID" << _outputModuleId <<
-    " with label " << _registrationInfo.outputModuleLabel() <<
+    " with label " << _registrationInfo->outputModuleLabel() <<
     " and HLT trigger names";
   boost::lambda::placeholder1_type arg1;
   std::for_each(tnames.begin(), tnames.end(), errorMsg << boost::lambda::constant(" ") << arg1);
@@ -77,7 +77,7 @@ bool EventConsumerSelector::acceptEvent( const I2OChain& ioc )
   if ( _eventSelector->wantAll()
     || _eventSelector->acceptEvent( &hlt_out[0], ioc.hltTriggerCount() ) )
   {
-    if ( (++_acceptedEvents % _registrationInfo.prescale()) == 0 ) return true;
+    if ( (++_acceptedEvents % _registrationInfo->prescale()) == 0 ) return true;
   }
   return false;
 }
@@ -86,7 +86,7 @@ bool EventConsumerSelector::operator<(const EventConsumerSelector& other) const
 {
   if ( queueId() != other.queueId() )
     return ( queueId() < other.queueId() );
-  return ( _registrationInfo < other._registrationInfo );
+  return ( *(_registrationInfo) < *(other._registrationInfo) );
 }
 
 

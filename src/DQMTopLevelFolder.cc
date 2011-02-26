@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.1.2.1 2011/02/23 09:26:39 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.2 2011/02/24 13:36:55 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -36,6 +36,7 @@ _nUpdates(0),
 _sentEvents(0)
 {
   gROOT->SetBatch(kTRUE);
+  _dqmEventMonColl.getNumberOfTopLevelFoldersMQ().addSample(1);
   addDQMEvent(dqmEvent);
 }
 
