@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.8.8.2 2011/02/23 09:27:07 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.8.8.3 2011/02/27 13:55:52 mommsen Exp $
 /// @file: DQMEventStore.h 
 
 #ifndef EventFilter_StorageManager_DQMEventStore_h
@@ -9,8 +9,14 @@
 
 #include "boost/shared_ptr.hpp"
 
+#include "toolbox/lang/Class.h"
+#include "toolbox/task/WaitingWorkLoop.h"
+#include "xcept/Exception.h"
+#include "xdaq/ApplicationDescriptor.h"
+
 #include "IOPool/Streamer/interface/HLTInfo.h"
 
+#include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DQMTopLevelFolder.h"
 #include "EventFilter/StorageManager/interface/DQMKey.h"
@@ -33,20 +39,24 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.8.2 $
-   * $Date: 2011/02/23 09:27:07 $
+   * $Revision: 1.8.8.3 $
+   * $Date: 2011/02/27 13:55:52 $
    */
 
-  template<class EventType, class ConnectionType>  
-  class DQMEventStore
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  class DQMEventStore : public toolbox::lang::Class
   {
   public:
     
     DQMEventStore
     (
+      xdaq::ApplicationDescriptor*,
+      DQMEventQueueCollectionPtr,
       DQMEventMonitorCollection&,
       ConnectionType*,
-      size_t (ConnectionType::*getExpectedUpdatesCount)() const
+      size_t (ConnectionType::*getExpectedUpdatesCount)() const,
+      StateMachineType*,
+      void (StateMachineType::*moveToFailedState)(xcept::Exception&)
     );
 
     ~DQMEventStore();
@@ -65,14 +75,7 @@ namespace stor {
     void addDQMEvent(EventType const&);
 
     /**
-     * Returns true if there is a complete group
-     * ready to be served to consumers. In this case
-     * DQMEventRecord::GroupRecord holds this record.
-     */
-    bool getCompletedTopLevelFolderIfAvailable(DQMTopLevelFolder::Record&);
-
-    /**
-     * Queue completed top level folders, then clear the DQM event store
+     * Process completed top level folders, then clear the DQM event store
      */
     void purge();
 
@@ -108,15 +111,27 @@ namespace stor {
 
     void addTopLevelFolderToReadyToServe(const DQMTopLevelFolderPtr);
 
+    void startWorkLoop();
+
+    bool processCompletedTopLevelFolders(toolbox::task::WorkLoop*);
+
+    xdaq::ApplicationDescriptor* _appDescriptor;
     DQMProcessingParams _dqmParams;
+    DQMEventQueueCollectionPtr _dqmEventQueueCollection;
     DQMEventMonitorCollection& _dqmEventMonColl;
     ConnectionType* _connectionType;
     size_t (ConnectionType::*_getExpectedUpdatesCount)() const;
+    StateMachineType* _stateMachineType;
+    void (StateMachineType::*_moveToFailedState)(xcept::Exception&);
 
     typedef std::map<DQMKey, DQMTopLevelFolderPtr> DQMTopLevelFolderMap;
     DQMTopLevelFolderMap _store;
-    std::queue<DQMTopLevelFolder::Record> _topLevelFoldersReadyToServe;
-        
+    ConcurrentQueue<DQMTopLevelFolder::Record> _topLevelFoldersReadyToServe;
+
+    toolbox::task::WorkLoop* _completedFolderWL;
+    toolbox::task::ActionSignature* _completedFolderAction;
+    bool _processCompletedTopLevelFolders;
+
     std::vector<unsigned char> _tempEventArea;
 
   };

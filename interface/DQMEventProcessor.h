@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.h,v 1.5.2.2 2011/02/23 09:27:07 mommsen Exp $
+// $Id: DQMEventProcessor.h,v 1.5.2.3 2011/02/27 13:55:52 mommsen Exp $
 /// @file: DQMEventProcessor.h 
 
 #ifndef EventFilter_StorageManager_DQMEventProcessor_h
@@ -31,8 +31,8 @@ namespace stor {
    * to disk every N lumi-sections.
    *
    * $Author: mommsen $
-   * $Revision: 1.5.2.2 $
-   * $Date: 2011/02/23 09:27:07 $
+   * $Revision: 1.5.2.3 $
+   * $Date: 2011/02/27 13:55:52 $
    */
   
   class DQMEventProcessor : public toolbox::lang::Class
@@ -70,12 +70,6 @@ namespace stor {
     void processNextDQMEvent();
 
     /**
-     * Retrieves all available completed top level folders
-     * adds it to the consumer queues
-     */    
-    void processCompletedTopLevelFolders();
-
-    /**
      * Purge instances and process all completed DQM records
      */    
     void endOfRun();
@@ -89,7 +83,7 @@ namespace stor {
 
     toolbox::task::WorkLoop*  _processWL;      
 
-    DQMEventStore<I2OChain,InitMsgCollection> _dqmEventStore;
+    DQMEventStore<I2OChain,InitMsgCollection,SharedResources> _dqmEventStore;
 
   };
   

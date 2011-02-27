@@ -1,8 +1,10 @@
-// $Id: DQMEventStore.icc,v 1.12.2.2 2011/02/23 09:26:39 mommsen Exp $
+// $Id: DQMEventStore.icc,v 1.1.2.1 2011/02/27 13:56:41 mommsen Exp $
 /// @file: DQMEventStore.icc
 
 #include "TROOT.h"
 #include "TTimeStamp.h"
+
+#include "toolbox/task/WorkLoopFactory.h"
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventStore.h"
@@ -14,60 +16,75 @@
 
 namespace stor {
     
-  template<class EventType, class ConnectionType>  
-  DQMEventStore<EventType,ConnectionType>::
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   DQMEventStore
   (
+    xdaq::ApplicationDescriptor* appDescriptor,
+    DQMEventQueueCollectionPtr dqmEventQueueCollection,
     DQMEventMonitorCollection& dqmEventMonColl,
     ConnectionType* connectionType,
-    size_t (ConnectionType::*getExpectedUpdatesCount)() const
+    size_t (ConnectionType::*getExpectedUpdatesCount)() const,
+    StateMachineType* stateMachineType,
+    void (StateMachineType::*moveToFailedState)(xcept::Exception&)
   ) :
+  _appDescriptor(appDescriptor),
+  _dqmEventQueueCollection(dqmEventQueueCollection),
   _dqmEventMonColl(dqmEventMonColl),
   _connectionType(connectionType),
-  _getExpectedUpdatesCount(getExpectedUpdatesCount)
+  _getExpectedUpdatesCount(getExpectedUpdatesCount),
+  _stateMachineType(stateMachineType),
+  _moveToFailedState(moveToFailedState),
+  _topLevelFoldersReadyToServe(1024),
+  _processCompletedTopLevelFolders(false)
   {
     gROOT->SetBatch(kTRUE);
+    startWorkLoop();
   }
 
-  template<class EventType, class ConnectionType>  
-  DQMEventStore<EventType,ConnectionType>::
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   ~DQMEventStore()
   {
     clear();
   }
 
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   clear()
   {
+    _processCompletedTopLevelFolders = false;
     _store.clear();
-    while ( ! _topLevelFoldersReadyToServe.empty() )
-      _topLevelFoldersReadyToServe.pop();
+    _topLevelFoldersReadyToServe.clear();
     _tempEventArea.clear();
   }
   
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   purge()
   {
     addReadyTopLevelFoldersToReadyToServe();
+    while ( ! _topLevelFoldersReadyToServe.empty() ) ::sleep(1);
+    _processCompletedTopLevelFolders = false;
     _store.clear();
   }
   
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   setParameters(DQMProcessingParams const& dqmParams)
   {
     clear();
     _dqmParams = dqmParams;
+    _processCompletedTopLevelFolders = true;
+    _completedFolderWL->submit(_completedFolderAction);
   }
   
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addDQMEvent(EventType const& dqmEvent)
   {
     if ( _dqmParams._collateDQM )
@@ -76,25 +93,9 @@ namespace stor {
       addDQMEventToReadyToServe(dqmEvent);
   }
   
-  template<class EventType, class ConnectionType>  
-  bool
-  DQMEventStore<EventType,ConnectionType>::
-  getCompletedTopLevelFolderIfAvailable
-  (
-    DQMTopLevelFolder::Record& record
-  )
-  {
-    if ( _topLevelFoldersReadyToServe.empty() ) return false;
-    
-    record = _topLevelFoldersReadyToServe.front();
-    _topLevelFoldersReadyToServe.pop();
-    
-    return true;
-  }
-  
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addDQMEventToStore(EventType const& dqmEvent)
   {
     const DQMKey newKey = dqmEvent.dqmKey();
@@ -119,9 +120,9 @@ namespace stor {
     addReadyTopLevelFoldersToReadyToServe();
   }
   
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addDQMEventToReadyToServe(EventType const& dqmEvent)
   {
     DQMTopLevelFolderPtr topLevelFolder( new DQMTopLevelFolder(
@@ -131,9 +132,9 @@ namespace stor {
     addTopLevelFolderToReadyToServe(topLevelFolder);
   }
   
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addReadyTopLevelFoldersToReadyToServe()
   {
     DQMTopLevelFolderPtr topLevelFolder;
@@ -144,19 +145,19 @@ namespace stor {
     }
   }
   
-  template<class EventType, class ConnectionType>  
+  template<class EventType, class ConnectionType, class StateMachineType>  
   void
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addTopLevelFolderToReadyToServe(const DQMTopLevelFolderPtr topLevelFolder)
   {
     DQMTopLevelFolder::Record record;
     topLevelFolder->getRecord(record);
-    _topLevelFoldersReadyToServe.push(record);
+    _topLevelFoldersReadyToServe.enq_wait(record);
   }
-  
-  template<class EventType, class ConnectionType>  
+
+  template<class EventType, class ConnectionType, class StateMachineType>  
   bool
-  DQMEventStore<EventType,ConnectionType>::
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
   getNextReadyTopLevelFolder(DQMTopLevelFolderPtr& topLevelFolder)
   {
     utils::time_point_t now = utils::getCurrentTime();
@@ -170,6 +171,79 @@ namespace stor {
     topLevelFolder = it->second;
     _store.erase(it);
     return true;
+  }
+  
+
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  void
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
+  startWorkLoop()
+  {
+    try
+    {
+      std::string identifier = utils::getIdentifier(_appDescriptor);
+    
+      _completedFolderWL = toolbox::task::getWorkLoopFactory()->
+        getWorkLoop( identifier + "CompletedFolderWL", "waiting" );
+    
+      if ( ! _completedFolderWL->isActive() )
+      {
+        _completedFolderWL->activate();
+      }
+
+      _completedFolderAction = 
+          toolbox::task::bind(this,
+            &DQMEventStore<EventType,ConnectionType,StateMachineType>::
+            processCompletedTopLevelFolders,
+            identifier + "CompletedFolder");
+    }
+    catch (xcept::Exception& e)
+    {
+      std::string msg = "Failed to start workloop 'CompletedFolderWL'.";
+      XCEPT_RETHROW(exception::DQMEventProcessing, msg, e);
+    }
+  }
+  
+  
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  bool
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
+  processCompletedTopLevelFolders(toolbox::task::WorkLoop*)
+  {
+    std::string errorMsg = "Failed to send completed top level folders to consumers: ";
+
+    try
+    {
+      DQMTopLevelFolder::Record record;
+      while (
+        _topLevelFoldersReadyToServe.deq_nowait(record) &&
+        _processCompletedTopLevelFolders )
+      {
+        _dqmEventQueueCollection->addEvent(record);
+      }
+    }
+    catch(xcept::Exception &e)
+    {
+      XCEPT_DECLARE_NESTED(exception::DQMEventProcessing,
+        sentinelException, errorMsg, e );
+      (_stateMachineType->*_moveToFailedState)(sentinelException);
+    }
+    catch(std::exception &e)
+    {
+      errorMsg += e.what();
+      XCEPT_DECLARE(exception::DQMEventProcessing,
+        sentinelException, errorMsg );
+      (_stateMachineType->*_moveToFailedState)(sentinelException);
+    }
+    catch(...)
+    {
+      errorMsg += "Unknown exception";
+      XCEPT_DECLARE(exception::DQMEventProcessing,
+        sentinelException, errorMsg );
+      (_stateMachineType->*_moveToFailedState)(sentinelException);
+    }
+      
+    return _processCompletedTopLevelFolders;
   }
 
 } // namespace stor

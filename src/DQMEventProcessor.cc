@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.12.2.4 2011/02/26 15:53:28 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12.2.5 2011/02/27 13:56:41 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -21,7 +21,8 @@ namespace stor {
   
   template<>  
   DQMEventMsgView
-  DQMEventStore<I2OChain,InitMsgCollection>::getDQMEventView(I2OChain const& dqmEvent)
+  DQMEventStore<I2OChain,InitMsgCollection,SharedResources>::
+  getDQMEventView(I2OChain const& dqmEvent)
   {
     dqmEvent.copyFragmentsIntoBuffer(_tempEventArea);
     return DQMEventMsgView(&_tempEventArea[0]);
@@ -29,15 +30,19 @@ namespace stor {
 
 
 
-  DQMEventProcessor::DQMEventProcessor(xdaq::Application *app, SharedResourcesPtr sr) :
+  DQMEventProcessor::DQMEventProcessor(xdaq::Application* app, SharedResourcesPtr sr) :
   _app(app),
   _sharedResources(sr),
   _actionIsActive(true),
   _dqmEventStore
   (
+    app->getApplicationDescriptor(),
+    sr->_dqmEventQueueCollection,
     sr->_statisticsReporter->getDQMEventMonitorCollection(),
     sr->_initMsgCollection.get(),
-    &stor::InitMsgCollection::maxMsgCount
+    &stor::InitMsgCollection::maxMsgCount,
+    sr.get(),
+    &stor::SharedResources::moveToFailedState
   )
   {
     WorkerThreadParams workerParams =
@@ -140,8 +145,6 @@ namespace stor {
         addDQMEventProcessorIdleSample(elapsedTime);
     }
     
-    processCompletedTopLevelFolders();
-    
     DQMEventProcessorResources::Requests requests;
     DQMProcessingParams dqmParams;
     boost::posix_time::time_duration newTimeoutValue;
@@ -168,18 +171,6 @@ namespace stor {
   void DQMEventProcessor::endOfRun()
   {
     _dqmEventStore.purge();
-    processCompletedTopLevelFolders();
-  }
-  
-  
-  void DQMEventProcessor::processCompletedTopLevelFolders()
-  {
-    DQMTopLevelFolder::Record topLevelFolderRecord;
-    while ( _dqmEventStore.getCompletedTopLevelFolderIfAvailable(topLevelFolderRecord) )
-    {
-      _sharedResources->
-        _dqmEventQueueCollection->addEvent(topLevelFolderRecord);
-    }
   }
     
 } // namespace stor
