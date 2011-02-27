@@ -225,7 +225,6 @@
         <collateDQM         xsi:type="xsd:boolean">false</collateDQM>
         <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
         <filePrefixDQM      xsi:type="xsd:string">../../smpsDQM</filePrefixDQM>
-        <purgeTimeDQM       xsi:type="xsd:integer">120</purgeTimeDQM>
         <readyTimeDQM       xsi:type="xsd:integer">30</readyTimeDQM>
         <archiveIntervalDQM xsi:type="xsd:integer">1</archiveIntervalDQM>
         <useCompressionDQM  xsi:type="xsd:boolean">true</useCompressionDQM>
