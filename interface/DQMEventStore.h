@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.8.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.8.8.2 2011/02/23 09:27:07 mommsen Exp $
 /// @file: DQMEventStore.h 
 
 #ifndef EventFilter_StorageManager_DQMEventStore_h
@@ -17,11 +17,13 @@
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
+namespace smproxy {
+  struct DataRetrieverMonitorCollection;
+}
 
 namespace stor {
   
   class DQMEventMonitorCollection;
-  class I2OChain;
 
 
   /**
@@ -31,15 +33,21 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.8.8.2 $
+   * $Date: 2011/02/23 09:27:07 $
    */
-  
+
+  template<class EventType, class ConnectionType>  
   class DQMEventStore
   {
   public:
     
-    explicit DQMEventStore(SharedResourcesPtr);
+    DQMEventStore
+    (
+      DQMEventMonitorCollection&,
+      ConnectionType*,
+      size_t (ConnectionType::*getExpectedUpdatesCount)() const
+    );
 
     ~DQMEventStore();
 
@@ -50,11 +58,11 @@ namespace stor {
     void setParameters(DQMProcessingParams const&);
 
     /**
-     * Adds the DQM event found in the I2OChain to
-     * the store. If a matching DQMEventRecord is found,
+     * Adds the DQM event found in EventType to the store.
+     * If a matching DQMEventRecord is found,
      * the histograms are added unless collateDQM is false.
      */
-    void addDQMEvent(I2OChain const&);
+    void addDQMEvent(EventType const&);
 
     /**
      * Returns true if there is a complete group
@@ -86,29 +94,31 @@ namespace stor {
     DQMEventStore(DQMEventStore const&);
     DQMEventStore& operator=(DQMEventStore const&);
 
-    void addDQMEventToStore(I2OChain const&);
+    void addDQMEventToStore(EventType const&);
 
-    void addDQMEventToReadyToServe(I2OChain const&);
+    void addDQMEventToReadyToServe(EventType const&);
 
     void addReadyTopLevelFoldersToReadyToServe();
 
-    DQMTopLevelFolderPtr makeDQMTopLevelFolder(I2OChain const&);
+    DQMTopLevelFolderPtr makeDQMTopLevelFolder(EventType const&);
 
-    DQMEventMsgView getDQMEventView(I2OChain const&);
+    DQMEventMsgView getDQMEventView(EventType const&);
 
     bool getNextReadyTopLevelFolder(DQMTopLevelFolderPtr&);
 
     void addTopLevelFolderToReadyToServe(const DQMTopLevelFolderPtr);
 
-
     DQMProcessingParams _dqmParams;
     DQMEventMonitorCollection& _dqmEventMonColl;
-    InitMsgCollectionPtr _initMsgColl;
+    ConnectionType* _connectionType;
+    size_t (ConnectionType::*_getExpectedUpdatesCount)() const;
 
     typedef std::map<DQMKey, DQMTopLevelFolderPtr> DQMTopLevelFolderMap;
     DQMTopLevelFolderMap _store;
     std::queue<DQMTopLevelFolder::Record> _topLevelFoldersReadyToServe;
-    
+        
+    std::vector<unsigned char> _tempEventArea;
+
   };
   
 } // namespace stor

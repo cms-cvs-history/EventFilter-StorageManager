@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.5.2.2 2011/01/24 14:03:20 mommsen Exp $
+// $Id: DQMEventSelector.h,v 1.5.2.3 2011/02/26 15:51:09 mommsen Exp $
 /// @file: DQMEventSelector.h 
 
 #ifndef EventFilter_StorageManager_DQMEventSelector_h
@@ -6,7 +6,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "FWCore/Framework/interface/EventSelector.h"
 #include "EventFilter/StorageManager/interface/I2OChain.h"
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
 
@@ -16,8 +15,8 @@ namespace stor
    * DQM event selector
    *
    * $Author: mommsen $
-   * $Revision: 1.5.2.2 $
-   * $Date: 2011/01/24 14:03:20 $
+   * $Revision: 1.5.2.3 $
+   * $Date: 2011/02/26 15:51:09 $
    */
 
   class DQMEventSelector

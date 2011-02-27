@@ -1,4 +1,4 @@
-// $Id: InitMsgCollection.h,v 1.12.2.1 2011/01/21 15:51:20 mommsen Exp $
+// $Id: InitMsgCollection.h,v 1.12.2.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: InitMsgCollection.h 
 
 #ifndef EventFilter_StorageManager_InitMsgCollection_h
@@ -22,8 +22,8 @@ namespace stor
      to event consumers and written to output streams.
 
      $Author: mommsen $
-     $Revision: 1.12.2.1 $
-     $Date: 2011/01/21 15:51:20 $
+     $Revision: 1.12.2.2 $
+     $Date: 2011/01/24 12:18:39 $
   */
 
   typedef std::vector<unsigned char> InitMsgBuffer;
@@ -117,7 +117,7 @@ namespace stor
      *
      * @return the integer number of messages.
      */
-    int size() const;
+    size_t size() const;
 
     /**
      * Returns the number of identical INIT messages received for the
@@ -125,7 +125,7 @@ namespace stor
      *
      * @return the integer number of received INIT messages
      */
-    uint32_t initMsgCount(const std::string& outputModuleLabel) const;
+    size_t initMsgCount(const std::string& outputModuleLabel) const;
 
     /**
      * Returns the maximum number of identical INIT messages received
@@ -133,7 +133,7 @@ namespace stor
      *
      * @return the integer number of maximum received INIT messages
      */
-    uint32_t maxMsgCount() const;
+    size_t maxMsgCount() const;
 
     /**
      * Returns a string with information on which selections are available.
@@ -172,7 +172,7 @@ namespace stor
      */
     void add(InitMsgView const& initMsgView);
 
-    typedef std::pair<InitMsgSharedPtr, uint32_t> InitMsgPtrAndCount;
+    typedef std::pair<InitMsgSharedPtr, size_t> InitMsgPtrAndCount;
     typedef std::vector<InitMsgPtrAndCount> InitMsgList;
     InitMsgList initMsgList_;
     InitMsgSharedPtr serializedFullSet_;

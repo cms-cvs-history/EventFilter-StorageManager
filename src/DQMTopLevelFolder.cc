@@ -22,37 +22,28 @@ using namespace stor;
 
 DQMTopLevelFolder::DQMTopLevelFolder
 (
-  const I2OChain& dqmEvent,
+  const DQMKey& dqmKey,
+  const QueueIDs& dqmConsumers,
   const DQMProcessingParams& dqmParams,
   DQMEventMonitorCollection& dqmEventMonColl,
   const unsigned int expectedUpdates
 ) :
+_dqmKey(dqmKey),
+_dqmConsumers(dqmConsumers),
 _dqmParams(dqmParams),
 _dqmEventMonColl(dqmEventMonColl),
-_dqmConsumers(dqmEvent.getDQMEventConsumerTags()),
-_dqmKey(dqmEvent.dqmKey()),
 _expectedUpdates(expectedUpdates),
 _nUpdates(0),
 _sentEvents(0)
 {
   gROOT->SetBatch(kTRUE);
   _dqmEventMonColl.getNumberOfTopLevelFoldersMQ().addSample(1);
-  addDQMEvent(dqmEvent);
 }
 
 
 DQMTopLevelFolder::~DQMTopLevelFolder()
 {
   _dqmFolders.clear();
-  _tempEventArea.clear();
-}
-
-
-void DQMTopLevelFolder::addDQMEvent(const I2OChain& dqmEvent)
-{
-  dqmEvent.copyFragmentsIntoBuffer(_tempEventArea);
-  DQMEventMsgView view(&_tempEventArea[0]);
-  addDQMEvent(view);
 }
 
 
@@ -121,12 +112,12 @@ bool DQMTopLevelFolder::getRecord(DQMTopLevelFolder::Record& record)
   const size_t folderSize = populateTable(table);
   
   edm::StreamDQMSerializer serializer;
-  serializer.serializeDQMEvent(table,
-    _dqmParams._useCompressionDQM,
-    _dqmParams._compressionLevelDQM);
-
+  const size_t sourceSize =
+    serializer.serializeDQMEvent(table,
+      _dqmParams._useCompressionDQM,
+      _dqmParams._compressionLevelDQM);
+  
   // Add space for header
-  const size_t sourceSize = serializer.currentSpaceUsed();
   const size_t totalSize =
     sourceSize
     + sizeof(DQMEventHeader)
@@ -156,9 +147,15 @@ bool DQMTopLevelFolder::getRecord(DQMTopLevelFolder::Record& record)
   builder.setEventLength(sourceSize);
   if ( _dqmParams._useCompressionDQM ) 
   {
+    // the "compression flag" contains the uncompressed size
     builder.setCompressionFlag(serializer.currentEventSize());
   }
-
+  else
+  {
+    // a size of 0 indicates no compression
+    builder.setCompressionFlag(0);
+  }
+  
   _dqmEventMonColl.getNumberOfUpdatesMQ().addSample(_nUpdates);
   _dqmEventMonColl.getServedDQMEventSizeMQ().addSample(
     static_cast<double>(record.totalDataSize()) / 0x100000

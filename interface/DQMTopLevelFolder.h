@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.h,v 1.1.2.1 2011/02/23 09:27:07 mommsen Exp $
+// $Id: DQMTopLevelFolder.h,v 1.1.2.2 2011/02/24 13:37:40 mommsen Exp $
 /// @file: DQMTopLevelFolder.h 
 
 #ifndef EventFilter_StorageManager_DQMTopLevelFolder_h
@@ -26,8 +26,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.1 $
-   * $Date: 2011/02/23 09:27:07 $
+   * $Revision: 1.1.2.2 $
+   * $Date: 2011/02/24 13:37:40 $
    */
 
   class DQMTopLevelFolder
@@ -35,15 +35,13 @@ namespace stor {
 
   public:
 
-    typedef std::vector<unsigned char> Buffer_t;
-
     class Record
     {
     private:
 
       struct Entry
       {
-        Buffer_t buffer;
+        std::vector<unsigned char> buffer;
         QueueIDs dqmConsumers;
       };
 
@@ -117,7 +115,8 @@ namespace stor {
 
     DQMTopLevelFolder
     (
-      const I2OChain& dqmEvent,
+      const DQMKey&,
+      const QueueIDs&,
       const DQMProcessingParams&,
       DQMEventMonitorCollection&,
       const unsigned int expectedUpdates
@@ -159,23 +158,20 @@ namespace stor {
     void addEvent(std::auto_ptr<DQMEvent::TObjectTable>);
     size_t populateTable(DQMEvent::TObjectTable&) const;
 
+    const DQMKey _dqmKey;
+    const QueueIDs _dqmConsumers;
     const DQMProcessingParams _dqmParams;
     DQMEventMonitorCollection& _dqmEventMonColl;
-
-    QueueIDs _dqmConsumers;
-
-    typedef boost::shared_ptr<DQMFolder> DQMFolderPtr;
-    typedef std::map<std::string, DQMFolderPtr> DQMFoldersMap;
-    DQMFoldersMap _dqmFolders;
-
-    const DQMKey _dqmKey;
     const unsigned int _expectedUpdates;
+
     unsigned int _nUpdates;
     utils::time_point_t _lastUpdate;
     unsigned int _sentEvents;
     std::string _releaseTag;
-    
-    Buffer_t _tempEventArea;
+
+    typedef boost::shared_ptr<DQMFolder> DQMFolderPtr;
+    typedef std::map<std::string, DQMFolderPtr> DQMFoldersMap;
+    DQMFoldersMap _dqmFolders;
     
   };
 
