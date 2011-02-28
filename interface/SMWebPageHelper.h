@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.h,v 1.1.2.2 2011/02/09 11:49:06 mommsen Exp $
+// $Id: SMWebPageHelper.h,v 1.1.2.3 2011/02/11 12:09:14 mommsen Exp $
 /// @file: SMWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_SMWebPageHelper_h
@@ -36,8 +36,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2011/02/09 11:49:06 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2011/02/11 12:09:14 $
    */
   
   class SMWebPageHelper : public WebPageHelper<SMWebPageHelper>
@@ -170,26 +170,6 @@ namespace stor {
     ) const;
 
     /**
-     * Adds DQM event processor statistics to the parent DOM element
-     */
-    void addDOMforProcessedDQMEvents
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* parent,
-      DQMEventMonitorCollection const&
-    ) const;
-
-    /**
-     * Adds statistics for the DQM events to the parent DOM element
-     */
-    void addDOMforDQMEventStatistics
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* parent,
-      DQMEventMonitorCollection const&
-    ) const;
-
-    /**
      * Adds throughput statistics to the parent DOM element
      */
     void addDOMforThroughputStatistics
@@ -230,16 +210,6 @@ namespace stor {
       XHTMLMaker::Node* table,
       FragmentMonitorCollection::FragmentStats const&,
       const MonitoredQuantity::DataSetType
-    ) const;
-
-    /**
-     * Add header with integration duration
-     */
-    void addDurationToTableHead
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* tableRow,
-      const utils::duration_t
     ) const;
     
     /**
@@ -394,72 +364,6 @@ namespace stor {
       XHTMLMaker::Node* parent,
       long long uniqueRBID,
       DataSenderMonitorCollection const&
-    ) const;
-
-    /**
-     * Add statistics for processed DQM events
-     */
-    void addDQMEventStats
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* table,
-      DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType
-    ) const;
-    
-    /**
-     * Add a table row for number of DQM events processed
-     */
-    void addRowForDQMEventsProcessed
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* table,
-      DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType
-    ) const;
-
-    /**
-     * Add a table row for DQM event bandwidth
-     */
-    void addRowForDQMEventBandwidth
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* table,
-      DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType
-    ) const;
-
-    /**
-     * Add a table row for total fragment volume received
-     */
-    void addRowForTotalDQMEventVolume
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* table,
-      DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType
-    ) const;
-
-    /**
-     * Add a table row for maximum fragment bandwidth
-     */
-    void addRowForMaxDQMEventBandwidth
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* table,
-      DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType
-    ) const;
-
-    /**
-     * Add a table row for minimum fragment bandwidth
-     */
-    void addRowForMinDQMEventBandwidth
-    (
-      XHTMLMaker& maker,
-      XHTMLMaker::Node* table,
-      DQMEventMonitorCollection::DQMEventStats const&,
-      const MonitoredQuantity::DataSetType
     ) const;
 
     /**

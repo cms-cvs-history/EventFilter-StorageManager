@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.h,v 1.1.2.6 2011/02/11 12:11:54 mommsen Exp $
+// $Id: ConsumerWebPageHelper.h,v 1.1.2.7 2011/02/23 10:44:38 mommsen Exp $
 /// @file: ConsumerWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_ConsumerWebPageHelper_h
@@ -7,7 +7,9 @@
 #include "xdaq/ApplicationDescriptor.h"
 #include "xgi/Output.h"
 
+#include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/DQMEventQueueCollection.h"
+#include "EventFilter/StorageManager/interface/EventConsumerMonitorCollection.h"
 #include "EventFilter/StorageManager/interface/EventQueueCollection.h"
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
 #include "EventFilter/StorageManager/interface/StatisticsReporter.h"
@@ -23,8 +25,8 @@ namespace stor
    * Helper class to handle consumer web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.6 $
-   * $Date: 2011/02/11 12:11:54 $
+   * $Revision: 1.1.2.7 $
+   * $Date: 2011/02/23 10:44:38 $
    */
 
   template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
