@@ -222,7 +222,7 @@
         </SMRegistrationList>
         <consumerQueueSize  xsi:type="xsd:integer">10</consumerQueueSize>
         <DQMconsumerQueueSize xsi:type="xsd:integer">10</DQMconsumerQueueSize>
-        <collateDQM         xsi:type="xsd:boolean">false</collateDQM>
+        <collateDQM         xsi:type="xsd:boolean">true</collateDQM>
         <archiveDQM         xsi:type="xsd:boolean">false</archiveDQM>
         <filePrefixDQM      xsi:type="xsd:string">../../smpsDQM</filePrefixDQM>
         <readyTimeDQM       xsi:type="xsd:integer">30</readyTimeDQM>
