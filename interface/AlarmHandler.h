@@ -1,4 +1,4 @@
-// $Id: AlarmHandler.h,v 1.7.8.1 2011/01/21 15:51:20 mommsen Exp $
+// $Id: AlarmHandler.h,v 1.7.8.2 2011/01/24 12:18:39 mommsen Exp $
 /// @file: AlarmHandler.h 
 
 #ifndef EventFilter_StorageManager_AlarmHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Helper class to handle sentinel alarming
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.1 $
-   * $Date: 2011/01/21 15:51:20 $
+   * $Revision: 1.7.8.2 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class AlarmHandler
@@ -75,10 +75,10 @@ namespace stor {
       xcept::Exception&
     );
 
-    xdaq::Application* _app;
-    xdata::InfoSpace* _alarmInfoSpace;
+    xdaq::Application* app_;
+    xdata::InfoSpace* alarmInfoSpace_;
 
-    mutable boost::mutex _mutex;
+    mutable boost::mutex mutex_;
 
   };
   

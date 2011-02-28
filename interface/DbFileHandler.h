@@ -1,4 +1,4 @@
-// $Id: DbFileHandler.h,v 1.4 2010/03/31 12:34:43 mommsen Exp $
+// $Id: DbFileHandler.h,v 1.4.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DbFileHandler.h 
 
 #ifndef EventFilter_StorageManager_DbFileHandler_h
@@ -19,8 +19,8 @@ namespace stor {
    * Handle the file used to pass information into SM database
    *
    * $Author: mommsen $
-   * $Revision: 1.4 $
-   * $Date: 2010/03/31 12:34:43 $
+   * $Revision: 1.4.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class DbFileHandler
@@ -58,8 +58,8 @@ namespace stor {
     DbFileHandler(DbFileHandler const&);
     DbFileHandler& operator=(DbFileHandler const&);
     
-    DiskWritingParams _dwParams;
-    unsigned int _runNumber;
+    DiskWritingParams dwParams_;
+    unsigned int runNumber_;
   };
 
   typedef boost::shared_ptr<DbFileHandler> DbFileHandlerPtr;

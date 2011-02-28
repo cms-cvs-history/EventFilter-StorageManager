@@ -1,4 +1,4 @@
-// $Id: ExpirableQueue.h,v 1.7.2.3 2011/02/03 14:16:28 mommsen Exp $
+// $Id: ExpirableQueue.h,v 1.7.2.4 2011/02/04 15:42:34 mommsen Exp $
 /// @file: ExpirableQueue.h 
 
 
@@ -19,8 +19,8 @@ namespace stor
      was made.
    
      $Author: mommsen $
-     $Revision: 1.7.2.3 $
-     $Date: 2011/02/03 14:16:28 $
+     $Revision: 1.7.2.4 $
+     $Date: 2011/02/04 15:42:34 $
    */
 
   template <class T, class Policy>
@@ -103,11 +103,11 @@ namespace stor
   private:
     typedef ConcurrentQueue<T, Policy> queue_t;
 
-    queue_t _events;
+    queue_t events_;
     /**  Time in seconds it takes for this queue to become stale. */
-    utils::duration_t _staleness_interval;
+    utils::duration_t staleness_interval_;
     /** Point in time at which this queue will become stale. */
-    utils::time_point_t _staleness_time;
+    utils::time_point_t staleness_time_;
 
     /*
       The following are not implemented, to prevent copying and
@@ -122,9 +122,9 @@ namespace stor
   ExpirableQueue<T, Policy>::ExpirableQueue(size_type maxsize,
                                             utils::duration_t staleness_interval,
                                             utils::time_point_t now) :
-    _events(maxsize),
-    _staleness_interval(staleness_interval),
-    _staleness_time(now+_staleness_interval)
+    events_(maxsize),
+    staleness_interval_(staleness_interval),
+    staleness_time_(now+staleness_interval_)
   {
   }
 
@@ -132,8 +132,8 @@ namespace stor
   bool
   ExpirableQueue<T, Policy>::deq_nowait(value_type& event)
   {
-    _staleness_time = utils::getCurrentTime() + _staleness_interval;
-    return _events.deq_nowait(event);
+    staleness_time_ = utils::getCurrentTime() + staleness_interval_;
+    return events_.deq_nowait(event);
   }
 
   template <class T, class Policy>
@@ -142,10 +142,10 @@ namespace stor
   {
     if ( stale(now) )
     {
-      _events.addExternallyDroppedEvents(1);
+      events_.addExternallyDroppedEvents(1);
       return 1;
     }
-    return _events.enq_nowait(event);
+    return events_.enq_nowait(event);
   }  
 
   template <class T, class Policy>
@@ -153,7 +153,7 @@ namespace stor
   void
   ExpirableQueue<T, Policy>::set_staleness_interval(const utils::duration_t& t)
   {
-    _staleness_interval = t;
+    staleness_interval_ = t;
   }
 
   template <class T, class Policy>
@@ -161,7 +161,7 @@ namespace stor
   utils::duration_t
   ExpirableQueue<T, Policy>::staleness_interval() const
   {
-    return _staleness_interval;
+    return staleness_interval_;
   }
 
   template <class T, class Policy>
@@ -169,7 +169,7 @@ namespace stor
   typename ExpirableQueue<T, Policy>::size_type
   ExpirableQueue<T, Policy>::clear()
   {
-    return _events.clear();
+    return events_.clear();
   }  
 
   template <class T, class Policy>
@@ -177,7 +177,7 @@ namespace stor
   bool
   ExpirableQueue<T, Policy>::empty() const
   {
-    return _events.empty();
+    return events_.empty();
   }
 
   template <class T, class Policy>
@@ -185,7 +185,7 @@ namespace stor
   typename ExpirableQueue<T, Policy>::size_type
   ExpirableQueue<T, Policy>::size() const
   {
-    return _events.size();
+    return events_.size();
   }
 
   template <class T, class Policy>
@@ -193,7 +193,7 @@ namespace stor
   bool
   ExpirableQueue<T, Policy>::full() const
   {
-    return _events.full();
+    return events_.full();
   }
 
   template <class T, class Policy>
@@ -201,7 +201,7 @@ namespace stor
   bool
   ExpirableQueue<T, Policy>::stale(const utils::time_point_t& now) const
   {
-    return (_staleness_time < now);
+    return (staleness_time_ < now);
   }
 
   template <class T, class Policy>
@@ -209,7 +209,7 @@ namespace stor
   bool
   ExpirableQueue<T, Policy>::clearIfStale(const utils::time_point_t& now, size_type& clearedEvents)
   {
-    if (_staleness_time < now)
+    if (staleness_time_ < now)
     {
       clearedEvents = clear();
       return true;

@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.h,v 1.5.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: FragmentProcessor.h,v 1.5.2.2 2011/02/26 15:51:09 mommsen Exp $
 /// @file: FragmentProcessor.h 
 
 #ifndef EventFilter_StorageManager_FragmentProcessor_h
@@ -33,8 +33,8 @@ namespace stor {
    * EventDistributor.
    *
    * $Author: mommsen $
-   * $Revision: 1.5.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.5.2.2 $
+   * $Date: 2011/02/26 15:51:09 $
    */
 
   class FragmentProcessor : public toolbox::lang::Class
@@ -81,17 +81,17 @@ namespace stor {
      */
     void processOneFragment();
 
-    xdaq::Application*                 _app;
-    SharedResourcesPtr                 _sharedResources;
-    WrapperNotifier                    _wrapperNotifier;
-    StateMachinePtr                    _stateMachine;
-    FragmentStore                      _fragmentStore;
-    EventDistributor                   _eventDistributor;
+    xdaq::Application*                 app_;
+    SharedResourcesPtr                 sharedResources_;
+    WrapperNotifier                    wrapperNotifier_;
+    StateMachinePtr                    stateMachine_;
+    FragmentStore                      fragmentStore_;
+    EventDistributor                   eventDistributor_;
 
-    boost::posix_time::time_duration   _timeout; // Waiting time
-    bool                               _actionIsActive;
+    boost::posix_time::time_duration   timeout_; // Waiting time
+    bool                               actionIsActive_;
 
-    toolbox::task::WorkLoop*           _processWL;      
+    toolbox::task::WorkLoop*           processWL_;      
 
   };
   

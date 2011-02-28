@@ -1,4 +1,4 @@
-// $Id: CurlInterface.h,v 1.2.4.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: CurlInterface.h,v 1.2.4.2 2011/02/14 16:53:48 mommsen Exp $
 /// @file: CurlInterface.h
 
 #ifndef EventFilter_StorageManager_CurlInterface_h
@@ -15,8 +15,8 @@ namespace stor {
    * Helper class to interact with curl
    *
    * $Author: mommsen $
-   * $Revision: 1.2.4.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.2.4.2 $
+   * $Date: 2011/02/14 16:53:48 $
    */
  
   class CurlInterface
@@ -49,7 +49,7 @@ namespace stor {
     CURLcode do_curl(CURL*, const std::string& url, Content& content);
     static size_t writeToString(char* data, size_t size, size_t nmemb, Content* buffer);
     
-    char _errorBuffer[CURL_ERROR_SIZE]; 
+    char errorBuffer_[CURL_ERROR_SIZE]; 
   };
 
 } // namespace stor

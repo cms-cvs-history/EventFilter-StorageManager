@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.h,v 1.10.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: XHTMLMaker.h,v 1.10.2.2 2011/02/08 16:49:34 mommsen Exp $
 /// @file: XHTMLMaker.h 
 
 #ifndef EventFilter_StorageManager_XHTMLMaker_h
@@ -20,8 +20,8 @@ namespace stor {
     Helper class to build XHTML pages
 
     $Author: mommsen $
-    $Revision: 1.10.2.1 $
-    $Date: 2011/01/24 12:18:39 $
+    $Revision: 1.10.2.2 $
+    $Date: 2011/02/08 16:49:34 $
   */
 
   class XHTMLMaker
@@ -53,7 +53,7 @@ namespace stor {
     /**
       Useful for css and javascript
     */
-    Node* getHead() const { return _head; }
+    Node* getHead() const { return head_; }
 
     /**
       Add child
@@ -157,18 +157,18 @@ namespace stor {
 
   private:
 
-    xercesc::DOMDocument* _doc;
-    xercesc::DOMWriter* _writer;
-    xercesc::DOMDocumentType* _typ;
+    xercesc::DOMDocument* doc_;
+    xercesc::DOMWriter* writer_;
+    xercesc::DOMDocumentType* typ_;
     
-    Node* _head;
+    Node* head_;
     
-    bool _page_started;
+    bool page_started_;
 
     /**
       Set DOMWriter features
     */
-    void _setWriterFeatures();
+    void setWriterFeatures_();
     
   };
 

@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.cc,v 1.5.2.1 2011/01/24 14:03:20 mommsen Exp $
+// $Id: DQMEventSelector.cc,v 1.5.2.2 2011/02/26 15:53:28 mommsen Exp $
 /// @file: DQMEventSelector.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventSelector.h"
@@ -11,9 +11,9 @@ bool DQMEventSelector::acceptEvent
   const utils::time_point_t& now
 )
 {
-  if( _registrationInfo->isStale(now) ) return false;
-  if( _registrationInfo->topLevelFolderName() == std::string( "*" ) ) return true;
-  if( _registrationInfo->topLevelFolderName() == ioc.topFolderName() ) return true;
+  if( registrationInfo_->isStale(now) ) return false;
+  if( registrationInfo_->topLevelFolderName() == std::string( "*" ) ) return true;
+  if( registrationInfo_->topLevelFolderName() == ioc.topFolderName() ) return true;
   return false;
 }
 
@@ -22,7 +22,7 @@ bool DQMEventSelector::operator<(const DQMEventSelector& other) const
 {
   if ( queueId() != other.queueId() )
     return ( queueId() < other.queueId() );
-  return ( *(_registrationInfo) < *(other._registrationInfo) );
+  return ( *(registrationInfo_) < *(other.registrationInfo_) );
 }
 
 

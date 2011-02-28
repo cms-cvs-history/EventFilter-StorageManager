@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.11 2011/02/25 13:32:41 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.cc,v 1.14.2.12 2011/02/26 15:53:28 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerRegistrationInfo.h"
@@ -39,7 +39,7 @@ namespace stor
   {
     try
     {
-      _outputModuleLabel = pset.getUntrackedParameter<std::string>("SelectHLTOutput");
+      outputModuleLabel_ = pset.getUntrackedParameter<std::string>("SelectHLTOutput");
     }
     catch( edm::Exception& e )
     {
@@ -47,11 +47,11 @@ namespace stor
         "No HLT output module specified" );
     }
 
-    _triggerSelection = pset.getUntrackedParameter<std::string>("TriggerSelector", "");
+    triggerSelection_ = pset.getUntrackedParameter<std::string>("TriggerSelector", "");
 
     try
     {
-      _eventSelection = pset.getParameter<Strings>("TrackedEventSelection");
+      eventSelection_ = pset.getParameter<Strings>("TrackedEventSelection");
     }
     catch( edm::Exception& e )
     {
@@ -59,27 +59,27 @@ namespace stor
         pset.getUntrackedParameter<edm::ParameterSet>("SelectEvents", edm::ParameterSet());
       if ( ! tmpPSet1.empty() )
       {
-        _eventSelection = tmpPSet1.getParameter<Strings>("SelectEvents");
+        eventSelection_ = tmpPSet1.getParameter<Strings>("SelectEvents");
       }
     }
 
-    _prescale = pset.getUntrackedParameter<int>("prescale", 1);
-    _uniqueEvents = pset.getUntrackedParameter<bool>("uniqueEvents", false);
-    _headerRetryInterval = pset.getUntrackedParameter<int>("headerRetryInterval", 5);
+    prescale_ = pset.getUntrackedParameter<int>("prescale", 1);
+    uniqueEvents_ = pset.getUntrackedParameter<bool>("uniqueEvents", false);
+    headerRetryInterval_ = pset.getUntrackedParameter<int>("headerRetryInterval", 5);
   }
   
   
   void
   EventConsumerRegistrationInfo::do_appendToPSet(edm::ParameterSet& pset) const
   {
-    pset.addUntrackedParameter<std::string>("SelectHLTOutput", _outputModuleLabel);
-    pset.addUntrackedParameter<std::string>("TriggerSelector", _triggerSelection);
-    pset.addParameter<Strings>("TrackedEventSelection", _eventSelection);
-    pset.addUntrackedParameter<bool>("uniqueEvents", _uniqueEvents);
-    pset.addUntrackedParameter<int>("prescale", _prescale);
+    pset.addUntrackedParameter<std::string>("SelectHLTOutput", outputModuleLabel_);
+    pset.addUntrackedParameter<std::string>("TriggerSelector", triggerSelection_);
+    pset.addParameter<Strings>("TrackedEventSelection", eventSelection_);
+    pset.addUntrackedParameter<bool>("uniqueEvents", uniqueEvents_);
+    pset.addUntrackedParameter<int>("prescale", prescale_);
 
-    if ( _headerRetryInterval != 5 )
-      pset.addUntrackedParameter<int>("headerRetryInterval", _headerRetryInterval);
+    if ( headerRetryInterval_ != 5 )
+      pset.addUntrackedParameter<int>("headerRetryInterval", headerRetryInterval_);
   }
 
   void 
@@ -91,25 +91,25 @@ namespace stor
   void
   EventConsumerRegistrationInfo::do_eventType(std::ostream& os) const
   {
-    os << "Output module: " << _outputModuleLabel << "\n";
+    os << "Output module: " << outputModuleLabel_ << "\n";
 
-    if ( _triggerSelection.empty() )
+    if ( triggerSelection_.empty() )
     {
-      if ( ! _eventSelection.empty() )
+      if ( ! eventSelection_.empty() )
       {
         os  << "Event Selection: ";
-        std::copy(_eventSelection.begin(), _eventSelection.end()-1,
+        std::copy(eventSelection_.begin(), eventSelection_.end()-1,
           std::ostream_iterator<Strings::value_type>(os, ","));
-        os << *(_eventSelection.end()-1);
+        os << *(eventSelection_.end()-1);
       }
     }
     else
-      os << "Trigger Selection: " << _triggerSelection;
+      os << "Trigger Selection: " << triggerSelection_;
 
-    if ( _prescale != 1 )
-      os << "; prescale: " << _prescale;
+    if ( prescale_ != 1 )
+      os << "; prescale: " << prescale_;
 
-    if ( _uniqueEvents != false )
+    if ( uniqueEvents_ != false )
       os << "; uniqueEvents";
 
     os << "\n";

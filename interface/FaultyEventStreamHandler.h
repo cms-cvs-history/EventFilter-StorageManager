@@ -1,4 +1,4 @@
-// $Id: FaultyEventStreamHandler.h,v 1.1 2010/05/11 17:58:01 mommsen Exp $
+// $Id: FaultyEventStreamHandler.h,v 1.1.4.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: FaultyEventStreamHandler.h 
 
 #ifndef EventFilter_StorageManager_FaultyEventStreamHandler_h
@@ -19,8 +19,8 @@ namespace stor {
    * Handle the faulty event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.1 $
-   * $Date: 2010/05/11 17:58:01 $
+   * $Revision: 1.1.4.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class FaultyEventStreamHandler : public StreamHandler
@@ -41,13 +41,13 @@ namespace stor {
      * Return the stream label
      */
     virtual std::string streamLabel() const
-    { return _streamRecord->streamName; }
+    { return streamRecord_->streamName; }
 
     /**
      * Return the fraction-to-disk parameter
      */
     virtual double fractionToDisk() const
-    { return _streamRecord->fractionToDisk; }
+    { return streamRecord_->fractionToDisk; }
 
     /**
      * Get the file handler responsible for the event
@@ -66,7 +66,7 @@ namespace stor {
     { return 0; }
 
 
-    InitMsgCollectionPtr _initMsgCollection;
+    InitMsgCollectionPtr initMsgCollection_;
 
   };
   

@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.1.2.2 2011/02/24 13:36:55 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.4 2011/02/27 13:56:41 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -17,177 +17,178 @@
 #include <sstream>
 #include <unistd.h>
 
-using namespace stor;
 
-
-DQMTopLevelFolder::DQMTopLevelFolder
-(
-  const DQMKey& dqmKey,
-  const QueueIDs& dqmConsumers,
-  const DQMProcessingParams& dqmParams,
-  DQMEventMonitorCollection& dqmEventMonColl,
-  const unsigned int expectedUpdates
-) :
-_dqmKey(dqmKey),
-_dqmConsumers(dqmConsumers),
-_dqmParams(dqmParams),
-_dqmEventMonColl(dqmEventMonColl),
-_expectedUpdates(expectedUpdates),
-_nUpdates(0),
-_sentEvents(0)
-{
-  gROOT->SetBatch(kTRUE);
-  _dqmEventMonColl.getNumberOfTopLevelFoldersMQ().addSample(1);
-}
-
-
-DQMTopLevelFolder::~DQMTopLevelFolder()
-{
-  _dqmFolders.clear();
-}
-
-
-void DQMTopLevelFolder::addDQMEvent(const DQMEventMsgView& view)
-{
-  _releaseTag = view.releaseTag();
-
-  edm::StreamDQMDeserializer deserializer;
-  std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
-    deserializer.deserializeDQMEvent(view);
-
-  addEvent(toTablePtr);
-
-  ++_nUpdates;
-  _lastUpdate = utils::getCurrentTime();
-
-  _dqmEventMonColl.getDQMEventSizeMQ().addSample(
-    static_cast<double>(view.size()) / 0x100000
-  );
-}
-
-
-bool DQMTopLevelFolder::isReady(const utils::time_point_t& now) const
-{
-  if ( _nUpdates == 0 ) return false;
-
-  if ( _nUpdates == _expectedUpdates ) return true;
-
-  if ( now > _lastUpdate + _dqmParams._readyTimeDQM ) return true;
+namespace stor {
   
-  return false;
-}
-
-void DQMTopLevelFolder::addEvent(std::auto_ptr<DQMEvent::TObjectTable> toTablePtr)
-{
-  for (
-    DQMEvent::TObjectTable::const_iterator it = toTablePtr->begin(),
-      itEnd = toTablePtr->end();
-    it != itEnd; 
-    ++it
-  ) 
+  DQMTopLevelFolder::DQMTopLevelFolder
+  (
+    const DQMKey& dqmKey,
+    const QueueIDs& dqmConsumers,
+    const DQMProcessingParams& dqmParams,
+    DQMEventMonitorCollection& dqmEventMonColl,
+    const unsigned int expectedUpdates
+  ) :
+  dqmKey_(dqmKey),
+  dqmConsumers_(dqmConsumers),
+  dqmParams_(dqmParams),
+  dqmEventMonColl_(dqmEventMonColl),
+  expectedUpdates_(expectedUpdates),
+  nUpdates_(0),
+  sentEvents_(0)
   {
-    const std::string folderName = it->first;
-
-    DQMFoldersMap::iterator pos = _dqmFolders.lower_bound(folderName);
-    if ( pos == _dqmFolders.end() || (_dqmFolders.key_comp()(folderName, pos->first)) )
-    {
-      pos = _dqmFolders.insert(pos, DQMFoldersMap::value_type(
-          folderName, DQMFolderPtr( new DQMFolder() )
-        ));
-    }
-    pos->second->addObjects(it->second);
+    gROOT->SetBatch(kTRUE);
+    dqmEventMonColl_.getNumberOfTopLevelFoldersMQ().addSample(1);
   }
-}
-
-
-bool DQMTopLevelFolder::getRecord(DQMTopLevelFolder::Record& record)
-{
-  if ( _nUpdates == 0 ) return false;
-
-  record.clear();
-  record.tagForEventConsumers(_dqmConsumers);
-
-  // Package list of TObjects into a DQMEvent::TObjectTable
-  DQMEvent::TObjectTable table;
-  const size_t folderSize = populateTable(table);
   
-  edm::StreamDQMSerializer serializer;
-  const size_t sourceSize =
-    serializer.serializeDQMEvent(table,
-      _dqmParams._useCompressionDQM,
-      _dqmParams._compressionLevelDQM);
   
-  // Add space for header
-  const size_t totalSize =
-    sourceSize
-    + sizeof(DQMEventHeader)
-    + 12*sizeof(uint32_t)
-    + _releaseTag.length()
-    + _dqmKey.topLevelFolderName.length()
+  DQMTopLevelFolder::~DQMTopLevelFolder()
+  {
+    dqmFolders_.clear();
+  }
+  
+  
+  void DQMTopLevelFolder::addDQMEvent(const DQMEventMsgView& view)
+  {
+    releaseTag_ = view.releaseTag();
+    
+    edm::StreamDQMDeserializer deserializer;
+    std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
+      deserializer.deserializeDQMEvent(view);
+    
+    addEvent(toTablePtr);
+    
+    ++nUpdates_;
+    lastUpdate_ = utils::getCurrentTime();
+    
+    dqmEventMonColl_.getDQMEventSizeMQ().addSample(
+      static_cast<double>(view.size()) / 0x100000
+    );
+  }
+  
+  
+  bool DQMTopLevelFolder::isReady(const utils::time_point_t& now) const
+  {
+    if ( nUpdates_ == 0 ) return false;
+    
+    if ( nUpdates_ == expectedUpdates_ ) return true;
+    
+    if ( now > lastUpdate_ + dqmParams_.readyTimeDQM_ ) return true;
+    
+    return false;
+  }
+  
+  
+  void DQMTopLevelFolder::addEvent(std::auto_ptr<DQMEvent::TObjectTable> toTablePtr)
+  {
+    for (
+      DQMEvent::TObjectTable::const_iterator it = toTablePtr->begin(),
+        itEnd = toTablePtr->end();
+      it != itEnd; 
+      ++it
+    ) 
+    {
+      const std::string folderName = it->first;
+      
+      DQMFoldersMap::iterator pos = dqmFolders_.lower_bound(folderName);
+      if ( pos == dqmFolders_.end() || (dqmFolders_.key_comp()(folderName, pos->first)) )
+      {
+        pos = dqmFolders_.insert(pos, DQMFoldersMap::value_type(
+            folderName, DQMFolderPtr( new DQMFolder() )
+          ));
+      }
+      pos->second->addObjects(it->second);
+    }
+  }
+  
+  
+  bool DQMTopLevelFolder::getRecord(DQMTopLevelFolder::Record& record)
+  {
+    if ( nUpdates_ == 0 ) return false;
+    
+    record.clear();
+    record.tagForEventConsumers(dqmConsumers_);
+    
+    // Package list of TObjects into a DQMEvent::TObjectTable
+    DQMEvent::TObjectTable table;
+    const size_t folderSize = populateTable(table);
+    
+    edm::StreamDQMSerializer serializer;
+    const size_t sourceSize =
+      serializer.serializeDQMEvent(table,
+        dqmParams_.useCompressionDQM_,
+        dqmParams_.compressionLevelDQM_);
+    
+    // Add space for header
+    const size_t totalSize =
+      sourceSize
+      + sizeof(DQMEventHeader)
+      + 12*sizeof(uint32_t)
+      + releaseTag_.length()
+      + dqmKey_.topLevelFolderName.length()
     + folderSize;
-  
-  edm::Timestamp timestamp(utils::nanoseconds_since_epoch(_lastUpdate));
-  
-  DQMEventMsgBuilder builder(
-    record.getBuffer(totalSize),
-    totalSize,
-    _dqmKey.runNumber,
-    ++_sentEvents,
-    timestamp,
-    _dqmKey.lumiSection,
-    _dqmKey.lumiSection,
-    (uint32_t)serializer.adler32_chksum(),
-    toolbox::net::getHostName().c_str(),
-    _releaseTag,
-    _dqmKey.topLevelFolderName,
-    table
-  ); 
-  unsigned char* source = serializer.bufferPointer();
-  std::copy(source,source+sourceSize, builder.eventAddress());
-  builder.setEventLength(sourceSize);
-  if ( _dqmParams._useCompressionDQM ) 
-  {
-    // the "compression flag" contains the uncompressed size
-    builder.setCompressionFlag(serializer.currentEventSize());
-  }
-  else
-  {
-    // a size of 0 indicates no compression
-    builder.setCompressionFlag(0);
-  }
-  
-  _dqmEventMonColl.getNumberOfUpdatesMQ().addSample(_nUpdates);
-  _dqmEventMonColl.getServedDQMEventSizeMQ().addSample(
-    static_cast<double>(record.totalDataSize()) / 0x100000
-  );
-
-  return true;
-}
-
-
-size_t DQMTopLevelFolder::populateTable(DQMEvent::TObjectTable& table) const
-{
-  size_t folderSize = 0;
-
-  for ( DQMFoldersMap::const_iterator it = _dqmFolders.begin(), itEnd = _dqmFolders.end();
-        it != itEnd; ++it )
-  {
-    const std::string folderName = it->first;
-    const DQMFolderPtr folder = it->second;
-
-    DQMEvent::TObjectTable::iterator pos = table.lower_bound(folderName);
-    if ( pos == table.end() || (table.key_comp()(folderName, pos->first)) )
+    
+    edm::Timestamp timestamp(utils::nanoseconds_since_epoch(lastUpdate_));
+    
+    DQMEventMsgBuilder builder(
+      record.getBuffer(totalSize),
+      totalSize,
+      dqmKey_.runNumber,
+      ++sentEvents_,
+      timestamp,
+      dqmKey_.lumiSection,
+      dqmKey_.lumiSection,
+      (uint32_t)serializer.adler32_chksum(),
+      toolbox::net::getHostName().c_str(),
+      releaseTag_,
+      dqmKey_.topLevelFolderName,
+      table
+    ); 
+    unsigned char* source = serializer.bufferPointer();
+    std::copy(source,source+sourceSize, builder.eventAddress());
+    builder.setEventLength(sourceSize);
+    if ( dqmParams_.useCompressionDQM_ ) 
     {
-      std::vector<TObject*> newObjectVector;
-      pos = table.insert(pos, DQMEvent::TObjectTable::value_type(folderName, newObjectVector));
-      folderSize += 2*sizeof(uint32_t) + folderName.length();
+      // the "compression flag" contains the uncompressed size
+      builder.setCompressionFlag(serializer.currentEventSize());
     }
-    folder->fillObjectVector(pos->second);
+    else
+    {
+      // a size of 0 indicates no compression
+      builder.setCompressionFlag(0);
+    }
+    
+    dqmEventMonColl_.getNumberOfUpdatesMQ().addSample(nUpdates_);
+    dqmEventMonColl_.getServedDQMEventSizeMQ().addSample(
+      static_cast<double>(record.totalDataSize()) / 0x100000
+    );
+    
+    return true;
   }
-  return folderSize;
-}
-
-
+  
+  
+  size_t DQMTopLevelFolder::populateTable(DQMEvent::TObjectTable& table) const
+  {
+    size_t folderSize = 0;
+    
+    for ( DQMFoldersMap::const_iterator it = dqmFolders_.begin(), itEnd = dqmFolders_.end();
+          it != itEnd; ++it )
+    {
+      const std::string folderName = it->first;
+      const DQMFolderPtr folder = it->second;
+      
+      DQMEvent::TObjectTable::iterator pos = table.lower_bound(folderName);
+      if ( pos == table.end() || (table.key_comp()(folderName, pos->first)) )
+      {
+        std::vector<TObject*> newObjectVector;
+        pos = table.insert(pos, DQMEvent::TObjectTable::value_type(folderName, newObjectVector));
+        folderSize += 2*sizeof(uint32_t) + folderName.length();
+      }
+      folder->fillObjectVector(pos->second);
+    }
+    return folderSize;
+  }
+  
+} // namespace stor
 
 /// emacs configuration
 /// Local Variables: -

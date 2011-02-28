@@ -14,22 +14,22 @@
 
 struct QueueElement
 {
-  QueueElement() : _value(0), _size(0) {};
-  QueueElement(const int& value) : _value(value), _size(sizeof(int)) {};
-  QueueElement(const unsigned int& value) : _value(value), _size(sizeof(unsigned int)) {};
-  QueueElement(const unsigned long& value) : _value(value), _size(sizeof(unsigned long)) {};
-  QueueElement(const unsigned long long& value) : _value(value), _size(sizeof(unsigned long long)) {};
+  QueueElement() : value_(0), size_(0) {};
+  QueueElement(const int& value) : value_(value), size_(sizeof(int)) {};
+  QueueElement(const unsigned int& value) : value_(value), size_(sizeof(unsigned int)) {};
+  QueueElement(const unsigned long& value) : value_(value), size_(sizeof(unsigned long)) {};
+  QueueElement(const unsigned long long& value) : value_(value), size_(sizeof(unsigned long long)) {};
 
   bool operator==(const QueueElement& other) const
-  { return (other._value == _value); }
+  { return (other.value_ == value_); }
 
   friend std::ostream& operator<<(std::ostream& os, const QueueElement& qe)
-  { os << qe._value; return os; }
+  { os << qe.value_; return os; }
   
-  size_t memoryUsed() const { return _size; };
+  size_t memoryUsed() const { return size_; };
 
-  unsigned long long _value;
-  size_t _size;
+  unsigned long long value_;
+  size_t size_;
 };
 
 typedef stor::ConcurrentQueue<QueueElement> queue_t;
@@ -43,9 +43,9 @@ public:
   FillQueue(boost::shared_ptr<queue_t>& p, 
 	    unsigned int delay,
 	    unsigned int nEntries):
-    _sharedQueue(p),
-    _delay(delay),
-    _counter(nEntries+1)
+    sharedQueue_(p),
+    delay_(delay),
+    counter_(nEntries+1)
   { }  
 
   void operator()();
@@ -53,42 +53,42 @@ public:
   void waiting_fill();
   
 private:
-  boost::shared_ptr<queue_t> _sharedQueue;
-  unsigned int               _delay;
-  unsigned int               _counter;
+  boost::shared_ptr<queue_t> sharedQueue_;
+  unsigned int               delay_;
+  unsigned int               counter_;
 };
 
 
 void FillQueue::operator()()
 {
-  while(--_counter)
+  while(--counter_)
     {
-      sleep(_delay);
-      _sharedQueue->enq_nowait(_counter);
+      sleep(delay_);
+      sharedQueue_->enq_nowait(counter_);
     }
 }
 
 void FillQueue::waiting_fill()
 {
-  while(--_counter) _sharedQueue->enq_wait(_counter);
+  while(--counter_) sharedQueue_->enq_wait(counter_);
 }
 
 class DrainQueue
 {
 public:
   DrainQueue(boost::shared_ptr<queue_t>& p, unsigned int delay) :
-    _sharedQueue(p),
-    _delay(delay),
-    _counter(0)
+    sharedQueue_(p),
+    delay_(delay),
+    counter_(0)
   { }  
 
   void operator()();
   unsigned int count() const;
 
 private:
-  boost::shared_ptr<queue_t> _sharedQueue;
-  unsigned int               _delay;
-  unsigned int               _counter;
+  boost::shared_ptr<queue_t> sharedQueue_;
+  unsigned int               delay_;
+  unsigned int               counter_;
 };
 
 void DrainQueue::operator()()
@@ -96,15 +96,15 @@ void DrainQueue::operator()()
   queue_t::value_type val;
   while(true)
     {
-      sleep(_delay);
-      if (_sharedQueue->deq_nowait(val)) ++_counter;
+      sleep(delay_);
+      if (sharedQueue_->deq_nowait(val)) ++counter_;
       else return;
     }
 }
 
 unsigned int DrainQueue::count() const
 {
-  return _counter;
+  return counter_;
 }
 
 
@@ -117,18 +117,18 @@ class DrainTimedQueue
 {
 public:
   DrainTimedQueue(boost::shared_ptr<queue_t>& p, unsigned int delay) :
-    _sharedQueue(p),
-    _delay(delay),
-    _counter(0)
+    sharedQueue_(p),
+    delay_(delay),
+    counter_(0)
   { }  
 
   void operator()();
   unsigned int count() const;
 
 private:
-  boost::shared_ptr<queue_t> _sharedQueue;
-  unsigned int               _delay;
-  unsigned int               _counter;
+  boost::shared_ptr<queue_t> sharedQueue_;
+  unsigned int               delay_;
+  unsigned int               counter_;
 };
 
 void DrainTimedQueue::operator()()
@@ -136,15 +136,15 @@ void DrainTimedQueue::operator()()
   queue_t::value_type val;
   while(true)
     {
-      sleep(_delay);
-      if (_sharedQueue->deq_nowait(val)) ++_counter;
+      sleep(delay_);
+      if (sharedQueue_->deq_nowait(val)) ++counter_;
       else return;
     }
 }
 
 unsigned int DrainTimedQueue::count() const
 {
-  return _counter;
+  return counter_;
 }
 
 class testConcurrentQueue : public CppUnit::TestFixture

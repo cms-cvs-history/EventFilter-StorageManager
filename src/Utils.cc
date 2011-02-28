@@ -1,4 +1,4 @@
-//$Id: Utils.cc,v 1.17 2010/12/10 19:38:48 mommsen Exp $
+//$Id: Utils.cc,v 1.18 2010/12/14 12:56:52 mommsen Exp $
 /// @file: Utils.cc
 
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -79,9 +79,14 @@ namespace stor
     
     void checkDirectory(const std::string& path)
     {
+      #if linux
       struct stat64 results;
-      
       int retVal = stat64(path.c_str(), &results);
+      #else
+      struct stat results;
+      int retVal = stat(path.c_str(), &results);
+      #endif
+
       if( retVal !=0 )
       {
         std::ostringstream msg;

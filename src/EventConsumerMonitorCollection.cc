@@ -1,4 +1,4 @@
-// $Id: EventConsumerMonitorCollection.cc,v 1.2 2009/08/28 16:41:26 mommsen Exp $
+// $Id: EventConsumerMonitorCollection.cc,v 1.2.12.1 2011/02/24 14:40:37 mommsen Exp $
 /// @file: EventConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerMonitorCollection.h"
@@ -14,14 +14,14 @@ ConsumerMonitorCollection(updateInterval, boost::posix_time::seconds(10))
 
 void EventConsumerMonitorCollection::do_appendInfoSpaceItems(InfoSpaceItems& infoSpaceItems)
 {
-  infoSpaceItems.push_back(std::make_pair("eventConsumers", &_eventConsumers));
+  infoSpaceItems.push_back(std::make_pair("eventConsumers", &eventConsumers_));
 }
 
 
 void EventConsumerMonitorCollection::do_updateInfoSpaceItems()
 {
-  boost::mutex::scoped_lock l( _mutex );
-  _eventConsumers = _smap.size();
+  boost::mutex::scoped_lock l( mutex_ );
+  eventConsumers_ = smap_.size();
 }
 
 

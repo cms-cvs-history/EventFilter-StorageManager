@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.17.2.2 2011/02/24 13:36:55 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.17.2.3 2011/02/26 15:53:28 mommsen Exp $
 /// @file: FragmentProcessor.cc
 
 #include <unistd.h>
@@ -18,49 +18,49 @@ using namespace stor;
 
 FragmentProcessor::FragmentProcessor( xdaq::Application *app,
                                       SharedResourcesPtr sr ) :
-  _app(app),
-  _sharedResources(sr),
-  _wrapperNotifier( app ),
-  _fragmentStore(),
-  _eventDistributor(sr),
-  _actionIsActive(true)
+  app_(app),
+  sharedResources_(sr),
+  wrapperNotifier_( app ),
+  fragmentStore_(),
+  eventDistributor_(sr),
+  actionIsActive_(true)
 {
-  _stateMachine.reset( new StateMachine( &_eventDistributor,
-                                         &_fragmentStore, &_wrapperNotifier,
-                                         _sharedResources ) );
-  _stateMachine->initiate();
+  stateMachine_.reset( new StateMachine( &eventDistributor_,
+                                         &fragmentStore_, &wrapperNotifier_,
+                                         sharedResources_ ) );
+  stateMachine_->initiate();
 
   WorkerThreadParams workerParams =
-    _sharedResources->_configuration->getWorkerThreadParams();
-  _timeout = workerParams._FPdeqWaitTime;
+    sharedResources_->configuration_->getWorkerThreadParams();
+  timeout_ = workerParams._FPdeqWaitTime;
 }
 
 FragmentProcessor::~FragmentProcessor()
 {
   // Stop the activity
-  _actionIsActive = false;
+  actionIsActive_ = false;
 
   // Cancel the workloop (will wait until the action has finished)
-  _processWL->cancel();
+  processWL_->cancel();
 }
 
 void FragmentProcessor::startWorkLoop(std::string workloopName)
 {
   try
     {
-      std::string identifier = utils::getIdentifier(_app->getApplicationDescriptor());
+      std::string identifier = utils::getIdentifier(app_->getApplicationDescriptor());
 
-      _processWL = toolbox::task::getWorkLoopFactory()->
+      processWL_ = toolbox::task::getWorkLoopFactory()->
         getWorkLoop( identifier + workloopName, "waiting" );
 
-      if ( ! _processWL->isActive() )
+      if ( ! processWL_->isActive() )
         {
           toolbox::task::ActionSignature* processAction = 
             toolbox::task::bind(this, &FragmentProcessor::processMessages, 
                                 identifier + "ProcessMessages");
-          _processWL->submit(processAction);
+          processWL_->submit(processAction);
 
-          _processWL->activate();
+          processWL_->activate();
         }
     }
   catch (xcept::Exception& e)
@@ -87,45 +87,45 @@ bool FragmentProcessor::processMessages(toolbox::task::WorkLoop*)
   }
   catch(stor::exception::RBLookupFailed &e)
   {
-    _sharedResources->_statisticsReporter->alarmHandler()->
+    sharedResources_->statisticsReporter_->alarmHandler()->
       notifySentinel(AlarmHandler::ERROR, e);
   }
   catch(xcept::Exception &e)
   {
     XCEPT_DECLARE_NESTED( stor::exception::FragmentProcessing,
                           sentinelException, errorMsg, e );
-    _sharedResources->moveToFailedState(sentinelException);
+    sharedResources_->moveToFailedState(sentinelException);
   }
   catch(std::exception &e)
   {
     errorMsg += e.what();
     XCEPT_DECLARE(stor::exception::FragmentProcessing,
       sentinelException, errorMsg);
-    _sharedResources->moveToFailedState(sentinelException);
+    sharedResources_->moveToFailedState(sentinelException);
   }
   catch(...)
   {
     errorMsg += "Unknown exception";
     XCEPT_DECLARE(stor::exception::FragmentProcessing,
       sentinelException, errorMsg);
-    _sharedResources->moveToFailedState(sentinelException);
+    sharedResources_->moveToFailedState(sentinelException);
   }
 
-  return _actionIsActive;
+  return actionIsActive_;
 }
 
 void FragmentProcessor::processOneFragmentIfPossible()
 {
-  if (_eventDistributor.full()) 
+  if (eventDistributor_.full()) 
   {
     utils::time_point_t startTime = utils::getCurrentTime();
 
-    utils::sleep(_timeout);
+    utils::sleep(timeout_);
 
     utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-    _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+    sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
 
-    _fragmentStore.addToStaleEventTimes(elapsedTime);
+    fragmentStore_.addToStaleEventTimes(elapsedTime);
   }
   else 
     processOneFragment();
@@ -134,36 +134,36 @@ void FragmentProcessor::processOneFragmentIfPossible()
 void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
-  FragmentQueuePtr fq = _sharedResources->_fragmentQueue;
+  FragmentQueuePtr fq = sharedResources_->fragmentQueue_;
   utils::time_point_t startTime = utils::getCurrentTime();
-  if (fq->deq_timed_wait(fragment, _timeout))
+  if (fq->deq_timed_wait(fragment, timeout_))
     {
       utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
-      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addPoppedFragmentSample(fragment.memoryUsed());
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addPoppedFragmentSample(fragment.memoryUsed());
 
-      _stateMachine->getCurrentState().processI2OFragment(fragment);
+      stateMachine_->getCurrentState().processI2OFragment(fragment);
     }
   else
     {
       utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
 
-      _stateMachine->getCurrentState().noFragmentToProcess();  
+      stateMachine_->getCurrentState().noFragmentToProcess();  
     }
 }
 
 
 void FragmentProcessor::processAllCommands()
 {
-  CommandQueuePtr cq = _sharedResources->_commandQueue;
+  CommandQueuePtr cq = sharedResources_->commandQueue_;
   stor::event_ptr evt;
   bool gotCommand = false;
 
   while( cq->deq_nowait( evt ) )
     {
       gotCommand = true;
-      _stateMachine->process_event( *evt );
+      stateMachine_->process_event( *evt );
     }
 
   // the timeout value may have changed if the transition was
@@ -171,8 +171,8 @@ void FragmentProcessor::processAllCommands()
   if (gotCommand)
     {
       WorkerThreadParams workerParams =
-        _sharedResources->_configuration->getWorkerThreadParams();
-      _timeout = workerParams._FPdeqWaitTime;
+        sharedResources_->configuration_->getWorkerThreadParams();
+      timeout_ = workerParams._FPdeqWaitTime;
     }
 }
 
@@ -181,10 +181,10 @@ void FragmentProcessor::processAllRegistrations()
 {
   RegPtr regPtr;
   RegistrationQueuePtr regQueue =
-    _sharedResources->_registrationQueue;
+    sharedResources_->registrationQueue_;
   while ( regQueue->deq_nowait( regPtr ) )
   {
-    regPtr->registerMe( &_eventDistributor );
+    regPtr->registerMe( &eventDistributor_ );
   }
 }
 

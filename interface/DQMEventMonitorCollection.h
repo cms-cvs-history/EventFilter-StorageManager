@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.h,v 1.7.8.2 2011/02/04 13:57:45 mommsen Exp $
+// $Id: DQMEventMonitorCollection.h,v 1.7.8.3 2011/02/26 15:51:09 mommsen Exp $
 /// @file: DQMEventMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DQMEventMonitorCollection_h
@@ -16,27 +16,27 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.2 $
-   * $Date: 2011/02/04 13:57:45 $
+   * $Revision: 1.7.8.3 $
+   * $Date: 2011/02/26 15:51:09 $
    */
   
   class DQMEventMonitorCollection : public MonitorCollection
   {
   private:
 
-    MonitoredQuantity _droppedDQMEventCounts;
+    MonitoredQuantity droppedDQMEventCounts_;
 
-    MonitoredQuantity _dqmEventSizes;
-    MonitoredQuantity _servedDQMEventSizes;
-    MonitoredQuantity _writtenDQMEventSizes;
+    MonitoredQuantity dqmEventSizes_;
+    MonitoredQuantity servedDQMEventSizes_;
+    MonitoredQuantity writtenDQMEventSizes_;
 
-    MonitoredQuantity _dqmEventBandwidth;
-    MonitoredQuantity _servedDQMEventBandwidth;
-    MonitoredQuantity _writtenDQMEventBandwidth;
+    MonitoredQuantity dqmEventBandwidth_;
+    MonitoredQuantity servedDQMEventBandwidth_;
+    MonitoredQuantity writtenDQMEventBandwidth_;
 
-    MonitoredQuantity _numberOfTopLevelFolders;
-    MonitoredQuantity _numberOfUpdates;
-    MonitoredQuantity _numberOfWrittenTopLevelFolders;
+    MonitoredQuantity numberOfTopLevelFolders_;
+    MonitoredQuantity numberOfUpdates_;
+    MonitoredQuantity numberOfWrittenTopLevelFolders_;
 
 
   public:
@@ -61,73 +61,73 @@ namespace stor {
     explicit DQMEventMonitorCollection(const utils::duration_t& updateInterval);
 
     const MonitoredQuantity& getDroppedDQMEventCountsMQ() const {
-      return _droppedDQMEventCounts;
+      return droppedDQMEventCounts_;
     }
     MonitoredQuantity& getDroppedDQMEventCountsMQ() {
-      return _droppedDQMEventCounts;
+      return droppedDQMEventCounts_;
     }
 
     const MonitoredQuantity& getDQMEventSizeMQ() const {
-      return _dqmEventSizes;
+      return dqmEventSizes_;
     }
     MonitoredQuantity& getDQMEventSizeMQ() {
-      return _dqmEventSizes;
+      return dqmEventSizes_;
     }
 
     const MonitoredQuantity& getServedDQMEventSizeMQ() const {
-      return _servedDQMEventSizes;
+      return servedDQMEventSizes_;
     }
     MonitoredQuantity& getServedDQMEventSizeMQ() {
-      return _servedDQMEventSizes;
+      return servedDQMEventSizes_;
     }
 
     const MonitoredQuantity& getWrittenDQMEventSizeMQ() const {
-      return _writtenDQMEventSizes;
+      return writtenDQMEventSizes_;
     }
     MonitoredQuantity& getWrittenDQMEventSizeMQ() {
-      return _writtenDQMEventSizes;
+      return writtenDQMEventSizes_;
     }
 
     const MonitoredQuantity& getDQMEventBandwidthMQ() const {
-      return _dqmEventBandwidth;
+      return dqmEventBandwidth_;
     }
     MonitoredQuantity& getDQMEventBandwidthMQ() {
-      return _dqmEventBandwidth;
+      return dqmEventBandwidth_;
     }
 
     const MonitoredQuantity& getServedDQMEventBandwidthMQ() const {
-      return _servedDQMEventBandwidth;
+      return servedDQMEventBandwidth_;
     }
     MonitoredQuantity& getServedDQMEventBandwidthMQ() {
-      return _servedDQMEventBandwidth;
+      return servedDQMEventBandwidth_;
     }
 
     const MonitoredQuantity& getWrittenDQMEventBandwidthMQ() const {
-      return _writtenDQMEventBandwidth;
+      return writtenDQMEventBandwidth_;
     }
     MonitoredQuantity& getWrittenDQMEventBandwidthMQ() {
-      return _writtenDQMEventBandwidth;
+      return writtenDQMEventBandwidth_;
     }
 
     const MonitoredQuantity& getNumberOfTopLevelFoldersMQ() const {
-      return _numberOfTopLevelFolders;
+      return numberOfTopLevelFolders_;
     }
     MonitoredQuantity& getNumberOfTopLevelFoldersMQ() {
-      return _numberOfTopLevelFolders;
+      return numberOfTopLevelFolders_;
     }
 
     const MonitoredQuantity& getNumberOfUpdatesMQ() const {
-      return _numberOfUpdates;
+      return numberOfUpdates_;
     }
     MonitoredQuantity& getNumberOfUpdatesMQ() {
-      return _numberOfUpdates;
+      return numberOfUpdates_;
     }
 
     const MonitoredQuantity& getNumberOfWrittenTopLevelFoldersMQ() const {
-      return _numberOfWrittenTopLevelFolders;
+      return numberOfWrittenTopLevelFolders_;
     }
     MonitoredQuantity& getNumberOfWrittenTopLevelFoldersMQ() {
-      return _numberOfWrittenTopLevelFolders;
+      return numberOfWrittenTopLevelFolders_;
     }
 
    /**
@@ -147,9 +147,9 @@ namespace stor {
     virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
     virtual void do_updateInfoSpaceItems();
 
-    xdata::Double _dqmFoldersPerEP;
-    xdata::UnsignedInteger32 _processedDQMEvents;
-    xdata::UnsignedInteger32 _droppedDQMEvents;
+    xdata::Double dqmFoldersPerEP_;
+    xdata::UnsignedInteger32 processedDQMEvents_;
+    xdata::UnsignedInteger32 droppedDQMEvents_;
   };
   
 } // namespace stor

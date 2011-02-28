@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.h,v 1.1.2.3 2011/02/11 12:09:14 mommsen Exp $
+// $Id: SMWebPageHelper.h,v 1.1.2.4 2011/02/28 11:36:56 mommsen Exp $
 /// @file: SMWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_SMWebPageHelper_h
@@ -36,8 +36,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2011/02/11 12:09:14 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2011/02/28 11:36:56 $
    */
   
   class SMWebPageHelper : public WebPageHelper<SMWebPageHelper>
@@ -424,12 +424,12 @@ namespace stor {
     SMWebPageHelper(SMWebPageHelper const&);
     SMWebPageHelper& operator=(SMWebPageHelper const&);
 
-    SharedResourcesPtr _sharedResources;
+    SharedResourcesPtr sharedResources_;
 
     typedef ConsumerWebPageHelper<SMWebPageHelper,
                                   EventQueueCollection,
                                   StatisticsReporter> ConsumerWebPageHelper_t;
-    ConsumerWebPageHelper_t _consumerWebPageHelper;
+    ConsumerWebPageHelper_t consumerWebPageHelper_;
 
   };
 

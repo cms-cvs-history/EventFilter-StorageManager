@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.8 2011/02/22 11:28:41 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.9 2011/02/24 13:36:55 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -38,13 +38,13 @@ namespace stor
     DQMEventQueueCollectionPtr dqmEventQueueCollection,
     AlarmHandlerPtr alarmHandler
   ) :
-  _configuration(configuration),
-  _registrationCollection(registrationCollection),
-  _registrationQueue(registrationQueue),
-  _initMsgCollection(initMsgCollection),
-  _eventQueueCollection(eventQueueCollection),
-  _dqmEventQueueCollection(dqmEventQueueCollection),
-  _alarmHandler(alarmHandler)
+  configuration_(configuration),
+  registrationCollection_(registrationCollection),
+  registrationQueue_(registrationQueue),
+  initMsgCollection_(initMsgCollection),
+  eventQueueCollection_(eventQueueCollection),
+  dqmEventQueueCollection_(dqmEventQueueCollection),
+  alarmHandler_(alarmHandler)
   {}
   
   
@@ -74,7 +74,7 @@ namespace stor
   {
     EventConsRegPtr reginfo;
     
-    ConsumerID cid = _registrationCollection->getConsumerId();
+    ConsumerID cid = registrationCollection_->getConsumerId();
     if ( !cid.isValid() ) return reginfo;
     
     std::string errorMsg = "Error parsing an event consumer registration request";
@@ -89,7 +89,7 @@ namespace stor
       
       XCEPT_DECLARE(stor::exception::ConsumerRegistration,
         sentinelException, errorMsg);
-      _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+      alarmHandler_->notifySentinel(AlarmHandler::ERROR, sentinelException);
       
       writeErrorString( out, errorMsg );
       return reginfo;
@@ -98,7 +98,7 @@ namespace stor
     {
       XCEPT_DECLARE_NESTED(stor::exception::ConsumerRegistration,
         sentinelException, errorMsg, excpt);
-      _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+      alarmHandler_->notifySentinel(AlarmHandler::ERROR, sentinelException);
       
       writeErrorString( out, errorMsg + ": " + xcept::stdformat_exception_history(excpt) );
       return reginfo;
@@ -109,7 +109,7 @@ namespace stor
       
       XCEPT_DECLARE(stor::exception::ConsumerRegistration,
         sentinelException, errorMsg);
-      _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+      alarmHandler_->notifySentinel(AlarmHandler::ERROR, sentinelException);
       
       writeErrorString( out, errorMsg );
       return reginfo;
@@ -124,7 +124,7 @@ namespace stor
   ConsumerUtils<Configuration_t,EventQueueCollection_t>::
   createEventConsumerQueue(EventConsRegPtr reginfo) const
   {
-    QueueID qid = _eventQueueCollection->createQueue(reginfo);
+    QueueID qid = eventQueueCollection_->createQueue(reginfo);
     
     if( !qid.isValid() ) return false;
     
@@ -146,7 +146,7 @@ namespace stor
     }
     
     EventConsRegPtr consRegPtr = boost::dynamic_pointer_cast<EventConsumerRegistrationInfo>(
-      _registrationCollection->getRegistrationInfo( cid ));
+      registrationCollection_->getRegistrationInfo( cid ));
     if ( consRegPtr.get() == NULL )
     {
       writeEmptyBuffer( out );
@@ -154,7 +154,7 @@ namespace stor
     }
     
     InitMsgSharedPtr payload =
-      _initMsgCollection->getElementForOutputModule( consRegPtr->outputModuleLabel() );
+      initMsgCollection_->getElementForOutputModule( consRegPtr->outputModuleLabel() );
     
     if( payload.get() == NULL )
     {
@@ -179,14 +179,14 @@ namespace stor
       return;
     }
     
-    if ( !_registrationCollection->registrationIsAllowed( cid ) )
+    if ( !registrationCollection_->registrationIsAllowed( cid ) )
     {
       writeDone( out );
       return;
     }
     
     typename EventQueueCollection_t::value_type event =
-      _eventQueueCollection->popEvent( cid );
+      eventQueueCollection_->popEvent( cid );
     if( event.first.empty() || event.first.faulty() )
       writeEmptyBuffer( out );
     else
@@ -223,7 +223,7 @@ namespace stor
   {
     DQMEventConsRegPtr dqmreginfo;
     
-    ConsumerID cid = _registrationCollection->getConsumerId();
+    ConsumerID cid = registrationCollection_->getConsumerId();
     if ( !cid.isValid() ) return dqmreginfo;
     
     std::string errorMsg = "Error parsing a DQM event consumer registration request";
@@ -238,7 +238,7 @@ namespace stor
       
       XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
         sentinelException, errorMsg);
-      _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+      alarmHandler_->notifySentinel(AlarmHandler::ERROR, sentinelException);
       
       writeErrorString( out, errorMsg );
       return dqmreginfo;
@@ -247,7 +247,7 @@ namespace stor
     {
       XCEPT_DECLARE_NESTED(stor::exception::DQMConsumerRegistration,
         sentinelException, errorMsg, excpt);
-      _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+      alarmHandler_->notifySentinel(AlarmHandler::ERROR, sentinelException);
       
       writeErrorString( out, errorMsg + ": " + xcept::stdformat_exception_history(excpt) );
       return dqmreginfo;
@@ -258,7 +258,7 @@ namespace stor
       
       XCEPT_DECLARE(stor::exception::DQMConsumerRegistration,
         sentinelException, errorMsg);
-      _alarmHandler->notifySentinel(AlarmHandler::ERROR, sentinelException);
+      alarmHandler_->notifySentinel(AlarmHandler::ERROR, sentinelException);
       
       writeErrorString( out, errorMsg );
       return dqmreginfo;
@@ -280,14 +280,14 @@ namespace stor
       return;
     }
     
-    if ( !_registrationCollection->registrationIsAllowed( cid ) )
+    if ( !registrationCollection_->registrationIsAllowed( cid ) )
     {
       writeDone( out );
       return;
     }
     
     typename DQMEventQueueCollection::value_type dqmEvent =
-      _dqmEventQueueCollection->popEvent( cid );
+      dqmEventQueueCollection_->popEvent( cid );
     
     if ( dqmEvent.first.empty() )
       writeEmptyBuffer( out );
@@ -301,7 +301,7 @@ namespace stor
   ConsumerUtils<Configuration_t,EventQueueCollection_t>::
   createDQMEventConsumerQueue(DQMEventConsRegPtr reginfo) const
   {
-    QueueID qid = _dqmEventQueueCollection->createQueue(reginfo);
+    QueueID qid = dqmEventQueueCollection_->createQueue(reginfo);
     
     if( !qid.isValid() ) return false;
     
@@ -315,9 +315,9 @@ namespace stor
   ConsumerUtils<Configuration_t,EventQueueCollection_t>::
   addRegistrationInfo(const RegPtr reginfo) const
   {
-    if ( !_registrationCollection->addRegistrationInfo( reginfo ) ) return false;
+    if ( !registrationCollection_->addRegistrationInfo( reginfo ) ) return false;
     
-    return _registrationQueue->enq_timed_wait( reginfo, boost::posix_time::seconds(5) );
+    return registrationQueue_->enq_timed_wait( reginfo, boost::posix_time::seconds(5) );
   }
   
   
@@ -360,7 +360,7 @@ namespace stor
     
     EventConsRegPtr cr(
       new EventConsumerRegistrationInfo(pset,
-        _configuration->getEventServingParams(), remoteHost)
+        configuration_->getEventServingParams(), remoteHost)
     );
     
     return cr;
@@ -404,7 +404,7 @@ namespace stor
     
     DQMEventConsRegPtr cr(
       new DQMEventConsumerRegistrationInfo(pset,
-        _configuration->getEventServingParams(), remoteHost)
+        configuration_->getEventServingParams(), remoteHost)
     );
     
     return cr;

@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.6 2011/02/25 09:13:48 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.7 2011/02/25 13:32:41 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -17,12 +17,12 @@ namespace stor
     const enquing_policy::PolicyTag& queuePolicy,
     const utils::duration_t& secondsToStale
   ) :
-  _remoteHost(remoteHost),
-  _consumerName(consumerName),
-  _queueSize(queueSize),
-  _queuePolicy(queuePolicy),
-  _secondsToStale(secondsToStale),
-  _consumerId(0)
+  remoteHost_(remoteHost),
+  consumerName_(consumerName),
+  queueSize_(queueSize),
+  queuePolicy_(queuePolicy),
+  secondsToStale_(secondsToStale),
+  consumerId_(0)
   { }
 
   RegistrationInfoBase::RegistrationInfoBase
@@ -32,56 +32,56 @@ namespace stor
     const EventServingParams& eventServingParams,
     const bool useEventServingParams
   ) :
-  _remoteHost(remoteHost),
-  _consumerId(0)
+  remoteHost_(remoteHost),
+  consumerId_(0)
   {
     try
     {
-      _consumerName = pset.getUntrackedParameter<std::string>("consumerName");
+      consumerName_ = pset.getUntrackedParameter<std::string>("consumerName");
     }
     catch( edm::Exception& e )
     {
-      _consumerName = pset.getUntrackedParameter<std::string>("DQMconsumerName", "Unknown");
+      consumerName_ = pset.getUntrackedParameter<std::string>("DQMconsumerName", "Unknown");
     }
 
     try
     {
-      _sourceURL = pset.getParameter<std::string>("sourceURL");
+      sourceURL_ = pset.getParameter<std::string>("sourceURL");
     }
     catch( edm::Exception& e )
     {
-      _sourceURL = pset.getUntrackedParameter<std::string>("sourceURL", "Unknown");
+      sourceURL_ = pset.getUntrackedParameter<std::string>("sourceURL", "Unknown");
     }
 
     const double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
     if ( maxEventRequestRate > 0 )
-      _minEventRequestInterval = utils::seconds_to_duration(1 / maxEventRequestRate);
+      minEventRequestInterval_ = utils::seconds_to_duration(1 / maxEventRequestRate);
     else
-      _minEventRequestInterval = boost::posix_time::not_a_date_time;
+      minEventRequestInterval_ = boost::posix_time::not_a_date_time;
 
-    _maxConnectTries = pset.getUntrackedParameter<int>("maxConnectTries", 300);
+    maxConnectTries_ = pset.getUntrackedParameter<int>("maxConnectTries", 300);
 
-    _connectTrySleepTime = pset.getUntrackedParameter<int>("connectTrySleepTime", 10);
+    connectTrySleepTime_ = pset.getUntrackedParameter<int>("connectTrySleepTime", 10);
 
-    _retryInterval = pset.getUntrackedParameter<int>("retryInterval", 5);
+    retryInterval_ = pset.getUntrackedParameter<int>("retryInterval", 5);
 
-    _queueSize = pset.getUntrackedParameter<int>("queueSize",
-      useEventServingParams ? eventServingParams._consumerQueueSize : 0);
+    queueSize_ = pset.getUntrackedParameter<int>("queueSize",
+      useEventServingParams ? eventServingParams.consumerQueueSize_ : 0);
 
     const std::string policy =
       pset.getUntrackedParameter<std::string>("queuePolicy",
-        useEventServingParams ? eventServingParams._consumerQueuePolicy : "Default");
+        useEventServingParams ? eventServingParams.consumerQueuePolicy_ : "Default");
     if ( policy == "DiscardNew" )
     {
-      _queuePolicy = enquing_policy::DiscardNew;
+      queuePolicy_ = enquing_policy::DiscardNew;
     }
     else if ( policy == "DiscardOld" )
     {
-      _queuePolicy = enquing_policy::DiscardOld;
+      queuePolicy_ = enquing_policy::DiscardOld;
     }
     else if ( policy == "Default" )
     {
-      _queuePolicy = enquing_policy::Max;
+      queuePolicy_ = enquing_policy::Max;
     }
     else
     {
@@ -89,48 +89,48 @@ namespace stor
         "Unknown enqueuing policy: " + policy );
     }
 
-    _secondsToStale = utils::seconds_to_duration(
+    secondsToStale_ = utils::seconds_to_duration(
       pset.getUntrackedParameter<double>("consumerTimeOut", 0)
     );
-    if ( useEventServingParams && _secondsToStale < boost::posix_time::seconds(1) )
-      _secondsToStale = eventServingParams._activeConsumerTimeout;
+    if ( useEventServingParams && secondsToStale_ < boost::posix_time::seconds(1) )
+      secondsToStale_ = eventServingParams.activeConsumerTimeout_;
   }
 
   edm::ParameterSet RegistrationInfoBase::getPSet() const
   {
     edm::ParameterSet pset;
 
-    if ( _consumerName != "Unknown" )
-      pset.addUntrackedParameter<std::string>("consumerName", _consumerName);
+    if ( consumerName_ != "Unknown" )
+      pset.addUntrackedParameter<std::string>("consumerName", consumerName_);
 
-    if ( _sourceURL  != "Unknown" )
-      pset.addParameter<std::string>("sourceURL", _sourceURL);
+    if ( sourceURL_  != "Unknown" )
+      pset.addParameter<std::string>("sourceURL", sourceURL_);
 
-    if ( _maxConnectTries != 300 )
-      pset.addUntrackedParameter<int>("maxConnectTries", _maxConnectTries);
+    if ( maxConnectTries_ != 300 )
+      pset.addUntrackedParameter<int>("maxConnectTries", maxConnectTries_);
     
-    if ( _connectTrySleepTime != 10 )
-      pset.addUntrackedParameter<int>("connectTrySleepTime", _connectTrySleepTime);
+    if ( connectTrySleepTime_ != 10 )
+      pset.addUntrackedParameter<int>("connectTrySleepTime", connectTrySleepTime_);
 
-    if ( _retryInterval != 5 )
-      pset.addUntrackedParameter<int>("retryInterval", _retryInterval);
+    if ( retryInterval_ != 5 )
+      pset.addUntrackedParameter<int>("retryInterval", retryInterval_);
     
-    if ( _queueSize > 0 )
-      pset.addUntrackedParameter<int>("queueSize", _queueSize);
+    if ( queueSize_ > 0 )
+      pset.addUntrackedParameter<int>("queueSize", queueSize_);
     
-    if ( ! _minEventRequestInterval.is_not_a_date_time() )
+    if ( ! minEventRequestInterval_.is_not_a_date_time() )
     {
-      const double rate = 1 / utils::duration_to_seconds(_minEventRequestInterval);
+      const double rate = 1 / utils::duration_to_seconds(minEventRequestInterval_);
       pset.addUntrackedParameter<double>("maxEventRequestRate", rate);
     }
 
-    const double secondsToStale = utils::duration_to_seconds(_secondsToStale);
+    const double secondsToStale = utils::duration_to_seconds(secondsToStale_);
     if ( secondsToStale > 0 )
       pset.addUntrackedParameter<double>("consumerTimeOut", secondsToStale);
 
-    if ( _queuePolicy == enquing_policy::DiscardNew )
+    if ( queuePolicy_ == enquing_policy::DiscardNew )
       pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
-    if ( _queuePolicy == enquing_policy::DiscardOld )
+    if ( queuePolicy_ == enquing_policy::DiscardOld )
       pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
 
     do_appendToPSet(pset);
@@ -163,9 +163,9 @@ namespace stor
 
   void RegistrationInfoBase::queueInfo(std::ostream& os) const
   {
-    os << "Queue type: " << _queuePolicy <<
-      ", size " << _queueSize << 
-      ", timeout " << _secondsToStale.total_seconds() << "s";
+    os << "Queue type: " << queuePolicy_ <<
+      ", size " << queueSize_ << 
+      ", timeout " << secondsToStale_.total_seconds() << "s";
   }
 
   std::ostream& operator<< (std::ostream& os,

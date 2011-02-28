@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.5 2009/08/18 08:54:13 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.5.12.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: MonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_MonitorCollection_h
@@ -18,8 +18,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.5 $
-   * $Date: 2009/08/18 08:54:13 $
+   * $Revision: 1.5.12.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class MonitorCollection
@@ -74,9 +74,9 @@ namespace stor {
     MonitorCollection(MonitorCollection const&);
     MonitorCollection& operator=(MonitorCollection const&);
 
-    const utils::duration_t _updateInterval;
-    utils::time_point_t _lastCalculateStatistics;
-    bool _infoSpaceUpdateNeeded;
+    const utils::duration_t updateInterval_;
+    utils::time_point_t lastCalculateStatistics_;
+    bool infoSpaceUpdateNeeded_;
 
   };
   

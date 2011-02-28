@@ -1,4 +1,4 @@
-// $Id: EventStreamConfigurationInfo.h,v 1.10 2010/12/17 18:21:04 mommsen Exp $
+// $Id: EventStreamConfigurationInfo.h,v 1.10.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventStreamConfigurationInfo.h
 
 #ifndef EventFilter_StorageManager_EventStreamConfigurationInfo_h
@@ -20,8 +20,8 @@ namespace stor
      Configuration information for the event stream
 
      $Author: mommsen $
-     $Revision: 1.10 $
-     $Date: 2010/12/17 18:21:04 $
+     $Revision: 1.10.2.1 $
+     $Date: 2011/01/24 12:18:39 $
   */
 
   class EventStreamConfigurationInfo
@@ -36,32 +36,32 @@ namespace stor
                                   const Strings& eventSelection,
                                   const std::string& outputModuleLabel,
                                   double fractionToDisk ):
-      _streamLabel( streamLabel ),
-      _maxFileSizeMB( maxFileSizeMB ),
-      _triggerSelection( triggerSelection ),
-      _eventSelection( eventSelection ),
-      _outputModuleLabel( outputModuleLabel ),
-      _fractionToDisk( fractionToDisk ),
-      _streamId(0)
+      streamLabel_( streamLabel ),
+      maxFileSizeMB_( maxFileSizeMB ),
+      triggerSelection_( triggerSelection ),
+      eventSelection_( eventSelection ),
+      outputModuleLabel_( outputModuleLabel ),
+      fractionToDisk_( fractionToDisk ),
+      streamId_(0)
     {}
 
     // Destructor:
     ~EventStreamConfigurationInfo() {}
 
     // Accessors:
-    const std::string& streamLabel() const { return _streamLabel; }
-    const int maxFileSizeMB() const { return _maxFileSizeMB; }
-    const std::string& triggerSelection() const { return _triggerSelection; }
-    const Strings& eventSelection() const { return _eventSelection; }
-    const std::string& outputModuleLabel() const { return _outputModuleLabel; }
-    double fractionToDisk() const { return _fractionToDisk; }
-    StreamID streamId() const { return _streamId; }
+    const std::string& streamLabel() const { return streamLabel_; }
+    const int maxFileSizeMB() const { return maxFileSizeMB_; }
+    const std::string& triggerSelection() const { return triggerSelection_; }
+    const Strings& eventSelection() const { return eventSelection_; }
+    const std::string& outputModuleLabel() const { return outputModuleLabel_; }
+    double fractionToDisk() const { return fractionToDisk_; }
+    StreamID streamId() const { return streamId_; }
 
     // Comparison:
     bool operator<(const EventStreamConfigurationInfo&) const;
 
     // Set stream Id:
-    void setStreamId( StreamID sid ) { _streamId = sid; }
+    void setStreamId( StreamID sid ) { streamId_ = sid; }
 
     // Output:
     friend std::ostream& operator <<
@@ -69,13 +69,13 @@ namespace stor
 
   private:
 
-    std::string _streamLabel;
-    int _maxFileSizeMB;
-    std::string _triggerSelection;
-    Strings _eventSelection;
-    std::string _outputModuleLabel;
-    double _fractionToDisk;
-    StreamID _streamId;
+    std::string streamLabel_;
+    int maxFileSizeMB_;
+    std::string triggerSelection_;
+    Strings eventSelection_;
+    std::string outputModuleLabel_;
+    double fractionToDisk_;
+    StreamID streamId_;
 
   };
 

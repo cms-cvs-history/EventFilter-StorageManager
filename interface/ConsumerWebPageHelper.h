@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.h,v 1.1.2.7 2011/02/23 10:44:38 mommsen Exp $
+// $Id: ConsumerWebPageHelper.h,v 1.1.2.8 2011/02/28 11:36:56 mommsen Exp $
 /// @file: ConsumerWebPageHelper.h
 
 #ifndef EventFilter_StorageManager_ConsumerWebPageHelper_h
@@ -25,8 +25,8 @@ namespace stor
    * Helper class to handle consumer web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2011/02/23 10:44:38 $
+   * $Revision: 1.1.2.8 $
+   * $Date: 2011/02/28 11:36:56 $
    */
 
   template<typename WebPageHelper_t, typename EventQueueCollection_t, typename StatisticsReporter_t>
@@ -101,7 +101,7 @@ namespace stor
     ConsumerWebPageHelper(ConsumerWebPageHelper const&);
     ConsumerWebPageHelper& operator=(ConsumerWebPageHelper const&);
 
-    xdaq::ApplicationDescriptor* _appDescriptor;
+    xdaq::ApplicationDescriptor* appDescriptor_;
 
   };
 

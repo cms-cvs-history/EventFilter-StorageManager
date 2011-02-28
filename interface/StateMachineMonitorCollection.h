@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.h,v 1.7.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: StateMachineMonitorCollection.h,v 1.7.8.2 2011/01/25 11:28:37 mommsen Exp $
 /// @file: StateMachineMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_StateMachineMonitorCollection_h
@@ -19,8 +19,8 @@ namespace stor {
    * A collection of monitored quantities related to the state machine
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.7.8.2 $
+   * $Date: 2011/01/25 11:28:37 $
    */
   
   class StateMachineMonitorCollection : public MonitorCollection
@@ -87,13 +87,13 @@ namespace stor {
     virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
     virtual void do_updateInfoSpaceItems();
 
-    History _history;
-    std::string _externallyVisibleState;
-    mutable boost::mutex _stateMutex;
+    History history_;
+    std::string externallyVisibleState_;
+    mutable boost::mutex stateMutex_;
 
-    std::string _statusMessage;
+    std::string statusMessage_;
 
-    xdata::String _stateName;
+    xdata::String stateName_;
 
   };
   

@@ -1,4 +1,4 @@
-// $Id: DQMHttpSource.cc,v 1.22.2.2 2011/02/24 15:05:09 mommsen Exp $
+// $Id: DQMHttpSource.cc,v 1.22.2.3 2011/02/25 09:13:48 mommsen Exp $
 /// @file: DQMHttpSource.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -22,8 +22,8 @@ namespace edm
     const InputSourceDescription& desc
   ) :
   edm::RawInputSource(pset, desc),
-  _dqmStore(0),
-  _dqmEventServerProxy(pset)
+  dqmStore_(0),
+  dqmEventServerProxy_(pset)
   {}
 
 
@@ -31,7 +31,7 @@ namespace edm
   {
     stor::CurlInterface::Content data;
 
-    _dqmEventServerProxy.getOneEvent(data);
+    dqmEventServerProxy_.getOneEvent(data);
     if ( data.empty() ) return std::auto_ptr<edm::Event>();
 
     HeaderView hdrView(&data[0]);
@@ -67,13 +67,13 @@ namespace edm
     {
       const std::string subFolderName = tableIter->first;
       std::vector<TObject*> toList = tableIter->second;
-      _dqmStore->makeDirectory(subFolderName);  // fetch or create
-      _dqmStore->setCurrentFolder(subFolderName);
+      dqmStore_->makeDirectory(subFolderName);  // fetch or create
+      dqmStore_->setCurrentFolder(subFolderName);
 
       for (std::vector<TObject*>::const_iterator objectIter = toList.begin(),
              objectIterEnd = toList.end(); objectIter != objectIterEnd; ++objectIter)
       {
-        _dqmStore->extract(*objectIter, _dqmStore->pwd(), true);
+        dqmStore_->extract(*objectIter, dqmStore_->pwd(), true);
         // TObject cloned into DQMStore. Thus, delete it here.
         delete *objectIter;
       }
@@ -83,10 +83,10 @@ namespace edm
 
   void DQMHttpSource::initializeDQMStore()
   {
-    if ( ! _dqmStore )
-      _dqmStore = edm::Service<DQMStore>().operator->();
+    if ( ! dqmStore_ )
+      dqmStore_ = edm::Service<DQMStore>().operator->();
     
-    if ( ! _dqmStore )
+    if ( ! dqmStore_ )
       throw cms::Exception("readOneEvent", "DQMHttpSource")
         << "Unable to lookup the DQMStore service!\n";
   }

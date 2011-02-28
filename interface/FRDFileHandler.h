@@ -1,4 +1,4 @@
-// $Id: FRDFileHandler.h,v 1.12 2010/12/15 10:09:14 mommsen Exp $
+// $Id: FRDFileHandler.h,v 1.12.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: FRDFileHandler.h 
 
 #ifndef EventFilter_StorageManager_FRDFileHandler_h
@@ -21,8 +21,8 @@ namespace stor {
    * FED Raw Data (FRD) format.
    *
    * $Author: mommsen $
-   * $Revision: 1.12 $
-   * $Date: 2010/12/15 10:09:14 $
+   * $Revision: 1.12.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class FRDFileHandler : public FileHandler
@@ -49,7 +49,7 @@ namespace stor {
      */
     virtual void do_writeEvent(const I2OChain&);
 
-    boost::scoped_ptr<FRDEventFileWriter> _writer; // writes FED Raw Data file
+    boost::scoped_ptr<FRDEventFileWriter> writer_; // writes FED Raw Data file
   };
   
 } // stor namespace

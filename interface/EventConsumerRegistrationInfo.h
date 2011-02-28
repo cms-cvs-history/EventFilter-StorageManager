@@ -1,4 +1,4 @@
-// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.13 2011/02/25 13:32:54 mommsen Exp $
+// $Id: EventConsumerRegistrationInfo.h,v 1.13.2.14 2011/02/26 15:51:09 mommsen Exp $
 /// @file: EventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_EventConsumerRegistrationInfo_h
@@ -27,8 +27,8 @@ namespace stor
    * Holds the registration information from a event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.2.13 $
-   * $Date: 2011/02/25 13:32:54 $
+   * $Revision: 1.13.2.14 $
+   * $Date: 2011/02/26 15:51:09 $
    */
 
   class EventConsumerRegistrationInfo :
@@ -54,12 +54,12 @@ namespace stor
     ~EventConsumerRegistrationInfo() {};
 
     // Accessors:
-    const std::string& triggerSelection() const { return _triggerSelection; }
-    const Strings& eventSelection() const { return _eventSelection; }
-    const std::string& outputModuleLabel() const { return _outputModuleLabel; }
-    const int& prescale() const { return _prescale; }
-    const bool& uniqueEvents() const { return _uniqueEvents; }
-    const int& headerRetryInterval() const { return _headerRetryInterval; }
+    const std::string& triggerSelection() const { return triggerSelection_; }
+    const Strings& eventSelection() const { return eventSelection_; }
+    const std::string& outputModuleLabel() const { return outputModuleLabel_; }
+    const int& prescale() const { return prescale_; }
+    const bool& uniqueEvents() const { return uniqueEvents_; }
+    const int& headerRetryInterval() const { return headerRetryInterval_; }
     uint32 eventRequestCode() const { return Header::EVENT_REQUEST; }
     uint32 eventCode() const { return Header::EVENT; }
     std::string eventURL() const { return sourceURL() + "/geteventdata"; }
@@ -82,12 +82,12 @@ namespace stor
 
     void parsePSet(const edm::ParameterSet&);
 
-    std::string _triggerSelection;
-    Strings _eventSelection;
-    std::string _outputModuleLabel;
-    int _prescale;
-    bool _uniqueEvents;
-    int _headerRetryInterval;
+    std::string triggerSelection_;
+    Strings eventSelection_;
+    std::string outputModuleLabel_;
+    int prescale_;
+    bool uniqueEvents_;
+    int headerRetryInterval_;
   };
 
   typedef boost::shared_ptr<stor::EventConsumerRegistrationInfo> EventConsRegPtr;

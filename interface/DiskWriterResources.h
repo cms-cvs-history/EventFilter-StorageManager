@@ -1,4 +1,4 @@
-// $Id: DiskWriterResources.h,v 1.8 2010/12/10 19:38:48 mommsen Exp $
+// $Id: DiskWriterResources.h,v 1.8.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DiskWriterResources.h 
 
 
@@ -25,8 +25,8 @@ namespace stor
    * and need to be accessed from multiple threads.
    *
    * $Author: mommsen $
-   * $Revision: 1.8 $
-   * $Date: 2010/12/10 19:38:48 $
+   * $Revision: 1.8.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class DiskWriterResources
@@ -108,21 +108,21 @@ namespace stor
 
   private:
 
-    bool _configurationIsNeeded;
-    bool _streamChangeIsNeeded;
-    bool _fileClosingTestIsNeeded;
-    bool _diskWriterIsBusy;
+    bool configurationIsNeeded_;
+    bool streamChangeIsNeeded_;
+    bool fileClosingTestIsNeeded_;
+    bool diskWriterIsBusy_;
 
-    EvtStrConfigListPtr _requestedEventStreamConfig;
-    ErrStrConfigListPtr _requestedErrorStreamConfig;
-    DiskWritingParams _requestedDiskWritingParams;
-    unsigned int _requestedRunNumber;
-    boost::posix_time::time_duration _requestedTimeout;
+    EvtStrConfigListPtr requestedEventStreamConfig_;
+    ErrStrConfigListPtr requestedErrorStreamConfig_;
+    DiskWritingParams requestedDiskWritingParams_;
+    unsigned int requestedRunNumber_;
+    boost::posix_time::time_duration requestedTimeout_;
 
-    bool _streamChangeInProgress;
-    boost::condition _streamChangeCondition;
+    bool streamChangeInProgress_;
+    boost::condition streamChangeCondition_;
     
-    mutable boost::mutex _streamChangeMutex;
+    mutable boost::mutex streamChangeMutex_;
   };
   
   typedef boost::shared_ptr<DiskWriterResources> DiskWriterResourcesPtr;

@@ -60,11 +60,11 @@ public:
   void shared_queues();
 
 private:
-  stor::EventConsumerMonitorCollection _ecmc;
+  stor::EventConsumerMonitorCollection ecmc_;
 };
 
 testEventQueueCollection::testEventQueueCollection() :
-_ecmc(boost::posix_time::seconds(1))
+ecmc_(boost::posix_time::seconds(1))
 {}
 
 void
@@ -83,7 +83,7 @@ void
 testEventQueueCollection::create_queues()
 {
   // Default collection should have no queues.
-  EventQueueCollection c(_ecmc);
+  EventQueueCollection c(ecmc_);
   CPPUNIT_ASSERT(c.size() == 0);
 
   // Make sure that the different types of queue are both counted
@@ -145,7 +145,7 @@ testEventQueueCollection::pop_event_from_non_existing_queue()
 {
   // Attemping to pop and event from a non-existent queue should
   // result in an exception.
-  EventQueueCollection c(_ecmc);
+  EventQueueCollection c(ecmc_);
   CPPUNIT_ASSERT(c.size() == 0);
   QueueID invalid_id;
   CPPUNIT_ASSERT(!invalid_id.isValid());
@@ -161,7 +161,7 @@ void
 testEventQueueCollection::add_and_pop()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-  EventQueueCollection coll(_ecmc);
+  EventQueueCollection coll(ecmc_);
 
   // We want events to go bad very rapidly.
   double expiration_interval = 5;
@@ -268,7 +268,7 @@ void
 testEventQueueCollection::invalid_queueid()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-  EventQueueCollection coll(_ecmc);
+  EventQueueCollection coll(ecmc_);
 
   QueueID id1(DiscardNew, 0);
   QueueID id2(DiscardOld, 0);
@@ -318,7 +318,7 @@ void
 testEventQueueCollection::clear_all_queues()
 {
   CPPUNIT_ASSERT(outstanding_bytes() == 0);
-  EventQueueCollection coll(_ecmc);
+  EventQueueCollection coll(ecmc_);
   ConsumerID cid;
 
   edm::ParameterSet pset;
@@ -376,7 +376,7 @@ testEventQueueCollection::clear_all_queues()
 void
 testEventQueueCollection::remove_all_queues()
 {
-  EventQueueCollection coll(_ecmc);
+  EventQueueCollection coll(ecmc_);
   ConsumerID cid;
 
   edm::ParameterSet pset;
@@ -412,7 +412,7 @@ testEventQueueCollection::remove_all_queues()
 void
 testEventQueueCollection::shared_queues()
 {
-  EventQueueCollection coll(_ecmc);
+  EventQueueCollection coll(ecmc_);
   ConsumerID cid;
 
   edm::ParameterSet pset1;

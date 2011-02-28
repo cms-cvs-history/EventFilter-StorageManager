@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.17 2010/12/15 10:09:13 mommsen Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.17.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DataSenderMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DataSenderMonitorCollection_h
@@ -24,8 +24,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: mommsen $
-   * $Revision: 1.17 $
-   * $Date: 2010/12/15 10:09:13 $
+   * $Revision: 1.17.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -409,23 +409,23 @@ namespace stor {
 
     void calcStatsForOutputModules(OutputModuleRecordMap& outputModuleMap);
 
-    mutable boost::mutex _collectionsMutex;
+    mutable boost::mutex collectionsMutex_;
 
-    xdata::UnsignedInteger32 _connectedRBs;
-    xdata::UnsignedInteger32 _connectedEPs;
-    xdata::UnsignedInteger32 _activeEPs;
-    xdata::Integer32 _outstandingDataDiscards;
-    xdata::Integer32 _outstandingDQMDiscards;
-    xdata::UnsignedInteger32 _faultyEvents;
-    xdata::UnsignedInteger32 _ignoredDiscards;
+    xdata::UnsignedInteger32 connectedRBs_;
+    xdata::UnsignedInteger32 connectedEPs_;
+    xdata::UnsignedInteger32 activeEPs_;
+    xdata::Integer32 outstandingDataDiscards_;
+    xdata::Integer32 outstandingDQMDiscards_;
+    xdata::UnsignedInteger32 faultyEvents_;
+    xdata::UnsignedInteger32 ignoredDiscards_;
 
-    OutputModuleRecordMap _outputModuleMap;
+    OutputModuleRecordMap outputModuleMap_;
 
-    std::map<ResourceBrokerKey, UniqueResourceBrokerID_t> _resourceBrokerIDs;
-    std::map<UniqueResourceBrokerID_t, RBRecordPtr> _resourceBrokerMap;
+    std::map<ResourceBrokerKey, UniqueResourceBrokerID_t> resourceBrokerIDs_;
+    std::map<UniqueResourceBrokerID_t, RBRecordPtr> resourceBrokerMap_;
 
-    const utils::duration_t _updateInterval;
-    AlarmHandlerPtr _alarmHandler;
+    const utils::duration_t updateInterval_;
+    AlarmHandlerPtr alarmHandler_;
 
   };
 

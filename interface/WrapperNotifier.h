@@ -1,4 +1,4 @@
-// $Id: WrapperNotifier.h,v 1.9 2009/09/29 07:54:01 mommsen Exp $
+// $Id: WrapperNotifier.h,v 1.9.10.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: WrapperNotifier.h 
 
 #ifndef EventFilter_StorageManager_WrapperNotifier_h
@@ -17,8 +17,8 @@ namespace stor
      Notifier implementation used by StorageManager
 
      $Author: mommsen $
-     $Revision: 1.9 $
-     $Date: 2009/09/29 07:54:01 $
+     $Revision: 1.9.10.1 $
+     $Date: 2011/01/24 12:18:39 $
   */
   class WrapperNotifier: public Notifier
   {
@@ -37,8 +37,8 @@ namespace stor
 
   private:
 
-    xdaq2rc::RcmsStateNotifier _rcms_notifier;
-    xdaq::Application* _app;
+    xdaq2rc::RcmsStateNotifier rcms_notifier_;
+    xdaq::Application* app_;
 
   };
 

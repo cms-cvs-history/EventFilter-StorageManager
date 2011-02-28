@@ -1,4 +1,4 @@
-// $Id: SharedResources.h,v 1.6 2009/09/29 07:53:30 mommsen Exp $
+// $Id: SharedResources.h,v 1.6.10.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: SharedResources.h 
 
 #ifndef EventFilter_StorageManager_SharedResources_h
@@ -33,30 +33,30 @@ namespace stor {
    * Container for shared resources.
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2009/09/29 07:53:30 $
+   * $Revision: 1.6.10.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   struct SharedResources
   {
 
     // queues
-    CommandQueuePtr _commandQueue;
-    DQMEventQueuePtr _dqmEventQueue;
-    FragmentQueuePtr _fragmentQueue;
-    StreamQueuePtr _streamQueue;
-    RegistrationQueuePtr _registrationQueue;
-    EventQueueCollectionPtr _eventQueueCollection;
-    DQMEventQueueCollectionPtr _dqmEventQueueCollection;
+    CommandQueuePtr commandQueue_;
+    DQMEventQueuePtr dqmEventQueue_;
+    FragmentQueuePtr fragmentQueue_;
+    StreamQueuePtr streamQueue_;
+    RegistrationQueuePtr registrationQueue_;
+    EventQueueCollectionPtr eventQueueCollection_;
+    DQMEventQueueCollectionPtr dqmEventQueueCollection_;
 
     // other
-    boost::shared_ptr<Configuration> _configuration;
-    boost::shared_ptr<DiscardManager> _discardManager;
-    boost::shared_ptr<DiskWriterResources> _diskWriterResources;
-    boost::shared_ptr<DQMEventProcessorResources> _dqmEventProcessorResources;
-    boost::shared_ptr<InitMsgCollection> _initMsgCollection;
-    boost::shared_ptr<StatisticsReporter> _statisticsReporter;
-    boost::shared_ptr<RegistrationCollection> _registrationCollection;
+    boost::shared_ptr<Configuration> configuration_;
+    boost::shared_ptr<DiscardManager> discardManager_;
+    boost::shared_ptr<DiskWriterResources> diskWriterResources_;
+    boost::shared_ptr<DQMEventProcessorResources> dqmEventProcessorResources_;
+    boost::shared_ptr<InitMsgCollection> initMsgCollection_;
+    boost::shared_ptr<StatisticsReporter> statisticsReporter_;
+    boost::shared_ptr<RegistrationCollection> registrationCollection_;
 
     /**
      * Add a Failed state-machine event to the command queue

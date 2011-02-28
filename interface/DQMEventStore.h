@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.8.8.3 2011/02/27 13:55:52 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.8.8.5 2011/02/28 08:20:26 mommsen Exp $
 /// @file: DQMEventStore.h 
 
 #ifndef EventFilter_StorageManager_DQMEventStore_h
@@ -39,8 +39,8 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.8.3 $
-   * $Date: 2011/02/27 13:55:52 $
+   * $Revision: 1.8.8.5 $
+   * $Date: 2011/02/28 08:20:26 $
    */
 
   template<class EventType, class ConnectionType, class StateMachineType>  
@@ -88,7 +88,7 @@ namespace stor {
      * Checks if the DQM event store is empty
      */
     bool empty()
-    { return _store.empty(); }
+    { return store_.empty(); }
 
     
   private:
@@ -113,24 +113,24 @@ namespace stor {
 
     bool handleNextCompletedTopLevelFolder();
 
-    xdaq::ApplicationDescriptor* _appDescriptor;
-    DQMProcessingParams _dqmParams;
-    DQMEventQueueCollectionPtr _dqmEventQueueCollection;
-    DQMEventMonitorCollection& _dqmEventMonColl;
-    ConnectionType* _connectionType;
-    size_t (ConnectionType::*_getExpectedUpdatesCount)() const;
-    StateMachineType* _stateMachineType;
-    void (StateMachineType::*_moveToFailedState)(xcept::Exception&);
+    xdaq::ApplicationDescriptor* appDescriptor_;
+    DQMProcessingParams dqmParams_;
+    DQMEventQueueCollectionPtr dqmEventQueueCollection_;
+    DQMEventMonitorCollection& dqmEventMonColl_;
+    ConnectionType* connectionType_;
+    size_t (ConnectionType::*getExpectedUpdatesCount_)() const;
+    StateMachineType* stateMachineType_;
+    void (StateMachineType::*moveToFailedState_)(xcept::Exception&);
 
     typedef std::map<DQMKey, DQMTopLevelFolderPtr> DQMTopLevelFolderMap;
-    DQMTopLevelFolderMap _store;
-    mutable boost::mutex _storeMutex;
+    DQMTopLevelFolderMap store_;
+    mutable boost::mutex storeMutex_;
 
-    toolbox::task::WorkLoop* _completedFolderWL;
-    toolbox::task::ActionSignature* _completedFolderAction;
-    bool _processCompletedTopLevelFolders;
+    toolbox::task::WorkLoop* completedFolderWL_;
+    toolbox::task::ActionSignature* completedFolderAction_;
+    bool processCompletedTopLevelFolders_;
 
-    std::vector<unsigned char> _tempEventArea;
+    std::vector<unsigned char> tempEventArea_;
 
   };
   

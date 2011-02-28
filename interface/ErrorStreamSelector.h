@@ -1,4 +1,4 @@
-// $Id: ErrorStreamSelector.h,v 1.4 2010/12/16 16:35:29 mommsen Exp $
+// $Id: ErrorStreamSelector.h,v 1.4.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: ErrorStreamSelector.h 
 
 #ifndef EventFilter_StorageManager_ErrorStreamSelector_h
@@ -16,8 +16,8 @@ namespace stor {
      ErrorStreamConfigurationInfo
 
      $Author: mommsen $
-     $Revision: 1.4 $
-     $Date: 2010/12/16 16:35:29 $
+     $Revision: 1.4.2.1 $
+     $Date: 2011/01/24 12:18:39 $
   */
 
   class ErrorStreamSelector
@@ -27,7 +27,7 @@ namespace stor {
 
     // Constructor:
     ErrorStreamSelector( const ErrorStreamConfigurationInfo& configInfo ):
-      _configInfo( configInfo )
+      configInfo_( configInfo )
     {}
 
     // Destructor:
@@ -37,15 +37,15 @@ namespace stor {
     bool acceptEvent( const I2OChain& );
 
     // Accessors:
-    const ErrorStreamConfigurationInfo& configInfo() const { return _configInfo; }
+    const ErrorStreamConfigurationInfo& configInfo() const { return configInfo_; }
 
     // Comparison:
     bool operator<(const ErrorStreamSelector& other) const
-    { return ( _configInfo < other.configInfo() ); }
+    { return ( configInfo_ < other.configInfo() ); }
 
   private:
 
-    ErrorStreamConfigurationInfo _configInfo;
+    ErrorStreamConfigurationInfo configInfo_;
 
   };
 

@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.12 2010/12/10 19:38:48 mommsen Exp $
+// $Id: DiskWriter.h,v 1.12.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DiskWriter.h 
 
 #ifndef EventFilter_StorageManager_DiskWriter_h
@@ -34,8 +34,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: mommsen $
-   * $Revision: 1.12 $
-   * $Date: 2010/12/10 19:38:48 $
+   * $Revision: 1.12.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -140,21 +140,21 @@ namespace stor {
     void writeEndOfRunMarker() const;
 
 
-    xdaq::Application* _app;
-    SharedResourcesPtr _sharedResources;
-    DiskWritingParams _dwParams;
-    const DbFileHandlerPtr _dbFileHandler;
+    xdaq::Application* app_;
+    SharedResourcesPtr sharedResources_;
+    DiskWritingParams dwParams_;
+    const DbFileHandlerPtr dbFileHandler_;
 
-    unsigned int _runNumber;
-    boost::posix_time::time_duration _timeout; // Timeout on stream queue
-    utils::time_point_t _lastFileTimeoutCheckTime; // Last time we checked for time-out files
+    unsigned int runNumber_;
+    boost::posix_time::time_duration timeout_; // Timeout on stream queue
+    utils::time_point_t lastFileTimeoutCheckTime_; // Last time we checked for time-out files
 
     typedef boost::shared_ptr<StreamHandler> StreamHandlerPtr;
     typedef std::vector<StreamHandlerPtr> StreamHandlers;
-    StreamHandlers _streamHandlers;
+    StreamHandlers streamHandlers_;
 
-    bool _actionIsActive;
-    toolbox::task::WorkLoop* _writingWL;      
+    bool actionIsActive_;
+    toolbox::task::WorkLoop* writingWL_;      
 
   };
   

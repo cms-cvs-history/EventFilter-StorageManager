@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.h,v 1.8.2.4 2011/02/03 14:16:28 mommsen Exp $
+// $Id: ConsumerUtils.h,v 1.8.2.5 2011/02/07 13:02:02 mommsen Exp $
 /// @file: ConsumerUtils.h 
 
 #ifndef EventFilter_StorageManager_ConsumerUtils_h
@@ -33,8 +33,8 @@ namespace stor
      Handles consumer requests and responses
 
      $Author: mommsen $
-     $Revision: 1.8.2.4 $
-     $Date: 2011/02/03 14:16:28 $
+     $Revision: 1.8.2.5 $
+     $Date: 2011/02/07 13:02:02 $
   */
 
   template<typename Configuration_t, typename EventQueueCollection_t>
@@ -170,13 +170,13 @@ namespace stor
     void writeDQMConsumerEvent(xgi::Output*, const DQMEventMsgView&) const;
 
 
-    boost::shared_ptr<Configuration_t> _configuration;
-    RegistrationCollectionPtr _registrationCollection;
-    RegistrationQueuePtr _registrationQueue;
-    InitMsgCollectionPtr _initMsgCollection;
-    boost::shared_ptr<EventQueueCollection_t> _eventQueueCollection;
-    DQMEventQueueCollectionPtr _dqmEventQueueCollection;
-    AlarmHandlerPtr _alarmHandler;
+    boost::shared_ptr<Configuration_t> configuration_;
+    RegistrationCollectionPtr registrationCollection_;
+    RegistrationQueuePtr registrationQueue_;
+    InitMsgCollectionPtr initMsgCollection_;
+    boost::shared_ptr<EventQueueCollection_t> eventQueueCollection_;
+    DQMEventQueueCollectionPtr dqmEventQueueCollection_;
+    AlarmHandlerPtr alarmHandler_;
   };
 
 } // namespace stor

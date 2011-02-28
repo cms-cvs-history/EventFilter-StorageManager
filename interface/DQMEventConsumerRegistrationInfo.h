@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.9 2011/02/25 09:12:38 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.h,v 1.8.2.10 2011/02/26 15:51:09 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.h 
 
 #ifndef EventFilter_StorageManager_DQMEventConsumerRegistrationInfo_h
@@ -26,8 +26,8 @@ namespace stor
    * Holds the registration information for a DQM event consumer.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.9 $
-   * $Date: 2011/02/25 09:12:38 $
+   * $Revision: 1.8.2.10 $
+   * $Date: 2011/02/26 15:51:09 $
    */
 
   class DQMEventConsumerRegistrationInfo : 
@@ -56,7 +56,7 @@ namespace stor
     ~DQMEventConsumerRegistrationInfo() {};
 
     // Accessors:
-    const std::string& topLevelFolderName() const { return _topLevelFolderName; }
+    const std::string& topLevelFolderName() const { return topLevelFolderName_; }
     uint32 eventRequestCode() const { return Header::DQMEVENT_REQUEST; }
     uint32 eventCode() const { return Header::DQM_EVENT; }
     std::string eventURL() const { return sourceURL() + "/getDQMeventdata"; }
@@ -79,7 +79,7 @@ namespace stor
 
     void parsePSet(const edm::ParameterSet&);
 
-    std::string _topLevelFolderName;
+    std::string topLevelFolderName_;
   };
 
   typedef boost::shared_ptr<stor::DQMEventConsumerRegistrationInfo> DQMEventConsRegPtr;

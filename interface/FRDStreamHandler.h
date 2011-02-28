@@ -1,4 +1,4 @@
-// $Id: FRDStreamHandler.h,v 1.6 2010/03/19 13:24:30 mommsen Exp $
+// $Id: FRDStreamHandler.h,v 1.6.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: FRDStreamHandler.h 
 
 #ifndef EventFilter_StorageManager_FRDStreamHandler_h
@@ -18,8 +18,8 @@ namespace stor {
    * Handle one FED Raw Data (error) event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2010/03/19 13:24:30 $
+   * $Revision: 1.6.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class FRDStreamHandler : public StreamHandler
@@ -40,7 +40,7 @@ namespace stor {
      * Return the stream label
      */
     virtual std::string streamLabel() const
-    { return _streamConfig.streamLabel(); }
+    { return streamConfig_.streamLabel(); }
 
     /**
      * Return the fraction-to-disk parameter
@@ -59,10 +59,10 @@ namespace stor {
      * Return the maximum file size for the stream in MB
      */
     virtual int getStreamMaxFileSize() const
-    { return _streamConfig.maxFileSizeMB(); }
+    { return streamConfig_.maxFileSizeMB(); }
 
 
-    ErrorStreamConfigurationInfo _streamConfig;
+    ErrorStreamConfigurationInfo streamConfig_;
     
   };
   

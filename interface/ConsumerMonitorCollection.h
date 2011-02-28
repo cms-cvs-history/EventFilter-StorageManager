@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11.2.6 2011/02/24 14:41:06 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.7 2011/02/24 15:05:33 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11.2.6 $
-   * $Date: 2011/02/24 14:41:06 $
+   * $Revision: 1.11.2.7 $
+   * $Date: 2011/02/24 15:05:33 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
@@ -97,19 +97,19 @@ namespace stor {
     virtual void do_calculateStatistics();
     virtual void do_reset();
 
-    const utils::duration_t _updateInterval;
-    const utils::duration_t _recentDuration;
-    MonitoredQuantity _totalQueuedMQ;
-    MonitoredQuantity _totalDroppedMQ;
-    MonitoredQuantity _totalServedMQ;
+    const utils::duration_t updateInterval_;
+    const utils::duration_t recentDuration_;
+    MonitoredQuantity totalQueuedMQ_;
+    MonitoredQuantity totalDroppedMQ_;
+    MonitoredQuantity totalServedMQ_;
 
   protected:
 
-    ConsStatMap _qmap; // queued
-    ConsStatMap _dmap; // dropped
-    ConsStatMap _smap; // served
+    ConsStatMap qmap_; // queued
+    ConsStatMap dmap_; // dropped
+    ConsStatMap smap_; // served
 
-    mutable boost::mutex _mutex;
+    mutable boost::mutex mutex_;
 
   };
 

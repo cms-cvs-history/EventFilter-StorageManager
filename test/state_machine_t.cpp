@@ -83,70 +83,70 @@ private:
   void checkSignals( const EventList& elist, const std::string& expected);
   bool checkHistory( const TransitionList& steps );
 
-  static xdaq::Application* _app;
-  EventDistributor* _ed;
-  FragmentStore* _fs;
-  MockNotifier* _mn;
+  static xdaq::Application* app_;
+  EventDistributor* ed_;
+  FragmentStore* fs_;
+  MockNotifier* mn_;
 
-  StateMachine *_machine;
-  static SharedResourcesPtr _sr;
+  StateMachine *machine_;
+  static SharedResourcesPtr sr_;
 };
 
-xdaq::Application* testStateMachine::_app;
-SharedResourcesPtr testStateMachine::_sr;
+xdaq::Application* testStateMachine::app_;
+SharedResourcesPtr testStateMachine::sr_;
 
 void testStateMachine::setUp()
 {
   // 30-Jun-2009, KAB - to avoid the problem in which we try to re-declare infospace
   // variables to the MockApplication infospace for each test, we need to create just
   // one mock application and one shared resources instance for all tests.
-  if ( _sr.get() == 0 )
+  if ( sr_.get() == 0 )
   {
     mkdir("/tmp/log", 644); // dummy dir to avoid DiskSpaceAlarms
-    _app = mockapps::getMockXdaqApplication();
+    app_ = mockapps::getMockXdaqApplication();
 
-    _sr.reset(new SharedResources());
-    _sr->_configuration.reset(new Configuration(_app->getApplicationInfoSpace(), 0));
-    _sr->_initMsgCollection.reset(new InitMsgCollection());
-    _sr->_diskWriterResources.reset(new MockDiskWriterResources());
-    _sr->_dqmEventProcessorResources.reset(new MockDQMEventProcessorResources());
-    _sr->_commandQueue.reset(new CommandQueue(32));
-    _sr->_fragmentQueue.reset(new FragmentQueue(32));
-    _sr->_registrationQueue.reset(new RegistrationQueue(32));
-    _sr->_streamQueue.reset(new StreamQueue(32));
-    _sr->_dqmEventQueue.reset(new DQMEventQueue(32));
-    _sr->_statisticsReporter.reset( new StatisticsReporter( _app, _sr ) );
+    sr_.reset(new SharedResources());
+    sr_->configuration_.reset(new Configuration(app_->getApplicationInfoSpace(), 0));
+    sr_->initMsgCollection_.reset(new InitMsgCollection());
+    sr_->diskWriterResources_.reset(new MockDiskWriterResources());
+    sr_->dqmEventProcessorResources_.reset(new MockDQMEventProcessorResources());
+    sr_->commandQueue_.reset(new CommandQueue(32));
+    sr_->fragmentQueue_.reset(new FragmentQueue(32));
+    sr_->registrationQueue_.reset(new RegistrationQueue(32));
+    sr_->streamQueue_.reset(new StreamQueue(32));
+    sr_->dqmEventQueue_.reset(new DQMEventQueue(32));
+    sr_->statisticsReporter_.reset( new StatisticsReporter( app_, sr_ ) );
     EventConsumerMonitorCollection& ecmc = 
-      _sr->_statisticsReporter->getEventConsumerMonitorCollection();
-    _sr->_eventQueueCollection.reset( new EventQueueCollection( ecmc ) );
+      sr_->statisticsReporter_->getEventConsumerMonitorCollection();
+    sr_->eventQueueCollection_.reset( new EventQueueCollection( ecmc ) );
     DQMConsumerMonitorCollection& dcmc = 
-      _sr->_statisticsReporter->getDQMConsumerMonitorCollection();
-    _sr->_dqmEventQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
+      sr_->statisticsReporter_->getDQMConsumerMonitorCollection();
+    sr_->dqmEventQueueCollection_.reset( new DQMEventQueueCollection( dcmc ) );
     
-    _sr->_discardManager.reset(new DiscardManager(_app->getApplicationContext(),
-                                                  _app->getApplicationDescriptor(),
-                                                  _sr->_statisticsReporter->getDataSenderMonitorCollection()));
+    sr_->discardManager_.reset(new DiscardManager(app_->getApplicationContext(),
+                                                  app_->getApplicationDescriptor(),
+                                                  sr_->statisticsReporter_->getDataSenderMonitorCollection()));
 
-    _sr->_registrationCollection.reset(new RegistrationCollection());
+    sr_->registrationCollection_.reset(new RegistrationCollection());
   }
 
-  _ed = new EventDistributor(_sr);
-  _fs = new FragmentStore();
-  _mn = new MockNotifier( _app );
+  ed_ = new EventDistributor(sr_);
+  fs_ = new FragmentStore();
+  mn_ = new MockNotifier( app_ );
 
-  _machine = new StateMachine( _ed, _fs, _mn, _sr );
+  machine_ = new StateMachine( ed_, fs_, mn_, sr_ );
 }
 
 void testStateMachine::tearDown()
 {
-  //delete _machine;
+  //delete machine_;
 }
 
 void testStateMachine::resetStateMachine()
 {
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
-  _machine->initiate();
+  machine_->initiate();
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -155,15 +155,15 @@ void testStateMachine::resetStateMachine()
 void testStateMachine::processEvent( stor::event_ptr requestedEvent )
 {
   boost::shared_ptr<CommandQueue> cmdQueue;
-  cmdQueue = _machine->getSharedResources()->_commandQueue;
+  cmdQueue = machine_->getSharedResources()->commandQueue_;
 
   cmdQueue->enq_wait( requestedEvent );
   
   stor::event_ptr nextEvent;
   while ( cmdQueue->deq_nowait( nextEvent ) )
   {
-    _machine->process_event( *nextEvent );
-    _machine->getCurrentState().noFragmentToProcess();
+    machine_->process_event( *nextEvent );
+    machine_->getCurrentState().noFragmentToProcess();
   }
 }
 
@@ -173,11 +173,11 @@ void testStateMachine::processEvent( stor::event_ptr requestedEvent )
 ////////////////////////////////////////////
 bool testStateMachine::checkState( const std::string& expected )
 {
-  const std::string actual = _machine->getCurrentStateName();
+  const std::string actual = machine_->getCurrentStateName();
   if( actual != expected )
   {
     std::cerr << "Expecting " << expected << ", got " << actual << std::endl;
-    _sr->_statisticsReporter->
+    sr_->statisticsReporter_->
       getStateMachineMonitorCollection().dumpHistory( std::cerr );
     return false;
   }
@@ -226,7 +226,7 @@ bool testStateMachine::checkHistory( const TransitionList& steps )
 {
 
   StateMachineMonitorCollection::History h; 
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().getHistory( h );
   const unsigned int hsize = h.size();
   const unsigned int ssize = steps.size();
@@ -298,7 +298,7 @@ void testStateMachine::testConstructed()
 
   checkSignals( elist, "Constructed" );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 
@@ -325,7 +325,7 @@ void testStateMachine::testHalted()
 
   checkSignals( elist, "Halted" );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 void testStateMachine::testStopped()
@@ -353,7 +353,7 @@ void testStateMachine::testStopped()
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Halted" ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 void testStateMachine::testProcessing()
@@ -385,7 +385,7 @@ void testStateMachine::testProcessing()
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Halted" ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 
@@ -405,7 +405,7 @@ void testStateMachine::testFail()
   EventList elist;
   checkSignals( elist, "Failed" );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 
@@ -440,7 +440,7 @@ void testStateMachine::testEnableSequence()
   steps.push_back( TransitionRecord( "Processing", true ) );
   CPPUNIT_ASSERT( checkHistory( steps ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 void testStateMachine::testStopSequence()
@@ -458,7 +458,7 @@ void testStateMachine::testStopSequence()
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Processing" ) );
 
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
   stMachEvent.reset( new Stop() );
   processEvent( stMachEvent );
@@ -479,7 +479,7 @@ void testStateMachine::testStopSequence()
   steps.push_back( TransitionRecord( "Stopped", true ) );
   CPPUNIT_ASSERT( checkHistory( steps ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 void testStateMachine::testHaltSequence()
@@ -487,7 +487,7 @@ void testStateMachine::testHaltSequence()
   stor::event_ptr stMachEvent;
 
   resetStateMachine();
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
 
@@ -499,7 +499,7 @@ void testStateMachine::testHaltSequence()
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Processing" ) );
 
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
   stMachEvent.reset( new Halt() );
   processEvent( stMachEvent );
@@ -517,7 +517,7 @@ void testStateMachine::testHaltSequence()
   steps.push_back( TransitionRecord( "Halted", true ) );
   CPPUNIT_ASSERT( checkHistory( steps ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 void testStateMachine::testReconfigureSequence()
@@ -525,7 +525,7 @@ void testStateMachine::testReconfigureSequence()
   stor::event_ptr stMachEvent;
 
   resetStateMachine();
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
 
@@ -533,7 +533,7 @@ void testStateMachine::testReconfigureSequence()
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Stopped" ) );
 
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
   stMachEvent.reset( new Reconfigure() );
   processEvent( stMachEvent );
@@ -548,7 +548,7 @@ void testStateMachine::testReconfigureSequence()
   steps.push_back( TransitionRecord( "Stopped", true ) );
   CPPUNIT_ASSERT( checkHistory( steps ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 
@@ -567,7 +567,7 @@ void testStateMachine::testEmergencyStopSequence()
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Processing" ) );
 
-  _sr->_statisticsReporter->
+  sr_->statisticsReporter_->
     getStateMachineMonitorCollection().reset(boost::posix_time::not_a_date_time);
   stMachEvent.reset( new EmergencyStop() );
   processEvent( stMachEvent );
@@ -584,7 +584,7 @@ void testStateMachine::testEmergencyStopSequence()
   steps.push_back( TransitionRecord( "Stopped", true ) );
   CPPUNIT_ASSERT( checkHistory( steps ) );
 
-  _machine->terminate();
+  machine_->terminate();
 }
 
 void testStateMachine::testAllStatesGoToFailed()
@@ -600,7 +600,7 @@ void testStateMachine::testAllStatesGoToFailed()
   stMachEvent.reset( new Fail() );
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Failed" ) );
-  _machine->terminate();
+  machine_->terminate();
 
   std::cout << std::endl << "**** Making sure Halted can go to Failed ****" << std::endl;
 
@@ -611,7 +611,7 @@ void testStateMachine::testAllStatesGoToFailed()
   stMachEvent.reset( new Fail() );
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Failed" ) );
-  _machine->terminate();
+  machine_->terminate();
 
   std::cout << std::endl << "**** Making sure Stopped can go to Failed ****" << std::endl;
 
@@ -626,7 +626,7 @@ void testStateMachine::testAllStatesGoToFailed()
   stMachEvent.reset( new Fail() );
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Failed" ) );
-  _machine->terminate();
+  machine_->terminate();
  
   std::cout << std::endl << "**** Making sure Processing can go to Failed ****" << std::endl;
 
@@ -645,7 +645,7 @@ void testStateMachine::testAllStatesGoToFailed()
   stMachEvent.reset( new Fail() );
   processEvent( stMachEvent );
   CPPUNIT_ASSERT( checkState( "Failed" ) );
- _machine->terminate();
+ machine_->terminate();
 
 }
 

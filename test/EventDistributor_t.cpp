@@ -69,8 +69,8 @@ private:
   std::string getSampleStreamConfig();
   void initEventDistributor();
 
-  static boost::shared_ptr<SharedResources> _sharedResources;
-  static boost::shared_ptr<EventDistributor> _eventDistributor;
+  static boost::shared_ptr<SharedResources> sharedResources_;
+  static boost::shared_ptr<EventDistributor> eventDistributor_;
 };
 
 // 30-Jun-2009, KAB - It turns out that CPPUNIT creates a new instance
@@ -80,45 +80,45 @@ private:
 // effectively singletons (such as an infospace with a given name),
 // so we need to ensure that only a single instance of the SharedResources
 // class gets created.  (Yet another reason to make these static attributes.)
-boost::shared_ptr<SharedResources> testEventDistributor::_sharedResources;
-boost::shared_ptr<EventDistributor> testEventDistributor::_eventDistributor;
+boost::shared_ptr<SharedResources> testEventDistributor::sharedResources_;
+boost::shared_ptr<EventDistributor> testEventDistributor::eventDistributor_;
 
 void testEventDistributor::initEventDistributor()
 {
-  if (_eventDistributor.get() == 0)
+  if (eventDistributor_.get() == 0)
     {
       xdaq::Application* app = mockapps::getMockXdaqApplication();
-      _sharedResources.reset(new SharedResources());
-      _sharedResources->_configuration.reset(new Configuration(app->getApplicationInfoSpace(), 0));
-      _sharedResources->_initMsgCollection.reset(new InitMsgCollection());
-      _sharedResources->_streamQueue.reset(new StreamQueue(1024));
-      _sharedResources->_dqmEventQueue.reset(new DQMEventQueue(1024));
-      _sharedResources->_statisticsReporter.reset(new StatisticsReporter(app,_sharedResources));
-      _eventDistributor.reset(new EventDistributor(_sharedResources));
+      sharedResources_.reset(new SharedResources());
+      sharedResources_->configuration_.reset(new Configuration(app->getApplicationInfoSpace(), 0));
+      sharedResources_->initMsgCollection_.reset(new InitMsgCollection());
+      sharedResources_->streamQueue_.reset(new StreamQueue(1024));
+      sharedResources_->dqmEventQueue_.reset(new DQMEventQueue(1024));
+      sharedResources_->statisticsReporter_.reset(new StatisticsReporter(app,sharedResources_));
+      eventDistributor_.reset(new EventDistributor(sharedResources_));
       EventConsumerMonitorCollection& ecmc = 
-        _sharedResources->_statisticsReporter->getEventConsumerMonitorCollection();
-      _sharedResources->_eventQueueCollection.reset( new EventQueueCollection( ecmc ) );
+        sharedResources_->statisticsReporter_->getEventConsumerMonitorCollection();
+      sharedResources_->eventQueueCollection_.reset( new EventQueueCollection( ecmc ) );
       DQMConsumerMonitorCollection& dcmc = 
-        _sharedResources->_statisticsReporter->getDQMConsumerMonitorCollection();
-      _sharedResources->_dqmEventQueueCollection.reset( new DQMEventQueueCollection( dcmc ) );
+        sharedResources_->statisticsReporter_->getDQMConsumerMonitorCollection();
+      sharedResources_->dqmEventQueueCollection_.reset( new DQMEventQueueCollection( dcmc ) );
     }
   else
   {
     // *** cleanup ***
     
-    _sharedResources->_initMsgCollection->clear();
-    _eventDistributor->clearStreams();
-    _eventDistributor->clearConsumers();
-    _sharedResources->_eventQueueCollection->removeQueues();
-    _sharedResources->_dqmEventQueueCollection->removeQueues();
+    sharedResources_->initMsgCollection_->clear();
+    eventDistributor_->clearStreams();
+    eventDistributor_->clearConsumers();
+    sharedResources_->eventQueueCollection_->removeQueues();
+    sharedResources_->dqmEventQueueCollection_->removeQueues();
 
-    CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-    CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-    CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-    CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-    CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-    CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 0);
-    CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 0);
+    CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+    CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+    CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+    CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+    CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+    CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 0);
+    CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 0);
   }
 }
 
@@ -127,23 +127,23 @@ void testEventDistributor::testInitMessages()
 {
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
 
   // *** specify configuration ***
 
   EvtStrConfigListPtr evtCfgList(new EvtStrConfigList);
   ErrStrConfigListPtr errCfgList(new ErrStrConfigList);
   parseStreamConfiguration(getSampleStreamConfig(), evtCfgList, errCfgList);
-  _eventDistributor->registerEventStreams(evtCfgList);
-  _eventDistributor->registerErrorStreams(errCfgList);
+  eventDistributor_->registerEventStreams(evtCfgList);
+  eventDistributor_->registerErrorStreams(errCfgList);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
 
   // *** first INIT message ***
 
@@ -151,11 +151,11 @@ void testEventDistributor::testInitMessages()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** second INIT message ***
 
@@ -163,11 +163,11 @@ void testEventDistributor::testInitMessages()
   stor::I2OChain initMsgFrag2(ref);
   CPPUNIT_ASSERT(initMsgFrag2.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag2);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 2);
 
   // *** third INIT message ***
 
@@ -175,11 +175,11 @@ void testEventDistributor::testInitMessages()
   stor::I2OChain initMsgFrag3(ref);
   CPPUNIT_ASSERT(initMsgFrag3.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag3);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag3);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 3);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 3);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 3);
 
   // *** duplicate INIT message ***
 
@@ -187,11 +187,11 @@ void testEventDistributor::testInitMessages()
   stor::I2OChain initMsgFrag4(ref);
   CPPUNIT_ASSERT(initMsgFrag4.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag4);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag4);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 3);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 3);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 3);
 
   // *** bogus INIT message ***
 
@@ -199,13 +199,13 @@ void testEventDistributor::testInitMessages()
   stor::I2OChain initMsgFrag5(ref);
   CPPUNIT_ASSERT(initMsgFrag5.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag5);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag5);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 3);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
 }
 
 
@@ -213,11 +213,11 @@ void testEventDistributor::testStreamSelection()
 {
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
 
   // *** specify configuration ***
 
@@ -228,12 +228,12 @@ void testEventDistributor::testStreamSelection()
   evtCfgList->at(1).setStreamId(2);
   evtCfgList->at(2).setStreamId(3);
   errCfgList->at(0).setStreamId(4);
-  _eventDistributor->registerEventStreams(evtCfgList);
-  _eventDistributor->registerErrorStreams(errCfgList);
+  eventDistributor_->registerEventStreams(evtCfgList);
+  eventDistributor_->registerErrorStreams(errCfgList);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
 
   // *** INIT message ***
 
@@ -241,11 +241,11 @@ void testEventDistributor::testStreamSelection()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** HLT trigger bit tests ***
   std::vector<unsigned char> hltBits;
@@ -279,11 +279,11 @@ void testEventDistributor::testStreamSelection()
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -310,11 +310,11 @@ void testEventDistributor::testStreamSelection()
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag2);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
@@ -335,11 +335,11 @@ void testEventDistributor::testStreamSelection()
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag3);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag3);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
@@ -356,11 +356,11 @@ void testEventDistributor::testStreamSelection()
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(errorMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(errorMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   CPPUNIT_ASSERT(errorMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
@@ -370,8 +370,8 @@ void testEventDistributor::testStreamSelection()
   CPPUNIT_ASSERT(streamIdList.size() == 1);
   CPPUNIT_ASSERT(std::count(streamIdList.begin(),streamIdList.end(),4) == 1);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
 }
 
 
@@ -379,11 +379,11 @@ void testEventDistributor::testDuplicatedStreamSelection()
 {
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
 
   // *** specify configuration ***
 
@@ -394,20 +394,20 @@ void testEventDistributor::testDuplicatedStreamSelection()
   evtCfgList->at(1).setStreamId(2);
   evtCfgList->at(2).setStreamId(3);
   errCfgList->at(0).setStreamId(4);
-  _eventDistributor->registerEventStreams(evtCfgList);
-  _eventDistributor->registerErrorStreams(errCfgList);
+  eventDistributor_->registerEventStreams(evtCfgList);
+  eventDistributor_->registerErrorStreams(errCfgList);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
 
   // *** re-register identical event stream ***
 
-  _eventDistributor->registerEventStreams(evtCfgList);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  eventDistributor_->registerEventStreams(evtCfgList);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
 
   // *** re-register identical error event stream ***
 
-  _eventDistributor->registerErrorStreams(errCfgList);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  eventDistributor_->registerErrorStreams(errCfgList);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
 
   // *** register streams with same selection ***
 
@@ -418,17 +418,17 @@ void testEventDistributor::testDuplicatedStreamSelection()
   evtCfgList2->at(1).setStreamId(2);
   evtCfgList2->at(2).setStreamId(3);
   errCfgList2->at(0).setStreamId(4);
-  _eventDistributor->registerEventStreams(evtCfgList2);
-  _eventDistributor->registerErrorStreams(errCfgList2);
+  eventDistributor_->registerEventStreams(evtCfgList2);
+  eventDistributor_->registerErrorStreams(errCfgList2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 4);
 
   // *** register streams with same selection, but different stream ids *** 
 
   evtCfgList2->at(1).setStreamId(8);
-  _eventDistributor->registerEventStreams(evtCfgList2);
+  eventDistributor_->registerEventStreams(evtCfgList2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 5);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 5);
 
   // *** INIT message ***
 
@@ -436,11 +436,11 @@ void testEventDistributor::testDuplicatedStreamSelection()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 5);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 5);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
   
   // *** HLT trigger bit tests ***
   std::vector<unsigned char> hltBits;
@@ -474,11 +474,11 @@ void testEventDistributor::testDuplicatedStreamSelection()
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 5);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 5);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -495,11 +495,11 @@ void testEventDistributor::testConsumerSelection()
 {
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
 
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
   ConsumerID cid;
@@ -513,16 +513,16 @@ void testEventDistributor::testConsumerSelection()
 
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID queueId1 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID queueId1 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId1.isValid());
   consInfo->setQueueId(queueId1);
 
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 1);
 
   // *** INIT message ***
 
@@ -530,27 +530,27 @@ void testEventDistributor::testConsumerSelection()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** second consumer ***
   pset.addUntrackedParameter<std::string>("TriggerSelector", "c || d");
   pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID queueId2 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID queueId2 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId2.isValid());
   consInfo->setQueueId(queueId2);
   
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 2);
 
   // *** first event message (should pass both consumers) ***
 
@@ -572,7 +572,7 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
 
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -595,31 +595,31 @@ void testEventDistributor::testConsumerSelection()
   pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID queueId3 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID queueId3 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId3.isValid());
     consInfo->setQueueId(queueId3);
-  consInfo->registerMe(&(*_eventDistributor));
+  consInfo->registerMe(&(*eventDistributor_));
     
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 3);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 3);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 3);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 3);
 
   // *** fourth consumer ***
   pset.addUntrackedParameter<std::string>("TriggerSelector", "b || d");
   pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardNew");
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID queueId4 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID queueId4 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId4.isValid());
   consInfo->setQueueId(queueId4);
   
-  consInfo->registerMe(&(*_eventDistributor));
+  consInfo->registerMe(&(*eventDistributor_));
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 4);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 4);
   
   // *** second event message (should not pass) ***
   
@@ -638,7 +638,7 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag2);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag2);
 
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag2.isTaggedForAnyEventConsumer());
@@ -664,7 +664,7 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag3);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag3);
 
   CPPUNIT_ASSERT(!eventMsgFrag3.isTaggedForAnyStream());
   CPPUNIT_ASSERT(eventMsgFrag3.isTaggedForAnyEventConsumer());
@@ -708,7 +708,7 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag4);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag4);
 
   CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!eventMsgFrag4.isTaggedForAnyEventConsumer());
@@ -725,17 +725,17 @@ void testEventDistributor::testConsumerSelection()
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(errorMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(errorMsgFrag);
 
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!errorMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 4);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 4);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 4);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 4);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
 }
 
 
@@ -743,11 +743,11 @@ void testEventDistributor::testDuplicatedConsumerSelection()
 {
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
 
   // *** first consumer ***
 
@@ -766,25 +766,25 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID queueId = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID queueId = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(queueId.isValid());
   consInfo->setQueueId(queueId);
   
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 1);
 
   // *** re-register identical consumer *** //
  
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 1);
 
 
   // *** INIT message ***
@@ -793,27 +793,27 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** re-register identical consumer again *** //
  
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** re-add INIT message *** //
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
 
   // *** second consumer with same selection ***
@@ -823,15 +823,15 @@ void testEventDistributor::testDuplicatedConsumerSelection()
 
   consInfo2.reset(new EventConsumerRegistrationInfo(pset, "remotehost"));
   consInfo2->setConsumerId(++cid);
-  QueueID queueId2 = _sharedResources->_eventQueueCollection->createQueue(consInfo2);
+  QueueID queueId2 = sharedResources_->eventQueueCollection_->createQueue(consInfo2);
   CPPUNIT_ASSERT(queueId2.isValid());
   consInfo2->setQueueId(queueId2);
   
-  _eventDistributor->registerEventConsumer(consInfo2);
+  eventDistributor_->registerEventConsumer(consInfo2);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** 2nd INIT message ***
 
@@ -839,11 +839,11 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   stor::I2OChain initMsgFrag2(ref2);
   CPPUNIT_ASSERT(initMsgFrag2.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag2);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** event message (should pass) ***
 
@@ -865,7 +865,7 @@ void testEventDistributor::testDuplicatedConsumerSelection()
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
 
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -882,11 +882,11 @@ void testEventDistributor::testSharedConsumerSelection()
 {
   initEventDistributor();
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
 
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
   ConsumerID cid;
@@ -900,51 +900,51 @@ void testEventDistributor::testSharedConsumerSelection()
   pset.addUntrackedParameter<bool>("uniqueEvents", true);
   consInfo.reset(new EventConsumerRegistrationInfo(pset, "localhost"));
   consInfo->setConsumerId(++cid);
-  QueueID qid1 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID qid1 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(qid1.isValid());
   consInfo->setQueueId(qid1);
   
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 1);
 
   // *** second consumer - same request, but no unique events ***
   pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 2");
   pset.addUntrackedParameter<bool>("uniqueEvents", false);
   consInfo.reset(new EventConsumerRegistrationInfo(pset, "remotehost"));
   consInfo->setConsumerId(++cid);
-  QueueID qid2 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID qid2 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(qid2.isValid());
   consInfo->setQueueId(qid2);
   CPPUNIT_ASSERT(qid1 != qid2);
 
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 2);
 
   // *** third consumer - share with consumer 1 ***
   pset.addUntrackedParameter<std::string>("consumerName", "Test Consumer 3");
   pset.addUntrackedParameter<bool>("uniqueEvents", true);
   consInfo.reset(new EventConsumerRegistrationInfo(pset, "farawayhost"));
   consInfo->setConsumerId(++cid);
-  QueueID qid3 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID qid3 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(qid3.isValid());
   consInfo->setQueueId(qid3);
   CPPUNIT_ASSERT(qid1 == qid3);
   CPPUNIT_ASSERT(qid2 != qid3);
   
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 2);
 
   // *** INIT message ***
 
@@ -952,11 +952,11 @@ void testEventDistributor::testSharedConsumerSelection()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** event message ***
 
@@ -978,7 +978,7 @@ void testEventDistributor::testSharedConsumerSelection()
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
 
-  _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
 
   CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
   CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -1003,11 +1003,11 @@ void testEventDistributor::testPrescaledConsumerSelection()
 {
   initEventDistributor();
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
 
   boost::shared_ptr<EventConsumerRegistrationInfo> consInfo;
   ConsumerID cid;
@@ -1020,31 +1020,31 @@ void testEventDistributor::testPrescaledConsumerSelection()
   pset.addUntrackedParameter<std::string>("queuePolicy", "DiscardOld");
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID qid1 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID qid1 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(qid1.isValid());
   consInfo->setQueueId(qid1);
   
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 1);
 
   // *** second consumer - prescaled by 3 ***
   pset.addUntrackedParameter<int>("prescale", 3);
   consInfo.reset(new EventConsumerRegistrationInfo(pset));
   consInfo->setConsumerId(++cid);
-  QueueID qid2 = _sharedResources->_eventQueueCollection->createQueue(consInfo);
+  QueueID qid2 = sharedResources_->eventQueueCollection_->createQueue(consInfo);
   CPPUNIT_ASSERT(qid2.isValid());
   consInfo->setQueueId(qid2);
   
-  _eventDistributor->registerEventConsumer(consInfo);
+  eventDistributor_->registerEventConsumer(consInfo);
   
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_eventQueueCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(sharedResources_->eventQueueCollection_->size() == 2);
 
   // *** INIT message ***
 
@@ -1052,11 +1052,11 @@ void testEventDistributor::testPrescaledConsumerSelection()
   stor::I2OChain initMsgFrag(ref);
   CPPUNIT_ASSERT(initMsgFrag.messageCode() == Header::INIT);
 
-  _eventDistributor->addEventToRelevantQueues(initMsgFrag);
+  eventDistributor_->addEventToRelevantQueues(initMsgFrag);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 1);
 
   // *** first event message - does not pass prescale ***
 
@@ -1079,7 +1079,7 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+    eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
     
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -1106,7 +1106,7 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+    eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
     
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -1133,7 +1133,7 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+    eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
     
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -1163,7 +1163,7 @@ void testEventDistributor::testPrescaledConsumerSelection()
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyEventConsumer());
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyDQMEventConsumer());
     
-    _eventDistributor->addEventToRelevantQueues(eventMsgFrag);
+    eventDistributor_->addEventToRelevantQueues(eventMsgFrag);
     
     CPPUNIT_ASSERT(!eventMsgFrag.isTaggedForAnyStream());
     CPPUNIT_ASSERT(eventMsgFrag.isTaggedForAnyEventConsumer());
@@ -1234,8 +1234,8 @@ void testEventDistributor::testDQMMessages()
   //
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 0);
 
   //
   //// DQM-specific stuff: ////
@@ -1254,13 +1254,13 @@ void testEventDistributor::testDQMMessages()
     new DQMEventConsumerRegistrationInfo(pset)
   );
   ri1->setConsumerId(++cid);
-  QueueID qid1 = _sharedResources->_dqmEventQueueCollection->createQueue(ri1);
+  QueueID qid1 = sharedResources_->dqmEventQueueCollection_->createQueue(ri1);
   CPPUNIT_ASSERT(qid1.isValid());
   ri1->setQueueId( qid1 );
-  _eventDistributor->registerDQMEventConsumer(ri1);
+  eventDistributor_->registerDQMEventConsumer(ri1);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 1);
 
   // Consumer for ECAL:
   pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 2");
@@ -1269,19 +1269,19 @@ void testEventDistributor::testDQMMessages()
     new DQMEventConsumerRegistrationInfo(pset)
   );
   ri2->setConsumerId(++cid);
-  QueueID qid2 = _sharedResources->_dqmEventQueueCollection->createQueue(ri2);
+  QueueID qid2 = sharedResources_->dqmEventQueueCollection_->createQueue(ri2);
   CPPUNIT_ASSERT(qid2.isValid());
   ri2->setQueueId( qid2 );
-  _eventDistributor->registerDQMEventConsumer(ri2);
+  eventDistributor_->registerDQMEventConsumer(ri2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 2);
 
   // HCAL event:
   Reference* ref1 = allocate_frame_with_dqm_msg( 1111, "HCAL" );
   stor::I2OChain frag1( ref1 );
   CPPUNIT_ASSERT( frag1.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag1 );
+  eventDistributor_->addEventToRelevantQueues( frag1 );
   CPPUNIT_ASSERT( frag1.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList1 = frag1.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList1.size() == 1 );
@@ -1291,7 +1291,7 @@ void testEventDistributor::testDQMMessages()
   Reference* ref2 = allocate_frame_with_dqm_msg( 2222, "ECAL" );
   stor::I2OChain frag2( ref2 );
   CPPUNIT_ASSERT( frag2.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag2 );
+  eventDistributor_->addEventToRelevantQueues( frag2 );
   CPPUNIT_ASSERT( frag2.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList2 = frag2.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList2.size() == 1 );
@@ -1301,7 +1301,7 @@ void testEventDistributor::testDQMMessages()
   Reference* ref3 = allocate_frame_with_dqm_msg( 3333, "GT" );
   stor::I2OChain frag3( ref3 );
   CPPUNIT_ASSERT( frag3.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag3 );
+  eventDistributor_->addEventToRelevantQueues( frag3 );
   CPPUNIT_ASSERT( !frag3.isTaggedForAnyDQMEventConsumer() );
   CPPUNIT_ASSERT( frag3.getDQMEventConsumerTags().size() == 0 );
 
@@ -1312,19 +1312,19 @@ void testEventDistributor::testDQMMessages()
     new DQMEventConsumerRegistrationInfo(pset)
   );
   ri3->setConsumerId(++cid);
-  QueueID qid3 = _sharedResources->_dqmEventQueueCollection->createQueue(ri3);
+  QueueID qid3 = sharedResources_->dqmEventQueueCollection_->createQueue(ri3);
   CPPUNIT_ASSERT(qid3.isValid());
   ri3->setQueueId( qid3 );
-  _eventDistributor->registerDQMEventConsumer(ri3);
+  eventDistributor_->registerDQMEventConsumer(ri3);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 3);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 3);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 3);
 
   // Another HCAL event:
   Reference* ref4 = allocate_frame_with_dqm_msg( 4444, "HCAL" );
   stor::I2OChain frag4( ref4 );
   CPPUNIT_ASSERT( frag4.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag4 );
+  eventDistributor_->addEventToRelevantQueues( frag4 );
   CPPUNIT_ASSERT( frag4.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList4 = frag4.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList4.size() == 2 );
@@ -1335,7 +1335,7 @@ void testEventDistributor::testDQMMessages()
   Reference* ref5 = allocate_frame_with_dqm_msg( 5555, "ECAL" );
   stor::I2OChain frag5( ref5 );
   CPPUNIT_ASSERT( frag5.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag5 );
+  eventDistributor_->addEventToRelevantQueues( frag5 );
   CPPUNIT_ASSERT( frag5.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList5 = frag5.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList5.size() == 2 );
@@ -1346,7 +1346,7 @@ void testEventDistributor::testDQMMessages()
   Reference* ref6 = allocate_frame_with_dqm_msg( 6666, "GT" );
   stor::I2OChain frag6( ref6 );
   CPPUNIT_ASSERT( frag6.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag6 );
+  eventDistributor_->addEventToRelevantQueues( frag6 );
   CPPUNIT_ASSERT( frag6.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList6 = frag6.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList6.size() == 1 );
@@ -1358,11 +1358,11 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
 {
   initEventDistributor();
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredStreamCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedStreamCount() == 0);
-  CPPUNIT_ASSERT(_sharedResources->_initMsgCollection->size() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 0);
-  CPPUNIT_ASSERT(_eventDistributor->initializedConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredStreamCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedStreamCount() == 0);
+  CPPUNIT_ASSERT(sharedResources_->initMsgCollection_->size() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 0);
+  CPPUNIT_ASSERT(eventDistributor_->initializedConsumerCount() == 0);
 
   ConsumerID cid;
   edm::ParameterSet pset;
@@ -1378,19 +1378,19 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
     new DQMEventConsumerRegistrationInfo(pset)
   );
   ri1->setConsumerId(++cid);
-  QueueID qid1 = _sharedResources->_dqmEventQueueCollection->createQueue(ri1);
+  QueueID qid1 = sharedResources_->dqmEventQueueCollection_->createQueue(ri1);
   CPPUNIT_ASSERT(qid1.isValid());
   ri1->setQueueId( qid1 );
-  _eventDistributor->registerDQMEventConsumer(ri1);
+  eventDistributor_->registerDQMEventConsumer(ri1);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 1);
 
   // re-register same consumer
 
-  _eventDistributor->registerDQMEventConsumer(ri1);
+  eventDistributor_->registerDQMEventConsumer(ri1);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 1);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 1);
 
   // 2nd consumer requesting same events
   pset.addUntrackedParameter<std::string>("consumerName", "DQM Consumer 2");
@@ -1398,20 +1398,20 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
     new DQMEventConsumerRegistrationInfo(pset)
   );
   ri2->setConsumerId(++cid);
-  QueueID qid2 = _sharedResources->_dqmEventQueueCollection->createQueue(ri2);
+  QueueID qid2 = sharedResources_->dqmEventQueueCollection_->createQueue(ri2);
   CPPUNIT_ASSERT(qid2.isValid());
   ri2->setQueueId( qid2 );
   CPPUNIT_ASSERT(qid1 != qid2);
-  _eventDistributor->registerDQMEventConsumer(ri2);
+  eventDistributor_->registerDQMEventConsumer(ri2);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 2);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 2);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 2);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 2);
 
   // HCAL event:
   Reference* ref1 = allocate_frame_with_dqm_msg( 1111, "HCAL" );
   stor::I2OChain frag1( ref1 );
   CPPUNIT_ASSERT( frag1.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag1 );
+  eventDistributor_->addEventToRelevantQueues( frag1 );
   CPPUNIT_ASSERT( frag1.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList1 = frag1.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList1.size() == 2 );
@@ -1425,21 +1425,21 @@ void testEventDistributor::testDuplicatedDQMConsumerSelection()
     new DQMEventConsumerRegistrationInfo(pset)
   );
   ri3->setConsumerId(++cid);
-  QueueID qid3 = _sharedResources->_dqmEventQueueCollection->createQueue(ri3);
+  QueueID qid3 = sharedResources_->dqmEventQueueCollection_->createQueue(ri3);
   CPPUNIT_ASSERT(qid3.isValid());
   ri3->setQueueId( qid3 );
   CPPUNIT_ASSERT(qid1 != qid3);
   CPPUNIT_ASSERT(qid2 != qid3);
-  _eventDistributor->registerDQMEventConsumer(ri3);
+  eventDistributor_->registerDQMEventConsumer(ri3);
 
-  CPPUNIT_ASSERT(_eventDistributor->configuredConsumerCount() == 3);
-  CPPUNIT_ASSERT(_sharedResources->_dqmEventQueueCollection->size() == 3);
+  CPPUNIT_ASSERT(eventDistributor_->configuredConsumerCount() == 3);
+  CPPUNIT_ASSERT(sharedResources_->dqmEventQueueCollection_->size() == 3);
 
   // Another HCAL event:
   Reference* ref2 = allocate_frame_with_dqm_msg( 4444, "HCAL" );
   stor::I2OChain frag2( ref2 );
   CPPUNIT_ASSERT( frag2.messageCode() == Header::DQM_EVENT );
-  _eventDistributor->addEventToRelevantQueues( frag2 );
+  eventDistributor_->addEventToRelevantQueues( frag2 );
   CPPUNIT_ASSERT( frag2.isTaggedForAnyDQMEventConsumer() );
   QueueIDs queueIdList2 = frag2.getDQMEventConsumerTags();
   CPPUNIT_ASSERT( queueIdList2.size() == 3 );

@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.5.2.3 2011/02/26 15:51:09 mommsen Exp $
+// $Id: DQMEventSelector.h,v 1.5.2.4 2011/02/27 13:55:52 mommsen Exp $
 /// @file: DQMEventSelector.h 
 
 #ifndef EventFilter_StorageManager_DQMEventSelector_h
@@ -15,8 +15,8 @@ namespace stor
    * DQM event selector
    *
    * $Author: mommsen $
-   * $Revision: 1.5.2.3 $
-   * $Date: 2011/02/26 15:51:09 $
+   * $Revision: 1.5.2.4 $
+   * $Date: 2011/02/27 13:55:52 $
    */
 
   class DQMEventSelector
@@ -25,7 +25,7 @@ namespace stor
   public:
     
     DQMEventSelector( const DQMEventConsRegPtr registrationInfo ):
-    _registrationInfo( registrationInfo )
+    registrationInfo_( registrationInfo )
     {};
     
     /**
@@ -41,7 +41,7 @@ namespace stor
     /**
      * Returns the ID of the queue corresponding to this selector.
      */
-    QueueID queueId() const { return _registrationInfo->queueId(); }
+    QueueID queueId() const { return registrationInfo_->queueId(); }
 
     /**
        Comparison:
@@ -50,7 +50,7 @@ namespace stor
 
   private:
 
-    const DQMEventConsRegPtr _registrationInfo;
+    const DQMEventConsRegPtr registrationInfo_;
 
   };
 

@@ -1,4 +1,4 @@
-// $Id: TransitionRecord.cc,v 1.3 2009/07/20 13:07:28 mommsen Exp $
+// $Id: TransitionRecord.cc,v 1.4 2009/09/11 21:07:06 elmer Exp $
 /// @file: TransitionRecord.cc
 
 #include "EventFilter/StorageManager/interface/TransitionRecord.h"
@@ -11,10 +11,10 @@ using namespace std;
 
 TransitionRecord::TransitionRecord( const std::string& state_name,
 				    bool is_entry ):
-  _stateName( state_name ),
-  _isEntry( is_entry )
+  stateName_( state_name ),
+  isEntry_( is_entry )
 {
-  gettimeofday( &_timestamp, NULL );
+  gettimeofday( &timestamp_, NULL );
 }
 
 std::ostream& stor::operator << ( std::ostream& os,

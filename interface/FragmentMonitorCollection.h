@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.7 2009/12/08 15:03:43 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.7.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: FragmentMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_FragmentMonitorCollection_h
@@ -16,22 +16,22 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.7 $
-   * $Date: 2009/12/08 15:03:43 $
+   * $Revision: 1.7.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
   {
   private:
 
-    MonitoredQuantity _allFragmentSizes;
-    MonitoredQuantity _allFragmentBandwidth;
+    MonitoredQuantity allFragmentSizes_;
+    MonitoredQuantity allFragmentBandwidth_;
 
-    MonitoredQuantity _eventFragmentSizes;
-    MonitoredQuantity _eventFragmentBandwidth;
+    MonitoredQuantity eventFragmentSizes_;
+    MonitoredQuantity eventFragmentBandwidth_;
 
-    MonitoredQuantity _dqmEventFragmentSizes;
-    MonitoredQuantity _dqmEventFragmentBandwidth;
+    MonitoredQuantity dqmEventFragmentSizes_;
+    MonitoredQuantity dqmEventFragmentBandwidth_;
 
 
   public:
@@ -66,45 +66,45 @@ namespace stor {
      void addDQMEventFragmentSample(const double bytecount);
 
     const MonitoredQuantity& getAllFragmentSizeMQ() const {
-      return _allFragmentSizes;
+      return allFragmentSizes_;
     }
     MonitoredQuantity& getAllFragmentSizeMQ() {
-      return _allFragmentSizes;
+      return allFragmentSizes_;
     }
 
     const MonitoredQuantity& getEventFragmentSizeMQ() const {
-      return _eventFragmentSizes;
+      return eventFragmentSizes_;
     }
     MonitoredQuantity& getEventFragmentSizeMQ() {
-      return _eventFragmentSizes;
+      return eventFragmentSizes_;
     }
 
     const MonitoredQuantity& getDQMEventFragmentSizeMQ() const {
-      return _dqmEventFragmentSizes;
+      return dqmEventFragmentSizes_;
     }
     MonitoredQuantity& getDQMEventFragmentSizeMQ() {
-      return _dqmEventFragmentSizes;
+      return dqmEventFragmentSizes_;
     }
 
     const MonitoredQuantity& getAllFragmentBandwidthMQ() const {
-      return _allFragmentBandwidth;
+      return allFragmentBandwidth_;
     }
     MonitoredQuantity& getAllFragmentBandwidthMQ() {
-      return _allFragmentBandwidth;
+      return allFragmentBandwidth_;
     }
 
     const MonitoredQuantity& getEventFragmentBandwidthMQ() const {
-      return _eventFragmentBandwidth;
+      return eventFragmentBandwidth_;
     }
     MonitoredQuantity& getEventFragmentBandwidthMQ() {
-      return _eventFragmentBandwidth;
+      return eventFragmentBandwidth_;
     }
 
     const MonitoredQuantity& getDQMEventFragmentBandwidthMQ() const {
-      return _dqmEventFragmentBandwidth;
+      return dqmEventFragmentBandwidth_;
     }
     MonitoredQuantity& getDQMEventFragmentBandwidthMQ() {
-      return _dqmEventFragmentBandwidth;
+      return dqmEventFragmentBandwidth_;
     }
 
    /**
@@ -124,9 +124,9 @@ namespace stor {
     virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
     virtual void do_updateInfoSpaceItems();
 
-    xdata::UnsignedInteger32 _receivedFrames; // Total I2O frames received
-    xdata::Double _instantBandwidth;          // Recent bandwidth in MB/s
-    xdata::Double _instantRate;               // Recent number of frames/s
+    xdata::UnsignedInteger32 receivedFrames_; // Total I2O frames received
+    xdata::Double instantBandwidth_;          // Recent bandwidth in MB/s
+    xdata::Double instantRate_;               // Recent number of frames/s
 
   };
   

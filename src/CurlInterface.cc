@@ -1,4 +1,4 @@
-// $Id: CurlInterface.cc,v 1.2.4.1 2011/02/14 16:53:49 mommsen Exp $
+// $Id: CurlInterface.cc,v 1.2.4.2 2011/02/15 09:57:50 mommsen Exp $
 /// @file: CurlInterface.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -55,7 +55,7 @@ CURLcode CurlInterface::do_curl(CURL* curl, const std::string& url, Content& con
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); // do not send any signals
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, stor::CurlInterface::writeToString);  
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &content);  
-  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, _errorBuffer); 
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer_); 
   curl_easy_setopt(curl, CURLOPT_FAILONERROR,1); 
   
   CURLcode returnCode = curl_easy_perform(curl);
@@ -66,9 +66,9 @@ CURLcode CurlInterface::do_curl(CURL* curl, const std::string& url, Content& con
   {
     size_t i = 0;
     content.clear();
-    while ( _errorBuffer[i] != '\0' )
+    while ( errorBuffer_[i] != '\0' )
     {
-      content.push_back( _errorBuffer[i] );
+      content.push_back( errorBuffer_[i] );
       ++i;
     }
   }

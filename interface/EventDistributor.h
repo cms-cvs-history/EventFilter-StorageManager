@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.7.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: EventDistributor.h,v 1.7.2.2 2011/02/26 15:51:09 mommsen Exp $
 /// @file: EventDistributor.h 
 
 #ifndef EventFilter_StorageManager_EventDistributor_h
@@ -37,8 +37,8 @@ namespace stor {
    * header.
    *
    * $Author: mommsen $
-   * $Revision: 1.7.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.7.2.2 $
+   * $Date: 2011/02/26 15:51:09 $
    */
 
   class EventDistributor
@@ -119,23 +119,23 @@ namespace stor {
 
     void tagCompleteEventForQueues( I2OChain& );
 
-    SharedResourcesPtr _sharedResources;
+    SharedResourcesPtr sharedResources_;
 
     typedef boost::shared_ptr<EventStreamSelector> EvtSelPtr;
     typedef std::set<EvtSelPtr, utils::ptr_comp<EventStreamSelector> > EvtSelList;
-    EvtSelList _eventStreamSelectors;
+    EvtSelList eventStreamSelectors_;
 
     typedef boost::shared_ptr<DQMEventSelector> DQMEvtSelPtr;
     typedef std::set<DQMEvtSelPtr, utils::ptr_comp<DQMEventSelector> > DQMEvtSelList;
-    DQMEvtSelList _dqmEventSelectors;
+    DQMEvtSelList dqmEventSelectors_;
 
     typedef boost::shared_ptr<ErrorStreamSelector> ErrSelPtr;
     typedef std::set<ErrSelPtr, utils::ptr_comp<ErrorStreamSelector> > ErrSelList;
-    ErrSelList _errorStreamSelectors;
+    ErrSelList errorStreamSelectors_;
 
     typedef boost::shared_ptr<EventConsumerSelector> ConsSelPtr;
     typedef std::set<ConsSelPtr, utils::ptr_comp<EventConsumerSelector> > ConsSelList;
-    ConsSelList _eventConsumerSelectors;
+    ConsSelList eventConsumerSelectors_;
 
   };
   

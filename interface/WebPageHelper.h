@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.12.2.5 2011/02/11 12:09:14 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.12.2.6 2011/02/28 11:36:56 mommsen Exp $
 /// @file: WebPageHelper.h
 
 #ifndef EventFilter_StorageManager_WebPageHelper_h
@@ -23,8 +23,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.12.2.5 $
-   * $Date: 2011/02/11 12:09:14 $
+   * $Revision: 1.12.2.6 $
+   * $Date: 2011/02/28 11:36:56 $
    */
   
   template<class T>
@@ -70,7 +70,7 @@ namespace stor {
      * Adds the links for the other hyperdaq webpages
      */
     void addDOMforHyperLinks(XHTMLMaker& maker, XHTMLMaker::Node* parent) const
-    { (_callee->*_addHyperLinks)(maker, parent); } 
+    { (callee_->*addHyperLinks_)(maker, parent); } 
 
     /**
      * Add header with integration duration
@@ -169,15 +169,15 @@ namespace stor {
     ) const;
 
 
-    xdaq::ApplicationDescriptor* _appDescriptor;
+    xdaq::ApplicationDescriptor* appDescriptor_;
 
-    XHTMLMaker::AttrMap _tableAttr;
-    XHTMLMaker::AttrMap _rowAttr;
-    XHTMLMaker::AttrMap _tableLabelAttr;
-    XHTMLMaker::AttrMap _tableValueAttr;
-    XHTMLMaker::AttrMap _specialRowAttr;
+    XHTMLMaker::AttrMap tableAttr_;
+    XHTMLMaker::AttrMap rowAttr_;
+    XHTMLMaker::AttrMap tableLabelAttr_;
+    XHTMLMaker::AttrMap tableValueAttr_;
+    XHTMLMaker::AttrMap specialRowAttr_;
 
-    std::map<unsigned int, std::string> _alarmColors;
+    std::map<unsigned int, std::string> alarmColors_;
 
   private:
 
@@ -186,9 +186,9 @@ namespace stor {
     WebPageHelper& operator=(WebPageHelper const&);
 
     evf::Css css_;
-    const std::string _cvsVersion;
-    T* _callee;
-    void (T::*_addHyperLinks)(XHTMLMaker&, XHTMLMaker::Node*) const;
+    const std::string cvsVersion_;
+    T* callee_;
+    void (T::*addHyperLinks_)(XHTMLMaker&, XHTMLMaker::Node*) const;
 
   };
 

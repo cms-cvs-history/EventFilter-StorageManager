@@ -1,4 +1,4 @@
-// $Id: XHTMLMonitor.cc,v 1.3.14.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: XHTMLMonitor.cc,v 1.3.14.2 2011/01/25 11:29:12 mommsen Exp $
 /// @file: XHTMLMonitor.cc
 
 #include "EventFilter/StorageManager/interface/XHTMLMonitor.h"
@@ -7,18 +7,18 @@
 
 using namespace xercesc;
 
-boost::mutex stor::XHTMLMonitor::_xhtmlMakerMutex;
+boost::mutex stor::XHTMLMonitor::xhtmlMakerMutex_;
 
 stor::XHTMLMonitor::XHTMLMonitor()
 {
-  _xhtmlMakerMutex.lock();
+  xhtmlMakerMutex_.lock();
   XMLPlatformUtils::Initialize();
 }
 
 stor::XHTMLMonitor::~XHTMLMonitor()
 {
   XMLPlatformUtils::Terminate();
-  _xhtmlMakerMutex.unlock();
+  xhtmlMakerMutex_.unlock();
 }
 
 

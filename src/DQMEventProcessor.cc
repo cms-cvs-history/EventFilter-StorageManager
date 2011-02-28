@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.12.2.5 2011/02/27 13:56:41 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12.2.6 2011/02/27 18:52:49 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -24,40 +24,40 @@ namespace stor {
   DQMEventStore<I2OChain,InitMsgCollection,SharedResources>::
   getDQMEventView(I2OChain const& dqmEvent)
   {
-    dqmEvent.copyFragmentsIntoBuffer(_tempEventArea);
-    return DQMEventMsgView(&_tempEventArea[0]);
+    dqmEvent.copyFragmentsIntoBuffer(tempEventArea_);
+    return DQMEventMsgView(&tempEventArea_[0]);
   }
 
 
 
   DQMEventProcessor::DQMEventProcessor(xdaq::Application* app, SharedResourcesPtr sr) :
-  _app(app),
-  _sharedResources(sr),
-  _actionIsActive(true),
-  _dqmEventStore
+  app_(app),
+  sharedResources_(sr),
+  actionIsActive_(true),
+  dqmEventStore_
   (
     app->getApplicationDescriptor(),
-    sr->_dqmEventQueueCollection,
-    sr->_statisticsReporter->getDQMEventMonitorCollection(),
-    sr->_initMsgCollection.get(),
+    sr->dqmEventQueueCollection_,
+    sr->statisticsReporter_->getDQMEventMonitorCollection(),
+    sr->initMsgCollection_.get(),
     &stor::InitMsgCollection::maxMsgCount,
     sr.get(),
     &stor::SharedResources::moveToFailedState
   )
   {
     WorkerThreadParams workerParams =
-      _sharedResources->_configuration->getWorkerThreadParams();
-    _timeout = workerParams._DQMEPdeqWaitTime;
+      sharedResources_->configuration_->getWorkerThreadParams();
+    timeout_ = workerParams._DQMEPdeqWaitTime;
   }
   
   
   DQMEventProcessor::~DQMEventProcessor()
   {
     // Stop the activity
-    _actionIsActive = false;
+    actionIsActive_ = false;
     
     // Cancel the workloop (will wait until the action has finished)
-    _processWL->cancel();
+    processWL_->cancel();
   }
   
   
@@ -65,19 +65,19 @@ namespace stor {
   {
     try
     {
-      std::string identifier = utils::getIdentifier(_app->getApplicationDescriptor());
+      std::string identifier = utils::getIdentifier(app_->getApplicationDescriptor());
       
-      _processWL = toolbox::task::getWorkLoopFactory()->
+      processWL_ = toolbox::task::getWorkLoopFactory()->
       getWorkLoop( identifier + workloopName, "waiting" );
       
-      if ( ! _processWL->isActive() )
+      if ( ! processWL_->isActive() )
       {
         toolbox::task::ActionSignature* processAction = 
           toolbox::task::bind(this, &DQMEventProcessor::processDQMEvents,
           identifier + "ProcessNextDQMEvent");
-        _processWL->submit(processAction);
+        processWL_->submit(processAction);
         
-        _processWL->activate();
+        processWL_->activate();
       }
     }
     catch (xcept::Exception& e)
@@ -100,61 +100,61 @@ namespace stor {
     {
       XCEPT_DECLARE_NESTED( stor::exception::DQMEventProcessing,
         sentinelException, errorMsg, e );
-      _sharedResources->moveToFailedState(sentinelException);
+      sharedResources_->moveToFailedState(sentinelException);
     }
     catch(std::exception &e)
     {
       errorMsg += e.what();
       XCEPT_DECLARE( stor::exception::DQMEventProcessing,
         sentinelException, errorMsg );
-      _sharedResources->moveToFailedState(sentinelException);
+      sharedResources_->moveToFailedState(sentinelException);
     }
     catch(...)
     {
       errorMsg += "Unknown exception";
       XCEPT_DECLARE( stor::exception::DQMEventProcessing,
         sentinelException, errorMsg );
-      _sharedResources->moveToFailedState(sentinelException);
+      sharedResources_->moveToFailedState(sentinelException);
     }
     
-    return _actionIsActive;
+    return actionIsActive_;
   }
   
   
   void DQMEventProcessor::processNextDQMEvent()
   {
     DQMEventQueue::value_type dqmEvent;
-    DQMEventQueuePtr eq = _sharedResources->_dqmEventQueue;
+    DQMEventQueuePtr eq = sharedResources_->dqmEventQueue_;
     utils::time_point_t startTime = utils::getCurrentTime();
-    if (eq->deq_timed_wait(dqmEvent, _timeout))
+    if (eq->deq_timed_wait(dqmEvent, timeout_))
     {
       utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
         addDQMEventProcessorIdleSample(elapsedTime);
-      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
         addPoppedDQMEventSample(dqmEvent.first.memoryUsed());
-      _sharedResources->_statisticsReporter->getDQMEventMonitorCollection().
+      sharedResources_->statisticsReporter_->getDQMEventMonitorCollection().
         getDroppedDQMEventCountsMQ().addSample(dqmEvent.second);
       
-      _dqmEventStore.addDQMEvent(dqmEvent.first);
+      dqmEventStore_.addDQMEvent(dqmEvent.first);
     }
     else
     {
       utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-      _sharedResources->_statisticsReporter->getThroughputMonitorCollection().
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
         addDQMEventProcessorIdleSample(elapsedTime);
     }
     
     DQMEventProcessorResources::Requests requests;
     DQMProcessingParams dqmParams;
     boost::posix_time::time_duration newTimeoutValue;
-    if (_sharedResources->_dqmEventProcessorResources->
+    if (sharedResources_->dqmEventProcessorResources_->
       getRequests(requests, dqmParams, newTimeoutValue))
     {
       if (requests.configuration)
       {
-        _timeout = newTimeoutValue;
-        _dqmEventStore.setParameters(dqmParams);
+        timeout_ = newTimeoutValue;
+        dqmEventStore_.setParameters(dqmParams);
       }
       if (requests.endOfRun)
       {
@@ -162,15 +162,15 @@ namespace stor {
       }
       if (requests.storeDestruction)
       {
-        _dqmEventStore.clear();
+        dqmEventStore_.clear();
       }
-      _sharedResources->_dqmEventProcessorResources->requestsDone();
+      sharedResources_->dqmEventProcessorResources_->requestsDone();
     }
   }
   
   void DQMEventProcessor::endOfRun()
   {
-    _dqmEventStore.purge();
+    dqmEventStore_.purge();
   }
     
 } // namespace stor

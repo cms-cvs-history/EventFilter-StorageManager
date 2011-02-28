@@ -1,4 +1,4 @@
-// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.9 2011/02/25 09:13:48 mommsen Exp $
+// $Id: DQMEventConsumerRegistrationInfo.cc,v 1.9.2.10 2011/02/26 15:53:28 mommsen Exp $
 /// @file: DQMEventConsumerRegistrationInfo.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventConsumerRegistrationInfo.h"
@@ -34,14 +34,14 @@ namespace stor
   void
   DQMEventConsumerRegistrationInfo::parsePSet(const edm::ParameterSet& pset)
   {
-    _topLevelFolderName = pset.getUntrackedParameter<std::string>("topLevelFolderName", "*");
+    topLevelFolderName_ = pset.getUntrackedParameter<std::string>("topLevelFolderName", "*");
   }
   
   void
   DQMEventConsumerRegistrationInfo::do_appendToPSet(edm::ParameterSet& pset) const
   {
-    if ( _topLevelFolderName != "*" )
-      pset.addUntrackedParameter<std::string>("topLevelFolderName", _topLevelFolderName);
+    if ( topLevelFolderName_ != "*" )
+      pset.addUntrackedParameter<std::string>("topLevelFolderName", topLevelFolderName_);
   }
 
   void 
@@ -53,7 +53,7 @@ namespace stor
   void
   DQMEventConsumerRegistrationInfo::do_eventType(std::ostream& os) const
   {
-    os << "Top level folder: " << _topLevelFolderName << "\n";
+    os << "Top level folder: " << topLevelFolderName_ << "\n";
     queueInfo(os);
   }
 

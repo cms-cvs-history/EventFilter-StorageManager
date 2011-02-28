@@ -1,4 +1,4 @@
-// $Id: SMWebPageHelper.cc,v 1.1.2.9 2011/02/26 15:53:28 mommsen Exp $
+// $Id: SMWebPageHelper.cc,v 1.1.2.10 2011/02/28 11:36:30 mommsen Exp $
 /// @file: SMWebPageHelper.cc
 
 #ifdef __APPLE__
@@ -40,8 +40,8 @@ namespace stor
     SharedResourcesPtr sharedResources
   ) :
   WebPageHelper<SMWebPageHelper>(appDesc, "$Name:  $", this, &stor::SMWebPageHelper::addDOMforHyperLinks),
-  _sharedResources(sharedResources),
-  _consumerWebPageHelper(appDesc, "$Name:  $", this, &stor::SMWebPageHelper::addDOMforHyperLinks)
+  sharedResources_(sharedResources),
+  consumerWebPageHelper_(appDesc, "$Name:  $", this, &stor::SMWebPageHelper::addDOMforHyperLinks)
   {}
 
 
@@ -50,7 +50,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     XHTMLMaker::Node* body = createWebPageBody(maker, "Main",
@@ -80,7 +80,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     XHTMLMaker::Node* body = createWebPageBody(maker, "Stored Data",
@@ -90,7 +90,7 @@ namespace stor
     
     maker.addNode("hr", body);
     
-    addDOMforConfigString(maker, body, _sharedResources->_configuration->getDiskWritingParams());  
+    addDOMforConfigString(maker, body, sharedResources_->configuration_->getDiskWritingParams());  
     
     addDOMforHyperLinks(maker, body);
     
@@ -104,7 +104,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     XHTMLMaker::Node* body = createWebPageBody(maker, "Files",
@@ -122,19 +122,19 @@ namespace stor
   void SMWebPageHelper::consumerStatistics(xgi::Output *out) const
   {
     const StateMachineMonitorCollection& stateMachineMonitorCollection =
-      _sharedResources->_statisticsReporter->getStateMachineMonitorCollection();
+      sharedResources_->statisticsReporter_->getStateMachineMonitorCollection();
 
     std::string errorMsg;
     stateMachineMonitorCollection.statusMessage(errorMsg);
 
-    _consumerWebPageHelper.consumerStatistics(out,
+    consumerWebPageHelper_.consumerStatistics(out,
       stateMachineMonitorCollection.externallyVisibleState(),
       stateMachineMonitorCollection.innerStateName(),
       errorMsg,
-      _sharedResources->_statisticsReporter,
-      _sharedResources->_registrationCollection,
-      _sharedResources->_eventQueueCollection,
-      _sharedResources->_dqmEventQueueCollection
+      sharedResources_->statisticsReporter_,
+      sharedResources_->registrationCollection_,
+      sharedResources_->eventQueueCollection_,
+      sharedResources_->dqmEventQueueCollection_
     );
   }
   
@@ -144,7 +144,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     XHTMLMaker::Node* body = createWebPageBody(maker, "Resource Broker Overview",
@@ -174,7 +174,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     std::ostringstream pageTitle;
@@ -203,7 +203,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     XHTMLMaker::Node* body = createWebPageBody(maker, "DQM Event Processor",
@@ -224,7 +224,7 @@ namespace stor
     XHTMLMonitor theMonitor;
     XHTMLMaker maker;
     
-    StatisticsReporterPtr statReporter = _sharedResources->_statisticsReporter;
+    StatisticsReporterPtr statReporter = sharedResources_->statisticsReporter_;
     
     // Create the body with the standard header
     XHTMLMaker::Node* body = createWebPageBody(maker, "Throughput",
@@ -265,8 +265,8 @@ namespace stor
     XHTMLMaker::Node *parent
   ) const
   {
-    std::string url = _appDescriptor->getContextDescriptor()->getURL()
-      + "/" + _appDescriptor->getURN();
+    std::string url = appDescriptor_->getContextDescriptor()->getURL()
+      + "/" + appDescriptor_->getURN();
     
     XHTMLMaker::AttrMap linkAttr;
     XHTMLMaker::Node *link;
@@ -333,9 +333,9 @@ namespace stor
     XHTMLMaker::AttrMap halfWidthAttr;
     halfWidthAttr[ "width" ] = "50%";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow, halfWidthAttr);
     addTableForResourceUsages(maker, tableDiv, rmcStats, poolUsageStats);
@@ -356,8 +356,8 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Resource Usage");
     
@@ -377,14 +377,14 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
     
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+    XHTMLMaker::AttrMap tableLabelAttr = tableLabelAttr_;
     tableLabelAttr[ "width" ] = "54%";
     
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     tableValueAttr[ "width" ] = "46%";
     
     // Memory pool usage
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv;
     if ( stats.getSampleCount() > 0 )
     {
@@ -408,18 +408,18 @@ namespace stor
     ResourceMonitorCollection::Stats const& stats
   ) const
   {
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     tableValueAttr[ "width" ] = "46%";
     
     // # copy worker
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "# CopyWorker");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
     maker.addInt( tableDiv, stats.numberOfCopyWorkers );
     
     // # inject worker
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "# InjectWorker");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
@@ -434,18 +434,18 @@ namespace stor
     ResourceMonitorCollection::Stats const& stats
   ) const
   {
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     tableValueAttr[ "width" ] = "46%";
     
     XHTMLMaker::Node *tableRow, *tableDiv;
     
-    XHTMLMaker::AttrMap warningAttr = _rowAttr;
+    XHTMLMaker::AttrMap warningAttr = rowAttr_;
     
     if (stats.sataBeastStatus < 0 )
     {
-      warningAttr[ "bgcolor" ] = _alarmColors.find(AlarmHandler::WARNING)->second;
+      warningAttr[ "bgcolor" ] = alarmColors_.find(AlarmHandler::WARNING)->second;
       
-      XHTMLMaker::AttrMap colspanAttr = _tableLabelAttr;
+      XHTMLMaker::AttrMap colspanAttr = tableLabelAttr_;
       colspanAttr[ "colspan" ] = "2";
       
       tableRow = maker.addNode("tr", table, warningAttr);
@@ -455,7 +455,7 @@ namespace stor
     else
     {
       if ( stats.sataBeastStatus > 0 )
-        warningAttr[ "bgcolor" ] = _alarmColors.find(AlarmHandler::ERROR)->second;
+        warningAttr[ "bgcolor" ] = alarmColors_.find(AlarmHandler::ERROR)->second;
       tableRow = maker.addNode("tr", table, warningAttr);
       tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, "SATA beast status");
@@ -475,16 +475,16 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
     
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+    XHTMLMaker::AttrMap tableLabelAttr = tableLabelAttr_;
     tableLabelAttr[ "width" ] = "54%";
     
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     tableValueAttr[ "width" ] = "46%";
     
-    XHTMLMaker::AttrMap warningAttr = _rowAttr;
+    XHTMLMaker::AttrMap warningAttr = rowAttr_;
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Disk Space Usage");
     
@@ -495,7 +495,7 @@ namespace stor
          it != itEnd;
          ++it)
     {
-      warningAttr[ "bgcolor" ] = _alarmColors.find( (*it)->alarmState )->second;
+      warningAttr[ "bgcolor" ] = alarmColors_.find( (*it)->alarmState )->second;
       tableRow = maker.addNode("tr", table, warningAttr);
       tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, (*it)->pathName);
@@ -530,15 +530,15 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "4";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
     // Received Data Statistics header
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Received I2O Frames");
     
     // Parameter/Value header
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Parameter");
     tableDiv = maker.addNode("th", tableRow);
@@ -562,7 +562,7 @@ namespace stor
   ) const
   {
     // Mean performance header
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow);
     if ( dataSet == MonitoredQuantity::FULL )
       maker.addText(tableDiv, "Performance for full run");
@@ -600,14 +600,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Frames Received");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, stats.allFragmentSizeStats.getSampleCount(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, stats.eventFragmentSizeStats.getSampleCount(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, stats.dqmEventFragmentSizeStats.getSampleCount(dataSet) );
   }
   
@@ -620,14 +620,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Bandwidth (MB/s)");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.allFragmentSizeStats.getValueRate(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.eventFragmentSizeStats.getValueRate(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.dqmEventFragmentSizeStats.getValueRate(dataSet) );
   }
   
@@ -640,14 +640,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Rate (frames/s)");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.allFragmentSizeStats.getSampleRate(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.eventFragmentSizeStats.getSampleRate(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.dqmEventFragmentSizeStats.getSampleRate(dataSet) );
   }
   
@@ -660,14 +660,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Latency (us/frame)");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.allFragmentSizeStats.getSampleLatency(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.eventFragmentSizeStats.getSampleLatency(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.dqmEventFragmentSizeStats.getSampleLatency(dataSet) );
   }
   
@@ -680,14 +680,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Total volume received (MB)");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.allFragmentSizeStats.getValueSum(dataSet), 3 );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.eventFragmentSizeStats.getValueSum(dataSet), 3 );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.dqmEventFragmentSizeStats.getValueSum(dataSet), 3 );
   }
   
@@ -700,14 +700,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Maximum Bandwidth (MB/s)");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.allFragmentBandwidthStats.getValueMax(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.eventFragmentBandwidthStats.getValueMax(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.dqmEventFragmentBandwidthStats.getValueMax(dataSet) );
   }
   
@@ -720,14 +720,14 @@ namespace stor
     const MonitoredQuantity::DataSetType dataSet
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Minimum Bandwidth (MB/s)");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.allFragmentBandwidthStats.getValueMin(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.eventFragmentBandwidthStats.getValueMin(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, stats.dqmEventFragmentBandwidthStats.getValueMin(dataSet) );
   }
   
@@ -755,17 +755,17 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "6";
     
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     tableValueAttr[ "width" ] = "16%";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Storage Manager Statistics");
     
     // Run number and lumi section
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Run number");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
@@ -780,7 +780,7 @@ namespace stor
     maker.addDouble( tableDiv, eolsSeenStats.getLastSampleValue(), 0 );
     
     // Total events received
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Events received (non-unique)");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
@@ -795,7 +795,7 @@ namespace stor
     maker.addInt( tableDiv, unwantedEventIDsReceivedStats.getSampleCount() );
     
     // Last event IDs
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Last event ID");
     tableDiv = maker.addNode("td", tableRow, tableValueAttr);
@@ -834,14 +834,14 @@ namespace stor
     XHTMLMaker::AttrMap bandwidthColspanAttr;
     bandwidthColspanAttr[ "colspan" ] = "4";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Stored Data Statistics");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
     maker.addText(tableDiv, "Stream");
     tableDiv = maker.addNode("th", tableRow, rowspanAttr);
@@ -857,7 +857,7 @@ namespace stor
     tableDiv = maker.addNode("th", tableRow, bandwidthColspanAttr);
     maker.addText(tableDiv, "Bandwidth (MB/s)");
     
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow, tableValueWidthAttr);
     maker.addText(tableDiv, "average");
     tableDiv = maker.addNode("th", tableRow, tableValueWidthAttr);
@@ -867,13 +867,13 @@ namespace stor
     
     if (smc.getStreamRecordsMQ().empty())
     {
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow, colspanAttr);
       maker.addText(tableDiv, "no streams available yet");
       return;
     }
     // Mean performance
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("th", tableRow, colspanAttr);
     {
       std::ostringstream tmpString;
@@ -885,7 +885,7 @@ namespace stor
     
     
     // Recent performance
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("th", tableRow, colspanAttr);
     {
       std::ostringstream tmpString;
@@ -905,10 +905,10 @@ namespace stor
   ) const
   {
     XHTMLMaker::Node* table = maker.addNode("table", parent);
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _specialRowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, specialRowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "SM Configuration");
-    tableRow = maker.addNode("tr", table, _rowAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
     tableDiv = maker.addNode("td", tableRow);
     XHTMLMaker::AttrMap textareaAttr;
     textareaAttr[ "rows" ] = "10";
@@ -917,7 +917,7 @@ namespace stor
     textareaAttr[ "readonly" ];
     textareaAttr[ "title" ] = "SM config";
     XHTMLMaker::Node* textarea = maker.addNode("textarea", tableDiv, textareaAttr);
-    maker.addText(textarea, dwParams._streamConfiguration);
+    maker.addText(textarea, dwParams.streamConfiguration_);
   }  
   
   
@@ -940,7 +940,7 @@ namespace stor
     
     XHTMLMaker::Node *tableRow, *tableDiv;
     
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     tableValueAttr[ "width" ] = "11%";
     
     
@@ -959,44 +959,44 @@ namespace stor
       (*it)->bandwidth.getStats(streamBandwidthStats);
       
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, (*it)->streamName);
       tableDiv = maker.addNode("td", tableRow);
       maker.addDouble(tableDiv, (*it)->fractionToDisk, 2);
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addInt( tableDiv, streamFileCountStats.getSampleCount(dataSet) );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addInt( tableDiv, streamVolumeStats.getSampleCount(dataSet) );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addDouble( tableDiv, streamVolumeStats.getSampleRate(dataSet), 1 );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addDouble( tableDiv, streamVolumeStats.getValueSum(dataSet), 1 );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addDouble( tableDiv, streamBandwidthStats.getValueRate(dataSet) );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addDouble( tableDiv, streamBandwidthStats.getValueMin(dataSet) );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addDouble( tableDiv, streamBandwidthStats.getValueMax(dataSet) );
     }
     
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("td", tableRow);
     maker.addText(tableDiv, "Total");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, allStreamsFileCountStats.getSampleCount(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, allStreamsVolumeStats.getSampleCount(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, allStreamsVolumeStats.getSampleRate(dataSet), 1 );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, allStreamsVolumeStats.getValueSum(dataSet), 1 );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, allStreamsBandwidthStats.getValueRate(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, allStreamsBandwidthStats.getValueMin(dataSet) );
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, allStreamsBandwidthStats.getValueMax(dataSet) );
   }
   
@@ -1014,7 +1014,7 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "5";
     
-    XHTMLMaker::AttrMap tableLabelAttr = _tableLabelAttr;
+    XHTMLMaker::AttrMap tableLabelAttr = tableLabelAttr_;
     tableLabelAttr[ "align" ] = "center";
     
     XHTMLMaker::AttrMap tableValueWidthAttr;
@@ -1023,14 +1023,14 @@ namespace stor
     XHTMLMaker::AttrMap tableCounterWidthAttr;
     tableCounterWidthAttr[ "width" ] = "5%";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "File Statistics (most recent first)");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow, tableCounterWidthAttr);
     maker.addText(tableDiv, "#");
     tableDiv = maker.addNode("th", tableRow);
@@ -1045,7 +1045,7 @@ namespace stor
     // File list
     if (fileRecords.empty())
     {
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow, colspanAttr);
       maker.addText(tableDiv, "no files available yet");
       return;
@@ -1058,14 +1058,14 @@ namespace stor
       ++it
     )
     {
-      tableRow = maker.addNode("tr", table, _rowAttr);
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addInt( tableDiv, (*it)->entryCounter );
       tableDiv = maker.addNode("td", tableRow);
       maker.addText(tableDiv, (*it)->completeFileName());
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addInt( tableDiv, (*it)->eventCount );
-      tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+      tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
       maker.addInt( tableDiv, (*it)->fileSize );
       tableDiv = maker.addNode("td", tableRow, tableLabelAttr);
       maker.addText(tableDiv, (*it)->closingReason());
@@ -1083,14 +1083,14 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "21";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Throughput Statistics");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Time (UTC)");
     tableDiv = maker.addNode("th", tableRow);
@@ -1160,9 +1160,9 @@ namespace stor
     const bool isAverage
   ) const
   {
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv;
-    XHTMLMaker::AttrMap tableValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableValueAttr = tableValueAttr_;
     
     if (isAverage)
     {
@@ -1174,7 +1174,7 @@ namespace stor
     }
     else
     {
-      tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+      tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
       maker.addText( tableDiv, utils::timeStampUTC(snapshot.absoluteTime) );
     }
     
@@ -1300,14 +1300,14 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "7";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Received Data Statistics (by output module)");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Output Module");
     tableDiv = maker.addNode("th", tableRow);
@@ -1328,7 +1328,7 @@ namespace stor
       XHTMLMaker::AttrMap messageAttr = colspanAttr;
       messageAttr[ "align" ] = "center";
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow, messageAttr);
       maker.addText(tableDiv, "No output modules are available yet.");
       return;
@@ -1339,24 +1339,24 @@ namespace stor
       {
         std::string outputModuleLabel = resultsList[idx]->name;
         
-        tableRow = maker.addNode("tr", table, _rowAttr);
+        tableRow = maker.addNode("tr", table, rowAttr_);
         tableDiv = maker.addNode("td", tableRow);
         maker.addText(tableDiv, outputModuleLabel);
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, resultsList[idx]->eventStats.getSampleCount() );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv,
           resultsList[idx]->eventStats.getValueSum()/(double)0x100000 );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv,
           resultsList[idx]->eventStats.getValueAverage()/(double)0x400 );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv,
           resultsList[idx]->eventStats.getValueRMS()/(double)0x400 );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv,
           resultsList[idx]->eventStats.getValueMin()/(double)0x400 );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv,
           resultsList[idx]->eventStats.getValueMax()/(double)0x400 );
       }
@@ -1374,14 +1374,14 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "3";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Output Module Summary");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Name");
     tableDiv = maker.addNode("th", tableRow);
@@ -1394,7 +1394,7 @@ namespace stor
       XHTMLMaker::AttrMap messageAttr = colspanAttr;
       messageAttr[ "align" ] = "center";
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow, messageAttr);
       maker.addText(tableDiv, "No output modules are available yet.");
       return;
@@ -1403,12 +1403,12 @@ namespace stor
     {
       for (unsigned int idx = 0; idx < resultsList.size(); ++idx)
       {
-        tableRow = maker.addNode("tr", table, _rowAttr);
+        tableRow = maker.addNode("tr", table, rowAttr_);
         tableDiv = maker.addNode("td", tableRow);
         maker.addText(tableDiv, resultsList[idx]->name);
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, resultsList[idx]->id );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, resultsList[idx]->initMsgSize );
       }
     }
@@ -1429,17 +1429,17 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "15";
     
-    XHTMLMaker::AttrMap tableSuspiciousValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableSuspiciousValueAttr = tableValueAttr_;
     tableSuspiciousValueAttr[ "style" ] = "background-color: yellow;";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Data Sender Overview");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Resource Broker URL");
     tableDiv = maker.addNode("th", tableRow);
@@ -1476,7 +1476,7 @@ namespace stor
       XHTMLMaker::AttrMap messageAttr = colspanAttr;
       messageAttr[ "align" ] = "center";
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow, messageAttr);
       maker.addText(tableDiv, "No data senders have registered yet.");
       return;
@@ -1485,7 +1485,7 @@ namespace stor
     {
       for (unsigned int idx = 0; idx < rbResultsList.size(); ++idx)
       {
-        tableRow = maker.addNode("tr", table, _rowAttr);
+        tableRow = maker.addNode("tr", table, rowAttr_);
         
         tableDiv = maker.addNode("td", tableRow);
         XHTMLMaker::AttrMap linkAttr;
@@ -1494,17 +1494,17 @@ namespace stor
         XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
         maker.addText(link, rbResultsList[idx]->key.hltURL);
         
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->key.hltInstance );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->key.hltTid );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->filterUnitCount );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt(tableDiv, rbResultsList[idx]->initMsgCount );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->eventStats.getSampleCount() );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->errorEventStats.getSampleCount() );
         
         if (rbResultsList[idx]->faultyEventStats.getSampleCount() != 0)
@@ -1513,7 +1513,7 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, rbResultsList[idx]->faultyEventStats.getSampleCount() );
         
@@ -1523,11 +1523,11 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, rbResultsList[idx]->outstandingDataDiscardCount );
         
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->dqmEventStats.getSampleCount() );
         
         if (rbResultsList[idx]->faultyDQMEventStats.getSampleCount() != 0)
@@ -1536,7 +1536,7 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, rbResultsList[idx]->faultyDQMEventStats.getSampleCount() );
         
@@ -1546,7 +1546,7 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, rbResultsList[idx]->outstandingDQMDiscardCount );
         
@@ -1557,14 +1557,14 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, skippedDiscards );
         
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv, rbResultsList[idx]->eventStats.
           getSampleRate(MonitoredQuantity::RECENT) );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, rbResultsList[idx]->lastEventNumber );
       }
     }
@@ -1594,138 +1594,138 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "2";
     
-    XHTMLMaker::AttrMap tableAttr = _tableAttr;
+    XHTMLMaker::AttrMap tableAttr = tableAttr_;
     tableAttr[ "width" ] = "";
     
     XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Resource Broker Details");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Parameter");
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Value");
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "URL");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     XHTMLMaker::AttrMap linkAttr;
     linkAttr[ "href" ] = rbResultPtr->key.hltURL + "/urn:xdaq-application:lid=" +
       boost::lexical_cast<std::string>(rbResultPtr->key.hltLocalId);
     XHTMLMaker::Node* link = maker.addNode("a", tableDiv, linkAttr);
     maker.addText(link, rbResultPtr->key.hltURL);
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Class Name");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addText(tableDiv, rbResultPtr->key.hltClassName);
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Instance");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->key.hltInstance );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Local ID");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->key.hltLocalId );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Tid");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->key.hltTid );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "INIT Message Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->initMsgCount );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Event Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->eventStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Error Event Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->errorEventStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Faulty Event Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->faultyEventStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Data Discard Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->dataDiscardStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "DQM Event Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->dqmEventStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Faulty DQM Event Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->faultyDQMEventStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "DQM Discard Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->dqmDiscardStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Ignored Discards Count");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->skippedDiscardStats.getSampleCount() );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Last Event Number Received");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->lastEventNumber );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     maker.addText(tableDiv, "Last Run Number Received");
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addInt( tableDiv, rbResultPtr->lastRunNumber );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     tmpDuration = rbResultPtr->eventStats.recentDuration.total_seconds();
     tmpText =  "Recent (" + boost::lexical_cast<std::string>(tmpDuration) +
       " sec) Event Rate (Hz)";
     maker.addText(tableDiv, tmpText);
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, rbResultPtr->eventStats.recentSampleRate );
     
-    tableRow = maker.addNode("tr", table, _rowAttr);
-    tableDiv = maker.addNode("td", tableRow, _tableLabelAttr);
+    tableRow = maker.addNode("tr", table, rowAttr_);
+    tableDiv = maker.addNode("td", tableRow, tableLabelAttr_);
     tmpDuration = rbResultPtr->eventStats.fullDuration.total_seconds();
     tmpText =  "Full (" + boost::lexical_cast<std::string>(tmpDuration) +
       " sec) Event Rate (Hz)";
     maker.addText(tableDiv, tmpText);
-    tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+    tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
     maker.addDouble( tableDiv, rbResultPtr->eventStats.fullSampleRate );
   }
   
@@ -1744,17 +1744,17 @@ namespace stor
     XHTMLMaker::AttrMap colspanAttr;
     colspanAttr[ "colspan" ] = "13";
     
-    XHTMLMaker::AttrMap tableSuspiciousValueAttr = _tableValueAttr;
+    XHTMLMaker::AttrMap tableSuspiciousValueAttr = tableValueAttr_;
     tableSuspiciousValueAttr[ "style" ] = "background-color: yellow;";
     
-    XHTMLMaker::Node* table = maker.addNode("table", parent, _tableAttr);
+    XHTMLMaker::Node* table = maker.addNode("table", parent, tableAttr_);
     
-    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, _rowAttr);
+    XHTMLMaker::Node* tableRow = maker.addNode("tr", table, rowAttr_);
     XHTMLMaker::Node* tableDiv = maker.addNode("th", tableRow, colspanAttr);
     maker.addText(tableDiv, "Filter Units");
     
     // Header
-    tableRow = maker.addNode("tr", table, _specialRowAttr);
+    tableRow = maker.addNode("tr", table, specialRowAttr_);
     tableDiv = maker.addNode("th", tableRow);
     maker.addText(tableDiv, "Process ID");
     tableDiv = maker.addNode("th", tableRow);
@@ -1787,7 +1787,7 @@ namespace stor
       XHTMLMaker::AttrMap messageAttr = colspanAttr;
       messageAttr[ "align" ] = "center";
       
-      tableRow = maker.addNode("tr", table, _rowAttr);
+      tableRow = maker.addNode("tr", table, rowAttr_);
       tableDiv = maker.addNode("td", tableRow, messageAttr);
       maker.addText(tableDiv, "No filter units have registered yet.");
       return;
@@ -1796,15 +1796,15 @@ namespace stor
     {
       for (unsigned int idx = 0; idx < fuResultsList.size(); ++idx)
       {
-        tableRow = maker.addNode("tr", table, _rowAttr);
+        tableRow = maker.addNode("tr", table, rowAttr_);
         
         tableDiv = maker.addNode("td", tableRow);
         maker.addInt( tableDiv, fuResultsList[idx]->key.fuProcessId );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, fuResultsList[idx]->initMsgCount );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, fuResultsList[idx]->shortIntervalEventStats.getSampleCount() );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, fuResultsList[idx]->errorEventStats.getSampleCount() );
         
         if (fuResultsList[idx]->faultyEventStats.getSampleCount() != 0)
@@ -1813,7 +1813,7 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, fuResultsList[idx]->faultyEventStats.getSampleCount() );
         
@@ -1823,11 +1823,11 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, fuResultsList[idx]->outstandingDataDiscardCount );
         
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, fuResultsList[idx]->dqmEventStats.getSampleCount() );
         
         if (fuResultsList[idx]->faultyDQMEventStats.getSampleCount() != 0)
@@ -1836,7 +1836,7 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, fuResultsList[idx]->faultyDQMEventStats.getSampleCount() );
         
@@ -1846,7 +1846,7 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, fuResultsList[idx]->outstandingDQMDiscardCount );
         
@@ -1857,16 +1857,16 @@ namespace stor
         }
         else
         {
-          tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+          tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         }
         maker.addInt( tableDiv, skippedDiscards );
         
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addDouble( tableDiv, fuResultsList[idx]->shortIntervalEventStats.
           getSampleRate(MonitoredQuantity::RECENT) );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, fuResultsList[idx]->lastEventNumber );
-        tableDiv = maker.addNode("td", tableRow, _tableValueAttr);
+        tableDiv = maker.addNode("td", tableRow, tableValueAttr_);
         maker.addInt( tableDiv, fuResultsList[idx]->lastRunNumber );
       }
     }

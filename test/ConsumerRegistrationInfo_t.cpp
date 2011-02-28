@@ -166,15 +166,15 @@ void testConsumerRegistrationInfo::testIncompleteEventConsumerPSet()
   CPPUNIT_ASSERT( ! ecriPSet.exists("connectTrySleepTime") );
 
   EventServingParams defaults;
-  defaults._activeConsumerTimeout =  boost::posix_time::seconds(12);
-  defaults._consumerQueueSize = 22;
-  defaults._consumerQueuePolicy = "DiscardOld";
+  defaults.activeConsumerTimeout_ =  boost::posix_time::seconds(12);
+  defaults.consumerQueueSize_ = 22;
+  defaults.consumerQueuePolicy_ = "DiscardOld";
 
   EventConsumerRegistrationInfo ecriDefaults(origPSet, defaults);
 
-  CPPUNIT_ASSERT( ecriDefaults.queueSize() == defaults._consumerQueueSize );
+  CPPUNIT_ASSERT( ecriDefaults.queueSize() == defaults.consumerQueueSize_ );
   CPPUNIT_ASSERT( ecriDefaults.queuePolicy() == enquing_policy::DiscardOld );
-  CPPUNIT_ASSERT( ecriDefaults.secondsToStale() == defaults._activeConsumerTimeout );
+  CPPUNIT_ASSERT( ecriDefaults.secondsToStale() == defaults.activeConsumerTimeout_ );
   CPPUNIT_ASSERT( ecriDefaults.minEventRequestInterval() == boost::posix_time::not_a_date_time );
 
   edm::ParameterSet ecriDefaultsPSet = ecriDefaults.getPSet();

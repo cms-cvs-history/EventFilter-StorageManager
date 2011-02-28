@@ -1,4 +1,4 @@
-// $Id: StorageManager.h,v 1.58.4.3 2011/01/25 11:28:37 mommsen Exp $
+// $Id: StorageManager.h,v 1.58.4.4 2011/01/26 11:14:19 mommsen Exp $
 /// @file: StorageManager.h 
 
 #ifndef EventFilter_StorageManager_StorageManager_h
@@ -37,8 +37,8 @@ namespace stor {
    * Main class of the StorageManager XDAQ application
    *
    * $Author: mommsen $
-   * $Revision: 1.58.4.3 $
-   * $Date: 2011/01/25 11:28:37 $
+   * $Revision: 1.58.4.4 $
+   * $Date: 2011/01/26 11:14:19 $
    */
 
   class StorageManager: public xdaq::Application
@@ -213,15 +213,15 @@ namespace stor {
      */
     void startWorkerThreads();
 
-    SharedResourcesPtr _sharedResources;
+    SharedResourcesPtr sharedResources_;
 
-    boost::scoped_ptr<FragmentProcessor> _fragmentProcessor;
-    boost::scoped_ptr<DiskWriter> _diskWriter;
-    boost::scoped_ptr<DQMEventProcessor> _dqmEventProcessor;
+    boost::scoped_ptr<FragmentProcessor> fragmentProcessor_;
+    boost::scoped_ptr<DiskWriter> diskWriter_;
+    boost::scoped_ptr<DQMEventProcessor> dqmEventProcessor_;
 
     typedef ConsumerUtils<Configuration,EventQueueCollection> ConsumerUtils_t;
-    boost::scoped_ptr<ConsumerUtils_t> _consumerUtils;
-    boost::scoped_ptr<SMWebPageHelper> _smWebPageHelper;
+    boost::scoped_ptr<ConsumerUtils_t> consumerUtils_;
+    boost::scoped_ptr<SMWebPageHelper> smWebPageHelper_;
 
   };
 

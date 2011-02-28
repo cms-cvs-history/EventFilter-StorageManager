@@ -1,4 +1,4 @@
-// $Id: DQMConsumerMonitorCollection.h,v 1.1 2009/08/24 14:31:11 mommsen Exp $
+// $Id: DQMConsumerMonitorCollection.h,v 1.1.14.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: DQMConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DQMConsumerMonitorCollection_h
@@ -15,8 +15,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track event consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.1 $
-   * $Date: 2009/08/24 14:31:11 $
+   * $Revision: 1.1.14.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class DQMConsumerMonitorCollection: public ConsumerMonitorCollection
@@ -35,7 +35,7 @@ namespace stor {
     virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
     virtual void do_updateInfoSpaceItems();
 
-    xdata::UnsignedInteger32 _dqmConsumers;
+    xdata::UnsignedInteger32 dqmConsumers_;
     
   };
 

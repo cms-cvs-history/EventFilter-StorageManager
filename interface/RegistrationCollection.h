@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.h,v 1.7.2.3 2011/01/24 12:18:39 mommsen Exp $
+// $Id: RegistrationCollection.h,v 1.7.2.4 2011/02/11 12:12:10 mommsen Exp $
 /// @file: RegistrationCollection.h 
 
 #ifndef EventFilter_StorageManager_RegistrationCollection_h
@@ -22,8 +22,8 @@ namespace stor
      Keep a collection of registered event and DQM event consumers.
 
      $Author: mommsen $
-     $Revision: 1.7.2.3 $
-     $Date: 2011/01/24 12:18:39 $
+     $Revision: 1.7.2.4 $
+     $Date: 2011/02/11 12:12:10 $
   */
 
   class RegistrationCollection
@@ -85,14 +85,14 @@ namespace stor
 
   private:
 
-    mutable boost::mutex _lock;
+    mutable boost::mutex lock_;
 
-    ConsumerID _nextConsumerId;
+    ConsumerID nextConsumerId_;
 
-    bool _registrationAllowed;
+    bool registrationAllowed_;
       
     typedef std::map<ConsumerID, RegPtr> RegistrationMap;
-    RegistrationMap _consumers;
+    RegistrationMap consumers_;
 
   };
 

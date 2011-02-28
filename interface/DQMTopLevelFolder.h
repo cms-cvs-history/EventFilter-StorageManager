@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.h,v 1.1.2.2 2011/02/24 13:37:40 mommsen Exp $
+// $Id: DQMTopLevelFolder.h,v 1.1.2.3 2011/02/27 13:55:52 mommsen Exp $
 /// @file: DQMTopLevelFolder.h 
 
 #ifndef EventFilter_StorageManager_DQMTopLevelFolder_h
@@ -26,8 +26,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.2 $
-   * $Date: 2011/02/24 13:37:40 $
+   * $Revision: 1.1.2.3 $
+   * $Date: 2011/02/27 13:55:52 $
    */
 
   class DQMTopLevelFolder
@@ -48,65 +48,65 @@ namespace stor {
     public:
       
       Record() :
-      _entry(new Entry) {};
+      entry_(new Entry) {};
 
       /**
        * Clear any data
        */
       inline void clear()
-      { _entry->buffer.clear(); _entry->dqmConsumers.clear(); }
+      { entry_->buffer.clear(); entry_->dqmConsumers.clear(); }
 
       /**
        * Return a reference to the buffer providing space for
        * the specified size in bytes.
        */
       inline void* getBuffer(size_t size) const
-      { _entry->buffer.resize(size); return &(_entry->buffer[0]); }
+      { entry_->buffer.resize(size); return &(entry_->buffer[0]); }
 
       /**
        * Set the list of DQM event consumer this
        * top level folder should be served to.
        */
       inline void tagForEventConsumers(const QueueIDs& ids)
-      { _entry->dqmConsumers = ids; }
+      { entry_->dqmConsumers = ids; }
       
       /**
        * Get the list of DQM event consumers this
        * top level folder should be served to.
        */
       inline QueueIDs getEventConsumerTags() const
-       { return _entry->dqmConsumers; }
+       { return entry_->dqmConsumers; }
 
       /**
        * Returns the DQM event message view for this group
        */
       inline DQMEventMsgView getDQMEventMsgView()
-      { return DQMEventMsgView(&_entry->buffer[0]); }
+      { return DQMEventMsgView(&entry_->buffer[0]); }
 
       /**
        * Returns true if there is no DQM event message view available
        */
       inline bool empty() const
-      { return ( _entry->buffer.empty() ); }
+      { return ( entry_->buffer.empty() ); }
 
       /**
        * Returns the memory usage of the stored event msg view in bytes
        */
       inline size_t memoryUsed() const
-      { return _entry->buffer.size() + _entry->dqmConsumers.size()*sizeof(QueueID); }
+      { return entry_->buffer.size() + entry_->dqmConsumers.size()*sizeof(QueueID); }
 
       /**
        * Returns the size of the stored event msg view in bytes
        */
       inline unsigned long totalDataSize() const
-      { return _entry->buffer.size(); }
+      { return entry_->buffer.size(); }
 
 
     private:
 
       // We use here a shared_ptr to avoid copying the whole
       // buffer each time the event record is handed on
-      boost::shared_ptr<Entry> _entry;
+      boost::shared_ptr<Entry> entry_;
       
     };
     
@@ -158,20 +158,20 @@ namespace stor {
     void addEvent(std::auto_ptr<DQMEvent::TObjectTable>);
     size_t populateTable(DQMEvent::TObjectTable&) const;
 
-    const DQMKey _dqmKey;
-    const QueueIDs _dqmConsumers;
-    const DQMProcessingParams _dqmParams;
-    DQMEventMonitorCollection& _dqmEventMonColl;
-    const unsigned int _expectedUpdates;
+    const DQMKey dqmKey_;
+    const QueueIDs dqmConsumers_;
+    const DQMProcessingParams dqmParams_;
+    DQMEventMonitorCollection& dqmEventMonColl_;
+    const unsigned int expectedUpdates_;
 
-    unsigned int _nUpdates;
-    utils::time_point_t _lastUpdate;
-    unsigned int _sentEvents;
-    std::string _releaseTag;
+    unsigned int nUpdates_;
+    utils::time_point_t lastUpdate_;
+    unsigned int sentEvents_;
+    std::string releaseTag_;
 
     typedef boost::shared_ptr<DQMFolder> DQMFolderPtr;
     typedef std::map<std::string, DQMFolderPtr> DQMFoldersMap;
-    DQMFoldersMap _dqmFolders;
+    DQMFoldersMap dqmFolders_;
     
   };
 

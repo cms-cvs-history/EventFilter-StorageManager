@@ -1,4 +1,4 @@
-// $Id: QueueID.h,v 1.3.14.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: QueueID.h,v 1.3.14.2 2011/02/24 10:56:55 mommsen Exp $
 /// @file: QueueID.h 
 
 #ifndef EventFilter_StorageManager_QueueID_h
@@ -16,8 +16,8 @@ namespace stor {
    * Uniquely identifies the consumer queues 
    *
    * $Author: mommsen $
-   * $Revision: 1.3.14.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.3.14.2 $
+   * $Date: 2011/02/24 10:56:55 $
    */
 
   class QueueID
@@ -71,8 +71,8 @@ namespace stor {
       bool operator!= (QueueID const& other) const;
 
     private:
-      size_type   _index;
-      policy_type _policy;
+      size_type   index_;
+      policy_type policy_;
 
     };
 
@@ -80,51 +80,51 @@ namespace stor {
 
   inline
   QueueID::QueueID() :
-    _index(0),
-    _policy(enquing_policy::Max)
+    index_(0),
+    policy_(enquing_policy::Max)
   { }
 
   inline 
   QueueID::QueueID(policy_type policy, size_t index) :
-    _index(index),
-    _policy(policy)
+    index_(index),
+    policy_(policy)
   { }
 
   inline 
   QueueID::policy_type
   QueueID::policy() const
   {
-    return _policy;
+    return policy_;
   }
 
   inline
   QueueID::size_type
   QueueID::index() const
   {
-    return _index;
+    return index_;
   }
 
   inline
   bool
   QueueID::isValid() const
   {
-    return _policy != enquing_policy::Max;
+    return policy_ != enquing_policy::Max;
   }
 
   inline
   bool
   QueueID::operator< (QueueID const& other) const
   {
-    return _policy == other._policy
-      ? _index < other._index
-      : _policy < other._policy;
+    return policy_ == other.policy_
+      ? index_ < other.index_
+      : policy_ < other.policy_;
   }
 
   inline
   bool
   QueueID::operator== (QueueID const& other) const
   {
-    return _policy == other._policy && _index == other._index;
+    return policy_ == other.policy_ && index_ == other.index_;
   }
 
   inline

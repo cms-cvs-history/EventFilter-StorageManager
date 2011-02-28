@@ -1,4 +1,4 @@
-// $Id: EventStreamHandler.h,v 1.6 2010/03/19 13:24:30 mommsen Exp $
+// $Id: EventStreamHandler.h,v 1.6.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventStreamHandler.h 
 
 #ifndef EventFilter_StorageManager_EventStreamHandler_h
@@ -22,8 +22,8 @@ namespace stor {
    * Handle one event stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.6 $
-   * $Date: 2010/03/19 13:24:30 $
+   * $Revision: 1.6.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class EventStreamHandler : public StreamHandler
@@ -44,13 +44,13 @@ namespace stor {
      * Return the stream label
      */
     virtual std::string streamLabel() const
-    { return _streamConfig.streamLabel(); }
+    { return streamConfig_.streamLabel(); }
 
     /**
      * Return the fraction-to-disk parameter
      */
     virtual double fractionToDisk() const
-    { return _streamConfig.fractionToDisk(); }
+    { return streamConfig_.fractionToDisk(); }
 
     /**
      * Return a new file handler for the provided event
@@ -61,12 +61,12 @@ namespace stor {
      * Return the maximum file size for the stream in MB
      */
     virtual int getStreamMaxFileSize() const
-    { return _streamConfig.maxFileSizeMB(); }
+    { return streamConfig_.maxFileSizeMB(); }
 
 
-    EventStreamConfigurationInfo _streamConfig;
-    InitMsgCollectionPtr _initMsgCollection;
-    InitMsgSharedPtr _initMsgView;
+    EventStreamConfigurationInfo streamConfig_;
+    InitMsgCollectionPtr initMsgCollection_;
+    InitMsgSharedPtr initMsgView_;
 
   };
   

@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.8 2011/02/25 09:12:38 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.9 2011/02/25 13:32:54 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -25,8 +25,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.8 $
-   * $Date: 2011/02/25 09:12:38 $
+   * $Revision: 1.6.2.9 $
+   * $Date: 2011/02/25 13:32:54 $
    */
 
   class RegistrationInfoBase
@@ -84,29 +84,29 @@ namespace stor {
     void queueInfo(std::ostream&) const;
 
     // Setters:
-    void setMinEventRequestInterval(const utils::duration_t& interval) { _minEventRequestInterval = interval; }
+    void setMinEventRequestInterval(const utils::duration_t& interval) { minEventRequestInterval_ = interval; }
 
     // Accessors
-    bool isValid() const { return _consumerId.isValid(); }
-    const QueueID& queueId() const { return _queueId; }
-    const enquing_policy::PolicyTag& queuePolicy() const { return _queuePolicy; }
-    const std::string& consumerName() const { return _consumerName; }
-    const std::string& remoteHost() const { return _remoteHost; }
-    const std::string& sourceURL() const { return _sourceURL; }
-    const ConsumerID& consumerId() const { return _consumerId; }
-    const int& queueSize() const { return _queueSize; }
-    const int& maxConnectTries() const { return _maxConnectTries; }
-    const int& connectTrySleepTime() const { return _connectTrySleepTime; }
-    const int& retryInterval() const { return _retryInterval; }
-    const utils::duration_t& minEventRequestInterval() const { return _minEventRequestInterval; }
-    const utils::duration_t& secondsToStale() const { return _secondsToStale; }
+    bool isValid() const { return consumerId_.isValid(); }
+    const QueueID& queueId() const { return queueId_; }
+    const enquing_policy::PolicyTag& queuePolicy() const { return queuePolicy_; }
+    const std::string& consumerName() const { return consumerName_; }
+    const std::string& remoteHost() const { return remoteHost_; }
+    const std::string& sourceURL() const { return sourceURL_; }
+    const ConsumerID& consumerId() const { return consumerId_; }
+    const int& queueSize() const { return queueSize_; }
+    const int& maxConnectTries() const { return maxConnectTries_; }
+    const int& connectTrySleepTime() const { return connectTrySleepTime_; }
+    const int& retryInterval() const { return retryInterval_; }
+    const utils::duration_t& minEventRequestInterval() const { return minEventRequestInterval_; }
+    const utils::duration_t& secondsToStale() const { return secondsToStale_; }
     bool isStale(const utils::time_point_t&) const;
     double lastContactSecondsAgo(const utils::time_point_t&) const;
 
     // Setters
-    void setQueueId(const QueueID& id) { _queueId = id; }
-    void setSourceURL(const std::string& url) { _sourceURL = url; }
-    void setConsumerId(const ConsumerID& id) { _consumerId = id; }
+    void setQueueId(const QueueID& id) { queueId_ = id; }
+    void setSourceURL(const std::string& url) { sourceURL_ = url; }
+    void setConsumerId(const ConsumerID& id) { consumerId_ = id; }
 
     // Comparison:
     virtual bool operator<(const RegistrationInfoBase&) const;
@@ -123,19 +123,19 @@ namespace stor {
 
   private:
 
-    const std::string                _remoteHost;
-    std::string                      _consumerName;
-    std::string                      _sourceURL;
-    int                              _queueSize;
-    enquing_policy::PolicyTag        _queuePolicy;
-    utils::duration_t                _secondsToStale;
-    int                              _maxConnectTries;
-    int                              _connectTrySleepTime;
-    int                              _retryInterval;
-    utils::duration_t                _minEventRequestInterval;
-    QueueID                          _queueId;
-    ConsumerID                       _consumerId;
-    utils::time_point_t              _lastConsumerContact;
+    const std::string                remoteHost_;
+    std::string                      consumerName_;
+    std::string                      sourceURL_;
+    int                              queueSize_;
+    enquing_policy::PolicyTag        queuePolicy_;
+    utils::duration_t                secondsToStale_;
+    int                              maxConnectTries_;
+    int                              connectTrySleepTime_;
+    int                              retryInterval_;
+    utils::duration_t                minEventRequestInterval_;
+    QueueID                          queueId_;
+    ConsumerID                       consumerId_;
+    utils::time_point_t              lastConsumerContact_;
   };
 
   typedef boost::shared_ptr<RegistrationInfoBase> RegPtr;
@@ -144,7 +144,7 @@ namespace stor {
   inline
   void RegistrationInfoBase::consumerContact()
   {
-    _lastConsumerContact = utils::getCurrentTime();
+    lastConsumerContact_ = utils::getCurrentTime();
   }
 
   inline
@@ -162,13 +162,13 @@ namespace stor {
   inline
   bool RegistrationInfoBase::isStale(const utils::time_point_t& now) const
   {
-    return ( now > _lastConsumerContact + secondsToStale() );
+    return ( now > lastConsumerContact_ + secondsToStale() );
   }
 
   inline
   double RegistrationInfoBase::lastContactSecondsAgo(const utils::time_point_t& now) const
   {
-    return utils::duration_to_seconds( now - _lastConsumerContact );
+    return utils::duration_to_seconds( now - lastConsumerContact_ );
   }
 
   std::ostream& operator<<(std::ostream& os, 

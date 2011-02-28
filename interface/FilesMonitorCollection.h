@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.15 2010/12/15 10:09:14 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.15.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: FilesMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_FilesMonitorCollection_h
@@ -24,8 +24,8 @@ namespace stor {
    * A collection of monitoring entities for open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.15 $
-   * $Date: 2010/12/15 10:09:14 $
+   * $Revision: 1.15.2.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -95,14 +95,14 @@ namespace stor {
     virtual void do_appendInfoSpaceItems(InfoSpaceItems&);
     virtual void do_updateInfoSpaceItems();
 
-    FileRecordList _fileRecords;
-    mutable boost::mutex _fileRecordsMutex;
+    FileRecordList fileRecords_;
+    mutable boost::mutex fileRecordsMutex_;
 
-    const unsigned int _maxFileEntries; // maximum number of files to remember
-    uint32_t _entryCounter;
+    const unsigned int maxFileEntries_; // maximum number of files to remember
+    uint32_t entryCounter_;
 
-    xdata::UnsignedInteger32 _closedFiles;                 // number of closed files
-    xdata::UnsignedInteger32 _openFiles;                   // number of open files
+    xdata::UnsignedInteger32 closedFiles_;                 // number of closed files
+    xdata::UnsignedInteger32 openFiles_;                   // number of open files
 
   };
   

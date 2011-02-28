@@ -1,4 +1,4 @@
-// $Id: EventStreamSelector.h,v 1.7 2010/12/16 16:35:29 mommsen Exp $
+// $Id: EventStreamSelector.h,v 1.7.2.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: EventStreamSelector.h 
 
 #ifndef EventFilter_StorageManager_EventStreamSelector_h
@@ -18,8 +18,8 @@ namespace stor {
      EventStreamConfigurationInfo
 
      $Author: mommsen $
-     $Revision: 1.7 $
-     $Date: 2010/12/16 16:35:29 $
+     $Revision: 1.7.2.1 $
+     $Date: 2011/01/24 12:18:39 $
   */
 
   class EventStreamSelector
@@ -40,21 +40,21 @@ namespace stor {
     bool acceptEvent( const I2OChain& );
 
     // Accessors:
-    unsigned int outputModuleId() const { return _outputModuleId; }
-    const EventStreamConfigurationInfo& configInfo() const { return _configInfo; }
-    bool isInitialized() const { return _initialized; }
+    unsigned int outputModuleId() const { return outputModuleId_; }
+    const EventStreamConfigurationInfo& configInfo() const { return configInfo_; }
+    bool isInitialized() const { return initialized_; }
 
     // Comparison:
     bool operator<(const EventStreamSelector& other) const
-    { return ( _configInfo < other.configInfo() ); }
+    { return ( configInfo_ < other.configInfo() ); }
 
   private:
 
-    bool _initialized;
-    unsigned int _outputModuleId;
-    const EventStreamConfigurationInfo _configInfo;
+    bool initialized_;
+    unsigned int outputModuleId_;
+    const EventStreamConfigurationInfo configInfo_;
 
-    TriggerSelectorPtr _eventSelector;
+    TriggerSelectorPtr eventSelector_;
 
   };
 

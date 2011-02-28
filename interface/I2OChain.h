@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.10.4.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: I2OChain.h,v 1.10.4.2 2011/02/24 10:56:55 mommsen Exp $
 /// @file: I2OChain.h 
 
 #ifndef EventFilter_StorageManager_I2OChain_h
@@ -28,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.4.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.10.4.2 $
+   * $Date: 2011/02/24 10:56:55 $
    */
 
 
@@ -552,7 +552,7 @@ namespace stor {
 
   private:
 
-    boost::shared_ptr<detail::ChainData> _data;
+    boost::shared_ptr<detail::ChainData> data_;
   };
   
 } // namespace stor
