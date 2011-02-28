@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.41.2.3 2011/02/11 16:45:14 mommsen Exp $
+// $Id: Configuration.cc,v 1.41.2.4 2011/02/23 09:26:39 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -203,7 +203,7 @@ namespace stor
 
   void Configuration::setDQMProcessingDefaults()
   {
-    _dqmParamCopy._collateDQM = false;
+    _dqmParamCopy._collateDQM = true;
     _dqmParamCopy._readyTimeDQM = boost::posix_time::seconds(120);
     _dqmParamCopy._useCompressionDQM = true;
     _dqmParamCopy._compressionLevelDQM = 1;
