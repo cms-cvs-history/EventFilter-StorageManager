@@ -35,7 +35,6 @@ namespace stor {
   _getExpectedUpdatesCount(getExpectedUpdatesCount),
   _stateMachineType(stateMachineType),
   _moveToFailedState(moveToFailedState),
-  _topLevelFoldersReadyToServe(1024),
   _processCompletedTopLevelFolders(false)
   {
     gROOT->SetBatch(kTRUE);
@@ -54,9 +53,9 @@ namespace stor {
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   clear()
   {
-    _processCompletedTopLevelFolders = false;
+    boost::mutex::scoped_lock sl(_storeMutex);
     _store.clear();
-    _topLevelFoldersReadyToServe.clear();
+    _processCompletedTopLevelFolders = false;
     _tempEventArea.clear();
   }
   
@@ -65,9 +64,9 @@ namespace stor {
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   purge()
   {
-    addReadyTopLevelFoldersToReadyToServe();
-    while ( ! _topLevelFoldersReadyToServe.empty() ) ::sleep(1);
     _processCompletedTopLevelFolders = false;
+    while ( handleNextCompletedTopLevelFolder() ) {}
+    boost::mutex::scoped_lock sl(_storeMutex);
     _store.clear();
   }
   
@@ -100,24 +99,20 @@ namespace stor {
   {
     const DQMKey newKey = dqmEvent.dqmKey();
     
-    // Use efficientAddOrUpdates pattern suggested by Item 24 of 
-    
-    // 'Effective STL' by Scott Meyers
+    boost::mutex::scoped_lock sl(_storeMutex);
     DQMTopLevelFolderMap::iterator pos = _store.lower_bound(newKey);
     
     if(pos == _store.end() || (_store.key_comp()(newKey, pos->first)))
     {
       // Use pos as a hint to insert a new record, so it can avoid another lookup
       DQMTopLevelFolderPtr topLevelFolder( new DQMTopLevelFolder(
-          dqmEvent.dqmKey(), dqmEvent.getDQMEventConsumerTags(),
+          newKey, dqmEvent.getDQMEventConsumerTags(),
           _dqmParams, _dqmEventMonColl, 
           (_connectionType->*_getExpectedUpdatesCount)()
         ));
       pos = _store.insert(pos, DQMTopLevelFolderMap::value_type(newKey, topLevelFolder));
     }
     pos->second->addDQMEvent(getDQMEventView(dqmEvent));
-
-    addReadyTopLevelFoldersToReadyToServe();
   }
   
   template<class EventType, class ConnectionType, class StateMachineType>  
@@ -125,41 +120,23 @@ namespace stor {
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addDQMEventToReadyToServe(EventType const& dqmEvent)
   {
+    const DQMKey newKey = dqmEvent.dqmKey();
+
     DQMTopLevelFolderPtr topLevelFolder( new DQMTopLevelFolder(
-        dqmEvent.dqmKey(), dqmEvent.getDQMEventConsumerTags(),
+        newKey, dqmEvent.getDQMEventConsumerTags(),
         _dqmParams, _dqmEventMonColl, 1));
     topLevelFolder->addDQMEvent(getDQMEventView(dqmEvent));
-    addTopLevelFolderToReadyToServe(topLevelFolder);
-  }
-  
-  template<class EventType, class ConnectionType, class StateMachineType>  
-  void
-  DQMEventStore<EventType,ConnectionType,StateMachineType>::
-  addReadyTopLevelFoldersToReadyToServe()
-  {
-    DQMTopLevelFolderPtr topLevelFolder;
-    
-    while ( getNextReadyTopLevelFolder(topLevelFolder) )
-    {
-      addTopLevelFolderToReadyToServe(topLevelFolder);
-    }
-  }
-  
-  template<class EventType, class ConnectionType, class StateMachineType>  
-  void
-  DQMEventStore<EventType,ConnectionType,StateMachineType>::
-  addTopLevelFolderToReadyToServe(const DQMTopLevelFolderPtr topLevelFolder)
-  {
-    DQMTopLevelFolder::Record record;
-    topLevelFolder->getRecord(record);
-    _topLevelFoldersReadyToServe.enq_wait(record);
-  }
 
+    boost::mutex::scoped_lock sl(_storeMutex);
+    _store.insert(DQMTopLevelFolderMap::value_type(newKey, topLevelFolder));
+  }
+  
   template<class EventType, class ConnectionType, class StateMachineType>  
   bool
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   getNextReadyTopLevelFolder(DQMTopLevelFolderPtr& topLevelFolder)
   {
+    boost::mutex::scoped_lock sl(_storeMutex);
     utils::time_point_t now = utils::getCurrentTime();
     
     DQMTopLevelFolderMap::iterator it = _store.begin();
@@ -212,15 +189,14 @@ namespace stor {
   {
     std::string errorMsg = "Failed to send completed top level folders to consumers: ";
 
+    ::sleep(5);
+
     try
     {
-      DQMTopLevelFolder::Record record;
       while (
-        _topLevelFoldersReadyToServe.deq_nowait(record) &&
-        _processCompletedTopLevelFolders )
-      {
-        _dqmEventQueueCollection->addEvent(record);
-      }
+        _processCompletedTopLevelFolders &&
+        handleNextCompletedTopLevelFolder()
+      ) {}
     }
     catch(xcept::Exception &e)
     {
@@ -242,8 +218,26 @@ namespace stor {
         sentinelException, errorMsg );
       (_stateMachineType->*_moveToFailedState)(sentinelException);
     }
-      
+    
     return _processCompletedTopLevelFolders;
+  }
+  
+  
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  bool
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
+  handleNextCompletedTopLevelFolder()
+  {
+    DQMTopLevelFolderPtr topLevelFolder;
+    if ( getNextReadyTopLevelFolder(topLevelFolder) )
+    {
+      DQMTopLevelFolder::Record record;
+      topLevelFolder->getRecord(record);
+      _dqmEventQueueCollection->addEvent(record);
+      return true;
+    }
+
+    return false;
   }
 
 } // namespace stor
