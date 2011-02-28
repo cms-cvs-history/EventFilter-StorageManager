@@ -8,6 +8,7 @@
 #include <queue>
 
 #include "boost/shared_ptr.hpp"
+#include "boost/thread/mutex.hpp"
 
 #include "toolbox/lang/Class.h"
 #include "toolbox/task/WaitingWorkLoop.h"
@@ -16,7 +17,6 @@
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 
-#include "EventFilter/StorageManager/interface/ConcurrentQueue.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DQMTopLevelFolder.h"
 #include "EventFilter/StorageManager/interface/DQMKey.h"
@@ -88,7 +88,7 @@ namespace stor {
      * Checks if the DQM event store is empty
      */
     bool empty()
-    { return ( _store.empty() && _topLevelFoldersReadyToServe.empty() ); }
+    { return _store.empty(); }
 
     
   private:
@@ -101,19 +101,17 @@ namespace stor {
 
     void addDQMEventToReadyToServe(EventType const&);
 
-    void addReadyTopLevelFoldersToReadyToServe();
-
     DQMTopLevelFolderPtr makeDQMTopLevelFolder(EventType const&);
 
     DQMEventMsgView getDQMEventView(EventType const&);
 
     bool getNextReadyTopLevelFolder(DQMTopLevelFolderPtr&);
 
-    void addTopLevelFolderToReadyToServe(const DQMTopLevelFolderPtr);
-
     void startWorkLoop();
 
     bool processCompletedTopLevelFolders(toolbox::task::WorkLoop*);
+
+    bool handleNextCompletedTopLevelFolder();
 
     xdaq::ApplicationDescriptor* _appDescriptor;
     DQMProcessingParams _dqmParams;
@@ -126,7 +124,7 @@ namespace stor {
 
     typedef std::map<DQMKey, DQMTopLevelFolderPtr> DQMTopLevelFolderMap;
     DQMTopLevelFolderMap _store;
-    ConcurrentQueue<DQMTopLevelFolder::Record> _topLevelFoldersReadyToServe;
+    mutable boost::mutex _storeMutex;
 
     toolbox::task::WorkLoop* _completedFolderWL;
     toolbox::task::ActionSignature* _completedFolderAction;
