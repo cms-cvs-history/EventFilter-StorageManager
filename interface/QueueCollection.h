@@ -1,4 +1,4 @@
-// $Id: QueueCollection.h,v 1.10.2.10 2011/02/04 15:42:34 mommsen Exp $
+// $Id: QueueCollection.h,v 1.10.2.11 2011/02/24 10:56:55 mommsen Exp $
 /// @file: QueueCollection.h 
 
 #ifndef EventFilter_StorageManager_QueueCollection_h
@@ -36,8 +36,8 @@ namespace stor {
    * of QueueIDs of queues the class should be added.
    *
    * $Author: mommsen $
-   * $Revision: 1.10.2.10 $
-   * $Date: 2011/02/04 15:42:34 $
+   * $Revision: 1.10.2.11 $
+   * $Date: 2011/02/24 10:56:55 $
    */
 
   template <class T>
@@ -454,8 +454,10 @@ namespace stor {
          it != itEnd; ++it )
     {
       const size_type droppedEvents = _enqueue_event( *it, event, now );
-      _consumer_monitor_collection.addQueuedEventSample( *it, event.totalDataSize() );
-      _consumer_monitor_collection.addDroppedEvents( *it, droppedEvents );
+      if ( droppedEvents > 0 )
+        _consumer_monitor_collection.addDroppedEvents( *it, droppedEvents );
+      else
+        _consumer_monitor_collection.addQueuedEventSample( *it, event.totalDataSize() );
     }
   }
   
