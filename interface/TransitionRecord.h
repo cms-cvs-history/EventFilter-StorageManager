@@ -1,4 +1,4 @@
-// $Id: TransitionRecord.h,v 1.4.10.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: TransitionRecord.h,v 1.4.10.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: TransitionRecord.h 
 
 #ifndef EventFilter_StorageManager_TransitionRecord_h
@@ -14,8 +14,8 @@ namespace stor {
    * A record of state machine transitions
    *
    * $Author: mommsen $
-   * $Revision: 1.4.10.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.4.10.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class TransitionRecord
@@ -23,8 +23,11 @@ namespace stor {
     
   public:
 
-    TransitionRecord( const std::string& state_name,
-                      bool is_entry );
+    TransitionRecord
+    (
+      const std::string& stateName,
+      bool isEntry
+    );
 
     const std::string& stateName() const { return stateName_; }
     bool isEntry() const { return isEntry_; }

@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.h,v 1.13.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: StatisticsReporter.h,v 1.13.8.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: StatisticsReporter.h 
 
 #ifndef EventFilter_StorageManager_StatisticsReporter_h
@@ -44,8 +44,8 @@ namespace stor {
    * statistics for all MonitorCollections.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.13.8.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class StatisticsReporter : public toolbox::lang::Class, public xdata::ActionListener
@@ -177,8 +177,8 @@ namespace stor {
     xdaq::Application* app_;
     AlarmHandlerPtr alarmHandler_;
     SharedResourcesPtr sharedResources_;
-    utils::duration_t monitoringSleepSec_;
-    utils::time_point_t lastMonitorAction_;
+    utils::Duration_t monitoringSleepSec_;
+    utils::TimePoint_t lastMonitorAction_;
 
     RunMonitorCollection runMonCollection_;
     FragmentMonitorCollection fragMonCollection_;

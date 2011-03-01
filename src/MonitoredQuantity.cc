@@ -1,4 +1,4 @@
-// $Id: MonitoredQuantity.cc,v 1.11 2010/12/15 15:29:23 mommsen Exp $
+// $Id: MonitoredQuantity.cc,v 1.11.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: MonitoredQuantity.cc
 
 #include "EventFilter/StorageManager/interface/MonitoredQuantity.h"
@@ -11,8 +11,8 @@ namespace stor {
   
   MonitoredQuantity::MonitoredQuantity
   (
-    utils::duration_t expectedCalculationInterval,
-    utils::duration_t timeWindowForRecentResults
+    utils::Duration_t expectedCalculationInterval,
+    utils::Duration_t timeWindowForRecentResults
   ):
   enabled_(true),
   expectedCalculationInterval_(expectedCalculationInterval)
@@ -77,7 +77,7 @@ namespace stor {
       addSample(value);
   }
   
-  void MonitoredQuantity::calculateStatistics(const utils::time_point_t& currentTime)
+  void MonitoredQuantity::calculateStatistics(const utils::TimePoint_t& currentTime)
   {
     if (! enabled_) {return;}
     if (lastCalculationTime_.is_not_a_date_time()) {return;}
@@ -91,8 +91,8 @@ namespace stor {
     double latestValueSumOfSquares;
     double latestValueMin;
     double latestValueMax;
-    utils::duration_t latestDuration;
-    utils::time_point_t latestSnapshotTime;
+    utils::Duration_t latestDuration;
+    utils::TimePoint_t latestSnapshotTime;
     double latestLastLatchedSampleValue;
     {
       boost::mutex::scoped_lock sl(accumulationMutex_);
@@ -137,7 +137,7 @@ namespace stor {
       binDuration_[workingBinId_] = latestDuration;
       binSnapshotTime_[workingBinId_] = latestSnapshotTime;
       
-      lastLatchedValueRate_ = latestValueSum / utils::duration_to_seconds(latestDuration);
+      lastLatchedValueRate_ = latestValueSum / utils::durationToSeconds(latestDuration);
       
       recentSampleCount_ = 0;
       recentValueSum_ = 0.0;
@@ -165,7 +165,7 @@ namespace stor {
       if (workingBinId_ >= binCount_) {workingBinId_ = 0;}
       
       // calculate the derived full values
-      const double fullDuration = utils::duration_to_seconds(fullDuration_);
+      const double fullDuration = utils::durationToSeconds(fullDuration_);
       fullSampleRate_ = fullSampleCount_ / fullDuration;
       fullValueRate_ = fullValueSum_ / fullDuration;
       
@@ -188,7 +188,7 @@ namespace stor {
       }
       
       // calculate the derived recent values
-      const double recentDuration = utils::duration_to_seconds(recentDuration_);
+      const double recentDuration = utils::durationToSeconds(recentDuration_);
       if (recentDuration > 0) {
         recentSampleRate_ = recentSampleCount_ / recentDuration;
         recentValueRate_ = recentValueSum_ / recentDuration;
@@ -219,7 +219,7 @@ namespace stor {
     }
   }
   
-  void MonitoredQuantity::reset_accumulators_()
+  void MonitoredQuantity::resetAccumulators()
   {
     lastCalculationTime_ = boost::posix_time::not_a_date_time;
     workingSampleCount_ = 0;
@@ -230,7 +230,7 @@ namespace stor {
     workingLastSampleValue_ = 0;
   }
   
-  void MonitoredQuantity::reset_results_()
+  void MonitoredQuantity::resetResults()
   {
     workingBinId_ = 0;
     for (unsigned int idx = 0; idx < binCount_; ++idx) {
@@ -272,12 +272,12 @@ namespace stor {
   {
     {
       boost::mutex::scoped_lock sl(accumulationMutex_);
-      reset_accumulators_();
+      resetAccumulators();
     }
     
     {
       boost::mutex::scoped_lock sl(resultsMutex_);
-      reset_results_();
+      resetResults();
     }
   }
   
@@ -296,7 +296,7 @@ namespace stor {
     enabled_ = false;
   }
   
-  void MonitoredQuantity::setNewTimeWindowForRecentResults(const utils::duration_t& interval)
+  void MonitoredQuantity::setNewTimeWindowForRecentResults(const utils::Duration_t& interval)
   {
     // lock the results objects since we're dramatically changing the
     // bins used for the recent results
@@ -325,12 +325,12 @@ namespace stor {
       binDuration_.reserve(binCount_);
       binSnapshotTime_.reserve(binCount_);
       
-      reset_results_();
+      resetResults();
     }
     
     {
       boost::mutex::scoped_lock sl(accumulationMutex_);
-      reset_accumulators_();
+      resetAccumulators();
     }
     
     // call the reset method to populate the correct initial values

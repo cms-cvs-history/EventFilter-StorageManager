@@ -1,4 +1,4 @@
-// $Id: FragmentProcessor.cc,v 1.17.2.3 2011/02/26 15:53:28 mommsen Exp $
+// $Id: FragmentProcessor.cc,v 1.17.2.4 2011/02/28 17:56:06 mommsen Exp $
 /// @file: FragmentProcessor.cc
 
 #include <unistd.h>
@@ -32,7 +32,7 @@ FragmentProcessor::FragmentProcessor( xdaq::Application *app,
 
   WorkerThreadParams workerParams =
     sharedResources_->configuration_->getWorkerThreadParams();
-  timeout_ = workerParams._FPdeqWaitTime;
+  timeout_ = workerParams.FPdeqWaitTime_;
 }
 
 FragmentProcessor::~FragmentProcessor()
@@ -118,12 +118,13 @@ void FragmentProcessor::processOneFragmentIfPossible()
 {
   if (eventDistributor_.full()) 
   {
-    utils::time_point_t startTime = utils::getCurrentTime();
+    utils::TimePoint_t startTime = utils::getCurrentTime();
 
     utils::sleep(timeout_);
 
-    utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-    sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+    utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
+    sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
+      addFragmentProcessorIdleSample(elapsedTime);
 
     fragmentStore_.addToStaleEventTimes(elapsedTime);
   }
@@ -135,19 +136,22 @@ void FragmentProcessor::processOneFragment()
 {
   I2OChain fragment;
   FragmentQueuePtr fq = sharedResources_->fragmentQueue_;
-  utils::time_point_t startTime = utils::getCurrentTime();
-  if (fq->deq_timed_wait(fragment, timeout_))
+  utils::TimePoint_t startTime = utils::getCurrentTime();
+  if (fq->deqTimedWait(fragment, timeout_))
     {
-      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
-      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addPoppedFragmentSample(fragment.memoryUsed());
+      utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
+        addFragmentProcessorIdleSample(elapsedTime);
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
+        addPoppedFragmentSample(fragment.memoryUsed());
 
       stateMachine_->getCurrentState().processI2OFragment(fragment);
     }
   else
     {
-      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
-      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addFragmentProcessorIdleSample(elapsedTime);
+      utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
+        addFragmentProcessorIdleSample(elapsedTime);
 
       stateMachine_->getCurrentState().noFragmentToProcess();  
     }
@@ -157,10 +161,10 @@ void FragmentProcessor::processOneFragment()
 void FragmentProcessor::processAllCommands()
 {
   CommandQueuePtr cq = sharedResources_->commandQueue_;
-  stor::event_ptr evt;
+  stor::EventPtr_t evt;
   bool gotCommand = false;
 
-  while( cq->deq_nowait( evt ) )
+  while( cq->deqNowait( evt ) )
     {
       gotCommand = true;
       stateMachine_->process_event( *evt );
@@ -172,7 +176,7 @@ void FragmentProcessor::processAllCommands()
     {
       WorkerThreadParams workerParams =
         sharedResources_->configuration_->getWorkerThreadParams();
-      timeout_ = workerParams._FPdeqWaitTime;
+      timeout_ = workerParams.FPdeqWaitTime_;
     }
 }
 
@@ -182,7 +186,7 @@ void FragmentProcessor::processAllRegistrations()
   RegPtr regPtr;
   RegistrationQueuePtr regQueue =
     sharedResources_->registrationQueue_;
-  while ( regQueue->deq_nowait( regPtr ) )
+  while ( regQueue->deqNowait( regPtr ) )
   {
     regPtr->registerMe( &eventDistributor_ );
   }

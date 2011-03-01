@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.cc,v 1.39.2.2 2011/02/14 16:53:49 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.39.2.3 2011/02/28 17:56:06 mommsen Exp $
 /// @file: ResourceMonitorCollection.cc
 
 #include <stdio.h>
@@ -33,7 +33,7 @@ namespace stor {
   
   ResourceMonitorCollection::ResourceMonitorCollection
   (
-    const utils::duration_t& updateInterval,
+    const utils::Duration_t& updateInterval,
     AlarmHandlerPtr ah
   ) :
   MonitorCollection(updateInterval),

@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.cc,v 1.9.2.1 2011/02/02 15:17:24 mommsen Exp $
+// $Id: MonitorCollection.cc,v 1.9.2.2 2011/02/28 17:56:06 mommsen Exp $
 /// @file: MonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
@@ -7,7 +7,7 @@
 
 namespace stor {
   
-  MonitorCollection::MonitorCollection(const utils::duration_t& updateInterval) :
+  MonitorCollection::MonitorCollection(const utils::Duration_t& updateInterval) :
   updateInterval_(updateInterval),
   lastCalculateStatistics_(boost::posix_time::not_a_date_time),
   infoSpaceUpdateNeeded_(false)
@@ -22,7 +22,7 @@ namespace stor {
   }
   
   
-  void MonitorCollection::calculateStatistics(const utils::time_point_t& now)
+  void MonitorCollection::calculateStatistics(const utils::TimePoint_t& now)
   {
     if ( lastCalculateStatistics_.is_not_a_date_time() ||
       lastCalculateStatistics_ + updateInterval_ < now )
@@ -44,7 +44,7 @@ namespace stor {
   }
   
   
-  void MonitorCollection::reset(const utils::time_point_t& now)
+  void MonitorCollection::reset(const utils::TimePoint_t& now)
   {
     do_reset();
     

@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.cc,v 1.8 2010/12/14 12:56:52 mommsen Exp $
+// $Id: FragmentMonitorCollection.cc,v 1.8.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: FragmentMonitorCollection.cc
 
 #include <string>
@@ -11,7 +11,7 @@
 
 namespace stor {
   
-  FragmentMonitorCollection::FragmentMonitorCollection(const utils::duration_t& updateInterval) :
+  FragmentMonitorCollection::FragmentMonitorCollection(const utils::Duration_t& updateInterval) :
   MonitorCollection(updateInterval),
   allFragmentSizes_(updateInterval, boost::posix_time::seconds(5)),
   allFragmentBandwidth_(updateInterval, boost::posix_time::seconds(5)),

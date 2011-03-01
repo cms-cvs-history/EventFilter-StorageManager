@@ -1,4 +1,4 @@
-// $Id: DbFileHandler.h,v 1.4.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DbFileHandler.h,v 1.4.8.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: DbFileHandler.h 
 
 #ifndef EventFilter_StorageManager_DbFileHandler_h
@@ -19,8 +19,8 @@ namespace stor {
    * Handle the file used to pass information into SM database
    *
    * $Author: mommsen $
-   * $Revision: 1.4.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.4.8.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class DbFileHandler
@@ -39,7 +39,7 @@ namespace stor {
     /**
      * Write the string into the db file. Close the file after each write.
      */
-    void writeOld(const utils::time_point_t&, const std::string&);
+    void writeOld(const utils::TimePoint_t&, const std::string&);
 
     /**
      * Write the string into the db file and prefix it with the report header.
@@ -50,9 +50,9 @@ namespace stor {
     
   private:
     
-    void openFile(std::ofstream&, const utils::time_point_t&) const;
+    void openFile(std::ofstream&, const utils::TimePoint_t&) const;
 
-    void addReportHeader(std::ostream&, const utils::time_point_t&) const;
+    void addReportHeader(std::ostream&, const utils::TimePoint_t&) const;
 
     //Prevent copying of the DbFileHandler
     DbFileHandler(DbFileHandler const&);

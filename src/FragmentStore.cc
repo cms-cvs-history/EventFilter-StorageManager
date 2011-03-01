@@ -1,4 +1,4 @@
-// $Id: FragmentStore.cc,v 1.8 2010/12/14 12:56:52 mommsen Exp $
+// $Id: FragmentStore.cc,v 1.8.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: FragmentStore.cc
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -48,7 +48,7 @@ const bool FragmentStore::addFragment(I2OChain &chain)
   return false;
 }
 
-void FragmentStore::addToStaleEventTimes(const utils::duration_t duration)
+void FragmentStore::addToStaleEventTimes(const utils::Duration_t duration)
 {
   for (
     fragmentMap::iterator it = store_.begin(), itEnd = store_.end();
@@ -72,9 +72,9 @@ void FragmentStore::resetStaleEventTimes()
   }
 }
 
-const bool FragmentStore::getStaleEvent(I2OChain &chain, utils::duration_t timeout)
+const bool FragmentStore::getStaleEvent(I2OChain &chain, utils::Duration_t timeout)
 {
-  const utils::time_point_t cutOffTime = utils::getCurrentTime() - timeout;
+  const utils::TimePoint_t cutOffTime = utils::getCurrentTime() - timeout;
   
   fragmentMap::iterator pos = store_.begin();
   fragmentMap::iterator end = store_.end();

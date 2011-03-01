@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.20 2010/12/14 12:56:52 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.20.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: StatisticsReporter.cc
 
 #include <sstream>
@@ -253,7 +253,7 @@ namespace stor {
   
   void StatisticsReporter::calculateStatistics()
   {
-    const utils::time_point_t now = utils::getCurrentTime();
+    const utils::TimePoint_t now = utils::getCurrentTime();
     
     runMonCollection_.calculateStatistics(now);
     fragMonCollection_.calculateStatistics(now);
@@ -323,7 +323,7 @@ namespace stor {
   
   void StatisticsReporter::reset()
   {
-    const utils::time_point_t now = utils::getCurrentTime();
+    const utils::TimePoint_t now = utils::getCurrentTime();
     
     // do not reset the stateMachineMonCollection, as we want to
     // keep the state machine history

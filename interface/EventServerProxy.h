@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.h,v 1.1.2.8 2011/02/22 11:29:28 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.9 2011/02/25 09:12:38 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
@@ -22,8 +22,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.8 $
-   * $Date: 2011/02/22 11:29:28 $
+   * $Revision: 1.1.2.9 $
+   * $Date: 2011/02/25 09:12:38 $
    */
 
   template<typename RegInfo>
@@ -67,8 +67,8 @@ namespace stor {
     std::string consumerPSetString_;
     unsigned int consumerId_;
     
-    stor::utils::time_point_t nextRequestTime_;
-    stor::utils::duration_t minEventRequestInterval_;
+    stor::utils::TimePoint_t nextRequestTime_;
+    stor::utils::Duration_t minEventRequestInterval_;
     
     bool alreadySaidHalted_;
     bool alreadySaidWaiting_;

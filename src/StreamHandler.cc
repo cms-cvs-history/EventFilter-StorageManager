@@ -1,4 +1,4 @@
-// $Id: StreamHandler.cc,v 1.20 2010/11/05 10:33:38 mommsen Exp $
+// $Id: StreamHandler.cc,v 1.20.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: StreamHandler.cc
 
 #include <sstream>
@@ -64,7 +64,7 @@ namespace stor {
   }
   
   
-  void StreamHandler::closeTimedOutFiles(utils::time_point_t currentTime)
+  void StreamHandler::closeTimedOutFiles(utils::TimePoint_t currentTime)
   {
     fileHandlers_.erase(
       std::remove_if(fileHandlers_.begin(),

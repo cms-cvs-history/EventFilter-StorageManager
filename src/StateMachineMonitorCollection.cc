@@ -1,4 +1,4 @@
-// $Id: StateMachineMonitorCollection.cc,v 1.8.8.1 2011/01/25 11:29:12 mommsen Exp $
+// $Id: StateMachineMonitorCollection.cc,v 1.8.8.2 2011/02/28 17:56:06 mommsen Exp $
 /// @file: StateMachineMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -7,7 +7,7 @@
 
 namespace stor {
   
-  StateMachineMonitorCollection::StateMachineMonitorCollection(const utils::duration_t& updateInterval) :
+  StateMachineMonitorCollection::StateMachineMonitorCollection(const utils::Duration_t& updateInterval) :
   MonitorCollection(updateInterval),
   externallyVisibleState_( "unknown" ),
   stateName_( "unknown" )

@@ -1,4 +1,4 @@
-// $Id: CommandQueue.h,v 1.5 2009/07/20 13:06:10 mommsen Exp $
+// $Id: CommandQueue.h,v 1.5.14.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: CommandQueue.h 
 
 #ifndef EventFilter_StorageManager_CommandQueue_h
@@ -15,11 +15,11 @@ namespace stor
      Concurrent queue holding state machine events
 
      $Author: mommsen $
-     $Revision: 1.5 $
-     $Date: 2009/07/20 13:06:10 $
+     $Revision: 1.5.14.1 $
+     $Date: 2011/01/24 12:18:39 $
   */
-  typedef boost::shared_ptr<boost::statechart::event_base> event_ptr;
-  typedef ConcurrentQueue<event_ptr> CommandQueue;
+  typedef boost::shared_ptr<boost::statechart::event_base> EventPtr_t;
+  typedef ConcurrentQueue<EventPtr_t> CommandQueue;
   typedef boost::shared_ptr<CommandQueue> CommandQueuePtr;
 
 } // namespace stor

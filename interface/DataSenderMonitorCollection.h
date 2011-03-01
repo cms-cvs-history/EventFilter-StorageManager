@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.h,v 1.17.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DataSenderMonitorCollection.h,v 1.17.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: DataSenderMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DataSenderMonitorCollection_h
@@ -24,8 +24,8 @@ namespace stor {
    * and events by their source (resource broker, filter unit, etc.)
    *
    * $Author: mommsen $
-   * $Revision: 1.17.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.17.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class DataSenderMonitorCollection : public MonitorCollection
@@ -126,7 +126,7 @@ namespace stor {
       //MonitoredQuantity fragmentSize;
       MonitoredQuantity eventSize;
       
-      OutputModuleRecord(const utils::duration_t& updateInterval) :
+      OutputModuleRecord(const utils::Duration_t& updateInterval) :
       eventSize(updateInterval,boost::posix_time::seconds(10)) {}
     };
     typedef boost::shared_ptr<OutputModuleRecord> OutModRecordPtr;
@@ -155,7 +155,7 @@ namespace stor {
       explicit FilterUnitRecord
       (
         FilterUnitKey fuKey,
-        const utils::duration_t& updateInterval
+        const utils::Duration_t& updateInterval
       ) :
         key(fuKey),
         shortIntervalEventSize(updateInterval,boost::posix_time::seconds(10)),
@@ -194,7 +194,7 @@ namespace stor {
       explicit ResourceBrokerRecord
       (
         ResourceBrokerKey rbKey,
-        const utils::duration_t& updateInterval
+        const utils::Duration_t& updateInterval
       ) :
         key(rbKey),
         eventSize(updateInterval,boost::posix_time::seconds(10)),
@@ -293,7 +293,7 @@ namespace stor {
      */
     DataSenderMonitorCollection
     (
-      const utils::duration_t& updateInterval,
+      const utils::Duration_t& updateInterval,
       AlarmHandlerPtr
     );
 
@@ -424,7 +424,7 @@ namespace stor {
     std::map<ResourceBrokerKey, UniqueResourceBrokerID_t> resourceBrokerIDs_;
     std::map<UniqueResourceBrokerID_t, RBRecordPtr> resourceBrokerMap_;
 
-    const utils::duration_t updateInterval_;
+    const utils::Duration_t updateInterval_;
     AlarmHandlerPtr alarmHandler_;
 
   };

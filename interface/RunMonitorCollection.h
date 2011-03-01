@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.h,v 1.12.4.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: RunMonitorCollection.h,v 1.12.4.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: RunMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_RunMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * in the current run
    *
    * $Author: mommsen $
-   * $Revision: 1.12.4.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.12.4.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class RunMonitorCollection : public MonitorCollection
@@ -31,7 +31,7 @@ namespace stor {
 
     RunMonitorCollection
     (
-      const utils::duration_t& updateInterval,
+      const utils::Duration_t& updateInterval,
       AlarmHandlerPtr,
       SharedResourcesPtr
     );

@@ -1,4 +1,4 @@
-// $Id: TriggerSelector.h,v 1.6 2010/02/17 23:05:24 smorovic Exp $
+// $Id: TriggerSelector.h,v 1.6.8.1 2011/01/24 12:18:39 mommsen Exp $
 /// @file: TriggerSelector.h 
 
 #ifndef EventFilter_StorageManager_TriggerSelector_h
@@ -21,9 +21,9 @@ namespace stor
   /**
    * Event selector allowing for and/not combination of triggers/paths
    *
-   * $Author: smorovic $
-   * $Revision: 1.6 $
-   * $Date: 2010/02/17 23:05:24 $
+   * $Author: mommsen $
+   * $Revision: 1.6.8.1 $
+   * $Date: 2011/01/24 12:18:39 $
    */
 
   class TriggerSelector
@@ -57,7 +57,7 @@ namespace stor
        */
       bool wantAll() const { 
 	//if (useOld_) return eventSelector_->wantAll();
-	return accept_all_; 
+	return acceptAll_; 
       }
 
       /**
@@ -91,7 +91,7 @@ namespace stor
 
     private:
 
-      bool accept_all_;
+      bool acceptAll_;
 
       /*
        * Starts parsing selection string

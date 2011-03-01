@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.cc,v 1.5.2.2 2011/02/26 15:53:28 mommsen Exp $
+// $Id: DQMEventSelector.cc,v 1.5.2.3 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMEventSelector.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventSelector.h"
@@ -8,7 +8,7 @@ using namespace stor;
 bool DQMEventSelector::acceptEvent
 (
   const I2OChain& ioc,
-  const utils::time_point_t& now
+  const utils::TimePoint_t& now
 )
 {
   if( registrationInfo_->isStale(now) ) return false;

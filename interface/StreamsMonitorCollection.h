@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.11.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.11.8.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: StreamsMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_StreamsMonitorCollection_h
@@ -28,8 +28,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.11.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.11.8.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -41,8 +41,8 @@ namespace stor {
       StreamRecord
       (
         StreamsMonitorCollection* coll,
-        const utils::duration_t& updateInterval,
-        const utils::duration_t& timeWindowForRecentResults
+        const utils::Duration_t& updateInterval,
+        const utils::Duration_t& timeWindowForRecentResults
       ) :
       fileCount(updateInterval,timeWindowForRecentResults),
       volume(updateInterval,timeWindowForRecentResults),
@@ -78,7 +78,7 @@ namespace stor {
     typedef std::vector<StreamRecordPtr> StreamRecordList;
 
 
-    explicit StreamsMonitorCollection(const utils::duration_t& updateInterval);
+    explicit StreamsMonitorCollection(const utils::Duration_t& updateInterval);
 
     const StreamRecordPtr getNewStreamRecord();
 
@@ -127,8 +127,8 @@ namespace stor {
     StreamRecordList streamRecords_;
     mutable boost::mutex streamRecordsMutex_;
 
-    const utils::duration_t updateInterval_;
-    const utils::duration_t timeWindowForRecentResults_;
+    const utils::Duration_t updateInterval_;
+    const utils::Duration_t timeWindowForRecentResults_;
 
     MonitoredQuantity allStreamsFileCount_;
     MonitoredQuantity allStreamsVolume_;

@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.cc,v 1.11.2.6 2011/02/24 15:05:09 mommsen Exp $
+// $Id: ConsumerMonitorCollection.cc,v 1.11.2.7 2011/02/28 17:56:05 mommsen Exp $
 /// @file: ConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ConsumerMonitorCollection.h"
@@ -10,8 +10,8 @@ namespace stor {
   
   ConsumerMonitorCollection::ConsumerMonitorCollection
   (
-    const utils::duration_t& updateInterval,
-    const utils::duration_t& recentDuration
+    const utils::Duration_t& updateInterval,
+    const utils::Duration_t& recentDuration
   ):
   MonitorCollection(updateInterval),
   updateInterval_(updateInterval),

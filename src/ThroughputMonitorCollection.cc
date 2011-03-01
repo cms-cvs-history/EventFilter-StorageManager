@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.cc,v 1.23 2010/12/15 15:29:23 mommsen Exp $
+// $Id: ThroughputMonitorCollection.cc,v 1.23.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: ThroughputMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/ThroughputMonitorCollection.h"
@@ -8,7 +8,7 @@ using namespace stor;
 
 ThroughputMonitorCollection::ThroughputMonitorCollection
 (
-  const utils::duration_t& updateInterval,
+  const utils::Duration_t& updateInterval,
   const unsigned int& throuphputAveragingCycles
 ) :
   MonitorCollection(updateInterval),
@@ -50,9 +50,9 @@ void ThroughputMonitorCollection::addPoppedFragmentSample(double dataSize)
 
 
 void ThroughputMonitorCollection::
-addFragmentProcessorIdleSample(utils::duration_t idleTime)
+addFragmentProcessorIdleSample(utils::Duration_t idleTime)
 {
-  fragmentProcessorIdleTimeMQ_.addSample(utils::duration_to_seconds(idleTime));
+  fragmentProcessorIdleTimeMQ_.addSample(utils::durationToSeconds(idleTime));
 }
 
 
@@ -63,9 +63,9 @@ void ThroughputMonitorCollection::addPoppedEventSample(double dataSize)
 
 
 void ThroughputMonitorCollection::
-addDiskWriterIdleSample(utils::duration_t idleTime)
+addDiskWriterIdleSample(utils::Duration_t idleTime)
 {
-  diskWriterIdleTimeMQ_.addSample(utils::duration_to_seconds(idleTime));
+  diskWriterIdleTimeMQ_.addSample(utils::durationToSeconds(idleTime));
 }
 
 
@@ -82,9 +82,9 @@ void ThroughputMonitorCollection::addPoppedDQMEventSample(double dataSize)
 
 
 void ThroughputMonitorCollection::
-addDQMEventProcessorIdleSample(utils::duration_t idleTime)
+addDQMEventProcessorIdleSample(utils::Duration_t idleTime)
 {
-  dqmEventProcessorIdleTimeMQ_.addSample(utils::duration_to_seconds(idleTime));
+  dqmEventProcessorIdleTimeMQ_.addSample(utils::durationToSeconds(idleTime));
 }
 
 
@@ -149,11 +149,11 @@ void ThroughputMonitorCollection::do_getStats(Stats& stats, const unsigned int s
   smoothIdleTimes(dwIdleMQ);
   smoothIdleTimes(dqmIdleMQ);
 
-  utils::duration_t relativeTime = fqEntryCountMQ.recentDuration;
+  utils::Duration_t relativeTime = fqEntryCountMQ.recentDuration;
   const int lowestBin = sampleCount<binCount_ ? binCount_-sampleCount : 0;
   for (int idx = (binCount_ - 1); idx >= lowestBin; --idx)
   {
-    utils::duration_t binDuration = fqEntryCountMQ.recentBinnedDurations[idx];
+    utils::Duration_t binDuration = fqEntryCountMQ.recentBinnedDurations[idx];
     relativeTime -= binDuration;
     if (binDuration < boost::posix_time::milliseconds(10)) continue; //avoid very short durations
 
@@ -258,7 +258,7 @@ void ThroughputMonitorCollection::smoothIdleTimes(MonitoredQuantity::Stats& stat
 int ThroughputMonitorCollection::smoothIdleTimesHelper
 (
   std::vector<double>& idleTimes,
-  std::vector<utils::duration_t>& durations,
+  std::vector<utils::Duration_t>& durations,
   int firstIndex, int lastIndex
 ) const
 {
@@ -269,7 +269,7 @@ int ThroughputMonitorCollection::smoothIdleTimesHelper
   for (int idx = firstIndex; idx <= lastIndex; ++idx)
   {
     idleTimeSum += idleTimes[idx];
-    durationSum += utils::duration_to_seconds(durations[idx]);
+    durationSum += utils::durationToSeconds(durations[idx]);
   }
 
   if (idleTimeSum > durationSum && firstIndex > 0)
@@ -283,7 +283,7 @@ int ThroughputMonitorCollection::smoothIdleTimesHelper
       for (int idx = firstIndex; idx <= lastIndex; ++idx)
       {
         idleTimes[idx] = idleTimeSum / workingSize;
-        durations[idx] = utils::seconds_to_duration(durationSum / workingSize);
+        durations[idx] = utils::secondsToDuration(durationSum / workingSize);
       }
     }
     return (firstIndex - 1);
@@ -299,7 +299,7 @@ void ThroughputMonitorCollection::getRateAndBandwidth
   double& bandwidth
 ) const
 {
-  const double recentBinnedDuration = utils::duration_to_seconds(stats.recentBinnedDurations[idx]);
+  const double recentBinnedDuration = utils::durationToSeconds(stats.recentBinnedDurations[idx]);
   if (recentBinnedDuration > 0)
   {
     rate =
@@ -330,11 +330,11 @@ double ThroughputMonitorCollection::calcBusyPercentage
     // this should only happen if deq_timed_wait timeout >= statistics calculation period
     busyPercentage = 0;
   }
-  else if (stats.recentBinnedValueSums[idx] <= utils::duration_to_seconds(stats.recentBinnedDurations[idx]))
+  else if (stats.recentBinnedValueSums[idx] <= utils::durationToSeconds(stats.recentBinnedDurations[idx]))
   {
     // the thread was busy while it was not idle during the whole reporting duration
     busyPercentage = 100.0 * (1.0 - (stats.recentBinnedValueSums[idx] /
-        utils::duration_to_seconds(stats.recentBinnedDurations[idx])));
+        utils::durationToSeconds(stats.recentBinnedDurations[idx])));
   }
   else
   {
@@ -456,7 +456,7 @@ void ThroughputMonitorCollection::do_updateInfoSpaceItems()
   fragmentProcessorBusy_ = stats.average.fragmentProcessorBusy;
   diskWriterBusy_ = stats.average.diskWriterBusy;
   dqmEventProcessorBusy_ = stats.average.dqmEventProcessorBusy;
-  averagingTime_ = utils::duration_to_seconds(stats.average.duration);
+  averagingTime_ = utils::durationToSeconds(stats.average.duration);
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: QueueID.h,v 1.3.14.2 2011/02/24 10:56:55 mommsen Exp $
+// $Id: QueueID.h,v 1.3.14.3 2011/02/28 17:56:15 mommsen Exp $
 /// @file: QueueID.h 
 
 #ifndef EventFilter_StorageManager_QueueID_h
@@ -16,15 +16,16 @@ namespace stor {
    * Uniquely identifies the consumer queues 
    *
    * $Author: mommsen $
-   * $Revision: 1.3.14.2 $
-   * $Date: 2011/02/24 10:56:55 $
+   * $Revision: 1.3.14.3 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class QueueID
     {
     public:
-      typedef std::size_t size_type;
-      typedef enquing_policy::PolicyTag policy_type;
+
+      typedef enquing_policy::PolicyTag PolicyType;
+
       /**
          A default-constructed QueueID is invalid; it can not be used
          to identify an actual queue.
@@ -35,12 +36,12 @@ namespace stor {
          Create a QueueID used to identify a queue with enquing policy
          denoted by policy and with identifier index.
        */
-      QueueID(policy_type policy, size_t index);
+      QueueID(PolicyType policy, size_t index);
 
       /**
          Return the tag for the queing policy of *this.
        */
-      policy_type policy() const;
+      PolicyType policy() const;
 
       /**
          Return the index for this queue.
@@ -71,8 +72,8 @@ namespace stor {
       bool operator!= (QueueID const& other) const;
 
     private:
-      size_type   index_;
-      policy_type policy_;
+      size_t   index_;
+      PolicyType policy_;
 
     };
 
@@ -85,20 +86,20 @@ namespace stor {
   { }
 
   inline 
-  QueueID::QueueID(policy_type policy, size_t index) :
+  QueueID::QueueID(PolicyType policy, size_t index) :
     index_(index),
     policy_(policy)
   { }
 
   inline 
-  QueueID::policy_type
+  QueueID::PolicyType
   QueueID::policy() const
   {
     return policy_;
   }
 
   inline
-  QueueID::size_type
+  size_t
   QueueID::index() const
   {
     return index_;

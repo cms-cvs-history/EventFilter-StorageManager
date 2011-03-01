@@ -78,7 +78,7 @@ public:
 
 private:
   void resetStateMachine();
-  void processEvent( stor::event_ptr requestedEvent );
+  void processEvent( stor::EventPtr_t requestedEvent );
   bool checkState( const std::string& expected );
   void checkSignals( const EventList& elist, const std::string& expected);
   bool checkHistory( const TransitionList& steps );
@@ -152,15 +152,15 @@ void testStateMachine::resetStateMachine()
 /////////////////////////////////////////////////////////////////////
 //// Simulate the processing of events by the fragment processor ////
 /////////////////////////////////////////////////////////////////////
-void testStateMachine::processEvent( stor::event_ptr requestedEvent )
+void testStateMachine::processEvent( stor::EventPtr_t requestedEvent )
 {
   boost::shared_ptr<CommandQueue> cmdQueue;
   cmdQueue = machine_->getSharedResources()->commandQueue_;
 
-  cmdQueue->enq_wait( requestedEvent );
+  cmdQueue->enqWait( requestedEvent );
   
-  stor::event_ptr nextEvent;
-  while ( cmdQueue->deq_nowait( nextEvent ) )
+  stor::EventPtr_t nextEvent;
+  while ( cmdQueue->deqNowait( nextEvent ) )
   {
     machine_->process_event( *nextEvent );
     machine_->getCurrentState().noFragmentToProcess();
@@ -304,7 +304,7 @@ void testStateMachine::testConstructed()
 
 void testStateMachine::testHalted()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -330,7 +330,7 @@ void testStateMachine::testHalted()
 
 void testStateMachine::testStopped()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -358,7 +358,7 @@ void testStateMachine::testStopped()
 
 void testStateMachine::testProcessing()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -391,7 +391,7 @@ void testStateMachine::testProcessing()
 
 void testStateMachine::testFail()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -411,7 +411,7 @@ void testStateMachine::testFail()
 
 void testStateMachine::testEnableSequence()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -445,7 +445,7 @@ void testStateMachine::testEnableSequence()
 
 void testStateMachine::testStopSequence()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -484,7 +484,7 @@ void testStateMachine::testStopSequence()
 
 void testStateMachine::testHaltSequence()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   sr_->statisticsReporter_->
@@ -522,7 +522,7 @@ void testStateMachine::testHaltSequence()
 
 void testStateMachine::testReconfigureSequence()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   sr_->statisticsReporter_->
@@ -554,7 +554,7 @@ void testStateMachine::testReconfigureSequence()
 
 void testStateMachine::testEmergencyStopSequence()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   resetStateMachine();
   CPPUNIT_ASSERT( checkState( "Constructed" ) );
@@ -589,7 +589,7 @@ void testStateMachine::testEmergencyStopSequence()
 
 void testStateMachine::testAllStatesGoToFailed()
 {
-  stor::event_ptr stMachEvent;
+  stor::EventPtr_t stMachEvent;
 
   std::cout << std::endl << "**** Making sure Constructed can go to Failed ****" << std::endl;
 

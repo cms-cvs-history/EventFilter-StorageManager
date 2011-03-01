@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.9 2011/02/24 13:36:55 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.10 2011/02/28 17:56:05 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -185,7 +185,7 @@ namespace stor
       return;
     }
     
-    typename EventQueueCollection_t::value_type event =
+    typename EventQueueCollection_t::ValueType event =
       eventQueueCollection_->popEvent( cid );
     if( event.first.empty() || event.first.faulty() )
       writeEmptyBuffer( out );
@@ -286,7 +286,7 @@ namespace stor
       return;
     }
     
-    typename DQMEventQueueCollection::value_type dqmEvent =
+    typename DQMEventQueueCollection::ValueType dqmEvent =
       dqmEventQueueCollection_->popEvent( cid );
     
     if ( dqmEvent.first.empty() )
@@ -317,7 +317,7 @@ namespace stor
   {
     if ( !registrationCollection_->addRegistrationInfo( reginfo ) ) return false;
     
-    return registrationQueue_->enq_timed_wait( reginfo, boost::posix_time::seconds(5) );
+    return registrationQueue_->enqTimedWait( reginfo, boost::posix_time::seconds(5) );
   }
   
   

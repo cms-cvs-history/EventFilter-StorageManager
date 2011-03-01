@@ -1,4 +1,4 @@
-// $Id: DbFileHandler.cc,v 1.9 2010/12/14 12:56:52 mommsen Exp $
+// $Id: DbFileHandler.cc,v 1.9.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: DbFileHandler.cc
 
 #include "EventFilter/StorageManager/interface/DbFileHandler.h"
@@ -14,7 +14,7 @@ namespace stor {
   {}
   
   
-  void DbFileHandler::writeOld(const utils::time_point_t& timestamp, const std::string& str)
+  void DbFileHandler::writeOld(const utils::TimePoint_t& timestamp, const std::string& str)
   {
     std::ofstream outputFile;
     openFile(outputFile, timestamp);
@@ -25,7 +25,7 @@ namespace stor {
   
   void DbFileHandler::write(const std::string& str)
   {
-    const utils::time_point_t timestamp = utils::getCurrentTime();
+    const utils::TimePoint_t timestamp = utils::getCurrentTime();
     
     std::ofstream outputFile;
     openFile(outputFile, timestamp);
@@ -48,7 +48,7 @@ namespace stor {
   void DbFileHandler::openFile
   (
     std::ofstream& outputFile,
-    const utils::time_point_t& timestamp
+    const utils::TimePoint_t& timestamp
   ) const
   {
     utils::checkDirectory(dwParams_.dbFilePath_);
@@ -75,10 +75,10 @@ namespace stor {
   void DbFileHandler::addReportHeader
   (
     std::ostream& msg,
-    const utils::time_point_t& timestamp
+    const utils::TimePoint_t& timestamp
   ) const
   {
-    msg << "Timestamp:" << utils::seconds_since_epoch(timestamp)
+    msg << "Timestamp:" << utils::secondsSinceEpoch(timestamp)
       << "\trun:" << runNumber_
       << "\thost:" << dwParams_.hostName_
       << "\tinstance:" << dwParams_.smInstanceString_

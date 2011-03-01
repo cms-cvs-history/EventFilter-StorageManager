@@ -1,5 +1,5 @@
 /**
- * $Id: SharedResources.cc,v 1.9 2010/12/10 19:38:48 mommsen Exp $
+ * $Id: SharedResources.cc,v 1.9.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: SharedResources.cc
  */
 
@@ -36,9 +36,9 @@ namespace stor
       statisticsReporter_->getStateMachineMonitorCollection().setStatusMessage( 
         xcept::stdformat_exception_history(exception)
       );
-      event_ptr stMachEvent( new Fail() );
+      EventPtr_t stMachEvent( new Fail() );
       // wait maximum 5 seconds until enqueuing succeeds
-      if ( ! commandQueue_->enq_timed_wait( stMachEvent, boost::posix_time::seconds(5) ) )
+      if ( ! commandQueue_->enqTimedWait( stMachEvent, boost::posix_time::seconds(5) ) )
       {
         XCEPT_DECLARE_NESTED( stor::exception::StateTransition,
           sentinelException, "Failed to enqueue FAIL event", exception );

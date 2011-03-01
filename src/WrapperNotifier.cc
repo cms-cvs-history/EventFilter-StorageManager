@@ -1,4 +1,4 @@
-// $Id: WrapperNotifier.cc,v 1.4 2009/07/20 13:07:28 mommsen Exp $
+// $Id: WrapperNotifier.cc,v 1.4.14.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: WrapperNotifier.cc
 
 #include "EventFilter/StorageManager/interface/WrapperNotifier.h"
@@ -9,27 +9,32 @@
 using namespace stor;
 
 WrapperNotifier::WrapperNotifier( xdaq::Application* app ):
-  rcms_notifier_( xdaq2rc::RcmsStateNotifier( app->getApplicationLogger(),
-                                              app->getApplicationDescriptor(),
-                                              app->getApplicationContext() )
-                  ),
+  rcmsNotifier_(
+    xdaq2rc::RcmsStateNotifier(
+      app->getApplicationLogger(),
+      app->getApplicationDescriptor(),
+      app->getApplicationContext()
+    )
+  ),
   app_( app )
 {
   xdata::InfoSpace *ispace = app->getApplicationInfoSpace();
   
   ispace->fireItemAvailable( "rcmsStateListener",
-    rcms_notifier_.getRcmsStateListenerParameter() );
+    rcmsNotifier_.getRcmsStateListenerParameter() );
   ispace->fireItemAvailable( "foundRcmsStateListener",
-    rcms_notifier_.getFoundRcmsStateListenerParameter() );
-  rcms_notifier_.findRcmsStateListener();
-  rcms_notifier_.subscribeToChangesInRcmsStateListener( ispace );
+    rcmsNotifier_.getFoundRcmsStateListenerParameter() );
+  rcmsNotifier_.findRcmsStateListener();
+  rcmsNotifier_.subscribeToChangesInRcmsStateListener( ispace );
 }
 
 
 void WrapperNotifier::reportNewState( const std::string& stateName )
 {
-  rcms_notifier_.stateChanged( stateName,
-			       std::string( "StorageManager is now " ) + stateName );
+  rcmsNotifier_.stateChanged(
+    stateName,
+    std::string( "StorageManager is now " ) + stateName
+  );
 }
 
 

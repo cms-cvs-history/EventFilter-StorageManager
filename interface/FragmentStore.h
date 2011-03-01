@@ -1,4 +1,4 @@
-// $Id: FragmentStore.h,v 1.8.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: FragmentStore.h,v 1.8.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: FragmentStore.h 
 
 #ifndef EventFilter_StorageManager_FragmentStore_h
@@ -20,8 +20,8 @@ namespace stor {
    * Uses a map of I2OChains to store incomplete events.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.8.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class FragmentStore
@@ -41,10 +41,10 @@ namespace stor {
 
 
     /**
-     * Add the duration_t in seconds to the stale window start time for
+     * Add the duration to the stale window start time for
      * all I2OChains hold by the store.
      */
-    void addToStaleEventTimes(const utils::duration_t);
+    void addToStaleEventTimes(const utils::Duration_t);
 
 
     /**
@@ -60,7 +60,7 @@ namespace stor {
      * it returns true and the I2OChain contains the faulty event.
      * Otherwise it returns false and the I2OChain is empty.
      */
-    const bool getStaleEvent(I2OChain&, utils::duration_t timeout);
+    const bool getStaleEvent(I2OChain&, utils::Duration_t timeout);
 
 
     /**

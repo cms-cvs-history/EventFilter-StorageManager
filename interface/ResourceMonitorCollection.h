@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.h,v 1.27.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ResourceMonitorCollection.h,v 1.27.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: ResourceMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ResourceMonitorCollection_h
@@ -33,8 +33,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to resource usages
    *
    * $Author: mommsen $
-   * $Revision: 1.27.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.27.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class ResourceMonitorCollection : public MonitorCollection
@@ -70,7 +70,7 @@ namespace stor {
      */
     ResourceMonitorCollection
     (
-      const utils::duration_t& updateInterval,
+      const utils::Duration_t& updateInterval,
       AlarmHandlerPtr
     );
 
@@ -111,7 +111,7 @@ namespace stor {
     DiskUsagePtrList diskUsageList_;
     mutable boost::mutex diskUsageListMutex_;
 
-    const utils::duration_t updateInterval_;
+    const utils::Duration_t updateInterval_;
     AlarmHandlerPtr alarmHandler_;
 
     //Prevent copying of the ResourceMonitorCollection

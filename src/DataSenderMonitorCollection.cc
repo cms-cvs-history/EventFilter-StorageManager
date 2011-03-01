@@ -1,4 +1,4 @@
-// $Id: DataSenderMonitorCollection.cc,v 1.16.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DataSenderMonitorCollection.cc,v 1.16.2.2 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DataSenderMonitorCollection.cc
 
 #include <string>
@@ -16,7 +16,7 @@ namespace stor {
   
   DataSenderMonitorCollection::DataSenderMonitorCollection
   (
-    const utils::duration_t& updateInterval,
+    const utils::Duration_t& updateInterval,
     AlarmHandlerPtr ah
   ) :
   MonitorCollection(updateInterval),

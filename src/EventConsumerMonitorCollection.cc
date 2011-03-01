@@ -1,4 +1,4 @@
-// $Id: EventConsumerMonitorCollection.cc,v 1.2.12.1 2011/02/24 14:40:37 mommsen Exp $
+// $Id: EventConsumerMonitorCollection.cc,v 1.2.12.2 2011/02/28 17:56:06 mommsen Exp $
 /// @file: EventConsumerMonitorCollection.cc
 
 #include "EventFilter/StorageManager/interface/EventConsumerMonitorCollection.h"
@@ -7,7 +7,7 @@
 using namespace stor;
 
 
-EventConsumerMonitorCollection::EventConsumerMonitorCollection(const utils::duration_t& updateInterval):
+EventConsumerMonitorCollection::EventConsumerMonitorCollection(const utils::Duration_t& updateInterval):
 ConsumerMonitorCollection(updateInterval, boost::posix_time::seconds(10))
 {}
 

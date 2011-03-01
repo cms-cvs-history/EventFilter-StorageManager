@@ -1,4 +1,4 @@
-// $Id: DrainingQueues.cc,v 1.12 2010/12/14 12:56:52 mommsen Exp $
+// $Id: DrainingQueues.cc,v 1.12.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: DrainingQueues.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
@@ -63,8 +63,8 @@ DrainingQueues::do_noFragmentToProcess() const
   {
     SharedResourcesPtr sharedResources =
       outermost_context().getSharedResources();
-    event_ptr stMachEvent( new QueuesEmpty() );
-    sharedResources->commandQueue_->enq_wait( stMachEvent );
+    EventPtr_t stMachEvent( new QueuesEmpty() );
+    sharedResources->commandQueue_->enqWait( stMachEvent );
   }
 }
 

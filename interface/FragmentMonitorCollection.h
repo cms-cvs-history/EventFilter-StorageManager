@@ -1,4 +1,4 @@
-// $Id: FragmentMonitorCollection.h,v 1.7.8.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: FragmentMonitorCollection.h,v 1.7.8.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: FragmentMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_FragmentMonitorCollection_h
@@ -16,8 +16,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.7.8.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class FragmentMonitorCollection : public MonitorCollection
@@ -48,7 +48,7 @@ namespace stor {
       MonitoredQuantity::Stats dqmEventFragmentBandwidthStats;
     };
 
-    explicit FragmentMonitorCollection(const utils::duration_t& updateInterval);
+    explicit FragmentMonitorCollection(const utils::Duration_t& updateInterval);
 
     /**
       Add a generic fragment size of bytes

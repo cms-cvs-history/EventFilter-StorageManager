@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.icc,v 1.1.2.3 2011/02/28 08:15:17 mommsen Exp $
+// $Id: DQMEventStore.icc,v 1.1.2.4 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMEventStore.icc
 
 #include "TROOT.h"
@@ -137,7 +137,7 @@ namespace stor {
   getNextReadyTopLevelFolder(DQMTopLevelFolderPtr& topLevelFolder)
   {
     boost::mutex::scoped_lock sl(storeMutex_);
-    utils::time_point_t now = utils::getCurrentTime();
+    utils::TimePoint_t now = utils::getCurrentTime();
     
     DQMTopLevelFolderMap::iterator it = store_.begin();
     DQMTopLevelFolderMap::const_iterator itEnd = store_.end();

@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.7 2011/02/25 13:32:41 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.8 2011/02/28 17:56:06 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -15,7 +15,7 @@ namespace stor
     const std::string& remoteHost,
     const int& queueSize,
     const enquing_policy::PolicyTag& queuePolicy,
-    const utils::duration_t& secondsToStale
+    const utils::Duration_t& secondsToStale
   ) :
   remoteHost_(remoteHost),
   consumerName_(consumerName),
@@ -55,7 +55,7 @@ namespace stor
 
     const double maxEventRequestRate = pset.getUntrackedParameter<double>("maxEventRequestRate", 0);
     if ( maxEventRequestRate > 0 )
-      minEventRequestInterval_ = utils::seconds_to_duration(1 / maxEventRequestRate);
+      minEventRequestInterval_ = utils::secondsToDuration(1 / maxEventRequestRate);
     else
       minEventRequestInterval_ = boost::posix_time::not_a_date_time;
 
@@ -89,7 +89,7 @@ namespace stor
         "Unknown enqueuing policy: " + policy );
     }
 
-    secondsToStale_ = utils::seconds_to_duration(
+    secondsToStale_ = utils::secondsToDuration(
       pset.getUntrackedParameter<double>("consumerTimeOut", 0)
     );
     if ( useEventServingParams && secondsToStale_ < boost::posix_time::seconds(1) )
@@ -120,11 +120,11 @@ namespace stor
     
     if ( ! minEventRequestInterval_.is_not_a_date_time() )
     {
-      const double rate = 1 / utils::duration_to_seconds(minEventRequestInterval_);
+      const double rate = 1 / utils::durationToSeconds(minEventRequestInterval_);
       pset.addUntrackedParameter<double>("maxEventRequestRate", rate);
     }
 
-    const double secondsToStale = utils::duration_to_seconds(secondsToStale_);
+    const double secondsToStale = utils::durationToSeconds(secondsToStale_);
     if ( secondsToStale > 0 )
       pset.addUntrackedParameter<double>("consumerTimeOut", secondsToStale);
 

@@ -1,4 +1,4 @@
-// $Id: Starting.cc,v 1.10 2010/08/06 20:24:31 wmtan Exp $
+// $Id: Starting.cc,v 1.10.4.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: Starting.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
@@ -42,13 +42,13 @@ void Starting::do_entryActionWork()
     requestStreamConfiguration(evtCfgList, errCfgList,
       sharedResources->configuration_->getDiskWritingParams(),
       sharedResources->configuration_->getRunNumber(),
-      workerParams._DWdeqWaitTime);
+      workerParams.DWdeqWaitTime_);
 
   // Request configuration of DQMEventProcessor
   sharedResources->dqmEventProcessorResources_->
     requestConfiguration(
       sharedResources->configuration_->getDQMProcessingParams(),
-      workerParams._DQMEPdeqWaitTime);
+      workerParams.DQMEPdeqWaitTime_);
 }
 
 Starting::~Starting()
@@ -89,8 +89,8 @@ Starting::do_noFragmentToProcess() const
   {
     SharedResourcesPtr sharedResources =
       outermost_context().getSharedResources();
-    event_ptr stMachEvent( new StartRun() );
-    sharedResources->commandQueue_->enq_wait( stMachEvent );
+    EventPtr_t stMachEvent( new StartRun() );
+    sharedResources->commandQueue_->enqWait( stMachEvent );
   }
 }
 

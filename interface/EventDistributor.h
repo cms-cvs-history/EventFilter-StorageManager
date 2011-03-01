@@ -1,4 +1,4 @@
-// $Id: EventDistributor.h,v 1.7.2.2 2011/02/26 15:51:09 mommsen Exp $
+// $Id: EventDistributor.h,v 1.7.2.3 2011/02/28 17:56:15 mommsen Exp $
 /// @file: EventDistributor.h 
 
 #ifndef EventFilter_StorageManager_EventDistributor_h
@@ -37,8 +37,8 @@ namespace stor {
    * header.
    *
    * $Author: mommsen $
-   * $Revision: 1.7.2.2 $
-   * $Date: 2011/02/26 15:51:09 $
+   * $Revision: 1.7.2.3 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class EventDistributor
@@ -122,19 +122,19 @@ namespace stor {
     SharedResourcesPtr sharedResources_;
 
     typedef boost::shared_ptr<EventStreamSelector> EvtSelPtr;
-    typedef std::set<EvtSelPtr, utils::ptr_comp<EventStreamSelector> > EvtSelList;
+    typedef std::set<EvtSelPtr, utils::ptrComp<EventStreamSelector> > EvtSelList;
     EvtSelList eventStreamSelectors_;
 
     typedef boost::shared_ptr<DQMEventSelector> DQMEvtSelPtr;
-    typedef std::set<DQMEvtSelPtr, utils::ptr_comp<DQMEventSelector> > DQMEvtSelList;
+    typedef std::set<DQMEvtSelPtr, utils::ptrComp<DQMEventSelector> > DQMEvtSelList;
     DQMEvtSelList dqmEventSelectors_;
 
     typedef boost::shared_ptr<ErrorStreamSelector> ErrSelPtr;
-    typedef std::set<ErrSelPtr, utils::ptr_comp<ErrorStreamSelector> > ErrSelList;
+    typedef std::set<ErrSelPtr, utils::ptrComp<ErrorStreamSelector> > ErrSelList;
     ErrSelList errorStreamSelectors_;
 
     typedef boost::shared_ptr<EventConsumerSelector> ConsSelPtr;
-    typedef std::set<ConsSelPtr, utils::ptr_comp<EventConsumerSelector> > ConsSelList;
+    typedef std::set<ConsSelPtr, utils::ptrComp<EventConsumerSelector> > ConsSelList;
     ConsSelList eventConsumerSelectors_;
 
   };

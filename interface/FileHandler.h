@@ -1,4 +1,4 @@
-// $Id: FileHandler.h,v 1.16.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: FileHandler.h,v 1.16.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: FileHandler.h 
 
 #ifndef EventFilter_StorageManager_FileHandler_h
@@ -25,8 +25,8 @@ namespace stor {
    * Abstract representation of a physical file
    *
    * $Author: mommsen $
-   * $Revision: 1.16.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.16.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class FileHandler
@@ -51,7 +51,7 @@ namespace stor {
     /**
      * Returns true if the file has not seen any recent events
      */
-    bool tooOld(const utils::time_point_t currentTime = utils::getCurrentTime());
+    bool tooOld(const utils::TimePoint_t currentTime = utils::getCurrentTime());
 
     /**
      * Returns true if the file corresponds to the given lumi section
@@ -198,8 +198,8 @@ namespace stor {
     FilesMonitorCollection::FileRecordPtr fileRecord_;
     const DbFileHandlerPtr dbFileHandler_;
 
-    utils::time_point_t firstEntry_;                // time when first event was writen
-    utils::time_point_t lastEntry_;                 // time when latest event was writen
+    utils::TimePoint_t firstEntry_;                // time when first event was writen
+    utils::TimePoint_t lastEntry_;                 // time when latest event was writen
 
     const DiskWritingParams& diskWritingParams_;
     

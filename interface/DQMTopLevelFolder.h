@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.h,v 1.1.2.3 2011/02/27 13:55:52 mommsen Exp $
+// $Id: DQMTopLevelFolder.h,v 1.1.2.4 2011/02/28 17:56:15 mommsen Exp $
 /// @file: DQMTopLevelFolder.h 
 
 #ifndef EventFilter_StorageManager_DQMTopLevelFolder_h
@@ -26,8 +26,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.3 $
-   * $Date: 2011/02/27 13:55:52 $
+   * $Revision: 1.1.2.4 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class DQMTopLevelFolder
@@ -144,7 +144,7 @@ namespace stor {
      * This is either the case if all expected updates have been received
      * or when the last update was more than dqmParams.readyTimeDQM ago.
      */
-    bool isReady(const utils::time_point_t& now) const;
+    bool isReady(const utils::TimePoint_t& now) const;
 
     /**
      * Populate the record with the currently available data.
@@ -165,7 +165,7 @@ namespace stor {
     const unsigned int expectedUpdates_;
 
     unsigned int nUpdates_;
-    utils::time_point_t lastUpdate_;
+    utils::TimePoint_t lastUpdate_;
     unsigned int sentEvents_;
     std::string releaseTag_;
 

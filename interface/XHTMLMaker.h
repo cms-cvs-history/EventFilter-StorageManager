@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.h,v 1.10.2.2 2011/02/08 16:49:34 mommsen Exp $
+// $Id: XHTMLMaker.h,v 1.10.2.3 2011/02/28 17:56:15 mommsen Exp $
 /// @file: XHTMLMaker.h 
 
 #ifndef EventFilter_StorageManager_XHTMLMaker_h
@@ -20,8 +20,8 @@ namespace stor {
     Helper class to build XHTML pages
 
     $Author: mommsen $
-    $Revision: 1.10.2.2 $
-    $Date: 2011/02/08 16:49:34 $
+    $Revision: 1.10.2.3 $
+    $Date: 2011/02/28 17:56:15 $
   */
 
   class XHTMLMaker
@@ -163,7 +163,7 @@ namespace stor {
     
     Node* head_;
     
-    bool page_started_;
+    bool pageStarted_;
 
     /**
       Set DOMWriter features

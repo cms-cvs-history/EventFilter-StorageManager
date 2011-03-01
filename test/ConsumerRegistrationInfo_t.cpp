@@ -80,7 +80,7 @@ void testConsumerRegistrationInfo::testEventConsumerRegistrationInfo()
   CPPUNIT_ASSERT( ecri.maxConnectTries() == 13 );
   CPPUNIT_ASSERT( ecri.connectTrySleepTime() == 4 );
   CPPUNIT_ASSERT( ecri.minEventRequestInterval() == boost::posix_time::milliseconds(100) );
-  CPPUNIT_ASSERT( fabs(stor::utils::duration_to_seconds(ecri.minEventRequestInterval()) - 0.1) < 0.0001);
+  CPPUNIT_ASSERT( fabs(stor::utils::durationToSeconds(ecri.minEventRequestInterval()) - 0.1) < 0.0001);
 
   edm::ParameterSet ecriPSet = ecri.getPSet();
   CPPUNIT_ASSERT( ecriPSet.getUntrackedParameter<std::string>("SelectHLTOutput") == "hltOutputDQM" );

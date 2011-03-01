@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.h,v 1.12.2.6 2011/02/28 11:36:56 mommsen Exp $
+// $Id: WebPageHelper.h,v 1.12.2.7 2011/02/28 17:56:15 mommsen Exp $
 /// @file: WebPageHelper.h
 
 #ifndef EventFilter_StorageManager_WebPageHelper_h
@@ -23,8 +23,8 @@ namespace stor {
    * Helper class to handle web page requests
    *
    * $Author: mommsen $
-   * $Revision: 1.12.2.6 $
-   * $Date: 2011/02/28 11:36:56 $
+   * $Revision: 1.12.2.7 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   template<class T>
@@ -79,7 +79,7 @@ namespace stor {
     (
       XHTMLMaker& maker,
       XHTMLMaker::Node* tableRow,
-      const utils::duration_t
+      const utils::Duration_t
     ) const;
 
     /**

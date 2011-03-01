@@ -1,4 +1,4 @@
-// $Id: ConsumerMonitorCollection.h,v 1.11.2.7 2011/02/24 15:05:33 mommsen Exp $
+// $Id: ConsumerMonitorCollection.h,v 1.11.2.8 2011/02/28 17:56:15 mommsen Exp $
 /// @file: ConsumerMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ConsumerMonitorCollection_h
@@ -21,8 +21,8 @@ namespace stor {
    * A collection of MonitoredQuantities to track consumer activity.
    *
    * $Author: mommsen $
-   * $Revision: 1.11.2.7 $
-   * $Date: 2011/02/24 15:05:33 $
+   * $Revision: 1.11.2.8 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class ConsumerMonitorCollection: public MonitorCollection
@@ -39,8 +39,8 @@ namespace stor {
 
     explicit ConsumerMonitorCollection
     (
-      const utils::duration_t& updateInterval,
-      const utils::duration_t& recentDuration
+      const utils::Duration_t& updateInterval,
+      const utils::Duration_t& recentDuration
     );
 
     /**
@@ -97,8 +97,8 @@ namespace stor {
     virtual void do_calculateStatistics();
     virtual void do_reset();
 
-    const utils::duration_t updateInterval_;
-    const utils::duration_t recentDuration_;
+    const utils::Duration_t updateInterval_;
+    const utils::Duration_t recentDuration_;
     MonitoredQuantity totalQueuedMQ_;
     MonitoredQuantity totalDroppedMQ_;
     MonitoredQuantity totalServedMQ_;

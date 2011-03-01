@@ -1,4 +1,4 @@
-// $Id: Ready.cc,v 1.16.4.1 2011/01/21 15:48:12 mommsen Exp $
+// $Id: Ready.cc,v 1.16.4.2 2011/02/28 17:56:06 mommsen Exp $
 /// @file: Ready.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -68,21 +68,21 @@ void Ready::do_entryActionWork()
   QueueConfigurationParams queueParams =
     sharedResources->configuration_->getQueueConfigurationParams();
   sharedResources->commandQueue_->
-    set_capacity(queueParams.commandQueueSize_);
+    setCapacity(queueParams.commandQueueSize_);
   sharedResources->fragmentQueue_->
-    set_capacity(queueParams.fragmentQueueSize_);
+    setCapacity(queueParams.fragmentQueueSize_);
   sharedResources->fragmentQueue_->
-    set_memory(queueParams.fragmentQueueMemoryLimitMB_ * 1024*1024);
+    setMemory(queueParams.fragmentQueueMemoryLimitMB_ * 1024*1024);
   sharedResources->registrationQueue_->
-    set_capacity(queueParams.registrationQueueSize_);
+    setCapacity(queueParams.registrationQueueSize_);
   sharedResources->streamQueue_->
-    set_capacity(queueParams.streamQueueSize_);
+    setCapacity(queueParams.streamQueueSize_);
   sharedResources->streamQueue_->
-    set_memory(queueParams.streamQueueMemoryLimitMB_ * 1024*1024);
+    setMemory(queueParams.streamQueueMemoryLimitMB_ * 1024*1024);
   sharedResources->dqmEventQueue_->
-    set_capacity(queueParams.dqmEventQueueSize_);
+    setCapacity(queueParams.dqmEventQueueSize_);
   sharedResources->dqmEventQueue_->
-    set_memory(queueParams.dqmEventQueueMemoryLimitMB_ * 1024*1024);
+    setMemory(queueParams.dqmEventQueueMemoryLimitMB_ * 1024*1024);
 
   // convert the SM configuration string into ConfigInfo objects
   // and store them for later use

@@ -1,4 +1,4 @@
-//$Id: Utils.cc,v 1.18 2010/12/14 12:56:52 mommsen Exp $
+//$Id: Utils.cc,v 1.18.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: Utils.cc
 
 #include "EventFilter/StorageManager/interface/Exception.h"
@@ -20,7 +20,7 @@ namespace stor
   namespace utils
   {
     
-    std::string timeStamp(time_point_t theTime)
+    std::string timeStamp(TimePoint_t theTime)
     {
       typedef boost::date_time::c_local_adjustor<boost::posix_time::ptime> local_adj;
       tm ptm = boost::posix_time::to_tm( local_adj::utc_to_local(theTime) );
@@ -35,7 +35,7 @@ namespace stor
     }
 
 
-    std::string timeStampUTC(time_point_t theTime)
+    std::string timeStampUTC(TimePoint_t theTime)
     {
       tm ptm = to_tm(theTime);
       std::ostringstream timeStampStr;
@@ -46,7 +46,7 @@ namespace stor
    }
 
 
-    std::string asctimeUTC(time_point_t theTime)
+    std::string asctimeUTC(TimePoint_t theTime)
     {
       tm ptm =  to_tm(theTime);
       char buf[30];
@@ -57,7 +57,7 @@ namespace stor
     }
 
 
-    std::string dateStamp(time_point_t theTime)
+    std::string dateStamp(TimePoint_t theTime)
     {
       typedef boost::date_time::c_local_adjustor<boost::posix_time::ptime> local_adj;
       tm ptm = boost::posix_time::to_tm( local_adj::utc_to_local(theTime) );

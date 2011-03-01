@@ -1,4 +1,4 @@
-// $Id: WebPageHelper.icc,v 1.1.2.3 2011/02/28 11:36:30 mommsen Exp $
+// $Id: WebPageHelper.icc,v 1.1.2.4 2011/02/28 17:56:06 mommsen Exp $
 /// @file: WebPageHelper.icc
 
 #include <iomanip>
@@ -199,7 +199,7 @@ namespace stor
   (
     XHTMLMaker& maker,
     XHTMLMaker::Node *tableRow,
-    const utils::duration_t duration
+    const utils::Duration_t duration
   ) const
   {
     XHTMLMaker::AttrMap tableValueWidth;

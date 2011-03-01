@@ -1,4 +1,4 @@
-// $Id: Stopping.cc,v 1.9 2010/08/06 20:24:31 wmtan Exp $
+// $Id: Stopping.cc,v 1.9.4.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: Stopping.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
@@ -70,8 +70,8 @@ Stopping::do_noFragmentToProcess() const
   {
     SharedResourcesPtr sharedResources =
       outermost_context().getSharedResources();
-    event_ptr stMachEvent( new StopDone() );
-    sharedResources->commandQueue_->enq_wait( stMachEvent );
+    EventPtr_t stMachEvent( new StopDone() );
+    sharedResources->commandQueue_->enqWait( stMachEvent );
   }
 }
 

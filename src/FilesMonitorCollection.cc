@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.cc,v 1.13 2010/09/28 16:25:29 mommsen Exp $
+// $Id: FilesMonitorCollection.cc,v 1.13.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: FilesMonitorCollection.cc
 
 #include <string>
@@ -11,7 +11,7 @@
 
 namespace stor {
   
-  FilesMonitorCollection::FilesMonitorCollection(const utils::duration_t& updateInterval) :
+  FilesMonitorCollection::FilesMonitorCollection(const utils::Duration_t& updateInterval) :
   MonitorCollection(updateInterval),
   maxFileEntries_(250),
   entryCounter_(0)

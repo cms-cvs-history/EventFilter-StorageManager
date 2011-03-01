@@ -1,4 +1,4 @@
-// $Id: FileHandler.cc,v 1.26 2010/12/15 10:09:14 mommsen Exp $
+// $Id: FileHandler.cc,v 1.26.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: FileHandler.cc
 
 #include <EventFilter/StorageManager/interface/Exception.h>
@@ -93,8 +93,8 @@ namespace stor {
       << " --FILECOUNTER "  << fileRecord_->fileCounter
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()                          
-      << " --STARTTIME "    << utils::seconds_since_epoch(firstEntry_)
-      << " --STOPTIME "     << utils::seconds_since_epoch(lastEntry_)
+      << " --STARTTIME "    << utils::secondsSinceEpoch(firstEntry_)
+      << " --STOPTIME "     << utils::secondsSinceEpoch(lastEntry_)
       << " --STATUS "       << "closed"
       << " --RUNNUMBER "    << fileRecord_->runNumber
       << " --LUMISECTION "  << fileRecord_->lumiSection
@@ -124,7 +124,7 @@ namespace stor {
       << " --FILECOUNTER "  << fileRecord_->fileCounter
       << " --NEVENTS "      << events()
       << " --FILESIZE "     << fileSize()
-      << " --STARTTIME "    << utils::seconds_since_epoch(firstEntry_)
+      << " --STARTTIME "    << utils::secondsSinceEpoch(firstEntry_)
       << " --STOPTIME 0"
       << " --STATUS open"
       << " --RUNNUMBER "    << fileRecord_->runNumber
@@ -146,7 +146,7 @@ namespace stor {
   }
   
   
-  bool FileHandler::tooOld(const utils::time_point_t currentTime)
+  bool FileHandler::tooOld(const utils::TimePoint_t currentTime)
   {
     if (diskWritingParams_.lumiSectionTimeOut_ > boost::posix_time::seconds(0) && 
       (currentTime - lastEntry_) > diskWritingParams_.lumiSectionTimeOut_)

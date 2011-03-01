@@ -1,4 +1,4 @@
-// $Id: RegistrationCollection.cc,v 1.10.2.2 2011/01/14 18:30:22 mommsen Exp $
+// $Id: RegistrationCollection.cc,v 1.10.2.3 2011/02/28 17:56:06 mommsen Exp $
 /// @file: RegistrationCollection.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationCollection.h"
@@ -81,7 +81,7 @@ void RegistrationCollection::getEventConsumers( ConsumerRegistrations& crs ) con
     }
   // sort the event consumers to have identical consumers sharing a queue
   // next to each others.
-  utils::ptr_comp<EventConsumerRegistrationInfo> comp;
+  utils::ptrComp<EventConsumerRegistrationInfo> comp;
   std::sort(crs.begin(), crs.end(), comp);
 }
 

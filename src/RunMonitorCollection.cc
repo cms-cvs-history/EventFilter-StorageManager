@@ -1,4 +1,4 @@
-// $Id: RunMonitorCollection.cc,v 1.14.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: RunMonitorCollection.cc,v 1.14.2.2 2011/02/28 17:56:06 mommsen Exp $
 /// @file: RunMonitorCollection.cc
 
 #include <string>
@@ -18,7 +18,7 @@ namespace stor {
   
   RunMonitorCollection::RunMonitorCollection
   (
-    const utils::duration_t& updateInterval,
+    const utils::Duration_t& updateInterval,
     AlarmHandlerPtr ah,
     SharedResourcesPtr sr
   ) :

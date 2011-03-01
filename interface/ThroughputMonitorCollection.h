@@ -1,4 +1,4 @@
-// $Id: ThroughputMonitorCollection.h,v 1.18.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: ThroughputMonitorCollection.h,v 1.18.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: ThroughputMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_ThroughputMonitorCollection_h
@@ -24,8 +24,8 @@ namespace stor {
    * through the storage manager.
    *
    * $Author: mommsen $
-   * $Revision: 1.18.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.18.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class ThroughputMonitorCollection : public MonitorCollection
@@ -34,7 +34,7 @@ namespace stor {
 
     explicit ThroughputMonitorCollection
     (
-      const utils::duration_t& updateInterval,
+      const utils::Duration_t& updateInterval,
       const unsigned int& throuphputAveragingCycles
     );
 
@@ -80,7 +80,7 @@ namespace stor {
       return poppedFragmentSizeMQ_;
     }
 
-    void addFragmentProcessorIdleSample(utils::duration_t idleTime);
+    void addFragmentProcessorIdleSample(utils::Duration_t idleTime);
 
     const MonitoredQuantity& getFragmentProcessorIdleMQ() const {
       return fragmentProcessorIdleTimeMQ_;
@@ -130,7 +130,7 @@ namespace stor {
       return poppedEventSizeMQ_;
     }
 
-    void addDiskWriterIdleSample(utils::duration_t idleTime);
+    void addDiskWriterIdleSample(utils::Duration_t idleTime);
 
     const MonitoredQuantity& getDiskWriterIdleMQ() const {
       return diskWriterIdleTimeMQ_;
@@ -175,7 +175,7 @@ namespace stor {
       return poppedDQMEventSizeMQ_;
     }
 
-    void addDQMEventProcessorIdleSample(utils::duration_t idleTime);
+    void addDQMEventProcessorIdleSample(utils::Duration_t idleTime);
 
     const MonitoredQuantity& getDQMEventProcessorIdleMQ() const {
       return dqmEventProcessorIdleTimeMQ_;
@@ -203,8 +203,8 @@ namespace stor {
 
       struct Snapshot
       {
-        utils::duration_t duration;
-        utils::time_point_t absoluteTime;
+        utils::Duration_t duration;
+        utils::TimePoint_t absoluteTime;
         double poolUsage; //bytes
         double entriesInFragmentQueue;
         double memoryUsedInFragmentQueue; //MB
@@ -277,7 +277,7 @@ namespace stor {
     int smoothIdleTimesHelper
     (
       std::vector<double>& idleTimes,
-      std::vector<utils::duration_t>& durations,
+      std::vector<utils::Duration_t>& durations,
       int firstIndex, int lastIndex
     ) const;
 

@@ -64,13 +64,13 @@ void FillQueue::operator()()
   while(--counter_)
     {
       sleep(delay_);
-      sharedQueue_->enq_nowait(counter_);
+      sharedQueue_->enqNowait(counter_);
     }
 }
 
 void FillQueue::waiting_fill()
 {
-  while(--counter_) sharedQueue_->enq_wait(counter_);
+  while(--counter_) sharedQueue_->enqWait(counter_);
 }
 
 class DrainQueue
@@ -93,11 +93,11 @@ private:
 
 void DrainQueue::operator()()
 {
-  queue_t::value_type val;
+  queue_t::ValueType val;
   while(true)
     {
       sleep(delay_);
-      if (sharedQueue_->deq_nowait(val)) ++counter_;
+      if (sharedQueue_->deqNowait(val)) ++counter_;
       else return;
     }
 }
@@ -133,11 +133,11 @@ private:
 
 void DrainTimedQueue::operator()()
 {
-  queue_t::value_type val;
+  queue_t::ValueType val;
   while(true)
     {
       sleep(delay_);
-      if (sharedQueue_->deq_nowait(val)) ++counter_;
+      if (sharedQueue_->deqNowait(val)) ++counter_;
       else return;
     }
 }
@@ -212,15 +212,15 @@ testConcurrentQueue::queue_is_fifo()
 {
   std::cerr << "\nConcurrentQueue_t::queue_is_fifo\n";
   queue_t q;
-  q.enq_nowait(1);
-  q.enq_nowait(2);
-  q.enq_nowait(3);
-  queue_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  q.enqNowait(1);
+  q.enqNowait(2);
+  q.enqNowait(3);
+  queue_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value == 1);
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value == 2);
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value == 3);
   CPPUNIT_ASSERT(q.empty());
   CPPUNIT_ASSERT(!q.full());
@@ -275,7 +275,7 @@ testConcurrentQueue::enq_timing()
   queue_t q(1);
 
   // Queue is initially empty, so the first call should succeed.
-  CPPUNIT_ASSERT_NO_THROW(q.enq_nowait(1));
+  CPPUNIT_ASSERT_NO_THROW(q.enqNowait(1));
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.capacity() == 1);
   CPPUNIT_ASSERT(q.full());
@@ -283,7 +283,7 @@ testConcurrentQueue::enq_timing()
   // The queue is now full. The next enq should fail.
   edm::CPUTimer t;
   t.start();
-  CPPUNIT_ASSERT_THROW(q.enq_nowait(1), exception_t);
+  CPPUNIT_ASSERT_THROW(q.enqNowait(1), exception_t);
   t.stop();
   // We somewhat arbitrarily choose 100 milliseconds as "immediately
   // enough".
@@ -295,7 +295,7 @@ testConcurrentQueue::enq_timing()
       t.reset();
       CPPUNIT_ASSERT(q.size() == 1);
       t.start();
-      CPPUNIT_ASSERT(!q.enq_timed_wait(1, boost::posix_time::seconds(wait_time)));
+      CPPUNIT_ASSERT(!q.enqTimedWait(1, boost::posix_time::seconds(wait_time)));
       t.stop();
       // We somewhat arbitrarily choose 10 milliseconds as "good enough
       // resolution".
@@ -304,16 +304,16 @@ testConcurrentQueue::enq_timing()
 
   // Now test the version that waits indefinitiely. We fill the queue,
   // start a draining thread that delays before each deq, and then
-  // make sure do eventually return from the call to enq_wait.
+  // make sure do eventually return from the call to enqWait.
   boost::shared_ptr<queue_t> qptr(new queue_t(1));
   CPPUNIT_ASSERT(qptr->capacity() == 1);
-  CPPUNIT_ASSERT_NO_THROW(qptr->enq_nowait(1));
+  CPPUNIT_ASSERT_NO_THROW(qptr->enqNowait(1));
   CPPUNIT_ASSERT(qptr->size() == 1);
 
   int delay = 2;
   boost::thread consumer(DrainQueue(qptr,delay));
 
-  qptr->enq_wait(delay);
+  qptr->enqWait(delay);
   consumer.join();
   CPPUNIT_ASSERT(qptr->empty());  
 }
@@ -323,16 +323,16 @@ testConcurrentQueue::change_capacity()
 {
   std::cerr << "\nConcurrentQueue_t::change_capacity\n";
   queue_t q(1);
-  CPPUNIT_ASSERT_NO_THROW(q.enq_nowait(1));
-  CPPUNIT_ASSERT_THROW(q.enq_nowait(1), exception_t);
-  CPPUNIT_ASSERT(!q.set_capacity(2));                 // did not reset
-  CPPUNIT_ASSERT_THROW(q.enq_nowait(3), exception_t); // ... so this fails.
+  CPPUNIT_ASSERT_NO_THROW(q.enqNowait(1));
+  CPPUNIT_ASSERT_THROW(q.enqNowait(1), exception_t);
+  CPPUNIT_ASSERT(!q.setCapacity(2));                 // did not reset
+  CPPUNIT_ASSERT_THROW(q.enqNowait(3), exception_t); // ... so this fails.
 
   q.clear();
-  CPPUNIT_ASSERT(q.set_capacity(2));
-  CPPUNIT_ASSERT_NO_THROW(q.enq_nowait(1));
-  CPPUNIT_ASSERT_NO_THROW(q.enq_nowait(2));
-  CPPUNIT_ASSERT_THROW(q.enq_nowait(3), exception_t);
+  CPPUNIT_ASSERT(q.setCapacity(2));
+  CPPUNIT_ASSERT_NO_THROW(q.enqNowait(1));
+  CPPUNIT_ASSERT_NO_THROW(q.enqNowait(2));
+  CPPUNIT_ASSERT_THROW(q.enqNowait(3), exception_t);
   CPPUNIT_ASSERT(q.size() == 2);
   CPPUNIT_ASSERT(q.capacity() == 2);  
 }
@@ -342,11 +342,11 @@ testConcurrentQueue::failiffull()
 {
   std::cerr << "\nConcurrentQueue_t::failiffull\n";
   queue_t q(1);  
-  CPPUNIT_ASSERT_NO_THROW(q.enq_nowait(1));
-  CPPUNIT_ASSERT_THROW(q.enq_nowait(2), exception_t);
+  CPPUNIT_ASSERT_NO_THROW(q.enqNowait(1));
+  CPPUNIT_ASSERT_THROW(q.enqNowait(2), exception_t);
   CPPUNIT_ASSERT(q.size() == 1);
-  queue_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  queue_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value==1);
   CPPUNIT_ASSERT(q.empty());
   CPPUNIT_ASSERT(q.used() == 0);
@@ -357,12 +357,12 @@ testConcurrentQueue::failiffull_memlimit()
 {
   std::cerr << "\nConcurrentQueue_t::failiffull_memlimit\n";
   queue_t q(5,sizeof(int)); //memory for one int only
-  CPPUNIT_ASSERT_NO_THROW(q.enq_nowait(1));
-  CPPUNIT_ASSERT_THROW(q.enq_nowait(2), exception_t);
+  CPPUNIT_ASSERT_NO_THROW(q.enqNowait(1));
+  CPPUNIT_ASSERT_THROW(q.enqNowait(2), exception_t);
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.used() == sizeof(int));
-  queue_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  queue_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value==1);
   CPPUNIT_ASSERT(q.empty());
   CPPUNIT_ASSERT(q.used() == 0);
@@ -373,11 +373,11 @@ testConcurrentQueue::keepnewest()
 {
   std::cerr << "\nConcurrentQueue_t::keepnewest\n";
   keepnewest_t q(1);
-  CPPUNIT_ASSERT(q.enq_nowait(1) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(2) == 1);
+  CPPUNIT_ASSERT(q.enqNowait(1) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(2) == 1);
   CPPUNIT_ASSERT(q.size() == 1);
-  keepnewest_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  keepnewest_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == 2);
   CPPUNIT_ASSERT(value.second == 1);
   CPPUNIT_ASSERT(q.empty());
@@ -389,12 +389,12 @@ testConcurrentQueue::keepnewest_memlimit()
 {
   std::cerr << "\nConcurrentQueue_t::keepnewest_memlimit\n";
   keepnewest_t q(5,sizeof(int)); //memory for one int only
-  CPPUNIT_ASSERT(q.enq_nowait(1) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(2) == 1);
+  CPPUNIT_ASSERT(q.enqNowait(1) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(2) == 1);
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.used() == sizeof(int));
-  keepnewest_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  keepnewest_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == 2);
   CPPUNIT_ASSERT(value.second == 1);
   CPPUNIT_ASSERT(q.empty());
@@ -406,22 +406,22 @@ testConcurrentQueue::keepnewest_memlimit2()
 {
   std::cerr << "\nConcurrentQueue_t::keepnewest_memlimit2\n";
   keepnewest_t q(5,3*sizeof(uint32_t));
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)1)) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)2)) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)3)) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint32_t)4)) == 1);
+  CPPUNIT_ASSERT(q.enqNowait(QueueElement((uint32_t)1)) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(QueueElement((uint32_t)2)) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(QueueElement((uint32_t)3)) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(QueueElement((uint32_t)4)) == 1);
   CPPUNIT_ASSERT(q.size() == 3);
   CPPUNIT_ASSERT(q.used() == 3*sizeof(uint32_t));
-  CPPUNIT_ASSERT(q.enq_nowait(QueueElement((uint64_t)5)) == 2);
+  CPPUNIT_ASSERT(q.enqNowait(QueueElement((uint64_t)5)) == 2);
   CPPUNIT_ASSERT(q.size() == 2);
   CPPUNIT_ASSERT(q.used() == sizeof(uint32_t) + sizeof(uint64_t));
 
-  keepnewest_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  keepnewest_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == (uint32_t)4);
   CPPUNIT_ASSERT(value.second == 1);
 
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == (uint64_t)5);
   CPPUNIT_ASSERT(value.second == 2);
 
@@ -434,17 +434,17 @@ testConcurrentQueue::rejectnewest()
 {
   std::cerr << "\nConcurrentQueue_t::rejectnewest\n";
   rejectnewest_t q(1);
-  CPPUNIT_ASSERT(q.enq_nowait(1) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(2) == 1);
+  CPPUNIT_ASSERT(q.enqNowait(1) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(2) == 1);
   CPPUNIT_ASSERT(q.size() == 1);
-  rejectnewest_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  rejectnewest_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == 1);
   CPPUNIT_ASSERT(value.second == 0);
   CPPUNIT_ASSERT(q.empty());
-  CPPUNIT_ASSERT(q.enq_nowait(3) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(3) == 0);
   CPPUNIT_ASSERT(q.size() == 1);
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == 3);
   CPPUNIT_ASSERT(value.second == 1);
   CPPUNIT_ASSERT(q.empty());
@@ -456,19 +456,19 @@ testConcurrentQueue::rejectnewest_memlimit()
 {
   std::cerr << "\nConcurrentQueue_t::rejectnewest_memlimit\n";
   rejectnewest_t q(5,sizeof(int)); //memory for one int only
-  CPPUNIT_ASSERT(q.enq_nowait(1) == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(2) == 1);
+  CPPUNIT_ASSERT(q.enqNowait(1) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(2) == 1);
   CPPUNIT_ASSERT(q.size() == 1);
   CPPUNIT_ASSERT(q.used() == sizeof(int));
-  rejectnewest_t::value_type value;
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  rejectnewest_t::ValueType value;
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == 1);
   CPPUNIT_ASSERT(value.second == 0);
   CPPUNIT_ASSERT(q.empty());
   CPPUNIT_ASSERT(q.used() == 0);
-  CPPUNIT_ASSERT(q.enq_nowait(3) == 0);
+  CPPUNIT_ASSERT(q.enqNowait(3) == 0);
   CPPUNIT_ASSERT(q.size() == 1);
-  CPPUNIT_ASSERT(q.deq_nowait(value));
+  CPPUNIT_ASSERT(q.deqNowait(value));
   CPPUNIT_ASSERT(value.first == 3);
   CPPUNIT_ASSERT(value.second == 1);
   CPPUNIT_ASSERT(q.empty());

@@ -1,4 +1,4 @@
-// $Id: DiskWriter.cc,v 1.25.2.2 2011/02/24 13:36:55 mommsen Exp $
+// $Id: DiskWriter.cc,v 1.25.2.3 2011/02/28 17:56:06 mommsen Exp $
 /// @file: DiskWriter.cc
 
 #include <algorithm>
@@ -31,7 +31,7 @@ namespace stor {
   {
     WorkerThreadParams workerParams =
       sharedResources_->configuration_->getWorkerThreadParams();
-    timeout_ = workerParams._DWdeqWaitTime;
+    timeout_ = workerParams.DWdeqWaitTime_;
   }
   
   
@@ -112,12 +112,12 @@ namespace stor {
   {
     I2OChain event;
     StreamQueuePtr sq = sharedResources_->streamQueue_;
-    utils::time_point_t startTime = utils::getCurrentTime();
-    if (sq->deq_timed_wait(event, timeout_))
+    utils::TimePoint_t startTime = utils::getCurrentTime();
+    if (sq->deqTimedWait(event, timeout_))
     {
       sharedResources_->diskWriterResources_->setBusy(true);
       
-      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
       sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addDiskWriterIdleSample(elapsedTime);
       sharedResources_->statisticsReporter_->getThroughputMonitorCollection().addPoppedEventSample(event.memoryUsed());
       
@@ -133,7 +133,7 @@ namespace stor {
     }
     else
     {
-      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
       sharedResources_->statisticsReporter_->
         getThroughputMonitorCollection().addDiskWriterIdleSample(elapsedTime);
       
@@ -199,7 +199,7 @@ namespace stor {
   
   void DiskWriter::checkForFileTimeOuts(const bool doItNow)
   {
-    utils::time_point_t now = utils::getCurrentTime();
+    utils::TimePoint_t now = utils::getCurrentTime();
     
     if (doItNow || (now - lastFileTimeoutCheckTime_) > dwParams_.fileClosingTestInterval_)
     {
@@ -209,7 +209,7 @@ namespace stor {
   }
   
   
-  void DiskWriter::closeTimedOutFiles(const utils::time_point_t now)
+  void DiskWriter::closeTimedOutFiles(const utils::TimePoint_t now)
   {
     std::for_each(streamHandlers_.begin(), streamHandlers_.end(),
       boost::bind(&StreamHandler::closeTimedOutFiles, _1, now));

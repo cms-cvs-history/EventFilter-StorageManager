@@ -1,4 +1,4 @@
-// $Id: ChainData.h,v 1.14.4.1 2011/02/24 10:57:27 mommsen Exp $
+// $Id: ChainData.h,v 1.14.4.2 2011/02/28 17:56:05 mommsen Exp $
 /// @file: ChainData.h
 
 #ifndef CHAINDATA_H
@@ -80,10 +80,10 @@ namespace stor
       unsigned int hltTid() const {return hltTid_;}
       unsigned int fuProcessId() const {return fuProcessId_;}
       unsigned int fuGuid() const {return fuGuid_;}
-      utils::time_point_t creationTime() const {return creationTime_;}
-      utils::time_point_t lastFragmentTime() const {return lastFragmentTime_;}
-      utils::time_point_t staleWindowStartTime() const {return staleWindowStartTime_;}
-      void addToStaleWindowStartTime(const utils::duration_t duration) {
+      utils::TimePoint_t creationTime() const {return creationTime_;}
+      utils::TimePoint_t lastFragmentTime() const {return lastFragmentTime_;}
+      utils::TimePoint_t staleWindowStartTime() const {return staleWindowStartTime_;}
+      void addToStaleWindowStartTime(const utils::Duration_t duration) {
         staleWindowStartTime_ += duration;
       }
       void resetStaleWindowStartTime() {
@@ -138,9 +138,9 @@ namespace stor
       QueueIDs eventConsumerTags_;
       QueueIDs dqmEventConsumerTags_;
 
-      utils::time_point_t creationTime_;
-      utils::time_point_t lastFragmentTime_;
-      utils::time_point_t staleWindowStartTime_;
+      utils::TimePoint_t creationTime_;
+      utils::TimePoint_t lastFragmentTime_;
+      utils::TimePoint_t staleWindowStartTime_;
 
       void checkForCompleteness();
       bool validateAdler32Checksum();

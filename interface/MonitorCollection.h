@@ -1,4 +1,4 @@
-// $Id: MonitorCollection.h,v 1.5.12.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: MonitorCollection.h,v 1.5.12.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: MonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_MonitorCollection_h
@@ -18,8 +18,8 @@ namespace stor {
    * An abstract collection of MonitoredQuantities
    *
    * $Author: mommsen $
-   * $Revision: 1.5.12.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.5.12.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class MonitorCollection
@@ -29,7 +29,7 @@ namespace stor {
     typedef std::vector< std::pair<std::string, xdata::Serializable*> > InfoSpaceItems;
 
 
-    explicit MonitorCollection(const utils::duration_t& updateInterval);
+    explicit MonitorCollection(const utils::Duration_t& updateInterval);
 
 
     // A pure virtual destructor results in a missing symbol
@@ -44,7 +44,7 @@ namespace stor {
     /**
      * Calculates the statistics for all quantities
      */
-    void calculateStatistics(const utils::time_point_t& now);
+    void calculateStatistics(const utils::TimePoint_t& now);
 
     /**
      * Update all values of the items put into the monitoring
@@ -57,7 +57,7 @@ namespace stor {
     /**
      * Resets the monitored quantities
      */
-    void reset(const utils::time_point_t& now);
+    void reset(const utils::TimePoint_t& now);
 
     
   protected:
@@ -74,8 +74,8 @@ namespace stor {
     MonitorCollection(MonitorCollection const&);
     MonitorCollection& operator=(MonitorCollection const&);
 
-    const utils::duration_t updateInterval_;
-    utils::time_point_t lastCalculateStatistics_;
+    const utils::Duration_t updateInterval_;
+    utils::TimePoint_t lastCalculateStatistics_;
     bool infoSpaceUpdateNeeded_;
 
   };

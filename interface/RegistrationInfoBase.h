@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.9 2011/02/25 13:32:54 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.10 2011/02/28 17:56:15 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -25,8 +25,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.9 $
-   * $Date: 2011/02/25 13:32:54 $
+   * $Revision: 1.6.2.10 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class RegistrationInfoBase
@@ -40,7 +40,7 @@ namespace stor {
       const std::string& remoteHost,
       const int& queueSize,
       const enquing_policy::PolicyTag& queuePolicy,
-      const utils::duration_t& secondsToStale
+      const utils::Duration_t& secondsToStale
     );
 
     RegistrationInfoBase
@@ -84,7 +84,7 @@ namespace stor {
     void queueInfo(std::ostream&) const;
 
     // Setters:
-    void setMinEventRequestInterval(const utils::duration_t& interval) { minEventRequestInterval_ = interval; }
+    void setMinEventRequestInterval(const utils::Duration_t& interval) { minEventRequestInterval_ = interval; }
 
     // Accessors
     bool isValid() const { return consumerId_.isValid(); }
@@ -98,10 +98,10 @@ namespace stor {
     const int& maxConnectTries() const { return maxConnectTries_; }
     const int& connectTrySleepTime() const { return connectTrySleepTime_; }
     const int& retryInterval() const { return retryInterval_; }
-    const utils::duration_t& minEventRequestInterval() const { return minEventRequestInterval_; }
-    const utils::duration_t& secondsToStale() const { return secondsToStale_; }
-    bool isStale(const utils::time_point_t&) const;
-    double lastContactSecondsAgo(const utils::time_point_t&) const;
+    const utils::Duration_t& minEventRequestInterval() const { return minEventRequestInterval_; }
+    const utils::Duration_t& secondsToStale() const { return secondsToStale_; }
+    bool isStale(const utils::TimePoint_t&) const;
+    double lastContactSecondsAgo(const utils::TimePoint_t&) const;
 
     // Setters
     void setQueueId(const QueueID& id) { queueId_ = id; }
@@ -128,14 +128,14 @@ namespace stor {
     std::string                      sourceURL_;
     int                              queueSize_;
     enquing_policy::PolicyTag        queuePolicy_;
-    utils::duration_t                secondsToStale_;
+    utils::Duration_t                secondsToStale_;
     int                              maxConnectTries_;
     int                              connectTrySleepTime_;
     int                              retryInterval_;
-    utils::duration_t                minEventRequestInterval_;
+    utils::Duration_t                minEventRequestInterval_;
     QueueID                          queueId_;
     ConsumerID                       consumerId_;
-    utils::time_point_t              lastConsumerContact_;
+    utils::TimePoint_t              lastConsumerContact_;
   };
 
   typedef boost::shared_ptr<RegistrationInfoBase> RegPtr;
@@ -160,15 +160,15 @@ namespace stor {
   }
 
   inline
-  bool RegistrationInfoBase::isStale(const utils::time_point_t& now) const
+  bool RegistrationInfoBase::isStale(const utils::TimePoint_t& now) const
   {
     return ( now > lastConsumerContact_ + secondsToStale() );
   }
 
   inline
-  double RegistrationInfoBase::lastContactSecondsAgo(const utils::time_point_t& now) const
+  double RegistrationInfoBase::lastContactSecondsAgo(const utils::TimePoint_t& now) const
   {
-    return utils::duration_to_seconds( now - lastConsumerContact_ );
+    return utils::durationToSeconds( now - lastConsumerContact_ );
   }
 
   std::ostream& operator<<(std::ostream& os, 

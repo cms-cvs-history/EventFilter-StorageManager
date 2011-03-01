@@ -1,4 +1,4 @@
-// $Id: EventDistributor.cc,v 1.23.2.5 2011/02/26 15:53:28 mommsen Exp $
+// $Id: EventDistributor.cc,v 1.23.2.6 2011/02/28 17:56:06 mommsen Exp $
 /// @file: EventDistributor.cc
 
 #include "EventFilter/StorageManager/interface/DataSenderMonitorCollection.h"
@@ -70,7 +70,7 @@ void EventDistributor::addEventToRelevantQueues( I2OChain& ioc )
   if( ioc.isTaggedForAnyStream() )
   {
     unexpected = false;
-    sharedResources_->streamQueue_->enq_wait( ioc );
+    sharedResources_->streamQueue_->enqWait( ioc );
   }
   
   if( ioc.isTaggedForAnyEventConsumer() )
@@ -159,7 +159,7 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
     
     case Header::DQM_EVENT:
     {
-      utils::time_point_t now = utils::getCurrentTime();
+      utils::TimePoint_t now = utils::getCurrentTime();
 
       for( DQMEvtSelList::iterator it = dqmEventSelectors_.begin(),
              itEnd = dqmEventSelectors_.end();
@@ -178,7 +178,7 @@ void EventDistributor::tagCompleteEventForQueues( I2OChain& ioc )
 
       if( ioc.isTaggedForAnyDQMEventConsumer() )
       {
-        sharedResources_->dqmEventQueue_->enq_nowait( ioc );
+        sharedResources_->dqmEventQueue_->enqNowait( ioc );
       }
       else
       {
@@ -360,7 +360,7 @@ unsigned int EventDistributor::initializedConsumerCount() const
 
 void EventDistributor::checkForStaleConsumers()
 {
-  utils::time_point_t now = utils::getCurrentTime();
+  utils::TimePoint_t now = utils::getCurrentTime();
 
   EventQueueCollectionPtr eqc =
     sharedResources_->eventQueueCollection_;

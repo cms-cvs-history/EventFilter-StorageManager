@@ -150,7 +150,7 @@ testEventQueueCollection::pop_event_from_non_existing_queue()
   QueueID invalid_id;
   CPPUNIT_ASSERT(!invalid_id.isValid());
 
-  EventQueueCollection::value_type event;
+  EventQueueCollection::ValueType event;
   CPPUNIT_ASSERT(event.first.empty());
   CPPUNIT_ASSERT_THROW(event = c.popEvent(invalid_id), 
                        stor::exception::UnknownQueueId);
@@ -168,7 +168,7 @@ testEventQueueCollection::add_and_pop()
 
   // Make some queues of each flavor, with very little capacity.  We want
   // them to fill rapidly.
-  stor::utils::time_point_t now = stor::utils::getCurrentTime();
+  stor::utils::TimePoint_t now = stor::utils::getCurrentTime();
 
   ConsumerID cid;
   edm::ParameterSet pset;
@@ -291,7 +291,7 @@ testEventQueueCollection::invalid_queueid()
   }
   // Trying to pop an event off an nonexistent queue should give an
   // empty event.
-  EventQueueCollection::value_type event;
+  EventQueueCollection::ValueType event;
   CPPUNIT_ASSERT(event.first.empty());
   CPPUNIT_ASSERT_THROW(event = coll.popEvent(id1), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT(event.first.empty());
@@ -305,7 +305,7 @@ testEventQueueCollection::invalid_queueid()
   CPPUNIT_ASSERT_THROW(coll.empty(id2), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT_THROW(coll.full(id2), stor::exception::UnknownQueueId);
   
-  stor::utils::time_point_t now = stor::utils::getCurrentTime();
+  stor::utils::TimePoint_t now = stor::utils::getCurrentTime();
   CPPUNIT_ASSERT(!coll.clearStaleQueues(now));
   CPPUNIT_ASSERT_THROW(coll.stale(id1,now), stor::exception::UnknownQueueId);
   CPPUNIT_ASSERT_THROW(coll.stale(id2,now), stor::exception::UnknownQueueId);

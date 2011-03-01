@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.14 2010/12/14 12:56:52 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.14.2.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: StreamsMonitorCollection.cc
 
 #include <string>
@@ -13,7 +13,7 @@ namespace stor {
   
   StreamsMonitorCollection::StreamsMonitorCollection
   (
-    const utils::duration_t& updateInterval
+    const utils::Duration_t& updateInterval
   ) :
   MonitorCollection(updateInterval),
   updateInterval_(updateInterval),

@@ -1,4 +1,4 @@
-// $Id: StreamHandler.h,v 1.13.4.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: StreamHandler.h,v 1.13.4.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: StreamHandler.h 
 
 #ifndef EventFilter_StorageManager_StreamHandler_h
@@ -24,8 +24,8 @@ namespace stor {
    * Abstract class to handle one stream written to disk.
    *
    * $Author: mommsen $
-   * $Revision: 1.13.4.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.13.4.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class StreamHandler
@@ -45,7 +45,7 @@ namespace stor {
     /**
      * Close all files which are have not seen any recent events
      */    
-    void closeTimedOutFiles(utils::time_point_t currentTime =
+    void closeTimedOutFiles(utils::TimePoint_t currentTime =
                             utils::getCurrentTime());
 
     /**

@@ -1,4 +1,4 @@
-// $Id: StorageManager.cc,v 1.134.2.6 2011/02/03 14:16:28 mommsen Exp $
+// $Id: StorageManager.cc,v 1.134.2.7 2011/02/28 17:56:06 mommsen Exp $
 /// @file: StorageManager.cc
 
 #include "EventFilter/StorageManager/interface/DiskWriter.h"
@@ -263,7 +263,7 @@ void StorageManager::receiveRegistryMessage(toolbox::mem::Reference *ref)
     static_cast<double>( i2oChain.totalDataSize() ) / 0x100000
   );
 
-  sharedResources_->fragmentQueue_->enq_wait(i2oChain);
+  sharedResources_->fragmentQueue_->enqWait(i2oChain);
 }
 
 
@@ -275,7 +275,7 @@ void StorageManager::receiveDataMessage(toolbox::mem::Reference *ref)
     sharedResources_->statisticsReporter_->getFragmentMonitorCollection();
   fragMonCollection.addEventFragmentSample( i2oChain.totalDataSize() );
 
-  sharedResources_->fragmentQueue_->enq_wait(i2oChain);
+  sharedResources_->fragmentQueue_->enqWait(i2oChain);
 
 #ifdef STOR_DEBUG_DUPLICATE_MESSAGES
   double r = rand()/static_cast<double>(RAND_MAX);
@@ -296,7 +296,7 @@ void StorageManager::receiveErrorDataMessage(toolbox::mem::Reference *ref)
     sharedResources_->statisticsReporter_->getFragmentMonitorCollection();
   fragMonCollection.addEventFragmentSample( i2oChain.totalDataSize() );
 
-  sharedResources_->fragmentQueue_->enq_wait(i2oChain);
+  sharedResources_->fragmentQueue_->enqWait(i2oChain);
 }
 
 
@@ -308,7 +308,7 @@ void StorageManager::receiveDQMMessage(toolbox::mem::Reference *ref)
     sharedResources_->statisticsReporter_->getFragmentMonitorCollection();
   fragMonCollection.addDQMEventFragmentSample( i2oChain.totalDataSize() );
 
-  sharedResources_->fragmentQueue_->enq_wait(i2oChain);
+  sharedResources_->fragmentQueue_->enqWait(i2oChain);
 }
 
 
@@ -324,7 +324,7 @@ void StorageManager::receiveEndOfLumiSectionMessage(toolbox::mem::Reference *ref
     sharedResources_->statisticsReporter_->getRunMonitorCollection();
   runMonCollection.getEoLSSeenMQ().addSample( i2oChain.lumiSection() );
 
-  sharedResources_->streamQueue_->enq_wait( i2oChain );
+  sharedResources_->streamQueue_->enqWait( i2oChain );
 }
 
 
@@ -600,27 +600,27 @@ xoap::MessageReference StorageManager::handleFSMSoapMessage( xoap::MessageRefere
     errorMsg = "Failed to put a '" + command + "' state machine event into command queue: ";
     if (command == "Configure")
     {
-      sharedResources_->commandQueue_->enq_wait( stor::event_ptr( new stor::Configure() ) );
+      sharedResources_->commandQueue_->enqWait( stor::EventPtr_t( new stor::Configure() ) );
     }
     else if (command == "Enable")
     {
       if (sharedResources_->configuration_->streamConfigurationHasChanged())
       {
-        sharedResources_->commandQueue_->enq_wait( stor::event_ptr( new stor::Reconfigure() ) );
+        sharedResources_->commandQueue_->enqWait( stor::EventPtr_t( new stor::Reconfigure() ) );
       }
-      sharedResources_->commandQueue_->enq_wait( stor::event_ptr( new stor::Enable() ) );
+      sharedResources_->commandQueue_->enqWait( stor::EventPtr_t( new stor::Enable() ) );
     }
     else if (command == "Stop")
     {
-      sharedResources_->commandQueue_->enq_wait( stor::event_ptr( new stor::Stop() ) );
+      sharedResources_->commandQueue_->enqWait( stor::EventPtr_t( new stor::Stop() ) );
     }
     else if (command == "Halt")
     {
-      sharedResources_->commandQueue_->enq_wait( stor::event_ptr( new stor::Halt() ) );
+      sharedResources_->commandQueue_->enqWait( stor::EventPtr_t( new stor::Halt() ) );
     }
     else if (command == "EmergencyStop")
     {
-      sharedResources_->commandQueue_->enq_wait( stor::event_ptr( new stor::EmergencyStop() ) );
+      sharedResources_->commandQueue_->enqWait( stor::EventPtr_t( new stor::EmergencyStop() ) );
     }
     else
     {

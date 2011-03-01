@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.cc,v 1.10.2.2 2011/02/26 15:53:28 mommsen Exp $
+// $Id: DQMEventMonitorCollection.cc,v 1.10.2.3 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMEventMonitorCollection.cc
 
 #include <string>
@@ -11,7 +11,7 @@
 namespace stor
 {
   
-  DQMEventMonitorCollection::DQMEventMonitorCollection(const utils::duration_t& updateInterval) :
+  DQMEventMonitorCollection::DQMEventMonitorCollection(const utils::Duration_t& updateInterval) :
   MonitorCollection(updateInterval),
   droppedDQMEventCounts_(updateInterval, boost::posix_time::seconds(300)),
   dqmEventSizes_(updateInterval, boost::posix_time::seconds(300)),

@@ -1,4 +1,4 @@
-// $Id: XHTMLMaker.cc,v 1.10.2.2 2011/02/08 16:49:34 mommsen Exp $
+// $Id: XHTMLMaker.cc,v 1.10.2.3 2011/02/28 17:56:06 mommsen Exp $
 /// @file: XHTMLMaker.cc
 
 #include "EventFilter/StorageManager/interface/XHTMLMaker.h"
@@ -63,7 +63,7 @@ XHTMLMaker::XHTMLMaker()
   XMLCh* version = xs_("1.0");
   doc_->setVersion(version);
 
-  page_started_ = false;
+  pageStarted_ = false;
 
   writer_ =
     ( (DOMImplementationLS*)imp )->createDOMWriter();
@@ -101,13 +101,13 @@ XHTMLMaker::~XHTMLMaker()
 XHTMLMaker::Node* XHTMLMaker::start( const std::string& title )
 {
 
-  if( page_started_ )
+  if( pageStarted_ )
     {
       std::cerr << "Page already started" << std::endl;
       return (Node*)0;
     }
 
-  page_started_ = true;
+  pageStarted_ = true;
 
   // Root element:
   Node* el_xhtml = doc_->getDocumentElement();

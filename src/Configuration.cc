@@ -1,4 +1,4 @@
-// $Id: Configuration.cc,v 1.41.2.5 2011/02/28 14:33:59 mommsen Exp $
+// $Id: Configuration.cc,v 1.41.2.6 2011/02/28 17:56:05 mommsen Exp $
 /// @file: Configuration.cc
 
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -234,9 +234,9 @@ namespace stor
   void Configuration::setWorkerThreadDefaults()
   {
     // set defaults
-    workerThreadParamCopy_._FPdeqWaitTime = boost::posix_time::millisec(250);
-    workerThreadParamCopy_._DWdeqWaitTime = boost::posix_time::millisec(500);
-    workerThreadParamCopy_._DQMEPdeqWaitTime = boost::posix_time::millisec(500);
+    workerThreadParamCopy_.FPdeqWaitTime_ = boost::posix_time::millisec(250);
+    workerThreadParamCopy_.DWdeqWaitTime_ = boost::posix_time::millisec(500);
+    workerThreadParamCopy_.DQMEPdeqWaitTime_ = boost::posix_time::millisec(500);
   
     workerThreadParamCopy_.staleFragmentTimeOut_ = boost::posix_time::seconds(60);
     workerThreadParamCopy_.monitoringSleepSec_ = boost::posix_time::seconds(1);
@@ -277,7 +277,7 @@ namespace stor
     maxFileSize_ = diskWriteParamCopy_.maxFileSizeMB_;
     highWaterMark_ = diskWriteParamCopy_.highWaterMark_;
     failHighWaterMark_ = diskWriteParamCopy_.failHighWaterMark_;
-    lumiSectionTimeOut_ = utils::duration_to_seconds(diskWriteParamCopy_.lumiSectionTimeOut_);
+    lumiSectionTimeOut_ = utils::durationToSeconds(diskWriteParamCopy_.lumiSectionTimeOut_);
     fileClosingTestInterval_ = diskWriteParamCopy_.fileClosingTestInterval_.total_seconds();
     fileSizeTolerance_ = diskWriteParamCopy_.fileSizeTolerance_;
     faultyEventsStream_ = diskWriteParamCopy_.faultyEventsStream_;
@@ -377,17 +377,17 @@ namespace stor
   setupWorkerThreadInfoSpaceParams(xdata::InfoSpace* infoSpace)
   {
     // copy the initial defaults to the xdata variables
-    _FPdeqWaitTime = utils::duration_to_seconds(workerThreadParamCopy_._FPdeqWaitTime);
-    _DWdeqWaitTime = utils::duration_to_seconds(workerThreadParamCopy_._DWdeqWaitTime);
-    _DQMEPdeqWaitTime = utils::duration_to_seconds(workerThreadParamCopy_._DQMEPdeqWaitTime);
-    staleFragmentTimeOut_ = utils::duration_to_seconds(workerThreadParamCopy_.staleFragmentTimeOut_);
-    monitoringSleepSec_ = utils::duration_to_seconds(workerThreadParamCopy_.monitoringSleepSec_);
+    FPdeqWaitTime_ = utils::durationToSeconds(workerThreadParamCopy_.FPdeqWaitTime_);
+    DWdeqWaitTime_ = utils::durationToSeconds(workerThreadParamCopy_.DWdeqWaitTime_);
+    DQMEPdeqWaitTime_ = utils::durationToSeconds(workerThreadParamCopy_.DQMEPdeqWaitTime_);
+    staleFragmentTimeOut_ = utils::durationToSeconds(workerThreadParamCopy_.staleFragmentTimeOut_);
+    monitoringSleepSec_ = utils::durationToSeconds(workerThreadParamCopy_.monitoringSleepSec_);
     throuphputAveragingCycles_ = workerThreadParamCopy_.throuphputAveragingCycles_;
 
     // bind the local xdata variables to the infospace
-    infoSpace->fireItemAvailable("FPdeqWaitTime", &_FPdeqWaitTime);
-    infoSpace->fireItemAvailable("DWdeqWaitTime", &_DWdeqWaitTime);
-    infoSpace->fireItemAvailable("DQMEPdeqWaitTime", &_DQMEPdeqWaitTime);
+    infoSpace->fireItemAvailable("FPdeqWaitTime", &FPdeqWaitTime_);
+    infoSpace->fireItemAvailable("DWdeqWaitTime", &DWdeqWaitTime_);
+    infoSpace->fireItemAvailable("DQMEPdeqWaitTime", &DQMEPdeqWaitTime_);
     infoSpace->fireItemAvailable("staleFragmentTimeOut", &staleFragmentTimeOut_);
     infoSpace->fireItemAvailable("monitoringSleepSec", &monitoringSleepSec_);
     infoSpace->fireItemAvailable("throuphputAveragingCycles", &throuphputAveragingCycles_);
@@ -446,7 +446,7 @@ namespace stor
     diskWriteParamCopy_.maxFileSizeMB_ = maxFileSize_;
     diskWriteParamCopy_.highWaterMark_ = highWaterMark_;
     diskWriteParamCopy_.failHighWaterMark_ = failHighWaterMark_;
-    diskWriteParamCopy_.lumiSectionTimeOut_ = utils::seconds_to_duration(lumiSectionTimeOut_);
+    diskWriteParamCopy_.lumiSectionTimeOut_ = utils::secondsToDuration(lumiSectionTimeOut_);
     diskWriteParamCopy_.fileClosingTestInterval_ =
       boost::posix_time::seconds( static_cast<int>(fileClosingTestInterval_) );
     diskWriteParamCopy_.fileSizeTolerance_ = fileSizeTolerance_;
@@ -503,12 +503,12 @@ namespace stor
 
   void Configuration::updateLocalWorkerThreadData()
   {
-    workerThreadParamCopy_._FPdeqWaitTime = utils::seconds_to_duration(_FPdeqWaitTime);
-    workerThreadParamCopy_._DWdeqWaitTime = utils::seconds_to_duration(_DWdeqWaitTime);
-    workerThreadParamCopy_._DQMEPdeqWaitTime = utils::seconds_to_duration(_DQMEPdeqWaitTime);
+    workerThreadParamCopy_.FPdeqWaitTime_ = utils::secondsToDuration(FPdeqWaitTime_);
+    workerThreadParamCopy_.DWdeqWaitTime_ = utils::secondsToDuration(DWdeqWaitTime_);
+    workerThreadParamCopy_.DQMEPdeqWaitTime_ = utils::secondsToDuration(DQMEPdeqWaitTime_);
 
-    workerThreadParamCopy_.staleFragmentTimeOut_ = utils::seconds_to_duration(staleFragmentTimeOut_);
-    workerThreadParamCopy_.monitoringSleepSec_ = utils::seconds_to_duration(monitoringSleepSec_);
+    workerThreadParamCopy_.staleFragmentTimeOut_ = utils::secondsToDuration(staleFragmentTimeOut_);
+    workerThreadParamCopy_.monitoringSleepSec_ = utils::secondsToDuration(monitoringSleepSec_);
     workerThreadParamCopy_.throuphputAveragingCycles_ = throuphputAveragingCycles_;
   }
 

@@ -1,4 +1,4 @@
-// $Id: ConsumerWebPageHelper.icc,v 1.1.2.13 2011/02/24 15:05:09 mommsen Exp $
+// $Id: ConsumerWebPageHelper.icc,v 1.1.2.14 2011/02/28 17:56:05 mommsen Exp $
 /// @file: ConsumerWebPageHelper.icc
 
 #include "EventFilter/StorageManager/interface/DQMConsumerMonitorCollection.h"
@@ -168,7 +168,7 @@ namespace stor
     bool evenRow = false;
     XHTMLMaker::AttrMap tableLabelAttr = this->tableLabelAttr_;
     XHTMLMaker::AttrMap tableValueAttr = this->tableValueAttr_;
-    utils::time_point_t now = utils::getCurrentTime();
+    utils::TimePoint_t now = utils::getCurrentTime();
     
     for( RegistrationCollection::ConsumerRegistrations::const_iterator
            it = consumers.begin(), itEnd = consumers.end();
@@ -204,11 +204,11 @@ namespace stor
       else
       {
         tableDiv = maker.addNode("td", tableRow, this->tableValueAttr_);
-        const utils::duration_t interval = (*it)->minEventRequestInterval();
+        const utils::Duration_t interval = (*it)->minEventRequestInterval();
         if ( interval.is_not_a_date_time() )
           maker.addText(tableDiv, "unlimited");
         else
-          maker.addDouble(tableDiv, 1 / utils::duration_to_seconds(interval), 1);
+          maker.addDouble(tableDiv, 1 / utils::durationToSeconds(interval), 1);
       }
 
       // Status:
@@ -414,7 +414,7 @@ namespace stor
     
     // Loop over consumers
     bool evenRow = false;
-    utils::time_point_t now = utils::getCurrentTime();
+    utils::TimePoint_t now = utils::getCurrentTime();
     
     for( RegistrationCollection::DQMConsumerRegistrations::const_iterator
            it = consumers.begin(), itEnd = consumers.end();

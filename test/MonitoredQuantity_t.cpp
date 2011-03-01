@@ -118,7 +118,7 @@ void testMonitoredQuantity::testResults
   CPPUNIT_ASSERT(stats.getValueMax(type) == 
     (cycleCount) ? static_cast<double>(sampleCount)*multiplier_ : 1e-9);
 
-  const double duration = utils::duration_to_seconds(stats.getDuration(type));
+  const double duration = utils::durationToSeconds(stats.getDuration(type));
   if (duration > 0)
   {
     CPPUNIT_ASSERT(

@@ -5,7 +5,7 @@
 #include "FWCore/Utilities/interface/CPUTimer.h"
 
 void test_helper(edm::CPUTimer& t, 
-                 stor::utils::duration_t interval, 
+                 stor::utils::Duration_t interval, 
                  double min_sleep, 
                  double max_sleep)
 {
@@ -19,9 +19,9 @@ void test_helper(edm::CPUTimer& t,
 }
 
 void test_helper_sleep_until(edm::CPUTimer& t, 
-                             stor::utils::duration_t interval) 
+                             stor::utils::Duration_t interval) 
 {
-  stor::utils::time_point_t now = stor::utils::getCurrentTime();
+  stor::utils::TimePoint_t now = stor::utils::getCurrentTime();
   stor::utils::sleepUntil(now + interval);
   CPPUNIT_ASSERT(stor::utils::getCurrentTime() >= now+interval);
 }

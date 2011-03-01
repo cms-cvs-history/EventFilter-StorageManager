@@ -1,4 +1,4 @@
-// $Id: DiskWriter.h,v 1.12.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: DiskWriter.h,v 1.12.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: DiskWriter.h 
 
 #ifndef EventFilter_StorageManager_DiskWriter_h
@@ -34,8 +34,8 @@ namespace stor {
    * to the appropriate stream file(s) on disk. 
    *
    * $Author: mommsen $
-   * $Revision: 1.12.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.12.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class DiskWriter : public toolbox::lang::Class
@@ -91,7 +91,7 @@ namespace stor {
     /**
      * Close all timed-out files
      */    
-    void closeTimedOutFiles(const utils::time_point_t);
+    void closeTimedOutFiles(const utils::TimePoint_t);
 
     /**
      * Configures the event streams to be written to disk
@@ -147,7 +147,7 @@ namespace stor {
 
     unsigned int runNumber_;
     boost::posix_time::time_duration timeout_; // Timeout on stream queue
-    utils::time_point_t lastFileTimeoutCheckTime_; // Last time we checked for time-out files
+    utils::TimePoint_t lastFileTimeoutCheckTime_; // Last time we checked for time-out files
 
     typedef boost::shared_ptr<StreamHandler> StreamHandlerPtr;
     typedef std::vector<StreamHandlerPtr> StreamHandlers;

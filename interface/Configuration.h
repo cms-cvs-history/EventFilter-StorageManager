@@ -1,4 +1,4 @@
-// $Id: Configuration.h,v 1.26.2.3 2011/02/23 09:27:07 mommsen Exp $
+// $Id: Configuration.h,v 1.26.2.4 2011/02/28 17:56:15 mommsen Exp $
 /// @file: Configuration.h 
 
 
@@ -39,8 +39,8 @@ namespace stor
     int maxFileSizeMB_;
     double highWaterMark_;
     double failHighWaterMark_;
-    utils::duration_t lumiSectionTimeOut_;
-    utils::duration_t fileClosingTestInterval_;
+    utils::Duration_t lumiSectionTimeOut_;
+    utils::Duration_t fileClosingTestInterval_;
     double fileSizeTolerance_;
     std::string faultyEventsStream_;
 
@@ -60,7 +60,7 @@ namespace stor
   struct DQMProcessingParams
   {
     bool collateDQM_;
-    utils::duration_t readyTimeDQM_;
+    utils::Duration_t readyTimeDQM_;
     bool useCompressionDQM_;
     int compressionLevelDQM_;
   };
@@ -71,10 +71,10 @@ namespace stor
    */
   struct EventServingParams
   {
-    utils::duration_t activeConsumerTimeout_;  // seconds
+    utils::Duration_t activeConsumerTimeout_;  // seconds
     int consumerQueueSize_;
     std::string consumerQueuePolicy_;
-    utils::duration_t _DQMactiveConsumerTimeout;  // seconds
+    utils::Duration_t _DQMactiveConsumerTimeout;  // seconds
     int _DQMconsumerQueueSize;
     std::string _DQMconsumerQueuePolicy;
   };
@@ -101,11 +101,11 @@ namespace stor
    */
   struct WorkerThreadParams
   {
-    boost::posix_time::time_duration _FPdeqWaitTime;
-    boost::posix_time::time_duration _DWdeqWaitTime;
-    boost::posix_time::time_duration _DQMEPdeqWaitTime;
-    utils::duration_t staleFragmentTimeOut_;
-    utils::duration_t monitoringSleepSec_;
+    boost::posix_time::time_duration FPdeqWaitTime_;
+    boost::posix_time::time_duration DWdeqWaitTime_;
+    boost::posix_time::time_duration DQMEPdeqWaitTime_;
+    utils::Duration_t staleFragmentTimeOut_;
+    utils::Duration_t monitoringSleepSec_;
     unsigned int throuphputAveragingCycles_;
   };
 
@@ -158,8 +158,8 @@ namespace stor
    * only at requested times.
    *
    * $Author: mommsen $
-   * $Revision: 1.26.2.3 $
-   * $Date: 2011/02/23 09:27:07 $
+   * $Revision: 1.26.2.4 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class Configuration : public xdata::ActionListener
@@ -370,9 +370,9 @@ namespace stor
     xdata::UnsignedInteger32 streamQueueSize_;
     xdata::UnsignedInteger32 streamQueueMemoryLimitMB_;
 
-    xdata::Double _FPdeqWaitTime;  // seconds
-    xdata::Double _DWdeqWaitTime;  // seconds
-    xdata::Double _DQMEPdeqWaitTime;  // seconds
+    xdata::Double FPdeqWaitTime_;  // seconds
+    xdata::Double DWdeqWaitTime_;  // seconds
+    xdata::Double DQMEPdeqWaitTime_;  // seconds
     xdata::Double staleFragmentTimeOut_;  // seconds
     xdata::Double monitoringSleepSec_;  // seconds
     xdata::UnsignedInteger32 throuphputAveragingCycles_;

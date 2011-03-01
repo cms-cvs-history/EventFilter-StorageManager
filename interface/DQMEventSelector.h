@@ -1,4 +1,4 @@
-// $Id: DQMEventSelector.h,v 1.5.2.4 2011/02/27 13:55:52 mommsen Exp $
+// $Id: DQMEventSelector.h,v 1.5.2.5 2011/02/28 17:56:15 mommsen Exp $
 /// @file: DQMEventSelector.h 
 
 #ifndef EventFilter_StorageManager_DQMEventSelector_h
@@ -15,8 +15,8 @@ namespace stor
    * DQM event selector
    *
    * $Author: mommsen $
-   * $Revision: 1.5.2.4 $
-   * $Date: 2011/02/27 13:55:52 $
+   * $Revision: 1.5.2.5 $
+   * $Date: 2011/02/28 17:56:15 $
    */
 
   class DQMEventSelector
@@ -35,7 +35,7 @@ namespace stor
     bool acceptEvent
     (
       const I2OChain&,
-      const utils::time_point_t&
+      const utils::TimePoint_t&
     );
     
     /**

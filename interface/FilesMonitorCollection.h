@@ -1,4 +1,4 @@
-// $Id: FilesMonitorCollection.h,v 1.15.2.1 2011/01/24 12:18:39 mommsen Exp $
+// $Id: FilesMonitorCollection.h,v 1.15.2.2 2011/02/28 17:56:15 mommsen Exp $
 /// @file: FilesMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_FilesMonitorCollection_h
@@ -24,8 +24,8 @@ namespace stor {
    * A collection of monitoring entities for open and closed files
    *
    * $Author: mommsen $
-   * $Revision: 1.15.2.1 $
-   * $Date: 2011/01/24 12:18:39 $
+   * $Revision: 1.15.2.2 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class FilesMonitorCollection : public MonitorCollection
@@ -77,7 +77,7 @@ namespace stor {
     typedef boost::circular_buffer<FileRecordPtr> FileRecordList;
 
 
-    explicit FilesMonitorCollection(const utils::duration_t& updateInterval);
+    explicit FilesMonitorCollection(const utils::Duration_t& updateInterval);
 
     const FileRecordPtr getNewFileRecord();
 

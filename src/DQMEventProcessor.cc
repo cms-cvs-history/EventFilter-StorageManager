@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.12.2.6 2011/02/27 18:52:49 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12.2.7 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -47,7 +47,7 @@ namespace stor {
   {
     WorkerThreadParams workerParams =
       sharedResources_->configuration_->getWorkerThreadParams();
-    timeout_ = workerParams._DQMEPdeqWaitTime;
+    timeout_ = workerParams.DQMEPdeqWaitTime_;
   }
   
   
@@ -123,12 +123,12 @@ namespace stor {
   
   void DQMEventProcessor::processNextDQMEvent()
   {
-    DQMEventQueue::value_type dqmEvent;
+    DQMEventQueue::ValueType dqmEvent;
     DQMEventQueuePtr eq = sharedResources_->dqmEventQueue_;
-    utils::time_point_t startTime = utils::getCurrentTime();
-    if (eq->deq_timed_wait(dqmEvent, timeout_))
+    utils::TimePoint_t startTime = utils::getCurrentTime();
+    if (eq->deqTimedWait(dqmEvent, timeout_))
     {
-      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
       sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
         addDQMEventProcessorIdleSample(elapsedTime);
       sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
@@ -140,7 +140,7 @@ namespace stor {
     }
     else
     {
-      utils::duration_t elapsedTime = utils::getCurrentTime() - startTime;
+      utils::Duration_t elapsedTime = utils::getCurrentTime() - startTime;
       sharedResources_->statisticsReporter_->getThroughputMonitorCollection().
         addDQMEventProcessorIdleSample(elapsedTime);
     }

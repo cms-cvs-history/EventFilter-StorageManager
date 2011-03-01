@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.1.2.4 2011/02/27 13:56:41 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.5 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -66,7 +66,7 @@ namespace stor {
   }
   
   
-  bool DQMTopLevelFolder::isReady(const utils::time_point_t& now) const
+  bool DQMTopLevelFolder::isReady(const utils::TimePoint_t& now) const
   {
     if ( nUpdates_ == 0 ) return false;
     
@@ -127,7 +127,7 @@ namespace stor {
       + dqmKey_.topLevelFolderName.length()
     + folderSize;
     
-    edm::Timestamp timestamp(utils::nanoseconds_since_epoch(lastUpdate_));
+    edm::Timestamp timestamp(utils::nanosecondsSinceEpoch(lastUpdate_));
     
     DQMEventMsgBuilder builder(
       record.getBuffer(totalSize),

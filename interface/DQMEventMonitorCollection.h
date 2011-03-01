@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.h,v 1.7.8.3 2011/02/26 15:51:09 mommsen Exp $
+// $Id: DQMEventMonitorCollection.h,v 1.7.8.4 2011/02/28 17:56:15 mommsen Exp $
 /// @file: DQMEventMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_DQMEventMonitorCollection_h
@@ -16,8 +16,8 @@ namespace stor {
    * A collection of MonitoredQuantities related to fragments
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.3 $
-   * $Date: 2011/02/26 15:51:09 $
+   * $Revision: 1.7.8.4 $
+   * $Date: 2011/02/28 17:56:15 $
    */
   
   class DQMEventMonitorCollection : public MonitorCollection
@@ -58,7 +58,7 @@ namespace stor {
       MonitoredQuantity::Stats numberOfWrittenTopLevelFoldersStats; //number of top level folders written to disk
     };
 
-    explicit DQMEventMonitorCollection(const utils::duration_t& updateInterval);
+    explicit DQMEventMonitorCollection(const utils::Duration_t& updateInterval);
 
     const MonitoredQuantity& getDroppedDQMEventCountsMQ() const {
       return droppedDQMEventCounts_;

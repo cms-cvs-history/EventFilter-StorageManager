@@ -1,4 +1,4 @@
-// $Id: FinishingDQM.cc,v 1.10 2010/08/06 20:24:31 wmtan Exp $
+// $Id: FinishingDQM.cc,v 1.10.4.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: FinishingDQM.cc
 
 #include "EventFilter/StorageManager/interface/CommandQueue.h"
@@ -60,8 +60,8 @@ FinishingDQM::do_noFragmentToProcess() const
   {
     SharedResourcesPtr sharedResources =
       outermost_context().getSharedResources();
-    event_ptr stMachEvent( new EndRun() );
-    sharedResources->commandQueue_->enq_wait( stMachEvent );
+    EventPtr_t stMachEvent( new EndRun() );
+    sharedResources->commandQueue_->enqWait( stMachEvent );
   }
 }
 
