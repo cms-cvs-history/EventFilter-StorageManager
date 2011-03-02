@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.icc,v 1.1.2.3 2011/02/26 10:11:36 mommsen Exp $
+// $Id: EventServerProxy.icc,v 1.1.2.4 2011/03/02 14:53:00 mommsen Exp $
 /// @file: EventServerProxy.icc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -107,7 +107,7 @@ namespace stor
           << "Failed to get event from event server " << regInfo_.sourceURL()
             << " (" << failedAttemptsToGetData_ << "/" << maxConnectTries << "):\n"
             <<  std::string(&data[0]) << std::endl;
-         ::sleep(regInfo_.connectTrySleepTime());
+         ::sleep(regInfo_.retryInterval());
       }
       data.clear();
     }
