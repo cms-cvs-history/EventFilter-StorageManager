@@ -1,4 +1,4 @@
-// $Id: DQMHttpSource.h,v 1.9.16.2 2011/02/25 09:13:48 mommsen Exp $
+// $Id: DQMHttpSource.h,v 1.9.16.3 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMHttpSource.h
 
 #ifndef StorageManager_DQMHttpSource_h
@@ -23,8 +23,8 @@ namespace edm
     the StorageManager or SMProxyServer to get DQM (histogram) data.
     
     $Author: mommsen $
-    $Revision: 1.9.16.2 $
-    $Date: 2011/02/25 09:13:48 $
+    $Revision: 1.9.16.3 $
+    $Date: 2011/02/28 17:56:05 $
   */
 
   class DQMHttpSource : public edm::RawInputSource
@@ -37,12 +37,19 @@ namespace edm
     );
     virtual ~DQMHttpSource() {};
 
+    static void addEventToDQMBackend
+    (
+      DQMStore*,
+      const DQMEventMsgView&,
+      const bool overwrite
+    );
+
+
   private:
     virtual std::auto_ptr<edm::Event> readOneEvent();
-    void addEventToDQMBackend(const DQMEventMsgView&);
     void initializeDQMStore();
 
-    DQMStore *dqmStore_;
+    DQMStore* dqmStore_;
     stor::EventServerProxy<stor::DQMEventConsumerRegistrationInfo> dqmEventServerProxy_;
 
   };

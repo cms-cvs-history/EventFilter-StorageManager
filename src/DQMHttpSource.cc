@@ -1,4 +1,4 @@
-// $Id: DQMHttpSource.cc,v 1.22.2.3 2011/02/25 09:13:48 mommsen Exp $
+// $Id: DQMHttpSource.cc,v 1.22.2.4 2011/02/28 17:56:05 mommsen Exp $
 /// @file: DQMHttpSource.cc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -29,6 +29,7 @@ namespace edm
 
   std::auto_ptr<Event> DQMHttpSource::readOneEvent()
   {
+    initializeDQMStore();
     stor::CurlInterface::Content data;
 
     dqmEventServerProxy_.getOneEvent(data);
@@ -39,7 +40,7 @@ namespace edm
       return std::auto_ptr<edm::Event>();
 
     const DQMEventMsgView dqmEventMsgView(&data[0]);
-    addEventToDQMBackend(dqmEventMsgView);
+    addEventToDQMBackend(dqmStore_, dqmEventMsgView, true);
 
     // make a fake event containing no data but the evId and runId from DQMEvent
     // and the time stamp from the event at update
@@ -54,10 +55,13 @@ namespace edm
   }
   
   
-  void DQMHttpSource::addEventToDQMBackend(const DQMEventMsgView& dqmEventMsgView)
+  void DQMHttpSource::addEventToDQMBackend
+  (
+    DQMStore* dqmStore,
+    const DQMEventMsgView& dqmEventMsgView,
+    const bool overwrite
+  )
   {
-    initializeDQMStore();
-    
     edm::StreamDQMDeserializer deserializeWorker;
     std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
       deserializeWorker.deserializeDQMEvent(dqmEventMsgView);
@@ -67,13 +71,12 @@ namespace edm
     {
       const std::string subFolderName = tableIter->first;
       std::vector<TObject*> toList = tableIter->second;
-      dqmStore_->makeDirectory(subFolderName);  // fetch or create
-      dqmStore_->setCurrentFolder(subFolderName);
+      dqmStore->setCurrentFolder(subFolderName); // creates dir if needed
 
       for (std::vector<TObject*>::const_iterator objectIter = toList.begin(),
              objectIterEnd = toList.end(); objectIter != objectIterEnd; ++objectIter)
       {
-        dqmStore_->extract(*objectIter, dqmStore_->pwd(), true);
+        dqmStore->extract(*objectIter, dqmStore->pwd(), overwrite);
         // TObject cloned into DQMStore. Thus, delete it here.
         delete *objectIter;
       }
