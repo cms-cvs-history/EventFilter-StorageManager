@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.1.2.6 2011/03/01 08:31:12 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.7 2011/03/02 16:52:28 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -49,22 +49,8 @@ namespace stor {
   
   void DQMTopLevelFolder::addDQMEvent(const DQMEventMsgView& view)
   {
-    if ( nUpdates_ == 0 )
-    {
-      releaseTag_ = view.releaseTag();
-      updateNumber_ = view.updateNumber();
-    }
-    else if (
-      view.releaseTag() != releaseTag_ ||
-      view.updateNumber() != updateNumber_
-    )
-    {
-      std::ostringstream errorMsg;
-      errorMsg << "Received a DQM event with mismatched information:\n"
-        << "releaseTag " << view.releaseTag() << ", expected " << releaseTag_ << "\n"
-        << "updateNumber " << view.updateNumber() << ", expected " << updateNumber_;
-      XCEPT_RAISE(exception::DQMEventProcessing, errorMsg.str());
-    }
+    if ( releaseTag_.empty() ) releaseTag_ = view.releaseTag();
+    updateNumber_ = std::max(updateNumber_, view.updateNumber());
 
     edm::StreamDQMDeserializer deserializer;
     std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
