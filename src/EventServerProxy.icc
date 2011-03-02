@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.icc,v 1.1.2.2 2011/02/25 13:31:43 mommsen Exp $
+// $Id: EventServerProxy.icc,v 1.1.2.3 2011/02/26 10:11:36 mommsen Exp $
 /// @file: EventServerProxy.icc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -28,7 +28,8 @@ namespace stor
   regInfo_(ps),
   consumerId_(0),
   alreadySaidHalted_(false),
-  alreadySaidWaiting_(false)
+  alreadySaidWaiting_(false),
+  failedAttemptsToGetData_(0)
   {
     nextRequestTime_ = stor::utils::getCurrentTime();
 
@@ -87,18 +88,38 @@ namespace stor
       requestMessage.size(),
       data
     );
+
+    const unsigned int maxConnectTries = regInfo_.maxConnectTries();
     
     if ( result != CURLE_OK )
     {
-      edm::LogError("EventServerProxy") << "curl perform failed for event: "
-        << std::string(&data[0]);
+      ++failedAttemptsToGetData_;
+      if ( failedAttemptsToGetData_ > maxConnectTries )
+      {
+        throw cms::Exception("getOneEventFromEventServer","EventServerProxy")
+          << "could not get event from event server " << regInfo_.sourceURL()
+            << " after " << maxConnectTries << " tries:\n"
+            <<  std::string(&data[0]) << std::endl;
+      }
+      else
+      {
+        edm::LogInfo("EventServerProxy")
+          << "Failed to get event from event server " << regInfo_.sourceURL()
+            << " (" << failedAttemptsToGetData_ << "/" << maxConnectTries << "):\n"
+            <<  std::string(&data[0]) << std::endl;
+         ::sleep(regInfo_.connectTrySleepTime());
+      }
       data.clear();
-      throw cms::Exception("getOneEvent","EventServerProxy")
-        << "Could not get event: probably XDAQ not running on event server\n";
+    }
+    else
+    {
+      failedAttemptsToGetData_ = 0;
     }
     
     if ( data.empty() && !alreadySaidWaiting_) {
-      edm::LogInfo("EventServerProxy") << "...waiting for first event from event server...";
+      edm::LogInfo("EventServerProxy")
+        << "Waiting for first event from event server "
+          << regInfo_.sourceURL() << std::endl;
       alreadySaidWaiting_ = true;
     }
   }
@@ -115,13 +136,14 @@ namespace stor
       if (hdrView.code() == Header::DONE) {
         if(!alreadySaidHalted_) {
           alreadySaidHalted_ = true;
-          edm::LogInfo("EventServerProxy") << "event server has stopped";
+          edm::LogInfo("EventServerProxy") << "Event server has stopped";
         }
       }
       else if (hdrView.code() != regInfo_.eventCode()) {
         throw cms::Exception("EventServerProxy", "checkEvent")
-          << "Received an event with header code " << hdrView.code()
-            << " instead of the expected " << regInfo_.eventCode() << std::endl;
+          << "received an event with header code " << hdrView.code()
+            << " instead of the expected " << regInfo_.eventCode() 
+            << " from event server " << regInfo_.sourceURL() << std::endl;
       }
       alreadySaidHalted_ = false;
     }
@@ -129,7 +151,8 @@ namespace stor
       const unsigned int MAX_DUMP_LENGTH = 2000;
       std::ostringstream dump;
       dump << "========================================" << std::endl;
-      dump << "* Exception decoding the response from the event server!" << std::endl;
+      dump << "* Exception decoding an event from the event server "
+        << regInfo_.sourceURL() << std::endl;
       if (data.size() < MAX_DUMP_LENGTH)
       {
         dump << "* Here is the raw text that was returned:" << std::endl;
@@ -163,7 +186,7 @@ namespace stor
 
     if (edm::shutdown_flag) {
       throw cms::Exception("registerWithEventServer","EventServerProxy")
-          << "Registration was aborted by a shutdown request.\n";
+          << "registration was aborted by a shutdown request.\n";
     }
   }
   
@@ -188,10 +211,10 @@ namespace stor
     // send registration request
     stor::CurlInterface curl;
     CURLcode result = CURLE_COULDNT_CONNECT;
-    int tries = 0;
+    unsigned int tries = 0;
 
     const std::string sourceURL = regInfo_.sourceURL();
-    const int maxConnectTries = regInfo_.maxConnectTries();
+    const unsigned int maxConnectTries = regInfo_.maxConnectTries();
     
     while ( result != CURLE_OK && !edm::shutdown_flag )
     {
@@ -205,18 +228,18 @@ namespace stor
       
       if ( result != CURLE_OK )
       {
-        if ( tries >= maxConnectTries )
+        if ( tries > maxConnectTries )
         {
-          edm::LogError("EventServerProxy") << "Giving up waiting for connection after " <<
-            tries << " tries for event server on " << sourceURL << std::endl;
           throw cms::Exception("connectToEventServer","EventServerProxy")
-            << "Could not register: probably no event server is running on "
-              << sourceURL;
+            << "giving up waiting for registration response after "
+              << maxConnectTries << " tries for event server " << sourceURL;
         }
         else
         {
-          edm::LogInfo("EventServerProxy") << "Waiting for connection to StorageManager on " <<
-            sourceURL << "... " << tries << "/" << maxConnectTries;
+          edm::LogInfo("EventServerProxy")
+            << "Waiting for registration response from event server "
+              << sourceURL << " (" << tries << "/" << maxConnectTries << "):\n"
+              <<  std::string(&data[0]) << std::endl;
           ::sleep(regInfo_.connectTrySleepTime());
         }
         data.clear();
@@ -238,7 +261,8 @@ namespace stor
       const unsigned int MAX_DUMP_LENGTH = 1000;
       std::ostringstream dump;
       dump << "========================================" << std::endl;
-      dump << "* Exception decoding the registerWithEventServer response!" << std::endl;
+      dump << "* Exception decoding the registerWithEventServer response from the event server "
+        << regInfo_.sourceURL() << std::endl;
       if (data.size() <= MAX_DUMP_LENGTH)
       {
         dump << "* Here is the raw text that was returned:" << std::endl;
@@ -258,7 +282,9 @@ namespace stor
     if ( respView->getStatus() == ConsRegResponseBuilder::ES_NOT_READY )
     {
       if(!alreadySaidWaiting_) {
-        edm::LogInfo("EventServerProxy") << "...waiting for registration response from event server...";
+        edm::LogInfo("EventServerProxy")
+          << "Waiting for registration response from event server "
+            << regInfo_.sourceURL() << std::endl;
         alreadySaidWaiting_ = true;
       }
       // sleep for desired amount of time
