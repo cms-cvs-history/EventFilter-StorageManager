@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.cc,v 1.3.2.8 2011/02/28 17:56:06 mommsen Exp $
+// $Id: RegistrationInfoBase.cc,v 1.3.2.9 2011/03/01 08:31:12 mommsen Exp $
 /// @file: RegistrationInfoBase.cc
 
 #include "EventFilter/StorageManager/interface/RegistrationInfoBase.h"
@@ -22,7 +22,8 @@ namespace stor
   queueSize_(queueSize),
   queuePolicy_(queuePolicy),
   secondsToStale_(secondsToStale),
-  consumerId_(0)
+  consumerId_(0),
+  lastConsumerContact_(utils::getCurrentTime())
   { }
 
   RegistrationInfoBase::RegistrationInfoBase
@@ -33,7 +34,8 @@ namespace stor
     const bool useEventServingParams
   ) :
   remoteHost_(remoteHost),
-  consumerId_(0)
+  consumerId_(0),
+  lastConsumerContact_(utils::getCurrentTime())
   {
     try
     {
