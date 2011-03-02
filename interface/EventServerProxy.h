@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.h,v 1.1.2.9 2011/02/25 09:12:38 mommsen Exp $
+// $Id: EventServerProxy.h,v 1.1.2.10 2011/03/01 08:30:49 mommsen Exp $
 /// @file: EventServerProxy.h
 
 #ifndef EventFilter_StorageManager_EventServerProxy_h
@@ -22,8 +22,8 @@ namespace stor {
    * is also obtained through a HTTP get.
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.9 $
-   * $Date: 2011/02/25 09:12:38 $
+   * $Revision: 1.1.2.10 $
+   * $Date: 2011/03/01 08:30:49 $
    */
 
   template<typename RegInfo>
@@ -72,6 +72,7 @@ namespace stor {
     
     bool alreadySaidHalted_;
     bool alreadySaidWaiting_;
+    unsigned int failedAttemptsToGetData_;
     
   };
 
