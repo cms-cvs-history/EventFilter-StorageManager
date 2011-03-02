@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.h,v 1.1.2.4 2011/02/28 17:56:15 mommsen Exp $
+// $Id: DQMTopLevelFolder.h,v 1.1.2.5 2011/03/01 08:30:49 mommsen Exp $
 /// @file: DQMTopLevelFolder.h 
 
 #ifndef EventFilter_StorageManager_DQMTopLevelFolder_h
@@ -26,8 +26,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.4 $
-   * $Date: 2011/02/28 17:56:15 $
+   * $Revision: 1.1.2.5 $
+   * $Date: 2011/03/01 08:30:49 $
    */
 
   class DQMTopLevelFolder
@@ -80,7 +80,7 @@ namespace stor {
       /**
        * Returns the DQM event message view for this group
        */
-      inline DQMEventMsgView getDQMEventMsgView()
+      inline DQMEventMsgView getDQMEventMsgView() const
       { return DQMEventMsgView(&entry_->buffer[0]); }
 
       /**
