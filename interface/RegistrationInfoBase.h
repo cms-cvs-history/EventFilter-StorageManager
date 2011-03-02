@@ -1,4 +1,4 @@
-// $Id: RegistrationInfoBase.h,v 1.6.2.10 2011/02/28 17:56:15 mommsen Exp $
+// $Id: RegistrationInfoBase.h,v 1.6.2.11 2011/03/01 08:30:49 mommsen Exp $
 /// @file: RegistrationInfoBase.h 
 
 #ifndef EventFilter_StorageManager_RegistrationInfoBase_h
@@ -25,8 +25,8 @@ namespace stor {
    * registration info objects.
    *
    * $Author: mommsen $
-   * $Revision: 1.6.2.10 $
-   * $Date: 2011/02/28 17:56:15 $
+   * $Revision: 1.6.2.11 $
+   * $Date: 2011/03/01 08:30:49 $
    */
 
   class RegistrationInfoBase
@@ -135,7 +135,7 @@ namespace stor {
     utils::Duration_t                minEventRequestInterval_;
     QueueID                          queueId_;
     ConsumerID                       consumerId_;
-    utils::TimePoint_t              lastConsumerContact_;
+    utils::TimePoint_t               lastConsumerContact_;
   };
 
   typedef boost::shared_ptr<RegistrationInfoBase> RegPtr;
