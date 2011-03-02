@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.1.2.7 2011/03/02 16:52:28 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.8 2011/03/02 17:24:30 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -50,6 +50,8 @@ namespace stor {
   void DQMTopLevelFolder::addDQMEvent(const DQMEventMsgView& view)
   {
     if ( releaseTag_.empty() ) releaseTag_ = view.releaseTag();
+    // A restarted EP will start counting at 0 again.
+    // Thus, take the maximum of all updates we get.
     updateNumber_ = std::max(updateNumber_, view.updateNumber());
 
     edm::StreamDQMDeserializer deserializer;
