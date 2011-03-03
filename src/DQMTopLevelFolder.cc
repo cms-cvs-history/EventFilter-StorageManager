@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.cc,v 1.1.2.8 2011/03/02 17:24:30 mommsen Exp $
+// $Id: DQMTopLevelFolder.cc,v 1.1.2.9 2011/03/02 17:26:31 mommsen Exp $
 /// @file: DQMTopLevelFolder.cc
 
 #include "EventFilter/StorageManager/interface/DQMEventMonitorCollection.h"
@@ -34,7 +34,8 @@ namespace stor {
   dqmEventMonColl_(dqmEventMonColl),
   expectedUpdates_(expectedUpdates),
   nUpdates_(0),
-  sentEvents_(0)
+  sentEvents_(0),
+  updateNumber_(0)
   {
     gROOT->SetBatch(kTRUE);
     dqmEventMonColl_.getNumberOfTopLevelFoldersMQ().addSample(1);
