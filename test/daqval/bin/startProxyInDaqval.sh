@@ -7,6 +7,6 @@ ps wwxau|sed -nre 's/^[[:alpha:] ]+([[:digit:]]+).*xdaq.exe.*smps_daqval.xml$/\1
 
 /opt/xdaq/bin/xdaq.exe -h $proxyHost -p $proxyPort -c ../cfg/smps_daqval.xml &
 sleep 3
-../soap/sendSimpleCmdToApp $proxyHost $proxyPort SMProxyServer 0 Configure
+../../demoSystem/soap/sendSimpleCmdToApp $proxyHost $proxyPort SMProxyServer 0 Configure
 sleep 3
-../soap/sendSimpleCmdToApp $proxyHost $proxyPort SMProxyServer 0 Enable
+../../demoSystem/soap/sendSimpleCmdToApp $proxyHost $proxyPort SMProxyServer 0 Enable
