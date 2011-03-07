@@ -1,4 +1,4 @@
-// $Id$
+// $Id: workloop_t.cpp,v 1.2.16.1 2011/02/28 17:56:41 mommsen Exp $
 
 // Test script to demonstrate the use of xdaq workloops
 // Documentation at https://twiki.cern.ch/twiki/bin/view/XdaqWiki/WebHome?topic=workloop
@@ -19,10 +19,10 @@ public:
   WorkloopTest()
   {
     // Get 2 work loops
-    _fragmentCollectorWorkloop = 
+    fragmentCollectorWorkloop_ = 
       toolbox::task::getWorkLoopFactory()->getWorkLoop("FragmentCollectorWorkloop", "polling");
 
-    _dqmProcessorWorkloop = 
+    dqmProcessorWorkloop_ = 
       toolbox::task::getWorkLoopFactory()->getWorkLoop("DqmProcessorWorkloop", "polling");
 
 
@@ -38,36 +38,36 @@ public:
 
 
     // Add actions to workloops
-    _fragmentCollectorWorkloop->submit(processFragmentQueueAction);
-    _fragmentCollectorWorkloop->submit(processCommandQueueAction);
+    fragmentCollectorWorkloop_->submit(processFragmentQueueAction);
+    fragmentCollectorWorkloop_->submit(processCommandQueueAction);
 
-    _dqmProcessorWorkloop->submit(processDQMEventQueueAction);
+    dqmProcessorWorkloop_->submit(processDQMEventQueueAction);
     
 		
     // Activate the workloops
     // Note: activating an active workloop throws toolbox::task::exception::Exception
-    if ( ! _fragmentCollectorWorkloop->isActive() )
+    if ( ! fragmentCollectorWorkloop_->isActive() )
     {
-      _fragmentCollectorWorkloop->activate();
+      fragmentCollectorWorkloop_->activate();
     }
-    if ( ! _dqmProcessorWorkloop->isActive() )
+    if ( ! dqmProcessorWorkloop_->isActive() )
     {
-      _dqmProcessorWorkloop->activate();
+      dqmProcessorWorkloop_->activate();
     }
   }
 
 
   ~WorkloopTest()
   {
-    _fragmentCollectorWorkloop->cancel();
-    _dqmProcessorWorkloop->cancel();
+    fragmentCollectorWorkloop_->cancel();
+    dqmProcessorWorkloop_->cancel();
 
     // Do we need to remove the workloop from the factory, too?
     // This interface is awkward.
-    toolbox::net::URN urn1("toolbox-task-workloop", _fragmentCollectorWorkloop->getName());
+    toolbox::net::URN urn1("toolbox-task-workloop", fragmentCollectorWorkloop_->getName());
     toolbox::task::getWorkLoopFactory()->removeWorkLoop(urn1);
 
-    toolbox::net::URN urn2("toolbox-task-workloop", _dqmProcessorWorkloop->getName());
+    toolbox::net::URN urn2("toolbox-task-workloop", dqmProcessorWorkloop_->getName());
     toolbox::task::getWorkLoopFactory()->removeWorkLoop(urn2);
   }
 	
@@ -98,8 +98,8 @@ private:
   }
 
 	
-  toolbox::task::WorkLoop* _fragmentCollectorWorkloop;
-  toolbox::task::WorkLoop* _dqmProcessorWorkloop;
+  toolbox::task::WorkLoop* fragmentCollectorWorkloop_;
+  toolbox::task::WorkLoop* dqmProcessorWorkloop_;
 
 	
 };
