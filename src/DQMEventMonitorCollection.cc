@@ -1,4 +1,4 @@
-// $Id: DQMEventMonitorCollection.cc,v 1.10.2.4 2011/03/01 08:31:12 mommsen Exp $
+// $Id: DQMEventMonitorCollection.cc,v 1.10.4.1 2011/03/07 11:33:04 mommsen Exp $
 /// @file: DQMEventMonitorCollection.cc
 
 #include <string>
@@ -100,6 +100,7 @@ namespace stor
     infoSpaceItems.push_back(std::make_pair("dqmFoldersPerEP", &dqmFoldersPerEP_));
     infoSpaceItems.push_back(std::make_pair("processedDQMEvents", &processedDQMEvents_));
     infoSpaceItems.push_back(std::make_pair("droppedDQMEvents", &droppedDQMEvents_));
+    infoSpaceItems.push_back(std::make_pair("discardedDQMEvents", &droppedDQMEvents_));
   }
   
   
