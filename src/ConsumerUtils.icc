@@ -1,4 +1,4 @@
-// $Id: ConsumerUtils.icc,v 1.1.2.12 2011/03/02 10:54:17 mommsen Exp $
+// $Id: ConsumerUtils.icc,v 1.1.2.13 2011/03/08 16:01:50 mommsen Exp $
 /// @file: ConsumerUtils.icc
 
 #include "EventFilter/StorageManager/interface/ConsumerID.h"
@@ -193,7 +193,7 @@ namespace stor
     {
       const unsigned int droppedEventsCount =
         event.first.droppedEventsCount() + event.second;
-      event.first.addDroppedEventsCount( droppedEventsCount );
+      event.first.setDroppedEventsCount( droppedEventsCount );
       writeConsumerEvent( out, event.first );
     }
   }
