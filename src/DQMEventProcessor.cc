@@ -1,4 +1,4 @@
-// $Id: DQMEventProcessor.cc,v 1.12.2.8 2011/03/01 08:31:12 mommsen Exp $
+// $Id: DQMEventProcessor.cc,v 1.12.4.1 2011/03/07 11:33:04 mommsen Exp $
 /// @file: DQMEventProcessor.cc
 
 #include "toolbox/task/WorkLoopFactory.h"
@@ -24,6 +24,7 @@ namespace stor {
   DQMEventStore<I2OChain,InitMsgCollection,SharedResources>::
   getDQMEventView(I2OChain const& dqmEvent)
   {
+    tempEventArea_.clear();
     dqmEvent.copyFragmentsIntoBuffer(tempEventArea_);
     return DQMEventMsgView(&tempEventArea_[0]);
   }

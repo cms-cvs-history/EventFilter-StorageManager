@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.icc,v 1.1.4.2 2011/03/07 11:33:04 mommsen Exp $
+// $Id: DQMEventStore.icc,v 1.1.4.3 2011/03/09 10:06:47 mommsen Exp $
 /// @file: DQMEventStore.icc
 
 #include "TROOT.h"
@@ -97,9 +97,9 @@ namespace stor {
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addDQMEventToStore(EventType const& dqmEvent)
   {
-    const DQMKey newKey = dqmEvent.dqmKey();
-    
     boost::mutex::scoped_lock sl(storeMutex_);
+
+    const DQMKey newKey = dqmEvent.dqmKey();
     DQMTopLevelFolderMap::iterator pos = store_.lower_bound(newKey);
     
     if(pos == store_.end() || (store_.key_comp()(newKey, pos->first)))
