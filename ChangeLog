@@ -1,3 +1,14 @@
+2011-03-10 Remi Mommsen <Remigius.Mommsen@cern.ch>
+
+	* tag V07-01-00
+	* Add Srecko's option 'dropOldLumisectionEvents' to EventStreamHttpReader.
+
+2011-03-09 Remi Mommsen <Remigius.Mommsen@cern.ch>
+
+	* tag V07-00-01
+	* Re-add 'discardedDQMEvents' quantity to infospace.
+	* A couple of minor adjustments.
+
 2011-03-07 Remi Mommsen <Remigius.Mommsen@cern.ch>
 
 	* tag V07-00-00
