@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.icc,v 1.1.4.3 2011/03/09 10:06:47 mommsen Exp $
+// $Id: DQMEventStore.icc,v 1.1.4.4 2011/03/09 12:04:14 mommsen Exp $
 /// @file: DQMEventStore.icc
 
 #include "TROOT.h"
@@ -54,6 +54,7 @@ namespace stor {
   clear()
   {
     boost::mutex::scoped_lock sl(storeMutex_);
+
     store_.clear();
     processCompletedTopLevelFolders_ = false;
     tempEventArea_.clear();
@@ -64,9 +65,10 @@ namespace stor {
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   purge()
   {
+    boost::mutex::scoped_lock sl(storeMutex_);
+
     processCompletedTopLevelFolders_ = false;
     while ( handleNextCompletedTopLevelFolder() ) {}
-    boost::mutex::scoped_lock sl(storeMutex_);
     store_.clear();
   }
   
@@ -120,6 +122,8 @@ namespace stor {
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
   addDQMEventToReadyToServe(EventType const& dqmEvent)
   {
+    boost::mutex::scoped_lock sl(storeMutex_);
+
     const DQMKey newKey = dqmEvent.dqmKey();
 
     DQMTopLevelFolderPtr topLevelFolder( new DQMTopLevelFolder(
@@ -127,29 +131,8 @@ namespace stor {
         dqmParams_, dqmEventMonColl_, 1));
     topLevelFolder->addDQMEvent(getDQMEventView(dqmEvent));
 
-    boost::mutex::scoped_lock sl(storeMutex_);
     store_.insert(DQMTopLevelFolderMap::value_type(newKey, topLevelFolder));
   }
-  
-  template<class EventType, class ConnectionType, class StateMachineType>  
-  bool
-  DQMEventStore<EventType,ConnectionType,StateMachineType>::
-  getNextReadyTopLevelFolder(DQMTopLevelFolderPtr& topLevelFolder)
-  {
-    boost::mutex::scoped_lock sl(storeMutex_);
-    utils::TimePoint_t now = utils::getCurrentTime();
-    
-    DQMTopLevelFolderMap::iterator it = store_.begin();
-    DQMTopLevelFolderMap::const_iterator itEnd = store_.end();
-    while ( it != itEnd && ! it->second->isReady(now) ) ++it;
-    
-    if ( it == itEnd ) return false;
-    
-    topLevelFolder = it->second;
-    store_.erase(it);
-    return true;
-  }
-  
 
   template<class EventType, class ConnectionType, class StateMachineType>  
   void
@@ -181,7 +164,6 @@ namespace stor {
     }
   }
   
-  
   template<class EventType, class ConnectionType, class StateMachineType>  
   bool
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
@@ -193,6 +175,8 @@ namespace stor {
 
     try
     {
+      boost::mutex::scoped_lock sl(storeMutex_);
+
       while (
         processCompletedTopLevelFolders_ &&
         handleNextCompletedTopLevelFolder()
@@ -222,7 +206,6 @@ namespace stor {
     return processCompletedTopLevelFolders_;
   }
   
-  
   template<class EventType, class ConnectionType, class StateMachineType>  
   bool
   DQMEventStore<EventType,ConnectionType,StateMachineType>::
@@ -238,6 +221,24 @@ namespace stor {
     }
 
     return false;
+  }
+  
+  template<class EventType, class ConnectionType, class StateMachineType>  
+  bool
+  DQMEventStore<EventType,ConnectionType,StateMachineType>::
+  getNextReadyTopLevelFolder(DQMTopLevelFolderPtr& topLevelFolder)
+  {
+    utils::TimePoint_t now = utils::getCurrentTime();
+    
+    DQMTopLevelFolderMap::iterator it = store_.begin();
+    DQMTopLevelFolderMap::const_iterator itEnd = store_.end();
+    while ( it != itEnd && ! it->second->isReady(now) ) ++it;
+    
+    if ( it == itEnd ) return false;
+    
+    topLevelFolder = it->second;
+    store_.erase(it);
+    return true;
   }
 
 } // namespace stor
