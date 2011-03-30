@@ -1,4 +1,4 @@
-// $Id: FragmentStore.cc,v 1.8.2.2 2011/03/01 08:31:12 mommsen Exp $
+// $Id: FragmentStore.cc,v 1.8.4.1 2011/03/07 11:33:05 mommsen Exp $
 /// @file: FragmentStore.cc
 
 #include "EventFilter/StorageManager/interface/FragmentStore.h"
@@ -6,6 +6,12 @@
 
 using namespace stor;
 
+
+FragmentStore::FragmentStore(size_t maxMemoryUsageMB)
+  : maxMemoryUsage_(maxMemoryUsageMB*1024*1024)
+{
+  clear();
+}
 
 const bool FragmentStore::addFragment(I2OChain &chain)
 {
