@@ -1,4 +1,4 @@
-// $Id: DQMTopLevelFolder.h,v 1.1.2.7 2011/03/02 16:52:27 mommsen Exp $
+// $Id: DQMTopLevelFolder.h,v 1.1.4.2 2011/03/07 11:33:04 mommsen Exp $
 /// @file: DQMTopLevelFolder.h 
 
 #ifndef EventFilter_StorageManager_DQMTopLevelFolder_h
@@ -26,8 +26,8 @@ namespace stor {
    * Class holding information for one DQM event
    *
    * $Author: mommsen $
-   * $Revision: 1.1.2.7 $
-   * $Date: 2011/03/02 16:52:27 $
+   * $Revision: 1.1.4.2 $
+   * $Date: 2011/03/07 11:33:04 $
    */
 
   class DQMTopLevelFolder
@@ -166,14 +166,15 @@ namespace stor {
 
     unsigned int nUpdates_;
     utils::TimePoint_t lastUpdate_;
-    unsigned int sentEvents_;
     std::string releaseTag_;
     uint32_t updateNumber_;
+    edm::Timestamp timeStamp_;
 
     typedef boost::shared_ptr<DQMFolder> DQMFolderPtr;
     typedef std::map<std::string, DQMFolderPtr> DQMFoldersMap;
     DQMFoldersMap dqmFolders_;
-    
+
+    static unsigned int sentEvents_;    
   };
 
   typedef boost::shared_ptr<DQMTopLevelFolder> DQMTopLevelFolderPtr;
