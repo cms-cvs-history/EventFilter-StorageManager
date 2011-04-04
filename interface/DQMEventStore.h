@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.8.10.1 2011/03/07 11:33:04 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.11 2011/04/04 12:03:30 mommsen Exp $
 /// @file: DQMEventStore.h 
 
 #ifndef EventFilter_StorageManager_DQMEventStore_h
@@ -7,7 +7,6 @@
 #include <map>
 #include <queue>
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "TThread.h"
@@ -17,15 +16,13 @@
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
 
+#include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
 #include "EventFilter/StorageManager/interface/DQMTopLevelFolder.h"
 #include "EventFilter/StorageManager/interface/DQMKey.h"
 #include "EventFilter/StorageManager/interface/InitMsgCollection.h"
 #include "EventFilter/StorageManager/interface/SharedResources.h"
 
-namespace smproxy {
-  struct DataRetrieverMonitorCollection;
-}
 
 namespace stor {
   
@@ -39,8 +36,8 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.8.10.1 $
-   * $Date: 2011/03/07 11:33:04 $
+   * $Revision: 1.11 $
+   * $Date: 2011/04/04 12:03:30 $
    */
 
   template<class EventType, class ConnectionType, class StateMachineType>  
@@ -56,7 +53,8 @@ namespace stor {
       ConnectionType*,
       size_t (ConnectionType::*getExpectedUpdatesCount)() const,
       StateMachineType*,
-      void (StateMachineType::*moveToFailedState)(xcept::Exception&)
+      void (StateMachineType::*moveToFailedState)(xcept::Exception&),
+      AlarmHandlerPtr
     );
 
     ~DQMEventStore();
@@ -104,17 +102,11 @@ namespace stor {
     DQMEventStore& operator=(DQMEventStore const&);
 
     void addDQMEventToStore(EventType const&);
-
     void addDQMEventToReadyToServe(EventType const&);
-
     DQMTopLevelFolderPtr makeDQMTopLevelFolder(EventType const&);
-
     DQMEventMsgView getDQMEventView(EventType const&);
-
     bool getNextReadyTopLevelFolder(DQMTopLevelFolderPtr&);
-
     static void processCompletedTopLevelFolders(void* arg);
-
     bool handleNextCompletedTopLevelFolder();
 
     xdaq::ApplicationDescriptor* appDescriptor_;
@@ -125,6 +117,7 @@ namespace stor {
     size_t (ConnectionType::*getExpectedUpdatesCount_)() const;
     StateMachineType* stateMachineType_;
     void (StateMachineType::*moveToFailedState_)(xcept::Exception&);
+    AlarmHandlerPtr alarmHandler_;
 
     typedef std::map<DQMKey, DQMTopLevelFolderPtr> DQMTopLevelFolderMap;
     DQMTopLevelFolderMap store_;
