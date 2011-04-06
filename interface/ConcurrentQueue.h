@@ -1,4 +1,4 @@
-// $Id: ConcurrentQueue.h,v 1.10.2.5 2011/03/01 08:30:49 mommsen Exp $
+// $Id: ConcurrentQueue.h,v 1.10.4.1 2011/03/07 11:33:04 mommsen Exp $
 /// @file: ConcurrentQueue.h 
 
 
@@ -42,8 +42,8 @@ namespace stor
         item cannot be added.
    
      $Author: mommsen $
-     $Revision: 1.10.2.5 $
-     $Date: 2011/03/01 08:30:49 $
+     $Revision: 1.10.4.1 $
+     $Date: 2011/03/07 11:33:04 $
    */
 
 
@@ -691,6 +691,7 @@ namespace stor
   void 
   ConcurrentQueue<T,EnqPolicy>::addExternallyDroppedEvents(SizeType n)
   {
+    LockType lock(protectElements_);
     elementsDropped_ += n;
   }
 
