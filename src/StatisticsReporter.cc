@@ -1,4 +1,4 @@
-// $Id: StatisticsReporter.cc,v 1.20.2.2 2011/03/01 08:31:12 mommsen Exp $
+// $Id: StatisticsReporter.cc,v 1.20.4.1 2011/03/07 11:33:05 mommsen Exp $
 /// @file: StatisticsReporter.cc
 
 #include <sstream>
@@ -35,7 +35,7 @@ namespace stor {
   runMonCollection_(monitoringSleepSec_, alarmHandler_, sr),
   fragMonCollection_(monitoringSleepSec_),
   filesMonCollection_(monitoringSleepSec_*5),
-  streamsMonCollection_(monitoringSleepSec_),
+  streamsMonCollection_(monitoringSleepSec_, alarmHandler_),
   dataSenderMonCollection_(monitoringSleepSec_, alarmHandler_),
   dqmEventMonCollection_(monitoringSleepSec_*5),
   resourceMonCollection_(monitoringSleepSec_*600, alarmHandler_),

@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.14.2.2 2011/03/01 08:31:12 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.14.4.1 2011/03/07 11:33:05 mommsen Exp $
 /// @file: StreamsMonitorCollection.cc
 
 #include <string>
@@ -13,11 +13,13 @@ namespace stor {
   
   StreamsMonitorCollection::StreamsMonitorCollection
   (
-    const utils::Duration_t& updateInterval
+    const utils::Duration_t& updateInterval,
+    AlarmHandlerPtr ah
   ) :
   MonitorCollection(updateInterval),
   updateInterval_(updateInterval),
   timeWindowForRecentResults_(boost::posix_time::seconds(30)),
+  alarmHandler_(ah),
   allStreamsFileCount_(updateInterval, timeWindowForRecentResults_),
   allStreamsVolume_(updateInterval, timeWindowForRecentResults_),
   allStreamsBandwidth_(updateInterval, timeWindowForRecentResults_)
@@ -202,48 +204,37 @@ namespace stor {
     
     boost::mutex::scoped_lock sl(streamRecordsMutex_);
     
-    streamNames_.clear();
-    eventsPerStream_.clear();
-    ratePerStream_.clear();
-    bandwidthPerStream_.clear();
-    
-    streamNames_.reserve(streamRecords_.size());
-    eventsPerStream_.reserve(streamRecords_.size());
-    ratePerStream_.reserve(streamRecords_.size());
-    bandwidthPerStream_.reserve(streamRecords_.size());
-    
-    for (
-      StreamRecordList::const_iterator
-        it = streamRecords_.begin(), itEnd = streamRecords_.end();
-      it != itEnd;
-      ++it
-    )
+    const size_t statsCount = streamRecords_.size();
+    const size_t infospaceCount = streamNames_.size();
+
+    if ( statsCount != infospaceCount )
+    {
+      std::ostringstream msg;
+      msg << "Going to resize StreamsMonitorCollection vectors in infospace. Old size "
+        << infospaceCount << ", new size " << statsCount << std::endl;
+      LOG4CPLUS_WARN(alarmHandler_->getLogger(), msg.str());
+      streamNames_.resize(statsCount);
+      eventsPerStream_.resize(statsCount);
+      ratePerStream_.resize(statsCount);
+      bandwidthPerStream_.resize(statsCount);
+    }
+
+    for (size_t i=0; i < statsCount; ++i)
     {
       MonitoredQuantity::Stats streamVolumeStats;
-      (*it)->volume.getStats(streamVolumeStats);
+      streamRecords_.at(i)->volume.getStats(streamVolumeStats);
       MonitoredQuantity::Stats streamBandwidthStats;
-      (*it)->bandwidth.getStats(streamBandwidthStats);
-      
-      streamNames_.push_back(
-        static_cast<xdata::String>( (*it)->streamName )
+      streamRecords_.at(i)->bandwidth.getStats(streamBandwidthStats);
+
+      streamNames_.at(i) = static_cast<xdata::String>(streamRecords_.at(i)->streamName);
+      eventsPerStream_.at(i) = static_cast<xdata::UnsignedInteger32>(
+        streamVolumeStats.getSampleCount(MonitoredQuantity::FULL)
       );
-      
-      eventsPerStream_.push_back(
-        static_cast<xdata::UnsignedInteger32>(
-          streamVolumeStats.getSampleCount(MonitoredQuantity::FULL)
-        )
+      ratePerStream_.at(i) = static_cast<xdata::Double>(
+        streamVolumeStats.getSampleRate(MonitoredQuantity::RECENT)
       );
-      
-      ratePerStream_.push_back(
-        static_cast<xdata::Double>(
-          streamVolumeStats.getSampleRate(MonitoredQuantity::RECENT)
-        )
-      );
-      
-      bandwidthPerStream_.push_back(
-        static_cast<xdata::Double>(
-          streamBandwidthStats.getValueRate(MonitoredQuantity::RECENT)
-        )
+      bandwidthPerStream_.at(i) = static_cast<xdata::Double>(
+        streamBandwidthStats.getValueRate(MonitoredQuantity::RECENT)
       );
     }
   }

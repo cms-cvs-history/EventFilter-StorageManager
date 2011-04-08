@@ -1,4 +1,4 @@
-// $Id: AlarmHandler.h,v 1.7.8.3 2011/02/28 17:56:15 mommsen Exp $
+// $Id: AlarmHandler.h,v 1.7.10.1 2011/03/07 11:33:04 mommsen Exp $
 /// @file: AlarmHandler.h 
 
 #ifndef EventFilter_StorageManager_AlarmHandler_h
@@ -20,8 +20,8 @@ namespace stor {
    * Helper class to handle sentinel alarming
    *
    * $Author: mommsen $
-   * $Revision: 1.7.8.3 $
-   * $Date: 2011/02/28 17:56:15 $
+   * $Revision: 1.7.10.1 $
+   * $Date: 2011/03/07 11:33:04 $
    */
 
   class AlarmHandler
@@ -64,6 +64,12 @@ namespace stor {
       Revokes all sentinel alarms 
     */
     void clearAllAlarms();
+
+    /**
+      Return the application logger
+    */
+    Logger& getLogger() const
+    { return app_->getApplicationLogger(); }
 
 
   private:
