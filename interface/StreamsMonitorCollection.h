@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.h,v 1.11.10.1 2011/03/07 11:33:04 mommsen Exp $
+// $Id: StreamsMonitorCollection.h,v 1.11.10.2 2011/04/08 09:19:36 mommsen Exp $
 /// @file: StreamsMonitorCollection.h 
 
 #ifndef EventFilter_StorageManager_StreamsMonitorCollection_h
@@ -17,7 +17,6 @@
 #include "xdata/UnsignedInteger32.h"
 #include "xdata/Vector.h"
 
-#include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/DbFileHandler.h"
 #include "EventFilter/StorageManager/interface/MonitorCollection.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
@@ -29,8 +28,8 @@ namespace stor {
    * A collection of MonitoredQuantities of output streams
    *
    * $Author: mommsen $
-   * $Revision: 1.11.10.1 $
-   * $Date: 2011/03/07 11:33:04 $
+   * $Revision: 1.11.10.2 $
+   * $Date: 2011/04/08 09:19:36 $
    */
   
   class StreamsMonitorCollection : public MonitorCollection
@@ -79,11 +78,7 @@ namespace stor {
     typedef std::vector<StreamRecordPtr> StreamRecordList;
 
 
-    StreamsMonitorCollection
-    (
-      const utils::Duration_t& updateInterval,
-      AlarmHandlerPtr
-    );
+    explicit StreamsMonitorCollection(const utils::Duration_t& updateInterval);
 
     const StreamRecordPtr getNewStreamRecord();
 
@@ -134,7 +129,6 @@ namespace stor {
 
     const utils::Duration_t updateInterval_;
     const utils::Duration_t timeWindowForRecentResults_;
-    AlarmHandlerPtr alarmHandler_;
 
     MonitoredQuantity allStreamsFileCount_;
     MonitoredQuantity allStreamsVolume_;

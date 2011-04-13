@@ -1,4 +1,4 @@
-// $Id: ResourceMonitorCollection.cc,v 1.39.4.1 2011/03/07 11:33:05 mommsen Exp $
+// $Id: ResourceMonitorCollection.cc,v 1.39.4.2 2011/04/08 09:19:36 mommsen Exp $
 /// @file: ResourceMonitorCollection.cc
 
 #include <stdio.h>
@@ -205,10 +205,6 @@ namespace stor {
 
     if ( statsCount != infospaceCount )
     {
-      std::ostringstream msg;
-      msg << "Going to resize ResourceMonitorCollection vectors in infospace. Old size "
-        << infospaceCount << ", new size " << statsCount << std::endl;
-      LOG4CPLUS_WARN(alarmHandler_->getLogger(), msg.str());
       diskPaths_.resize(statsCount);
       totalDiskSpace_.resize(statsCount);
       usedDiskSpace_.resize(statsCount);

@@ -1,4 +1,4 @@
-// $Id: StreamsMonitorCollection.cc,v 1.14.4.1 2011/03/07 11:33:05 mommsen Exp $
+// $Id: StreamsMonitorCollection.cc,v 1.14.4.2 2011/04/08 09:19:36 mommsen Exp $
 /// @file: StreamsMonitorCollection.cc
 
 #include <string>
@@ -13,13 +13,11 @@ namespace stor {
   
   StreamsMonitorCollection::StreamsMonitorCollection
   (
-    const utils::Duration_t& updateInterval,
-    AlarmHandlerPtr ah
+    const utils::Duration_t& updateInterval
   ) :
   MonitorCollection(updateInterval),
   updateInterval_(updateInterval),
   timeWindowForRecentResults_(boost::posix_time::seconds(30)),
-  alarmHandler_(ah),
   allStreamsFileCount_(updateInterval, timeWindowForRecentResults_),
   allStreamsVolume_(updateInterval, timeWindowForRecentResults_),
   allStreamsBandwidth_(updateInterval, timeWindowForRecentResults_)
@@ -209,10 +207,6 @@ namespace stor {
 
     if ( statsCount != infospaceCount )
     {
-      std::ostringstream msg;
-      msg << "Going to resize StreamsMonitorCollection vectors in infospace. Old size "
-        << infospaceCount << ", new size " << statsCount << std::endl;
-      LOG4CPLUS_WARN(alarmHandler_->getLogger(), msg.str());
       streamNames_.resize(statsCount);
       eventsPerStream_.resize(statsCount);
       ratePerStream_.resize(statsCount);
