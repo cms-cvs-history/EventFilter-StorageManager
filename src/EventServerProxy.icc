@@ -1,4 +1,4 @@
-// $Id: EventServerProxy.icc,v 1.2 2011/03/07 15:31:32 mommsen Exp $
+// $Id: EventServerProxy.icc,v 1.1.4.2 2011/03/07 11:33:05 mommsen Exp $
 /// @file: EventServerProxy.icc
 
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
@@ -206,7 +206,7 @@ namespace stor
     char msgBuffer[bufferSize];
     ConsRegRequestBuilder requestMessage(
       msgBuffer, bufferSize, regInfo_.consumerName(),
-      consumerPSetString
+      "normal", consumerPSetString
     );
     
     // send registration request

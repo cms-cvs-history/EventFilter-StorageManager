@@ -38,7 +38,6 @@ namespace stor {
   expectedUpdates_(expectedUpdates),
   alarmHandler_(alarmHandler),
   nUpdates_(0),
-  mergeCount_(0),
   updateNumber_(0)
   {
     gROOT->SetBatch(kTRUE);
@@ -62,7 +61,6 @@ namespace stor {
       timeStamp_ = view.timeStamp();
     else
       timeStamp_ = std::min(timeStamp_, view.timeStamp());
-    mergeCount_ += std::max(1U, view.mergeCount());
 
     edm::StreamDQMDeserializer deserializer;
     std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
@@ -185,7 +183,7 @@ namespace stor {
       // a size of 0 indicates no compression
       builder.setCompressionFlag(0);
     }
-    builder.setMergeCount(mergeCount_);
+    
     dqmEventMonColl_.getNumberOfUpdatesMQ().addSample(nUpdates_);
     dqmEventMonColl_.getServedDQMEventSizeMQ().addSample(
       static_cast<double>(record.totalDataSize()) / 0x100000
