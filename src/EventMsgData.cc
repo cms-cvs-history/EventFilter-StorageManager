@@ -1,4 +1,4 @@
-// $Id: EventMsgData.cc,v 1.10 2011/03/08 16:01:50 mommsen Exp $
+// $Id: EventMsgData.cc,v 1.7.4.1 2011/02/28 17:56:06 mommsen Exp $
 /// @file: EventMsgData.cc
 
 #include "EventFilter/StorageManager/src/ChainData.h"
@@ -104,36 +104,6 @@ namespace stor
 
       if (! headerFieldsCached_) {cacheHeaderFields();}
       bitList = hltTriggerBits_;
-    }
-
-    unsigned int
-    EventMsgData::do_droppedEventsCount() const
-    {
-      if ( !headerOkay() )
-      {
-        std::stringstream msg;
-        msg << "The dropped events count cannot be determined from a ";
-        msg << "faulty or incomplete Event message.";
-        XCEPT_RAISE(stor::exception::IncompleteEventMessage, msg.str());
-      }
-
-      if (! headerFieldsCached_) {cacheHeaderFields();}
-      return droppedEventsCount_;
-     }
-
-    void
-    EventMsgData::do_setDroppedEventsCount(unsigned int count)
-    {
-      if ( headerOkay() )
-      {
-        const unsigned long firstFragSize = dataSize(0);
-        
-        // This should always be the case:
-        assert( firstFragSize > sizeof(EventHeader) );
-
-        EventHeader* header = (EventHeader*)dataLocation(0);
-        convert(count,header->droppedEventsCount_);
-      }
     }
 
     void 
@@ -278,7 +248,6 @@ namespace stor
       lumiSection_ = msgView->lumi();
       eventNumber_ = msgView->event();
       adler32_ = msgView->adler32_chksum();
-      droppedEventsCount_ = msgView->droppedEventsCount();
 
       headerFieldsCached_ = true;
 
