@@ -1,4 +1,4 @@
-// $Id: ChainData.cc,v 1.17 2011/03/08 16:01:50 mommsen Exp $
+// $Id: ChainData.cc,v 1.14.2.2 2011/02/28 17:56:05 mommsen Exp $
 /// @file: ChainData.cc
 
 #include "IOPool/Streamer/interface/HLTInfo.h"
@@ -676,16 +676,6 @@ QueueIDs const& detail::ChainData::getDQMEventConsumerTags() const
   return dqmEventConsumerTags_;
 }
 
-unsigned int detail::ChainData::droppedEventsCount() const
-{
-  return do_droppedEventsCount();
-}
-
-void detail::ChainData::setDroppedEventsCount(unsigned int count)
-{
-  do_setDroppedEventsCount(count);
-}
-
 bool detail::ChainData::isEndOfLumiSectionMessage() const
 {
   return ( i2oMessageCode_ == I2O_EVM_LUMISECTION );
@@ -921,24 +911,6 @@ detail::ChainData::do_hltTriggerBits(std::vector<unsigned char>& bitList) const
 {
   std::stringstream msg;
   msg << "The HLT trigger bits are only available from a valid, ";
-  msg << "complete Event message.";
-  XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
-}
-
-unsigned int
-detail::ChainData::do_droppedEventsCount() const
-{
-  std::stringstream msg;
-  msg << "Dropped events count can only be retrieved from a valid, ";
-  msg << "complete Event message.";
-  XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
-}
-
-void 
-detail::ChainData::do_setDroppedEventsCount(unsigned int count)
-{
-  std::stringstream msg;
-  msg << "Dropped events count can only be added to a valid, ";
   msg << "complete Event message.";
   XCEPT_RAISE(stor::exception::WrongI2OMessageType, msg.str());
 }
