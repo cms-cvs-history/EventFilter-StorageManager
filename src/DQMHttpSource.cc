@@ -1,7 +1,6 @@
-// $Id: DQMHttpSource.cc,v 1.25 2011/03/30 15:16:48 mommsen Exp $
+// $Id: DQMHttpSource.cc,v 1.22.4.1 2011/03/07 11:33:04 mommsen Exp $
 /// @file: DQMHttpSource.cc
 
-#include "DQMServices/Core/interface/MonitorElement.h"
 #include "EventFilter/StorageManager/interface/CurlInterface.h"
 #include "EventFilter/StorageManager/src/DQMHttpSource.h"
 #include "EventFilter/StorageManager/src/EventServerProxy.icc"
@@ -26,8 +25,8 @@ namespace edm
     const InputSourceDescription& desc
   ) :
   edm::RawInputSource(pset, desc),
-  dqmEventServerProxy_(pset),
-  dqmStore_(0)
+  dqmStore_(0),
+  dqmEventServerProxy_(pset)
   {}
 
 
@@ -67,9 +66,6 @@ namespace edm
   )
   {
     boost::mutex::scoped_lock sl(mutex_);
-    
-    MonitorElement* me = dqmStore->bookInt("mergeCount");
-    me->Fill(dqmEventMsgView.mergeCount());
 
     edm::StreamDQMDeserializer deserializeWorker;
     std::auto_ptr<DQMEvent::TObjectTable> toTablePtr =
