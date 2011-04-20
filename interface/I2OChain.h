@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.13 2011/03/08 16:01:50 mommsen Exp $
+// $Id: I2OChain.h,v 1.10.4.4 2011/03/01 08:30:49 mommsen Exp $
 /// @file: I2OChain.h 
 
 #ifndef EventFilter_StorageManager_I2OChain_h
@@ -28,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: mommsen $
-   * $Revision: 1.13 $
-   * $Date: 2011/03/08 16:01:50 $
+   * $Revision: 1.10.4.4 $
+   * $Date: 2011/03/01 08:30:49 $
    */
 
 
@@ -263,17 +263,6 @@ namespace stor {
        *not* for for modifying the list of tags.
     */
     QueueIDs getDQMEventConsumerTags() const;
-
-    /**
-      Return the number of dropped events found in the EventHeader
-     */
-    unsigned int droppedEventsCount() const;
-
-    /**
-        Add the number of dropped (skipped) events to the EVENT message
-        header.
-    */
-    void setDroppedEventsCount(unsigned int);
 
     /**
        Returns the message code for the chain. Valid values
