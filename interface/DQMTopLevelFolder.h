@@ -170,7 +170,6 @@ namespace stor {
     AlarmHandlerPtr alarmHandler_;
 
     unsigned int nUpdates_;
-    unsigned int mergeCount_;
     utils::TimePoint_t lastUpdate_;
     std::string releaseTag_;
     uint32_t updateNumber_;
