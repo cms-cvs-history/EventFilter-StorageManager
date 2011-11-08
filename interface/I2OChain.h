@@ -1,4 +1,4 @@
-// $Id: I2OChain.h,v 1.14 2011/03/08 18:34:11 mommsen Exp $
+// $Id: I2OChain.h,v 1.13 2011/03/08 16:01:50 mommsen Exp $
 /// @file: I2OChain.h 
 
 #ifndef EventFilter_StorageManager_I2OChain_h
@@ -9,12 +9,11 @@
 #include "boost/shared_ptr.hpp"
 #include "toolbox/mem/Reference.h"
 
-#include "EventFilter/StorageManager/interface/FragKey.h"
+#include "IOPool/Streamer/interface/HLTInfo.h"
 #include "EventFilter/StorageManager/interface/QueueID.h"
 #include "EventFilter/StorageManager/interface/StreamID.h"
 #include "EventFilter/StorageManager/interface/Utils.h"
 
-#include "IOPool/Streamer/interface/MsgTools.h"
 
 namespace stor {
 
@@ -29,8 +28,8 @@ namespace stor {
    * the last instance of I2OChain goes out of scope.
    *
    * $Author: mommsen $
-   * $Revision: 1.14 $
-   * $Date: 2011/03/08 18:34:11 $
+   * $Revision: 1.13 $
+   * $Date: 2011/03/08 16:01:50 $
    */
 
 

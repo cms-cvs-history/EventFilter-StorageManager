@@ -1,4 +1,4 @@
-// $Id: DQMEventStore.h,v 1.12 2011/04/18 16:06:23 mommsen Exp $
+// $Id: DQMEventStore.h,v 1.11 2011/04/04 12:03:30 mommsen Exp $
 /// @file: DQMEventStore.h 
 
 #ifndef EventFilter_StorageManager_DQMEventStore_h
@@ -13,6 +13,8 @@
 
 #include "xcept/Exception.h"
 #include "xdaq/ApplicationDescriptor.h"
+
+#include "IOPool/Streamer/interface/HLTInfo.h"
 
 #include "EventFilter/StorageManager/interface/AlarmHandler.h"
 #include "EventFilter/StorageManager/interface/Configuration.h"
@@ -34,8 +36,8 @@ namespace stor {
    * into DQMEventMsgViews.
    *
    * $Author: mommsen $
-   * $Revision: 1.12 $
-   * $Date: 2011/04/18 16:06:23 $
+   * $Revision: 1.11 $
+   * $Date: 2011/04/04 12:03:30 $
    */
 
   template<class EventType, class ConnectionType, class StateMachineType>  
