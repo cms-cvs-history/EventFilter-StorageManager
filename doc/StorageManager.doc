@@ -47,6 +47,7 @@ The following unit tests are provided in the test/ directory:
 - ConcurrentQueue_t: test of the generic queue template used in the SM
 - ConsumerID_t: test of consumer ID
 - ConsumerRegistrationInfo_t: test of the consumer registration
+- DiskWriter_t: test of disk-writing thread
 - EnquingPolicyTag_t: test of the enqueuing policy
 - MockNotifier_t: test for the RCMS notifier mockup used in the unit tests
 - EventDistributor_t: test of the event distributor
