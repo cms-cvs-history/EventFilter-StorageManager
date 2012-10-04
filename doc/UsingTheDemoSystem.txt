@@ -18,7 +18,6 @@ It has the following features:
      a cluster of PCs)
    * support for multiple developers to run on the same host (although the CPU
      could get bogged down, of course)
-   * supports Python- and older "cfg"-style configuration files
 
 
 BUILDING THE PACKAGES NEEDEDED FOR THE DEMO SYSTEM
@@ -34,9 +33,6 @@ steps to build the packages that are needed by the demoSystem:
    * 'cvs co -r <releaseTag> EventFilter/ResourceBroker', if not already done
    * 'cvs co -r <releaseTag> EventFilter/Processor', if not already done
    * 'cvs co -r <releaseTag> EventFilter/SMProxyServer', if not already done
-   * 'EventFilter/StorageManager/test/demoSystem/bin/applyDevelopmentPatches.pl',
-     if not already done (this applies useful or necessary patches to several
-     of the packages)
    * 'scramv1 b'
 
 
@@ -44,9 +40,7 @@ RUNNING THE DEMO SYSTEM
 -----------------------
 
 First-time steps:
-   * 'cd <yourProjectArea>/src/EventFilter/StorageManager/test/demoSystem/'
-   * './createDirectories.sh'
-   * 'cd ..'
+   * 'cd <yourProjectArea>/src/EventFilter/StorageManager/test/'
    * decide on a base port number for your demo system, and configure the
      system to use that port number (and the current host). In order for
      multiple developers to use the same host for running demo systems, they
@@ -57,9 +51,9 @@ First-time steps:
      (e.g. 45000 - 46999) and configuring the demo system to use that
      range. Please use the following steps to configure the hostname, port
      number, and configuration file type:
-      * './configureHosts.csh -h' to see the command arguments that the script
+      * './configureHosts.sh -h' to see the command arguments that the script
         expects 
-      * './configureHosts.sh python <yourBasePortNumber>' (hostname is
+      * './configureHosts.sh <yourBasePortNumber>' (hostname is
         defaulted to the current host)
 
 To start the system:
@@ -108,14 +102,14 @@ To modify the system to run on a different host, simply re-run the
 configureHosts.csh script as shown here:
    * log into the new host
    * 'cd <yourProjectArea>/src/EventFilter/StorageManager/test'
-   * './configureHosts.csh python <yourBasePortNumber>' (the hostname is
+   * './configureHosts.csh <yourBasePortNumber>' (the hostname is
      determined automatically by the script) 
 These steps are useful when you need to switch between PCs in a cluster and
 you have a demo system set up on a shared file system on that cluster.
 
 Log files from the XDAQ processes are located in application-based
 subdirectories underneath <demoSystemDir>/logs. Please check the log files
-if/when you are experiencing problems. Log files that are older than 14 days
+if/when you are experiencing problems. Log files that are older than one day
 are cleaned up whenever you run the killEverything command. (So, you should
 either use the killEverything command to completely shut down a demo system or
 remember to clean up stale log files yourself.) The script that actually does
@@ -126,7 +120,7 @@ Data files from the Storage Manager are written to subdirectories underneath
 filePath parameter in the StorageManager section of the
 <demoSystemDir>/cfg/sm_autobu_8fu.xml.base file and re-running the
 configureHosts.csh script from the <demoSystemDir>/.. directory.) Data files
-that are older than 14 days are cleaned up whenever you run the killEverything
+that are older than 10 minutes are cleaned up whenever you run the killEverything
 command. (So, you should either use the killEverything command to completely
 shut down a demo system or remember to clean up stale data files yourself.) The
 script that actually does the work is
